@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>数学学习智能体评测组合</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #5d6875;
+      --line: #d9dee5;
+      --paper: #ffffff;
+      --band: #f5f7fb;
+      --blue: #2f6fed;
+      --green: #167a59;
+      --amber: #9a6500;
+      --red: #b33a3a;
+      --violet: #6549c2;
+      --teal: #087b83;
+      --radius: 8px;
+      --shadow: 0 10px 28px rgba(23, 32, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.55;
+    }
+
+    header {
+      background:
+        linear-gradient(120deg, rgba(47, 111, 237, 0.12), rgba(8, 123, 131, 0.10)),
+        #f7f9fc;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      min-height: 360px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+      gap: 36px;
+      align-items: center;
+      padding: 56px 0 44px;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 20px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p { margin: 0; }
+
+    .lead {
+      max-width: 780px;
+      color: #334155;
+      font-size: 18px;
+    }
+
+    .answer-box {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-left: 6px solid var(--green);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .answer-box strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 20px;
+      color: var(--green);
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid #c8d2e1;
+      background: #fff;
+      color: #334155;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 46px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    section.alt { background: var(--band); }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    .section-head p {
+      max-width: 640px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 4px 14px rgba(23, 32, 42, 0.04);
+    }
+
+    .card.core { border-top: 4px solid var(--blue); }
+    .card.important { border-top: 4px solid var(--teal); }
+    .card.guard { border-top: 4px solid var(--red); }
+    .card.optional { border-top: 4px solid var(--violet); }
+
+    .tag {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #edf3ff;
+      color: #2358bd;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag.green { background: #e9f7f1; color: var(--green); }
+    .tag.amber { background: #fff5db; color: var(--amber); }
+    .tag.red { background: #fdecec; color: var(--red); }
+    .tag.violet { background: #f0edff; color: var(--violet); }
+
+    .card p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .bench-list {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .bench {
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #f0f3f7;
+      color: #2f3b4a;
+      font-size: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(23, 32, 42, 0.04);
+    }
+
+    th, td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #eef2f7;
+      font-size: 13px;
+      color: #334155;
+      text-transform: none;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .dim {
+      display: inline-flex;
+      min-width: 42px;
+      justify-content: center;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: #17202a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 86px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status.ready { background: #e9f7f1; color: var(--green); }
+    .status.partial { background: #fff5db; color: var(--amber); }
+    .status.risk { background: #fdecec; color: var(--red); }
+
+    .quote {
+      border-left: 5px solid var(--blue);
+      background: #f8fbff;
+      padding: 18px 20px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      color: #263444;
+    }
+
+    .evidence {
+      display: grid;
+      grid-template-columns: 160px minmax(0, 1fr);
+      gap: 10px 18px;
+      align-items: start;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    .evidence .label {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #dde4ee;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+    }
+
+    .source {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer {
+      padding: 28px 0 40px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #eef2f7;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.94em;
+    }
+
+    @media (max-width: 860px) {
+      .hero,
+      .grid.cols-3,
+      .grid.cols-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+
+      .evidence {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero">
+      <div>
+        <h1>数学学习智能体评测组合</h1>
+        <p class="lead">目标不是只测“模型会不会做数学题”，而是测它能不能作为学生的学习伙伴：诊断错因、分层提示、讲清几何图、适配中文 K12，并在安全边界内持续辅导。</p>
+        <div class="meta-row">
+          <span class="pill">场景：学生数学学习</span>
+          <span class="pill">数据来源：exhaustive_2026-05-13</span>
+          <span class="pill">结构：原子能力 -> Benchmark -> 结论</span>
+        </div>
+      </div>
+      <div class="answer-box">
+        <strong>结论：是的，这个组合全部建立在原子能力上。</strong>
+        <p>评测组合不是任意拼 benchmark，而是从 24 个原子能力中选出数学学习智能体需要的能力子集。每个 benchmark 只是这些原子能力的观测工具。</p>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>一、该场景要评测哪些原子能力</h2>
+          <p>下面是面向“学生数学学习智能体”的推荐组合。核心项决定产品能不能成立，重要项决定适用范围和体验上限，安全项必须单独验收。</p>
+        </div>
+      </div>
+
+      <div class="grid cols-3">
+        <article class="card core">
+          <span class="tag">核心 D04</span>
+          <h3>基础数学应用题</h3>
+          <p>验证小学、初中常见应用题和多步算术是否稳定。它适合作为门槛，不适合作为最终排序。</p>
+          <div class="bench-list"><span class="bench">GSM8K</span><span class="bench">Math23K</span><span class="bench">Ape210K</span></div>
+        </article>
+
+        <article class="card core">
+          <span class="tag">核心 D05</span>
+          <h3>高阶数学与竞赛推理</h3>
+          <p>验证代数、几何、数论、组合概率和 Hard 题。它决定智能体能否覆盖拔高题和竞赛风格问题。</p>
+          <div class="bench-list"><span class="bench">MATH</span><span class="bench">OlymMATH</span><span class="bench">OlympiadBench</span></div>
+        </article>
+
+        <article class="card core">
+          <span class="tag">核心 D12</span>
+          <h3>学生错误定位与纠错反馈</h3>
+          <p>验证能不能指出学生第一处关键错误、判断学生步骤是否正确，并给出纠错，而不是直接报答案。</p>
+          <div class="bench-list"><span class="bench">MathTutorBench</span><span class="bench">Bridge</span><span class="bench">SAS-Bench</span></div>
+        </article>
+
+        <article class="card core">
+          <span class="tag">核心 D13</span>
+          <h3>苏格拉底式引导与脚手架</h3>
+          <p>验证模型是否能通过提示、追问和分层支持帮助学生自己完成，而不是剧透完整解法。</p>
+          <div class="bench-list"><span class="bench">MathTutorBench</span><span class="bench">TutorBench</span><span class="bench">MathDial</span></div>
+        </article>
+
+        <article class="card important">
+          <span class="tag green">重要 D06</span>
+          <h3>几何视觉、图表和多模态数学</h3>
+          <p>如果学生会拍照上传题目、几何图、函数图或图表，这项必须测。它覆盖视觉定位和图文联合推理。</p>
+          <div class="bench-list"><span class="bench">MathVista</span><span class="bench">ME2</span><span class="bench">K12Vista</span><span class="bench">CMMU</span></div>
+        </article>
+
+        <article class="card important">
+          <span class="tag green">重要 D02</span>
+          <h3>中文本土知识与 K12 学科体系</h3>
+          <p>面向中国学生时，需要验证中文教材语境、考试表达、学段差异和 K12 多模态题。</p>
+          <div class="bench-list"><span class="bench">E-EVAL</span><span class="bench">GaokaoBench</span><span class="bench">K12Vista</span></div>
+        </article>
+
+        <article class="card important">
+          <span class="tag green">重要 D14</span>
+          <h3>教学法知识与教学设计</h3>
+          <p>验证模型是否掌握基本教学策略、特殊教育知识、讲解结构和教学设计，而不只是会做题。</p>
+          <div class="bench-list"><span class="bench">Pedagogy Benchmark</span><span class="bench">EduBench</span></div>
+        </article>
+
+        <article class="card important">
+          <span class="tag green">重要 D15</span>
+          <h3>学习规划、个性化与学情分析</h3>
+          <p>验证能否根据学生水平、历史错题和目标安排学习路径。公开榜单较弱，需要自建数据补足。</p>
+          <div class="bench-list"><span class="bench">EduBench</span><span class="bench">ASSISTments</span><span class="bench">EdNet</span></div>
+        </article>
+
+        <article class="card guard">
+          <span class="tag red">必测 D21</span>
+          <h3>教育安全、合规与角色扮演</h3>
+          <p>学生产品不能默认安全。要单独评估教育角色边界、对抗诱导、未成年人风险和不专业回复。</p>
+          <div class="bench-list"><span class="bench">EduGuard-Bench</span></div>
+        </article>
+
+        <article class="card optional">
+          <span class="tag violet">可选 D22</span>
+          <h3>教学可视化生成</h3>
+          <p>如果产品要生成图示、动画、网页交互或可视化讲解，需要评估视觉是否真的服务于理解。</p>
+          <div class="bench-list"><span class="bench">EduVisBench</span><span class="bench">VisualEDU</span><span class="bench">ME2</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>二、过去评测已经给出的关键结论</h2>
+          <p>这些结论来自本地结构化库中的 benchmark 结果和补充调研。重点是判断哪些能力已经接近可用，哪些仍是智能体研发风险。</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>原子能力</th>
+            <th>代表 benchmark</th>
+            <th>过去评测结论</th>
+            <th>对数学学习智能体的含义</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="dim">D04</span> 基础数学应用题</td>
+            <td>GSM8K</td>
+            <td>早期 GPT-3 175B fine-tuned 约 33-34%，generator + verifier 约 55%；较新模型如 Llama 3.1 405B-Instruct 96.8，Qwen3-235B-A22B-Base 94.39。</td>
+            <td>基础算术和应用题已可作为准入门槛。单独跑高分不说明“会教学”。</td>
+          </tr>
+          <tr>
+            <td><span class="dim">D05</span> 高阶数学与竞赛推理</td>
+            <td>MATH、OlymMATH、OlympiadBench</td>
+            <td>MATH 原论文中 GPT-3 175B few-shot Avg 5.2；后续 full MATH 已明显提升，但 OlymMATH-HARD 中 Gemini 2.5 Pro 英文 P@1 58.4、中文 P@1 55.4，OlympiadBench full 中 GPT-4o overall 25.89。</td>
+            <td>高阶题仍有明显区分度。需要工具调用、答案验证、自检和失败兜底。</td>
+          </tr>
+          <tr>
+            <td><span class="dim">D12</span> 错误定位与纠错</td>
+            <td>MathTutorBench</td>
+            <td>LearnLM-1.5-Pro Problem solving 0.94，但 Mistake location 0.57；GPT-4o Correction 0.84，但 Mistake location 0.37。</td>
+            <td>“改正答案”比“诊断学生错在哪里”容易。错因诊断必须单独测，不能用解题正确率替代。</td>
+          </tr>
+          <tr>
+            <td><span class="dim">D13</span> 苏格拉底式引导与脚手架</td>
+            <td>MathTutorBench、TutorBench</td>
+            <td>Qwen2.5-Math-7B-Instruct Problem solving 0.88，但 Scaffolding 0.06、Ped. IF 0.07。TutorBench 中 Gemini 2.5 Pro overall 55.65，GPT-5 55.33，GPT-4o 36.12。</td>
+            <td>会做题的数学模型可能最不会教。需要强约束的教学策略和对话评测。</td>
+          </tr>
+          <tr>
+            <td><span class="dim">D06</span> 多模态数学</td>
+            <td>MathVista、ME2、K12Vista</td>
+            <td>MathVista testmini 中 o1 73.9、Claude 3.5 Sonnet 67.7、GPT-4o 63.8；ME2 视觉关键点 Gemini 2.0 Flash 0.576、GPT-4o 0.472；K12Vista Gemini2-thinking Direct 55.47、Step-by-Step 57.36。</td>
+            <td>拍题、几何图和图表理解可用但不稳。视觉关键点和过程 grounding 是真实产品风险。</td>
+          </tr>
+          <tr>
+            <td><span class="dim">D02</span> 中文 K12 体系</td>
+            <td>E-EVAL、GaokaoBench、K12Vista</td>
+            <td>E-EVAL 中 Qwen-72B-Chat 约 88.8，中文模型整体强；GaokaoBench 客观题 GPT-4-0314 72.2，主观题 GPT-4-0314 51.9；K12Vista 多模态总体远低于文本选择题。</td>
+            <td>中文选择题不难，中文主观题和多模态过程题仍难。面向国内学生不能只测 MMLU/GSM8K。</td>
+          </tr>
+          <tr>
+            <td><span class="dim">D14</span> 教学法知识</td>
+            <td>Pedagogy Benchmark、EduBench</td>
+            <td>Pedagogy Benchmark 顶部 CDPK/SEND 在 85-89 左右；但它偏教师考试知识。EduBench 中模型评委普遍比人类打分高。</td>
+            <td>教学法知识可测，但不能证明真实 tutor 对话质量。需要与 D12/D13 联合验收。</td>
+          </tr>
+          <tr>
+            <td><span class="dim">D15</span> 学情分析与规划</td>
+            <td>ASSISTments、EdNet、EduBench</td>
+            <td>传统 KT/CD 数据丰富，但多为 AUC/ACC 的答题预测；公开 LLM 统一榜单不足。</td>
+            <td>这是产品必须有、公开 benchmark 不够的能力。需要自建学生历史、错题画像和下一题推荐评测。</td>
+          </tr>
+          <tr>
+            <td><span class="dim">D21</span> 教育安全</td>
+            <td>EduGuard-Bench</td>
+            <td>Claude-3.7 RFS 0.77、ASR 27.0；DeepSeek-V3 RFS 0.73 但 ASR 81.6。教学角色表现和安全表现不一致。</td>
+            <td>安全不能由教学质量推断。学生智能体上线前必须单独跑安全与边界评测。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>三、现在能不能做到</h2>
+          <p>结论是：可以做出有用的数学学习智能体，但不能只靠裸模型。需要把模型、工具、教学策略和专项评测组合起来。</p>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <article class="card">
+          <span class="tag green">基本可用</span>
+          <h3>基础解题与常规中文 K12 选择题</h3>
+          <p>GSM8K 和 E-EVAL 的公开结果显示，强模型已经能覆盖大量基础题。这里适合设置准入线，例如基础应用题、K12 选择题、常见知识点。</p>
+          <div class="bar"><span style="width: 88%"></span></div>
+        </article>
+
+        <article class="card">
+          <span class="tag amber">部分可用</span>
+          <h3>高阶数学、主观题与复杂过程推理</h3>
+          <p>OlymMATH、OlympiadBench 和 GaokaoBench 主观题说明高阶推理仍不稳定。产品中应加入求解器、校验器、逐步自检和不会时的转人工/降级策略。</p>
+          <div class="bar"><span style="width: 58%"></span></div>
+        </article>
+
+        <article class="card">
+          <span class="tag amber">部分可用</span>
+          <h3>错因诊断与脚手架式辅导</h3>
+          <p>MathTutorBench 显示这是智能体的核心短板。研发上要把“直接给答案”改成“先定位错误，再给下一步提示”，并用真实学生错题验收。</p>
+          <div class="bar"><span style="width: 45%"></span></div>
+        </article>
+
+        <article class="card">
+          <span class="tag amber">部分可用</span>
+          <h3>拍题、几何图和可视化讲解</h3>
+          <p>MathVista、ME2、K12Vista 和 EduVisBench 表明多模态数学可用但不稳。几何关键点、图像忠实性和讲解对应关系需要专门测试。</p>
+          <div class="bar"><span style="width: 52%"></span></div>
+        </article>
+
+        <article class="card">
+          <span class="tag red">必须自建</span>
+          <h3>个性化学情与长期学习效果</h3>
+          <p>ASSISTments、EdNet 等数据强，但没有直接回答“LLM tutor 是否让学生学得更好”。需要用学生历史、前后测、延迟测和下一题推荐来补。</p>
+          <div class="bar"><span style="width: 32%"></span></div>
+        </article>
+
+        <article class="card">
+          <span class="tag red">必须单测</span>
+          <h3>教育安全与未成年人边界</h3>
+          <p>EduGuard-Bench 的核心警示是：教学能力高不代表安全。安全策略、拒答质量、风险识别和角色边界必须作为发布门槛。</p>
+          <div class="bar"><span style="width: 40%"></span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>四、建议的实验设计</h2>
+          <p>公开 benchmark 用来建立外部可比性，自建小测集用来验证真实产品场景。两者缺一不可。</p>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="quote">
+          <h3>公开 benchmark 组合</h3>
+          <div class="evidence">
+            <div class="label">解题底座</div>
+            <div>GSM8K、MATH、OlymMATH、E-EVAL 数学、GaokaoBench 数学</div>
+            <div class="label">Tutor 核心</div>
+            <div>MathTutorBench、TutorBench、MathDial、Bridge</div>
+            <div class="label">多模态数学</div>
+            <div>MathVista、ME2、K12Vista</div>
+            <div class="label">教学质量</div>
+            <div>Pedagogy Benchmark、EduBench</div>
+            <div class="label">安全合规</div>
+            <div>EduGuard-Bench</div>
+          </div>
+        </div>
+
+        <div class="quote">
+          <h3>自建产品小测集</h3>
+          <div class="evidence">
+            <div class="label">样本规模</div>
+            <div>100-300 条真实学生数学错题，覆盖小学、初中、高中或目标学段。</div>
+            <div class="label">标注字段</div>
+            <div>学生答案、第一处错误、错因、合适提示、是否剧透、下一步推荐题。</div>
+            <div class="label">评价指标</div>
+            <div>错误定位准确率、纠错准确率、提示可用性、非剧透率、学生可继续作答率。</div>
+            <div class="label">上线门槛</div>
+            <div>基础题稳定、高阶题可降级、错因诊断可靠、安全拒答和转介稳定。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>五、一句话判断</h2>
+      <div class="quote">
+        <p><strong>数学学习智能体的评测组合必须围绕 D04、D05、D12、D13、D06、D02、D14、D15、D21 来建。</strong> 过去评测已经证明：基础解题接近成熟，高阶数学和多模态仍有区分度，真正短板在学生错因诊断、脚手架引导、个性化学习和教育安全。现在可以做产品实验，但必须把这些短板作为主评测项，而不是只展示模型解题分数。</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p>数据依据：<code>data/exhaustive_2026-05-13/results.jsonl</code>、<code>metrics.jsonl</code>、<code>dimension_mapping.jsonl</code>、<code>benchmarks.jsonl</code>。生成日期：2026-05-13。</p>
+    </div>
+  </footer>
+</body>
+</html>

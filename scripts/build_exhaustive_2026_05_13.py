@@ -105,6 +105,8 @@ MANUAL_URLS = {
     "interactscience": ["https://github.com/open-compass/InteractScience"],
     "essayjudge": ["https://arxiv.org/abs/2502.11916"],
     "sas_bench": ["https://github.com/PKU-DAIR/SAS-Bench", "https://arxiv.org/abs/2505.07247"],
+    "convolearn": ["https://huggingface.co/datasets/masharma/convolearn", "https://arxiv.org/pdf/2601.08950v1", "https://scale.stanford.edu/ai/repository/convolearn-dataset-constructivist-tutor-student-dialogue"],
+    "pebble": ["https://openreview.net/forum?id=ffvNvoJVgE"],
 }
 
 MANUAL_META = {
@@ -138,6 +140,8 @@ MANUAL_META = {
     "interactscience": ("交互式科学演示", "interactive_science_demo_generation"),
     "essayjudge": ("作文自动评分", "multimodal_essay_scoring"),
     "sas_bench": ("短答案评分", "short_answer_step_scoring"),
+    "convolearn": ("建构主义辅导对话", "constructivist_tutoring_dialogue"),
+    "pebble": ("多轮辅导过程评测", "multi_turn_tutoring_process_evaluation"),
 }
 
 RESOURCE_DIMENSIONS = {
@@ -187,7 +191,48 @@ RESOURCE_DIMENSIONS = {
     "网易有道子曰": ["D24"],
     "科大讯飞星火教育": ["D24"],
     "CheggMate": ["D24"],
+    "ConvoLearn": ["D13", "D19"],
+    "PEBBLE": ["D12", "D13", "D15"],
 }
+
+EXTRA_RESOURCE_RESULTS = [
+    {
+        "benchmark": "ConvoLearn",
+        "model": "Fine-tuned Mistral 7B",
+        "metric": "teacher human evaluation overall",
+        "score": "4.10",
+        "setting": "QLoRA fine-tuned",
+        "notes": "Stanford SCALE page reports human evaluation by 31 teachers; dataset has 1,250 middle-school Earth Science tutor-student dialogues and six constructivist pedagogy dimensions.",
+        "source_url": "https://scale.stanford.edu/ai/repository/convolearn-dataset-constructivist-tutor-student-dialogue",
+    },
+    {
+        "benchmark": "ConvoLearn",
+        "model": "Base Mistral 7B",
+        "metric": "teacher human evaluation overall",
+        "score": "2.59",
+        "setting": "base model",
+        "notes": "Reported comparison point on the Stanford SCALE ConvoLearn page.",
+        "source_url": "https://scale.stanford.edu/ai/repository/convolearn-dataset-constructivist-tutor-student-dialogue",
+    },
+    {
+        "benchmark": "ConvoLearn",
+        "model": "Claude Sonnet 4.5",
+        "metric": "teacher human evaluation overall",
+        "score": "2.87",
+        "setting": "frontier baseline",
+        "notes": "Reported comparison point on the Stanford SCALE ConvoLearn page; use as source-reported context, not a unified public leaderboard.",
+        "source_url": "https://scale.stanford.edu/ai/repository/convolearn-dataset-constructivist-tutor-student-dialogue",
+    },
+    {
+        "benchmark": "PEBBLE",
+        "model": "not_standardized",
+        "metric": "no_unified_leaderboard",
+        "score": "no_unified_leaderboard",
+        "setting": "pending_public_release",
+        "notes": "OpenReview record describes an initial multi-turn tutor benchmark with scaffolding, diagnostic questioning, misconception repair, metacognitive support, affective support, overhelping penalty, contamination controls, and an evaluation kit to be released upon acceptance.",
+        "source_url": "https://openreview.net/forum?id=ffvNvoJVgE",
+    },
+]
 
 
 def split_md_row(line: str) -> list[str]:
@@ -397,6 +442,10 @@ def infer_dimensions(bid: str, metric: str, bench_dims: dict[str, list[str]]) ->
         dims = ["D07"]
     elif bid == "k12vista":
         dims = ["D02", "D06"]
+    elif bid == "convolearn":
+        dims = ["D13", "D19"]
+    elif bid == "pebble":
+        dims = ["D12", "D13", "D15"]
     return sorted(set(dims))
 
 
@@ -619,6 +668,54 @@ def no_leaderboard_results(tables: list[dict[str, Any]], bench_dims: dict[str, l
                 }
             )
     return results, logs
+
+
+def extra_resource_results(bench_dims: dict[str, list[str]]) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
+    results = [
+        make_result(
+            row["benchmark"],
+            row["model"],
+            row["metric"],
+            row["score"],
+            "web_verified_updates_2026-05-13.md",
+            "2026-05-13 web-verified emerging education benchmarks",
+            bench_dims,
+            setting=row["setting"],
+            notes=row["notes"],
+            source_url=row["source_url"],
+        )
+        for row in EXTRA_RESOURCE_RESULTS
+    ]
+    authority = {
+        "convolearn": {
+            "authority_score": 72.0,
+            "authority_score_text": "72",
+            "authority_score_type": "资源价值",
+            "authority_usage_ecosystem": "新兴",
+            "authority_reason": "建构主义 tutor 对话维度清晰，覆盖认知参与、形成性评价、元认知和权力关系等过程指标；目前规模和复现生态仍早期。",
+            "authority_source_section": "2026-05-13 web-verified emerging education benchmarks",
+        },
+        "pebble": {
+            "authority_score": 70.0,
+            "authority_score_text": "70",
+            "authority_score_type": "权威性",
+            "authority_usage_ecosystem": "待发布",
+            "authority_reason": "多轮 tutor 过程评分、SRL 和 overhelping penalty 设计贴近教育核心缺口；代码和榜单仍处于发布前状态。",
+            "authority_source_section": "2026-05-13 web-verified emerging education benchmarks",
+        },
+    }
+    logs = [
+        {
+            "source_file": "web_verified_updates_2026-05-13.md",
+            "source_section": "2026-05-13 web-verified emerging education benchmarks",
+            "benchmark": "ConvoLearn / PEBBLE",
+            "markdown_rows": 2,
+            "result_records": len(results),
+            "status": "web_verified_emerging_resources_added",
+            "notes": "补入 2026 检索发现但本地 survey 未覆盖的 tutor/教学过程类条目；ConvoLearn 保留来源页明示的人评分数，PEBBLE 保留为待发布评测协议。",
+        }
+    ]
+    return results, authority, logs
 
 
 def extract_authority(tables: list[dict[str, Any]]) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]]]:
@@ -978,6 +1075,151 @@ def write_reports(
     HTML_REPORT.write_text("".join(parts), encoding="utf-8")
 
 
+def dataset_repo_from_hf(url: str) -> str:
+    m = re.search(r"huggingface\.co/datasets/([^/?#]+/[^/?#]+)", url)
+    return m.group(1) if m else ""
+
+
+def github_clone_url(url: str) -> str:
+    m = re.search(r"(https://github\.com/[^/?#]+/[^/?#]+)", url)
+    return m.group(1).rstrip("/") if m else ""
+
+
+def kaggle_competition_slug(url: str) -> str:
+    m = re.search(r"kaggle\.com/c/([^/?#]+)", url)
+    return m.group(1) if m else ""
+
+
+def build_dataset_acquisition(benchmarks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    records = []
+    for b in benchmarks:
+        bid = b["benchmark_id"]
+        urls = b.get("source_urls", [])
+        commands = []
+        manual_steps = []
+        access_modes = []
+        for url in urls:
+            hf_repo = dataset_repo_from_hf(url)
+            gh_url = github_clone_url(url)
+            kaggle_slug = kaggle_competition_slug(url)
+            if hf_repo:
+                access_modes.append("huggingface_dataset")
+                commands.append(f"huggingface-cli download --repo-type dataset {hf_repo} --local-dir sources/datasets/{bid}")
+            elif gh_url:
+                access_modes.append("github_repository")
+                commands.append(f"git clone --depth 1 {gh_url} sources/datasets/{bid}")
+            elif kaggle_slug:
+                access_modes.append("kaggle_competition")
+                commands.append(f"kaggle competitions download -c {kaggle_slug} -p sources/datasets/{bid}")
+                manual_steps.append("requires Kaggle account, competition terms acceptance, and API token")
+            elif "arxiv.org" in url or url.endswith(".pdf"):
+                access_modes.append("paper_or_pdf")
+            else:
+                access_modes.append("project_page_or_manual")
+        access_modes = sorted(set(access_modes)) or ["missing_source_url"]
+        if commands:
+            status = "download_command_available_not_bulk_downloaded"
+        elif "paper_or_pdf" in access_modes and len(access_modes) == 1:
+            status = "paper_only_or_release_pending"
+        else:
+            status = "manual_access_or_metadata_only"
+        records.append(
+            {
+                "benchmark_id": bid,
+                "benchmark_name": b["benchmark_name"],
+                "domain": b["domain"],
+                "task_type": b["task_type"],
+                "has_model_results": b["has_model_results"],
+                "access_modes": access_modes,
+                "dataset_status": status,
+                "recommended_local_path": f"sources/datasets/{bid}",
+                "download_commands": sorted(set(commands)),
+                "manual_steps": sorted(set(manual_steps)),
+                "source_urls": urls,
+                "notes": "Bulk download is intentionally not executed by this generator because many datasets are large, gated, licensed, or require manual terms acceptance. Use commands selectively.",
+            }
+        )
+    return sorted(records, key=lambda x: (x["dataset_status"], x["benchmark_id"]))
+
+
+def write_dataset_acquisition_report(path: Path, rows: list[dict[str, Any]]) -> None:
+    by_status: dict[str, int] = defaultdict(int)
+    by_access: dict[str, int] = defaultdict(int)
+    for row in rows:
+        by_status[row["dataset_status"]] += 1
+        for mode in row["access_modes"]:
+            by_access[mode] += 1
+    lines = [
+        "# AI-Edu Benchmark Dataset Acquisition Manifest",
+        "",
+        "生成日期：2026-05-13",
+        "",
+        "本文件回答 `todo.md` 中“下载其数据集”的可执行层面：对每个 benchmark/resource 记录数据入口、建议本地路径、可用下载命令和人工申请风险。为避免误下超大、闭源、需授权或需同意条款的数据，本脚本只生成下载清单，不默认批量下载。",
+        "",
+        "## 状态统计",
+        "",
+        "| Status | Count |",
+        "|---|---:|",
+    ]
+    for status, count in sorted(by_status.items()):
+        lines.append(f"| {status} | {count} |")
+    lines += ["", "## 入口类型统计", "", "| Access mode | Count |", "|---|---:|"]
+    for mode, count in sorted(by_access.items()):
+        lines.append(f"| {mode} | {count} |")
+    lines += [
+        "",
+        "## 可直接执行的下载入口",
+        "",
+        "| Benchmark | Local path | Commands / manual notes |",
+        "|---|---|---|",
+    ]
+    for row in rows:
+        command_text = "<br>".join(f"`{cmd}`" for cmd in row["download_commands"])
+        manual_text = "<br>".join(row["manual_steps"])
+        if not command_text:
+            command_text = row["dataset_status"]
+        if manual_text:
+            command_text = f"{command_text}<br>{manual_text}"
+        lines.append(f"| {row['benchmark_name']} | `{row['recommended_local_path']}` | {command_text} |")
+    lines += [
+        "",
+        "## 使用建议",
+        "",
+        "- 优先下载 `huggingface_dataset` 和 `github_repository` 类型；Kaggle、Google Drive、机构页面和产品页通常需要人工确认条款。",
+        "- `sources/` 已在 `.gitignore` 中，不会把大数据集误提交到仓库。",
+        "- 只作为训练语料的数据集（如 FineWeb-Edu）不应直接当作评测结论；需要先定义任务、切分、指标和污染检查。",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_web_update_note(path: Path) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "# Web-Verified Emerging AI-Edu Benchmark Updates",
+                "",
+                "生成日期：2026-05-13",
+                "",
+                "本文件记录本轮为补齐 `todo.md` 的全量性而额外核验的 2025-2026 新兴教育 benchmark / 数据资源。",
+                "",
+                "## ConvoLearn",
+                "",
+                "- Source: https://scale.stanford.edu/ai/repository/convolearn-dataset-constructivist-tutor-student-dialogue",
+                "- Dataset: https://huggingface.co/datasets/masharma/convolearn",
+                "- ArXiv PDF: https://arxiv.org/pdf/2601.08950v1",
+                "- Stanford SCALE page states ConvoLearn has 1,250 middle-school Earth Science tutor-student dialogues and six constructivist pedagogy dimensions; it reports teacher human-evaluation means for fine-tuned Mistral 7B, base Mistral 7B, and Claude Sonnet 4.5.",
+                "",
+                "## PEBBLE",
+                "",
+                "- Source: https://openreview.net/forum?id=ffvNvoJVgE",
+                "- OpenReview describes a multi-turn tutoring benchmark with scaffolding, diagnostic questioning, misconception repair, metacognitive support, affective support, overhelping penalty, contamination controls, and planned release of code/seeds/personas/judge prompts/leaderboard specification.",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def verify(outdir: Path) -> dict[str, Any]:
     required_result_keys = {"benchmark_id", "benchmark_name", "model", "metric_original", "score_text", "source_file"}
     stats = {}
@@ -1023,20 +1265,29 @@ def main() -> None:
     no_lb, no_lb_logs = no_leaderboard_results(tables, bench_dims)
     results.extend(no_lb)
     logs.extend(no_lb_logs)
+    extra_results, extra_authority, extra_logs = extra_resource_results(bench_dims)
+    results.extend(extra_results)
+    logs.extend(extra_logs)
     authority, authority_logs = extract_authority(tables)
+    authority.update(extra_authority)
     logs.extend(authority_logs)
     apply_source_urls(results, source_urls)
     results = sorted(results, key=lambda r: (r["benchmark_id"], r["source_file"], r["source_section"], r["model"], r["metric_original"]))
     metrics = build_metrics(results, dim_names)
     benchmarks = build_benchmarks(results, authority, source_urls)
     mapping = build_dimension_mapping(metrics, dim_names)
+    dataset_acquisition = build_dataset_acquisition(benchmarks)
     write_jsonl(OUTDIR / "benchmarks.jsonl", benchmarks)
     write_jsonl(OUTDIR / "metrics.jsonl", metrics)
     write_jsonl(OUTDIR / "results.jsonl", results)
     write_jsonl(OUTDIR / "dimension_mapping.jsonl", mapping)
+    write_jsonl(OUTDIR / "dataset_acquisition.jsonl", dataset_acquisition)
     write_log(OUTDIR / "extraction_log.md", logs, results, metrics, benchmarks)
+    write_dataset_acquisition_report(OUTDIR / "dataset_acquisition_report.md", dataset_acquisition)
+    write_web_update_note(ROOT / "web_verified_updates_2026-05-13.md")
     write_reports(results, metrics, benchmarks, dim_names)
     stats = verify(OUTDIR)
+    stats["dataset_acquisition.jsonl"] = len(dataset_acquisition)
     print(json.dumps(stats, ensure_ascii=False, indent=2))
 
 

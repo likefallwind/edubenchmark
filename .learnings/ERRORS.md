@@ -1,5 +1,33 @@
 # Errors
 
+## [ERR-20260513-001] unsafe_optional_url_regex_group
+
+**Logged**: 2026-05-13T10:52:00+08:00  
+**Priority**: low  
+**Status**: fixed  
+**Area**: scripting
+
+### Summary
+Dataset acquisition manifest generation assumed every source URL matched the GitHub regex and called `group(1)` on `None`.
+
+### Error
+```text
+AttributeError: 'NoneType' object has no attribute 'group'
+```
+
+### Context
+- `build_dataset_acquisition(...)` iterates mixed source URLs: Hugging Face, GitHub, Kaggle, arXiv, and project pages.
+- `github_clone_url(...)` needed to return an empty string when the URL is not a GitHub repository.
+
+### Suggested Fix
+For optional URL parsers, return `""` or `None` on no match and let the caller branch by truthiness.
+
+### Metadata
+- Reproducible: yes
+- Related Files: scripts/build_exhaustive_2026_05_13.py
+
+---
+
 ## [ERR-20260512-001] parallel_dependent_commands
 
 **Logged**: 2026-05-12T11:29:40+08:00  

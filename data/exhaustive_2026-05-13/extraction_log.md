@@ -4,9 +4,9 @@
 
 ## 总览
 
-- benchmarks.jsonl：76 条 benchmark/resource 记录。
-- metrics.jsonl：163 条 benchmark-native 指标记录。
-- results.jsonl：1612 条结果记录，其中模型分数 1566 条，no_unified_leaderboard 46 条。
+- benchmarks.jsonl：78 条 benchmark/resource 记录。
+- metrics.jsonl：165 条 benchmark-native 指标记录。
+- results.jsonl：1616 条结果记录，其中模型分数 1569 条，no_unified_leaderboard 47 条。
 - 旧 `data/model_dimension_performance_2026-05-12.json` 是代表性抽取，只保留为摘要参考；本目录作为全量本地结构化结果库。
 - 本轮未把多列指标压成 average；Markdown 表格中的每个模型 × 指标单元格单独保留。
 - 在线补充结果来自 `edu_benchmark_survey_supplement_2026-05-11.md` 中已核验描述；本脚本未重新抓取外部网页。
@@ -48,6 +48,7 @@
 | edu_benchmark_survey.md | SAS-Bench CCS/ECS 平均 | SAS-Bench | 16 | 32 | extracted |  |
 | edu_benchmark_survey_supplement_2026-05-11.md | 一、旧模型结果的线上补充 / 可补充进原报告的代表性新结果 | multiple_benchmarks | 14 | 45 | supplement_representative_updates_extracted | 按补充文件中明确列出的模型-分数展开；不覆盖 survey 原始结果。 |
 | edu_benchmark_survey.md | E. 无官方统一模型榜单的条目 | multiple_resources | 6 | 46 | no_unified_leaderboard_recorded | 每个条目保留 no_unified_leaderboard 结果记录，避免无榜单条目被省略。 |
+| web_verified_updates_2026-05-13.md | 2026-05-13 web-verified emerging education benchmarks | ConvoLearn / PEBBLE | 2 | 4 | web_verified_emerging_resources_added | 补入 2026 检索发现但本地 survey 未覆盖的 tutor/教学过程类条目；ConvoLearn 保留来源页明示的人评分数，PEBBLE 保留为待发布评测协议。 |
 | edu_benchmark_survey_supplement_2026-05-11.md | 1. 解题能力：通用学科与考试 | authority_table | 8 | 8 | authority_metadata_extracted | 权威性 表已写入 benchmarks.jsonl 的 authority_* 字段。 |
 | edu_benchmark_survey_supplement_2026-05-11.md | 2. 解题能力：数学专项 | authority_table | 11 | 11 | authority_metadata_extracted | 权威性 表已写入 benchmarks.jsonl 的 authority_* 字段。 |
 | edu_benchmark_survey_supplement_2026-05-11.md | 3. 解题能力：代码与编程教育 | authority_table | 6 | 7 | authority_metadata_extracted | 权威性 表已写入 benchmarks.jsonl 的 authority_* 字段。 |
@@ -64,6 +65,7 @@
 - CMMLU: 133 result records
 - CMMU: 10 result records
 - ChartQA: 27 result records
+- ConvoLearn: 3 result records
 - E-EVAL: 45 result records
 - EduBench: 16 result records
 - EduEval: 28 result records
@@ -123,6 +125,7 @@
 - MOOCCube: 类别：教育资源。论文/README/数据卡未找到可直接引用的官方统一模型 leaderboard。
 - NCTE Transcripts: 类别：教育资源。论文/README/数据卡未找到可直接引用的官方统一模型 leaderboard。
 - NuminaMath: 类别：数学数据资源。论文/README/数据卡未找到可直接引用的官方统一模型 leaderboard。
+- PEBBLE: OpenReview record describes an initial multi-turn tutor benchmark with scaffolding, diagnostic questioning, misconception repair, metacognitive support, affective support, overhelping penalty, contamination controls, and an evaluation kit to be released upon acceptance.
 - PTADisc: 类别：知识追踪/认知诊断。论文/README/数据卡未找到可直接引用的官方统一模型 leaderboard。
 - QACP: 类别：教育问答数据。论文/README/数据卡未找到可直接引用的官方统一模型 leaderboard。
 - SCB-Dataset: 类别：教育资源。论文/README/数据卡未找到可直接引用的官方统一模型 leaderboard。

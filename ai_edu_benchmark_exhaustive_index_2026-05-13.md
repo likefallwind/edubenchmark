@@ -4,9 +4,9 @@
 
 本报告基于 `data/exhaustive_2026-05-13/` 的 JSONL 文件生成。旧 `data/model_dimension_performance_2026-05-12.json` 是代表性抽取，不作为全量结果库。
 
-- Benchmarks/resources: 76
-- Metrics: 163
-- Result records: 1612
+- Benchmarks/resources: 78
+- Metrics: 165
+- Result records: 1616
 
 ## 按原子能力浏览
 
@@ -258,8 +258,12 @@
   - Fidelity / Fidelity: 10 result rows
   - Reference / Reference: 10 result rows
   - Visual Keypoint Overall / Visual Keypoint Overall: 10 result rows
+- **PEBBLE** (pebble)
+  - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
 
 ### D13 苏格拉底式引导与脚手架
+- **ConvoLearn** (convolearn)
+  - teacher human evaluation overall / teacher human evaluation overall: 3 result rows
 - **EduDial** (edudial)
   - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
 - **MathDial** (mathdial)
@@ -270,6 +274,8 @@
   - Scaff. hard / 困难脚手架胜率: 8 result rows
   - Scaffolding / 脚手架胜率: 8 result rows
   - Socratic BLEU / 苏格拉底式提问 BLEU: 8 result rows
+- **PEBBLE** (pebble)
+  - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
 - **SocraticLM** (socraticlm)
   - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
 - **TutorBench** (tutorbench)
@@ -303,6 +309,8 @@
 - **FoundationalAssist** (foundationalassist)
   - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
 - **MOOCCube** (mooccube)
+  - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
+- **PEBBLE** (pebble)
   - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
 
 ### D16 知识追踪与答题预测
@@ -350,6 +358,8 @@
   - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
 
 ### D19 课堂话语和教师行为分析
+- **ConvoLearn** (convolearn)
+  - teacher human evaluation overall / teacher human evaluation overall: 3 result rows
 - **EduDial** (edudial)
   - no_unified_leaderboard / no_unified_leaderboard: 1 result rows
 - **Google Education Dialogue Dataset** (google_education_dialogue_dataset)
