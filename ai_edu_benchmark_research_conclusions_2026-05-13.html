@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI-Edu Benchmark 调研结论</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --paper: #ffffff;
+      --ink: #182235;
+      --muted: #61708a;
+      --line: #dbe2ed;
+      --accent: #0f766e;
+      --accent-dark: #07564f;
+      --accent-soft: #e7f4f2;
+      --blue: #1d4ed8;
+      --blue-soft: #eaf1ff;
+      --orange: #9a3412;
+      --orange-soft: #fff4ed;
+      --green: #166534;
+      --green-soft: #ecfdf3;
+      --shadow: 0 18px 45px rgba(24, 36, 56, 0.08);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.68 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 282px minmax(0, 1fr);
+      gap: 28px;
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .sidebar {
+      align-self: start;
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 7px 0;
+      color: #31415a;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .paper {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 44px 50px 34px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(120deg, rgba(15, 118, 110, 0.14), rgba(29, 78, 216, 0.08) 48%, rgba(255, 255, 255, 0) 76%),
+        var(--paper);
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--accent-dark);
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    h1 {
+      max-width: 980px;
+      margin: 0 0 18px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 980px;
+      margin: 0;
+      color: #33435c;
+      font-size: 18px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 3px 10px;
+      border: 1px solid rgba(15, 118, 110, 0.22);
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-weight: 700;
+    }
+
+    main {
+      padding: 36px 50px 58px;
+    }
+
+    section {
+      padding-top: 26px;
+      margin-top: 24px;
+      border-top: 1px solid var(--line);
+    }
+
+    section:first-child {
+      padding-top: 0;
+      margin-top: 0;
+      border-top: 0;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: 28px;
+      line-height: 1.25;
+    }
+
+    h3 {
+      margin: 28px 0 12px;
+      font-size: 21px;
+      line-height: 1.35;
+    }
+
+    p { margin: 0 0 16px; }
+    ul, ol { margin: 0 0 18px 1.2em; padding: 0; }
+    li { margin: 8px 0; }
+    strong { font-weight: 760; }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: #eef2f7;
+      color: #24324a;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 22px 0 4px;
+    }
+
+    .stat {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfe;
+    }
+
+    .stat b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent-dark);
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .lead-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 0;
+      list-style: none;
+    }
+
+    .lead-list li {
+      margin: 0;
+      padding: 17px 18px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius);
+      background: #fbfcfe;
+    }
+
+    .callout {
+      margin: 16px 0 22px;
+      padding: 16px 18px;
+      border: 1px solid #f1c9ad;
+      border-left: 4px solid var(--orange);
+      border-radius: var(--radius);
+      background: var(--orange-soft);
+      color: #51210a;
+    }
+
+    .callout.green {
+      border-color: #bde8ca;
+      border-left-color: var(--green);
+      background: var(--green-soft);
+      color: #12351f;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 840px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    th:last-child, td:last-child { border-right: 0; }
+    tr:last-child td { border-bottom: 0; }
+
+    th {
+      background: #eef4f8;
+      color: #1e2d44;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .tag {
+      display: inline-block;
+      margin: 0 4px 5px 0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: #173d91;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tag.warn { background: var(--orange-soft); color: var(--orange); }
+    .tag.good { background: var(--green-soft); color: var(--green); }
+
+    .sources {
+      columns: 2 340px;
+      column-gap: 30px;
+      margin-top: 8px;
+    }
+
+    .sources li {
+      break-inside: avoid;
+      margin-bottom: 8px;
+    }
+
+    .backtop {
+      display: inline-flex;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1040px) {
+      .layout { display: block; padding: 14px; }
+      .sidebar { position: static; max-height: none; margin-bottom: 14px; }
+      header, main { padding-left: 22px; padding-right: 22px; }
+      .stats, .lead-list { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .layout { display: block; padding: 0; }
+      .sidebar { display: none; }
+      .paper { border: 0; box-shadow: none; }
+      header, main { padding: 22px; }
+      a { color: inherit; text-decoration: none; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout" id="top">
+    <nav class="sidebar" aria-label="目录">
+      <h2>目录</h2>
+      <a href="#summary">核心结论</a>
+      <a href="#data-assets">本地数据资产</a>
+      <a href="#dimension-map">24 个原子能力</a>
+      <a href="#metric-map">指标体系</a>
+      <a href="#model-evidence">模型表现证据</a>
+      <a href="#scenario-index">四个场景结论</a>
+      <a href="#recommendation">评测组合建议</a>
+      <a href="#sources">参考与底层文件</a>
+    </nav>
+
+    <article class="paper">
+      <header>
+        <p class="eyebrow">AI-Edu Benchmark 调研结论</p>
+        <h1>从教育 Benchmark 到可复用指标体系</h1>
+        <p class="subtitle">本页汇总截至 2026-05-13 的调研结论：把教育 benchmark 拆成 24 个原子能力、84 组具体指标，并将 74 条文献/报告中的模型表现映射到对应维度。</p>
+        <div class="meta">
+          <span class="pill">输出日期：2026-05-13</span>
+          <span>依据文件：<a href="./edu_benchmark_survey.md">主调研报告</a>、<a href="./edu_benchmark_survey_supplement_2026-05-11.md">补充调研</a>、<a href="./benchmark_metric_indicator_taxonomy_2026-05-12.md">指标拆解</a></span>
+        </div>
+      </header>
+
+      <main>
+        <section id="summary">
+          <h2>核心结论</h2>
+          <div class="stats">
+            <div class="stat"><b>24</b><span>AI+教育原子能力</span></div>
+            <div class="stat"><b>84</b><span>归一化评测指标</span></div>
+            <div class="stat"><b>74</b><span>文献中的模型表现记录</span></div>
+            <div class="stat"><b>4</b><span>重点教育场景索引</span></div>
+          </div>
+
+          <ol class="lead-list">
+            <li><strong>基础题已经不能代表教育能力。</strong> MMLU、GSM8K、HumanEval、MBPP 等曾经很有区分度的 benchmark，现在更适合作为门槛项；教育模型主排序应转向 tutor、主观批改、多模态作业和安全指标。</li>
+            <li><strong>教育核心指标是过程指标。</strong> Mistake Location、Scaffolding Win Rate、Pedagogy IF、CCS、ECS、process correctness、visual keypoint identification 比普通 accuracy 更能区分“会解题”和“会教学”。</li>
+            <li><strong>多模态教育仍是硬问题。</strong> MathVista、K12Vista、ME2、SciVideoBench、EduVisBench、InteractScience 都显示：模型能写出解释，不代表能稳定看懂图、定位关键视觉元素、生成正确交互演示。</li>
+            <li><strong>传统教育数据和 LLM 评测存在断层。</strong> ASSISTments、EdNet、MOOCCube、PTADisc 等数据很强，但多评价 AUC/ACC、推荐排序或行为预测，不直接评价讲解、引导、纠错和教师采纳。</li>
+            <li><strong>最大公开空白是长期学习增益。</strong> learning gain、delayed retention、transfer、teacher adoption、A/B outcome 仍缺成熟公开 benchmark，需要内部评测或真实产品实验补齐。</li>
+            <li><strong>四个重点场景覆盖不均。</strong> 师生机协同覆盖中等偏强；思政“入心”、青少年心理安全、学生科研创新都需要自建本地化评测。</li>
+          </ol>
+        </section>
+
+        <section id="data-assets">
+          <h2>本地数据资产</h2>
+          <p>这次调研不只生成报告，还把中间信息保存成本地结构化文件，方便后续回答“某个场景有哪些 benchmark、指标和模型表现”。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>文件</th>
+                  <th>内容</th>
+                  <th>规模</th>
+                  <th>用途</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a href="./data/benchmark_metric_dimensions_2026-05-12.json">benchmark_metric_dimensions_2026-05-12.json</a></td>
+                  <td>24 个原子能力、覆盖 benchmark、代表模型表现、能力缺口、四个场景索引</td>
+                  <td>24 dimensions, 70 representative results, 4 scenarios</td>
+                  <td>回答“某个教育能力/场景有哪些 benchmark 覆盖”</td>
+                </tr>
+                <tr>
+                  <td><a href="./data/benchmark_metric_indicators_2026-05-12.json">benchmark_metric_indicators_2026-05-12.json</a></td>
+                  <td>每个原子能力下的具体指标、benchmark 原始指标名、评分方式、评估者类型</td>
+                  <td>24 dimensions, 84 indicator groups</td>
+                  <td>回答“这个能力究竟用什么指标测”</td>
+                </tr>
+                <tr>
+                  <td><a href="./data/model_dimension_performance_2026-05-12.json">model_dimension_performance_2026-05-12.json</a></td>
+                  <td>文献/项目报告中的模型表现映射到 24 个原子能力</td>
+                  <td>74 rows, 覆盖全部 24 维度</td>
+                  <td>回答“哪些模型在哪些教育维度上表现怎样”</td>
+                </tr>
+                <tr>
+                  <td><a href="./benchmark_metric_indicator_taxonomy_2026-05-12.md">benchmark_metric_indicator_taxonomy_2026-05-12.md</a></td>
+                  <td>指标拆解的人类可读版本</td>
+                  <td>118 lines</td>
+                  <td>快速审阅和讨论指标体系</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="dimension-map">
+          <h2>24 个原子能力</h2>
+          <p>原子能力不是按 benchmark 名称罗列，而是按 AI 教育产品真正要解决的问题拆分。下表给出每个维度的代表 benchmark、结论和建议权重。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>原子能力</th>
+                  <th>代表 benchmark</th>
+                  <th>调研结论</th>
+                  <th>建议用法</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>D01</td><td>通用学科知识与选择题答题</td><td>MMLU, CMMLU, C-EVAL, E-EVAL</td><td>前沿模型已进入 90 分段，明显门槛化。</td><td><span class="tag warn">低权重门槛</span></td></tr>
+                <tr><td>D02</td><td>中文本土知识与 K12 学科体系</td><td>CMMLU, C-EVAL, E-EVAL, GaokaoBench, K12Vista</td><td>中文文本选择题强，多模态/过程题仍弱。</td><td><span class="tag">中文底座</span></td></tr>
+                <tr><td>D03</td><td>标准化考试与资格考试推理</td><td>AGIEval, GaokaoBench, C-EVAL</td><td>客观题可用，主观题和理科推理仍有差距。</td><td><span class="tag">考试补充</span></td></tr>
+                <tr><td>D04</td><td>基础数学应用题</td><td>GSM8K, Math23K, Ape210K</td><td>GSM8K 已饱和，中文旧题值得去重补测。</td><td><span class="tag warn">基础门槛</span></td></tr>
+                <tr><td>D05</td><td>高阶数学与竞赛推理</td><td>MATH, OlymMATH, OlympiadBench</td><td>高阶数学提升大，但奥赛级和证明式仍难。</td><td><span class="tag good">主排序</span></td></tr>
+                <tr><td>D06</td><td>几何视觉、图表和多模态数学</td><td>MathVista, CMMU, K12Vista, ME2</td><td>视觉定位、图文 grounding、几何关键点是短板。</td><td><span class="tag good">核心区分项</span></td></tr>
+                <tr><td>D07</td><td>科学实验、视频和长时序理解</td><td>SciVideoBench, LectureBank, ARIC</td><td>科学视频整体尚可，但定量推理低。</td><td><span class="tag">科学课堂</span></td></tr>
+                <tr><td>D08</td><td>代码生成与算法题解</td><td>HumanEval, MBPP, APPS</td><td>入门代码题饱和，不能代表编程教学反馈。</td><td><span class="tag warn">编程门槛</span></td></tr>
+                <tr><td>D09</td><td>编程教育问答与代码诊断</td><td>CS1QA, QACP, Codecademy</td><td>真实学生问题有数据，但缺现代 LLM 横评。</td><td><span class="tag good">自建优先</span></td></tr>
+                <tr><td>D10</td><td>作文自动评分</td><td>ASAP-AES, ELLIPSE, EssayJudge</td><td>总分可做，高层论证和公平性仍弱。</td><td><span class="tag">写作反馈</span></td></tr>
+                <tr><td>D11</td><td>短答案和分步评分</td><td>ASAP-SAS, SAS-Bench, GaokaoBench 主观题</td><td>分步一致性和错误原因显著难于总分。</td><td><span class="tag good">批改核心</span></td></tr>
+                <tr><td>D12</td><td>学生错误定位与纠错反馈</td><td>MathTutorBench, Bridge, MathDial</td><td>纠错强于错误定位，诊断学生思路仍难。</td><td><span class="tag good">Tutor 核心</span></td></tr>
+                <tr><td>D13</td><td>苏格拉底式引导与脚手架</td><td>MathTutorBench, TutorBench, SocraticLM</td><td>“会解题不会教”最明显。</td><td><span class="tag good">高权重</span></td></tr>
+                <tr><td>D14</td><td>教学法知识与教学设计</td><td>Pedagogy Benchmark, EduBench, EduEval</td><td>考试型教学知识较强，真实课堂转化未证实。</td><td><span class="tag">教师助手</span></td></tr>
+                <tr><td>D15</td><td>学习规划、个性化与学情分析</td><td>EduBench, ASSISTments, EdNet</td><td>LLM 生成反馈与传统 KT 指标未统一。</td><td><span class="tag">Hybrid 评测</span></td></tr>
+                <tr><td>D16</td><td>知识追踪与答题预测</td><td>ASSISTments, KDD Cup 2010, EdNet</td><td>传统 AUC/ACC 体系成熟，但不测讲解。</td><td><span class="tag">状态建模</span></td></tr>
+                <tr><td>D17</td><td>认知诊断与知识点掌握</td><td>PTADisc, Junyi, FoundationalAssist</td><td>数据价值高，缺开放统一 LLM leaderboard。</td><td><span class="tag">学情诊断</span></td></tr>
+                <tr><td>D18</td><td>教育资源检索、推荐与学习路径</td><td>MOOCCube, TutorialBank, FineWeb-Edu</td><td>资源侧覆盖足，模型效果评价分散。</td><td><span class="tag">路径推荐</span></td></tr>
+                <tr><td>D19</td><td>课堂话语和教师行为分析</td><td>TalkMoves, NCTE, TIMSS</td><td>真实课堂标注稀缺，跨教师泛化难。</td><td><span class="tag">课中反馈</span></td></tr>
+                <tr><td>D20</td><td>课堂视觉行为与参与度识别</td><td>SCB-Dataset, ARIC, IntrEx</td><td>参与度识别尚未和学习效果打通。</td><td><span class="tag">课堂观察</span></td></tr>
+                <tr><td>D21</td><td>教育安全、合规与角色扮演</td><td>EduGuard-Bench, CASTLE, YouthSafe</td><td>教学专业度和安全性不一致。</td><td><span class="tag good">上线门槛</span></td></tr>
+                <tr><td>D22</td><td>教学可视化生成</td><td>EduVisBench, VisualEDU, ME2</td><td>通用模型裸生成弱，专门流程明显更强。</td><td><span class="tag good">内容生成</span></td></tr>
+                <tr><td>D23</td><td>交互式科学演示生成</td><td>InteractScience, EduVisBench</td><td>界面可生成，但功能完整性低。</td><td><span class="tag good">AI 实验</span></td></tr>
+                <tr><td>D24</td><td>教育垂类系统端到端能力</td><td>LearnLM, 九章, 子曰, 星火, CheggMate</td><td>多数产品无可复现公开分数，需外部 benchmark 和真实指标二次测。</td><td><span class="tag good">端到端验证</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <a class="backtop" href="#top">返回目录</a>
+        </section>
+
+        <section id="metric-map">
+          <h2>指标体系：从“能力”到“怎么测”</h2>
+          <p>这次补齐的关键层级是：每个原子能力下到底用什么指标评估。完整 84 组指标保存在 <a href="./data/benchmark_metric_indicators_2026-05-12.json">JSON 指标库</a>，这里列出最有教育区分度的指标。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>能力类型</th>
+                  <th>高价值指标</th>
+                  <th>来自 benchmark</th>
+                  <th>为什么重要</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>错误诊断</td>
+                  <td>Mistake Location、Mistake Correction、Solution Correctness、misconception diagnosis</td>
+                  <td>MathTutorBench、Bridge、SAS-Bench</td>
+                  <td>直接衡量模型是否理解学生错在哪里，而不是自己会不会做题。</td>
+                </tr>
+                <tr>
+                  <td>引导式教学</td>
+                  <td>Socratic Questioning、Scaffolding Win Rate、Pedagogy IF Win Rate、expert tutor decision alignment</td>
+                  <td>MathTutorBench、MathDial、TutorBench、Bridge</td>
+                  <td>区分“给答案”和“帮助学生自己想出来”。</td>
+                </tr>
+                <tr>
+                  <td>主观题批改</td>
+                  <td>QWK、CCS、ECS、F1、subject/question-type slice</td>
+                  <td>ASAP-SAS、SAS-Bench、GaokaoBench 主观题</td>
+                  <td>总分一致性会高估模型，分步评分和错因一致性更关键。</td>
+                </tr>
+                <tr>
+                  <td>作文反馈</td>
+                  <td>trait-level QWK、Argument Clarity、coherence、cross-prompt generalization、length bias</td>
+                  <td>EssayJudge、ASAP-AES、ELLIPSE</td>
+                  <td>作文批改要看篇章和论证，不只看总分。</td>
+                </tr>
+                <tr>
+                  <td>多模态数学</td>
+                  <td>visual context slice、reasoning type slice、Visual Keypoint Identification、fidelity、referencing</td>
+                  <td>MathVista、ME2、K12Vista、CMMU</td>
+                  <td>真实作业依赖图、表、手写步骤和几何关键点。</td>
+                </tr>
+                <tr>
+                  <td>科学视频</td>
+                  <td>Conceptual、Hypothetical、Quantitative、with-video vs no-video accuracy</td>
+                  <td>SciVideoBench</td>
+                  <td>科学实验理解不只是语言题，必须看时序、测量和因果。</td>
+                </tr>
+                <tr>
+                  <td>交互课件</td>
+                  <td>PFT Overall/Average/Perfect、VQT Action、VQT CLIP、VQT VLM-judge</td>
+                  <td>InteractScience</td>
+                  <td>检验生成的 HTML/交互演示是否真的能运行且科学语义正确。</td>
+                </tr>
+                <tr>
+                  <td>教育安全</td>
+                  <td>RFS、ASR、youth risk category、crisis escalation quality、student-specific safety</td>
+                  <td>EduGuard-Bench、YouthSafe、CASTLE</td>
+                  <td>教育场景涉及未成年人、心理脆弱和师生边界，不能只套通用安全集。</td>
+                </tr>
+                <tr>
+                  <td>真实产品效果</td>
+                  <td>learning gain、delayed retention、transfer、teacher adoption、override rate</td>
+                  <td>当前多需自建</td>
+                  <td>这是教育产品最终要证明的效果，也是公开 benchmark 最大空白。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="callout green"><strong>结论：</strong>未来教育大模型评测不应只看 answer accuracy，而应建立“答案正确性 + 过程诊断 + 教学引导 + 多模态 grounding + 安全 + 真实学习效果”的组合指标。</p>
+          <a class="backtop" href="#top">返回目录</a>
+        </section>
+
+        <section id="model-evidence">
+          <h2>模型表现证据</h2>
+          <p>模型表现数据来自文献、官方 leaderboard 或模型报告，不是本地重跑。不同 benchmark 的 prompt、split 和评分协议不同，不能直接跨表平均。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>维度</th>
+                  <th>Benchmark</th>
+                  <th>模型</th>
+                  <th>指标与分数</th>
+                  <th>解释</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>通用知识</td><td>MMLU</td><td>o3 / GPT-4.1</td><td>93.4 / 90.2</td><td>基础通识题已接近饱和。</td></tr>
+                <tr><td>中文 K12</td><td>E-EVAL</td><td>Qwen-72B-Chat</td><td>88.8 average</td><td>中文文本选择题强。</td></tr>
+                <tr><td>中文多模态 K12</td><td>K12Vista</td><td>Gemini2-thinking / GPT-4o</td><td>55.47 / 35.02 direct overall</td><td>多模态过程题远难于文本选择题。</td></tr>
+                <tr><td>基础数学</td><td>GSM8K</td><td>Llama 3.1 405B / Qwen3-235B</td><td>96.8 / 94.39 accuracy</td><td>基础数学应用题基本门槛化。</td></tr>
+                <tr><td>高阶数学</td><td>OlymMATH-HARD</td><td>Gemini 2.5 Pro</td><td>58.4 English HARD</td><td>奥赛 Hard 子集仍有区分度。</td></tr>
+                <tr><td>奥赛多模态</td><td>OlympiadBench full</td><td>GPT-4o</td><td>25.89 overall</td><td>双语多模态奥赛题远未解决。</td></tr>
+                <tr><td>多模态数学</td><td>ME2</td><td>Gemini 2.0 Flash</td><td>0.576 visual keypoint overall</td><td>视觉关键点识别仍困难。</td></tr>
+                <tr><td>科学视频</td><td>SciVideoBench</td><td>Gemini-2.5-Pro / GPT-4o</td><td>64.30 / 24.90 overall</td><td>长时序科学视频对模型差异很大。</td></tr>
+                <tr><td>短答案评分</td><td>SAS-Bench</td><td>DeepSeek-R1</td><td>CCS 73.76, ECS 55.90</td><td>错误原因一致性明显难于评分一致性。</td></tr>
+                <tr><td>错误定位</td><td>MathTutorBench</td><td>LearnLM-1.5-Pro</td><td>Mistake Location 0.57</td><td>教育垂类模型仍有诊断短板。</td></tr>
+                <tr><td>脚手架</td><td>MathTutorBench</td><td>Qwen2.5-Math-7B</td><td>Problem Solving 0.88, Scaffolding 0.06</td><td>典型“会做题不会教”。</td></tr>
+                <tr><td>Tutor 综合</td><td>TutorBench</td><td>Gemini 2.5 Pro / GPT-4o</td><td>55.65 / 36.12 overall</td><td>真实 tutor rubric 下顶部模型也不高。</td></tr>
+                <tr><td>教育安全</td><td>EduGuard-Bench</td><td>Claude-3.7 / DeepSeek-V3</td><td>RFS 0.77/0.73, ASR 27.0/81.6</td><td>专业度接近，但安全性差异很大。</td></tr>
+                <tr><td>教学可视化</td><td>EduVisBench</td><td>EduVisAgent / GPT-4o Webpage</td><td>81.6 / 38.1 average</td><td>专门流程明显优于裸模型。</td></tr>
+                <tr><td>交互科学演示</td><td>InteractScience</td><td>Claude-Sonnet-4 / GPT-5 / GPT-4o</td><td>PFT 41.47 / 39.47 / 28.27</td><td>交互功能完整性仍低。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <a class="backtop" href="#top">返回目录</a>
+        </section>
+
+        <section id="scenario-index">
+          <h2>四个场景结论</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>场景</th>
+                  <th>已有覆盖</th>
+                  <th>关键缺口</th>
+                  <th>建议自建指标</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>师生机协同教学助手</td>
+                  <td>MathTutorBench、TutorBench、Pedagogy Benchmark、EduBench、TalkMoves、ASSISTments、EduGuard-Bench</td>
+                  <td>缺三方协同数据、教师采纳指标、课前课中课后闭环和延迟学习结果。</td>
+                  <td>teacher adoption、override rate、student correction after hint、classroom workflow completion</td>
+                </tr>
+                <tr>
+                  <td>思政教育“入耳容易，入心难”</td>
+                  <td>CMMLU、C-EVAL、E-EVAL、GaokaoBench、Edu-Values、OmniEduBench、EduGuard-Bench</td>
+                  <td>现有多测价值知识或安全判断，缺少认同、反思、迁移和行动改变。</td>
+                  <td>non-preaching guidance、reflection depth、value transfer、action plan quality</td>
+                </tr>
+                <tr>
+                  <td>青少年身心健康问题</td>
+                  <td>EduBench mental health、YouthSafe、CASTLE、CounselBench、EduGuard-Bench</td>
+                  <td>学校语境、未成年人危机升级、家校沟通、长期依赖风险仍需本地化。</td>
+                  <td>risk recognition、crisis escalation quality、privacy boundary、developmental appropriateness</td>
+                </tr>
+                <tr>
+                  <td>学生科研创新</td>
+                  <td>PaperBench、ResearchBench、SciVideoBench、InteractScience、EduVisBench、OlympiadBench</td>
+                  <td>通用科研 benchmark 可借鉴，但缺少学生选题、实验设计、失败复盘和防代写指标。</td>
+                  <td>topic novelty, feasibility, experimental design quality, citation faithfulness, anti-ghostwriting</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <a class="backtop" href="#top">返回目录</a>
+        </section>
+
+        <section id="recommendation">
+          <h2>建议的评测组合</h2>
+          <p>如果要构建一个完整但可执行的 AI 教育评测，不建议平均堆叠所有 benchmark，而应分层使用。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>层级</th>
+                  <th>作用</th>
+                  <th>推荐 benchmark / 指标</th>
+                  <th>权重建议</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>门槛层</td>
+                  <td>筛掉基础能力不足的模型</td>
+                  <td>C-EVAL、CMMLU、E-EVAL、GSM8K、HumanEval、基础 MathVista</td>
+                  <td>低到中，避免基础题饱和后误导排序</td>
+                </tr>
+                <tr>
+                  <td>区分层</td>
+                  <td>评价真正的教育能力</td>
+                  <td>MathTutorBench、TutorBench、SAS-Bench、EssayJudge、ME2、K12Vista、SciVideoBench、EduGuard-Bench</td>
+                  <td>高，作为模型选型主依据</td>
+                </tr>
+                <tr>
+                  <td>应用层</td>
+                  <td>评价产品工作流和真实使用效果</td>
+                  <td>teacher adoption、learning gain、delayed retention、transfer、workflow completion、safety escalation</td>
+                  <td>最高，需要自建或用产品日志验证</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="callout"><strong>最重要的落地建议：</strong>公开 benchmark 只能证明模型具备若干能力，不能直接证明教育产品有效。产品评估必须补教师采纳、学生改正、延迟保持、迁移题表现和安全升级质量。</p>
+          <a class="backtop" href="#top">返回目录</a>
+        </section>
+
+        <section id="sources">
+          <h2>参考与底层文件</h2>
+          <ul class="sources">
+            <li><a href="./benchmark_metric_indicator_taxonomy_2026-05-12.md">AI-Edu Benchmark 原子能力下的评测指标拆解</a></li>
+            <li><a href="./data/benchmark_metric_dimensions_2026-05-12.json">24 个原子能力结构化数据</a></li>
+            <li><a href="./data/benchmark_metric_indicators_2026-05-12.json">84 组指标结构化数据</a></li>
+            <li><a href="./data/model_dimension_performance_2026-05-12.json">模型表现映射数据</a></li>
+            <li><a href="./todo_research_2026-05-12.md">场景机会点与空白调研</a></li>
+            <li><a href="./todo_research_2026-05-12.html">场景机会点 HTML 版</a></li>
+            <li><a href="./edu_benchmark_survey.md">教育 Benchmark 与数据集调研报告</a></li>
+            <li><a href="./edu_benchmark_survey_supplement_2026-05-11.md">教育 Benchmark 补充调研、权威性排序与原子能力覆盖分析</a></li>
+          </ul>
+        </section>
+      </main>
+    </article>
+  </div>
+</body>
+</html>

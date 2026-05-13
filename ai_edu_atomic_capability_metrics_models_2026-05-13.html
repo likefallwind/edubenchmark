@@ -1,0 +1,1875 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI-Edu 原子能力：指标与模型表现</title>
+  <style>
+    :root {
+      --bg:#f5f7fb; --paper:#fff; --ink:#172033; --muted:#61708a; --line:#dbe2ed;
+      --accent:#0f766e; --accent-dark:#07564f; --accent-soft:#e7f4f2;
+      --blue:#1d4ed8; --blue-soft:#eaf1ff; --orange:#9a3412; --orange-soft:#fff4ed;
+      --shadow:0 18px 45px rgba(24,36,56,.08); --radius:8px;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.68 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC","Microsoft YaHei",Arial,sans-serif}
+    a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+    .layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:28px;width:min(1560px,100%);margin:0 auto;padding:28px}
+    .sidebar{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;padding:20px;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);box-shadow:var(--shadow)}
+    .sidebar h2{margin:0 0 12px;font-size:15px} .sidebar a{display:block;padding:6px 0;color:#31415a;font-size:13px;line-height:1.35}
+    .paper{min-width:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);box-shadow:var(--shadow);overflow:hidden}
+    header{padding:44px 50px 34px;border-bottom:1px solid var(--line);background:linear-gradient(120deg,rgba(15,118,110,.14),rgba(29,78,216,.08) 52%,rgba(255,255,255,0) 78%),var(--paper)}
+    .eyebrow{margin:0 0 12px;color:var(--accent-dark);font-size:14px;font-weight:750}
+    h1{max-width:980px;margin:0 0 18px;font-size:clamp(34px,5vw,58px);line-height:1.08;letter-spacing:0}
+    .subtitle{max-width:980px;margin:0;color:#33435c;font-size:18px}
+    .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;color:var(--muted);font-size:14px}
+    .pill{display:inline-flex;align-items:center;min-height:28px;padding:3px 10px;border:1px solid rgba(15,118,110,.22);border-radius:999px;background:var(--accent-soft);color:var(--accent-dark);font-weight:700}
+    main{padding:36px 50px 58px}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 28px}
+    .stat{padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:#fbfcfe} .stat b{display:block;margin-bottom:6px;color:var(--accent-dark);font-size:32px;line-height:1} .stat span{color:var(--muted);font-size:14px}
+    .note{padding:16px 18px;border:1px solid #f1c9ad;border-left:4px solid var(--orange);border-radius:var(--radius);background:var(--orange-soft);color:#51210a;margin:0 0 28px}
+    section.capability{padding-top:30px;margin-top:30px;border-top:1px solid var(--line)}
+    .cap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:10px}
+    .cap-id{margin:0 0 6px;color:var(--accent-dark);font-size:13px;font-weight:800;text-transform:uppercase}
+    h2{margin:0;font-size:27px;line-height:1.25;letter-spacing:0} h3{margin:24px 0 12px;font-size:19px;line-height:1.35}
+    .count-box{display:grid;grid-template-columns:auto auto;gap:2px 7px;min-width:112px;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:#fbfcfe;color:var(--muted);font-size:13px}
+    .count-box b{color:var(--accent-dark);font-size:22px;line-height:1}
+    .gap{padding:12px 14px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);color:#113b37}
+    .table-wrap{width:100%;overflow-x:auto;margin:14px 0 22px;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+    table{width:100%;min-width:940px;border-collapse:collapse} th,td{padding:11px 13px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top;text-align:left;font-size:14px;line-height:1.55} th:last-child,td:last-child{border-right:0} tr:last-child td{border-bottom:0} th{background:#eef4f8;color:#1e2d44;font-weight:760;white-space:nowrap}
+    .tag{display:inline-block;margin:0 4px 5px 0;padding:2px 8px;border-radius:999px;background:var(--blue-soft);color:#173d91;font-size:12px;font-weight:700;white-space:nowrap}
+    .score{font-weight:800;color:var(--accent-dark)} .score.muted{font-weight:650;color:var(--muted)} .empty{color:var(--muted);font-style:italic}
+    .backtop{display:inline-flex;margin-top:2px;color:var(--muted);font-size:13px}
+    @media(max-width:1060px){.layout{display:block;padding:14px}.sidebar{position:static;max-height:none;margin-bottom:14px}header,main{padding-left:22px;padding-right:22px}.summary{grid-template-columns:1fr}.cap-head{display:block}.count-box{margin-top:12px;width:max-content}}
+    @media print{body{background:#fff}.layout{display:block;padding:0}.sidebar{display:none}.paper{border:0;box-shadow:none}header,main{padding:22px}a{color:inherit;text-decoration:none}section{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <div class="layout" id="top">
+    <nav class="sidebar" aria-label="目录">
+      <h2>24 个原子能力</h2>
+      <a href="#dim-d01">D01 通用学科知识与选择题答题</a><a href="#dim-d02">D02 中文本土知识与 K12 学科体系</a><a href="#dim-d03">D03 标准化考试与资格考试推理</a><a href="#dim-d04">D04 基础数学应用题</a><a href="#dim-d05">D05 高阶数学与竞赛推理</a><a href="#dim-d06">D06 几何视觉、图表和多模态数学</a><a href="#dim-d07">D07 科学实验、视频和长时序理解</a><a href="#dim-d08">D08 代码生成与算法题解</a><a href="#dim-d09">D09 编程教育问答与代码诊断</a><a href="#dim-d10">D10 作文自动评分</a><a href="#dim-d11">D11 短答案和分步评分</a><a href="#dim-d12">D12 学生错误定位与纠错反馈</a><a href="#dim-d13">D13 苏格拉底式引导与脚手架</a><a href="#dim-d14">D14 教学法知识与教学设计</a><a href="#dim-d15">D15 学习规划、个性化与学情分析</a><a href="#dim-d16">D16 知识追踪与答题预测</a><a href="#dim-d17">D17 认知诊断与知识点掌握</a><a href="#dim-d18">D18 教育资源检索、推荐与学习路径</a><a href="#dim-d19">D19 课堂话语和教师行为分析</a><a href="#dim-d20">D20 课堂视觉行为与参与度识别</a><a href="#dim-d21">D21 教育安全、合规与角色扮演</a><a href="#dim-d22">D22 教学可视化生成</a><a href="#dim-d23">D23 交互式科学演示生成</a><a href="#dim-d24">D24 教育垂类系统端到端能力</a>
+    </nav>
+    <article class="paper">
+      <header>
+        <p class="eyebrow">AI-Edu Benchmark 指标与模型表现</p>
+        <h1>每个原子能力具体怎么测、哪些模型测过</h1>
+        <p class="subtitle">本页按 24 个 AI+教育原子能力逐项展开：先列具体评测指标和评分方式，再列已有文献/项目报告中的模型表现记录。底层数据来自本地 JSON，不是重新跑模型。</p>
+        <div class="meta"><span class="pill">输出日期：2026-05-13</span><span>数据源：<a href="./data/benchmark_metric_indicators_2026-05-12.json">指标 JSON</a>、<a href="./data/model_dimension_performance_2026-05-12.json">模型表现 JSON</a>、<a href="./data/benchmark_metric_dimensions_2026-05-12.json">维度 JSON</a></span></div>
+      </header>
+      <main>
+        <div class="summary">
+          <div class="stat"><b>24</b><span>原子能力</span></div>
+          <div class="stat"><b>84</b><span>具体指标组</span></div>
+          <div class="stat"><b>74</b><span>模型表现记录</span></div>
+          <div class="stat"><b>24</b><span>覆盖维度</span></div>
+        </div>
+        <p class="note"><strong>读法：</strong>“分数/结果”保留 benchmark 原始口径，不能跨 benchmark 直接平均。没有统一 leaderboard 的数据集也保留在表中，标明需要自建评测或二次定义任务。</p>
+        
+      <section id="dim-d01" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D01 · 解题/考试</p>
+            <h2>通用学科知识与选择题答题</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>4</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>选择题已部分饱和；主观题、复杂理科推理和真实教学反馈不能由该维度证明。</p>
+        <p><strong>覆盖 benchmark：</strong>MMLU, CMMLU, C-EVAL, E-EVAL, AGIEval, GaokaoBench</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>总体正确率/平均分</strong></td>
+            <td><span class="tag">MMLU accuracy/average</span><span class="tag">CMMLU average</span><span class="tag">C-EVAL average</span><span class="tag">E-EVAL average</span></td>
+            <td>选择题 exact match 后按题目或学科平均。</td>
+            <td>automatic</td>
+            <td>MMLU, CMMLU, C-EVAL, E-EVAL</td>
+          </tr>
+          <tr>
+            <td><strong>学科切片正确率</strong></td>
+            <td><span class="tag">STEM/Humanities/Social Science/Other</span><span class="tag">subject-level score</span><span class="tag">C-Eval Hard</span></td>
+            <td>按学科、难度或 hard subset 聚合准确率。</td>
+            <td>automatic</td>
+            <td>MMLU, CMMLU, C-EVAL, E-EVAL, GaokaoBench</td>
+          </tr>
+          <tr>
+            <td><strong>prompt 方式敏感性</strong></td>
+            <td><span class="tag">zero-shot</span><span class="tag">five-shot</span><span class="tag">CoT</span><span class="tag">few-shot CoT</span></td>
+            <td>同一题集在不同提示设置下比较准确率变化。</td>
+            <td>automatic</td>
+            <td>CMMLU, C-EVAL, AGIEval, E-EVAL</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>MMLU</td>
+            <td><strong>o3</strong></td>
+            <td>accuracy/average</td>
+            <td class="score">93.4</td>
+            <td>通用知识选择题已接近饱和。</td>
+          </tr>
+          <tr>
+            <td>MMLU</td>
+            <td><strong>GPT-4.1</strong></td>
+            <td>accuracy/average</td>
+            <td class="score">90.2</td>
+            <td>前沿闭源模型在 MMLU 约 90 分段。</td>
+          </tr>
+          <tr>
+            <td>CMMLU</td>
+            <td><strong>Spark 4.0</strong></td>
+            <td>zero-shot average</td>
+            <td class="score">90.97</td>
+            <td>中文通识/本土知识强。</td>
+          </tr>
+          <tr>
+            <td>C-EVAL</td>
+            <td><strong>DeepSeek-R1</strong></td>
+            <td>self-reported average</td>
+            <td class="score">91.8</td>
+            <td>中文考试选择题已进入高分段。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d02" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D02 · 解题/考试</p>
+            <h2>中文本土知识与 K12 学科体系</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>4</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>文本选择题强，多模态题和过程正确性弱。</p>
+        <p><strong>覆盖 benchmark：</strong>CMMLU, C-EVAL, E-EVAL, GaokaoBench, OmniEduBench, K12Vista</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>中文 K12 学科正确率</strong></td>
+            <td><span class="tag">E-EVAL average</span><span class="tag">GaokaoBench objective overall</span><span class="tag">K12Vista direct overall</span></td>
+            <td>按小学/初中/高中、语数英理化生政史地等学科切片统计。</td>
+            <td>automatic_or_human_for_subjective</td>
+            <td>E-EVAL, GaokaoBench, K12Vista</td>
+          </tr>
+          <tr>
+            <td><strong>中国本土知识正确率</strong></td>
+            <td><span class="tag">CMMLU China-specific</span><span class="tag">C-EVAL subject categories</span></td>
+            <td>对中国历史、政治、法律、文化、考试体系等题目计算准确率。</td>
+            <td>automatic</td>
+            <td>CMMLU, C-EVAL</td>
+          </tr>
+          <tr>
+            <td><strong>过程正确性</strong></td>
+            <td><span class="tag">K12Vista Step-by-Step overall</span><span class="tag">process correctness</span><span class="tag">hallucination/logical contradiction tags</span></td>
+            <td>不仅看答案，还检查步骤是否跳步、幻觉、逻辑矛盾或图文误解。</td>
+            <td>automatic_plus_model_or_human_judge</td>
+            <td>K12Vista</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>E-EVAL</td>
+            <td><strong>Qwen-72B-Chat</strong></td>
+            <td>average</td>
+            <td class="score">88.8</td>
+            <td>中文 K12 文本选择题强。</td>
+          </tr>
+          <tr>
+            <td>E-EVAL</td>
+            <td><strong>ERNIE-Bot 4.0</strong></td>
+            <td>average</td>
+            <td class="score">85.5</td>
+            <td>中文教育题上中文模型较强。</td>
+          </tr>
+          <tr>
+            <td>K12Vista</td>
+            <td><strong>Gemini2-thinking</strong></td>
+            <td>direct overall</td>
+            <td class="score">55.47</td>
+            <td>中文 K12 多模态仍明显困难。</td>
+          </tr>
+          <tr>
+            <td>K12Vista</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>direct overall</td>
+            <td class="score">35.02</td>
+            <td>多模态 K12 题低于文本选择题很多。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d03" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D03 · 解题/考试</p>
+            <h2>标准化考试与资格考试推理</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>4</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>客观题可用；主观题、法律推理、物理和数学仍难。</p>
+        <p><strong>覆盖 benchmark：</strong>AGIEval, GaokaoBench, C-EVAL, MMLU, OmniEduBench</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>考试题正确率</strong></td>
+            <td><span class="tag">AGIEval zero-shot/few-shot accuracy</span><span class="tag">GaokaoBench objective score</span></td>
+            <td>客观题 exact match 或多选匹配。</td>
+            <td>automatic</td>
+            <td>AGIEval, GaokaoBench, C-EVAL</td>
+          </tr>
+          <tr>
+            <td><strong>主观题评分</strong></td>
+            <td><span class="tag">GaokaoBench subjective overall</span><span class="tag">subjective subject score</span></td>
+            <td>按标准答案和评分细则人工或模型辅助评分。</td>
+            <td>human_or_model_judge</td>
+            <td>GaokaoBench</td>
+          </tr>
+          <tr>
+            <td><strong>考试类型切片</strong></td>
+            <td><span class="tag">SAT</span><span class="tag">LSAT</span><span class="tag">Gaokao</span><span class="tag">Civil Service Exam</span><span class="tag">Law/Math/Reading subsets</span></td>
+            <td>按考试来源或题型统计准确率。</td>
+            <td>automatic</td>
+            <td>AGIEval, C-EVAL</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>AGIEval-en</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>few-shot average</td>
+            <td class="score">71.4</td>
+            <td>考试型推理仍有区分度。</td>
+          </tr>
+          <tr>
+            <td>AGIEval-en</td>
+            <td><strong>Llama 3.1 405B</strong></td>
+            <td>English average</td>
+            <td class="score">71.6</td>
+            <td>强开源模型接近 GPT-4o。</td>
+          </tr>
+          <tr>
+            <td>GaokaoBench</td>
+            <td><strong>GPT-4-0409</strong></td>
+            <td>weighted average</td>
+            <td class="score">76.0</td>
+            <td>高考客观题/加权平均较强。</td>
+          </tr>
+          <tr>
+            <td>GaokaoBench subjective</td>
+            <td><strong>GPT-4-0314</strong></td>
+            <td>subjective overall</td>
+            <td class="score">51.9</td>
+            <td>主观题明显更难。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d04" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D04 · 数学</p>
+            <h2>基础数学应用题</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>GSM8K 基本饱和；中文旧数据集缺少现代 LLM 去重补测。</p>
+        <p><strong>覆盖 benchmark：</strong>GSM8K, Math23K, Ape210K, E-EVAL math subset</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>最终答案正确率</strong></td>
+            <td><span class="tag">GSM8K exact match</span><span class="tag">Math23K answer accuracy</span><span class="tag">Ape210K accuracy</span></td>
+            <td>抽取最终数值/表达式，与标准答案 exact match 或数值等价。</td>
+            <td>automatic</td>
+            <td>GSM8K, Math23K, Ape210K</td>
+          </tr>
+          <tr>
+            <td><strong>表达式/方程生成正确率</strong></td>
+            <td><span class="tag">equation accuracy</span><span class="tag">template accuracy</span><span class="tag">answer accuracy</span></td>
+            <td>比较生成方程、模板或计算结果是否等价。</td>
+            <td>automatic</td>
+            <td>Math23K, Ape210K</td>
+          </tr>
+          <tr>
+            <td><strong>推理链设置效果</strong></td>
+            <td><span class="tag">CoT accuracy</span><span class="tag">verifier reranking result</span><span class="tag">self-consistency</span></td>
+            <td>比较直接作答、CoT、多采样、verifier 或 self-consistency 的答案正确率。</td>
+            <td>automatic</td>
+            <td>GSM8K</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>GSM8K</td>
+            <td><strong>Llama 3.1 405B-Instruct</strong></td>
+            <td>accuracy</td>
+            <td class="score">96.8</td>
+            <td>基础数学应用题趋于饱和。</td>
+          </tr>
+          <tr>
+            <td>GSM8K</td>
+            <td><strong>Qwen3-235B-A22B-Base</strong></td>
+            <td>accuracy</td>
+            <td class="score">94.39</td>
+            <td>基础多步算术已不适合作主排序。</td>
+          </tr>
+          <tr>
+            <td>GSM8K</td>
+            <td><strong>GPT-3 175B + verifier</strong></td>
+            <td>accuracy approx.</td>
+            <td class="score">55</td>
+            <td>早期模型曾明显困难。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d05" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D05 · 数学</p>
+            <h2>高阶数学与竞赛推理</h2>
+          </div>
+          <div class="count-box">
+            <b>4</b><span>指标</span>
+            <b>4</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>高阶题提升明显，但奥赛级、证明式、多模态物理/几何仍有空间。</p>
+        <p><strong>覆盖 benchmark：</strong>MATH, MATH-500, OlymMATH, OlympiadBench, IMO-ANSWER BENCH, NuminaMath</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>最终答案正确率</strong></td>
+            <td><span class="tag">MATH accuracy</span><span class="tag">MATH-500 accuracy</span><span class="tag">OlymMATH accuracy</span><span class="tag">OlympiadBench accuracy</span></td>
+            <td>抽取 boxed answer，进行 exact match、数值容差或符号等价判断。</td>
+            <td>automatic_with_math_checker</td>
+            <td>MATH, MATH-500, OlymMATH, OlympiadBench</td>
+          </tr>
+          <tr>
+            <td><strong>Hard 子集正确率</strong></td>
+            <td><span class="tag">OlymMATH-HARD</span><span class="tag">competition subset</span><span class="tag">Olympiad-level subset</span></td>
+            <td>按高难子集单独统计准确率。</td>
+            <td>automatic_with_math_checker</td>
+            <td>OlymMATH, OlympiadBench</td>
+          </tr>
+          <tr>
+            <td><strong>稳定性/多次采样收益</strong></td>
+            <td><span class="tag">Pass@k</span><span class="tag">Cons@k</span><span class="tag">self-consistency</span></td>
+            <td>多次采样后统计至少一次答对或一致答案答对的比例。</td>
+            <td>automatic</td>
+            <td>OlymMATH, MATH</td>
+          </tr>
+          <tr>
+            <td><strong>证明/过程可评性</strong></td>
+            <td><span class="tag">theorem proving subset</span><span class="tag">process-level correctness</span></td>
+            <td>证明题通常难以全自动评分；部分框架用人工、形式化 checker 或 LLM judge。</td>
+            <td>human_or_formal_or_model_judge</td>
+            <td>OlympiadBench, IMO-style benchmarks</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>MATH</td>
+            <td><strong>Llama 3.1 405B-Instruct</strong></td>
+            <td>CoT accuracy</td>
+            <td class="score">73.8</td>
+            <td>高阶数学相对早期 GPT-3 大幅提升。</td>
+          </tr>
+          <tr>
+            <td>MATH-500</td>
+            <td><strong>DeepSeek-R1</strong></td>
+            <td>accuracy</td>
+            <td class="score">97.3</td>
+            <td>MATH-500 口径已接近饱和。</td>
+          </tr>
+          <tr>
+            <td>OlymMATH-HARD English</td>
+            <td><strong>Gemini 2.5 Pro</strong></td>
+            <td>accuracy</td>
+            <td class="score">58.4</td>
+            <td>奥赛 Hard 子集仍有区分度。</td>
+          </tr>
+          <tr>
+            <td>OlympiadBench full</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>overall</td>
+            <td class="score">25.89</td>
+            <td>双语多模态奥赛级题远未解决。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d06" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D06 · 多模态数学</p>
+            <h2>几何视觉、图表和多模态数学</h2>
+          </div>
+          <div class="count-box">
+            <b>5</b><span>指标</span>
+            <b>4</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>视觉定位、图文 grounding、几何关键点和过程一致性仍弱。</p>
+        <p><strong>覆盖 benchmark：</strong>MathVista, CMMU, K12Vista, ME2, ChartQA, OlympiadBench</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>多模态数学总体正确率</strong></td>
+            <td><span class="tag">MathVista test/testmini accuracy</span><span class="tag">CMMU fill-in/choice accuracy</span><span class="tag">K12Vista direct overall</span></td>
+            <td>对图文题最终答案做 exact match、选项匹配或模型裁判。</td>
+            <td>automatic_or_model_judge</td>
+            <td>MathVista, CMMU, K12Vista</td>
+          </tr>
+          <tr>
+            <td><strong>视觉上下文切片</strong></td>
+            <td><span class="tag">MathVista visual context types</span><span class="tag">chart/table/geometry/figure QA</span></td>
+            <td>按图表、几何图、函数图、科学论文图等视觉类型统计准确率。</td>
+            <td>automatic</td>
+            <td>MathVista, ChartQA</td>
+          </tr>
+          <tr>
+            <td><strong>数学推理类型切片</strong></td>
+            <td><span class="tag">algebraic</span><span class="tag">arithmetic</span><span class="tag">geometric</span><span class="tag">logical</span><span class="tag">numeric</span><span class="tag">scientific</span><span class="tag">statistical</span></td>
+            <td>按推理类型统计准确率。</td>
+            <td>automatic</td>
+            <td>MathVista</td>
+          </tr>
+          <tr>
+            <td><strong>视觉关键点识别</strong></td>
+            <td><span class="tag">ME2 Visual Keypoint Identification accuracy</span></td>
+            <td>判断模型是否识别辅助线、点、角、标记等对讲解有用的视觉元素。</td>
+            <td>automatic_or_model_judge</td>
+            <td>ME2</td>
+          </tr>
+          <tr>
+            <td><strong>基于关键点的讲解质量</strong></td>
+            <td><span class="tag">ME2 correctness</span><span class="tag">ME2 fidelity</span><span class="tag">ME2 referencing score</span></td>
+            <td>评价讲解是否正确、忠实于图像、是否明确引用关键视觉元素。</td>
+            <td>model_or_human_judge</td>
+            <td>ME2</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>MathVista private test</td>
+            <td><strong>InternVL2-Pro</strong></td>
+            <td>ALL</td>
+            <td class="score">65.84</td>
+            <td>多模态数学最高分仍不算饱和。</td>
+          </tr>
+          <tr>
+            <td>MathVista testmini</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>accuracy</td>
+            <td class="score">63.8</td>
+            <td>强多模态模型可显著超过早期 GPT-4V。</td>
+          </tr>
+          <tr>
+            <td>ME2</td>
+            <td><strong>Gemini 2.0 Flash</strong></td>
+            <td>visual keypoint overall</td>
+            <td class="score">0.576</td>
+            <td>视觉关键点识别仍难。</td>
+          </tr>
+          <tr>
+            <td>CMMU</td>
+            <td><strong>GPT-4V</strong></td>
+            <td>test fill-in average</td>
+            <td class="score">30.91</td>
+            <td>中文多模态填空题困难。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d07" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D07 · 科学教育</p>
+            <h2>科学实验、视频和长时序理解</h2>
+          </div>
+          <div class="count-box">
+            <b>4</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>科学视频和实验定量推理仍弱，课堂视频资源多但统一模型榜单少。</p>
+        <p><strong>覆盖 benchmark：</strong>SciVideoBench, K12Vista, CMMU, LectureBank, TIMSS Video Study, ARIC</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>科学视频总体正确率</strong></td>
+            <td><span class="tag">SciVideoBench overall accuracy</span></td>
+            <td>对多选题计算正确率。</td>
+            <td>automatic</td>
+            <td>SciVideoBench</td>
+          </tr>
+          <tr>
+            <td><strong>学科切片正确率</strong></td>
+            <td><span class="tag">Physics</span><span class="tag">Chemistry</span><span class="tag">Biology</span><span class="tag">Medicine</span></td>
+            <td>按科学学科统计准确率。</td>
+            <td>automatic</td>
+            <td>SciVideoBench</td>
+          </tr>
+          <tr>
+            <td><strong>推理类型切片</strong></td>
+            <td><span class="tag">Conceptual</span><span class="tag">Hypothetical</span><span class="tag">Quantitative</span></td>
+            <td>按概念理解、假设推理、定量计算统计准确率。</td>
+            <td>automatic</td>
+            <td>SciVideoBench</td>
+          </tr>
+          <tr>
+            <td><strong>视觉 grounding 依赖</strong></td>
+            <td><span class="tag">vision-blind baseline</span><span class="tag">with-video vs no-video accuracy</span></td>
+            <td>比较有视频输入和无视频输入时的表现差距。</td>
+            <td>automatic</td>
+            <td>SciVideoBench</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>SciVideoBench</td>
+            <td><strong>Gemini-2.5-Pro</strong></td>
+            <td>overall</td>
+            <td class="score">64.30</td>
+            <td>科学视频理解当前领先。</td>
+          </tr>
+          <tr>
+            <td>SciVideoBench</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>overall</td>
+            <td class="score">24.90</td>
+            <td>长科学视频推理弱。</td>
+          </tr>
+          <tr>
+            <td>SciVideoBench</td>
+            <td><strong>Gemini-2.5-Pro</strong></td>
+            <td>quantitative</td>
+            <td class="score">50.61</td>
+            <td>定量实验推理低于概念题。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d08" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D08 · 编程教育</p>
+            <h2>代码生成与算法题解</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>入门代码生成趋于饱和；学生代码诊断和教学反馈覆盖不足。</p>
+        <p><strong>覆盖 benchmark：</strong>HumanEval, MBPP, APPS, LeetCode Student Submissions, LiveCodeBench/CodeForce-style reports</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>功能正确率</strong></td>
+            <td><span class="tag">HumanEval pass@1</span><span class="tag">MBPP accuracy/pass@1</span><span class="tag">APPS test pass rate</span></td>
+            <td>运行单元测试或隐藏测试，统计通过率。</td>
+            <td>automatic_execution</td>
+            <td>HumanEval, MBPP, APPS</td>
+          </tr>
+          <tr>
+            <td><strong>采样收益</strong></td>
+            <td><span class="tag">pass@k</span><span class="tag">pass@10</span><span class="tag">pass@100</span></td>
+            <td>多次采样中至少一个候选通过测试的概率估计。</td>
+            <td>automatic_execution</td>
+            <td>HumanEval, APPS</td>
+          </tr>
+          <tr>
+            <td><strong>题目难度切片</strong></td>
+            <td><span class="tag">introductory</span><span class="tag">interview</span><span class="tag">competition</span><span class="tag">difficulty tags</span></td>
+            <td>按难度或题源统计测试通过率。</td>
+            <td>automatic_execution</td>
+            <td>APPS, LeetCode-style datasets</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>HumanEval</td>
+            <td><strong>Llama 3.1 405B-Instruct</strong></td>
+            <td>pass@1/accuracy</td>
+            <td class="score">89.0</td>
+            <td>入门代码生成趋于饱和。</td>
+          </tr>
+          <tr>
+            <td>MBPP</td>
+            <td><strong>Llama 3.1 405B-Instruct</strong></td>
+            <td>accuracy</td>
+            <td class="score">88.6</td>
+            <td>入门编程题不够区分教学反馈能力。</td>
+          </tr>
+          <tr>
+            <td>HumanEval</td>
+            <td><strong>Codex-12B</strong></td>
+            <td>pass@1</td>
+            <td class="score">28.81</td>
+            <td>早期代码模型表现有限。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d09" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D09 · 编程教育</p>
+            <h2>编程教育问答与代码诊断</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>2</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>真实学生问题数据存在，但缺少现代 LLM 横评和教学反馈指标。</p>
+        <p><strong>覆盖 benchmark：</strong>CS1QA, QACP, Codecademy Dataset, PTADisc, LeetCode Student Submissions</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>学生问题类型识别</strong></td>
+            <td><span class="tag">CS1QA question type</span><span class="tag">intent/category classification</span></td>
+            <td>分类学生问题属于概念、语法、运行错误、调试、需求理解等类型。</td>
+            <td>automatic_or_human</td>
+            <td>CS1QA, QACP</td>
+          </tr>
+          <tr>
+            <td><strong>相关代码行定位</strong></td>
+            <td><span class="tag">CS1QA related code line annotation</span><span class="tag">bug localization</span></td>
+            <td>判断模型能否定位与问题相关的代码行或错误位置。</td>
+            <td>automatic_or_human</td>
+            <td>CS1QA, Codecademy Dataset</td>
+          </tr>
+          <tr>
+            <td><strong>教学反馈质量</strong></td>
+            <td><span class="tag">hint usefulness</span><span class="tag">concept explanation quality</span><span class="tag">non-spoiler feedback</span></td>
+            <td>评价是否给出可操作提示、解释概念且不过早泄露完整答案。</td>
+            <td>human_or_model_judge</td>
+            <td>CS1QA, QACP, self-built required</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>CS1QA</td>
+            <td><strong>not standardized</strong></td>
+            <td>student QA/diagnosis</td>
+            <td class="score muted">no unified LLM leaderboard</td>
+            <td>真实学生编程问答有数据但缺现代模型横评。</td>
+          </tr>
+          <tr>
+            <td>QACP</td>
+            <td><strong>not standardized</strong></td>
+            <td>Chinese Python QA</td>
+            <td class="score muted">no unified LLM leaderboard</td>
+            <td>中文编程教育问答需自建评测协议。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d10" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D10 · 自动评分</p>
+            <h2>作文自动评分</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>总分评分可做；论证清晰度、篇章级反馈、公平性和跨 prompt 泛化仍弱。</p>
+        <p><strong>覆盖 benchmark：</strong>ASAP-AES, ELLIPSE, EssayJudge</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>总分一致性</strong></td>
+            <td><span class="tag">QWK</span><span class="tag">holistic score agreement</span></td>
+            <td>模型评分与人工评分之间计算 Quadratic Weighted Kappa。</td>
+            <td>automatic_metric_against_human_labels</td>
+            <td>ASAP-AES, EssayJudge, ELLIPSE</td>
+          </tr>
+          <tr>
+            <td><strong>多维 trait 一致性</strong></td>
+            <td><span class="tag">vocabulary</span><span class="tag">sentence</span><span class="tag">argument clarity</span><span class="tag">coherence</span><span class="tag">syntax trait QWK</span></td>
+            <td>按词汇、句法、篇章、论证等评分维度分别计算 QWK 或相关指标。</td>
+            <td>automatic_metric_against_human_labels</td>
+            <td>EssayJudge, ELLIPSE</td>
+          </tr>
+          <tr>
+            <td><strong>跨 prompt 泛化和公平性</strong></td>
+            <td><span class="tag">cross-prompt QWK</span><span class="tag">length bias</span><span class="tag">group fairness slice</span></td>
+            <td>跨题目、不同群体、不同文本长度切片比较评分一致性和偏差。</td>
+            <td>automatic_plus_analysis</td>
+            <td>ASAP-AES, ELLIPSE, self-built required</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>EssayJudge</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>overall QWK</td>
+            <td class="score">strongest among evaluated MLLMs</td>
+            <td>多模态作文评分闭源模型领先。</td>
+          </tr>
+          <tr>
+            <td>EssayJudge</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>Argument Clarity QWK</td>
+            <td class="score">0.30</td>
+            <td>高层论证维度仍弱。</td>
+          </tr>
+          <tr>
+            <td>EssayJudge</td>
+            <td><strong>human</strong></td>
+            <td>Argument Clarity reference</td>
+            <td class="score">0.72</td>
+            <td>与人类一致性差距大。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d11" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D11 · 自动评分</p>
+            <h2>短答案和分步评分</h2>
+          </div>
+          <div class="count-box">
+            <b>4</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>分步一致性和错误原因一致性显著难于总分一致性。</p>
+        <p><strong>覆盖 benchmark：</strong>ASAP-SAS, SAS-Bench, GaokaoBench subjective questions</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>总体评分一致性</strong></td>
+            <td><span class="tag">QWK</span><span class="tag">overall score agreement</span></td>
+            <td>模型总分与人工总分之间计算 QWK。</td>
+            <td>automatic_metric_against_human_labels</td>
+            <td>ASAP-SAS, SAS-Bench</td>
+          </tr>
+          <tr>
+            <td><strong>分步评分一致性</strong></td>
+            <td><span class="tag">CCS: Comprehensive Consistency Score</span></td>
+            <td>评估 overall score 与 step-wise scores 的一致性。</td>
+            <td>automatic_metric_against_human_labels</td>
+            <td>SAS-Bench</td>
+          </tr>
+          <tr>
+            <td><strong>错误原因一致性</strong></td>
+            <td><span class="tag">ECS: Errors Consistency Score</span></td>
+            <td>比较模型和人工标注的错误类型频率分布一致性。</td>
+            <td>automatic_metric_against_human_labels</td>
+            <td>SAS-Bench</td>
+          </tr>
+          <tr>
+            <td><strong>局部分析指标</strong></td>
+            <td><span class="tag">F1 score</span><span class="tag">subject/question-type slice</span></td>
+            <td>对特定错误类型、学科、题型计算 F1 或切片分数。</td>
+            <td>automatic</td>
+            <td>SAS-Bench</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>SAS-Bench</td>
+            <td><strong>DeepSeek-R1</strong></td>
+            <td>CCS</td>
+            <td class="score">73.76</td>
+            <td>分步评分一致性较强但未饱和。</td>
+          </tr>
+          <tr>
+            <td>SAS-Bench</td>
+            <td><strong>DeepSeek-R1</strong></td>
+            <td>ECS</td>
+            <td class="score">55.90</td>
+            <td>错误原因一致性仍困难。</td>
+          </tr>
+          <tr>
+            <td>SAS-Bench</td>
+            <td><strong>DeepSeek-V3</strong></td>
+            <td>CCS</td>
+            <td class="score">74.11</td>
+            <td>总分与步骤一致性较好。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d12" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D12 · 教学/辅导</p>
+            <h2>学生错误定位与纠错反馈</h2>
+          </div>
+          <div class="count-box">
+            <b>4</b><span>指标</span>
+            <b>4</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>模型更擅长直接纠错，不擅长定位学生思路中的具体误解。</p>
+        <p><strong>覆盖 benchmark：</strong>MathTutorBench, Bridge, MathDial, SAS-Bench, ME2</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>错误位置定位</strong></td>
+            <td><span class="tag">MathTutorBench Mistake Location</span></td>
+            <td>判断模型能否指出学生解答中第一处错误或关键错误位置。</td>
+            <td>automatic_or_model_judge</td>
+            <td>MathTutorBench, Bridge</td>
+          </tr>
+          <tr>
+            <td><strong>纠错准确性</strong></td>
+            <td><span class="tag">MathTutorBench Mistake Correction</span></td>
+            <td>判断模型能否给出正确纠正，而不是只给最终答案。</td>
+            <td>automatic_or_model_judge</td>
+            <td>MathTutorBench, SAS-Bench</td>
+          </tr>
+          <tr>
+            <td><strong>学生答案正确性判断</strong></td>
+            <td><span class="tag">MathTutorBench Solution Correctness</span></td>
+            <td>二分类判断学生答案/步骤是否正确。</td>
+            <td>automatic_or_model_judge</td>
+            <td>MathTutorBench</td>
+          </tr>
+          <tr>
+            <td><strong>错因解释质量</strong></td>
+            <td><span class="tag">error cause</span><span class="tag">misconception diagnosis</span><span class="tag">expert tutor decision</span></td>
+            <td>评价模型解释学生为什么错、下一步应如何引导。</td>
+            <td>human_or_model_judge</td>
+            <td>Bridge, SAS-Bench, MathDial</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>LearnLM-1.5-Pro</strong></td>
+            <td>Mistake Location</td>
+            <td class="score">0.57</td>
+            <td>错误定位仍明显弱于解题。</td>
+          </tr>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>LearnLM-1.5-Pro</strong></td>
+            <td>Mistake Correction</td>
+            <td class="score">0.74</td>
+            <td>纠错强于错误定位。</td>
+          </tr>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>Mistake Correction</td>
+            <td class="score">0.84</td>
+            <td>GPT-4o 在纠错上强。</td>
+          </tr>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>Mistake Location</td>
+            <td class="score">0.37</td>
+            <td>定位学生错误仍弱。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d13" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D13 · 教学/辅导</p>
+            <h2>苏格拉底式引导与脚手架</h2>
+          </div>
+          <div class="count-box">
+            <b>4</b><span>指标</span>
+            <b>5</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>会解题不会教最明显，下一步教学决策是关键瓶颈。</p>
+        <p><strong>覆盖 benchmark：</strong>MathTutorBench, MathDial, SocraticLM, Bridge, TutorBench</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>苏格拉底式提问</strong></td>
+            <td><span class="tag">MathTutorBench Socratic Questioning</span></td>
+            <td>评价回复是否通过问题引导学生思考，而非直接给答案。</td>
+            <td>model_or_human_judge</td>
+            <td>MathTutorBench, MathDial</td>
+          </tr>
+          <tr>
+            <td><strong>脚手架胜率</strong></td>
+            <td><span class="tag">Scaffolding Win Rate</span><span class="tag">Scaffolding (Hard)</span></td>
+            <td>成对比较模型回复在分层提示、逐步支持上的优劣。</td>
+            <td>model_or_human_judge</td>
+            <td>MathTutorBench</td>
+          </tr>
+          <tr>
+            <td><strong>教学指令遵循</strong></td>
+            <td><span class="tag">Pedagogy IF Win Rate</span><span class="tag">Pedagogy IF (Hard)</span></td>
+            <td>评价模型是否遵循特定教学策略或教学法指令。</td>
+            <td>model_or_human_judge</td>
+            <td>MathTutorBench</td>
+          </tr>
+          <tr>
+            <td><strong>下一步教学决策</strong></td>
+            <td><span class="tag">expert tutor decision alignment</span><span class="tag">hint generation quality</span></td>
+            <td>比较模型下一步提示/追问是否符合专家 tutor 决策。</td>
+            <td>human_or_model_judge</td>
+            <td>Bridge, TutorBench, SocraticLM</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>Qwen2.5-Math-7B-Instruct</strong></td>
+            <td>Problem Solving</td>
+            <td class="score">0.88</td>
+            <td>数学专用模型会做题。</td>
+          </tr>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>Qwen2.5-Math-7B-Instruct</strong></td>
+            <td>Scaffolding Win Rate</td>
+            <td class="score">0.06</td>
+            <td>但脚手架能力很弱。</td>
+          </tr>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>Qwen2.5-Math-7B-Instruct</strong></td>
+            <td>Pedagogy IF Win Rate</td>
+            <td class="score">0.07</td>
+            <td>教学法指令遵循弱。</td>
+          </tr>
+          <tr>
+            <td>TutorBench</td>
+            <td><strong>Gemini 2.5 Pro preview</strong></td>
+            <td>overall</td>
+            <td class="score">55.65</td>
+            <td>真实 tutor 能力最高分也不高。</td>
+          </tr>
+          <tr>
+            <td>TutorBench</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>overall</td>
+            <td class="score">36.12</td>
+            <td>通用多模态强模型在 tutoring rubric 下表现有限。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d14" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D14 · 教学/教师助手</p>
+            <h2>教学法知识与教学设计</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>教师考试型知识较强，但真实课堂转化和三方协同未充分验证。</p>
+        <p><strong>覆盖 benchmark：</strong>Pedagogy Benchmark, EduBench, EduEval, OmniEduBench</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>教学法知识正确率</strong></td>
+            <td><span class="tag">CDPK</span><span class="tag">pedagogical knowledge score</span></td>
+            <td>基于教师职业知识或教学法题目计算正确率。</td>
+            <td>automatic</td>
+            <td>Pedagogy Benchmark</td>
+          </tr>
+          <tr>
+            <td><strong>特殊教育能力</strong></td>
+            <td><span class="tag">SEND</span></td>
+            <td>评估特殊教育需求相关教学知识和策略。</td>
+            <td>automatic</td>
+            <td>Pedagogy Benchmark</td>
+          </tr>
+          <tr>
+            <td><strong>教学设计质量</strong></td>
+            <td><span class="tag">lesson planning</span><span class="tag">instructional design</span><span class="tag">rubric-based education score</span></td>
+            <td>按教学目标、活动设计、评价方式、适配性等 rubric 评分。</td>
+            <td>model_or_human_judge</td>
+            <td>EduBench, EduEval, OmniEduBench</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>Pedagogy Benchmark</td>
+            <td><strong>Gemini 2.5 Pro</strong></td>
+            <td>CDPK</td>
+            <td class="score">about 89</td>
+            <td>教学法考试知识较强。</td>
+          </tr>
+          <tr>
+            <td>Pedagogy Benchmark</td>
+            <td><strong>Gemini 2.5 Pro</strong></td>
+            <td>SEND</td>
+            <td class="score">about 86</td>
+            <td>特殊教育知识维度较强。</td>
+          </tr>
+          <tr>
+            <td>EduBench</td>
+            <td><strong>DeepSeek-R1</strong></td>
+            <td>GPT-4o evaluator average</td>
+            <td class="score">about 9.06</td>
+            <td>教育场景生成质量较高。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d15" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D15 · 个性化学习</p>
+            <h2>学习规划、个性化与学情分析</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>2</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>LLM 生成式反馈与传统 KT/CD 指标之间缺统一桥接。</p>
+        <p><strong>覆盖 benchmark：</strong>EduBench, EduEval, ASSISTments, EdNet, FoundationalAssist, MOOCCube</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>学习规划质量</strong></td>
+            <td><span class="tag">learning planning</span><span class="tag">study plan rubric score</span></td>
+            <td>评价目标拆解、时间安排、资源推荐和可执行性。</td>
+            <td>model_or_human_judge</td>
+            <td>EduBench, EduEval</td>
+          </tr>
+          <tr>
+            <td><strong>个性化适配</strong></td>
+            <td><span class="tag">personalization</span><span class="tag">student profile alignment</span></td>
+            <td>评价回复是否适配学生年级、基础、错误历史、兴趣和情绪。</td>
+            <td>model_or_human_judge</td>
+            <td>EduBench, CASTLE, self-built required</td>
+          </tr>
+          <tr>
+            <td><strong>学情预测/推荐效果</strong></td>
+            <td><span class="tag">KT AUC</span><span class="tag">ACC</span><span class="tag">next response prediction</span><span class="tag">recommendation ranking</span></td>
+            <td>预测学生下次答题正确性或推荐下一资源，并用 AUC/ACC/NDCG 等评估。</td>
+            <td>automatic</td>
+            <td>ASSISTments, EdNet, Junyi, MOOCCube</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>EduBench</td>
+            <td><strong>DeepSeek-R1</strong></td>
+            <td>overall education scenario score</td>
+            <td class="score">about 9.06</td>
+            <td>覆盖学习规划等场景，但依赖模型评委。</td>
+          </tr>
+          <tr>
+            <td>ASSISTments/EdNet</td>
+            <td><strong>traditional KT models</strong></td>
+            <td>AUC/ACC</td>
+            <td class="score muted">varies by split</td>
+            <td>学情预测成熟但与 LLM 反馈未统一。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d16" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D16 · 知识追踪</p>
+            <h2>知识追踪与答题预测</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>2</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>非 LLM 体系成熟，开放回答和题干文本利用不足。</p>
+        <p><strong>覆盖 benchmark：</strong>ASSISTments, KDD Cup 2010, EdNet, Junyi, STATICS2011, Synthetic, Adaptive Geography Practice</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>下一题答对概率预测</strong></td>
+            <td><span class="tag">AUC</span><span class="tag">ACC</span><span class="tag">RMSE</span></td>
+            <td>用历史作答序列预测下一次作答是否正确。</td>
+            <td>automatic</td>
+            <td>ASSISTments, KDD Cup 2010, EdNet, Junyi, STATICS2011</td>
+          </tr>
+          <tr>
+            <td><strong>长序列建模能力</strong></td>
+            <td><span class="tag">sequence-level AUC</span><span class="tag">long interaction split</span></td>
+            <td>在长学习日志上统计预测指标。</td>
+            <td>automatic</td>
+            <td>EdNet, KDD Cup 2010</td>
+          </tr>
+          <tr>
+            <td><strong>跨数据/跨知识点泛化</strong></td>
+            <td><span class="tag">cross-dataset split</span><span class="tag">concept split</span><span class="tag">student split</span></td>
+            <td>按学生、题目、知识点或时间切分后比较 AUC/ACC。</td>
+            <td>automatic</td>
+            <td>ASSISTments, Junyi, FoundationalAssist</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>ASSISTments</td>
+            <td><strong>BKT/DKT/AKT/SAINT families</strong></td>
+            <td>AUC/ACC</td>
+            <td class="score muted">varies by protocol</td>
+            <td>知识追踪有成熟传统模型生态。</td>
+          </tr>
+          <tr>
+            <td>EdNet</td>
+            <td><strong>Transformer KT families</strong></td>
+            <td>AUC/ACC</td>
+            <td class="score muted">varies by protocol</td>
+            <td>大规模序列 KT 数据丰富。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d17" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D17 · 认知诊断</p>
+            <h2>认知诊断与知识点掌握</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>2</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>适合教育算法，但缺开放统一 LLM leaderboard。</p>
+        <p><strong>覆盖 benchmark：</strong>ASSISTments, PTADisc, Junyi, FoundationalAssist, 数字教育应用算法智能诊断公共数据集</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>知识点掌握估计</strong></td>
+            <td><span class="tag">concept mastery</span><span class="tag">knowledge component mastery</span></td>
+            <td>估计学生对知识概念的掌握概率或等级。</td>
+            <td>automatic_against_response_logs</td>
+            <td>ASSISTments, PTADisc, Junyi</td>
+          </tr>
+          <tr>
+            <td><strong>诊断解释质量</strong></td>
+            <td><span class="tag">diagnostic explanation</span><span class="tag">misconception explanation</span></td>
+            <td>评价模型给出的薄弱知识点解释是否和作答证据一致。</td>
+            <td>human_or_model_judge</td>
+            <td>FoundationalAssist, self-built required</td>
+          </tr>
+          <tr>
+            <td><strong>概念标签预测/映射</strong></td>
+            <td><span class="tag">concept label prediction</span><span class="tag">KC tagging</span></td>
+            <td>预测题目或学生错误对应的知识点标签。</td>
+            <td>automatic</td>
+            <td>PTADisc, ASSISTments</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>PTADisc</td>
+            <td><strong>not standardized for LLM</strong></td>
+            <td>data scale</td>
+            <td class="score">225K problems; 680M+ responses</td>
+            <td>认知诊断资源大，但缺 LLM 榜。</td>
+          </tr>
+          <tr>
+            <td>FoundationalAssist</td>
+            <td><strong>not standardized for LLM</strong></td>
+            <td>data scale</td>
+            <td class="score">1.7M interactions</td>
+            <td>保留文本和错误选项，适合 LLM 诊断。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d18" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D18 · 教育资源</p>
+            <h2>教育资源检索、推荐与学习路径</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>2</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>资源侧覆盖足，模型效果评价分散。</p>
+        <p><strong>覆盖 benchmark：</strong>MOOCCube, TutorialBank, FineWeb-Edu, Chinese FineWeb Edu, SIGHT, LectureBank</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>资源检索相关性</strong></td>
+            <td><span class="tag">Recall@k</span><span class="tag">MRR</span><span class="tag">NDCG</span><span class="tag">retrieval relevance</span></td>
+            <td>根据查询/知识点检索课程、视频、教程，计算排序指标。</td>
+            <td>automatic_or_human_labels</td>
+            <td>MOOCCube, TutorialBank, LectureBank</td>
+          </tr>
+          <tr>
+            <td><strong>学习路径连贯性</strong></td>
+            <td><span class="tag">prerequisite consistency</span><span class="tag">path coherence</span><span class="tag">concept graph alignment</span></td>
+            <td>评价推荐序列是否符合先修关系和学习目标。</td>
+            <td>automatic_plus_human_judge</td>
+            <td>MOOCCube, SIGHT, self-built required</td>
+          </tr>
+          <tr>
+            <td><strong>教育语料质量</strong></td>
+            <td><span class="tag">educational quality score</span><span class="tag">filter score</span></td>
+            <td>对网页/文本资源的教育密度、清晰度、可靠性评分。</td>
+            <td>model_or_classifier</td>
+            <td>FineWeb-Edu, Chinese FineWeb Edu</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>MOOCCube</td>
+            <td><strong>recommendation/knowledge graph models</strong></td>
+            <td>ranking/recommendation metrics</td>
+            <td class="score">no single LLM leaderboard</td>
+            <td>资源推荐可用，但任务分散。</td>
+          </tr>
+          <tr>
+            <td>FineWeb-Edu</td>
+            <td><strong>pretraining/filtering models</strong></td>
+            <td>educational quality/resource</td>
+            <td class="score muted">not a benchmark</td>
+            <td>适合训练和资源质量，不直接排序模型。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d19" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D19 · 课堂分析</p>
+            <h2>课堂话语和教师行为分析</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>2</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>真实课堂标注稀缺，跨教师、跨文化泛化难。</p>
+        <p><strong>覆盖 benchmark：</strong>TalkMoves, NCTE Transcripts, TIMSS Video Study, SIGHT, Google Education Dialogue Dataset</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>课堂话语动作分类</strong></td>
+            <td><span class="tag">Talk Moves labels</span><span class="tag">instructional moves classification</span></td>
+            <td>把教师话语标注为追问、复述、重述、促推理、连接学生想法等类别。</td>
+            <td>automatic_against_human_labels</td>
+            <td>TalkMoves, NCTE Transcripts</td>
+          </tr>
+          <tr>
+            <td><strong>课堂反馈建议质量</strong></td>
+            <td><span class="tag">teacher feedback usefulness</span><span class="tag">actionability</span><span class="tag">pedagogical alignment</span></td>
+            <td>评价模型基于课堂片段给教师的建议是否可执行、对齐教学目标。</td>
+            <td>human_or_model_judge</td>
+            <td>NCTE Transcripts, TIMSS Video Study, self-built required</td>
+          </tr>
+          <tr>
+            <td><strong>跨课堂泛化</strong></td>
+            <td><span class="tag">cross-teacher</span><span class="tag">cross-school</span><span class="tag">cross-country split</span></td>
+            <td>按教师、学校、国家或课程切分后评估分类或建议质量。</td>
+            <td>automatic_plus_human_analysis</td>
+            <td>TIMSS Video Study, TalkMoves</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>TalkMoves/NCTE</td>
+            <td><strong>foundation models</strong></td>
+            <td>instructional move classification</td>
+            <td class="score">limited reliability; few-shot not solved</td>
+            <td>课堂话语动作识别仍有挑战。</td>
+          </tr>
+          <tr>
+            <td>Google Education Dialogue Dataset</td>
+            <td><strong>Gemini Ultra generated data</strong></td>
+            <td>data scale</td>
+            <td class="score">47,234 dialogues</td>
+            <td>合成师生对话资源丰富但不是榜单。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d20" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D20 · 课堂多模态</p>
+            <h2>课堂视觉行为与参与度识别</h2>
+          </div>
+          <div class="count-box">
+            <b>3</b><span>指标</span>
+            <b>2</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>参与度识别尚未与学习效果、教师决策闭环打通。</p>
+        <p><strong>覆盖 benchmark：</strong>SCB-Dataset, ARIC, IntrEx, classroom video resources</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>学生行为识别</strong></td>
+            <td><span class="tag">behavior classification accuracy</span><span class="tag">action recognition</span></td>
+            <td>识别听讲、举手、互动、走神等课堂行为。</td>
+            <td>automatic_against_human_labels</td>
+            <td>SCB-Dataset, ARIC</td>
+          </tr>
+          <tr>
+            <td><strong>参与度/兴趣度预测</strong></td>
+            <td><span class="tag">engagement score</span><span class="tag">interest level</span><span class="tag">participation label</span></td>
+            <td>根据对话、视频或行为预测学生参与度。</td>
+            <td>automatic_against_human_labels</td>
+            <td>IntrEx, ARIC</td>
+          </tr>
+          <tr>
+            <td><strong>多模态同步理解</strong></td>
+            <td><span class="tag">audio-video-text alignment</span><span class="tag">classroom event grounding</span></td>
+            <td>联合图像、音频、文本定位课堂事件和参与变化。</td>
+            <td>human_or_model_judge</td>
+            <td>ARIC, classroom video resources</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>SCB/ARIC</td>
+            <td><strong>vision behavior models</strong></td>
+            <td>behavior recognition</td>
+            <td class="score muted">no unified LLM/VLM leaderboard</td>
+            <td>课堂视觉行为有数据但未接入统一教育大模型评测。</td>
+          </tr>
+          <tr>
+            <td>IntrEx</td>
+            <td><strong>engagement modeling</strong></td>
+            <td>engagement labels</td>
+            <td class="score muted">no unified public leaderboard</td>
+            <td>参与度建模重要但榜单不足。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d21" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D21 · 安全</p>
+            <h2>教育安全、合规与角色扮演</h2>
+          </div>
+          <div class="count-box">
+            <b>4</b><span>指标</span>
+            <b>4</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>教学专业度与安全性不一致，青少年心理和个体差异需单独测。</p>
+        <p><strong>覆盖 benchmark：</strong>EduGuard-Bench, EduBench, EduEval, CASTLE, YouthSafe</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>角色扮演专业度</strong></td>
+            <td><span class="tag">RFS</span><span class="tag">role-following score</span></td>
+            <td>评价模型作为教师/tutor 是否遵循教育角色和专业边界。</td>
+            <td>model_or_human_judge</td>
+            <td>EduGuard-Bench</td>
+          </tr>
+          <tr>
+            <td><strong>攻击成功率/安全失败率</strong></td>
+            <td><span class="tag">ASR</span></td>
+            <td>统计对抗诱导下模型产生不安全或不专业回复的比例，越低越好。</td>
+            <td>automatic_or_model_judge</td>
+            <td>EduGuard-Bench, YouthSafe</td>
+          </tr>
+          <tr>
+            <td><strong>青少年风险识别与转介</strong></td>
+            <td><span class="tag">youth risk category</span><span class="tag">safeguard success</span><span class="tag">crisis escalation quality</span></td>
+            <td>评估 grooming、自伤、边界侵犯、情感依赖等风险识别和升级建议。</td>
+            <td>human_or_model_judge</td>
+            <td>YouthSafe, CASTLE, self-built required</td>
+          </tr>
+          <tr>
+            <td><strong>学生个体差异安全</strong></td>
+            <td><span class="tag">student-specific safety</span><span class="tag">empathy</span><span class="tag">developmental appropriateness</span></td>
+            <td>按年龄、认知水平、心理状态评价回复是否安全适配。</td>
+            <td>human_or_model_judge</td>
+            <td>CASTLE</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>EduGuard-Bench</td>
+            <td><strong>Claude-3.7</strong></td>
+            <td>RFS</td>
+            <td class="score">0.77</td>
+            <td>角色扮演专业度较高。</td>
+          </tr>
+          <tr>
+            <td>EduGuard-Bench</td>
+            <td><strong>Claude-3.7</strong></td>
+            <td>ASR lower is better</td>
+            <td class="score">27.0</td>
+            <td>安全攻击成功率较低。</td>
+          </tr>
+          <tr>
+            <td>EduGuard-Bench</td>
+            <td><strong>DeepSeek-V3</strong></td>
+            <td>RFS</td>
+            <td class="score">0.73</td>
+            <td>专业度接近但安全表现不同。</td>
+          </tr>
+          <tr>
+            <td>EduGuard-Bench</td>
+            <td><strong>DeepSeek-V3</strong></td>
+            <td>ASR lower is better</td>
+            <td class="score">81.6</td>
+            <td>教学专业度和安全性不一致。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d22" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D22 · 教学内容生成</p>
+            <h2>教学可视化生成</h2>
+          </div>
+          <div class="count-box">
+            <b>5</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>通用模型裸生成弱，专门流程明显更强；科学正确性和认知过程对齐是瓶颈。</p>
+        <p><strong>覆盖 benchmark：</strong>EduVisBench, VisualEDU, ME2, InteractScience, MathVista</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>逻辑序列</strong></td>
+            <td><span class="tag">logic sequence</span></td>
+            <td>评价可视化步骤是否符合解题或概念讲解顺序。</td>
+            <td>model_or_human_judge</td>
+            <td>EduVisBench, VisualEDU</td>
+          </tr>
+          <tr>
+            <td><strong>结构丰富度</strong></td>
+            <td><span class="tag">structural richness</span></td>
+            <td>评价图形、布局、层次、交互元素是否支持学习。</td>
+            <td>model_or_human_judge</td>
+            <td>EduVisBench</td>
+          </tr>
+          <tr>
+            <td><strong>语义对齐</strong></td>
+            <td><span class="tag">semantic alignment</span></td>
+            <td>评价视觉元素是否准确表达题目和讲解内容。</td>
+            <td>model_or_human_judge</td>
+            <td>EduVisBench, ME2</td>
+          </tr>
+          <tr>
+            <td><strong>讲解引导</strong></td>
+            <td><span class="tag">explanation guidance</span></td>
+            <td>评价可视化是否引导学生理解关键步骤，而非只做装饰。</td>
+            <td>model_or_human_judge</td>
+            <td>EduVisBench, VisualEDU</td>
+          </tr>
+          <tr>
+            <td><strong>交互参与度</strong></td>
+            <td><span class="tag">interaction engagement</span></td>
+            <td>评价互动控件、动态变化、探索路径是否有教育价值。</td>
+            <td>model_or_human_judge</td>
+            <td>EduVisBench, InteractScience</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>EduVisBench</td>
+            <td><strong>EduVisAgent</strong></td>
+            <td>average</td>
+            <td class="score">81.6</td>
+            <td>专门多智能体流程明显领先。</td>
+          </tr>
+          <tr>
+            <td>EduVisBench</td>
+            <td><strong>v0</strong></td>
+            <td>average</td>
+            <td class="score">58.2</td>
+            <td>通用网页生成工具较强但仍低于专门流程。</td>
+          </tr>
+          <tr>
+            <td>EduVisBench</td>
+            <td><strong>GPT-4o Webpage</strong></td>
+            <td>average</td>
+            <td class="score">38.1</td>
+            <td>裸模型生成教育可视化较弱。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d23" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D23 · 教学内容生成</p>
+            <h2>交互式科学演示生成</h2>
+          </div>
+          <div class="count-box">
+            <b>4</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>功能完整性低，模型常能生成界面但科学语义和交互逻辑不稳。</p>
+        <p><strong>覆盖 benchmark：</strong>InteractScience, EduVisBench, VisualEDU</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>程序功能测试通过率</strong></td>
+            <td><span class="tag">PFT Overall</span><span class="tag">PFT Average</span><span class="tag">PFT Perfect</span></td>
+            <td>用 Playwright/unit tests 检查交互功能是否按题目要求工作。</td>
+            <td>automatic_execution</td>
+            <td>InteractScience</td>
+          </tr>
+          <tr>
+            <td><strong>动作成功率</strong></td>
+            <td><span class="tag">VQT Action</span></td>
+            <td>执行指定交互动作后，检查期望视觉状态是否出现。</td>
+            <td>automatic_visual_test</td>
+            <td>InteractScience</td>
+          </tr>
+          <tr>
+            <td><strong>视觉相似度</strong></td>
+            <td><span class="tag">VQT CLIP</span></td>
+            <td>比较生成快照和参考快照的 CLIP 相似度。</td>
+            <td>automatic_model_metric</td>
+            <td>InteractScience</td>
+          </tr>
+          <tr>
+            <td><strong>语义正确性</strong></td>
+            <td><span class="tag">VQT VLM-judge</span></td>
+            <td>用多模态模型判断视觉结果是否符合科学演示规格。</td>
+            <td>model_judge</td>
+            <td>InteractScience</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>InteractScience</td>
+            <td><strong>Claude-Sonnet-4</strong></td>
+            <td>PFT overall</td>
+            <td class="score">41.47</td>
+            <td>交互科学演示功能正确率仍低。</td>
+          </tr>
+          <tr>
+            <td>InteractScience</td>
+            <td><strong>GPT-5</strong></td>
+            <td>PFT overall</td>
+            <td class="score">39.47</td>
+            <td>强模型也未解决交互功能完整性。</td>
+          </tr>
+          <tr>
+            <td>InteractScience</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>PFT overall</td>
+            <td class="score">28.27</td>
+            <td>功能测试通过率低。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      <section id="dim-d24" class="capability">
+        <div class="cap-head">
+          <div>
+            <p class="cap-id">D24 · 端到端教育系统</p>
+            <h2>教育垂类系统端到端能力</h2>
+          </div>
+          <div class="count-box">
+            <b>4</b><span>指标</span>
+            <b>3</b><span>模型记录</span>
+          </div>
+        </div>
+        <p class="gap"><strong>结论/缺口：</strong>多数产品系统无可复现公开分数；端到端体验强依赖闭源题库和工作流。</p>
+        <p><strong>覆盖 benchmark：</strong>LearnLM, InnoSpark, 九章, 子曰, 星火教育, CheggMate, external benchmarks</p>
+        <h3>具体评测指标</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>归一化指标</th><th>Benchmark 原始指标/子维度</th><th>评分方式</th><th>评估者类型</th><th>相关 benchmark</th></tr></thead>
+            <tbody>
+          <tr>
+            <td><strong>外部 benchmark 能力</strong></td>
+            <td><span class="tag">MathTutorBench scores</span><span class="tag">EduBench scores</span><span class="tag">TutorBench scores</span></td>
+            <td>把系统或底座模型放到公开 benchmark 上复测。</td>
+            <td>benchmark_specific</td>
+            <td>LearnLM, InnoSpark, 九章, 子曰, 星火教育, CheggMate</td>
+          </tr>
+          <tr>
+            <td><strong>工作流完成度</strong></td>
+            <td><span class="tag">task completion</span><span class="tag">workflow success</span><span class="tag">teacher adoption</span></td>
+            <td>评估备课、讲题、批改、学情分析等产品工作流是否完整完成。</td>
+            <td>human_or_product_telemetry</td>
+            <td>self-built required</td>
+          </tr>
+          <tr>
+            <td><strong>真实学习效果</strong></td>
+            <td><span class="tag">learning gain</span><span class="tag">delayed retention</span><span class="tag">transfer</span><span class="tag">A/B outcome</span></td>
+            <td>通过前后测、延迟测、迁移题或平台 A/B 指标评估学生是否真正学会。</td>
+            <td>human_experiment_or_product_telemetry</td>
+            <td>self-built required</td>
+          </tr>
+          <tr>
+            <td><strong>教师采纳与修改量</strong></td>
+            <td><span class="tag">teacher acceptance rate</span><span class="tag">edit distance</span><span class="tag">override rate</span></td>
+            <td>统计教师是否采纳 AI 建议、修改多少、拒绝原因。</td>
+            <td>product_telemetry_or_human_review</td>
+            <td>self-built required</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <h3>已有模型表现记录</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Benchmark</th><th>模型</th><th>指标</th><th>分数/结果</th><th>解释</th></tr></thead>
+            <tbody>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>LearnLM-1.5-Pro</strong></td>
+            <td>Problem Solving</td>
+            <td class="score">0.94</td>
+            <td>少数教育垂类模型有公开 benchmark 结果。</td>
+          </tr>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>LearnLM-1.5-Pro</strong></td>
+            <td>Mistake Location</td>
+            <td class="score">0.57</td>
+            <td>教育垂类模型仍有诊断短板。</td>
+          </tr>
+          <tr>
+            <td>MathTutorBench</td>
+            <td><strong>LearnLM-1.5-Pro</strong></td>
+            <td>Mistake Correction</td>
+            <td class="score">0.74</td>
+            <td>纠错能力较强但不等于完整教学闭环。</td>
+          </tr></tbody>
+          </table>
+        </div>
+        <a class="backtop" href="#top">返回目录</a>
+      </section>
+      </main>
+    </article>
+  </div>
+</body>
+</html>

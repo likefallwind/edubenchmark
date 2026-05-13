@@ -1,0 +1,756 @@
+{
+  "metadata": {
+    "title": "Metric indicators under AI-Edu atomic abilities",
+    "created_at": "2026-05-12",
+    "purpose": "For each atomic ability dimension, record the actual evaluation indicators used by related benchmarks, including metric names, scoring methods, and evidence sources.",
+    "related_dimension_file": "data/benchmark_metric_dimensions_2026-05-12.json",
+    "note": "This file is a reusable intermediate artifact. It keeps benchmark-native metric names where available and adds normalized Chinese labels for cross-benchmark aggregation."
+  },
+  "dimensions": [
+    {
+      "dimension_id": "D01",
+      "dimension": "通用学科知识与选择题答题",
+      "indicators": [
+        {
+          "normalized_indicator": "总体正确率/平均分",
+          "benchmark_native_metrics": ["MMLU accuracy/average", "CMMLU average", "C-EVAL average", "E-EVAL average"],
+          "scoring_method": "选择题 exact match 后按题目或学科平均。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["MMLU", "CMMLU", "C-EVAL", "E-EVAL"]
+        },
+        {
+          "normalized_indicator": "学科切片正确率",
+          "benchmark_native_metrics": ["STEM/Humanities/Social Science/Other", "subject-level score", "C-Eval Hard"],
+          "scoring_method": "按学科、难度或 hard subset 聚合准确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["MMLU", "CMMLU", "C-EVAL", "E-EVAL", "GaokaoBench"]
+        },
+        {
+          "normalized_indicator": "prompt 方式敏感性",
+          "benchmark_native_metrics": ["zero-shot", "five-shot", "CoT", "few-shot CoT"],
+          "scoring_method": "同一题集在不同提示设置下比较准确率变化。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["CMMLU", "C-EVAL", "AGIEval", "E-EVAL"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D02",
+      "dimension": "中文本土知识与 K12 学科体系",
+      "indicators": [
+        {
+          "normalized_indicator": "中文 K12 学科正确率",
+          "benchmark_native_metrics": ["E-EVAL average", "GaokaoBench objective overall", "K12Vista direct overall"],
+          "scoring_method": "按小学/初中/高中、语数英理化生政史地等学科切片统计。",
+          "evaluator_type": "automatic_or_human_for_subjective",
+          "benchmarks": ["E-EVAL", "GaokaoBench", "K12Vista"]
+        },
+        {
+          "normalized_indicator": "中国本土知识正确率",
+          "benchmark_native_metrics": ["CMMLU China-specific", "C-EVAL subject categories"],
+          "scoring_method": "对中国历史、政治、法律、文化、考试体系等题目计算准确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["CMMLU", "C-EVAL"]
+        },
+        {
+          "normalized_indicator": "过程正确性",
+          "benchmark_native_metrics": ["K12Vista Step-by-Step overall", "process correctness", "hallucination/logical contradiction tags"],
+          "scoring_method": "不仅看答案，还检查步骤是否跳步、幻觉、逻辑矛盾或图文误解。",
+          "evaluator_type": "automatic_plus_model_or_human_judge",
+          "benchmarks": ["K12Vista"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D03",
+      "dimension": "标准化考试与资格考试推理",
+      "indicators": [
+        {
+          "normalized_indicator": "考试题正确率",
+          "benchmark_native_metrics": ["AGIEval zero-shot/few-shot accuracy", "GaokaoBench objective score"],
+          "scoring_method": "客观题 exact match 或多选匹配。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["AGIEval", "GaokaoBench", "C-EVAL"]
+        },
+        {
+          "normalized_indicator": "主观题评分",
+          "benchmark_native_metrics": ["GaokaoBench subjective overall", "subjective subject score"],
+          "scoring_method": "按标准答案和评分细则人工或模型辅助评分。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["GaokaoBench"]
+        },
+        {
+          "normalized_indicator": "考试类型切片",
+          "benchmark_native_metrics": ["SAT", "LSAT", "Gaokao", "Civil Service Exam", "Law/Math/Reading subsets"],
+          "scoring_method": "按考试来源或题型统计准确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["AGIEval", "C-EVAL"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D04",
+      "dimension": "基础数学应用题",
+      "indicators": [
+        {
+          "normalized_indicator": "最终答案正确率",
+          "benchmark_native_metrics": ["GSM8K exact match", "Math23K answer accuracy", "Ape210K accuracy"],
+          "scoring_method": "抽取最终数值/表达式，与标准答案 exact match 或数值等价。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["GSM8K", "Math23K", "Ape210K"]
+        },
+        {
+          "normalized_indicator": "表达式/方程生成正确率",
+          "benchmark_native_metrics": ["equation accuracy", "template accuracy", "answer accuracy"],
+          "scoring_method": "比较生成方程、模板或计算结果是否等价。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["Math23K", "Ape210K"]
+        },
+        {
+          "normalized_indicator": "推理链设置效果",
+          "benchmark_native_metrics": ["CoT accuracy", "verifier reranking result", "self-consistency"],
+          "scoring_method": "比较直接作答、CoT、多采样、verifier 或 self-consistency 的答案正确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["GSM8K"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D05",
+      "dimension": "高阶数学与竞赛推理",
+      "indicators": [
+        {
+          "normalized_indicator": "最终答案正确率",
+          "benchmark_native_metrics": ["MATH accuracy", "MATH-500 accuracy", "OlymMATH accuracy", "OlympiadBench accuracy"],
+          "scoring_method": "抽取 boxed answer，进行 exact match、数值容差或符号等价判断。",
+          "evaluator_type": "automatic_with_math_checker",
+          "benchmarks": ["MATH", "MATH-500", "OlymMATH", "OlympiadBench"]
+        },
+        {
+          "normalized_indicator": "Hard 子集正确率",
+          "benchmark_native_metrics": ["OlymMATH-HARD", "competition subset", "Olympiad-level subset"],
+          "scoring_method": "按高难子集单独统计准确率。",
+          "evaluator_type": "automatic_with_math_checker",
+          "benchmarks": ["OlymMATH", "OlympiadBench"]
+        },
+        {
+          "normalized_indicator": "稳定性/多次采样收益",
+          "benchmark_native_metrics": ["Pass@k", "Cons@k", "self-consistency"],
+          "scoring_method": "多次采样后统计至少一次答对或一致答案答对的比例。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["OlymMATH", "MATH"]
+        },
+        {
+          "normalized_indicator": "证明/过程可评性",
+          "benchmark_native_metrics": ["theorem proving subset", "process-level correctness"],
+          "scoring_method": "证明题通常难以全自动评分；部分框架用人工、形式化 checker 或 LLM judge。",
+          "evaluator_type": "human_or_formal_or_model_judge",
+          "benchmarks": ["OlympiadBench", "IMO-style benchmarks"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D06",
+      "dimension": "几何视觉、图表和多模态数学",
+      "indicators": [
+        {
+          "normalized_indicator": "多模态数学总体正确率",
+          "benchmark_native_metrics": ["MathVista test/testmini accuracy", "CMMU fill-in/choice accuracy", "K12Vista direct overall"],
+          "scoring_method": "对图文题最终答案做 exact match、选项匹配或模型裁判。",
+          "evaluator_type": "automatic_or_model_judge",
+          "benchmarks": ["MathVista", "CMMU", "K12Vista"]
+        },
+        {
+          "normalized_indicator": "视觉上下文切片",
+          "benchmark_native_metrics": ["MathVista visual context types", "chart/table/geometry/figure QA"],
+          "scoring_method": "按图表、几何图、函数图、科学论文图等视觉类型统计准确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["MathVista", "ChartQA"]
+        },
+        {
+          "normalized_indicator": "数学推理类型切片",
+          "benchmark_native_metrics": ["algebraic", "arithmetic", "geometric", "logical", "numeric", "scientific", "statistical"],
+          "scoring_method": "按推理类型统计准确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["MathVista"]
+        },
+        {
+          "normalized_indicator": "视觉关键点识别",
+          "benchmark_native_metrics": ["ME2 Visual Keypoint Identification accuracy"],
+          "scoring_method": "判断模型是否识别辅助线、点、角、标记等对讲解有用的视觉元素。",
+          "evaluator_type": "automatic_or_model_judge",
+          "benchmarks": ["ME2"]
+        },
+        {
+          "normalized_indicator": "基于关键点的讲解质量",
+          "benchmark_native_metrics": ["ME2 correctness", "ME2 fidelity", "ME2 referencing score"],
+          "scoring_method": "评价讲解是否正确、忠实于图像、是否明确引用关键视觉元素。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["ME2"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D07",
+      "dimension": "科学实验、视频和长时序理解",
+      "indicators": [
+        {
+          "normalized_indicator": "科学视频总体正确率",
+          "benchmark_native_metrics": ["SciVideoBench overall accuracy"],
+          "scoring_method": "对多选题计算正确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["SciVideoBench"]
+        },
+        {
+          "normalized_indicator": "学科切片正确率",
+          "benchmark_native_metrics": ["Physics", "Chemistry", "Biology", "Medicine"],
+          "scoring_method": "按科学学科统计准确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["SciVideoBench"]
+        },
+        {
+          "normalized_indicator": "推理类型切片",
+          "benchmark_native_metrics": ["Conceptual", "Hypothetical", "Quantitative"],
+          "scoring_method": "按概念理解、假设推理、定量计算统计准确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["SciVideoBench"]
+        },
+        {
+          "normalized_indicator": "视觉 grounding 依赖",
+          "benchmark_native_metrics": ["vision-blind baseline", "with-video vs no-video accuracy"],
+          "scoring_method": "比较有视频输入和无视频输入时的表现差距。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["SciVideoBench"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D08",
+      "dimension": "代码生成与算法题解",
+      "indicators": [
+        {
+          "normalized_indicator": "功能正确率",
+          "benchmark_native_metrics": ["HumanEval pass@1", "MBPP accuracy/pass@1", "APPS test pass rate"],
+          "scoring_method": "运行单元测试或隐藏测试，统计通过率。",
+          "evaluator_type": "automatic_execution",
+          "benchmarks": ["HumanEval", "MBPP", "APPS"]
+        },
+        {
+          "normalized_indicator": "采样收益",
+          "benchmark_native_metrics": ["pass@k", "pass@10", "pass@100"],
+          "scoring_method": "多次采样中至少一个候选通过测试的概率估计。",
+          "evaluator_type": "automatic_execution",
+          "benchmarks": ["HumanEval", "APPS"]
+        },
+        {
+          "normalized_indicator": "题目难度切片",
+          "benchmark_native_metrics": ["introductory", "interview", "competition", "difficulty tags"],
+          "scoring_method": "按难度或题源统计测试通过率。",
+          "evaluator_type": "automatic_execution",
+          "benchmarks": ["APPS", "LeetCode-style datasets"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D09",
+      "dimension": "编程教育问答与代码诊断",
+      "indicators": [
+        {
+          "normalized_indicator": "学生问题类型识别",
+          "benchmark_native_metrics": ["CS1QA question type", "intent/category classification"],
+          "scoring_method": "分类学生问题属于概念、语法、运行错误、调试、需求理解等类型。",
+          "evaluator_type": "automatic_or_human",
+          "benchmarks": ["CS1QA", "QACP"]
+        },
+        {
+          "normalized_indicator": "相关代码行定位",
+          "benchmark_native_metrics": ["CS1QA related code line annotation", "bug localization"],
+          "scoring_method": "判断模型能否定位与问题相关的代码行或错误位置。",
+          "evaluator_type": "automatic_or_human",
+          "benchmarks": ["CS1QA", "Codecademy Dataset"]
+        },
+        {
+          "normalized_indicator": "教学反馈质量",
+          "benchmark_native_metrics": ["hint usefulness", "concept explanation quality", "non-spoiler feedback"],
+          "scoring_method": "评价是否给出可操作提示、解释概念且不过早泄露完整答案。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["CS1QA", "QACP", "self-built required"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D10",
+      "dimension": "作文自动评分",
+      "indicators": [
+        {
+          "normalized_indicator": "总分一致性",
+          "benchmark_native_metrics": ["QWK", "holistic score agreement"],
+          "scoring_method": "模型评分与人工评分之间计算 Quadratic Weighted Kappa。",
+          "evaluator_type": "automatic_metric_against_human_labels",
+          "benchmarks": ["ASAP-AES", "EssayJudge", "ELLIPSE"]
+        },
+        {
+          "normalized_indicator": "多维 trait 一致性",
+          "benchmark_native_metrics": ["vocabulary", "sentence", "argument clarity", "coherence", "syntax trait QWK"],
+          "scoring_method": "按词汇、句法、篇章、论证等评分维度分别计算 QWK 或相关指标。",
+          "evaluator_type": "automatic_metric_against_human_labels",
+          "benchmarks": ["EssayJudge", "ELLIPSE"]
+        },
+        {
+          "normalized_indicator": "跨 prompt 泛化和公平性",
+          "benchmark_native_metrics": ["cross-prompt QWK", "length bias", "group fairness slice"],
+          "scoring_method": "跨题目、不同群体、不同文本长度切片比较评分一致性和偏差。",
+          "evaluator_type": "automatic_plus_analysis",
+          "benchmarks": ["ASAP-AES", "ELLIPSE", "self-built required"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D11",
+      "dimension": "短答案和分步评分",
+      "indicators": [
+        {
+          "normalized_indicator": "总体评分一致性",
+          "benchmark_native_metrics": ["QWK", "overall score agreement"],
+          "scoring_method": "模型总分与人工总分之间计算 QWK。",
+          "evaluator_type": "automatic_metric_against_human_labels",
+          "benchmarks": ["ASAP-SAS", "SAS-Bench"]
+        },
+        {
+          "normalized_indicator": "分步评分一致性",
+          "benchmark_native_metrics": ["CCS: Comprehensive Consistency Score"],
+          "scoring_method": "评估 overall score 与 step-wise scores 的一致性。",
+          "evaluator_type": "automatic_metric_against_human_labels",
+          "benchmarks": ["SAS-Bench"]
+        },
+        {
+          "normalized_indicator": "错误原因一致性",
+          "benchmark_native_metrics": ["ECS: Errors Consistency Score"],
+          "scoring_method": "比较模型和人工标注的错误类型频率分布一致性。",
+          "evaluator_type": "automatic_metric_against_human_labels",
+          "benchmarks": ["SAS-Bench"]
+        },
+        {
+          "normalized_indicator": "局部分析指标",
+          "benchmark_native_metrics": ["F1 score", "subject/question-type slice"],
+          "scoring_method": "对特定错误类型、学科、题型计算 F1 或切片分数。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["SAS-Bench"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D12",
+      "dimension": "学生错误定位与纠错反馈",
+      "indicators": [
+        {
+          "normalized_indicator": "错误位置定位",
+          "benchmark_native_metrics": ["MathTutorBench Mistake Location"],
+          "scoring_method": "判断模型能否指出学生解答中第一处错误或关键错误位置。",
+          "evaluator_type": "automatic_or_model_judge",
+          "benchmarks": ["MathTutorBench", "Bridge"]
+        },
+        {
+          "normalized_indicator": "纠错准确性",
+          "benchmark_native_metrics": ["MathTutorBench Mistake Correction"],
+          "scoring_method": "判断模型能否给出正确纠正，而不是只给最终答案。",
+          "evaluator_type": "automatic_or_model_judge",
+          "benchmarks": ["MathTutorBench", "SAS-Bench"]
+        },
+        {
+          "normalized_indicator": "学生答案正确性判断",
+          "benchmark_native_metrics": ["MathTutorBench Solution Correctness"],
+          "scoring_method": "二分类判断学生答案/步骤是否正确。",
+          "evaluator_type": "automatic_or_model_judge",
+          "benchmarks": ["MathTutorBench"]
+        },
+        {
+          "normalized_indicator": "错因解释质量",
+          "benchmark_native_metrics": ["error cause", "misconception diagnosis", "expert tutor decision"],
+          "scoring_method": "评价模型解释学生为什么错、下一步应如何引导。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["Bridge", "SAS-Bench", "MathDial"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D13",
+      "dimension": "苏格拉底式引导与脚手架",
+      "indicators": [
+        {
+          "normalized_indicator": "苏格拉底式提问",
+          "benchmark_native_metrics": ["MathTutorBench Socratic Questioning"],
+          "scoring_method": "评价回复是否通过问题引导学生思考，而非直接给答案。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["MathTutorBench", "MathDial"]
+        },
+        {
+          "normalized_indicator": "脚手架胜率",
+          "benchmark_native_metrics": ["Scaffolding Win Rate", "Scaffolding (Hard)"],
+          "scoring_method": "成对比较模型回复在分层提示、逐步支持上的优劣。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["MathTutorBench"]
+        },
+        {
+          "normalized_indicator": "教学指令遵循",
+          "benchmark_native_metrics": ["Pedagogy IF Win Rate", "Pedagogy IF (Hard)"],
+          "scoring_method": "评价模型是否遵循特定教学策略或教学法指令。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["MathTutorBench"]
+        },
+        {
+          "normalized_indicator": "下一步教学决策",
+          "benchmark_native_metrics": ["expert tutor decision alignment", "hint generation quality"],
+          "scoring_method": "比较模型下一步提示/追问是否符合专家 tutor 决策。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["Bridge", "TutorBench", "SocraticLM"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D14",
+      "dimension": "教学法知识与教学设计",
+      "indicators": [
+        {
+          "normalized_indicator": "教学法知识正确率",
+          "benchmark_native_metrics": ["CDPK", "pedagogical knowledge score"],
+          "scoring_method": "基于教师职业知识或教学法题目计算正确率。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["Pedagogy Benchmark"]
+        },
+        {
+          "normalized_indicator": "特殊教育能力",
+          "benchmark_native_metrics": ["SEND"],
+          "scoring_method": "评估特殊教育需求相关教学知识和策略。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["Pedagogy Benchmark"]
+        },
+        {
+          "normalized_indicator": "教学设计质量",
+          "benchmark_native_metrics": ["lesson planning", "instructional design", "rubric-based education score"],
+          "scoring_method": "按教学目标、活动设计、评价方式、适配性等 rubric 评分。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduBench", "EduEval", "OmniEduBench"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D15",
+      "dimension": "学习规划、个性化与学情分析",
+      "indicators": [
+        {
+          "normalized_indicator": "学习规划质量",
+          "benchmark_native_metrics": ["learning planning", "study plan rubric score"],
+          "scoring_method": "评价目标拆解、时间安排、资源推荐和可执行性。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduBench", "EduEval"]
+        },
+        {
+          "normalized_indicator": "个性化适配",
+          "benchmark_native_metrics": ["personalization", "student profile alignment"],
+          "scoring_method": "评价回复是否适配学生年级、基础、错误历史、兴趣和情绪。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduBench", "CASTLE", "self-built required"]
+        },
+        {
+          "normalized_indicator": "学情预测/推荐效果",
+          "benchmark_native_metrics": ["KT AUC", "ACC", "next response prediction", "recommendation ranking"],
+          "scoring_method": "预测学生下次答题正确性或推荐下一资源，并用 AUC/ACC/NDCG 等评估。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["ASSISTments", "EdNet", "Junyi", "MOOCCube"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D16",
+      "dimension": "知识追踪与答题预测",
+      "indicators": [
+        {
+          "normalized_indicator": "下一题答对概率预测",
+          "benchmark_native_metrics": ["AUC", "ACC", "RMSE"],
+          "scoring_method": "用历史作答序列预测下一次作答是否正确。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["ASSISTments", "KDD Cup 2010", "EdNet", "Junyi", "STATICS2011"]
+        },
+        {
+          "normalized_indicator": "长序列建模能力",
+          "benchmark_native_metrics": ["sequence-level AUC", "long interaction split"],
+          "scoring_method": "在长学习日志上统计预测指标。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["EdNet", "KDD Cup 2010"]
+        },
+        {
+          "normalized_indicator": "跨数据/跨知识点泛化",
+          "benchmark_native_metrics": ["cross-dataset split", "concept split", "student split"],
+          "scoring_method": "按学生、题目、知识点或时间切分后比较 AUC/ACC。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["ASSISTments", "Junyi", "FoundationalAssist"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D17",
+      "dimension": "认知诊断与知识点掌握",
+      "indicators": [
+        {
+          "normalized_indicator": "知识点掌握估计",
+          "benchmark_native_metrics": ["concept mastery", "knowledge component mastery"],
+          "scoring_method": "估计学生对知识概念的掌握概率或等级。",
+          "evaluator_type": "automatic_against_response_logs",
+          "benchmarks": ["ASSISTments", "PTADisc", "Junyi"]
+        },
+        {
+          "normalized_indicator": "诊断解释质量",
+          "benchmark_native_metrics": ["diagnostic explanation", "misconception explanation"],
+          "scoring_method": "评价模型给出的薄弱知识点解释是否和作答证据一致。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["FoundationalAssist", "self-built required"]
+        },
+        {
+          "normalized_indicator": "概念标签预测/映射",
+          "benchmark_native_metrics": ["concept label prediction", "KC tagging"],
+          "scoring_method": "预测题目或学生错误对应的知识点标签。",
+          "evaluator_type": "automatic",
+          "benchmarks": ["PTADisc", "ASSISTments"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D18",
+      "dimension": "教育资源检索、推荐与学习路径",
+      "indicators": [
+        {
+          "normalized_indicator": "资源检索相关性",
+          "benchmark_native_metrics": ["Recall@k", "MRR", "NDCG", "retrieval relevance"],
+          "scoring_method": "根据查询/知识点检索课程、视频、教程，计算排序指标。",
+          "evaluator_type": "automatic_or_human_labels",
+          "benchmarks": ["MOOCCube", "TutorialBank", "LectureBank"]
+        },
+        {
+          "normalized_indicator": "学习路径连贯性",
+          "benchmark_native_metrics": ["prerequisite consistency", "path coherence", "concept graph alignment"],
+          "scoring_method": "评价推荐序列是否符合先修关系和学习目标。",
+          "evaluator_type": "automatic_plus_human_judge",
+          "benchmarks": ["MOOCCube", "SIGHT", "self-built required"]
+        },
+        {
+          "normalized_indicator": "教育语料质量",
+          "benchmark_native_metrics": ["educational quality score", "filter score"],
+          "scoring_method": "对网页/文本资源的教育密度、清晰度、可靠性评分。",
+          "evaluator_type": "model_or_classifier",
+          "benchmarks": ["FineWeb-Edu", "Chinese FineWeb Edu"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D19",
+      "dimension": "课堂话语和教师行为分析",
+      "indicators": [
+        {
+          "normalized_indicator": "课堂话语动作分类",
+          "benchmark_native_metrics": ["Talk Moves labels", "instructional moves classification"],
+          "scoring_method": "把教师话语标注为追问、复述、重述、促推理、连接学生想法等类别。",
+          "evaluator_type": "automatic_against_human_labels",
+          "benchmarks": ["TalkMoves", "NCTE Transcripts"]
+        },
+        {
+          "normalized_indicator": "课堂反馈建议质量",
+          "benchmark_native_metrics": ["teacher feedback usefulness", "actionability", "pedagogical alignment"],
+          "scoring_method": "评价模型基于课堂片段给教师的建议是否可执行、对齐教学目标。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["NCTE Transcripts", "TIMSS Video Study", "self-built required"]
+        },
+        {
+          "normalized_indicator": "跨课堂泛化",
+          "benchmark_native_metrics": ["cross-teacher", "cross-school", "cross-country split"],
+          "scoring_method": "按教师、学校、国家或课程切分后评估分类或建议质量。",
+          "evaluator_type": "automatic_plus_human_analysis",
+          "benchmarks": ["TIMSS Video Study", "TalkMoves"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D20",
+      "dimension": "课堂视觉行为与参与度识别",
+      "indicators": [
+        {
+          "normalized_indicator": "学生行为识别",
+          "benchmark_native_metrics": ["behavior classification accuracy", "action recognition"],
+          "scoring_method": "识别听讲、举手、互动、走神等课堂行为。",
+          "evaluator_type": "automatic_against_human_labels",
+          "benchmarks": ["SCB-Dataset", "ARIC"]
+        },
+        {
+          "normalized_indicator": "参与度/兴趣度预测",
+          "benchmark_native_metrics": ["engagement score", "interest level", "participation label"],
+          "scoring_method": "根据对话、视频或行为预测学生参与度。",
+          "evaluator_type": "automatic_against_human_labels",
+          "benchmarks": ["IntrEx", "ARIC"]
+        },
+        {
+          "normalized_indicator": "多模态同步理解",
+          "benchmark_native_metrics": ["audio-video-text alignment", "classroom event grounding"],
+          "scoring_method": "联合图像、音频、文本定位课堂事件和参与变化。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["ARIC", "classroom video resources"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D21",
+      "dimension": "教育安全、合规与角色扮演",
+      "indicators": [
+        {
+          "normalized_indicator": "角色扮演专业度",
+          "benchmark_native_metrics": ["RFS", "role-following score"],
+          "scoring_method": "评价模型作为教师/tutor 是否遵循教育角色和专业边界。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduGuard-Bench"]
+        },
+        {
+          "normalized_indicator": "攻击成功率/安全失败率",
+          "benchmark_native_metrics": ["ASR"],
+          "scoring_method": "统计对抗诱导下模型产生不安全或不专业回复的比例，越低越好。",
+          "evaluator_type": "automatic_or_model_judge",
+          "benchmarks": ["EduGuard-Bench", "YouthSafe"]
+        },
+        {
+          "normalized_indicator": "青少年风险识别与转介",
+          "benchmark_native_metrics": ["youth risk category", "safeguard success", "crisis escalation quality"],
+          "scoring_method": "评估 grooming、自伤、边界侵犯、情感依赖等风险识别和升级建议。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["YouthSafe", "CASTLE", "self-built required"]
+        },
+        {
+          "normalized_indicator": "学生个体差异安全",
+          "benchmark_native_metrics": ["student-specific safety", "empathy", "developmental appropriateness"],
+          "scoring_method": "按年龄、认知水平、心理状态评价回复是否安全适配。",
+          "evaluator_type": "human_or_model_judge",
+          "benchmarks": ["CASTLE"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D22",
+      "dimension": "教学可视化生成",
+      "indicators": [
+        {
+          "normalized_indicator": "逻辑序列",
+          "benchmark_native_metrics": ["logic sequence"],
+          "scoring_method": "评价可视化步骤是否符合解题或概念讲解顺序。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduVisBench", "VisualEDU"]
+        },
+        {
+          "normalized_indicator": "结构丰富度",
+          "benchmark_native_metrics": ["structural richness"],
+          "scoring_method": "评价图形、布局、层次、交互元素是否支持学习。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduVisBench"]
+        },
+        {
+          "normalized_indicator": "语义对齐",
+          "benchmark_native_metrics": ["semantic alignment"],
+          "scoring_method": "评价视觉元素是否准确表达题目和讲解内容。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduVisBench", "ME2"]
+        },
+        {
+          "normalized_indicator": "讲解引导",
+          "benchmark_native_metrics": ["explanation guidance"],
+          "scoring_method": "评价可视化是否引导学生理解关键步骤，而非只做装饰。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduVisBench", "VisualEDU"]
+        },
+        {
+          "normalized_indicator": "交互参与度",
+          "benchmark_native_metrics": ["interaction engagement"],
+          "scoring_method": "评价互动控件、动态变化、探索路径是否有教育价值。",
+          "evaluator_type": "model_or_human_judge",
+          "benchmarks": ["EduVisBench", "InteractScience"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D23",
+      "dimension": "交互式科学演示生成",
+      "indicators": [
+        {
+          "normalized_indicator": "程序功能测试通过率",
+          "benchmark_native_metrics": ["PFT Overall", "PFT Average", "PFT Perfect"],
+          "scoring_method": "用 Playwright/unit tests 检查交互功能是否按题目要求工作。",
+          "evaluator_type": "automatic_execution",
+          "benchmarks": ["InteractScience"]
+        },
+        {
+          "normalized_indicator": "动作成功率",
+          "benchmark_native_metrics": ["VQT Action"],
+          "scoring_method": "执行指定交互动作后，检查期望视觉状态是否出现。",
+          "evaluator_type": "automatic_visual_test",
+          "benchmarks": ["InteractScience"]
+        },
+        {
+          "normalized_indicator": "视觉相似度",
+          "benchmark_native_metrics": ["VQT CLIP"],
+          "scoring_method": "比较生成快照和参考快照的 CLIP 相似度。",
+          "evaluator_type": "automatic_model_metric",
+          "benchmarks": ["InteractScience"]
+        },
+        {
+          "normalized_indicator": "语义正确性",
+          "benchmark_native_metrics": ["VQT VLM-judge"],
+          "scoring_method": "用多模态模型判断视觉结果是否符合科学演示规格。",
+          "evaluator_type": "model_judge",
+          "benchmarks": ["InteractScience"]
+        }
+      ]
+    },
+    {
+      "dimension_id": "D24",
+      "dimension": "教育垂类系统端到端能力",
+      "indicators": [
+        {
+          "normalized_indicator": "外部 benchmark 能力",
+          "benchmark_native_metrics": ["MathTutorBench scores", "EduBench scores", "TutorBench scores"],
+          "scoring_method": "把系统或底座模型放到公开 benchmark 上复测。",
+          "evaluator_type": "benchmark_specific",
+          "benchmarks": ["LearnLM", "InnoSpark", "九章", "子曰", "星火教育", "CheggMate"]
+        },
+        {
+          "normalized_indicator": "工作流完成度",
+          "benchmark_native_metrics": ["task completion", "workflow success", "teacher adoption"],
+          "scoring_method": "评估备课、讲题、批改、学情分析等产品工作流是否完整完成。",
+          "evaluator_type": "human_or_product_telemetry",
+          "benchmarks": ["self-built required"]
+        },
+        {
+          "normalized_indicator": "真实学习效果",
+          "benchmark_native_metrics": ["learning gain", "delayed retention", "transfer", "A/B outcome"],
+          "scoring_method": "通过前后测、延迟测、迁移题或平台 A/B 指标评估学生是否真正学会。",
+          "evaluator_type": "human_experiment_or_product_telemetry",
+          "benchmarks": ["self-built required"]
+        },
+        {
+          "normalized_indicator": "教师采纳与修改量",
+          "benchmark_native_metrics": ["teacher acceptance rate", "edit distance", "override rate"],
+          "scoring_method": "统计教师是否采纳 AI 建议、修改多少、拒绝原因。",
+          "evaluator_type": "product_telemetry_or_human_review",
+          "benchmarks": ["self-built required"]
+        }
+      ]
+    }
+  ],
+  "sources_used_for_metric_names": [
+    "https://github.com/eth-lre/mathtutorbench",
+    "https://eth-lre.github.io/mathtutorbench/",
+    "https://labs.scale.com/leaderboard/tutorbench",
+    "https://labs.scale.com/papers/tutorbench",
+    "https://www.researchgate.net/publication/391676181_SAS-Bench_A_Fine-Grained_Benchmark_for_Evaluating_Short_Answer_Scoring_with_Large_Language_Models",
+    "https://mathvista.github.io/",
+    "https://evalscope.readthedocs.io/en/latest/benchmarks/olympiad_bench.html",
+    "https://me2-benchmark.github.io/",
+    "https://scivideobench.github.io/",
+    "https://github.com/open-compass/InteractScience",
+    "https://www.researchgate.net/publication/396459862_InteractScience_Programmatic_and_Visually-Grounded_Evaluation_of_Interactive_Scientific_Demonstration_Code_Generation"
+  ]
+}
