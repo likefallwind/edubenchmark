@@ -61,6 +61,9 @@
 ├── scripts/
 │   ├── build_exhaustive_2026_05_13.py
 │   └── download_all_datasets.sh
+├── skills/
+│   └── edubenchassistant/
+│       └── SKILL.md
 ├── sources/
 │   └── datasets/
 └── todo.md
@@ -71,7 +74,46 @@
 - `reports/` 放人可读调研报告和结论。
 - `data/` 放机器可读抽取结果、下载 manifest 和日志。
 - `scripts/` 放生成脚本和下载脚本。
+- `skills/edubenchassistant/` 放面向 Agent 的 EduBench Assistant skill。
 - `sources/` 放真实下载的数据集，已在 `.gitignore` 中，不提交到 git。
+
+## EduBench Assistant Skill
+
+本仓库包含一个 Agent skill：[skills/edubenchassistant/SKILL.md](./skills/edubenchassistant/SKILL.md)。
+
+它用于在用户描述一个 AI-教育应用、产品想法或具体教学场景时，基于本仓库资料生成评测建议，并最终输出 HTML 报告。典型输出包括：
+
+- 应重点关注哪些 D01-D24 原子能力。
+- 对应哪些 S1-S8 一级尺度。
+- 过去已有 benchmark 做过哪些相似评测。
+- 原生指标、公开模型结果和数据集可用状态。
+- 需要额外关注的安全、污染、rubric、学习效果、教师监督等问题。
+
+本地开发安装方式：
+
+```bash
+install -D skills/edubenchassistant/SKILL.md ~/.agents/skills/edubenchassistant/SKILL.md
+```
+
+如果把本仓库发布到 GitHub，并保持 `skills/edubenchassistant/SKILL.md` 结构，可以用 Skills CLI 安装：
+
+```bash
+npx skills add <owner>/<repo>@edubenchassistant -g -y
+```
+
+示例：
+
+```bash
+npx skills add likefallwind/edubenchmark@edubenchassistant -g -y
+```
+
+常用 Skills CLI 命令：
+
+```bash
+npx skills find education benchmark
+npx skills check
+npx skills update
+```
 
 ## 数据下载
 
