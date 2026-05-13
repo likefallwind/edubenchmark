@@ -21,8 +21,9 @@ SUPPLEMENT = ROOT / "edu_benchmark_survey_supplement_2026-05-11.md"
 DIM_FILE = ROOT / "data" / "benchmark_metric_dimensions_2026-05-12.json"
 IND_FILE = ROOT / "data" / "benchmark_metric_indicators_2026-05-12.json"
 OUTDIR = ROOT / "data" / "exhaustive_2026-05-13"
-MD_REPORT = ROOT / "ai_edu_benchmark_exhaustive_index_2026-05-13.md"
-HTML_REPORT = ROOT / "ai_edu_benchmark_exhaustive_index_2026-05-13.html"
+REPORT_DIR = ROOT / "reports" / "2026-05-13"
+MD_REPORT = REPORT_DIR / "ai_edu_benchmark_exhaustive_index_2026-05-13.md"
+HTML_REPORT = REPORT_DIR / "ai_edu_benchmark_exhaustive_index_2026-05-13.html"
 
 
 BENCHMARK_ALIASES = {
@@ -677,7 +678,7 @@ def extra_resource_results(bench_dims: dict[str, list[str]]) -> tuple[list[dict[
             row["model"],
             row["metric"],
             row["score"],
-            "web_verified_updates_2026-05-13.md",
+            "reports/2026-05-13/web_verified_updates_2026-05-13.md",
             "2026-05-13 web-verified emerging education benchmarks",
             bench_dims,
             setting=row["setting"],
@@ -706,7 +707,7 @@ def extra_resource_results(bench_dims: dict[str, list[str]]) -> tuple[list[dict[
     }
     logs = [
         {
-            "source_file": "web_verified_updates_2026-05-13.md",
+            "source_file": "reports/2026-05-13/web_verified_updates_2026-05-13.md",
             "source_section": "2026-05-13 web-verified emerging education benchmarks",
             "benchmark": "ConvoLearn / PEBBLE",
             "markdown_rows": 2,
@@ -1284,7 +1285,8 @@ def main() -> None:
     write_jsonl(OUTDIR / "dataset_acquisition.jsonl", dataset_acquisition)
     write_log(OUTDIR / "extraction_log.md", logs, results, metrics, benchmarks)
     write_dataset_acquisition_report(OUTDIR / "dataset_acquisition_report.md", dataset_acquisition)
-    write_web_update_note(ROOT / "web_verified_updates_2026-05-13.md")
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    write_web_update_note(REPORT_DIR / "web_verified_updates_2026-05-13.md")
     write_reports(results, metrics, benchmarks, dim_names)
     stats = verify(OUTDIR)
     stats["dataset_acquisition.jsonl"] = len(dataset_acquisition)

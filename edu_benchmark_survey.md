@@ -126,7 +126,7 @@
 | TalkMoves | 567 篇人工注释 K12 数学课堂转录，标注 talk moves。 | 适合评测教师话语动作识别；大模型容易混淆相近教学意图。 | [GitHub](https://github.com/SumnerLab/TalkMoves/tree/main/data) |
 | TIMSS Video Study | 1,000+ 八年级数学/科学课堂视频与转录，覆盖 7 个国家。 | 适合跨文化课堂分析；视频年代、课程制度和语言差异会影响泛化。 | [Official](https://www.timssvideo.com/transcripts) |
 | SIGHT | MIT 数学公开课 288 个讲座转录和 15,784 条学生评论。 | 可用于讲座理解、学生反馈建模、知识点抽取；不是模型排行榜。 | [GitHub](https://github.com/rosewang2008/sight/tree/main/data) |
-| VisualEDU | 数学解题可视化讲解生成系统与数据，基于 LLM 和 Manim。 | 与 EduVisBench 类似，真正难点是让动画严格对应解题步骤，而非生成装饰性图形。 | [GitHub](https://github.com/Uchihalchigo/VisualEDU) |
+| VisualEDU | 数学解题可视化讲解生成系统与数据，基于 LLM 和 Manim。 | 与 EduVisBench 类似，真正难点是让动画严格对应解题步骤，而非生成装饰性图形。 | [GitHub](https://github.com/UchihaIchigo/VisualEDU) |
 | MLPdataset | 大学课程幻灯片、180+ 小时讲解视频、讲师课程数据。 | 适合课程视频理解、幻灯片-讲解对齐、讲座摘要；无统一榜单。 | [GitHub](https://github.com/mlpdataset) |
 | MOOCCube | ACL 2020 MOOC 数据，含课程、视频、概念图谱、用户选课和观看行为。 | 适合课程推荐、概念图谱、学习路径建模；模型评测常在推荐/KT 指标上，不等同于 LLM 教学能力。 | [Official](http://moocdata.cn/data/MOOCCube) |
 | TutorialBank | ACL 2018 教程资源库，20,243 个资源及 URL、元数据、主题标注。 | 适合教育资源检索、分类和推荐；网页失效和主题层级噪声是主要问题。 | [GitHub](https://github.com/Yale-LILY/TutorialBank) |

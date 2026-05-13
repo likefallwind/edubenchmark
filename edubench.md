@@ -108,7 +108,7 @@
 * **TalkMoves**: 包含567篇由人工注释的K-12 数学课堂教学转录文本,涵盖完整课程或课程片段: https://github.com/SumnerLab/TalkMoves/tree/main/data
 * **TIMSS Video Study**: 超过1,000节八年级数学和科学课堂的录像以及转录文本,涵盖7个国家: https://www.timssvideo.com/transcripts
 * **SIGHT**: 收录了MIT数学公开课的288个讲座转录文本和15,784条学生评论: https://github.com/rosewang2008/sight/tree/main/data
-* **VisualEDU**: 面向数学教育的端到端解题可视化讲解生成系统+配套标注数据集,基于大模型与 Manim 动画引擎,实现数学题的分步解题、动画代码生成、视频渲染全流程自动化: https://github.com/Uchihalchigo/VisualEDU
+* **VisualEDU**: 面向数学教育的端到端解题可视化讲解生成系统+配套标注数据集,基于大模型与 Manim 动画引擎,实现数学题的分步解题、动画代码生成、视频渲染全流程自动化: https://github.com/UchihaIchigo/VisualEDU
 * **MLPdataset**: 9031 张大学课程幻灯片、180+小时真人教授讲解视频、10位大学讲师的完整系列课程: https://github.com/mlpdataset
 * **MOOCCube**: 【ACL 2020】 http://moocdata.cn/data/MOOCCube,包含706门来自“学堂在线”的真实课程,38,181个教学视频,包含114,563个概念,并构建了概念图谱(包含先后修、上下位等关系,包含199,199名用户的选课记录和详细视频观看行为(如观看次数、倍速、拖拽位置等)。
 * **TutorialBank**: 【ACL 2018】 https://github.com/Yale-LILY/TutorialBank,包含20,243个资源,均带有有效的URL、元数据(Meta-data)和经过良好标注的主题(Topics)

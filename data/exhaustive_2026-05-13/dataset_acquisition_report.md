@@ -83,7 +83,7 @@
 | TalkMoves | `sources/datasets/talkmoves` | `git clone --depth 1 https://github.com/SumnerLab/TalkMoves sources/datasets/talkmoves` |
 | TutorBench | `sources/datasets/tutorbench` | `huggingface-cli download --repo-type dataset ScaleAI/TutorBench --local-dir sources/datasets/tutorbench` |
 | TutorialBank | `sources/datasets/tutorialbank` | `git clone --depth 1 https://github.com/Yale-LILY/TutorialBank sources/datasets/tutorialbank` |
-| VisualEDU | `sources/datasets/visualedu` | `git clone --depth 1 https://github.com/Uchihalchigo/VisualEDU sources/datasets/visualedu` |
+| VisualEDU | `sources/datasets/visualedu` | `git clone --depth 1 https://github.com/UchihaIchigo/VisualEDU sources/datasets/visualedu` |
 | Adaptive Geography Practice | `sources/datasets/adaptive_geography_practice` | manual_access_or_metadata_only |
 | ARIC | `sources/datasets/aric` | manual_access_or_metadata_only |
 | ASSISTments | `sources/datasets/assistments` | manual_access_or_metadata_only |

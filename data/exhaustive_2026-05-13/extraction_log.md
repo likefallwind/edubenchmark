@@ -48,7 +48,7 @@
 | edu_benchmark_survey.md | SAS-Bench CCS/ECS 平均 | SAS-Bench | 16 | 32 | extracted |  |
 | edu_benchmark_survey_supplement_2026-05-11.md | 一、旧模型结果的线上补充 / 可补充进原报告的代表性新结果 | multiple_benchmarks | 14 | 45 | supplement_representative_updates_extracted | 按补充文件中明确列出的模型-分数展开；不覆盖 survey 原始结果。 |
 | edu_benchmark_survey.md | E. 无官方统一模型榜单的条目 | multiple_resources | 6 | 46 | no_unified_leaderboard_recorded | 每个条目保留 no_unified_leaderboard 结果记录，避免无榜单条目被省略。 |
-| web_verified_updates_2026-05-13.md | 2026-05-13 web-verified emerging education benchmarks | ConvoLearn / PEBBLE | 2 | 4 | web_verified_emerging_resources_added | 补入 2026 检索发现但本地 survey 未覆盖的 tutor/教学过程类条目；ConvoLearn 保留来源页明示的人评分数，PEBBLE 保留为待发布评测协议。 |
+| reports/2026-05-13/web_verified_updates_2026-05-13.md | 2026-05-13 web-verified emerging education benchmarks | ConvoLearn / PEBBLE | 2 | 4 | web_verified_emerging_resources_added | 补入 2026 检索发现但本地 survey 未覆盖的 tutor/教学过程类条目；ConvoLearn 保留来源页明示的人评分数，PEBBLE 保留为待发布评测协议。 |
 | edu_benchmark_survey_supplement_2026-05-11.md | 1. 解题能力：通用学科与考试 | authority_table | 8 | 8 | authority_metadata_extracted | 权威性 表已写入 benchmarks.jsonl 的 authority_* 字段。 |
 | edu_benchmark_survey_supplement_2026-05-11.md | 2. 解题能力：数学专项 | authority_table | 11 | 11 | authority_metadata_extracted | 权威性 表已写入 benchmarks.jsonl 的 authority_* 字段。 |
 | edu_benchmark_survey_supplement_2026-05-11.md | 3. 解题能力：代码与编程教育 | authority_table | 6 | 7 | authority_metadata_extracted | 权威性 表已写入 benchmarks.jsonl 的 authority_* 字段。 |

@@ -1,7 +1,7 @@
 # `todo.md` 问题进一步调研：AI 教育 Benchmark 的机会点与空白
 
 调研日期：2026-05-12  
-基础材料：[todo.md](./todo.md)、[edubench.md](./edubench.md)、[edu_benchmark_survey.md](./edu_benchmark_survey.md)、[edu_benchmark_survey_supplement_2026-05-11.md](./edu_benchmark_survey_supplement_2026-05-11.md)
+基础材料：[todo.md](../../todo.md)、[edubench.md](../../edubench.md)、[edu_benchmark_survey.md](../../edu_benchmark_survey.md)、[edu_benchmark_survey_supplement_2026-05-11.md](../../edu_benchmark_survey_supplement_2026-05-11.md)
 
 ## 结论先行
 
