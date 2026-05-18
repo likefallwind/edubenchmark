@@ -1,6 +1,6 @@
 # AI-教育 Benchmark 调研仓库
 
-本仓库用于整理 AI-教育领域 benchmark、评测尺度、公开效果和可获得数据集。当前工作重点是信息收集与统一尺度建设，不是重新跑模型实验。
+本仓库用于整理 AI-教育领域 benchmark、评测尺度、公开效果、可获得数据集，以及一版可追溯的“原子能力-评价标准-题目出处”benchmark 规格。当前工作重点是信息收集、统一尺度建设和题目出处索引，不是重新跑模型实验。
 
 ## 目标
 
@@ -14,7 +14,12 @@
 
 ## 当前状态
 
-截至 2026-05-13，第一版统一框架已经可以使用：
+截至 2026-05-18，仓库里有两层成果：
+
+1. **调研证据库**：覆盖 AI-教育相关 benchmark / 数据资源、指标、公开结果、数据下载状态。
+2. **Benchmark v1 规格**：把 8 个一级尺度、D01-D24 原子能力、84 个细粒度评价标准和 840 条本地题目/任务样本串起来。
+
+调研证据库状态：
 
 - 覆盖 78 个 benchmark / 数据资源。
 - 抽取 165 个指标。
@@ -22,6 +27,16 @@
 - 覆盖 24 个原子能力。
 - 收敛为 8 个一级评测尺度。
 - 已下载 GitHub / HuggingFace 可直接获取的大部分数据集。
+
+Benchmark v1 状态：
+
+- 8 个一级尺度。
+- 24 个原子能力。
+- 84 个评价标准。
+- 840 条评测题/任务样本。
+- 每条题都有 `source_file` 和 `source_row_or_key`，可追溯到本地数据源。
+- 抽题逻辑不是固定取前 10 条，而是每个评价标准先取最多 80 条候选，再按 `quality_score` 选择前 10 条。
+- 27 个评价标准标为 `coverage_gap` / proxy 样本，表示本地有可构造任务材料，但仍缺原生 benchmark 标签、授权数据、视频/图像资源或产品级日志。
 
 仍未完全补齐的部分主要是访问权限问题：
 
@@ -33,11 +48,33 @@
 
 推荐阅读顺序：
 
-1. [todo.md](./todo.md)：项目目标。
-2. [reports/2026-05-13/README.md](./reports/2026-05-13/README.md)：当前调研状态和是否足够的判断。
-3. [reports/2026-05-13/ai_edu_unified_benchmark_framework_2026-05-13.md](./reports/2026-05-13/ai_edu_unified_benchmark_framework_2026-05-13.md)：统一尺度、场景映射和评分建议。
-4. [reports/2026-05-13/ai_edu_benchmark_catalog_2026-05-13.md](./reports/2026-05-13/ai_edu_benchmark_catalog_2026-05-13.md)：benchmark 总目录。
-5. [data/exhaustive_2026-05-13/dataset_acquisition_report.md](./data/exhaustive_2026-05-13/dataset_acquisition_report.md)：数据下载 manifest。
+1. [AI_EDU_BENCHMARK_V1.md](./AI_EDU_BENCHMARK_V1.md)：根目录主入口，查看 8 个一级尺度、D01-D24 原子能力和评价标准。
+2. [ai_edu_benchmark_v1_questions.json](./ai_edu_benchmark_v1_questions.json)：题目索引 JSON，查每道题的来源文件和行/键位置。
+3. [AI_EDU_BENCHMARK_V1.html](./AI_EDU_BENCHMARK_V1.html)：和主 Markdown 同内容，适合浏览。
+4. [reports/2026-05-18/ai_edu_benchmark_v1_spec.md](./reports/2026-05-18/ai_edu_benchmark_v1_spec.md)：更完整的 v1 规格报告。
+5. [reports/2026-05-13/ai_edu_unified_benchmark_framework_2026-05-13.md](./reports/2026-05-13/ai_edu_unified_benchmark_framework_2026-05-13.md)：统一尺度、场景映射和评分建议。
+6. [reports/2026-05-13/ai_edu_benchmark_catalog_2026-05-13.md](./reports/2026-05-13/ai_edu_benchmark_catalog_2026-05-13.md)：benchmark 总目录。
+7. [data/exhaustive_2026-05-13/dataset_acquisition_report.md](./data/exhaustive_2026-05-13/dataset_acquisition_report.md)：数据下载 manifest。
+
+## 主要文件说明
+
+| 文件 / 目录 | 作用 |
+|---|---|
+| `AI_EDU_BENCHMARK_V1.md` | 根目录可读总览。按 S1-S8、D01-D24、评价标准组织，是当前最推荐打开的入口。 |
+| `AI_EDU_BENCHMARK_V1.html` | 根目录 HTML 版总览，方便浏览表格。 |
+| `ai_edu_benchmark_v1_questions.json` | 题目索引 JSON。每条题含 `item_id`、`dimension_id`、`criterion_id`、`question`、`answer_or_rubric`、`scoring_method`、`source_file`、`source_row_or_key`、`quality_score`。 |
+| `data/benchmark_v1_2026-05-18/items.jsonl` | v1 题目明细，每行一道题或一个任务构造样本。适合程序读取。 |
+| `data/benchmark_v1_2026-05-18/capability_criteria.jsonl` | v1 评价标准明细，每行一个标准，包含原子能力、指标族、推荐 benchmark、覆盖状态和抽样规则。 |
+| `data/benchmark_v1_2026-05-18/source_manifest.jsonl` | v1 来源 manifest，说明每个来源文件是否本地存在、访问状态、抽样说明、抽到的 row/key。 |
+| `reports/2026-05-18/ai_edu_benchmark_v1_spec.md` | v1 完整规格报告，内容比根目录总览更细。 |
+| `reports/2026-05-18/ai_edu_benchmark_v1_spec.html` | v1 完整规格 HTML 报告。 |
+| `scripts/build_benchmark_v1_2026_05_18.py` | 生成 v1 三件套和明细 JSONL 的脚本。核心逻辑是“读取 taxonomy -> 构造候选题 -> 质量排序 -> 取前 10 -> 输出 Markdown/HTML/JSON”。 |
+| `data/exhaustive_2026-05-13/` | 2026-05-13 的调研证据库：benchmark、指标、公开结果、能力映射和数据获取状态。 |
+| `reports/2026-05-13/` | 2026-05-13 的调研报告、统一框架、benchmark catalog。 |
+| `data/benchmark_metric_dimensions_2026-05-12.json` | D01-D24 原子能力定义、相关 benchmark 和覆盖说明。 |
+| `data/benchmark_metric_indicators_2026-05-12.json` | 每个原子能力下的细粒度评价指标，是 v1 评价标准的主要来源。 |
+| `sources/datasets/` | 本地下载的数据集副本。已在 `.gitignore` 中，通常不提交到 git。 |
+| `skills/edubenchassistant/SKILL.md` | 面向 Agent 的 EduBench Assistant skill。 |
 
 ## 目录结构
 
@@ -47,6 +84,10 @@
 │   ├── benchmark_metric_dimensions_2026-05-12.json
 │   ├── benchmark_metric_indicators_2026-05-12.json
 │   ├── model_dimension_performance_2026-05-12.json
+│   ├── benchmark_v1_2026-05-18/
+│   │   ├── items.jsonl
+│   │   ├── capability_criteria.jsonl
+│   │   └── source_manifest.jsonl
 │   └── exhaustive_2026-05-13/
 │       ├── benchmarks.jsonl
 │       ├── metrics.jsonl
@@ -57,15 +98,20 @@
 │       └── download_summary.csv
 ├── reports/
 │   ├── 2026-05-12/
-│   └── 2026-05-13/
+│   ├── 2026-05-13/
+│   └── 2026-05-18/
 ├── scripts/
 │   ├── build_exhaustive_2026_05_13.py
+│   ├── build_benchmark_v1_2026_05_18.py
 │   └── download_all_datasets.sh
 ├── skills/
 │   └── edubenchassistant/
 │       └── SKILL.md
 ├── sources/
 │   └── datasets/
+├── AI_EDU_BENCHMARK_V1.md
+├── AI_EDU_BENCHMARK_V1.html
+├── ai_edu_benchmark_v1_questions.json
 └── todo.md
 ```
 
@@ -136,7 +182,47 @@ FAILED_ONLY=1 COMMAND_TIMEOUT=300 ./scripts/download_all_datasets.sh
 
 如果下载源是 Gitee HTTPS URL，脚本会自动改写为 SSH 形式，适配已有 Gitee SSH 权限。
 
-## 重新生成抽取结果
+## 重新生成 Benchmark v1
+
+运行：
+
+```bash
+python scripts/build_benchmark_v1_2026_05_18.py
+```
+
+该脚本会更新：
+
+- `AI_EDU_BENCHMARK_V1.md`
+- `AI_EDU_BENCHMARK_V1.html`
+- `ai_edu_benchmark_v1_questions.json`
+- `data/benchmark_v1_2026-05-18/items.jsonl`
+- `data/benchmark_v1_2026-05-18/capability_criteria.jsonl`
+- `data/benchmark_v1_2026-05-18/source_manifest.jsonl`
+- `reports/2026-05-18/ai_edu_benchmark_v1_spec.md`
+- `reports/2026-05-18/ai_edu_benchmark_v1_spec.html`
+
+只做结构校验：
+
+```bash
+python scripts/build_benchmark_v1_2026_05_18.py --validate-only
+```
+
+当前验证结果：
+
+```text
+criteria=84
+items=840
+manifest=88
+```
+
+抽题逻辑：
+
+- 每个评价标准先构造最多 80 条本地候选题。
+- 用透明启发式打 `quality_score`：题干长度、答案/rubric 完整度、评分方式、evaluator、题源是否存在、benchmark 是否匹配、是否有程序测试/多模态/安全/rubric 信号。
+- 每个评价标准最终保留前 10 条。
+- `coverage_status` 包含 `coverage_gap` 的标准表示当前只是 proxy/resource-construction 样本，不能当作原生 benchmark 已完全覆盖。
+
+## 重新生成 2026-05-13 调研抽取结果
 
 运行：
 
