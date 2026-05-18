@@ -23,7 +23,7 @@
 | 原子能力 | 24 |
 | 评价标准 | 84 |
 | 评测题/任务样本 | 840 |
-| 采样来源文件 | 29 |
+| 采样来源文件 | 31 |
 | 含 proxy/gap 的评价标准 | 27 |
 
 ## 一级尺度
@@ -356,6 +356,12 @@
 | questions[].source_row_or_key | 来源文件中的行号、key、ID 或构造键。 |
 | questions[].item_record_file / item_record_line | 该题在 JSONL 明细中的位置。 |
 | questions[].answer_or_rubric / scoring_method | 标准答案、评分规则或 rubric。 |
+| questions[].quality_score | 候选题质量分，用于从候选池中选出前 10 条。 |
+| questions[].quality_reasons | 质量分来源，例如题干长度合适、答案完整、题源可追溯、贴近推荐 benchmark。 |
+
+## 抽题逻辑
+
+每个评价标准不再固定取来源文件前 10 条，而是先构造最多 80 条本地候选题，再按以下启发式质量信号排序，最后保留前 10 条：题干长度是否合适、答案或 rubric 是否完整、评分方式和 evaluator 是否明确、来源文件是否真实存在、benchmark 是否匹配该评价标准、是否包含程序测试/多模态/安全/rubric 等对应指标信号。这个排序是透明启发式，不等于人工或 LLM 语义审题；`quality_reasons` 会保留每题被选中的原因。
 
 ## 覆盖说明
 
