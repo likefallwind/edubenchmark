@@ -16,3 +16,8 @@ AutoEduBenchMark
 2. 基于该模型，用所有edubenchmark给评分
 3. 持续自动化收集最新的benchmark加入其中，扩充benchmark队列
 4. 同时持续补充要人工标注的benchmark，后续可以持续干
+
+
+## 有趣的目标：
+
+类似llm-arena，强调human in the loop。让人来给LLM提出挑战，收集这些挑战作为benchmark
