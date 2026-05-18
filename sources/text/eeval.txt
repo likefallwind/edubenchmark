@@ -1,0 +1,1961 @@
+arXiv:2401.15927v1 [cs.CL] 29 Jan 2024
+
+E-EVAL: A Comprehensive Chinese K-12 Education
+Evaluation Benchmark for Large Language Models
+Jinchang Hou∗1,2 , Chang Ao∗1,3 , Haihong Wu1,2 , Xiangtao Kong1,2 ,
+Zhigang Zheng1,3 , Daijia Tang4 , Chengming Li5 , Xiping Hu5 , Ruifeng Xu6 ,
+Shiwen Ni† 1 , and Min Yang† 1
+1
+
+Shenzhen Institute of Advanced Technology, Chinese Academy of Sciences, Shenzhen, China
+2
+University of Science and Technology of China, Hefei, China
+3
+Southern University of Science and Technology, Shenzhen, China
+4
+UNION INFORMATION, Shenzhen, China
+5
+Shenzhen MSU-BIT University, Shenzhen, China
+6
+Harbin Institute of Technology (Shenzhen), Shenzhen, China
+{sw.ni, min.yang, c.ao, zg.zheng}@siat.ac.cn, {jinchangh, taotaotao}@ustc.edu,
+haihongw@mail.ustc.edu.cn, tangdj@szlhxx.com, licm@smbu.edu.cn, xuruifeng@hit.edu.cn
+
+Abstract
+With the accelerating development of Large Language Models (LLMs), many
+LLMs are beginning to be used in the Chinese K-12 education domain. The
+integration of LLMs and education is getting closer and closer, however, there is
+currently no benchmark for evaluating LLMs that focuses on the Chinese K-12
+education domain. Therefore, there is an urgent need for a comprehensive natural
+language processing benchmark to accurately assess the capabilities of various
+LLMs in the Chinese K-12 education domain. To address this, we introduce the
+E-EVAL, the first comprehensive evaluation benchmark specifically designed for
+the Chinese K-12 education field. The E-EVAL consists of 4,351 multiple-choice
+questions at the primary, middle, and high school levels across a wide range of
+subjects, including Chinese, English, Politics, History, Ethics, Physics, Chemistry,
+Mathematics, and Geography. We conducted a comprehensive evaluation of EEVAL on advanced LLMs, including both English-dominant and Chinese-dominant
+models. Findings show that Chinese-dominant models perform well compared to
+English-dominant models, with many scoring even above the GPT 4.0. However,
+almost all models perform poorly in complex subjects such as mathematics. We
+also found that most Chinese-dominant LLMs did not achieve higher scores at
+the primary school level compared to the middle school level. We observe that
+the mastery of higher-order knowledge by the model does not necessarily imply
+the mastery of lower-order knowledge as well. Additionally, the experimental
+results indicate that the Chain of Thought (CoT) technique is effective only for
+the challenging science subjects, while Few-shot prompting is more beneficial
+for liberal arts subjects. With E-EVAL, we aim to analyze the strengths and
+limitations of LLMs in educational applications, and to contribute to the progress
+and development of Chinese K-12 education and LLMs345 .
+∗
+
+Equal Contribution
+Corresponding author
+3
+https://github.com/AI-EDU-LAB/E-EVAL
+4
+https://huggingface.co/datasets/E-EVAL/E-EVAL
+5
+https://eevalbenchmark.com
+
+†
+
+Preprint. Under review.
+
+1
+
+Introduction
+
+Large language models (LLMs) have made significant advancements in the field of natural language
+processing and artificial intelligence. The evaluation of the knowledge and reasoning capabilities
+embedded in these models has become progressively more difficult, leading to the development
+of multiple testing benchmarks. Novel benchmarks such as MMLU(Hendrycks et al., 2021), BIGbench(Srivastava et al., 2022), and HELM(Liang et al., 2022) span multiple domains and tasks,
+encompassing real-world examinations and textbook knowledge. These benchmarks evaluate not
+only language comprehension but also the models’ ability in common sense reasoning, mathematical
+reasoning, and code generation. Concurrently, with the rapid development of Chinese LLMs, an
+increasing number of Chinese benchmarks have begun to surface. MMCU(Zeng, 2023) focuses on professional domains, AGIEval(Zhong et al., 2023) targets China’s standardized tests, C-EVAL(Huang
+et al., 2023) encompasses knowledge from middle school to professional fields, CMMLU(Li et al.,
+2023) concentrates on Chinese culture and CMB(Wang et al., 2023) focuses on the field of Chinese
+medicine. While these benchmarks primarily focus on the models’ advanced ability, certain specific
+fields and topics crucial to the models might not receive adequate attention. Currently, there is no
+comprehensive assessment benchmark in the field of Chinese K-12 education that is important for
+assessing and analyzing the specifics of LLMs’ learning of human knowledge at all stages.
+In this paper, we introduce E-EVAL, the first comprehensive evaluation suite focusing on Chinese
+K-12, aimed at evaluating basic models’ knowledge and reasoning ability within the context of K-12.
+E-EVAL comprises 4,351 multiple-choice questions across primary, middle, and high school stages,
+as depicted in Figure 1 covering 23 subjects including Primary School Chinese, Primary School
+Mathematics, Primary School English, Primary School Science, Primary School Ethics, Middle
+School Chinese, Middle School Mathematics, Middle School English, Middle School Physics, Middle
+School Chemistry, Middle School Biology, Middle School Politics, Middle School History, Middle
+School Geography, High School Chinese, High School Mathematics, High School English, High
+School Physics, High School Chemistry, High School Biology, High School Politics, High School
+History, High School Geography. We further categorize the questions into two types: arts and science,
+with science encompassing disciplines like Mathematics, Physics, Chemistry, and arts including
+Chinese, English, History, etc., noting that the difficulty of arts subjects is generally lower than that
+of science.
+Our evaluation of multiple open-source and commercial models on E-EVAL reveals that Chinesedominant models outperform English-dominant ones in Chinese K-12 performance, with several
+models even surpassing GPT 4.0. However, performance in complex subjects like Mathematics
+remains subpar. Additionally, we observed that advanced Chinese models struggle to achieve higher
+performance at lower educational levels compared to higher ones. This underscores the need for
+improvement in LLMs within the Chinese K-12 educational domain and highlights the potential
+value of E-EVAL as an important evaluation suite.
+subject
+
+#Subject
+
+#Question
+
+In terms of difficulty
+High School
+9
+2225
+Middle School
+9
+1589
+Primary School
+5
+537
+Arts
+Science
+Dev
+Valid
+Test
+Total
+
+In terms of arts/science
+13
+2699
+10
+1652
+In terms of split
+23
+23
+23
+23
+
+115
+424
+3812
+
+Option
+
+E-EVAL
+
+C-EVAL
+
+MMLU
+
+A
+B
+C
+D
+
+24.3%
+26.1%
+25.8%
+23.8%
+
+22.9%
+26.0%
+26.4%
+24.7%
+
+23.1%
+24.7%
+25.5%
+26.7%
+
+Table 2: Distribution of the correct answer.
+
+4351
+
+Table 1: Statistics of E-EVAL.
+
+2
+
+Figure 1: Overview diagram of the E-EVAL benchmark.
+
+2
+
+The E-EVAL Evaluation Benchmark
+
+2.1
+
+Design Principle
+
+E-EVAL is a meticulously crafted benchmark designed to evaluate the performance of LLMs within
+the diverse educational environments of Chinese K-12 education. It encompasses a comprehensive
+coverage of various subjects, categorizing them into arts and science to provide an all-encompassing
+evaluation across all educational stages. Overall statistics of E-EVAL are presented in Table 1, with
+detailed subject-wise data in Appendix A.1.
+The benchmark employs a multiple-choice question format,akin to Hendrycks et al. (2021),offering a
+clear and effective method for evaluating the precision and reasoning ability of LLMs. The questions,
+carefully selected and primarily sourced from homework and local small-scale exams, reflect the real
+educational setting while maintaining content originality and regional specificity. Special attention
+has been paid to the manual collection and fine processing of data, especially for subjects involving
+complex equations, to ensure high data integrity.
+E-EVAL deliberately avoids using questions from national exams like the Gaokao to minimize the
+risk of data contamination, instead opting for mock tests and specific high school online exams.
+The choice to use PDF and Word documents as primary sources of information, rather than plain
+text or structured questions, further reduces the risk of data leakage. E-EVAL is extracted from
+thousands of test papers from different regions, schools, grades and subjects. This benchmark is
+particularly aimed at aiding developers in rapidly understanding and enhancing the capability of
+LLMs in processing subject-specific knowledge and content with cultural uniqueness in the context of
+Chinese education. Thus, E-EVAL is a comprehensive, effective, and culturally benchmark, intended
+to foster the advancement and optimization of LLMs in the educational technology field.
+2.2
+
+Data Collection
+
+Subjects: E-EVAL encompasses a range of subjects pivotal to Chinese K-12 education, covering key
+disciplines at primary, middle, and high school levels to cater to the educational needs of different age
+groups. This comprehensive coverage ensures E-EVAL’s high applicability and representativeness
+across various educational stages. For better organization of these subjects, they have been divided
+into two main categories: arts and science, to more aptly reflect the nature and characteristics of
+each discipline. In the arts category, subjects that study unique aspects of human society, such as
+politics, economics, and culture, are included. These subjects not only focus on the transmission
+of knowledge but also emphasize the cultivation of thinking ability and humanistic literacy. This
+3
+
+category encompasses subjects like Chinese, English, Politics, History, and Geography, covering
+the fields of social science and humanity. On the other hand, the science category includes natural
+science, applied science, and mathematical logic, emphasizing the cultivation of scientific methods
+and experimental skills, as well as understanding of the natural world and technological domains.
+This category covers subjects such as Mathematics, Physics, Chemistry, and Biology, encompassing
+the STEM (Science, Technology, Engineering, and Mathematics) fields. In total, E-EVAL covers 23
+different subjects, including both arts and science, as illustrated in Figure 1.
+Sources: Our data primarily come from free, regional homework, practice questions, and mock
+exams available on the internet6 . These are typically provided by schools, educational institutions,
+or teachers to assist students in consolidating knowledge. Unlike public exams like the Gaokao or
+Zhongkao, these local homework and practice questions tend not to circulate widely, thereby posing a
+lower risk of contamination. This choice of data source ensures better originality and quality of data,
+enhancing the credibility of the assessment. Moreover, these regional questions better reflect the real
+educational environment and academic requirements, as they are closer to what students encounter in
+their daily learning.
+实验室需配制一种强酸溶液500mL，c(H + )=2mol/L，下列配制方法可行的是：
+Laboratory needs to prepare a strong acid solution of 500mL, c(H + )=2mol/L, the feasible
+preparation method is:
+A. 取100mL5mol/LH2 SO4 ，加入400mL水。
+A. Take 100mL of 5mol/L H2 SO4 , add 400mL of water.
+B. 取100mL5mol/LH2 SO4 ，加水稀释至500mL。
+B. Take 100mL of 5mol/L H2 SO4 , dilute with water to 500mL.
+C. 取100mL5mol/LHCl，加水稀释至500mL。
+C. Take 100mL of 5mol/L HCl, dilute with water to 500mL.
+D. 取100mL5mol/LHN O3 ，加水稀释至500mL。
+D. Take 100mL of 5mol/L HN O3 , dilute with water to 500mL.
+答案：B
+Answer: B
+详解：A．100mL5mol/L H2 SO4 ，加入400mL水溶液的体积要小于500mL，无法计算
+浓度，A不符合题意； B．c(H + )==2mol/L，B符合题意； C．c(H + )==1mol/L，C不
+符合题意 ； D．c(H + )==1mol/L，D不符合题意； 故选B。
+Explanation: A. The volume of the solution of 100mL 5mol/L H2 SO4 with 400mL of water
+is less than 500mL, and the concentration cannot be calculated, so A does not meet the
+requirements; B. c(H + ) == 2mol/L, B meets the requirements; C. c(H + ) == 1mol/L, C
+does not meet the requirements; D. c(H + ) == 1mol/L, D does not meet the requirements;
+Therefore, choose B.
+Figure 2: A development example with explanations from E-EVAL. English translations are provided
+beneath the relevant Chinese text.
+Processing: The collected data are in various formats, primarily PDFs and Microsoft Word documents.
+For arts subjects like Chinese and English, we employ scripts to automatically parse PDF and Word
+documents for structured data. However, for science subjects with complex formulas, manual parsing
+is necessary, converting formulas into standard LaTeX format. Most of the collected questions follow
+a format of one question with four options, and questions with fewer than four options are discarded.
+For questions with more than four options, one incorrect option is removed. After format conversion,
+we conduct three rounds of manual checks: the first ensures no data duplication, the second verifies
+the correctness and completeness of formulas, and the third confirms the accuracy of answers. After
+checks, the order of options is deliberately adjusted to achieve a more balanced distribution of
+correct answers among options A, B, C, and D, with the aim of minimizing the potential impact
+of option bias within the model. The distribution of correct answer is shown in Table 2. A total
+of 4351 questions were collected, categorized into development, validation, and test sets across the
+23 subjects. Additionally, we selected five representative questions with explanations to support
+Few-shot assessments. A representative example with explanations is illustrated in Figure 2. The
+6
+
+Our raw data comes from https://www.zxxk.com/ and https://zujuan.xkw.com/.
+
+4
+
+final development set contains 115 questions, the validation set contains 424 questions, and the test
+set contains 3812 questions,as shown in Table 1.
+2.3
+
+E-EVAL Arts and Science
+
+We divided E-EVAL into two separate benchmarks by subject, E-EVAL Arts and E-EVAL Science.
+E-EVAL Arts includes 13 subjects: primary school Chinese, primary school English, primary
+school ethics, middle school Chinese, middle school English, middle school politics, middle school
+history, middle school geography, high school Chinese, high school English, high school politics,
+high school history and high school geography. E-EVAL Science consists of 10 subjects: Primary
+school Mathematics, Primary school Science, Middle School Mathematics, Middle School Physics,
+Middle School Chemistry, Middle School Biology, High School Mathematics, High School Physics,
+High School Chemistry, and High School Biology.
+2.4
+
+Evaluation
+以下是中国关于高中生物的单项选择题，请选出其中的正确答案。
+The following are multiple-choice questions about biology of high school in China. Please
+select the correct answer.
+人体内含有多种多样的蛋白质，每种蛋白质( )。
+The human body contains various proteins, and each protein ( ).
+A. 都含有21种氨基酸。
+A. Contains 21 types of amino acids.
+B. 都是在细胞内发挥作用。
+B. Functions within cells.
+C. 都能调节生物体的生命活动。
+C. Regulates the life activities of organisms.
+D. 都具有一定的空间结构。
+D. Has a certain spatial structure.
+答案：D
+Answer: D
+...[another 4 examples without explanation]...
+下列关于植物激素作用的说法，错误的是( )。
+Among the following statements about the effects of plant hormones, the incorrect one is ( )
+A. 种子在即将成熟时遇到高温天气出现“穗上发芽”的现象与脱落酸含量降低有关。
+A. The phenomenon of "germination on the ear" when seeds are about to mature in high
+temperatures is related to the decrease in abscisic acid content.
+B. 摘除棉花的顶芽可以促进侧芽的萌发，主要是因为顶芽摘除后侧芽处生长素含量
+降低。
+B. Removing the apical bud of cotton can promote the germination of lateral buds, mainly
+because the content of auxin at the lateral bud decreases after the apical bud is removed.
+C. 啤酒生产中用赤霉素处理大麦种子，可以使大麦在不发芽的状态下就能产生淀粉
+酶。
+C. Treating barley seeds with gibberellin in beer production can allow barley to produce
+amylase without germination.
+D. 生长素浓度升高到一定水平时，会促进乙烯的合成，乙烯又会反过来促进生长素
+合成。
+D. When the concentration of auxin rises to a certain level, it promotes the synthesis of
+ethylene, and ethylene, in turn, promotes the synthesis of auxin.
+答案：D
+Answer: D
+
+Figure 3: An example with five-shot-ao from E-EVAL. The red part is the response from model,
+English translations are provided beneath the relevant Chinese text.
+We use accuracy as the metric for evaluation. To ensure fairness, only the answers to the training
+and validation sets were disclosed, keeping the test set answers private. This approach prevents the
+5
+
+以下是中国关于高中数学的单项选择题，请选出其中的正确答案。
+The following are multiple-choice questions about high school mathematics in China. Please
+select the correct answers.
+已知某教学大楼共有四层，每层都有东、西两个楼梯，则从一层到四层不同的走法
+种数为( )。
+Given that a teaching building has four floors, each with east and west stairs, the number of
+different ways to go from the first floor to the fourth floor is ( ).
+A. 7
+B. 8
+C. 9
+D. 10
+答案: 让我们一步一步思考,根据题意，教学大楼共有四层，每层都有东、西两个楼
+梯，则从一层到二层，有2种走法，同理从二层到三层、从三层到四层也各有2种走
+法，则从一层到四层共有2 × 2 × 2 = 8种走法。所以答案是B。
+Answer: Let’s think step by step. According to the problem, the teaching building has four
+floors, and each floor has east and west stairs. There are 2 ways to go from the first floor to
+the second floor, similarly from the second floor to the third floor, and from the third floor to
+the fourth floor, each having 2 ways. Therefore, the total number of ways from the first floor
+to the fourth floor is 2 × 2 × 2 = 8,so the answer is B.
+... [another 4 examples with explanation] ...
+若集合A = {0, 1, 2}, 则A有( )个真子集。
+If the set A = {0, 1, 2}, then A has ( ) proper subsets.
+A. 7
+B. 8
+C. 9
+D. 6
+答案:
+让我们一步一步思考:集合 A = {0, 1, 2} 的真子集是指除了集合本身和空集之外的所
+有可能子集。
+1、空集是 A的真子集。
+2、包含一个元素的子集：{0}, {1}, {2}。
+3、包含两个元素的子集：{0, 1}, {0, 2}, {1, 2}。
+4、包含所有元素的子集：{0, 1, 2}。
+因此，共有 23 − 1 = 7个真子集，答案是A：7
+Answer:
+Let’s consider step by step: A set A = {0, 1, 2} has subsets, excluding the set itself and the
+empty set.
+1. The empty set is a proper subset of A.
+2. Subsets containing one element: {0}, {1}, {2}.
+3. Subsets containing two elements: {0, 1}, {0, 2}, {1, 2}.
+4. Subset containing all elements: {0, 1, 2}.
+Therefore, there are 23 − 1 = 7 proper subsets, the answer is A:7
+Figure 4: An example with five-shot-cot from E-EVAL. The red part is the response from model,
+English translations are provided beneath the relevant Chinese text.
+
+incorporation of E-EVAL data in pre-training datasets. Users are invited to submit their predictions
+for the test set on our website7 to ascertain their accuracy. The site maintains a public leaderboard,
+where users have the discretion to publish their model’s results.
+
+7
+
+https://eevalbenchmark.com
+
+6
+
+3
+
+Experiment
+
+Here we detail our experiments. We tested 15 advanced models on this benchmark, encompassing
+various sizes, language orientations, and stages (pretrained or fine-tuned). This in-depth analysis of
+their performance offers a reliable reference point for future research in this field.
+3.1
+
+Setup
+
+The experimental design of E-EVAL aims to evaluate the performance of LLMs on E-EVAL. Both
+open-source and proprietary advanced LLMs were tested. These models were prompted to select the
+correct choice from a set of questions with four options (ABCD), and regular expressions were used to
+extract the model’s selected response. Three evaluation methods were developed: zero-shot(Kojima
+et al., 2022), few-shot-answer-only (few-shot-ao), and few-shot-chain-of-thought (few-shot-cot)(Wei
+et al., 2022), to deeply analyze the models’ knowledge and reasoning ability.
+3.2
+
+Prompt
+
+We introduced the following phrase before each question: "以下是中国关于[subject]考试的单
+项选择题，请选出其中的正确答案（Here is a multiple-choice question from China’s [subject]
+examination. Please select the correct answer）" In the zero-shot evaluation, the question and options
+were presented directly after the prompt, without any prior examples or additional information,
+requiring the model to rely solely on its existing knowledge and understanding to respond.
+For the few-shot-ao evaluation, we appended five related questions without explanation from the
+development set. This method helps the model better understand and adapt to the current question
+by leveraging these prior examples, enhancing the model’s ability to adapt to new tasks using a
+minimal number of examples. In the few-shot-cot evaluation, we further included explanations and
+the prompt "让我们一步一步思考(Let’s think step by step)" building on the few-shot-ao approach.
+This is designed to encourage the model to demonstrate its step-by-step reasoning process in solving
+the question, rather than just providing the answer. This evaluation mode emphasizes the model’s
+reasoning ability, making its approach to problem-solving more akin to human thought processes. At
+the end of each question, we added "答案是：(Answer:)" to present the model’s final conclusion.
+The examples of few-shot-ao and few-shot-cot are shown in Figure 3 and Figure 4, respectively.
+3.3
+
+Models
+
+We assessed 15 models from different countries, organizations, and sizes, as shown in Table 3. For
+commercial models, we assessed ChatGPT(OpenAI, 2022), GPT 4.0(OpenAI, 2023), ERNIE-Bot
+and ERNIE-Bot 4.0(Zhang et al., 2019). For open-source models, we tested Qwen-72B/7B(Bai et al.,
+2023), Yi-34B/6B-Chat(01.AI, 2023), ChatGLM3-6B(Du et al., 2022; Zeng et al., 2022), Baichuan213B/7B-Chat(Yang et al., 2023), Chinese-LLaMA-2-13B and Chinese-Alpaca-2-13B(Cui et al.,
+2023), among other general models. Additionally, we evaluated the EduChat series(Dan et al., 2023),
+focusing on China’s education field, including Educhat-sft-002-13B-Baichuan, Educhat-sft-002-7B.
+Please refer to Appendix B for details on each model.
+3.4
+
+Main Results
+
+The testing results of various models are presented in Table 4, where we report the average accuracy
+for three types of prompts across different categories. The accuracy for each of the three prompts is
+shown in Appendix A.2. Detailed accuracy information for each subject is provided in Appendix
+A.3. Among the large-scale models, Alibaba’s Qwen-72B-Chat model achieves the highest accuracy
+rate, averaging 88.8%, attributed to its extensive parameter size and high-quality Chinese corpus.
+Baidu’s ERNIE-Bot 4.0 follows closely in second place, trailing Qwen-72B-Chat by only 3.3
+percentage points. Yi-34B-Chat and ERNIE-Bot demonstrate comparable overall performance,
+with a mere 1 percentage point difference in average accuracy. Notably, GPT 4.0 and ChatGPT
+exhibit poor performance, ranking 5th and 11th in accuracy, respectively. The underperformance
+of the GPTs may be attributed to the training corpus, where the Chinese corpus constitutes a low
+percentage. Among models with parameters less than 10B, Yi-6B-Chat performs the best, ranking
+6th, approaching the accuracy of GPT 4.0 but still trailing behind Yi-34B-Chat. This suggests that
+7
+
+Model
+
+Creator
+
+#Parameters
+
+Access
+
+Qwen-72B
+Ernie-Bot 4.0
+Yi-34B-Chat
+Ernie-Bot
+GPT 4.0
+Yi-6B-Chat
+ChatGLM3-6B
+Qwen-7B
+Baichuan2-13B-Chat
+Baichuan2-7B-Chat
+ChatGPT
+Chinese-Alpaca-2-13B
+Educhat-sft-002-13B
+Chinese-LLaMA-2-13B
+Educhat-sft-002-13B-Baichuan
+
+Alibaba
+Baidu
+01.AI
+Baidu
+OpenAI
+01.AI
+Tsinghua
+Alibaba
+Baichuan
+Baichuan
+OpenAI
+HFL
+ECNU
+HFL
+ECNU
+
+72B
+undisclosed
+34B
+undisclosed
+undisclosed
+6B
+6B
+7B
+13B
+7B
+undisclosed
+13B
+13B
+13B
+13B
+
+Weights
+API
+Weights
+API
+API
+Weights
+Weights
+Weights
+Weights
+Weights
+API
+Weights
+Weights
+Weights
+Weights
+
+Table 3: Models evaluated in this paper.
+
+models with larger parameter sizes demonstrate enhanced knowledge and inference, aligning with
+expectations. Qwen-7B-Chat, Baichuan2-13B-Chat,ChatGLM3-6B, and Baichaun2-7B-Chat closely
+follow, outperforming ChatGPT due to their rich and high-quality Chinese corpus, despite their smaller
+size. Chinese-LLaMA exhibits subpar performance, primarily attributed to the inadequacy of Chinese
+training data. Although EduChat is primarily trained on an educational corpus, it underperformed in
+the evaluation, potentially due to its focus on reinforcing psychological and pedagogical theories.
+Overall, Chinese-dominant models that have been trained on a wide range of Chinese corpora show
+excellent performance in this evaluation. In the same series, the large model outperformed the small
+model. In addition, all models performed much better in arts subjects than in science subjects. This
+is in line with our expectations, as text comprehension is a strong point of LLMs, while logical
+reasoning has been a weak point of LLMs.
+
+Model
+
+Arts
+
+Science
+
+Primary Middle
+
+High
+
+Average
+
+Random
+Qwen-72B-Chat
+Ernie-Bot 4.0
+Yi-34B-Chat
+Ernie-Bot
+GPT 4.0
+Yi-6B-Chat
+Qwen-7B-Chat
+Baichuan2-13B-Chat
+ChatGLM3-6B
+Baichuan2-7B-Chat
+ChatGPT
+Chinese-Alpaca-2-13B
+Educhat-sft-002-13B
+Chinese-LLaMA-2-13B
+Educhat-sft-002-13B-Baichuan
+
+25.0
+92.5
+90.8
+82.4
+81.7
+75.4
+74.7
+67.3
+65.3
+61.9
+62.2
+60.5
+53.6
+41.8
+44.2
+40.2
+
+25.0
+84.0
+78.6
+69.5
+68.2
+64.2
+61.1
+50.1
+47.8
+51.9
+45.0
+46.8
+36.6
+28.9
+31.9
+29.3
+
+25.0
+89.3
+87.3
+79.6
+78.7
+81.9
+71.3
+69.7
+69.2
+60.0
+61.2
+68.3
+51.4
+39.9
+39.2
+40.8
+
+25.0
+85.6
+82.1
+71.7
+71.6
+70.6
+63.1
+53.3
+49.8
+51.8
+48.6
+48.8
+38.9
+32.7
+33.2
+32.2
+
+25.0
+88.9
+85.5
+76.9
+75.9
+70.6
+68.8
+59.9
+57.8
+57.6
+54.8
+54.6
+43.3
+36.3
+35.9
+35.5
+
+25.0
+93.1
+89.6
+83.1
+80.8
+76.8
+76.1
+65.9
+65.1
+65.0
+61.3
+58.2
+46.7
+39.9
+38.5
+38.4
+
+Table 4: Accuracy of multiple models in different categories.
+
+8
+
+3.5
+
+Insight and Analysis
+
+Are large language models better at arts or sciences? Observations from Table 4 regarding
+model performance across different subject categories reveal that all models perform better in arts
+subjects than in science subjects. Arts subjects emphasize memory, interpretation, and language
+understanding, aligning well with the basic construction of the models, which includes language
+processing and pattern recognition ability. Science subjects, on the other hand, involve logical
+reasoning, quantitative analysis, and solving complex problems, requiring strong logical reasoning
+and mathematical processing ability from the models. Therefore, it is logical that models exhibit
+better performance in arts subjects.
+
+以下是中国关于数学考试的单项选择题，请选出其中的正确答案。
+四位同学赛跑，丁丁用了106秒，强强用了1分15秒，明明用了92秒，奇奇用了1分50秒。（ ）跑得最快。
+The following is a Chinese multiple choice question about a math test, please choose the correct answer among them.
+Four students ran a race, Ding Ding took 106 seconds, Qiang Qiang took 1 minute 15 seconds, Ming Ming took 92 seconds and Qi Qi
+took 1 minute 50 seconds. ( ) ran the fastest.
+A. 丁丁 (Ding Ding)
+B. 强强 (Qiang Qiang)
+C. 明明 (Ming Ming)
+D. 奇奇 (Qi Qi)
+答案：
+Answer:
+
+Qwen-72B:
+
+首先，我们需要将所有人的跑步时间转换为同一单位。这里可以将所有人的时间都转换为秒。
+2. 其次，我们比较每个人的时间，时间最短的人跑得最快。
+3. 最后，我们计算出每个人的时间：
+- 丁丁：106 秒
+- 强强：1 分 15 秒 = 75 秒
+- 明明：92 秒
+- 奇奇：1 分 50 秒 = 110 秒
+综上所述，本题答案选C. 明明
+First, we need to convert everyone's running times to the same unit. Here you can convert everyone's time to seconds. \n2. Second, we
+compare everyone's times. The person with the shortest time runs the fastest. \n3. Finally, we calculate each person's time: \n - Ting Ting:
+106 seconds \n - Qiang Qiang: 1 minute 15 seconds = 75 seconds \n - Ming Ming: 92 seconds \n - Qiqiqi: 1 minute 50 seconds = 110
+seconds \n\n Summing up, the answer to this question is C. Ming Ming.
+
+Ernie-Bot 4.0:
+
+C. 明明。\n1分=60秒，1分15秒=75秒，1分50秒=110秒，因92＜106＜110＜75，所以明明用的时间最少，明明跑的最快。故选：C。
+C. Ming Ming. \n1 minute = 60 seconds, 1 minute 15 seconds = 75 seconds, 1 minute 50 seconds = 110 seconds, since 92 < 106 < 110 <
+75, Ming took the least amount of time and Ming ran the fastest. Therefore, choose: C.
+
+Yi-34B-chat:
+
+首先，我们需要将所有时间转换为秒，因为所有的计时都需要在同一个单位下进行比较。
+丁丁用了106秒。强强用了1分15秒，即60秒 + 15秒 = 75秒。明明用了92秒。奇奇用了1分50秒，即60秒 + 50秒 = 110秒。
+现在我们有了所有时间都在秒的单位下：
+- 丁丁：106秒
+- 强强：75秒
+- 明明：92秒
+- 奇奇：110秒
+要找出谁跑得最快，我们需要比较每个人的时间。时间越短，说明他们跑得越快。
+从上面的列表中，我们可以看到明明用的时间最短，是92秒。
+所以，正确答案是：C. 明明
+因此，明明跑得最快。
+First, we need to convert all times to seconds because all timekeeping needs to be compared under the same unit. \n\n Ding Ding took
+106 seconds. \n Strong used 1 minute 15 seconds, i.e. 60 seconds + 15 seconds = 75 seconds. \n Ming Ming used 92 seconds.
+\\nCheeChee took 1 minute 50 seconds, i.e. 60 seconds + 50 seconds = 110 seconds. \n\nNow we have all the times in seconds: \nTintin: 106 seconds \n- Qiangqiang: 75 seconds \n- Mingming: 92 seconds \n- Qiqi: 110 seconds \n\nTo find out who ran the fastest, we
+need to compare the times of each person. The shorter the time, the faster they ran. \n\nFrom the list above, we can see that Ming Ming
+took the shortest time, which was 92 seconds. \n\nSo, the correct answer is: \nC. Ming \n\nTherefore, Ming ran the fastest.
+
+Figure 5: A simple primary school math problem with the predictions of the top-3 models.
+Does the simpler the question, the better the model performs? Further observations of model
+performance at different educational levels in Table 4 show that although the difficulty of the problems
+gradually increases from primary school to high school, the top-ranked models generally perform
+better at the middle school level than at the primary school level. This phenomenon is highly counterintuitive because elementary school questions are far easier than middle school questions from a
+human cognitive perspective. As shown in Figure 5, a very simple elementary school math question
+was answered incorrectly by the top three models on the E-EVAL leaderboard." Four students ran
+a race, Ding Ding took 106 seconds, Qiang Qiang took 1 minute 15 seconds, Ming Ming took 92
+seconds and Qi Qi took 1 minute 50 seconds. ( ) ran the fastest.". The correct answer is B: Qiang
+Qiang, but all three models predict C: Ming Ming. The Top-3 LLMs all thought that 92 seconds is
+faster than 75 seconds. Ernie-Bot 4.0 model surprisingly generated such incredible results as 92 <
+9
+
+以下是中国关于数学考试的单项选择题，请选出其中的正确答案。
+a=log0.30.4，b=log34，c=41/3的大小关系为( )。
+The following is a Chinese multiple choice question about a math test, please choose the correct answer among them.
+The size relationship between a=log0.30.4, b=log34, and c=41/3 is ( ).
+A. a<b<c
+B. b<a<c
+C. a<c<b
+D. c<a<b
+答案：
+Answer:
+
+Qwen-72B:
+
+首先，我们计算c的值：c=41/3=2。接着，我们可以根据对数函数的性质判断a和b的范围：0<a=log0.30.4<1，b=log34>1。最后，我们将三个
+数进行比较：a<1<b<2=c。综上所述，本题答案选A. a<b<c
+First, we calculate the value of c: c=41/3=2. Next, we can determine the range of a and b based on the properties of the logarithmic
+function: 0<a=log0.30.4<1，b=log34>1. Finally, we compare the three numbers: a<1<b<2=c. In summary, the answer to this question is A.
+a<b<c
+
+Ernie-Bot 4.0:
+
+A. a<b<c。
+首先，我们知道对数函数logax在a>1时是增函数，在0<a<1时是减函数。因此，a=log0.30.4是一个减函数的值，由于0.4>0.3，所以a<0。
+其次，对于b=log34，由于4>3，所以b>1。
+最后，对于c=41/3，由于4>1，所以c>1。又因为c3=4<32=9，所以c<32/3。
+综合以上三点，我们可以得出a<0<1<b<c<32/3，即a<b<c。
+因此，正确答案是A.
+First, we know that the logarithmic function logax is an increasing function at a>1 and a decreasing function at 0<a<1. Therefore,
+a=log0.30.4 is the value of a decreasing function, and since 0.4>0.3, a<0.
+Second, for b=log34, since 4>3, b>1.
+Finally, for c=41/3, since 4>1, c>1. And sincec3=4<32=9, c<c<32/3.
+Combining these three points, we can conclude that a<0<1<b<c<c<32/3, which means that a<b<c.
+Therefore, the correct answer is A.
+
+Yi-34B-chat:
+
+为了比较a、b和c的大小关系，我们需要先计算它们的具体值，然后进行比较。
+首先，计算对数和分数指数幂：
+1. 对于a，我们知道log0.30.4 < 0，因为当底数小于1时，对数函数是减函数。
+2. 对于b，我们有log34 > 1，因为当底数大于1时，对数函数大于0。
+3. 对于c，我们有41/3 > 1，因为任何分数指数幂x1/3当x > 0时都大于1。
+现在我们可以比较它们的大小关系：
+- 因为a < 0，b > 1，所以a < b。
+- 因为c > 1，所以b < c。
+因此，我们有a < b < c。
+正确答案是：A. a<b<c
+In order to compare the relationship between the sizes of a, b and c, we need to calculate their specific values and then compare them.
+First, calculate the logarithmic and fractional exponential powers:
+1. for a, we know that log0.30.4 < 0 because the logarithmic function is a decreasing function when the base is less than 1.
+2. for b, we have log34 > 1 because the logarithmic function is greater than 0 when the base is greater than 1.
+3. for c, we have 41/3 > 1 because any fractional power of exponent x1/3 is greater than 1 when x > 0.
+Now we can compare their magnitudes:
+- Since a < 0 and b > 1, a < b.
+- Since c > 1, b < c.
+Therefore, we have a < b < c.
+The correct answer is: A. a < b < c
+
+Figure 6: A hard high school math problem with the predictions of the top-3 models.
+106 < 110 < 75. This result seems to indicate that LLMs are not good at comparing sizes, yet we
+find that LLMs are capable of solving similarly complex high school math problems. As shown in
+the example in Figure 6, the LLMs can accurately determine the magnitude relationship between
+a = log0.3 0.4, b = log3 4, c = 41/3 as log0.3 0.4 < log3 4 < 41/3 .
+We speculate that the pre-training data for these models is probable to use only middle and high
+school and college level knowledge and ignore the very simple elementary school level knowledge. It
+is possible that the developers believe that the primary school level is too simple, and that once more
+complex knowledge is mastered, the simpler knowledge will be automatically mastered. As a result,
+the model is trained with a bias toward solving higher stage topics and may perform poorly on simple
+knowledge that occurs less frequently in the training data.
+Does Few-shot prompting help? Table 5 and Figure 7 illustrate the performance of the models
+under zero-shot and five-shot conditions. In general, the accuracy of most models is slightly higher
+under five-shot conditions compared to zero-shot, which is expected. However, there is a decrease
+in performance for the top two models, Qwen-72B-Chat and ERNIE-Bot 4.0. This phenomenon of
+performance degradation with a limited number of examples has also been noted in other studies
+(Liu et al., 2023a; Zeng, 2023; Li et al., 2023). We believe that they can perform zero-shot reasoning
+without relying on Few-shot exemplars. Upon further observation from Table 6 and Figure 7, it is
+evident that the improvement in arts subjects, especially in Chinese language, is more significant
+than that in science subjects. We speculate that there are two main reasons for this phenomenon: the
+quality of the sample and the richness of prior knowledge. The Arts test questions, which primarily
+10
+
+required language comprehension and knowledge retention, were highly similar among the samples
+and were mostly helpful questions. On the contrary, science test questions are diverse and often
+involve formulas and calculations, so it is highly unlikely that the five samples will contain a sufficient
+number of useful samples. In addition, during the pre-training phase, the model is exposed to a large
+amount of textual data, and the arts test questions are formally more similar to the tasks that the
+model handles during this phase. As a result, the model has more prior knowledge related to the arts,
+and a small number of art samples can activate this relevant knowledge in time.
+Model
+
+Zero-shot
+
+Five-shot-ao
+
+Five-shot-cot
+
+Random
+Qwen-72B-Chat
+Ernie-Bot 4.0
+Yi-34B-Chat
+Ernie-Bot
+GPT 4.0
+Yi-6B-Chat
+Qwen-7B-Chat
+Baichuan2-13B-Chat
+ChatGLM3-6B
+Baichuan2-7B-Chat
+ChatGPT
+Chinese-Alpaca-2-13B
+Educhat-sft-002-13B
+Chinese-LLaMA-2-13B
+Educhat-sft-002-13B-Baichuan
+
+25.0
+89.0
+86.7
+72.5
+76.1
+70.5
+68.8
+58.7
+56.1
+59.8
+55.2
+54.5
+44.8
+33.2
+35.7
+54.0
+
+25.0
+88.7
+85.2
+81.4
+75.7
+73.8
+71.2
+60.4
+60.9
+59.2
+56.2
+56.9
+46.2
+39.4
+38.9
+14.4
+
+25.0
+88.8
+84.6
+76.6
+75.7
+67.4
+66.5
+60.4
+56.1
+53.7
+52.9
+52.3
+38.7
+36.1
+33.2
+38.1
+
+Average
+25.0
+88.9
+85.5
+76.9
+75.9
+70.6
+68.8
+59.9
+57.8
+57.6
+54.8
+54.6
+43.3
+36.3
+35.9
+35.5
+
+Table 5: Accuracy of multiple models in different prompt scenarios.
+
+Model
+Qwen-72B-Chat
+ERNIE-Bot 4.0
+Yi-34B-Chat
+ERNIE-Bot
+GPT 4.0
+Yi-6B-Chat
+Qwen-7B-Chat
+Baichuan2-13B-Chat
+ChatGLM3-6B
+Baichuan2-7B-Chat
+ChatGPT
+Chinese-Alpaca-2-13B
+5Educhat-sft-002-13B
+Chinese-LLaMA-2-13B
+Educhat-sft-002-13B-Baichuan
+
+Arts
+
+Science
+
+Average
+
+92.4 / 92.6 / 92.6
+90.5 / 91.8 / 90.1
+77.8 / 88.3 / 81.2
+81.8 / 82.2 / 81.2
+75.1 / 78.0 / 73.2
+76.1 / 76.5 / 71.7
+65.9 / 68.1 / 68.1
+65.2 / 68.5 / 62.4
+64.8 / 63.4 / 57.9
+63.5 / 64.0 / 59.3
+61.0 / 63.1 / 57.5
+51.1 / 53.7 / 43.9
+39.5 / 46.3 / 39.9
+40.5 / 44.2 / 35.2
+60.0 / 15.9 / 44.9
+
+89.0 / 88.7 / 88.8
+86.7 / 85.2 / 84.6
+72.6 / 81.4 / 76.6
+76.2 / 75.7 / 75.7
+70.6 / 73.8 / 67.4
+68.8 / 71.3 / 66.6
+58.8 / 60.5 / 60.4
+56.1 / 61.0 / 56.2
+59.8 / 59.3 / 53.8
+55.2 / 56.3 / 52.9
+54.6 / 56.9 / 52.4
+44.8 / 46.3 / 38.8
+33.3 / 39.4 / 36.1
+35.7 / 38.9 / 33.2
+54.1 / 14.4 / 38.1
+
+89.0 / 88.7 / 88.8
+86.7 / 85.2 / 84.6
+72.6 / 81.4 / 76.6
+76.2 / 75.7 / 75.7
+70.6 / 73.8 / 67.4
+68.8 / 71.3 / 66.6
+58.8 / 60.5 / 60.4
+56.1 / 61.0 / 56.2
+59.8 / 59.3 / 53.8
+55.2 / 56.3 / 52.9
+54.6 / 56.9 / 52.4
+44.8 / 46.3 / 38.8
+33.3 / 39.4 / 36.1
+35.7 / 38.9 / 33.2
+54.1 / 14.4 / 38.1
+
+Table 6: Accuracy of multiple models in arts and science subjects across different prompt scenarios,
+the number on the left is in zero-shot, the number in the middle is in five-shot-ao, and the number on
+the right is five-shot-cot.
+Does Chain-of-Thought prompting help? As observed in Table 5 and Figure 8, compared to the
+five-shot-ao, nearly all models show a noticeable decline in average performance on the five-shot-cot.
+This observation aligns with the findings of Huang et al. (2023), who noted a deterioration in model
+performance when applying CoT. We believe that many subjects in E-EVAL, especially in arts, do
+not require complex reasoning, and additional reasoning steps might decrease performance. Further
+observation from Table 6 and Figure 8 reveals that while the average performance decreased, there
+11
+
+was a divergence between humanities and sciences, humanities showed a decline, whereas sciences,
+particularly high school and middle school mathematics, showed an increase. This is because science
+questions typically have fixed principles and a logical deduction process, hence CoT prompts can
+effectively guide models in structured reasoning. CoT can aid models in step-by-step construction of
+answers, which is advantageous for science questions. On the contrary, arts questions often involve
+broader and more ambiguous knowledge areas. These questions might depend more on intuition,
+experience, and understanding of polysemous terms, which are not suited for simple logical reasoning.
+Introducing CoT in arts questions could lead to models over-reasoning or developing reasoning chains
+in the wrong direction, as these questions might require a wider range of background knowledge and
+creative thinking, rather than simple step-by-step logical deduction. Therefore, the application of CoT
+needs to be adjusted based on the question type and complexity, to better adapt to the characteristics
+of different tasks.
+
+4
+
+Related Work
+
+Initial benchmarking efforts were concentrated on simple, singular tasks such as part-of-speech tagging, and named entity recognition. However, with the continuous advancement of natural language
+processing technology, benchmarks have expanded to encompass more complex tasks, such as machine translation(Bojar et al., 2014) and summarizationNarayan et al. (2018); Hermann et al. (2015).
+The advent of comprehensive benchmarks like GLUE(Wang et al., 2018) and SuperGLUE(Sarlin
+et al., 2020) heralded a new era. These benchmarks amalgamate various natural language understanding tasks, including textual entailment, sentiment analysis, and question answering, thereby providing
+a standard for evaluating the holistic performance of models. Popular for their ability to assess models
+on both understanding and generating natural language, these benchmarks have gained prominence.
+Yet, the emergence of LLMs like BERT and GPT shifted the focus towards assessing performance on
+higher-level, more intricate tasks. Such models have even surpassed human-level performance on certain tasks, notably in text summarization(Hermann et al., 2015) and reading comprehensionRajpurkar
+et al. (2018); Li et al. (2022). However, some recent work(Goyal et al., 2022; Liu et al., 2023b) have
+demonstrate that LLM can perform even better than human or human annotators on some tasks such
+as summarization, leading to a re-evaluation of the appropriateness of using these benchmarks.To
+offer a more encompassing evaluation, new benchmarks like MMLU(Hendrycks et al., 2021) include
+a multitude of domains and tasks, ranging from real-world exams to book knowledge, assessing
+ability in language understanding, common sense reasoning(Clark et al., 2018; Talmor et al., 2019;
+Sakaguchi et al., 2021), mathematical reasoning(Hendrycks et al., 2021; Cobbe et al., 2021), and code
+generation(Chen et al., 2021; Austin et al., 2021). The BIG-bench(Srivastava et al., 2022) includes
+204 diverse tasks, some of which are deemed beyond the current ability of LLMs. The HELM(Liang
+et al., 2022) benchmark comprises 42 distinct tasks, evaluating LLMs across seven metrics.
+With the burgeoning development of Chinese Large Models, an increasing number of Chinese benchmarks have emerged. CLUE(Xu et al., 2020), an influential Chinese NLU benchmark, has been
+widely adopted in the field. Additionally, the team has recently introduced SuperCLUE(Xu et al.,
+2023), a benchmark tailored specifically for LLMs. Concurrently, Chinese benchmarks akin to
+MMLU(Hendrycks et al., 2021) have surfaced, such as MMCUL(Zeng, 2023), which emphasizes
+medicine and education within its four major domains. AGIEval(Zhong et al., 2023) focuses on
+standardized Chinese exams like the college entrance exam, while C-Eval(Huang et al., 2023) encompasses questions across four levels of difficulty from middle school to professional tests. M3KE(Liu
+et al., 2023a) gathers 71 tasks from the Chinese education examination system, akin to the coverage
+of C-Eval. CMMLU(Li et al., 2023), designed for the Chinese language and cultural context, is a
+fully localized Chinese benchmark.Compared to these benchmarks, E-EVAL distinguishes itself by
+(1) focusing on the field of K-12 Education in China, covering all subjects from primary to high
+school. (2) including the often-overlooked domain of elementary education. (3) sourcing data from
+homework and smaller-scale exams, ensuring a high degree of data privacy.
+
+5
+
+Discussion and Conclusion
+
+Although large language models have potential in K-12 education, their accurate assessment remains
+critical for practical application, and the introduction of the E-EVAL benchmark, customized for K-12
+education in China, provides a more accurate and comprehensive evaluation benchmark. Although
+E-EVAL is not a competitive ranking, it serves as a key tool for tracking the progress of large language
+12
+
+models in Chinese K-12 education. This may pave the way for a wider and more effective utilization
+of large-scale language models in the field of K-12 education in China.
+In this work, we obtained the following potentially insightful observations.
+• Chinese-dominant large language models have outperformed powerful Generalized models
+like GPT-4 in Chinese K-12 education.
+• general, the more model parameters the better the results, but smaller models can also
+perform better than models of larger sizes.
+• The gap between open-source and closed-source models is currently very tight, and opensource models are growing rapidly.
+• Some specially trained educational large language models still lag behind generalized models
+in performance, suggesting that there is still much space for improvement in the education
+vertical.
+• Overall, models perform slightly better in Few-shot compared to Zero-shot, with a more
+significant improvement observed in liberal arts subjects as opposed to science subjects.
+• The application of CoT has a negative impact on the model as a whole, but it is helpful for
+complex science subjects such as mathematics.
+• Large language models are better at liberal arts than science, and especially perform poorly
+in highly logical mathematics.
+• The poor performance of the Chinese-dominant large language model on simple problems
+at primary school level may indicate that the model’s mastery of higher-order knowledge
+does not mean that it has also mastered lower-order knowledge.
+
+Acknowledgement
+This research was funded by the State Sponsored Postdoctoral Researcher Program of China. Grant
+No. GZC20232873. SIAT-UI AI and Education Joint Lab also funded this work.
+
+References
+01.AI. Yi. https://github.com/01-ai/Yi, 2023.
+J. Austin, A. Odena, M. Nye, M. Bosma, H. Michalewski, D. Dohan, E. Jiang, C. Cai, M. Terry,
+Q. Le, and C. Sutton. Program synthesis with large language models, 2021.
+J. Bai, S. Bai, Y. Chu, Z. Cui, K. Dang, X. Deng, Y. Fan, W. Ge, Y. Han, F. Huang, et al. Qwen
+technical report. arXiv preprint arXiv:2309.16609, 2023.
+O. Bojar, C. Buck, C. Federmann, B. Haddow, P. Koehn, J. Leveling, C. Monz, P. Pecina, M. Post,
+H. Saint-Amand, R. Soricut, L. Specia, and A. Tamchyna. Findings of the 2014 workshop
+on statistical machine translation. In O. Bojar, C. Buck, C. Federmann, B. Haddow, P. Koehn,
+C. Monz, M. Post, and L. Specia, editors, Proceedings of the Ninth Workshop on Statistical Machine
+Translation, pages 12–58, Baltimore, Maryland, USA, June 2014. Association for Computational
+Linguistics. doi: 10.3115/v1/W14-3302. URL https://aclanthology.org/W14-3302.
+M. Chen, J. Tworek, H. Jun, Q. Yuan, H. P. de Oliveira Pinto, J. Kaplan, H. Edwards, Y. Burda,
+N. Joseph, G. Brockman, A. Ray, R. Puri, G. Krueger, M. Petrov, H. Khlaaf, G. Sastry, P. Mishkin,
+B. Chan, S. Gray, N. Ryder, M. Pavlov, A. Power, L. Kaiser, M. Bavarian, C. Winter, P. Tillet, F. P.
+Such, D. Cummings, M. Plappert, F. Chantzis, E. Barnes, A. Herbert-Voss, W. H. Guss, A. Nichol,
+A. Paino, N. Tezak, J. Tang, I. Babuschkin, S. Balaji, S. Jain, W. Saunders, C. Hesse, A. N. Carr,
+J. Leike, J. Achiam, V. Misra, E. Morikawa, A. Radford, M. Knight, M. Brundage, M. Murati,
+K. Mayer, P. Welinder, B. McGrew, D. Amodei, S. McCandlish, I. Sutskever, and W. Zaremba.
+Evaluating large language models trained on code, 2021.
+P. Clark, I. Cowhey, O. Etzioni, T. Khot, A. Sabharwal, C. Schoenick, and O. Tafjord. Think you
+have solved question answering? try arc, the ai2 reasoning challenge, 2018.
+13
+
+K. Cobbe, V. Kosaraju, M. Bavarian, M. Chen, H. Jun, L. Kaiser, M. Plappert, J. Tworek, J. Hilton,
+R. Nakano, et al. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168,
+2021.
+Y. Cui, Z. Yang, and X. Yao. Efficient and effective text encoding for chinese llama and alpaca. arXiv
+preprint arXiv:2304.08177, 2023. URL https://arxiv.org/abs/2304.08177.
+Y. Dan, Z. Lei, Y. Gu, Y. Li, J. Yin, J. Lin, L. Ye, Z. Tie, Y. Zhou, Y. Wang, et al. Educhat:
+A large-scale language model-based chatbot system for intelligent education. arXiv preprint
+arXiv:2308.02773, 2023.
+Z. Du, Y. Qian, X. Liu, M. Ding, J. Qiu, Z. Yang, and J. Tang. Glm: General language model
+pretraining with autoregressive blank infilling. In Proceedings of the 60th Annual Meeting of the
+Association for Computational Linguistics (Volume 1: Long Papers), pages 320–335, 2022.
+T. Goyal, J. J. Li, and G. Durrett. News summarization and evaluation in the era of gpt-3. arXiv
+preprint arXiv:2209.12356, 2022.
+D. Hendrycks, C. Burns, S. Basart, A. Zou, M. Mazeika, D. Song, and J. Steinhardt. Measuring massive multitask language understanding. In International Conference on Learning Representations,
+2021. URL https://openreview.net/forum?id=d7KBjmI3GmQ.
+K. M. Hermann, T. Kocisky, E. Grefenstette, L. Espeholt, W. Kay, M. Suleyman, and P. Blunsom.
+Teaching machines to read and comprehend. Advances in neural information processing systems,
+28, 2015.
+Y. Huang, Y. Bai, Z. Zhu, J. Zhang, J. Zhang, T. Su, J. Liu, C. Lv, Y. Zhang, J. Lei, et al. C-eval:
+A multi-level multi-discipline chinese evaluation suite for foundation models. arXiv preprint
+arXiv:2305.08322, 2023.
+T. Kojima, S. S. Gu, M. Reid, Y. Matsuo, and Y. Iwasawa. Large language models are zero-shot reasoners. In A. H. Oh, A. Agarwal, D. Belgrave, and K. Cho, editors, Advances in Neural Information
+Processing Systems, 2022. URL https://openreview.net/forum?id=e2TBb5y0yFf.
+H. Li, M. Tomko, M. Vasardani, and T. Baldwin. MultiSpanQA: A dataset for multi-span question answering. In M. Carpuat, M.-C. de Marneffe, and I. V. Meza Ruiz, editors, Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, pages 1250–1260, Seattle, United States, July
+2022. Association for Computational Linguistics. doi: 10.18653/v1/2022.naacl-main.90. URL
+https://aclanthology.org/2022.naacl-main.90.
+H. Li, Y. Zhang, F. Koto, Y. Yang, H. Zhao, Y. Gong, N. Duan, and T. Baldwin. Cmmlu: Measuring
+massive multitask language understanding in chinese. arXiv preprint arXiv:2306.09212, 2023.
+P. Liang, R. Bommasani, T. Lee, D. Tsipras, D. Soylu, M. Yasunaga, Y. Zhang, D. Narayanan, Y. Wu,
+A. Kumar, et al. Holistic evaluation of language models. arXiv preprint arXiv:2211.09110, 2022.
+C. Liu, R. Jin, Y. Ren, L. Yu, T. Dong, X. Peng, S. Zhang, J. Peng, P. Zhang, Q. Lyu, X. Su, Q. Liu,
+and D. Xiong. M3ke: A massive multi-level multi-subject knowledge evaluation benchmark for
+chinese large language models, 2023a.
+Y. Liu, D. Iter, Y. Xu, S. Wang, R. Xu, and C. Zhu. Gpteval: Nlg evaluation using gpt-4 with better
+human alignment. arXiv preprint arXiv:2303.16634, 2023b.
+S. Narayan, S. B. Cohen, and M. Lapata. Don’t give me the details, just the summary! topic-aware
+convolutional neural networks for extreme summarization. In E. Riloff, D. Chiang, J. Hockenmaier,
+and J. Tsujii, editors, Proceedings of the 2018 Conference on Empirical Methods in Natural
+Language Processing, pages 1797–1807, Brussels, Belgium, Oct.-Nov. 2018. Association for
+Computational Linguistics. doi: 10.18653/v1/D18-1206. URL https://aclanthology.org/
+D18-1206.
+OpenAI. Chatgpt: Optimizing language models for dialogue. OpenAI Blog, 2022. URL https:
+//openai.com/blog/chatgpt/.
+14
+
+OpenAI. Gpt-4 technical report. arXiv preprint arXiv:2303.08774, 2023.
+P. Rajpurkar, R. Jia, and P. Liang. Know what you don’t know: Unanswerable questions for squad.
+arXiv preprint arXiv:1806.03822, 2018.
+K. Sakaguchi, R. L. Bras, C. Bhagavatula, and Y. Choi. Winogrande: An adversarial winograd
+schema challenge at scale. Communications of the ACM, 64(9):99–106, 2021.
+P.-E. Sarlin, D. DeTone, T. Malisiewicz, and A. Rabinovich. Superglue: Learning feature matching
+with graph neural networks. In Proceedings of the IEEE/CVF conference on computer vision and
+pattern recognition, pages 4938–4947, 2020.
+A. Srivastava, A. Rastogi, A. Rao, A. A. M. Shoeb, A. Abid, A. Fisch, A. R. Brown, A. Santoro,
+A. Gupta, A. Garriga-Alonso, et al. Beyond the imitation game: Quantifying and extrapolating the
+capabilities of language models. arXiv preprint arXiv:2206.04615, 2022.
+A. Talmor, J. Herzig, N. Lourie, and J. Berant. CommonsenseQA: A question answering challenge
+targeting commonsense knowledge. In J. Burstein, C. Doran, and T. Solorio, editors, Proceedings
+of the 2019 Conference of the North American Chapter of the Association for Computational
+Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers), pages 4149–
+4158, Minneapolis, Minnesota, June 2019. Association for Computational Linguistics. doi:
+10.18653/v1/N19-1421. URL https://aclanthology.org/N19-1421.
+A. Wang, A. Singh, J. Michael, F. Hill, O. Levy, and S. R. Bowman. Glue: A multi-task benchmark
+and analysis platform for natural language understanding. arXiv preprint arXiv:1804.07461, 2018.
+X. Wang, G. H. Chen, D. Song, Z. Zhang, Z. Chen, Q. Xiao, F. Jiang, J. Li, X. Wan, B. Wang, et al.
+Cmb: A comprehensive medical benchmark in chinese. arXiv preprint arXiv:2308.08833, 2023.
+J. Wei, X. Wang, D. Schuurmans, M. Bosma, brian ichter, F. Xia, E. H. Chi, Q. V. Le, and D. Zhou.
+Chain of thought prompting elicits reasoning in large language models. In A. H. Oh, A. Agarwal,
+D. Belgrave, and K. Cho, editors, Advances in Neural Information Processing Systems, 2022. URL
+https://openreview.net/forum?id=_VjQlMeSB_J.
+L. Xu, H. Hu, X. Zhang, L. Li, C. Cao, Y. Li, Y. Xu, K. Sun, D. Yu, C. Yu, Y. Tian, Q. Dong, W. Liu,
+B. Shi, Y. Cui, J. Li, J. Zeng, R. Wang, W. Xie, Y. Li, Y. Patterson, Z. Tian, Y. Zhang, H. Zhou,
+S. Liu, Z. Zhao, Q. Zhao, C. Yue, X. Zhang, Z. Yang, K. Richardson, and Z. Lan. CLUE: A
+Chinese language understanding evaluation benchmark. In D. Scott, N. Bel, and C. Zong, editors,
+Proceedings of the 28th International Conference on Computational Linguistics, pages 4762–4772,
+Barcelona, Spain (Online), Dec. 2020. International Committee on Computational Linguistics. doi:
+10.18653/v1/2020.coling-main.419. URL https://aclanthology.org/2020.coling-main.
+419.
+L. Xu, A. Li, L. Zhu, H. Xue, C. Zhu, K. Zhao, H. He, X. Zhang, Q. Kang, and Z. Lan. Superclue: A
+comprehensive chinese large language model benchmark. arXiv preprint arXiv:2307.15020, 2023.
+A. Yang, B. Xiao, B. Wang, B. Zhang, C. Bian, C. Yin, C. Lv, D. Pan, D. Wang, D. Yan, F. Yang,
+F. Deng, F. Wang, F. Liu, G. Ai, G. Dong, H. Zhao, H. Xu, H. Sun, H. Zhang, H. Liu, J. Ji, J. Xie,
+J. Dai, K. Fang, L. Su, L. Song, L. Liu, L. Ru, L. Ma, M. Wang, M. Liu, M. Lin, N. Nie, P. Guo,
+R. Sun, T. Zhang, T. Li, T. Li, W. Cheng, W. Chen, X. Zeng, X. Wang, X. Chen, X. Men, X. Yu,
+X. Pan, Y. Shen, Y. Wang, Y. Li, Y. Jiang, Y. Gao, Y. Zhang, Z. Zhou, and Z. Wu. Baichuan 2:
+Open large-scale language models, 2023.
+A. Zeng, X. Liu, Z. Du, Z. Wang, H. Lai, M. Ding, Z. Yang, Y. Xu, W. Zheng, X. Xia, et al. Glm-130b:
+An open bilingual pre-trained model. arXiv preprint arXiv:2210.02414, 2022.
+H. Zeng. Measuring massive multitask chinese understanding. arXiv preprint arXiv:2304.12986,
+2023.
+Z. Zhang, X. Han, Z. Liu, X. Jiang, M. Sun, and Q. Liu. Ernie: Enhanced language representation
+with informative entities. arXiv preprint arXiv:1905.07129, 2019.
+W. Zhong, R. Cui, Y. Guo, Y. Liang, S. Lu, Y. Wang, A. Saied, W. Chen, and N. Duan. Agieval: A
+human-centric benchmark for evaluating foundation models. arXiv preprint arXiv:2304.06364,
+2023.
+15
+
+Figure 7: Accuracy improvement from five-shot-ao to zero-shot across 23 subjects.
+
+A
+
+Detailed Stats of E-EVAL
+
+A.1
+
+Statistis of Subjects
+
+Table 7 lists all subjects of E-EVAL, their categories, and the number of questions for each subject.
+A.2
+
+Results of three prompt Evaluations
+
+The accuracy of zero-shot is shown in Table 9, The accuracy of five-shot-ao is shown in Table 10,
+The accuracy of five-shot-cot is shown in Table 11.
+A.3
+
+Partial results per subject
+
+Table 8 shows the performace of partial models on each subjects.
+
+B
+
+Models being Evaluated
+
+Baichuan 2-13B and Baichuan 2-7B are the new generation of open-source large language models
+launched by Baichuan Intelligence. It is trained on a high-quality corpus with 2.6 trillion tokens
+and has achieved the best performance in authoritative Chinese and English benchmarks of the
+same size.Baichuan 2 comes in two model variants: Baichuan 2-7B with 70 billion parameters and
+Baichuan 2-13B with 130 billion parameters. Both models have undergone training on a massive 26
+trillion tokens. In this paper, we evaluate the models Baichuan 2-7B-Chat and Baichuan 2-13B-Chat,
+16
+
+Figure 8: Accuracy improvement from five-shot-ao to five-shot-cot across 23 subjects.
+
+specifically optimized for adhering to human instructions. These models demonstrate outstanding
+performance in dialogue and context comprehension.
+Qwen-72B and Qwen-7B are integral components of the Qwen series of language models developed
+by Alibaba Cloud. Both models are built upon the Transformer architecture and have been trained on
+a diverse range of data sources, including internet texts, professional literature, and code. Qwen-72B,
+boasting a substantial 72 billion parameters, excels in multiple Chinese and English downstream
+tasks, particularly in areas such as reasoning and translation. It has undergone extensive pretraining
+on over 3 trillion tokens, encompassing a wide array of languages and domains, and can support
+contexts of up to 32,000 tokens in length.On the other hand, the 7-billion-parameter Qwen-7B also
+demonstrates remarkable data coverage and diversity. In this paper, the models evaluated are the
+chatbot variants fine-tuned from Qwen-72B and Qwen-7B through human alignment techniques.
+ChatGLM3-6B is the latest open-source model in the ChatGLM series, excels with its base model,
+ChatGLM3-6B-Base, incorporating diverse training datasets, sufficient training steps, and effective
+strategies. This culminates in superior performance on various datasets, including those involving
+semantics, mathematics, reasoning, coding, and knowledge, especially notable among models with
+less than 10 billion parameters. The model introduces an innovative Prompt format, enhancing
+multi-turn dialogues, function calls, code interpretation, and agent tasks. It represents a significant
+advance in bilingual (Chinese and English) language processing, particularly in question answering
+and dialogue tasks.
+Yi-34B and Yi-6B are two large language models in the Yi series developed by 01.AI. Trained
+from scratch on a 3T multilingual corpus, they exhibit exceptional bilingual ability, excelling in
+language comprehension, commonsense reasoning, and reading comprehension. Yi-34B performed
+outstandingly in various assessments, ranking second only to GPT 4.0 on the AlpacaEval leaderboard
+17
+
+Subject
+
+Category
+
+#Questions
+
+Primary School Chinese (小学语文)
+Primary School Mathematics (小学数学)
+Primary School English (小学英语)
+Primary School Science (小学科学)
+Primary School Ethics (小学道德)
+Middle School Chinese (初中语文)
+Middle School Mathematics (初中数学)
+Middle School English (初中英语)
+Middle School Physics (初中物理)
+Middle School Chemistry (初中化学)
+Middle School Biology (初中生物)
+Middle School Politics (初中政治)
+Middle School History (初中历史)
+Middle School Geography (初中地理)
+High School Chinese (高中语文)
+High School Mathematics (高中数学)
+High School English (高中英语)
+High School Physics (高中物理)
+High School Chemistry (高中化学)
+High School Biology (高中生物)
+High School Politics (高中政治)
+High School History (高中历史)
+High School Geography (高中地理)
+
+Arts
+Science
+Arts
+Science
+Arts
+Arts
+Science
+Arts
+Science
+Science
+Science
+Arts
+Arts
+Arts
+Arts
+Science
+Arts
+Science
+Science
+Science
+Arts
+Arts
+Arts
+
+96
+102
+94
+82
+87
+148
+172
+138
+152
+148
+169
+174
+127
+161
+259
+251
+261
+190
+176
+210
+238
+207
+170
+
+Table 7: Summary of all 23 subjects.
+
+in December 2023, surpassing major models like LLaMA2-Chat-70B. In the field of Chinese, it
+ranked second in the SuperCLUE in October 2023, again only behind GPT 4.0, and ahead of models
+like Baidu’s ERNIE. Although Yi-6B has fewer parameters than Yi-34B, it plays a crucial role in
+innovative projects and diverse applications, demonstrating strong language processing ability. In
+this paper, we are using the chat versions of Yi-34B and Yi-6B.
+ChatGPT and GPT 4.0, developed by OpenAI, represent the latest advancements in the GPT
+series of AI models. While ChatGPT is based on ChatGPT and focuses on smooth conversational
+experiences, GPT 4.0 is the newest iteration, introducing the capability to process visual inputs,
+enriching user interactions with the model. GPT 4.0 has demonstrated improved factual response
+rates and a significant reduction in responses to inappropriate content in OpenAI’s internal tests.
+These models are trained to better follow human instructions, offering helpfulness, harmlessness, and
+honesty. GPT 4.0’s updates also include an increased input/output capacity, enhanced creativity and
+collaborative ability, and the ability to connect to third-party knowledge sources.
+ERNIE-Bot and ERNIE-Bot 4.0 are advanced large language models developed by Baidu. ERNIEBot is an industrial-grade, knowledge-enhanced large language model that encompasses extensive
+Chinese data. It possesses robust capabilities in text comprehension, dialogue question-answering,
+and content creation. The 4.0 version of ERNIE-Bot represents a comprehensive upgrade of the
+foundational model, achieving significant improvements in understanding, generation, logic, and
+memory capabilities compared to its predecessor. The notable feature of ERNIE-Bot 4.0 is its
+multimodal capability, capable of generating a range of content including text, images, and videos
+based on simple text prompts and image inputs. Compared to ChatGPT, ERNIE-Bot 4.0 has an
+advantage in multimodal ability, though ChatGPT Plus with GPT 4.0 provides multimodality, it
+currently does not support video generation.
+Chinese LLaMA & Alpaca LLM project is based on the LLaMA-2, released by Meta. Developers
+open-source Chinese LLaMA-2 (foundation model) and Alpaca-2 (instruction-following model).
+These models extend the original LLaMA-2 structure by incorporating an additional 20,000 Chinese
+18
+
+Subject
+
+Qwen-72B-Chat
+
+Ernie-Bot 4.0
+
+GPT 4.0
+
+ChatGLM3-6B
+
+Chinese
+Mathematics
+English
+Science
+Ethics
+
+87.5 / 90.6 / 89.5
+82.3 / 75.4 / 75.4
+95.7 / 95.7 / 95.7
+90.2 / 87.8 / 89.0
+97.7 / 96.5 / 96.5
+
+Primary School
+87.5 / 94.7 / 88.5 66.6 / 86.4 / 73.9
+79.4 / 62.7 / 62.7 59.8 / 62.7 / 70.5
+96.8 / 95.7 / 96.8 90.4 / 94.6 / 85.1
+92.6 / 89.0 / 82.9 68.2 / 85.3 / 84.1
+97.7 / 96.5 / 94.2 80.4 / 97.7 / 95.4
+
+Yi-34B
+
+70.8 / 75.0 / 73.9
+69.6 / 71.5 / 73.5
+92.5 / 92.5 / 89.3
+85.3 / 82.9 / 85.3
+94.2 / 95.4 / 83.9
+
+56.2 / 51.0 / 54.1
+39.2 / 45.0 / 38.2
+62.7 / 62.7 / 48.9
+71.9 / 69.5 / 67.0
+83.9 / 87.3 / 77.0
+
+Chinese
+Mathematics
+English
+Physics
+Chemistry
+Biology
+Politics
+History
+Geography
+
+85.8 / 88.5 / 88.5
+83.7 / 84.3 / 84.3
+97.8 / 97.1 / 97.1
+91.4 / 93.4 / 94.0
+95.2 / 94.5 / 94.5
+95.8 / 93.4 / 93.4
+94.2 / 95.9 / 95.9
+99.2 / 97.6 / 98.4
+97.5 / 95.0 / 95.0
+
+Middle School
+87.1 / 89.1 / 89.8 75.6 / 80.4 / 70.9
+77.9 / 64.5 / 68.6 57.5 / 61.6 / 70.9
+97.8 / 97.1 / 97.1 83.3 / 94.9 / 91.3
+89.4 / 76.3 / 80.9 78.9 / 85.5 / 83.5
+91.2 / 89.6 / 89.1 75.0 / 85.8 / 82.4
+95.8 / 97.0 / 97.0 81.6 / 93.4 / 89.9
+94.2 / 91.3 / 93.1 92.5 / 95.9 / 94.2
+97.6 / 97.6 / 95.2 87.4 / 96.8 / 92.9
+95.6 / 95.0 / 93.7 75.7 / 95.6 / 78.8
+
+54.7 / 61.4 / 51.3
+59.8 / 65.1 / 64.5
+93.4 / 91.3 / 89.8
+76.3 / 78.9 / 71.0
+67.5 / 69.5 / 64.8
+87.5 / 88.7 / 82.2
+83.9 / 86.7 / 79.3
+88.9 / 88.9 / 88.1
+81.9 / 83.8 / 81.3
+
+52.0 / 50.0 / 41.8
+37.2 / 40.6 / 51.1
+70.2 / 71.0 / 60.1
+69.7 / 70.5 / 61.8
+67.5 / 67.5 / 66.2
+72.1 / 72.1 / 59.1
+82.7 / 83.9 / 77.5
+81.1 / 78.7 / 77.1
+70.1 / 68.3 / 62.7
+
+Chinese
+Mathematics
+English
+Physics
+Chemistry
+Biology
+Politics
+History
+Geography
+
+83.0 / 89.1 / 89.1
+58.5 / 57.7 / 58.5
+95.0 / 93.8 / 93.4
+81.5 / 81.0 / 80.5
+91.4 / 89.7 / 89.7
+91.9 / 91.4 / 91.4
+94.1 / 91.5 / 91.5
+92.2 / 89.3 / 89.3
+88.2 / 90.0 / 90.5
+
+High School
+74.9 / 79.5 / 76.0 62.9 / 66.0 / 56.7
+54.9 / 61.7 / 64.1 32.2 / 33.0 / 37.0
+94.2 / 95.7 / 93.1 72.0 / 91.9 / 82.7
+84.7 / 63.6 / 64.7 74.2 / 79.4 / 70.5
+86.9 / 86.9 / 85.7 68.7 / 74.4 / 69.3
+83.3 / 84.2 / 83.8 75.2 / 83.8 / 73.3
+88.6 / 91.1 / 88.2 82.7 / 90.7 / 84.8
+90.8 / 92.2 / 91.7 81.6 / 90.8 / 87.9
+88.8 / 90.0 / 87.0 73.5 / 84.1 / 78.8
+
+39.3 / 44.4 / 37.8
+42.6 / 43.0 / 28.2
+88.5 / 90.0 / 86.2
+61.5 / 71.0 / 56.3
+59.0 / 65.9 / 50.5
+63.8 / 69.0 / 58.5
+65.5 / 71.8 / 66.3
+78.2 / 81.1 / 79.2
+78.8 / 81.1 / 75.8
+
+40.5 / 36.2 / 33.5
+33.8 / 33.8 / 26.6
+64.7 / 59.0 / 54.7
+52.1 / 52.1 / 45.2
+51.1 / 44.3 / 46.0
+56.1 / 60.9 / 44.7
+70.1 / 74.7 / 67.6
+68.5 / 64.7 / 63.7
+57.0 / 57.6 / 49.4
+
+Table 8: Accuracy of partial models in all subjects across different prompt scenarios, the number on
+the left is in zero-shot, the number in the middle is in five-shot-ao, and the number on the right is in
+five-shot-cot.
+
+tokens into its vocabulary and undergoes secondary pre-training and instruction fine-tuning on
+Chinese data, which further improved the fundamental semantic understanding of the Chinese
+language, resulting in a significant performance improvement compared to the first-generation
+models.In this paper, we used Chinese-LLaMA-2-13B and Chinese-Alpaca-2-13B.
+EduChat is a large-scale language model (LLM)-based chatbot system in the education domain.
+Its goal is to support personalized, fair, and compassionate intelligent education, serving teachers,
+students, and parents. Guided by theories from psychology and education, it further strengthens
+educational functions such as open question answering, essay assessment, Socratic teaching, and
+emotional support based on the existing basic LLMs.Developers use an educational corpus for
+pre-training to enable the model to acquire domain-specific knowledge. They further fine-tune the
+model on designed system prompts and instructions to stimulate a range of tool usage skills.They
+proposed several versions of the model. In this paper, we evaluated two models in educhat,
+educhat-sft-002-13B-Baichuan and educhat-sft-002-13B.
+
+19
+
+Model
+
+Arts
+
+Science
+
+Primary Middle
+
+High
+
+Average
+
+Random
+Qwen-72B-Chat
+ERNIE-Bot 4.0
+ERNIE-Bot
+Yi-34B-Chat
+GPT 4.0
+Yi-6B-Chat
+ChatGLM3-6B
+Qwen-7B-Chat
+Baichuan2-13B-Chat
+Baichuan2-7B-Chat
+ChatGPT
+Educhat-sft-002-13B-Baichuan
+Chinese-Alpaca-2-13B
+Chinese-LLaMA-2-13B
+5Educhat-sft-002-13B
+
+25.0
+92.4
+90.5
+81.8
+77.8
+75.1
+76.1
+64.8
+65.9
+65.2
+63.5
+61.0
+60.0
+51.1
+40.5
+39.5
+
+25.0
+84.7
+81.7
+68.9
+65.7
+64.7
+59.3
+53.4
+49.5
+44.3
+44.4
+46.1
+46.2
+36.7
+29.4
+25.1
+
+25.0
+90.4
+90.4
+80.0
+72.8
+82.0
+71.3
+61.8
+68.8
+66.5
+62.6
+68.9
+60.3
+54.2
+34.7
+37.3
+
+25.0
+85.8
+82.4
+70.9
+68.4
+63.5
+63.0
+54.6
+52.9
+48.6
+48.8
+49.1
+50.9
+40.2
+34.1
+29.7
+
+25.0
+89.0
+86.7
+76.2
+72.6
+70.6
+68.8
+59.8
+58.8
+56.1
+55.2
+54.6
+54.1
+44.8
+35.7
+33.3
+
+25.0
+93.2
+91.6
+82.3
+78.4
+76.8
+76.2
+66.6
+63.8
+63.4
+61.9
+57.5
+56.5
+48.3
+38.3
+36.9
+
+Table 9: Zero-shot accuracy of multiple models in answer-only setting.
+
+Model
+
+Arts
+
+Science
+
+Primary Middle
+
+High
+
+Average
+
+Random
+Qwen-72B-Chat
+ERNIE-Bot 4.0
+Yi-34B-Chat
+ERNIE-Bot
+GPT 4.0
+Yi-6B-Chat
+Baichuan2-13B-Chat
+Qwen-7B-Chat
+ChatGLM3-6B
+ChatGPT
+Baichuan2-7B-Chat
+Chinese-Alpaca-2-13B
+5Educhat-sft-002-13B
+Chinese-LLaMA-2-13B
+Educhat-sft-002-13B-Baichuan
+
+25.0
+92.6
+91.8
+88.3
+82.2
+78.0
+76.5
+68.5
+68.1
+63.4
+63.1
+64.0
+53.7
+46.3
+44.2
+15.9
+
+25.0
+83.7
+76.6
+72.4
+67.3
+68.4
+64.4
+51.2
+50.5
+54.0
+48.9
+46.2
+36.6
+30.4
+31.9
+12.5
+
+25.0
+88.9
+87.1
+84.8
+78.0
+83.0
+72.2
+72.0
+70.3
+62.2
+69.1
+61.3
+54.0
+44.0
+45.9
+17.8
+
+25.0
+85.6
+82.7
+76.4
+72.0
+67.8
+65.5
+53.6
+53.5
+53.4
+50.8
+50.8
+41.5
+37.2
+34.3
+10.6
+
+25.0
+88.7
+85.2
+81.4
+75.7
+73.8
+71.3
+61.0
+60.5
+59.3
+56.9
+56.3
+46.3
+39.4
+38.9
+14.4
+
+25.0
+93.1
+88.2
+87.4
+80.2
+79.2
+79.1
+67.8
+67.1
+66.7
+61.5
+62.3
+50.4
+41.0
+43.1
+18.8
+
+Table 10: Five-shot accuracy of multiple models in answer-only setting.
+
+20
+
+Model
+
+Arts
+
+Science
+
+Primary Middle
+
+High
+
+Average
+
+Random
+Qwen-72B-Chat
+ERNIE-Bot 4.0
+Yi-34B-Chat
+ERNIE-Bot
+GPT 4.0
+Yi-6B-Chat
+Qwen-7B-Chat
+Baichuan2-13B-Chat
+ChatGLM3-6B
+Baichuan2-7B-Chat
+ChatGPT
+Chinese-Alpaca-2-13B
+Educhat-sft-002-13B-Baichuan
+5Educhat-sft-002-13B
+Chinese-LLaMA-2-13B
+
+25.0
+92.6
+90.1
+81.2
+81.2
+73.2
+71.7
+68.1
+62.4
+57.9
+59.3
+57.5
+43.9
+44.9
+39.9
+35.2
+
+25.0
+83.8
+77.4
+70.6
+68.6
+59.8
+59.9
+50.3
+48.1
+48.5
+44.5
+45.7
+32.0
+29.3
+31.2
+30.7
+
+25.0
+88.9
+84.6
+81.3
+78.0
+80.9
+70.5
+70.3
+69.4
+56.1
+59.8
+67.0
+46.2
+44.5
+38.4
+37.3
+
+25.0
+85.7
+81.5
+70.5
+72.1
+59.3
+61.0
+53.6
+47.4
+47.6
+46.4
+46.6
+35.1
+35.2
+31.4
+31.5
+
+25.0
+88.8
+84.6
+76.6
+75.7
+67.4
+66.6
+60.4
+56.2
+53.8
+52.9
+52.4
+38.8
+38.1
+36.1
+33.2
+
+25.0
+93.3
+89.1
+83.7
+80.1
+74.5
+73.2
+66.8
+64.2
+61.8
+59.8
+55.7
+41.5
+40.2
+42.0
+34.4
+
+Table 11: Five-shot accuracy of multiple models in Chain-of-Thought setting.
+
+21
+
+

@@ -1,0 +1,1251 @@
+                                         EssayJudge: A Multi-Granular Benchmark for Assessing Automated Essay
+                                               Scoring Capabilities of Multimodal Large Language Models
+                                                               Jiamin Su1,2,* , Yibo Yan1,3,* , Fangteng Fu1 , Han Zhang1 ,
+                                                        Jingheng Ye4 , Xiang Liu1,3 , Jiahao Huo1 , Huiyu Zhou5 , Xuming Hu1,2,3,†
+                                                                           1
+                                                                               The Hong Kong University of Science and Technology (Guangzhou)
+                                                                                        2
+                                                                                            Beijing Future Brain Education Technology Co., Ltd.
+                                                                    3
+                                                                        The Hong Kong University of Science and Technology, 4 Tsinghua University
+                                                                               5
+                                                                                   Guangxi Zhuang Autonomous Region Big Data Research Institute
+                                                            jsu360@connect.hkust-gz.edu.cn, yanyibo70@gmail.com, xuminghu@hkust-gz.edu.cn
+
+
+                                                                    Abstract
+
+                                                 Automated Essay Scoring (AES) plays a cru-
+arXiv:2502.11916v2 [cs.CL] 20 May 2025
+
+
+
+
+                                                 cial role in educational assessment by pro-
+                                                 viding scalable and consistent evaluations of
+                                                 writing tasks. However, traditional AES sys-
+                                                 tems face three major challenges: ❶ reliance
+                                                 on handcrafted features that limit generaliz-
+                                                 ability, ❷ difficulty in capturing fine-grained
+                                                 traits like coherence and argumentation, and
+                                                 ❸ inability to handle multimodal contexts. In
+                                                 the era of Multimodal Large Language Mod-
+                                                 els (MLLMs), we propose E SSAY J UDGE, the
+                                                 first multimodal benchmark to evaluate AES
+                                                 capabilities across lexical-, sentence-, and
+                                                 discourse-level traits. By leveraging MLLMs’
+                                                 strengths in trait-specific scoring and multi-
+                                                 modal context understanding, E SSAY J UDGE
+                                                 aims to offer precise, context-rich evaluations
+                                                 without manual feature engineering, address-
+                                                 ing longstanding AES limitations. Our exper-
+                                                 iments with 18 representative MLLMs reveal
+                                                 gaps in AES performance compared to human                              Figure 1: Comparison of task settings between the previ-
+                                                                                                                        ous evaluation paradigm (a) and our proposed E SSAY J UDGE
+                                                 evaluation, particularly in discourse-level traits,                    benchmark (b) on automated essay scoring task.
+                                                 highlighting the need for further advancements
+                                                 in MLLM-based AES research. The dataset                                2024). Such detailed feedback is critical for guid-
+                                                 and code are available at this URL.                                    ing students in improving their writing skills, but
+                                                                                                                        remains difficult to achieve with existing methods.
+                                         1       Introduction                                                              Traditional AES approaches, including statisti-
+                                                                                                                        cal models such as Support Vector Machines, rely
+                                         Automated Essay Scoring (AES) has become an                                    heavily on handcrafted features such as word fre-
+                                         essential tool in educational assessment, providing                            quency and essay length (Yang et al., 2024; Jansen
+                                         efficient and consistent scoring for large-scale writ-                         et al., 2024; Uto et al., 2020). As illustrated in
+                                         ing tasks (Ye et al., 2025; Ramesh and Sanampudi,                              Figure 1 (a), they often suffer from ❶ relying on
+                                         2022; Li and Liu, 2024; Wu et al., 2024; Xia et al.,                           manually engineered features, thus limiting the
+                                         2024). While AES systems have significantly re-                                generalizability across diverse data; ❷ failing to
+                                         duced the workload of human graders, they still                                model fine-grained traits such as logical structure
+                                         face challenges in delivering accurate and detailed                            and argument persuasiveness; ❸ inability to han-
+                                         evaluations, particularly for trait-specific scoring,                          dle multimodal context, thus struggling to deliver
+                                         which assesses individual aspects of writing quality,                          comprehensive and context-aware evaluations (Lim
+                                         such as coherence, creativity, and argumentation                               et al., 2021; Uto, 2021; Wang et al., 2022).
+                                         (Song et al., 2024; Pack et al., 2024; Ruseti et al.,                             The emergence of Large Language Models
+                                             * Co-first authors with equal contribution.                                (LLMs) and Multimodal Large Language Models
+                                             †
+                                                 Corresponding author.                                                  (MLLMs) offers a promising solution to these chal-
+
+                                                                                                                    1
+lenges (Xiao et al., 2024b; Mansour et al., 2024;            Benchmarks                            Venue    Size #Topics Modality #Traits
+                                                             ASAPAES (Cozma et al., 2018)             ACL 17,450     8      T        0
+Ding and Zou, 2024; Luo et al., 2025). Unlike tra-           ASAP++ (Mathias and Bhattacharyya, 2018) ACL 10,696     6      T       8
+                                                             CLC-FCE (Yannakoudakis et al., 2011)     ACL   1,244    10     T       0
+ditional models, LLMs can capture rich semantic              TOEFL11 (Lee et al., 2024)              EMNLP 1,100     8      T       0
+                                                             ICLE (Granger et al., 2009)             COLING 3,663   48      T       4
+representations directly from text, allowing them            AAE (Stab and Gurevych, 2014)           COLING 102     101     T       1
+                                                             ICLE++ (Li and Ng, 2024c)               NAACL 1,008     10     T       10
+to evaluate essays holistically and provide detailed         CREE (Bailey and Meurers, 2008)          BEA    566     75     T        1
+feedback on specific traits (Gao et al., 2024; Maity         E SSAY J UDGE (Ours)                     -     1054    125    T, I     10
+
+and Deroy, 2024). Furthermore, MLLMs extend
+                                                             Table 1: Comparison between previous AES benchmarks and
+this capability by integrating text and image inputs,
+                                                             our proposed E SSAY J UDGE. The cells highlighted in red
+enabling a deeper understanding of multimodal es-            indicate the highest number for #Topics and #Traits columns,
+say context (Lee et al., 2023; Xu et al., 2024). This        and the unique modality for Modality column.
+not only improves scoring accuracy but also ad-
+dresses the need for nuanced evaluations in more                 that enables comprehensive evaluation with ten
+complex writing scenarios.                                       multi-granular metrics, covering three dimen-
+   Therefore, we propose E SSAY J UDGE, the first                sions: lexical, sentence, and discourse levels.
+multimodal benchmark for assessing the multi-
+granular AES capabilities of MLLMs. As shown                 • We conduct an in-depth evaluation of 18 state-
+in Figure 1 (b), E SSAY J UDGE aims to address                 of-the-art MLLMs and human evaluation on
+the aforementioned gaps by ❶ refraining from                   E SSAY J UDGE, using Quadratic Weighted Kappa
+manually engineered features, using MLLMs’ in-                 (QWK) as the primary metric to assess the trait-
+herent capabilities to automatically capture com-              specific scoring performance.
+plex linguistic patterns and contextual cues, which          By bridging the gaps in existing AES benchmarks,
+allows for better generalization across diverse              E SSAY J UDGE contributes to the development of
+datasets; ❷ leveraging MLLMs’ ability to model               more accurate, robust, and context-aware MLLM-
+multi-granular traits (i.e., lexical-, sentence-, and        based essay scoring systems in the era of AGI.
+discourse-levels), enabling more precise and nu-
+anced trait-specific evaluations; ❸ incorporating            2     Related Work
+multimodal inputs including text and image compo-
+nents, enabling MLLM to handle complex context,              2.1     AES Datasets
+which is crucial for essays on intricate topics.             Existing AES datasets have advanced the field
+   Through extensive experiments, we evaluated               but remain some limitations (shown in Table 1)
+18 representative open-source and closed-source              (Ke and Ng, 2019; Li and Ng, 2024b,a). For ex-
+MLLMs, yielding the following key insights: (i)              ample, ASAPAES is notable for its size, enabling
+open-source MLLMs generally perform poorly in                high-performance prompt-specific systems (Cozma
+AES compared to closed-source MLLMs, particu-                et al., 2018). However, differing score ranges
+larly GPT-4o; (ii) closed-source MLLMs tend to               across prompts and heavy preprocessing (e.g., re-
+assign lower scores across multiple traits compared          moval of paragraph structures and named entities)
+to human evaluators, reflecting their stricter scoring       reduce its utility. ASAP++ is an extension of ASAP
+criteria; (iii) closed-source MLLMs perform better           that introduces trait-specific scores (Mathias and
+in evaluating essays based on single-image setting           Bhattacharyya, 2018; Li and Ng, 2024a). How-
+compared to multi-image one. In general, our find-           ever, its traits are coarse-grained, with all content-
+ings highlight that there is still a noticeable gap in       based traits (e.g., coherence, persuasiveness, and
+AES performance compared to human evaluators,                thesis clarity) grouped into a single "CONTENT"
+particularly in discourse-level traits, underscoring         category. The CLC-FCE dataset includes holistic
+the necessity for further LLM research.                      scores and linguistic error annotations, support-
+   Our contributions can be summarized as follows:           ing grammatical error detection alongside scor-
+                                                             ing tasks, but the small number of essays per
+• We introduce the first multimodal AES dataset
+                                                             prompt hinders the development of prompt-specific
+  E SSAY J UDGE, comprising over 1,000 high-
+                                                             systems (Yannakoudakis et al., 2011; Li and Ng,
+  quality multimodal English essays, each of which
+                                                             2024b). TOEFL11 dataset focuses on native lan-
+  has undergone rigorous multi-round human an-
+                                                             guage identification and provides only coarse-
+  notation and verification.
+                                                             grained proficiency labels (low, medium & high),
+• We propose a trait-specific scoring framework              which do not fully capture essay quality. ICLE
+
+                                                         2
+(Granger et al., 2009) and ICLE++ (Li and Ng,                remarkable capabilities in multimodal challenges,
+2024c) datasets provide some of the most detailed            excelling in areas such as multimodal reasoning
+trait-specific annotations, with ICLE++ scoring es-          and QA (Chang et al., 2024; Yan et al., 2024c,b;
+says on 10 dimensions of writing quality. Nev-               Zheng et al., 2024; Yan et al., 2025a). At the same
+ertheless, these datasets are still constrained by           time, Open-source MLLMs have made consider-
+limited topic diversity. Similarly, The AAE corpus           able strides. For instance, LLaVA-NEXT (Liu et al.,
+includes 102 persuasive essays and only focuses              2024) utilizes a pretrained vision encoder to gen-
+on argument structure (Stab and Gurevych, 2014).             erate visual embeddings, which are then aligned
+To address the aforementioned limitations, we pro-           with text embeddings through a lightweight adapter,
+pose the E SSAY J UDGE benchmark, which features             enabling effective multimodal understanding. Sim-
+multimodal context, 125 unique essay topics, and             ilarly, MLLMs such as Qwen2-VL (Wang et al.,
+comprehensive scoring across 10 distinct traits.             2024), DeepSeek-VL (Lu et al., 2024a), InternVL
+                                                             (Chen et al., 2024, 2025), MiniCPM (Hu et al.,
+2.2   AES Systems                                            2024), Ovis (Lu et al., 2024b), LLaMA3 (Dubey
+AES research focuses on three main categories:               et al., 2024) and Yi-VL (Young et al., 2024) im-
+heuristic approaches, machine learning approaches,           plement innovative projection techniques to com-
+and deep learning approaches (Li and Ng, 2024a).             bine visual and textual features effectively, en-
+Heuristic AES approaches focus on holistic scoring           abling many multimodal applications. These mod-
+by combining trait scores such as Organization, Co-          els showcase the growing potential of MLLMs in
+herence, and Grammar into a weighted sum. Trait-             advancing both research and practical applications
+specific scores are computed using rules, like as-           that rely on multimodal data (Qu et al., 2025; Zou
+sessing Organization based on a five-paragraph for-          et al., 2024; Zhou et al., 2024; Huang et al., 2024).
+mat (Attali and Burstein, 2006). Machine learning            Therefore, we introduce E SSAY J UDGE, a novel
+approaches (e.g., Logistic Regression and Support            benchmark designed to evaluate MLLMs’ capabil-
+Vector Machine) rely on handcrafted features, such           ity to score essays with multimodal context, paving
+as lexical (Chen and He, 2013), length-based (Vaj-           the way for AGI systems (Xiao et al., 2024b; Tate
+jala, 2016; Yannakoudakis and Briscoe, 2012), and            et al., 2024; Yan et al., 2024a, 2025b).
+discourse features (Yannakoudakis and Briscoe,
+                                                             3     Dataset
+2012), and perform well in within-prompt scoring
+but struggle with generalization to new prompts.             3.1    Data Collection
+Deep learning approaches, particularly those using           This section describes the process of construct-
+Transformer architectures like BERT (Wang et al.,            ing our dataset to ensure high-quality data for
+2022), have advanced AES by learning essay rep-              analysis, as illustrated in Figure 2. Unlike tradi-
+resentations directly from text, enabling multi-trait        tional datasets that often rely on publicly available
+and cross-prompt scoring. Among these, LLM-                  sources or textbook modifications, the data for this
+based approaches stand out for their ability to lever-       study originates from a K-12 Education Organiza-
+age commonsense knowledge and understand com-                tion. This organization provides a repository of
+plex instructions (Mizumoto and Eguchi, 2023).               essays graded by experienced educators, guarantee-
+By using prompts, LLMs can perform AES in zero-              ing the credibility and reliability.
+shot settings with rubrics alone (Lee et al., 2024)             From the original dataset, four primary fields
+or in few-shot settings with minimal labeled data            were retained: (i) Image, which contains the image
+(Mansour et al., 2024; Xiao et al., 2024a). These            of the writing Topics; (ii) Question, which contains
+methods enhance flexibility, scalability, and perfor-        the text of the writing prompt; (iii) Essay, repre-
+mance, especially in low-resource scenarios.                 senting the student’s written work; (iv) Overall
+                                                             Score, reflecting the final assessment provided by
+2.3   Multimodal Large Language Models                       professional educators. To enhance the dataset’s
+MLLMs have brought significant advancements                  quality, a series of processing and cleaning steps
+to diverse tasks and applications (Xi et al., 2023;          were applied. These steps included removing es-
+Huo et al., 2024; Yan et al., 2024d; Yan and Lee,            says with incomplete or low-quality responses and
+2024; Zou et al., 2025; Dang et al., 2024). Propri-          selecting topics that met the criteria for reliability
+etary MLLMs such as GPT-4o (Hurst et al., 2024)              and diversity. Through this rigorous process, we cu-
+and Gemini-1.5 (DeepMind, 2024b) have shown                  rated the E SSAY J UDGE dataset consisting of 1,054
+
+                                                         3
+             Figure 2: Roadmap illustration of E SSAY J UDGE dataset collection, construction and annotation.
+
+multimodal essays with 125 topics. These essays,                ability to build logical and linguistically sound sen-
+covering a broad spectrum of writing abilities, form            tence structures that support the flow of ideas.
+a solid foundation for facilitating AES research.                  At the discourse level, the evaluation considers
+3.2   Data Annotation Scheme                                    the overall structure, argumentation, and coherence
+                                                                of the essay as a whole. Traits including ❼ orga-
+Through discussion with English teachers and lin-               nizational structure assess how well the essay is
+guistic experts, we identified ten traits of essays             organized across its introduction, body, and con-
+and categorized them into three levels of granular-             clusion, ensuring ideas are logically and clearly
+ity, progressing from fine-grained lexical features             presented. ❽ Argument clarity evaluates the ex-
+to broader sentence-level structures and, finally, to           plicitness and focus of the central argument, while
+discourse-level characteristics. This hierarchical              ❾ justifying persuasiveness measures the strength
+structure reflects a natural flow from the smallest             of evidence and reasoning provided to support the
+units of language to the overall coherence and per-             argument. Finally, ❿ essay length ensures that the
+suasiveness of an essay, providing a comprehensive              essay meets the required length while maintaining
+framework for evaluation. The rubrics (with a scale             depth and focus. This broader granularity captures
+of 0 to 5) can be seen in Appendix A. Higher scores             the writer’s ability to integrate all elements into a
+indicate a stronger performance.                                cohesive and persuasive whole.
+   At the lexical level, the focus is on the precision
+                                                                3.3   Datasets Annotation Procedure
+and diversity of word usage, which forms the foun-
+dation of effective expression. Traits including ❶              To ensure a thorough and objective evaluation of
+lexical accuracy and ❷ lexical diversity assess how             the traits, we enlisted two experienced experts in
+well the writer uses vocabulary to convey meaning,              English education, who independently assessed all
+including the correctness of word choice, spelling,             10 traits for each essay. After scoring, we compared
+and semantic appropriateness, as well as the vari-              the results and calculated the differences between
+ety and richness of vocabulary demonstrated in the              the two sets of scores. For traits where the score
+essay. These fine-grained features ensure that the              difference was less than or equal to 1, we took the
+language is both accurate and expressive.                       average of the two scores to establish the ground-
+   Moving to the sentence level, the evaluation                 truth score. In cases where the score difference
+shifts to the internal quality of sentences and the             exceeded 1, we asked another independent team
+connections between them. Traits including ❸                    consisting of three senior annotators to review the
+grammatical accuracy and ❹ grammatical diver-                   essays and discuss the traits with the team. They
+sity examine the correctness and variety of gram-               finally reached a consensus on the final ground-
+matical structures, reflecting the writer’s ability             truth score, ensuring a fair and reliable outcome.
+to construct well-formed and diverse sentences.                 3.4   Data Details
+❺ Punctuation accuracy ensures that punctuation                 E SSAY J UDGE dataset comprises a substantial col-
+marks are used appropriately to enhance clarity and             lection of 1,054 multimodal essays designed for
+readability. Additionally, ❻ coherence is assessed              AES (See details in Appendix B). The dataset is
+at this level, focusing on how smoothly sentences               categorized based on the number of images per
+connect through effective transitions, logical re-              question, with 66.7% being single-image questions
+lationships, and appropriate use of conjunctions.               and the remaining 33.3% multi-image questions.
+This intermediate granularity highlights the writer’s
+
+                                                            4
+4     Experiment and Analysis
+4.1    Experimental Setup
+Evaluation Groups. We meticulously catego-
+rized diverse MLLMs into distinct groups to as-
+sess their capabilities in trait-specific AES. (i)
+The Open-Source MLLMs category encompassed
+models such as Yi-VL (Young et al., 2024),
+Qwen2-VL (Wang et al., 2024), DeepSeek-VL
+(Lu et al., 2024a), LLaVA-NEXT (Liu et al.,
+2024), InternVL2 (Chen et al., 2024), InternVL2.5
+(Chen et al., 2025), MiniCPM-V2.6 (Hu et al.,
+2024), MiniCPM-LLaMA3-V2.5 (Hu et al., 2024),               Figure 3: The open-source and closed-source MLLMs’ distri-
+                                                            bution of average scores among ten traits.
+Ovis1.6-Gemma2 (Lu et al., 2024b), and LLaMA-
+3.2-Vision (Dubey et al., 2024), each demonstrat-
+ing their unique strengths and capabilities in multi-       say scoring tasks, with GPT-4o achieving the
+granular essay scoring. (ii) The Closed-Source              strongest overall performance. Table 2 illus-
+MLLMs featured proprietary models like Qwen-                trates that closed-source MLLMs consistently out-
+Max (Team, 2024), Step-1V (StepFun, 2024),                  perform open-source MLLMs across ten traits.
+Gemini-1.5-Pro (DeepMind, 2024b), Gemini-1.5-               This advantage is likely due to the high-quality
+Flash (DeepMind, 2024a), Claude-3.5-Haiku (An-              proprietary datasets and advanced training tech-
+thropic, 2024a), Claude-3.5-Sonnet (Anthropic,              niques leveraged by closed-source models (Yu
+2024b), GPT-4o-mini (OpenAI, 2024), and GPT-                et al., 2024; Wang et al., 2023), enabling them
+4o (Hurst et al., 2024), providing a comparison             to achieve more balanced and robust performance.
+point for the performance of models that are not            GPT-4o stands out as the best-performing model,
+publicly accessible. (iii) Lastly, the Human Perfor-        achieving the highest QWK scores across multi-
+mance category served as a benchmark for human-             ple traits except for Argument Clarity, highlight-
+level intelligence, enabling us to assess how closely       ing its exceptional capability. Among open-source
+MLLMs emulate human cognitive abilities (More               MLLMs, InternVL2 emerges as the best performer.
+details in Appendix C.3). The detailed prompts for          However, its overall performance remains behind
+MLLMs and sources of MLLMs are provided in                  closed-source ones, underscoring the gap between
+Appendix C.4 and C.5.                                       open-source and closed-source models in terms of
+                                                            capturing complex and evaluative subtleties.
+Evaluation Metric. We employ Quadratic
+Weighted Kappa (QWK) (Ke and Ng, 2019; Li and                  Closed-source MLLMs exhibit distinct scor-
+Ng, 2024b,a) as our metric for scoring the similar-         ing patterns compared to open-source counter-
+ity, which is widely used to evaluate the agreement         parts, characterized by greater score variability
+between model scores and the ground truth. Its              and stricter adherence to rubrics. As revealed
+formula is expressed as:                                    in Figure 3, closed-source models demonstrate sig-
+                       P                                    nificantly higher score variance (0.49 vs. 0.34),
+                          i,j wi,j Oi,j                     suggesting enhanced capacity to differentiate essay
+              k =1− P                   ,
+                          i,j wi,j Ei,j                     quality through broader score distribution across
+                      2
+                                                            performance levels. This contrasts with open-
+                (i−j)
+where wi,j = (N   −1)2
+                       is the weight matrix penal-          source models’ tendency to cluster scores in the
+izing larger differences between i and j, O i,j is          mid-range (3-4 points), reflecting limited discrimi-
+the observed agreement, and E i,j is the expected           native capacity for quality extremes. As shown in
+agreement under random chance. QWK values                   Figure 5, the scoring rigor of closed-source systems
+range from -1 (complete disagreement) to 1 (per-            is further evidenced by their consistent assignment
+fect agreement). Higher values are expected.                of lower scores across critical traits including Argu-
+                                                            ment Clarity, Coherence, and Linguistic Features,
+4.2    Main Results                                         with human ratings typically intermediate between
+Closed-source MLLMs demonstrate significant                 the two model types. This systematic conservatism
+superiority over open-source MLLMs in es-                   stems from closed-source models’ strict adherence
+
+                                                        5
+                                                  Lexical Level           Sentence Level                 Discourse Level
+               MLLMs                     #Para.
+                                                   LA     LD        CH     GA     GD       PA     AC        JP    OS       EL
+                                                   Open-Source MLLMs
+       Yi-VL (Young et al., 2024)         6B      0.07    0.05     0.08    0.09   0.05     0.09   0.05     0.13   0.05     0.07
+     Qwen2-VL (Wang et al., 2024)         7B      0.20    0.26     0.13    0.21   0.16     0.12   0.17     0.10   0.14     0.15
+    DeepSeek-VL (Lu et al., 2024a)        7B      0.09    0.12     0.12    0.13   0.35     0.06   0.18     0.21   0.08     0.09
+    LLaVA-NEXT (Liu et al., 2024)         8B      0.02    0.04     0.03    0.11   0.10     0.02   0.12     0.15   0.02     0.10
+      InternVL2 (Chen et al., 2024)       8B      0.28    0.27     0.34    0.36   0.31     0.33   0.25     0.29   0.31     0.29
+     InternVL2.5 (Chen et al., 2025)      8B      0.14    0.29     0.29    0.29   0.31     0.26   0.15     0.21   0.25     0.22
+    MiniCPM-V2.6 (Hu et al., 2024)        8B      0.18    0.07     0.08    0.16   0.09     0.04   0.12     0.35   0.06     0.24
+MiniCPM-LLaMA3-V2.5 (Hu et al., 2024)     8B      0.37    0.27     0.36    0.29   0.34     0.29   0.09     0.18   0.21     0.09
+   Ovis1.6-Gemma2 (Lu et al., 2024b)      9B      0.15    0.11     0.13    0.39   0.27     0.36   0.11     0.13   0.14     0.21
+ LLaMA-3.2-Vision (Dubey et al., 2024)    11B     0.20    0.16     0.17    0.14   0.11     0.12   0.09     0.17   0.17     0.16
+                                                  Closed-Source MLLMs
+        Qwen-Max (Team, 2024)              -      0.57    0.51     0.52    0.56   0.48     0.40   0.34     0.54   0.45     0.41
+        Step-1V (StepFun, 2024)            -      0.52    0.40     0.49    0.50   0.46     0.37   0.26     0.39   0.31     0.25
+   Gemini-1.5-Pro (DeepMind, 2024b)        -      0.52    0.46     0.57    0.56   0.51     0.35   0.29     0.46   0.54     0.28
+  Gemini-1.5-Flash (DeepMind, 2024a)       -      0.46    0.40     0.48    0.53   0.41     0.33   0.33     0.42   0.47     0.28
+  Claude-3.5-Haiku (Anthropic, 2024a)      -      0.59    0.54     0.53    0.50   0.57     0.40   0.35     0.39   0.48     0.33
+  Claude-3.5-Sonnet (Anthropic, 2024b)     -      0.66    0.60     0.58    0.66   0.60     0.57   0.33     0.46   0.39     0.35
+      GPT-4o-mini (OpenAI, 2024)           -      0.64    0.56     0.54    0.58   0.54     0.45   0.33     0.57   0.45     0.46
+       GPT-4o (Hurst et al., 2024)         -      0.89    0.89     0.87    0.85   0.61     0.65   0.30     0.80   0.79     0.70
+                                                   Human Performance
+          Human performance                -      0.91    0.91     0.89    0.93   0.56     0.86   0.72     0.86   0.88     0.77
+
+Table 2: Comparison of open-source and closed-source MLLM performance (QWK). The highest and second highest scores
+among MLLMs in each column are highlighted in red and blue , respectively.
+
+to quantitative rubtics (Kundu and Barbosa, 2024),
+prioritizing error penalization (grammatical inaccu-
+racies, logical inconsistencies) and standardization
+over nuanced language appreciation. While ensur-
+ing transparency and reproducibility, this approach
+may undervalue creative language use, contrast-                   Figure 4: GPT-4o’s QWK values across traits for text-only
+                                                                  and multimodal settings.
+ing with human raters’ contextual flexibility and
+open-source models’ reduced capacity to assess
+linguistic complexity effectively.                                Figure 6, their low QWK values for Argument Clar-
+   Multimodal inputs play a critical role in im-                  ity and Essay Length are because closed-source
+proving the performance of LLMs in AES tasks.                     LLMs rely heavily on surface-level features like
+Our ablation study compared the performance of                    grammar and vocabulary, making them ineffective
+models in two settings, including multimodal in-                  in handling complex arguments that require con-
+puts (text and images) versus text-only inputs. As                textual understanding and reasoning. For Essay
+shown in Figure 4, when image information was                     Length, they often hallucinate word counts (Rawte
+removed, GPT-4o experienced a decrease in QWK                     et al., 2023) and over-rely on quantitative mea-
+scores across all ten traits. These findings under-               sures, leading to an overvaluation of verbosity and
+score that visual features provide essential evalua-              an undervaluation of concise but effective writing
+tive dimensions that are inaccessible to text-only ap-            (Jeon and Strube, 2021). In contrast, closed-source
+proaches, especially when images contain critical                 MLLMs’ strong lexical performance is due to expo-
+information supporting the argument. Additional                   sure to a extensive, high-quality datasets (Shi et al.,
+evaluation results for other models are provided in               2023), enabling superior precision and variety in
+the Appendix C.2.                                                 lexical choice.
+                                                                     MLLMs demonstrate outstanding perfor-
+4.3   Trait-Specific Analysis                                     mance in assessing Coherence when grading
+Closed-source MLLMs perform poorly in evalu-                      essays related to line charts. For example, as
+ating Argument Clarity and Essay Length while                     shown in Figure 7, GPT-4o achieves a high QWK
+excelling at lexical-level assessment. As shown in                value of 0.89 for the coherence trait when evaluat-
+
+                                                            6
+      Figure 5: The average scores of open-source MLLMs, closed-source MLLMs and ground-truth across ten traits.
+
+
+
+
+Figure 6: The average QWK values of representative models       Figure 7: GPT-4o’s mean QWK values across different essay
+across three granularities of ten traits.                       types across three granularities of ten traits.
+
+ing line chart essays. The results of the top three
+open-source and top three closed-source MLLMs
+are provided in the appendix D. This is primarily
+because line charts have a highly linear information
+structure that emphasizes trends and changes, mak-
+                                                                Figure 8: Comparison of GPT-4o’s QWK values across ten
+ing the logical relationships between data points               traits between single-image and multi-image settings.
+clear and easy to follow (Islam et al., 2024). Ad-
+ditionally, the core information in line chart de-
+scriptions typically focuses on key points such as
+turning points, peaks, and troughs, which simplifies
+the logical chain and allows models to effectively
+capture and evaluate the coherence of the text.
+
+4.4   Analysis of #image Setting                                Figure 9: The closed-source MLLMs’ QWK values of JP
+                                                                trait among single-image & multi-image settings.
+Most closed-source MLLMs perform better in
+evaluating essays with single-image setting. As
+shown in Figure 8, GPT-4o performed better on
+single-image tasks except for JP and GD traits. Ap-
+pendix E shows that among all evaluated closed-
+source MLLMs, only three models do not follow
+this pattern. Single-image tasks are simpler and
+more focused, typically requiring students to de-
+                                                                Figure 10: The open-source MLLMs’ QWK values of JP
+scribe one logical theme. This clear structure                  trait among single-image & multi-image settings.
+makes it easier for models to capture key infor-
+mation and provide accurate evaluations, without
+
+                                                            7
+                       Figure 11: The example case of multi-granular evaluation for the essay.
+
+
+the need for complex comparisons or logical inte-            ing visual elements. The ability to clearly present
+gration across multiple images. In contrast, multi-          and logically connect ideas is essential for both
+image tasks involve comparing, relating, and inte-           multimodal understanding and reasoning, making
+grating data from multiple sources, which increases          it a critical benchmark for evaluating the AES per-
+task complexity and the likelihood of errors in both         formance of MLLMs. Addressing these challenges
+student responses and model evaluations.                     in future MLLMs could significantly improve their
+   For Justifying Persuasiveness, most MLLMs                 ability to assess essays with complex reasoning and
+perform better when evaluating essays with                   enhance their multimodal integration capabilities.
+multi-image setting.        We selected the top-
+performing eight models from both open-source                5   Conclusion
+and closed-source MLLMs, as shown in Figure 9                In this work, we presented E SSAY J UDGE, the
+and Figure 10. Unlike most traits, where MLLMs               first multimodal benchmark designed to evaluate
+tend to perform better on single-image tasks, the            the AES capabilities of MLLMs across lexical,
+evaluation of Justifying Persuasiveness shows a dis-         sentence, and discourse-level traits. Addressing
+tinct advantage in multi-image settings. This may            longstanding limitations in traditional AES ap-
+be because multi-image tasks inherently provide              proaches, E SSAY J UDGE leverages MLLMs’ in-
+richer and more diverse data points, enabling stu-           herent strengths in contextual understanding and
+dents to construct more evidence-based arguments.            multimodal analysis, enabling more precise, trait-
+                                                             specific evaluations without reliance on hand-
+4.5   Case Study                                             crafted features. Our comprehensive evaluation of
+                                                             18 representative MLLMs highlights current limi-
+Figure 11 shows the detailed multi-granular evalua-
+                                                             tations of MLLM-based AES systems. Notably,
+tion for one of the essays. Additional examples are
+                                                             closed-source MLLMs such as GPT-4 demon-
+shown in Appendix F. Specifically, we can find that
+                                                             strate superior performance compared to open-
+argument clarity is the most discrepant from the
+                                                             source counterparts, yet a significant gap remains
+ground truth. Argument clarity is crucial in AES,
+                                                             in achieving human-level accuracy.
+as it directly reflects whether the author’s central
+                                                                We envision that E SSAY J UDGE will not only
+ideas are in alignment with the essay requirement
+                                                             drive innovation in AES but also serve as a stepping
+(Falk and Lapesa, 2023). Leading models like GPT-
+                                                             stone toward broader applications of MLLMs in
+4o show relatively poor performance in assessing
+                                                             educational assessment and beyond. The research
+argument clarity, which is illustrated in Figure 2.
+                                                             community can address the challenges identified
+However, argument clarity serves as a key indicator
+                                                             and foster the development of more accurate and
+of a model’s reasoning abilities and its capacity to
+                                                             interpretable AES systems towards AGI.
+integrate and process complex information, includ-
+
+                                                         8
+Limitations                                                   Yupeng Chang, Xu Wang, Jindong Wang, Yuan Wu,
+                                                                Linyi Yang, Kaijie Zhu, Hao Chen, Xiaoyuan Yi,
+Despite the findings we demonstrate in our work,                Cunxiang Wang, Yidong Wang, et al. 2024. A sur-
+there still exist minor limitations:                            vey on evaluation of large language models. ACM
+                                                                Transactions on Intelligent Systems and Technology,
+                                                                15(3):1–45.
+  1. The datasets used in this study primarily con-
+     sist of essays written by non-native speakers            Hongbo Chen and Ben He. 2013. Automated essay
+     of English, making it unclear whether our                  scoring by maximizing human-machine agreement.
+     conclusions apply to essays written by native              In Proceedings of the 2013 Conference on Empiri-
+                                                                cal Methods in Natural Language Processing, pages
+     speakers, such as those in the ASAP dataset.               1741–1752.
+     However, since our rubrics are broadly appli-
+     cable and not designed specifically for non-             Zhe Chen, Weiyun Wang, Yue Cao, Yangzhou Liu,
+     native speakers, we believe the conclusions                Zhangwei Gao, Erfei Cui, Jinguo Zhu, Shenglong Ye,
+                                                                Hao Tian, Zhaoyang Liu, Lixin Gu, Xuehui Wang,
+     can be generalized to essays written by native
+                                                                Qingyun Li, Yimin Ren, Zixuan Chen, Jiapeng Luo,
+     speakers as well.                                          Jiahao Wang, Tan Jiang, Bo Wang, Conghui He, Bo-
+                                                                tian Shi, Xingcheng Zhang, Han Lv, Yi Wang, Wenqi
+  2. Although our study covers diverse topics, in-              Shao, Pei Chu, Zhongying Tu, Tong He, Zhiyong Wu,
+     cluding healthcare, biology, demographics,                 Huipeng Deng, Jiaye Ge, Kai Chen, Kaipeng Zhang,
+                                                                Limin Wang, Min Dou, Lewei Lu, Xizhou Zhu, Tong
+     environment, education and so on, there is still           Lu, Dahua Lin, Yu Qiao, Jifeng Dai, and Wenhai
+     a demand for a more generalized benchmark.                 Wang. 2025. Expanding performance boundaries of
+     Further expansion is needed to address a wider             open-source multimodal models with model, data,
+     variety of writing contexts and disciplines, en-           and test-time scaling. Preprint, arXiv:2412.05271.
+     suring its broader applicability across differ-
+                                                              Zhe Chen, Weiyun Wang, Hao Tian, Shenglong Ye,
+     ent writing tasks.                                         Zhangwei Gao, Erfei Cui, Wenwen Tong, Kongzhi
+                                                                Hu, Jiapeng Luo, Zheng Ma, et al. 2024. How far
+Acknowledgements                                                are we to gpt-4v? closing the gap to commercial
+                                                                multimodal models with open-source suites. arXiv
+This work was supported by Open Project                         preprint arXiv:2404.16821.
+Program of Guangxi Key Laboratory of Digital
+                                                              Mădălina Cozma, Andrei Butnaru, and Radu Tudor
+Infrastructure (Grant Number: GXDIOP2024015);                   Ionescu. 2018. Automated essay scoring with string
+Guangdong Provincial Department of Education                    kernels and word embeddings. In Proceedings of the
+Project (Grant No.2024KQNCX028); Scientific                     56th Annual Meeting of the Association for Compu-
+Research Projects for the Higher-educational                    tational Linguistics (Volume 2: Short Papers), pages
+                                                                503–509.
+Institutions (Grant No.2024312096), Education
+Bureau of Guangzhou Municipality; Guangzhou-                  Yunkai Dang, Kaichen Huang, Jiahao Huo, Yibo Yan,
+HKUST(GZ) Joint Funding Program (Grant                          Sirui Huang, Dongrui Liu, Mengxi Gao, Jie Zhang,
+No.2025A03J3957), Education Bureau of                           Chen Qian, Kun Wang, et al. 2024. Explain-
+                                                                able and interpretable multimodal large language
+Guangzhou Municipality.
+                                                                models: A comprehensive survey. arXiv preprint
+                                                                arXiv:2412.02104.
+
+References                                                    Google DeepMind. 2024a. Gemini 1.5 flash.
+Anthropic. 2024a. Claude 3.5 haiku.                           Google DeepMind. 2024b. Gemini 1.5 pro.
+
+Anthropic. 2024b. Claude 3.5 sonnet.                          Linqian Ding and Di Zou. 2024. Automated writing
+                                                                evaluation systems: A systematic review of gram-
+Yigal Attali and Jill Burstein. 2006. Automated es-             marly, pigai, and criterion with a perspective on fu-
+  say scoring with e-rater® v.2. journal of technology,         ture directions in the age of generative artificial in-
+  learning, and assessment, 4(3). Journal of Technol-           telligence. Education and Information Technologies,
+  ogy, Learning, and Assessment, 4.                             pages 1–53.
+
+Stacey Bailey and Detmar Meurers. 2008. Diagnos-              Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey,
+   ing meaning errors in short answers to reading com-          Abhishek Kadian, Ahmad Al-Dahle, Aiesha Letman,
+   prehension questions. In Proceedings of the Third            Akhil Mathur, Alan Schelten, Amy Yang, Angela
+  Workshop on Innovative Use of NLP for Building                Fan, et al. 2024. The llama 3 herd of models. arXiv
+  Educational Applications, pages 107–115.                      preprint arXiv:2407.21783.
+
+
+                                                          9
+Neele Falk and Gabriella Lapesa. 2023. Bridging argu-           Zixuan Ke and Vincent Ng. 2019. Automated essay
+  ment quality and deliberative quality annotations with          scoring: A survey of the state of the art. In Proceed-
+  adapters. In Findings of the Association for Compu-             ings of the Twenty-Eighth International Joint Con-
+  tational Linguistics: EACL 2023, pages 2469–2488,               ference on Artificial Intelligence, IJCAI-19, pages
+  Dubrovnik, Croatia. Association for Computational               6300–6308. International Joint Conferences on Arti-
+  Linguistics.                                                    ficial Intelligence Organization.
+
+Rujun Gao, Hillary E Merzdorf, Saira Anwar, M Cyn-              Anindita Kundu and Denilson Barbosa. 2024. Are large
+  thia Hipwell, and Arun Srinivasa. 2024. Automatic               language models good essay graders? Preprint,
+  assessment of text-based responses in post-secondary            arXiv:2409.13120.
+  education: A systematic review. Computers and Ed-
+  ucation: Artificial Intelligence, page 100206.                Gyeong-Geon Lee, Lehong Shi, Ehsan Latif, Yizhu
+                                                                  Gao, Arne Bewersdorff, Matthew Nyaaba, Shuchen
+Sylviane Granger, Estelle Dagneaux, Fanny Meunier,                Guo, Zihao Wu, Zhengliang Liu, Hui Wang, et al.
+  and Magali Paquot. 2009. International Corpus of                2023. Multimodality of ai for education: To-
+  Learner English. Version 2. Handbook and CD-ROM.                wards artificial general intelligence. arXiv preprint
+                                                                  arXiv:2312.06037.
+Shengding Hu, Yuge Tu, Xu Han, Chaoqun He, Ganqu
+  Cui, Xiang Long, Zhi Zheng, Yewei Fang, Yuxiang
+  Huang, Weilin Zhao, Xinrong Zhang, Zheng Leng                 Sanwoo Lee, Yida Cai, Desong Meng, Ziyang Wang,
+  Thai, Kaihuo Zhang, Chongyi Wang, Yuan Yao,                     and Yunfang Wu. 2024. Unleashing large language
+  Chenyang Zhao, Jie Zhou, Jie Cai, Zhongwu Zhai,                 models’ proficiency in zero-shot essay scoring. In
+  Ning Ding, Chao Jia, Guoyang Zeng, Dahai Li,                    Findings of the Association for Computational Lin-
+  Zhiyuan Liu, and Maosong Sun. 2024. Minicpm:                    guistics: EMNLP 2024, pages 181–198.
+  Unveiling the potential of small language mod-
+  els with scalable training strategies. Preprint,              Shengjie Li and Vincent Ng. 2024a. Automated essay
+  arXiv:2404.06395.                                               scoring: A reflection on the state of the art. In Pro-
+                                                                  ceedings of the 2024 Conference on Empirical Meth-
+Kaichen Huang, Jiahao Huo, Yibo Yan, Kun Wang,                    ods in Natural Language Processing, pages 17876–
+  Yutao Yue, and Xuming Hu. 2024. Miner: Mining                   17888.
+  the underlying pattern of modality-specific neurons
+  in multimodal large language models. arXiv preprint           Shengjie Li and Vincent Ng. 2024b. Automated es-
+  arXiv:2410.04819.                                               say scoring: Recent successes and future directions.
+                                                                  In Proceedings of the Thirty-Third International
+Jiahao Huo, Yibo Yan, Boren Hu, Yutao Yue, and Xum-               Joint Conference on Artificial Intelligence, IJCAI-24,
+   ing Hu. 2024. Mmneuron: Discovering neuron-level               pages 8114–8122.
+   domain-specific interpretation in multimodal large
+   language model. arXiv preprint arXiv:2406.11193.             Shengjie Li and Vincent Ng. 2024c. Icle++: Model-
+                                                                  ing fine-grained traits for holistic essay scoring. In
+Aaron Hurst, Adam Lerer, Adam P Goucher, Adam                     Proceedings of the 2024 Conference of the North
+  Perelman, Aditya Ramesh, Aidan Clark, AJ Os-                    American Chapter of the Association for Computa-
+  trow, Akila Welihinda, Alan Hayes, Alec Radford,                tional Linguistics: Human Language Technologies
+  et al. 2024. Gpt-4o system card. arXiv preprint                 (Volume 1: Long Papers), pages 8458–8478.
+  arXiv:2410.21276.
+                                                                Wenchao Li and Haitao Liu. 2024. Applying large
+Mohammed Saidul Islam, Raian Rahman, Ahmed
+                                                                 language models for automated essay scoring for
+ Masry, Md Tahmid Rahman Laskar, Mir Tafseer
+                                                                 non-native japanese. Humanities and Social Sciences
+ Nayeem, and Enamul Hoque. 2024. Are large vi-
+                                                                 Communications, 11(1):1–15.
+ sion language models up to the challenge of chart
+ comprehension and reasoning. In Findings of the
+ Association for Computational Linguistics: EMNLP               Chun Then Lim, Chih How Bong, Wee Sian Wong, and
+ 2024, pages 3334–3368, Miami, Florida, USA. Asso-                Nung Kion Lee. 2021. A comprehensive review of
+ ciation for Computational Linguistics.                           automated essay scoring (aes) research and develop-
+                                                                  ment. Pertanika Journal of Science & Technology,
+Thorben Jansen, Jennifer Meyer, Johanna Fleckenstein,             29(3):1875–1899.
+  Andrea Horbach, Stefan Keller, and Jens Möller.
+  2024. Individualizing goal-setting interventions us-          Haotian Liu, Chunyuan Li, Yuheng Li, Bo Li, Yuanhan
+  ing automated writing evaluation to support sec-                Zhang, Sheng Shen, and Yong Jae Lee. 2024. Llava-
+  ondary school students’ text revisions. Learning and            next: Improved reasoning, ocr, and world knowledge.
+  Instruction, 89:101847.
+                                                                Haoyu Lu, Wen Liu, Bo Zhang, Bingxuan Wang, Kai
+Sungho Jeon and Michael Strube. 2021. Countering the              Dong, Bo Liu, Jingxiang Sun, Tongzheng Ren, Zhu-
+  influence of essay length in neural essay scoring. In           oshu Li, Yaofeng Sun, et al. 2024a. Deepseek-vl:
+  Proceedings of the second workshop on simple and                towards real-world vision-language understanding.
+  efficient natural language processing, pages 32–38.             arXiv preprint arXiv:2403.05525.
+
+
+                                                           10
+Shiyin Lu, Yang Li, Qing-Guo Chen, Zhao Xu, Weihua                Weijia Shi, Anirudh Ajith, Mengzhou Xia, Yangsibo
+  Luo, Kaifu Zhang, and Han-Jia Ye. 2024b. Ovis:                   Huang, Daogao Liu, Terra Blevins, Danqi Chen,
+  Structural embedding alignment for multimodal large              and Luke Zettlemoyer. 2023. Detecting pretraining
+  language model. Preprint, arXiv:2405.20797.                      data from large language models. arXiv preprint
+                                                                   arXiv:2310.16789.
+Ziming Luo, Zonglin Yang, Zexin Xu, Wei Yang, and
+  Xinya Du. 2025. Llm4sr: A survey on large lan-                  Yishen Song, Qianta Zhu, Huaibo Wang, and Qinhua
+  guage models for scientific research. arXiv preprint              Zheng. 2024. Automated essay scoring and revising
+  arXiv:2501.04306.                                                 based on open-source large language models. IEEE
+                                                                    Transactions on Learning Technologies.
+Subhankar Maity and Aniket Deroy. 2024. The future of
+  learning in the age of generative ai: Automated ques-           Christian Stab and Iryna Gurevych. 2014. Annotating
+  tion generation and assessment with large language                argument components and relations in persuasive es-
+  models. arXiv preprint arXiv:2410.09576.                          says. In Proceedings of COLING 2014, the 25th
+                                                                    International Conference on Computational Linguis-
+Watheq Mansour, Salam Albatarni, Sohaila Eltanbouly,
+                                                                    tics: Technical Papers, pages 1501–1510.
+  and Tamer Elsayed. 2024. Can large language mod-
+  els automatically score proficiency of written essays?
+ Preprint, arXiv:2403.06149.                                      StepFun. 2024. Introducing step1v.
+
+Sandeep Mathias and Pushpak Bhattacharyya. 2018.                  Tamara P Tate, Jacob Steiss, Drew Bailey, Steve Gra-
+  ASAP++: Enriching the ASAP automated essay grad-                  ham, Youngsun Moon, Daniel Ritchie, Waverly
+  ing dataset with essay attribute scores. In Proceed-              Tseng, and Mark Warschauer. 2024. Can ai pro-
+  ings of the Eleventh International Conference on Lan-             vide useful holistic essay scoring? Computers and
+  guage Resources and Evaluation (LREC 2018).                       Education: Artificial Intelligence, 7:100255.
+
+Atsushi Mizumoto and Masaki Eguchi. 2023. Exploring               Qwen Team. 2024. Introducing qwen1.5.
+  the potential of using an ai language model for auto-
+  mated essay scoring. Research Methods in Applied                Masaki Uto. 2021. A review of deep-neural automated
+  Linguistics, 2(2):100050.                                        essay scoring models. Behaviormetrika, 48(2):459–
+                                                                   484.
+OpenAI. 2024. Gpt-4o mini: advancing cost-efficient
+  intelligence.                                                   Masaki Uto, Yikuan Xie, and Maomi Ueno. 2020.
+                                                                   Neural automated essay scoring incorporating hand-
+Austin Pack, Alex Barrett, and Juan Escalante. 2024.               crafted features. In Proceedings of the 28th interna-
+  Large language models and automated essay scoring                tional conference on computational linguistics, pages
+  of english language learner writing: Insights into               6077–6088.
+  validity and reliability. Computers and Education:
+  Artificial Intelligence, 6:100234.                              Sowmya Vajjala. 2016. Automated assessment of non-
+                                                                    native learner essays: Investigating the role of lin-
+Changle Qu, Sunhao Dai, Xiaochi Wei, Hengyi Cai,                    guistic features. CoRR.
+  Shuaiqiang Wang, Dawei Yin, Jun Xu, and Ji-Rong
+  Wen. 2025. Tool learning with large language mod-
+                                                                  Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhi-
+  els: A survey. Frontiers of Computer Science,
+                                                                    hao Fan, Jinze Bai, Keqin Chen, Xuejing Liu, Jialin
+  19(8):198343.
+                                                                    Wang, Wenbin Ge, Yang Fan, Kai Dang, Mengfei
+Dadi Ramesh and Suresh Kumar Sanampudi. 2022.                       Du, Xuancheng Ren, Rui Men, Dayiheng Liu,
+  An automated essay scoring systems: a system-                     Chang Zhou, Jingren Zhou, and Junyang Lin. 2024.
+  atic literature review. Artificial Intelligence Review,           Qwen2-vl: Enhancing vision-language model’s per-
+  55(3):2495–2527.                                                  ception of the world at any resolution. Preprint,
+                                                                    arXiv:2409.12191.
+Vipula Rawte, Swagata Chakraborty, Agnibh Pathak,
+  Anubhav Sarkar, S.M Towhidul Islam Tonmoy,                      Xiao Wang, Guangyao Chen, Guangwu Qian,
+  Aman Chadha, Amit Sheth, and Amitava Das. 2023.                   Pengcheng Gao, Xiao-Yong Wei, Yaowei Wang,
+  The troubling emergence of hallucination in large lan-            Yonghong Tian, and Wen Gao. 2023. Large-scale
+  guage models - an extensive definition, quantification,           multi-modal pre-trained models: A comprehensive
+  and prescriptive remediations. In Proceedings of the              survey. Machine Intelligence Research, 20(4):447–
+  2023 Conference on Empirical Methods in Natural                   482.
+  Language Processing, pages 2541–2573, Singapore.
+  Association for Computational Linguistics.                      Yongjie Wang, Chuang Wang, Ruobing Li, and Hui Lin.
+                                                                    2022. On the use of bert for automated essay scoring:
+Stefan Ruseti, Ionut Paraschiv, Mihai Dascalu, and                  Joint learning of multi-scale essay representation. In
+   Danielle S McNamara. 2024. Automated pipeline for                Proceedings of the 2022 Conference of the North
+   multi-lingual automated essay scoring with reader-               American Chapter of the Association for Computa-
+   bench. International Journal of Artificial Intelligence          tional Linguistics: Human Language Technologies,
+   in Education, pages 1–22.                                        pages 3416–3425.
+
+
+                                                             11
+Xuansheng Wu, Padmaja Pravin Saraf, Gyeong-Geon                  Bart Selman, and Qingsong Wen. 2025a. Posi-
+  Lee, Ehsan Latif, Ninghao Liu, and Xiaoming Zhai.              tion: Multimodal large language models can signifi-
+  2024. Unveiling scoring processes: Dissecting the              cantly advance scientific reasoning. arXiv preprint
+  differences between llms and human graders in auto-            arXiv:2502.02871.
+  matic scoring. arXiv preprint arXiv:2407.18328.
+                                                               Yibo Yan, Shen Wang, Jiahao Huo, Philip S Yu, Xum-
+Zhiheng Xi, Wenxiang Chen, Xin Guo, Wei He, Yiwen                ing Hu, and Qingsong Wen. 2025b. Mathagent:
+  Ding, Boyang Hong, Ming Zhang, Junzhe Wang,                    Leveraging a mixture-of-math-agent framework for
+  Senjie Jin, Enyu Zhou, et al. 2023. The rise and               real-world multimodal mathematical error detection.
+  potential of large language model based agents: A              arXiv preprint arXiv:2503.18132.
+  survey. arXiv preprint arXiv:2309.07864.
+                                                               Yibo Yan, Haomin Wen, Siru Zhong, Wei Chen,
+Wei Xia, Shaoguang Mao, and Chanjing Zheng. 2024.                Haodong Chen, Qingsong Wen, Roger Zimmermann,
+ Empirical study of large language models as au-                 and Yuxuan Liang. 2024d. Urbanclip: Learning
+ tomated essay scoring tools in english composi-                 text-enhanced urban region profiling with contrastive
+ tion_taking toefl independent writing task for exam-            language-image pretraining from the web. In Pro-
+ ple. arXiv preprint arXiv:2401.03401.                           ceedings of the ACM on Web Conference 2024, pages
+                                                                 4006–4017.
+Changrong Xiao, Wenxing Ma, Qingping Song,
+  Sean Xin Xu, Kunpeng Zhang, Yufang Wang, and
+  Qi Fu. 2024a. Human-ai collaborative essay scor-             Kaixun Yang, Mladen Raković, Yuyang Li, Quanlong
+  ing: A dual-process framework with llms. Preprint,             Guan, Dragan Gašević, and Guangliang Chen. 2024.
+  arXiv:2401.06431.                                              Unveiling the tapestry of automated essay scoring:
+                                                                 A comprehensive investigation of accuracy, fairness,
+Changrong Xiao, Wenxing Ma, Sean Xin Xu, Kunpeng                 and generalizability. In Proceedings of the AAAI Con-
+  Zhang, Yufang Wang, and Qi Fu. 2024b. From au-                 ference on Artificial Intelligence, volume 38, pages
+  tomation to augmentation: Large language models                22466–22474.
+  elevating essay scoring landscape. arXiv preprint
+  arXiv:2401.06431.                                            Helen Yannakoudakis and Ted Briscoe. 2012. Modeling
+                                                                 coherence in ESOL learner texts. In Proceedings
+Tianlong Xu, Richard Tong, Jing Liang, Xing Fan,                 of the Seventh Workshop on Building Educational
+  Haoyang Li, and Qingsong Wen. 2024. Foundation                 Applications Using NLP, pages 33–43.
+  models for education: Promises and prospects. arXiv
+  preprint arXiv:2405.10959.                                   Helen Yannakoudakis, Ted Briscoe, and Ben Medlock.
+                                                                 2011. A new dataset and method for automatically
+Lixiang Yan, Lele Sha, Linxuan Zhao, Yuheng Li,                  grading ESOL texts. In Proceedings of the 49th
+  Roberto Martinez-Maldonado, Guanliang Chen,                    Annual Meeting of the Association for Computational
+  Xinyu Li, Yueqiao Jin, and Dragan Gašević. 2024a.             Linguistics: Human Language Technologies, pages
+  Practical and ethical challenges of large language             180–189.
+  models in education: A systematic scoping review.
+  British Journal of Educational Technology, 55(1):90–         Jingheng Ye, Shen Wang, Deqing Zou, Yibo Yan, Kun
+  112.                                                            Wang, Hai-Tao Zheng, Zenglin Xu, Irwin King,
+                                                                  Philip S Yu, and Qingsong Wen. 2025. Position:
+Yibo Yan and Joey Lee. 2024. Georeasoner: Reason-                 Llms can be good tutors in foreign language educa-
+  ing on geospatially grounded context for natural lan-           tion. arXiv preprint arXiv:2502.05467.
+  guage understanding. In Proceedings of the 33rd
+  ACM International Conference on Information and
+                                                               Alex Young, Bei Chen, Chao Li, Chengen Huang,
+  Knowledge Management, pages 4163–4167.
+                                                                 Ge Zhang, Guanwei Zhang, Heng Li, Jiangcheng
+Yibo Yan, Jiamin Su, Jianxiang He, Fangteng Fu,                  Zhu, Jianqun Chen, Jing Chang, et al. 2024. Yi:
+  Xu Zheng, Yuanhuiyi Lyu, Kun Wang, Shen Wang,                  Open foundation models by 01. ai. arXiv preprint
+  Qingsong Wen, and Xuming Hu. 2024b. A survey                   arXiv:2403.04652.
+  of mathematical reasoning in the era of multimodal
+  large language model: Benchmark, method & chal-              Yue Yu, Yuchen Zhuang, Jieyu Zhang, Yu Meng,
+  lenges. arXiv preprint arXiv:2412.11936.                       Alexander J Ratner, Ranjay Krishna, Jiaming Shen,
+                                                                 and Chao Zhang. 2024. Large language model as
+Yibo Yan, Shen Wang, Jiahao Huo, Hang Li, Boyan Li,              attributed training data generator: A tale of diversity
+  Jiamin Su, Xiong Gao, Yi-Fan Zhang, Tianlong Xu,               and bias. Advances in Neural Information Processing
+  Zhendong Chu, et al. 2024c. Errorradar: Benchmark-             Systems, 36.
+  ing complex mathematical reasoning of multimodal
+  large language models via error detection. arXiv             Kening Zheng, Junkai Chen, Yibo Yan, Xin Zou, and
+  preprint arXiv:2410.04509.                                     Xuming Hu. 2024. Reefknot: A comprehensive
+                                                                 benchmark for relation hallucination evaluation, anal-
+Yibo Yan, Shen Wang, Jiahao Huo, Jingheng Ye, Zhen-              ysis and mitigation in multimodal large language
+  dong Chu, Xuming Hu, Philip S Yu, Carla Gomes,                 models. arXiv preprint arXiv:2408.09429.
+
+
+                                                          12
+Guanyu Zhou, Yibo Yan, Xin Zou, Kun Wang, Ai-
+  wei Liu, and Xuming Hu. 2024. Mitigating modal-
+  ity prior-induced hallucinations in multimodal large
+  language models via deciphering attention causality.
+  arXiv preprint arXiv:2410.04780.
+Xin Zou, Yizhou Wang, Yibo Yan, Sirui Huang, Ken-
+  ing Zheng, Junkai Chen, Chang Tang, and Xuming
+  Hu. 2024. Look twice before you answer: Memory-
+  space visual retracing for hallucination mitigation in
+  multimodal large language models. arXiv preprint
+  arXiv:2410.03577.
+Xingchen Zou, Yibo Yan, Xixuan Hao, Yuehong Hu,
+  Haomin Wen, Erdong Liu, Junbo Zhang, Yong Li,
+  Tianrui Li, Yu Zheng, et al. 2025. Deep learning for
+  cross-domain data fusion in urban computing: Tax-
+  onomy, advances, and outlook. Information Fusion,
+  113:102606.
+
+
+
+
+                                                           13
+A     Trait-Specific Rubrics                                   Statistic                                 Number
+In this section, we introduce the rubrics used to              Total Multimodal Essays                     1,054
+annotate the 10 traits for each essay in our dataset.
+The rubrics are detailed in Table 5 to Table 14.               Image Type
+Each trait is assessed using a numerical score rang-            - Single-Image                         703 (66.7%)
+ing from 0 to 5. A score of 5 represents high-                  - Multi-Image                          351 (33.3%)
+quality performance with respect to the trait being
+evaluated, while a score of 0 represents low-quality           Multimodal Essay Type
+performance in the same regard.                                - Flow Chart                            305 (28.9%)
+                                                               - Bar Chart                             211 (20.0%)
+B     E SSAY J UDGE Dataset Details                            - Table                                 153 (14.5%)
+                                                               - Line Chart                            145 (13.8%)
+B.1    Dataset Scope
+                                                               - Pie Chart                              71 (6.7%)
+In the E SSAY J UDGE benchmark, the essay require-             - Map                                    62 (5.9%)
+ments are all set at university-level difficulty. The          - Composite Chart                       107 (10.2%)
+essays highly depend on visual information. There-
+fore, when writing the essays, students need to use                 Table 3: Key statistics of E SSAY J UDGE dataset.
+the information provided by the pictures as evi-
+dence to support their arguments. This creates a
+unique multimodal challenge and provides a basis
+for evaluating the ability of MLLMs to handle di-            B.4     Annotation Details
+verse and complex information in the multimodal
+context of AES.                                              During the annotation process, we found that when
+                                                             two experts independently scored for the first time,
+B.2    Dataset Categorization                                the proportion of the score difference less than or
+                                                             equal to 1 was 94.8%. This data fully indicates that
+The Figure 3 above provides a detailed breakdown             the scoring consistency of the two experts is very
+of the E SSAY J UDGE dataset, which consists of              high, reflecting that the scoring of the two experts is
+1054 multimodal essays. The dataset is categorized           relatively accurate. Table 4 shows the proportions
+based on the type of image it includes, with 66.7%           of the score difference less than or equal to 1 based
+(703 essays) containing a single image and 33.3%             on specific traits.
+(351 essays) containing multiple images. Further
+classification is made based on the type of visual
+content within these essays, with the most common
+                                                                   Traits          #Essays            Proportion
+type being flow charts (28.9%), followed by bar
+charts (20.0%), and tables (14.5%). Other image                     AC               900                  85.4%
+types include line charts (13.8%), pie charts (6.7%),               JP              1,035                 98.2%
+maps (5.9%), and composite charts (10.2%). This                     OS              1,016                 96.4%
+dataset provides valuable insights into the diver-                  CH              1,038                 98.5%
+sity of multimodal elements incorporated in essay                   EL               920                  87.3%
+content.                                                            GA              1,025                 97.2%
+                                                                    GD              1,044                 99.1%
+B.3    Dataset Topic
+                                                                    LA              1,034                 98.1%
+Our dataset includes 125 distinct essay topics,                     LD              1,044                 99.1%
+which span a wide range of themes such as popu-                     PA               936                  88.8%
+lation, environment, education, production, evolu-
+tion, and so on. The topics represent a diverse array              Total            9,992                 94.8%
+of subjects, offering a broad scope for analysis. In
+the Table 15, we highlight the top five most fre-            Table 4: The proportions of the score difference less than or
+                                                             equal to 1 based on specific traits.
+quent topics in the dataset, providing an overview
+of the predominant themes present in the essays.
+
+                                                        14
+C     Additional Experimental Details                         Definition, Rubrics, Reference Content, and In-
+                                                              struction. The details are shown in Figure 13.
+C.1    Analysis on Scaling Law
+                                                                 The input to the model includes the question text,
+We conducted additional experiments using a larger            the accompanying image(s), the student’s essay, as
+open-source MLLM—Qwen-VL (72B). Compared                      well as the specific trait to be evaluated and its
+to Qwen-VL (7B), this model shows a significant               corresponding rubrics.
+performance improvement, consistent with the ex-                 The output should be the only a numerical score,
+pected scaling law (as shown in the Table 16). How-           in line with the requirements set forth in the Task
+ever, even with increased model size, these models            Definition. However, given that some models, es-
+still underperform compared to most closed-source             pecially the open-source MLLMs, tend to deviate
+MLLMs, which is in line with our conclusions.                 from the only score task and produce outputs be-
+                                                              yond what is expected, we explicitly reinforce the
+C.2    Multimodal Ablation Study                              requirement for a numerical score in the final In-
+We also evaluated GPT-4o-mini. Figure 12 shows                struction section of the prompt. This redundancy
+that GPT-4o-mini exhibited a decline in nine out              aims to ensure adherence to the evaluation task and
+of ten traits when image information was removed,             improve the reliability of the scoring process.
+with the exception of lexical diversity. Except for
+GPT-4o and GPT-4o-mini, we also evaluated text-               C.5    Model Sources
+only LLM - GPT-3.5, which also showed noticeable              Table 18 details specific sources for the various
+performance drops (as shown in Table 17 below).               MLLMs we evaluated. The hyperparameters for
+This finding further underscores the importance               the experiments are set to their default values unless
+of multimodal inputs, as visual features provide              specified otherwise.
+essential evaluative dimensions that text-only ap-
+proaches cannot capture, especially when images               D     More on Trait-Specific Analysis
+contain critical supporting information.                      We present the performance results of the top
+C.3    Human Performance Evaluation                           three open-source and closed-source MLLMs in
+                                                              grading essays related to line charts. Aside
+In the Human Performance section, four postgrad-              from the best performer, GPT-4o, other mod-
+uate students with excellent English backgrounds              els evaluated include Claude-3.5-Sonnet, GPT-4o-
+independently evaluated the essays, scoring them              mini, InternVL2, MiniCPM-LLaMA3-V2.5, and
+across ten distinct traits. To ensure the reliability         InternVL2.5. As shown in Figure 14 to Figure
+of their assessments, each student was assigned an            18 These models also demonstrated outstanding
+approximately equal number of the 1,054 essays,               performance in assessing coherence when grading
+ensuring a balanced workload.                                 essays related to line charts.
+   The evaluations were conducted independently,
+with no discussions permitted between the evalua-             E     More on Analysis of #image
+tors to preserve the integrity of the scoring process.
+                                                              This section presents the evaluation results of all as-
+Each postgraduate student provided their assess-
+                                                              sessed closed-source MLLMs. As shown in Figure
+ments based solely on their expertise and under-
+                                                              19 to Figure 25, most closed-source MLLMs, ex-
+standing of the scoring criteria.
+                                                              cept for the Gemini series and Qwen-Max, perform
+   This analysis underscores the ability of human
+                                                              better when grading essays based on single-image
+assessments to capture the distinct traits of essays,
+                                                              tasks compared to multi-image tasks.
+highlighting their role in reflecting the nuances of
+natural intelligence. These evaluations also reveal           F     More Multimodal Essay Scoring
+the gap between large language models and human                     Examples
+cognitive capabilities, serving as a benchmark for
+the advancements that machine intelligence strives            This section provides additional examples of mul-
+to achieve.                                                   timodal essay scoring based on Multi-Granular
+                                                              rubrics, which is shown in Figure 26 to Figure 28,
+C.4    Prompt for MLLM Evaluation                             showcasing the application of our proposed frame-
+For the evaluation of MLLMs, we designed                      work to a diverse set of essays that incorporate both
+prompts that consist of four distinct parts: Task             textual and visual elements.
+
+                                                         15
+Score                                              Scoring Criteria
+ 5      The central argument is clear, and the first paragraph clearly outlines the topic of the image
+        and question, providing guidance with no ambiguity.
+ 4      The central argument is clear, and the first paragraph mentions the topic of the image and
+        question, but the guidance is slightly lacking or the expression is somewhat vague.
+ 3      The argument is generally clear, but the expression is vague, and it doesn’t adequately guide
+        the rest of the essay.
+ 2      The argument is unclear, the description is vague or incomplete, and it doesn’t guide the essay.
+ 1      The argument is vague, and the first paragraph fails to effectively summarize the topic of the
+        image or question.
+ 0      No central argument is presented, or the essay completely deviates from the topic and image.
+
+                       Table 5: Rubrics for evaluating the argument clarity of the essays.
+
+
+
+Score                                              Scoring Criteria
+ 5      Transitions between sentences are natural, and logical connections flow smoothly; appropriate
+        use of linking words and transitional phrases.
+ 4      Sentences are generally coherent, with some transitions slightly awkward; linking words are
+        used sparingly but are generally appropriate.
+ 3      The logical connection between sentences is not smooth, with some sentences jumping or
+        lacking flow; linking words are used insufficiently or inappropriately.
+ 2      Logical connections are weak, sentence connections are awkward, and linking words are
+        either used too little or excessively.
+ 1      There is almost no logical connection between sentences, transitions are unnatural, and
+        linking words are very limited or incorrect.
+ 0      No coherence at all, with logical confusion between sentences.
+
+                          Table 6: Rubrics for evaluating the coherence of the essays.
+
+
+
+Score                                              Scoring Criteria
+ 5      Word count is 150 words or more, with the content being substantial and without obvious
+        excess or brevity.
+ 4      Word count is around 150 words, but slightly off (within 10 words), and the content is
+        complete.
+ 3      Word count is noticeably too short or too long, and the content is not sufficiently substantial or
+        is somewhat lengthy.
+ 2      Word count deviates significantly, failing to fully cover the requirements of the prompt.
+ 1      Word count is far below the requirement, and the content is incomplete.
+ 0      Word count is severely insufficient or excessive, making it impossible to meet the
+        requirements of the prompt.
+
+                         Table 7: Rubrics for evaluating the essay length of the essays.
+
+
+
+                                                       16
+Score                                             Scoring Criteria
+ 5      Sentence structure is accurate with no grammatical errors; both simple and complex sentences
+        are error-free.
+ 4      Sentence structure is generally accurate, with occasional minor errors that do not affect
+        understanding; some errors in complex sentence structures.
+ 3      Few grammatical errors, but more noticeable errors that affect understanding; simple
+        sentences are accurate, but complex sentences frequently contain errors.
+ 2      Numerous grammatical errors, with sentence structure affecting understanding; simple
+        sentences are occasionally correct, but complex sentences have frequent errors.
+ 1      A large number of grammatical errors, with sentence structure severely affecting
+        understanding; sentence structure is unstable, and even simple sentences contain mistakes.
+ 0      Sentence structure is completely incorrect, nonsensical, and difficult to understand.
+
+                    Table 8: Rubrics for evaluating the grammatical accuracy of the essays.
+
+
+
+
+Score                                             Scoring Criteria
+ 5      Uses a variety of sentence structures, including both simple and complex sentences, with
+        flexible use of clauses and compound sentences, demonstrating rich sentence variation.
+ 4      Generally uses a variety of sentence structures, with appropriate use of common clauses and
+        compound sentences. Sentence structures vary, though some sentence types lack flexibility.
+ 3      Uses a variety of sentence structures, but with limited use of complex sentences, which often
+        contain errors. Sentence variation is somewhat restricted.
+ 2      Sentence structures are simple, primarily relying on simple sentences, with occasional
+        attempts at complex sentences, though errors occur frequently.
+ 1      Sentence structures are very basic, with almost no complex sentences, and even simple
+        sentences contain errors.
+ 0      Only uses simple, repetitive sentences with no complex sentences, resulting in rigid sentence
+        structures.
+
+                    Table 9: Rubrics for evaluating the grammatical diversity of the essays.
+
+
+
+
+                                                      17
+Score                                               Scoring Criteria
+ 5      Fully addresses and accurately analyzes all important information in the image and prompt
+        (e.g., data turning points, trends); argumentation is in-depth and logically sound.
+ 4      Addresses most of the important information in the image and prompt, with reasonable
+        analysis but slight shortcomings; argumentation is generally logical.
+ 3      Addresses some important information in the image and prompt, but analysis is insufficient;
+        argumentation is somewhat weak.
+ 2      Mentions a small amount of important information in the image and prompt, with simple or
+        incorrect analysis; there are significant logical issues in the argumentation.
+ 1      Only briefly mentions important information in the image and prompt or makes clear
+        analytical errors, lacking reasonable reasoning.
+ 0      Fails to mention key information from the image and prompt, lacks any argumentation, and is
+        logically incoherent.
+
+                   Table 10: Rubrics for evaluating the justifying persuasiveness of the essays.
+
+
+Score                                               Scoring Criteria
+ 5      Vocabulary is accurately chosen, with correct meanings and spelling, and minimal errors;
+        words are used precisely to convey the intended meaning.
+ 4      Vocabulary is generally accurate, with occasional slight meaning errors or minor spelling
+        mistakes, but they do not affect overall understanding; words are fairly precise.
+ 3      Vocabulary is mostly correct, but frequent minor errors or spelling mistakes affect some
+        expressions; word choice is not fully precise.
+ 2      Vocabulary is inaccurate, with significant meaning errors and frequent spelling mistakes,
+        affecting understanding.
+ 1      Vocabulary is severely incorrect, with unclear meanings and noticeable spelling errors,
+        making comprehension difficult.
+ 0      Vocabulary choice and spelling are completely incorrect, and the intended meaning is unclear
+        or impossible to understand.
+
+                       Table 11: Rubrics for evaluating the lexical accuracy of the essays.
+
+
+Score                                               Scoring Criteria
+ 5      Vocabulary is rich and diverse, with a wide range of words used flexibly, avoiding repetition.
+ 4      Vocabulary diversity is good, with a broad range of word choices, occasional repetition, but
+        overall flexible expression.
+ 3      Vocabulary diversity is average, with some variety in word choice but limited, with frequent
+        repetition.
+ 2      Vocabulary is fairly limited, with a lot of repetition and restricted word choice.
+ 1      Vocabulary is very limited, with frequent repetition and an extremely narrow range of words.
+ 0      Vocabulary is monotonous, with almost no variation, failing to demonstrate vocabulary
+        diversity.
+
+                       Table 12: Rubrics for evaluating the lexical diversity of the essays.
+
+
+                                                        18
+Score                                              Scoring Criteria
+ 5      The essay has a well-organized structure, with clear paragraph divisions, each focused on a
+        single theme. There are clear topic sentences and concluding sentences, and transitions
+        between paragraphs are natural.
+ 4      The structure is generally reasonable, with fairly clear paragraph divisions, though transitions
+        may be somewhat awkward and some paragraphs may lack clear topic sentences.
+ 3      The structure is somewhat disorganized, with unclear paragraph divisions, a lack of topic
+        sentences, or weak logical flow.
+ 2      The structure is unclear, with improper paragraph divisions and poor logical coherence.
+ 1      The paragraph structure is chaotic, with most paragraphs lacking clear topic sentences and
+        disorganized content.
+ 0      No paragraph structure, content is jumbled, and there is a complete lack of logical
+        connections.
+
+                   Table 13: Rubrics for evaluating the organizational structure of the essays.
+
+
+
+
+Score                                              Scoring Criteria
+ 5      Punctuation is used correctly throughout, adhering to standard rules with no errors.
+ 4      Punctuation is mostly correct, with occasional minor errors that do not affect understanding.
+ 3      Punctuation is generally correct, but there are some noticeable errors that slightly affect
+        understanding.
+ 2      There are frequent punctuation errors, some of which affect understanding.
+ 1      Punctuation errors are severe, significantly affecting comprehension.
+ 0      Punctuation is completely incorrect or barely used, severely hindering understanding.
+
+                    Table 14: Rubrics for evaluating the punctuation accuracy of the essays.
+
+
+
+
+                                                       19
+            Image              Topic                                                                Frequency
+                               The diagram below shows how rain water is collected and then            23
+                               treated to be used as drinking water in an Australian town. Sum-
+                               marise the information by selecting and reporting the main fea-
+                               tures and make comparisons where relevant. You should write at
+                               least 150 words.
+
+                               The diagram gives information about the process of making               23
+                               carbonated drinks. Summarise the information by selecting
+                               and report in the main features, and make comparisons where
+                               relevant. You should write at least 150 words.
+
+
+                               The diagrams below show the existing ground floor plan of a             16
+                               house and a proposed plan for some building work.Summarise
+                               the information by selecting and reporting the main features and
+                               make comparisons where relevant. You should write at least 150
+                               words.
+
+                               The diagram below shows how solar panels can be used to pro-            16
+                               vide electricity for domestic use.Write a report for a university,
+                               lecturer describing the information shown below. You should
+                               write at least 150 words.
+
+                               The graph shows Underground Station passenger numbers in                16
+                               London.Summarise the information by selecting and reporting
+                               the main features, and make comparisons where relevant. You
+                               should write at least 150 words.
+
+
+        Table 15: The top five most frequent topics in the dataset with images, topics, and frequencies.
+
+
+
+
+Trait                                      Qwen2-VL (7B)                       Qwen2-VL (72B)
+Argument Clarity                           0.17                                0.34
+Justifying Persuasiveness                  0.10                                0.52
+Organizational Structure                   0.14                                0.48
+Coherence                                  0.13                                0.55
+Essay Length                               0.15                                0.40
+Grammatical Accuracy                       0.21                                0.51
+Grammatical Diversity                      0.16                                0.55
+Lexical Accuracy                           0.20                                0.52
+Lexical Diversity                          0.26                                0.38
+Punctuation Accuracy                       0.12                                0.42
+
+                      Table 16: QWK values of Qwen2-VL (7B) and Qwen2-VL (72B).
+
+
+
+
+                                                       20
+           Figure 12: GPT-4o-mini’s QWK values across traits for text-only and multimodal settings.
+
+
+
+
+       Trait                                      GPT-4o         GPT-4o-mini              GPT-3.5
+       Argument Clarity                           0.30           0.33                     0.23
+       Justifying Persuasiveness                  0.8            0.57                     0.24
+       Organizational Structure                   0.79           0.45                     0.18
+       Coherence                                  0.87           0.54                     0.37
+       Essay Length                               0.70           0.46                     0.35
+       Grammatical Accuracy                       0.85           0.58                     0.42
+       Grammatical Diversity                      0.61           0.54                     0.43
+       Lexical Accuracy                           0.89           0.64                     0.21
+       Lexical Diversity                          0.89           0.56                     0.24
+       Punctuation Accuracy                       0.65           0.45                     0.28
+
+               Table 17: QWK values of GPT-4o, GPT-4o-mini and GPT-3.5 without image inputs.
+
+
+
+
+Task Definition: Assume you are a professional English Educator. You need to score the {Trait}
+in the student’s essay. Based on the essay topic and image prompt, as well as the student’s essay,
+please assign a score (0-5) according to the criteria in the rubric. The output should be only the
+score.
+
+Rubrics: {Trait-specific corresponding rubrics}
+
+Below is the reference content:
+Image: "{image}"
+Essay Topic: "{question}"
+Student’s Essay: "{essay}"
+
+Instruction: Please output only the number of the score (e.g. 5)
+
+
+                                   Figure 13: Prompt for trait-specific AES task.
+
+
+
+
+                                                         21
+MLLMs                           Source                          URL
+Yi-VL-6B                        local checkpoint                https://huggingface.co/01-ai/
+                                                                Yi-VL-6B
+Qwen2-VL-7B                     local checkpoint                https://huggingface.co/Qwen/
+                                                                Qwen2-VL-7B
+DeepSeek-VL-7B                  local checkpoint                https://huggingface.
+                                                                co/deepseek-ai/
+                                                                deepseek-vl-7b-chat
+InternVL2-8B                    local checkpoint                https://huggingface.co/
+                                                                OpenGVLab/InternVL2-8B
+InternVL2.5-8B                  local checkpoint                https://huggingface.co/
+                                                                OpenGVLab/InternVL2_5-8B
+MiniCPM-V 2.6-8B                local checkpoint                https://huggingface.co/
+                                                                openbmb/MiniCPM-V-2_6
+MiniCPM-Llama3-V 2.5-8B         local checkpoint                https://huggingface.co/
+                                                                openbmb/MiniCPM-Llama3-V-2_5
+LLaMA-3.2-Vision-Instruct-      local checkpoint                https://huggingface.
+11B                                                             co/meta-llama/Llama-3.
+                                                                2-11B-Vision-Instruct
+Qwen-Max                        qwen-vl-max-0809                https://modelscope.cn/studios/
+                                                                qwen/Qwen-VL-Max
+Step-1V                         step-1v-32k                     https://platform.stepfun.com/
+                                                                docs/llm/vision
+Gemini 1.5 Pro                  gemini-1.5-pro-latest           https://deepmind.google/
+                                                                technologies/gemini/pro/
+Gemini 1.5 Flash                gemini-1.5-flash-latest         https://ai.google.dev/
+                                                                gemini-api/docs/models/gemini#
+                                                                gemini-1.5-flash
+Claude 3.5 Haiku                claude-3.5-haiku-20241022       https://www.anthropic.com/
+                                                                claude/haiku
+Claude 3.5 Sonnet               claude-3.5-sonnet-20241022      https://www.anthropic.com/
+                                                                claude/sonnet
+GPT-4o-mini                     gpt-4o-mini-2024-07-18          https://platform.openai.com/
+                                                                docs/models/gpt-4o-mini
+GPT-4o                          gpt-4o-2024-08-06               https://platform.openai.com/
+                                                                docs/models/gpt-4o
+
+                             Table 18: Sources of our evaluated MLLMs.
+
+
+
+
+                                                   22
+Figure 14: The relation between essay type and Claude-3.5-Sonnet’s QWK.
+
+
+
+
+  Figure 15: The relation between essay type and GPT-4o-mini’s QWK.
+
+
+
+
+                                  23
+      Figure 16: The relation between essay type and InternVL2’s QWK.
+
+
+
+
+Figure 17: The relation between essay type and MiniCPM-LLaMA3-V2.5’s QWK.
+
+
+
+
+                                    24
+Figure 18: The relation between essay type and InternVL2.5’s QWK.
+
+
+
+
+                               25
+  Figure 19: GPT-4o-mini’s QWK values across traits for single-image and multi-image settings.
+
+
+
+
+Figure 20: Claude 3.5 Haiku’s QWK values across traits for single-image and multi-image settings.
+
+
+
+
+Figure 21: Claude 3.5 Sonnet’s QWK values across traits for single-image and multi-image settings.
+
+
+
+
+ Figure 22: Gemini 1.5 Pro’s QWK values across traits for single-image and multi-image settings.
+
+
+
+
+Figure 23: Gemini 1.5 Flash’s QWK values across traits for single-image and multi-image settings.
+
+
+
+
+   Figure 24: Qwen-Max’s QWK values across traits for single-image and multi-image settings.
+
+
+
+
+    Figure 25: Step-1V’s QWK values across traits for single-image and multi-image settings.
+
+
+
+                                               26
+Figure 26: The example one of multi-granular evaluation for the essay.
+
+
+
+
+Figure 27: The example two of multi-granular evaluation for the essay.
+
+
+
+
+Figure 28: The example three of multi-granular evaluation for the essay.
+
+
+                                  27
+

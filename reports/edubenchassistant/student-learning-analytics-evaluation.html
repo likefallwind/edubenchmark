@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>学生学情分析 AI 评估建议</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --paper: #ffffff;
+      --ink: #18202a;
+      --muted: #5c6875;
+      --line: #d9dee6;
+      --accent: #1d6f66;
+      --accent-soft: #e7f3f1;
+      --warn: #9a5b00;
+      --warn-soft: #fff4df;
+      --risk: #9f2d3a;
+      --risk-soft: #fdecef;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.62 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+    main {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 32px auto 56px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(24, 32, 42, 0.06);
+      overflow: hidden;
+    }
+    header {
+      padding: 30px 34px 24px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff 0%, #f4faf9 100%);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 30px 0 12px;
+      font-size: 21px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    h3 {
+      margin: 22px 0 10px;
+      font-size: 17px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    p { margin: 0 0 12px; }
+    a { color: #195f9b; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .meta {
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+    .content { padding: 8px 34px 34px; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .summary div {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+      min-height: 98px;
+    }
+    .summary strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent);
+      font-size: 13px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .pill.warn { background: var(--warn-soft); color: var(--warn); }
+    .pill.risk { background: var(--risk-soft); color: var(--risk); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 20px;
+      table-layout: fixed;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      vertical-align: top;
+      word-break: break-word;
+    }
+    th {
+      background: #f1f4f7;
+      text-align: left;
+      font-weight: 700;
+    }
+    ul {
+      margin: 8px 0 18px 22px;
+      padding: 0;
+    }
+    li { margin: 5px 0; }
+    .note {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      padding: 12px 14px;
+      margin: 14px 0 20px;
+      border-radius: 0 8px 8px 0;
+    }
+    .warning {
+      border-left-color: var(--warn);
+      background: var(--warn-soft);
+    }
+    .riskbox {
+      border-left-color: var(--risk);
+      background: var(--risk-soft);
+    }
+    code {
+      background: #f1f4f7;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    .sample-table td:first-child {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+      color: #334052;
+    }
+    @media (max-width: 860px) {
+      main { width: calc(100vw - 20px); margin: 12px auto 28px; }
+      header, .content { padding-left: 18px; padding-right: 18px; }
+      .summary { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; table-layout: auto; }
+      th, td { min-width: 180px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>学生学情分析 AI 评估建议</h1>
+      <p class="meta">场景报告生成日期：2026-05-14。依据本仓库 2026-05-13 AI 教育 benchmark 框架、目录与数据获取清单。</p>
+      <div class="summary" aria-label="摘要">
+        <div><strong>场景定位</strong>面向教师、教研员或学习平台，基于作答、测验、学习日志和对话记录分析学生状态。</div>
+        <div><strong>核心尺度</strong>S5 个性化、学情与学习路径；辅以 S3 教学诊断、S8 真实学习效果、S7 安全边界。</div>
+        <div><strong>覆盖判断</strong><span class="pill warn">公共覆盖：部分覆盖</span><br>数据资源较多，但统一 LLM 榜单和端到端学习效果证据不足。</div>
+        <div><strong>建议路线</strong>用公开数据做知识追踪/认知诊断离线评测，再用校内日志与教师复核做内部闭环评测。</div>
+      </div>
+    </header>
+
+    <section class="content">
+      <h2>一、场景解释</h2>
+      <table>
+        <tr>
+          <th>维度</th>
+          <th>建议定义</th>
+        </tr>
+        <tr>
+          <td>应用做什么</td>
+          <td>识别学生的知识点掌握、薄弱环节、错因类型、学习风险和下一步学习建议；可输出班级画像、个人画像、分层干预建议和资源推荐。</td>
+        </tr>
+        <tr>
+          <td>使用者</td>
+          <td>主要是教师、教研员、学校管理者和学习平台运营；学生端建议只展示经过教师确认的反馈，不直接输出高风险标签。</td>
+        </tr>
+        <tr>
+          <td>输入</td>
+          <td>测验得分、题目作答序列、知识点标签、作业文本、错题订正、多轮答疑记录、课程资源点击/观看日志；若含课堂音视频，则另需多模态行为分析。</td>
+        </tr>
+        <tr>
+          <td>输出</td>
+          <td>知识点掌握概率、学习状态预测、错因解释、分层学生清单、干预建议、推荐练习/资源、班级共性问题和教师可执行行动。</td>
+        </tr>
+        <tr>
+          <td>风险级别</td>
+          <td><span class="pill risk">中高风险</span>。该系统会影响学生评价、教学干预和家校沟通，必须控制误诊、偏见、隐私泄露、标签化和自动化决策风险。</td>
+        </tr>
+      </table>
+
+      <div class="note">
+        本报告按保守假设处理：用户要研究的是“AI 辅助学情分析系统”，而不是单纯的传统知识追踪模型。如果实际产品只做报表可视化，S7 和 S8 权重可降低；如果会自动推荐学习路径或生成学生评价，则必须保留教师复核和安全评测。
+      </div>
+
+      <h2>二、能力映射</h2>
+      <h3>主要原子能力</h3>
+      <table>
+        <tr>
+          <th style="width: 16%;">D-code</th>
+          <th style="width: 24%;">能力名称</th>
+          <th>为什么关键</th>
+        </tr>
+        <tr>
+          <td>D15</td>
+          <td>学习规划、个性化与学情分析</td>
+          <td>决定系统是否能把分数和日志转成可解释的学生画像，并形成下一步学习建议。</td>
+        </tr>
+        <tr>
+          <td>D16</td>
+          <td>知识追踪</td>
+          <td>评估系统能否预测学生下一题/下一阶段表现，是学情预测的基础。</td>
+        </tr>
+        <tr>
+          <td>D17</td>
+          <td>认知诊断与知识点掌握</td>
+          <td>评估系统能否定位知识点掌握、概念误解和错因，而不只是给一个总分。</td>
+        </tr>
+        <tr>
+          <td>D18</td>
+          <td>教育资源检索、推荐与学习路径</td>
+          <td>当学情分析要落到“下一步学什么、练什么、看什么资源”时，推荐质量会直接影响价值。</td>
+        </tr>
+        <tr>
+          <td>D12</td>
+          <td>学生错误定位与纠错反馈</td>
+          <td>如果输入包含主观题、步骤题、错题订正或开放作答，就需要评估错因定位和反馈行动性。</td>
+        </tr>
+        <tr>
+          <td>D21</td>
+          <td>教育安全、伦理与角色边界</td>
+          <td>防止系统输出歧视性标签、心理判断、过度归因或越权替代教师决策。</td>
+        </tr>
+      </table>
+
+      <h3>次要能力</h3>
+      <ul>
+        <li>D19 课堂话语和教师行为分析：当学情分析来自课堂对话、听课记录或教师反馈时纳入。</li>
+        <li>D20 课堂视觉行为：当输入包含课堂视频、表情、举手、走神等视觉数据时纳入，并需要更强隐私审查。</li>
+        <li>D02 中文 K12 与 D03 标准化考试：作为学科正确性门槛，不应替代学情分析主评测。</li>
+        <li>D24 教育垂类系统边界与端到端风险：当产品自动生成干预方案、面向学校真实部署时纳入。</li>
+      </ul>
+
+      <h2>三、已有 benchmark 与数据证据</h2>
+      <table>
+        <tr>
+          <th>用途层级</th>
+          <th>Benchmark / 数据</th>
+          <th>覆盖能力</th>
+          <th>原生指标 / 可构造指标</th>
+          <th>公开模型结果</th>
+          <th>数据状态</th>
+        </tr>
+        <tr>
+          <td>主评测</td>
+          <td>ASSISTments</td>
+          <td>D15、D16、D17</td>
+          <td>KT AUC/ACC、RMSE、concept mastery、知识点掌握误差</td>
+          <td>无统一 LLM leaderboard</td>
+          <td><code>sources/datasets/assistments</code>；manual_access_or_metadata_only</td>
+        </tr>
+        <tr>
+          <td>主评测</td>
+          <td>EdNet</td>
+          <td>D15、D16</td>
+          <td>下一题正确率预测 AUC/ACC、序列泛化、冷启动表现</td>
+          <td>无统一 LLM leaderboard</td>
+          <td><code>sources/datasets/ednet</code>；可执行 git clone，尚未批量下载</td>
+        </tr>
+        <tr>
+          <td>主评测</td>
+          <td>Junyi Academy</td>
+          <td>D16、D17</td>
+          <td>知识追踪、认知诊断、中文/繁中 K12 数学知识点掌握</td>
+          <td>无统一 LLM leaderboard</td>
+          <td><code>sources/datasets/junyi_academy</code>；manual_access_or_metadata_only</td>
+        </tr>
+        <tr>
+          <td>主评测</td>
+          <td>FoundationalAssist</td>
+          <td>D15、D17</td>
+          <td>题目文本理解、作答解释、知识点掌握、profile alignment</td>
+          <td>无统一 LLM leaderboard</td>
+          <td><code>sources/datasets/foundationalassist</code>；HuggingFace 下载命令可用，尚未批量下载</td>
+        </tr>
+        <tr>
+          <td>主评测/资源推荐</td>
+          <td>MOOCCube</td>
+          <td>D15、D18</td>
+          <td>资源推荐 NDCG/MRR、路径连贯性、课程概念图谱覆盖</td>
+          <td>无统一 LLM leaderboard</td>
+          <td><code>sources/datasets/mooccube</code>；manual_access_or_metadata_only</td>
+        </tr>
+        <tr>
+          <td>认知诊断补充</td>
+          <td>PTADisc</td>
+          <td>D09、D17</td>
+          <td>知识点掌握、代码/编程课程诊断、跨课迁移</td>
+          <td>无统一 LLM leaderboard</td>
+          <td><code>sources/datasets/ptadisc</code>；可执行 git clone，尚未批量下载</td>
+        </tr>
+        <tr>
+          <td>教学诊断补充</td>
+          <td>MathTutorBench</td>
+          <td>D12、D13、D24</td>
+          <td>Mistake location、Correction、Scaffolding、Socratic BLEU、Ped. IF</td>
+          <td>有公开模型结果</td>
+          <td><code>sources/datasets/mathtutorbench</code>；可执行 git clone，尚未批量下载</td>
+        </tr>
+        <tr>
+          <td>课堂分析补充</td>
+          <td>TalkMoves、NCTE Transcripts、TIMSS Video Study、SIGHT</td>
+          <td>D18、D19，部分含 D07</td>
+          <td>话语动作分类、课堂反馈建议、课堂证据引用、跨教师泛化</td>
+          <td>多数无统一 LLM leaderboard</td>
+          <td>TalkMoves/NCTE/SIGHT 可下载命令可用；TIMSS 需人工访问</td>
+        </tr>
+        <tr>
+          <td>安全门槛</td>
+          <td>EduGuard-Bench、YouthSafe/YAIR、SproutBench</td>
+          <td>D21</td>
+          <td>RFS、ASR、risk classification、refusal quality、age appropriateness</td>
+          <td>部分有公开模型结果</td>
+          <td>EduGuard-Bench 下载命令可用；YouthSafe/SproutBench 需按项目入口确认</td>
+        </tr>
+      </table>
+
+      <div class="warning note">
+        覆盖判断：公共 benchmark 对“知识追踪、认知诊断、资源推荐”有可用数据资源，但大多没有统一 LLM 榜单；对“真实学习增益、教师采纳、学生改正率、长期留存”覆盖很弱。因此该场景不能只引用公开榜单，需要自建内部评测集和真实工作流实验。
+      </div>
+
+      <h2>四、实例数据与解释</h2>
+      <p>下面是学情分析评测中常见的样例格式，用来说明“输入、标签、模型输出、评价指标”怎样对应。它们是评测样例格式，不是从未下载数据集中抽出的原始记录。</p>
+
+      <table class="sample-table">
+        <tr>
+          <th style="width: 22%;">样例记录</th>
+          <th style="width: 24%;">字段含义</th>
+          <th>怎么用来测试</th>
+        </tr>
+        <tr>
+          <td>{student_id: "S102", item_id: "Q8841", skill: "一次函数-斜率", correct: 0, response_time_sec: 82, hint_count: 2, timestamp: "2026-03-12 20:11"}</td>
+          <td>单次作答日志：学生、题目、知识点、是否答对、耗时、提示次数和时间。</td>
+          <td>用于知识追踪。模型看历史作答序列，预测下一题是否答对；常见指标是 AUC、ACC、RMSE。ASSISTments、EdNet、Junyi、KDD Cup 2010 常被这样使用。</td>
+        </tr>
+        <tr>
+          <td>{student_id: "S102", concept: "分式方程", mastery_label: 0, evidence_items: ["Q117", "Q203", "Q455"], recent_error_rate: 0.67}</td>
+          <td>知识点掌握标签：某学生在某概念上的掌握状态，以及支持判断的题目证据。</td>
+          <td>用于认知诊断。测试系统能否判断“哪个知识点没掌握”，而不是只给总分；可看 macro-F1、校准误差、教师一致率和证据引用质量。</td>
+        </tr>
+        <tr>
+          <td>{question: "解方程 2(x-3)=10", student_answer: "x=2", gold_error: "移项/除法过程错误", expected_feedback: "先展开或两边同除以2，再检查x-3=5"}</td>
+          <td>开放作答和错因标签：题目、学生答案、标准错因、期望反馈方向。</td>
+          <td>用于错因定位与反馈评测。MathTutorBench 这类数据会看 Mistake location、Correction、Scaffolding，而不是只看模型能不能自己做对题。</td>
+        </tr>
+        <tr>
+          <td>{student_profile: "函数图像薄弱; 近7天正确率42%", candidate_resource: "一次函数图像微课L3", clicked: 1, completed: 1, post_test_gain: 0.18}</td>
+          <td>学习资源推荐记录：学生画像、候选资源、点击/完成行为和后测变化。</td>
+          <td>用于资源推荐和学习路径评测。MOOCCube 或校内资源库可构造 NDCG、MRR、path coherence、先修关系违规率，后测提升要靠内部数据。</td>
+        </tr>
+        <tr>
+          <td>{ai_claim: "该生在等式性质上不稳定", evidence: ["Q31错", "Q47订正成功", "Q52错"], teacher_action: "edited", outcome: "补充2道基础题后正确率提升"}</td>
+          <td>教师工作流记录：AI 结论、证据、教师采纳/修改/拒绝和后续结果。</td>
+          <td>用于端到端价值评测。重点不是模型分数，而是教师是否采纳、修改原因是什么、学生是否真的改进。这部分公开 benchmark 很弱，必须自建。</td>
+        </tr>
+      </table>
+
+      <h2>五、现在大家做过什么测试</h2>
+      <table>
+        <tr>
+          <th style="width: 18%;">测试类型</th>
+          <th style="width: 22%;">常用数据/benchmark</th>
+          <th style="width: 22%;">测什么</th>
+          <th>当前证据状态</th>
+        </tr>
+        <tr>
+          <td>知识追踪 KT</td>
+          <td>ASSISTments、EdNet、Junyi、KDD Cup 2010、STATICS2011</td>
+          <td>用历史作答序列预测下一题/下一单元表现，常看 AUC、ACC、RMSE、冷启动分层。</td>
+          <td>这是学情分析最成熟的一类离线测试；但本地目录标注这些条目大多是“资源/任务协议”，不是统一 LLM leaderboard。</td>
+        </tr>
+        <tr>
+          <td>认知诊断 CDM</td>
+          <td>ASSISTments、Junyi、FoundationalAssist、PTADisc、数字教育应用算法智能诊断公共数据集</td>
+          <td>判断知识点掌握、概念误解、错因类别和知识结构薄弱点。</td>
+          <td>适合评估“为什么错”和“弱在哪里”；公开模型结果少，通常需要自己定义标签、切分和教师/专家复核。</td>
+        </tr>
+        <tr>
+          <td>学习路径/资源推荐</td>
+          <td>MOOCCube、SIGHT、LectureBank、校内资源库</td>
+          <td>把学生画像映射到课程、视频、练习和下一步路径，常看 NDCG、MRR、coverage、path coherence。</td>
+          <td>有资源和行为数据，但“推荐后学生是否真的提升”需要后测或 A/B；公开 benchmark 对 learning gain 覆盖不足。</td>
+        </tr>
+        <tr>
+          <td>错因定位与脚手架</td>
+          <td>MathTutorBench、TutorBench、MathDial、Bridge、ConvoLearn</td>
+          <td>测试模型能否定位错误、纠错、给分层提示、遵守“不直接给答案”等教学策略。</td>
+          <td>比 KT 更接近 LLM 教育能力。MathTutorBench 有 Mistake location、Correction、Scaffolding、Socratic BLEU 等指标；TutorBench 有 Text-only、Multimodal、Overall 结果。</td>
+        </tr>
+        <tr>
+          <td>课堂话语/课堂证据</td>
+          <td>TalkMoves、NCTE Transcripts、TIMSS Video Study、SIGHT、ConvoLearn</td>
+          <td>分析教师话语动作、课堂互动、学生表达、课堂证据是否支持学情判断。</td>
+          <td>适合“课堂学情分析”，但多为资源/任务协议；ConvoLearn 有教师人工评价结果，可作为辅导对话证据。</td>
+        </tr>
+        <tr>
+          <td>教育安全与标签风险</td>
+          <td>EduGuard-Bench、YouthSafe/YAIR、SproutBench、本地红队集</td>
+          <td>测试未成年人场景下的风险识别、拒答质量、年龄适配、角色边界和敏感标签处理。</td>
+          <td>学情分析必须补这一项，因为系统会影响学生评价和家校沟通；中文本地化风险仍需要内部样例。</td>
+        </tr>
+      </table>
+
+      <h3>可引用的公开结果示例</h3>
+      <table>
+        <tr>
+          <th>Benchmark</th>
+          <th>本地结果库中的示例</th>
+          <th>对学情分析的解释</th>
+        </tr>
+        <tr>
+          <td>ConvoLearn</td>
+          <td>Base Mistral 7B：2.59；Claude Sonnet 4.5：2.87；Fine-tuned Mistral 7B：4.10。结果说明中记录了 31 名教师人工评价、1,250 条中学地球科学 tutor-student 对话和 6 个建构主义教学维度。</td>
+          <td>说明已有研究在测试“辅导对话质量”和“教师视角是否认可”。它不是纯 KT，但能补足学情分析中的对话证据、课堂反馈和教师评价维度。</td>
+        </tr>
+        <tr>
+          <td>TutorBench</td>
+          <td>本地结果库记录了 Text-only、Multimodal、Overall 三类指标。例如 GPT-5 Overall 55.33、Gemini 2.5 Pro Overall 55.65、GPT-4o Overall 36.12。</td>
+          <td>说明大家已经开始用模型评委/自动评测比较真实辅导能力。它更偏“会不会辅导”，不是直接预测学生掌握度，因此适合作为学情解释和干预建议的补充测试。</td>
+        </tr>
+        <tr>
+          <td>MathTutorBench</td>
+          <td>本地目录记录的核心指标包括 Correction、Mistake location、Ped. IF、Scaffolding、Scaff. hard、Socratic BLEU、Solution correctness。</td>
+          <td>这是从“学生错在哪里、怎么提示”角度评估模型。对学情系统很有用，因为一个可信的学情结论必须能落到具体错因和下一步教学动作。</td>
+        </tr>
+        <tr>
+          <td>ASSISTments / EdNet / Junyi / FoundationalAssist / PTADisc / MOOCCube</td>
+          <td>本地目录均标注为无统一 LLM leaderboard；EdNet、FoundationalAssist、PTADisc 有可执行下载入口，ASSISTments、Junyi、MOOCCube 需要人工访问或只记录元数据入口。</td>
+          <td>这些才是学情分析主数据来源。当前现实是“可构造评测很多，可直接拿来比较 LLM 的公开榜单很少”，所以研究方案必须包含自建任务协议。</td>
+        </tr>
+      </table>
+
+      <div class="note">
+        读这些测试时要分清三件事：KT/CDM 测的是“能否预测和诊断学生状态”；TutorBench/MathTutorBench 测的是“能否给教学反馈和脚手架”；A/B、后测和教师采纳测的是“系统是否真的产生教育价值”。三者不能互相替代。
+      </div>
+
+      <h2>六、推荐评估方案</h2>
+      <h3>1. Gate checks：上线前门槛</h3>
+      <ul>
+        <li>学科正确性：按目标学段和学科抽取 C-EVAL、E-EVAL、GaokaoBench、K12Vista 或本地题库，要求关键知识解释不出硬伤。</li>
+        <li>隐私与安全：对未成年人数据、心理风险、家校冲突、敏感标签做 D21 测试，输出不得替代教师或心理专业判断。</li>
+        <li>解释可追溯：每个学情结论必须能回溯到证据，如题目、知识点、作答历史、时间窗口和置信度。</li>
+        <li>教师复核：高风险结论，如“学习困难”“注意力不足”“心理问题”，必须只作为教师内部线索，不能自动推送给学生或家长。</li>
+      </ul>
+
+      <h3>2. Primary ranking checks：核心排序评测</h3>
+      <table>
+        <tr>
+          <th>评测任务</th>
+          <th>建议数据</th>
+          <th>指标</th>
+          <th>通过标准建议</th>
+        </tr>
+        <tr>
+          <td>下一题/下一单元表现预测</td>
+          <td>ASSISTments、EdNet、Junyi</td>
+          <td>AUC、ACC、RMSE、按学生冷启动/知识点冷启动分层</td>
+          <td>优于强传统 KT baseline；冷启动和低资源学生分层不能显著退化。</td>
+        </tr>
+        <tr>
+          <td>知识点掌握诊断</td>
+          <td>ASSISTments、FoundationalAssist、Junyi、PTADisc</td>
+          <td>concept mastery calibration、macro-F1、teacher agreement、解释一致性</td>
+          <td>与教师/专家标签一致，且能说明证据而非只给标签。</td>
+        </tr>
+        <tr>
+          <td>个性化干预建议</td>
+          <td>内部学生画像 + 历史干预记录</td>
+          <td>recommendation NDCG/MRR、教师采纳率、学生完成率、后测提升</td>
+          <td>建议可执行、不过度重复、与知识薄弱点对齐。</td>
+        </tr>
+        <tr>
+          <td>资源/学习路径推荐</td>
+          <td>MOOCCube、校内资源库、题库知识图谱</td>
+          <td>NDCG、MRR、coverage、path coherence、prerequisite violation rate</td>
+          <td>推荐路径符合先修关系，避免把难题直接推给基础薄弱学生。</td>
+        </tr>
+      </table>
+
+      <h3>3. Diagnostic checks：错误分析评测</h3>
+      <ul>
+        <li>分层公平性：按年级、班级、历史成绩、设备条件、语言背景分组看 AUC/误诊率，避免把数据缺失误判成能力不足。</li>
+        <li>时间稳定性：比较最近 7 天、30 天、学期累计窗口，检查系统是否被短期偶然失误牵引。</li>
+        <li>错因解释质量：抽样让教师判断“证据是否充分、建议是否可执行、是否过度归因”。</li>
+        <li>多轮更新：学生完成订正或补救练习后，画像必须合理更新；否则说明系统只是静态打标签。</li>
+        <li>课堂证据一致性：若接入课堂对话/视频，用 TalkMoves、NCTE 或 TIMSS 类任务检查话语/行为证据是否支撑学情结论。</li>
+      </ul>
+
+      <h3>4. Internal checks：必须自建的内部评测</h3>
+      <table>
+        <tr>
+          <th>内部评测</th>
+          <th>为什么公开 benchmark 不够</th>
+          <th>建议设计</th>
+        </tr>
+        <tr>
+          <td>教师盲评学情报告</td>
+          <td>公开数据通常没有你的校本课程、教师工作流和班级上下文。</td>
+          <td>同一批学生生成 AI 报告与人工报告，教师盲评准确性、可行动性、冗余和风险表述。</td>
+        </tr>
+        <tr>
+          <td>后测/延迟测</td>
+          <td>S8 真实学习效果公开覆盖弱，无法证明学生真的学会。</td>
+          <td>对照组与实验组，观察 immediate gain、delayed retention、transfer，而不是只看点击率。</td>
+        </tr>
+        <tr>
+          <td>干预闭环</td>
+          <td>学情分析价值在于教师是否用、学生是否改、系统是否更新。</td>
+          <td>记录教师采纳率、修改率、拒绝原因、学生完成率、订正后错误迁移。</td>
+        </tr>
+        <tr>
+          <td>本地安全红队</td>
+          <td>中文教育安全、家校沟通、未成年人标签化和心理危机场景本地化强。</td>
+          <td>构造敏感家庭背景、成绩焦虑、霸凌、心理危机、家长追问排名等用例，评估拒答和转介质量。</td>
+        </tr>
+      </table>
+
+      <h2>七、额外注意点</h2>
+      <ul>
+        <li>安全与角色边界：AI 可以辅助教师形成线索，不应自动给学生贴“差生”“懒惰”“心理异常”等标签。</li>
+        <li>数据泄漏与污染：题库、训练集、校内历史数据要按时间切分；资源推荐评测中不能把未来学习行为泄漏给模型。</li>
+        <li>rubric 可靠性：教师评价学情报告时要有明确 rubric，例如证据充分性、诊断准确性、建议可执行性、语气适当性。</li>
+        <li>多模态 grounding：如果使用课堂视频或作业图片，必须验证结论是否真的由图像/视频证据支持，而不是语言模型猜测。</li>
+        <li>教师监督：所有影响分层教学、家校沟通或个体评价的结论都应有人审，系统要记录教师修改意见。</li>
+        <li>学习效果缺口：AUC、NDCG、报告满意度都不是最终教育效果，最终要补 learning gain、retention 和 transfer。</li>
+      </ul>
+
+      <h2>八、实施优先级建议</h2>
+      <table>
+        <tr>
+          <th>阶段</th>
+          <th>目标</th>
+          <th>最低可交付</th>
+        </tr>
+        <tr>
+          <td>第 1 阶段：离线能力画像</td>
+          <td>验证是否能做基本预测和诊断。</td>
+          <td>基于 ASSISTments/EdNet/FoundationalAssist 构造 D15-D17 评测，输出能力画像，不做单一总分。</td>
+        </tr>
+        <tr>
+          <td>第 2 阶段：校本内部集</td>
+          <td>验证是否适配本地课程、题库和教师语言。</td>
+          <td>抽样 200-500 名学生历史记录，教师标注知识点掌握与干预建议，建立盲评集。</td>
+        </tr>
+        <tr>
+          <td>第 3 阶段：小规模试点</td>
+          <td>验证教师是否采纳、学生是否改进。</td>
+          <td>2-4 个班 A/B 或准实验，观察教师采纳率、报告修改率、后测提升和安全事件。</td>
+        </tr>
+        <tr>
+          <td>第 4 阶段：产品化监控</td>
+          <td>持续发现漂移、误诊和不公平。</td>
+          <td>上线监控仪表盘：分组误差、教师反馈、学生申诉、敏感输出拦截、长期学习效果。</td>
+        </tr>
+      </table>
+
+      <h2>九、引用的本地证据源</h2>
+      <ul>
+        <li><a href="../2026-05-13/ai_edu_unified_benchmark_framework_2026-05-13.md">AI-教育统一 Benchmark 尺度与评测框架</a></li>
+        <li><a href="../2026-05-13/ai_edu_benchmark_catalog_2026-05-13.md">AI-教育 Benchmark 信息目录</a></li>
+        <li><a href="../../data/exhaustive_2026-05-13/dataset_acquisition_report.md">AI-Edu Benchmark Dataset Acquisition Manifest</a></li>
+        <li><code>data/exhaustive_2026-05-13/benchmarks.jsonl</code>、<code>metrics.jsonl</code>、<code>results.jsonl</code>、<code>dimension_mapping.jsonl</code>、<code>dataset_acquisition.jsonl</code></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

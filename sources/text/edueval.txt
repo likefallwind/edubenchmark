@@ -1,0 +1,3317 @@
+EduEval: A Hierarchical Cognitive Benchmark for Evaluating Large
+Language Models in Chinese Education
+Guoqing Ma1 , Jia Zhu1 , Hanghui Guo1 , Weijie Shi2 , Yue Cui2 , Jiawei Shen1 , Zilong Li1 , Yidan Liang1
+1
+
+2
+
+Zhejiang Normal University, Zhejiang, China
+Hong Kong University of Science and Technology, Hong Kong, China
+
+Abstract
+
+arXiv:2512.00290v1 [cs.CL] 29 Nov 2025
+
+Large language models (LLMs) demonstrate
+significant potential for educational applications. However, their unscrutinized deployment
+poses risks to educational standards, underscoring the need for rigorous evaluation. We introduce EduEval, a comprehensive hierarchical
+benchmark for evaluating LLMs in Chinese K12 education. This benchmark makes three key
+contributions: (1) Cognitive Framework: We
+propose the EduAbility Taxonomy, which unifies Bloom’s Taxonomy and Webb’s Depth of
+Knowledge to organize tasks across six cognitive dimensions including Memorization, Understanding, Application, Reasoning, Creativity, and Ethics. (2) Authenticity: Our benchmark integrates real exam questions, classroom conversation, student essays, and expertdesigned prompts to reflect genuine educational challenges; (3) Scale: EduEval comprises 24 distinct task types with over 11,000
+questions spanning primary to high school levels. We evaluate 14 leading LLMs under both
+zero-shot and few-shot settings, revealing that
+while models perform well on factual tasks,
+they struggle with classroom dialogue classification and exhibit inconsistent results in creative content generation. Interestingly, several open source models outperform proprietary systems on complex educational reasoning. Few-shot prompting shows varying effectiveness across cognitive dimensions, suggesting that different educational objectives
+require tailored approaches. These findings
+provide targeted benchmarking metrics for developing LLMs specifically optimized for diverse Chinese educational tasks. The EduEval dataset and code are publicly available at
+https://github.com/Maerzs/E_edueval.
+
+1
+
+Introduction
+
+The rapid advancement of large language models
+(LLMs) in natural language processing (NLP) and
+artificial intelligence (AI) has opened new possibilities for their application in education. With strong
+
+capabilities in language understanding, reasoning, and text generation, LLMs have been widely
+adopted in intelligent tutoring, automated grading,
+and educational content generation, significantly
+enhancing personalized learning and instructional
+efficiency (Brown et al., 2020; Ouyang et al., 2022;
+Wei et al., 2022). Their impact now extends from
+primary and secondary education to higher education and vocational training (Glaser et al., 2001;
+Kasneci et al., 2023; Peng et al., 2023), with great
+potential shown in real world teaching activities
+like lesson preparation assistance and interactive
+classroom support (Kasneci et al., 2023; Chang
+et al., 2024; Gan et al., 2023; Huang et al., 2025).
+However, evaluating LLMs in authentic educational settings remains a significant challenge
+(Guo et al., 2021). The educational process is inherently dynamic and heterogeneous (Koopmans,
+2020), with diverse student cognitive profiles requiring constant adaptation (Haelermans, 2022).
+Current mainstream evaluation methods rely heavily on static assessments (Chen et al., 2024), such
+as standardized multiple choice questions, which
+fail to capture the complex reasoning, generative
+expression, and ethical decision making required in
+real world classrooms (Allen and Kendeou, 2024;
+Yan et al., 2024). As a result, these evaluations tend
+to underestimate the true educational potential of
+LLMs (Srivastava et al., 2022). While general purpose benchmarks such as MMLU (Hendrycks et al.,
+2020), BIG-bench (Srivastava et al., 2022), and
+HELM (Liang et al., 2022) cover broad abilities,
+they fall short in addressing the specific needs of
+educational applications. Similarly, Chinese benchmarks like E-Eval (Hou et al., 2024), AGIEval
+(Zhong et al., 2024), and C-Eval (Huang et al.,
+2023) are still dominated by low level cognitive
+questions and single-turn formats, lacking systematic evaluation of higher-order abilities and providing limited diversity in task contexts and cognitive
+depth (Long et al., 2024).
+
+To bridge this gap, a robust benchmark must assess a spectrum of cognitive abilities grounded in
+authentic pedagogical contexts. Established frameworks like Bloom’s Taxonomy of Educational Objectives (Krathwohl, 2002) and Webb’s Depth of
+Knowledge (DOK) model (Masharipova, 2024)
+provide a foundation for structuring cognitive levels, but a comprehensive evaluation requires a synthesized framework tailored specifically for the
+multifaceted demands of K-12 education. We introduce EduEval, a hierarchical benchmark designed to meet this need by systematically evaluating LLMs on Chinese K-12 educational tasks.
+EduEval prioritizes educational authenticity by
+incorporating tasks directly from teaching practice.
+Unlike traditional benchmarks, it includes classroom dialogue classification, student essay scoring,
+and teaching scenario design activities that reflect
+educators’ daily challenges. To ensure a comprehensive and authentic assessment, we developed
+a curriculum-balanced dataset spanning core subjects across developmental stages from primary to
+high school. All tasks derive from genuine educational sources, including examination archives,
+classroom transcripts, and expert-created materials.
+Our rigorous quality control employs a two-phase
+annotation protocol where practicing educators provide initial assessments before domain experts conduct thorough reviews, ensuring alignment with
+actual pedagogical standards rather than artificial
+benchmarking metrics.
+Our systematic evaluation of mainstream language models (including both general-purpose and
+education-specific systems) reveals a consistent
+performance gradient across cognitive dimensions.
+Models generally excel at knowledge-oriented
+tasks, with top performers achieving over 90% accuracy in areas like formula recall, but struggle
+significantly with contextual application in authentic educational scenarios, where accuracy can drop
+below 30% for tasks such as classroom dialogue
+classification. This pattern mirrors the complexity
+progression in human learning and highlights key
+areas for model improvement. By identifying these
+capability patterns across the EduAbility hierarchy, our benchmark provides not merely a scoring
+system but a developmental blueprint for creating
+AI systems that can meaningfully support the full
+spectrum of educational processes.
+In summary, we make three key contributions:
+1) We propose the EduAbility Taxonomy, a novel
+and hierarchical cognitive framework that inte-
+
+grates Bloom’s Taxonomy and Webb’s Depth of
+Knowledge to systematically organize educational
+evaluation tasks across six cognitive dimensions.
+2) We establish EduEval, a comprehensive and
+authentic benchmark for Chinese K-12 education, featuring over 11,000 questions across 24 task
+types derived from genuine classroom scenarios,
+including dialogue classification and essay scoring.
+3) We present a holistic evaluation of 14 leading LLMs on this benchmark, providing a detailed
+analysis of their educational capabilities and a developmental blueprint for creating more effective
+AI systems for education.
+
+2
+
+Related Work
+
+In recent years, large language models (LLMs)
+have demonstrated remarkable capabilities across
+various domains through mechanisms such as pretraining, supervised fine-tuning, and alignment
+with human or AI feedback (Bai et al., 2022; Christiano et al., 2017; Dong et al., 2023, 2024). With
+the continuous advancement of natural language
+processing technology, benchmarks have expanded
+to encompass more complex tasks, including machine translation (Bojar et al., 2014) and summarization (Narayan et al., 2018; Hermann et al.,
+2015). Comprehensive benchmarks like GLUE
+(Wang et al., 2019) and SuperGLUE (Sarlin et al.,
+2020) amalgamate various natural language understanding tasks, providing standards for evaluating model performance. Popular frameworks
+like MMLU (Hendrycks et al., 2020) include tasks
+ranging from real-world exams to book knowledge,
+assessing ability in language understanding, common sense reasoning (Bhakthavatsalam et al., 2021;
+Bian et al., 2021; Sakaguchi et al., 2021), and code
+generation (Chen et al., 2021; Austin et al., 2021).
+With the burgeoning development of Chinese
+Large Models, an increasing number of Chinese
+benchmarks have emerged. CLUE (Xu et al., 2020),
+an influential Chinese NLU benchmark, has been
+widely adopted. In addition, Chinese benchmarks
+similar to MMLU have surfaced, such as MMCU
+(Zeng, 2023), which encompasses medicine and
+education within its four main domains. AGIEval
+(Zhong et al., 2024) focuses on standardized Chinese exams, while C-Eval (Huang et al., 2023) includes 13,948 questions on four levels of difficulty,
+from middle school to professional tests. M3KE
+(Liu et al., 2023) gathers 71 tasks from the Chinese
+education examination system, akin to the coverage
+
+Figure 1: Overview of EduEval: concentric rings represent data sources, with data processing methodology (left)
+and educational cognitive framework hierarchy (right).
+
+of C-Eval. CMMLU (Li et al., 2024), designed for
+the Chinese language and cultural context, is a fully
+localized Chinese benchmark. These benchmarks
+mainly focus on low-level cognitive questions and
+single-turn formats, lacking systematic assessment
+of higher-order abilities and offering limited task
+context diversity and cognitive depth.
+EduEval actualizes this logical progression
+through its hierarchical cognitive framework, the
+EduAbility Taxonomy. This structure is what enables the benchmark to incorporate authentic assessments derived from real classroom materials
+and, for the first time, systematically evaluate the
+creative, critical, and ethical dimensions that were
+fundamentally beyond the scope of prior work.
+
+3
+
+EduEval
+
+3.1
+
+Design Principles
+
+Traditional cognitive taxonomies present limitations when applied to comprehensive LLM evaluation in educational contexts. Bloom’s Taxonomy (Krathwohl, 2002), while influential, assumes
+rigid hierarchical progression and lacks consideration of concurrent cognitive processes. Webb’s
+Depth of Knowledge (DOK) model (Masharipova,
+2024) addresses cognitive complexity but inadequately captures the multidimensional nature of educational cognition. Neither framework sufficiently
+addresses ethical reasoning, which is crucial for educational AI systems. We propose the EduAbility
+Taxonomy to address these limitations by integrating both frameworks’ strengths while introducing
+novel dimensions. Our approach maps Memory
+and Understanding levels to DOK Levels 1-2 and
+
+Bloom’s foundational skills, Application and Reasoning levels to DOK Level 3 with Bloom’s analytical capabilities, and Creativity level to Bloom’s
+highest-order thinking and DOK Level 4 demands.
+Additionally, we introduce an Ethics dimension to
+address moral reasoning in educational contexts.
+As depicted in Figure 1, the EduAbility Taxonomy organizes tasks into six hierarchical cognitive levels: Memory, Understanding, Application,
+Reasoning, Creativity, and Ethics. These levels
+form an interconnected cognitive scaffold where
+higher-level tasks build on foundational abilities
+while operating synergistically. Memory tasks assess recall of core concepts. Understanding requires interpretation and explanation. Application
+involves real world problem-solving (e.g., Essay
+Scoring, Classroom Dialogue Classification), Reasoning evaluates causal analysis and complex inference. Creativity encompasses innovative generation and knowledge integration, and Ethics addresses moral judgment in educational contexts.
+The theoretical foundations, detailed framework
+mappings, and empirical validation of this taxonomy are extensively discussed in the Appendix B.
+Each level includes several specific evaluation
+tasks that correspond to the respective abilities. For
+example, our Classroom Dialogue Classification
+tasks utilize real teacher-student interactions, while
+our Essay Scoring task requires evaluating student
+compositions according to standard educational
+rubrics. It is essential to note that this taxonomy
+does not imply a linear progression of abilities:
+the cognitive dimensions are interdependent, with
+higher-level reasoning often requiring strong foun-
+
+Table 1: EduEval task distribution across six cognitive levels (24 tasks, 11,150 instances).
+Task (ID)
+
+Metric
+
+Memory
+Primary Formula Recall (1-1)
+Junior Knowledge Recall (1-2)
+Senior Concept Recall (1-3)
+
+Acc.
+Acc.
+Acc.
+
+Primary Understanding (2-1)
+Junior Understanding (2-2)
+Senior Understanding (2-3)
+Poetry Appreciation (2-4)
+Reading Comprehension (2-5)
+
+Acc.
+Acc.
+Acc.
+Rouge-L
+Rouge-L
+
+Reasoning
+Acc.
+Acc.
+Acc.
+Acc.
+RMSE
+
+Creativity
+Question Generation (5-1)
+Teaching Design (5-2)
+Text Writing (5-3)
+
+Metric
+
+Understanding
+
+Application
+Classroom Dialogue (3-1)
+Primary Problem Solving (3-2)
+Junior Problem Solving (3-3)
+Senior Problem Solving (3-4)
+Essay Scoring (3-5)
+
+Task (ID)
+
+General Logical Inference (4-1)
+Primary Reasoning (4-2)
+Junior Reasoning (4-3)
+Senior Reasoning (4-4)
+
+Acc.
+Acc.
+Acc.
+Acc.
+
+Ethics
+GPT
+GPT
+GPT
+
+Primary Moral (6-1)
+Junior Ethics Scenario (6-2)
+Senior Ethics Scenario (6-3)
+Educational Ethics (6-4)
+
+Acc.
+Acc.
+Acc.
+Acc.
+
+Note: Acc. = Accuracy; GPT = GPT-based evaluation; RMSE = Root Mean Square Error (lower is better). Full details in table 9.
+
+dational knowledge, and creativity building upon
+solid understanding. By synthesizing performance
+across multiple tasks within each level, EduEval enables precise identification of where models excel
+versus where they struggle, providing a framework
+for targeted improvements in capabilities most relevant to educational applications. As this taxonomy continues to evolve, it will increasingly facilitate comprehensive evaluation of LLMs across
+the full spectrum of cognitive dimensions essential
+for effective educational support from elementary
+through high school settings.
+3.2
+
+Data Collection and Processing
+
+Data Source. EduEval is constructed from a
+blend of authentic educational content and expertauthored materials to comprehensively evaluate
+language models across six cognitive levels. For
+memory, understanding, reasoning, and application
+tasks, we collect standardized exam questions from
+Gaokao, Zhongkao, and various primary and middle school assessments, covering core subjects such
+as Chinese, Mathematics, English, and Science.
+The essay scoring task is based on real studentwritten essays collected from diverse school contexts, each paired with ground-truth scores assigned by certified instructors using official grading
+rubrics. Classroom dialogue classification tasks are
+built from transcripts of real classroom interactions,
+which are annotated by experienced educators according to a predefined taxonomy of pedagogical
+
+discourse types. Creative tasks and ethical reasoning tasks are entirely designed by domain experts.
+While creative tasks such as teaching design or
+question generation require open-ended model responses, ethical tasks simulate realistic dilemmas
+related to fairness, bias, or privacy in school settings, and are presented in structured formats with
+predefined choices. These tasks are intended to
+probe the model’s moral and normative alignment,
+without relying on externally annotated labels. A
+detailed mapping between task types and their corresponding data sources is provided in Appendix C.
+Data Processing. To operationalize the EduAbility cognitive scaffold on authentic and often
+unstructured educational materials, a methodological architecture of commensurate sophistication is
+required. Consequently, we designed and implemented a multi-agent processing pipeline whose
+structure is intentionally engineered to mirror the
+interconnected nature of the cognitive framework
+itself. This architecture serves the dual purpose
+of ensuring high-fidelity conversion of diverse raw
+materials (PDFs, Word documents, web content)
+into a unified JSON schema, while systematically
+embedding our theoretical principles into the data
+curation process. The pipeline includes: (1) Format
+Conversion Agent for OCR extraction and mathematical notation processing; (2) Standardization
+Agent for schema validation and field extraction;
+(3) Task Format Optimizer that renders objective
+tasks as multiple-choice and preserves free-form
+
+structure for open ended tasks; (4) Quality Control
+Agent for duplicate detection and anomaly flagging. This architecture enables scalable processing
+of 11,150+ items while maintaining high fidelity.
+Details in Appendix C.1.
+Data Annotation. The annotation process itself
+is a hybrid human-AI framework, engineered to
+embed our theoretical principles directly into the
+dataset. A Task Routing Agent first assigns items
+to appropriate annotation tracks based on task type,
+after which Annotation Support Agents provide
+draft suggestions that human experts can accept
+or override. All subjective labels then undergo a
+rigorous double-blind cross-review, managed by a
+Consensus Orchestration Agent, to achieve an interannotator agreement threshold of over 90%. Crucially, a Cognitive Alignment Verification Agent
+operationalizes our theoretical framework, using
+a fine-tuned classifier to validate that each item
+is rigorously mapped to its primary dimension
+within the EduAbility cognitive scaffold. This
+multi-agent, human-in-the-loop approach ensures
+that each benchmark item is not only internally consistent but also theoretically grounded, combining
+the irreplaceable judgment of educational experts
+with the systematic rigor of AI-driven validation.
+Complete protocols in Appendix E.
+3.3
+
+Task Definitions
+
+To evaluate LLMs across varied cognitive dimensions, we construct tasks grounded in the EduAbility Taxonomy, covering memory, understanding,
+application, reasoning, creativity, and ethics. Memory tasks assess factual recall, such as mathematical formulas and historical facts. Understanding
+tasks test conceptual interpretation, including reading comprehension and poetry analysis. Application tasks reflect real-world classroom scenarios
+like essay scoring and dialogue classification. Reasoning tasks involve logical inference and crossdisciplinary integration. Creativity tasks require
+open-ended generation, such as teaching design
+and question creation. Ethics tasks present dilemmas on fairness and moral judgment in education.
+A summary of task categories is shown in Table 1,
+with further details and examples in Appendix C.3.
+
+4
+
+Evaluation
+
+4.1
+
+Experimental Setup
+
+We evaluate all LLMs in both zero-shot and fewshot settings. In the zero-shot setting, each input
+
+consists of a task instruction and query, while in the
+few-shot setting, we provide three illustrative examples per task. To ensure consistency, all prompts
+are presented in Chinese, and for chat-based models, we preserve their native dialogue format. We
+set the decoding temperature to 0 during inference
+to reduce randomness in model outputs. When
+an input exceeds the model’s maximum context
+length, we truncate it from the middle to preserve
+instruction and answer segments. Multiple-choice
+tasks are evaluated using Accuracy, and generative
+tasks are evaluated using Rouge-L or GPT-based
+alignment metrics. The evaluation metrics used for
+each task are listed in Table 1, and prompt formats
+are provided in Appendix C.4. For experimental
+hardware configuration, refer to Appendix D.
+4.2
+
+Evaluated Models
+
+We evaluated 14 large language models varying in
+size, organization, and design objective, as summarized in Table 11. For commercial models,
+we included GPT-4o (Hurst et al., 2024), Qwen14B-Chat (Bai et al., 2023), GLM4-9B-Chat (Zeng
+et al., 2023), and Spark-X1 (iFLYTEK Research,
+2024), representing leading proprietary systems.
+Among open-source systems, we assessed Qwen72B and Qwen-7B (Bai et al., 2023), Yi-34B-Chat
+and Yi-6B-Chat (01.AI, 2023), Chinese-LLaMA213B (Cui et al., 2023), DeepSeek-R1-32B (Team,
+2024), LLaMA3-8B (Grattafiori et al., 2024), and
+Baichuan-13B (Yang et al., 2023). These models
+span a wide range of parameter scales and alignment strategies, enabling controlled comparisons
+across reasoning, generation, and ethical tasks. To
+further explore domain-specific capabilities, we included EduChat-sft-002-13B-Baichuan (Dan et al.,
+2023), which is fine-tuned from Baichuan-13B
+specifically for educational tasks, allowing for a direct analysis of the impact of domain specialization.
+The relevant model details are in the Appendix D.
+4.3
+
+Experimental Results
+
+We present the zero-shot performance of all 14
+models in Tables 2 and 3, focusing here on the
+leading systems to highlight key patterns. From
+these results, we draw the following interconnected
+insights:
+Clear performance hierarchy among models.
+The proprietary Spark-X1 leads overall rankings,
+with the Qwen series following closely, while the
+closed-source GPT-4o ranks fifth. This demonstrates that well-optimized open-source models
+
+Table 2: Zero-shot performance (%) of various models on Memorization, Understanding, and Application levels.
+Different depth of color of the cells indicate that the values inside is higher. ∗ Tasks 2-4 and 2-5 are evaluated using
+Rouge-L metric; † task 3-5 uses RMSE metric (lower is better); all other tasks are evaluated using accuracy.
+Model
+Spark-X1
+Qwen-plus
+Qwen-72B
+DeepseekR1-32B
+GPT-4o
+Yi-34B
+Qwen-14B-Chat
+GLM4-9B-Chat
+Qwen-7B
+Yi-6B
+EduChat-sft-002-13b
+LLaMA3-8B
+BaiChuan-13b
+LLaMA2-Chinese-13B
+
+1-1
+92.5
+81.8
+79.8
+78.5
+72.0
+74.3
+71.0
+67.8
+60.0
+56.8
+51.1
+41.0
+39.1
+28.1
+
+Memory
+1-2
+86.2
+82.0
+78.8
+80.0
+74.9
+70.9
+73.0
+72.4
+62.3
+61.0
+51.2
+43.8
+45.9
+34.2
+
+1-3
+91.0
+89.2
+89.3
+89.0
+81.2
+79.8
+78.8
+77.4
+63.0
+60.4
+52.8
+44.3
+39.9
+32.5
+
+2-1
+93.1
+89.4
+85.7
+86.8
+82.2
+79.0
+81.9
+77.4
+68.7
+62.2
+59.7
+48.1
+49.4
+32.5
+
+Understanding
+2-2
+2-3
+2-4∗
+86.6
+88.4
+48.9
+85.3
+90.9
+47.7
+81.4
+86.8
+48.4
+83.4
+82.0
+47.8
+81.3
+80.7
+48.5
+78.0
+80.2
+49.3
+77.6
+78.2
+49.8
+78.8
+80.7
+49.7
+68.4
+68.9
+48.8
+62.5
+61.4
+47.8
+58.7
+59.1
+48.9
+47.5
+47.8
+42.4
+48.1
+46.1
+49.1
+32.2
+33.0
+47.1
+
+2-5∗
+50.5
+50.6
+50.1
+50.7
+51.3
+51.3
+51.8
+50.8
+51.3
+51.1
+49.9
+46.2
+50.1
+50.8
+
+3-1
+27.8
+24.8
+24.8
+18.1
+28.2
+17.3
+17.1
+22.2
+15.5
+14.9
+20.5
+10.1
+11.5
+16.4
+
+3-2
+95.4
+75.9
+74.4
+79.3
+58.9
+60.8
+50.2
+52.8
+44.3
+41.7
+35.7
+32.4
+33.9
+27.7
+
+Application
+3-3
+3-4
+87.6
+91.0
+83.2
+79.0
+80.9
+72.1
+84.8
+83.4
+76.6
+58.3
+77.0
+60.8
+76.6
+54.8
+73.6
+61.0
+66.7
+49.5
+63.4
+47.5
+56.8
+39.9
+48.5
+34.1
+48.3
+38.2
+34.6
+26.2
+
+3-5†
+43.175
+12.240
+32.815
+21.410
+9.013
+28.528
+34.109
+28.260
+35.814
+35.742
+13.3
+12.476
+33.393
+26.298
+
+Table 3: Zero-shot performance (%) of various models on Reasoning, Creation, and Ethics levels. Different depth
+of color of the cells indicate that the values inside is higher. All tasks are evaluated using accuracy except for ∗
+creativity tasks (5-1, 5-2, 5-3), which use GPT-based evaluation.
+Model
+Spark-X1
+Qwen-plus
+Qwen-72B
+DeepseekR1-32B
+GPT-4o
+Yi-34B
+Qwen-14B-Chat
+GLM4-9B-Chat
+Qwen-7B
+Yi-6B
+EduChat-sft-002-13B
+LLaMA3-8B
+BaiChuan-13b
+LLaMA2-Chinese-13B
+
+4-1
+78.8
+72.6
+69.6
+67.9
+65.4
+58.1
+40.0
+59.4
+38.4
+40.6
+31.8
+39.0
+35.3
+25.7
+
+Reasoning
+4-2
+4-3
+90.6
+93.6
+69.2
+88.4
+65.7
+84.6
+75.4
+66.7
+54.7
+71.8
+56.0
+78.8
+50.0
+78.4
+46.8
+76.6
+44.8
+66.8
+41.4
+60.4
+36.5
+49.5
+34.1
+39.1
+29.7
+41.0
+25.9
+21.8
+
+4-4
+88.0
+85.8
+78.8
+78.6
+71.6
+66.0
+66.2
+68.0
+60.6
+53.5
+50.9
+43.1
+42.3
+23.9
+
+5-1
+88.3
+86.3
+87.8
+85.5
+89.4
+83.9
+77.9
+77.0
+80.7
+74.0
+71.2
+85.5
+70.0
+63.0
+
+Creation∗
+5-2
+5-3
+85.9
+88.7
+87.0
+86.4
+90.4
+80.0
+86.3
+81.1
+84.6
+84.9
+90.0
+78.7
+88.0
+72.1
+86.5
+74.8
+87.8
+71.4
+88.4
+77.0
+84.6
+67.5
+86.4
+77.7
+85.8
+66.6
+85.4
+55.7
+
+can now match proprietary systems on educational
+tasks. Scale effects are significant within the same
+family, larger models (such as Yi-34B compared to
+Yi-6B) consistently outperform on complex tasks,
+confirming that increased parameter count substantially enhances educational reasoning and problemsolving capabilities.
+Task difficulty gradient and capability distribution. All models exhibit consistent performance
+decline as task complexity increases. Models excel at memory and comprehension tasks but face
+challenges with application and reasoning tasks.
+This pattern reveals that while current LLMs have
+matured in surface-level language understanding
+and knowledge retrieval, they still have room for
+improvement in tasks requiring multi-step logical
+deduction and subject knowledge application. Notably, models perform better at recalling complex
+high school knowledge than elementary basics, potentially reflecting the overrepresentation of advanced academic material in training corpora.
+
+6-1
+74.4
+80.0
+78.7
+76.8
+76.4
+75.6
+84.0
+72.0
+69.6
+70.8
+69.6
+70.0
+62.0
+59.5
+
+Ethics
+6-2
+6-3
+81.0
+77.8
+85.4
+83.4
+79.3
+78.2
+79.2
+78.8
+81.4
+78.6
+81.2
+79.8
+84.2
+81.6
+79.2
+74.6
+72.6
+71.6
+63.2
+69.5
+78.2
+73.2
+68.8
+69.0
+61.8
+64.2
+49.8
+47.8
+
+6-4
+79.8
+85.4
+78.3
+80.2
+80.0
+79.2
+80.0
+74.4
+73.8
+62.9
+73.4
+65.0
+61.8
+50.6
+
+Average
+
+Rank
+
+81.1
+77.7
+75.0
+74.8
+71.0
+69.8
+68.1
+67.6
+60.8
+57.9
+53.8
+50.3
+48.7
+39.3
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+
+Instruction tuning advantages and domain
+adaptation limitations. The impact of domainspecific adaptation is revealing: the educationspecialized EduChat-sft-002-13B substantially improved upon its Baichuan-13B base model in most
+authentic educational contexts, especially in application and ethics tasks. However, this targeted
+enhancement came with a subtle trade-off, as performance slightly decreased on tasks assessing abstract reasoning independent of educational context.
+This suggests that the fine-tuning process, while
+optimizing for educational alignment, may have
+shifted the model’s learned distribution away from
+the general-purpose capabilities inherited from its
+foundation. This nuanced finding underscores a
+critical challenge: narrow domain specialization,
+while effective for contextual tasks, can inadvertently constrain broader reasoning, highlighting the
+need for careful balance during fine-tuning. Subject differences and cognitive preferences. Models generally perform better on humanities-based
+
+Table 4: Few-shot performance (%) of various models on Memory, Understanding, and Application levels. Different
+depth of color of the cells indicate that the values inside is higher. ∗ Tasks 2-4 and 2-5 use Rouge-L metric; † task
+3-5 uses RMSE metric (lower is better); all other tasks use accuracy. Arrows indicate performance change compared
+to zero-shot: ↑ shows improvement, ↓ for 3-5 indicates improvement (lower RMSE).
+Model
+Spark-X1
+Qwen-plus
+GPT-4o
+DeepseekR1-32B
+Qwen-72B
+Qwen-14B-Chat
+GLM4-9B-Chat
+Yi-34B
+Qwen-7B
+EduChat-sft-002-13b
+Yi-6B
+Baichuan-13B
+LLaMA3-8B
+LLaMA2-Chinese-13B
+
+1-1
+91.3
+82.2↑
+72.7↑
+79.3↑
+78.3
+69.3
+62.1
+66.3
+54.9
+51.6↑
+48.8
+39.5↑
+38.0
+35.0↑
+
+Memory
+1-2
+85.2
+80.6
+74.3
+60.0
+75.6
+71.9
+69.3
+65.5
+59.0
+52.4↑
+56.9
+47.2↑
+42.6
+34.7↑
+
+1-3
+91.2
+89.2
+79.8
+86.6
+88.6
+79.4↑
+73.6
+71.3
+55.6
+52.1
+48.3
+39.9
+39.0
+29.0
+
+2-1
+92.7
+88.8
+83.3↑
+85.9
+84.9
+79.9
+65.7
+77.5
+65.7
+56.8
+52.2
+46.0
+47.5
+32.0
+
+Understanding
+2-2
+2-3
+2-4∗
+86.6
+89.8↑
+48.6
+84.0
+91.0↑
+48.9↑
+82.4↑
+81.2↑
+49.2↑
+53.1
+84.6↑
+47.5
+79.0
+85.4
+47.6
+77.7↑
+82.9↑
+49.8
+73.8
+75.5
+49.1
+75.0
+76.4
+48.8
+63.9
+64.1
+48.7
+59.9↑
+59.7↑
+47.9
+50.4
+41.3
+48.7↑
+49.7↑
+49.9↑
+47.3
+41.6
+47.9↑
+43.4↑
+29.8
+31.9
+47.4↑
+
+2-5∗
+50.4
+51.0↑
+51.7↑
+50.5
+51.6↑
+51.6
+48.2
+50.7
+51.2
+42.9
+50.8
+44.0
+46.0
+50.4
+
+3-1
+26.6
+27.4↑
+29.1↑
+21.4↑
+25.4↑
+20.2↑
+19.3
+18.9↑
+13.2
+23.5↑
+12.9
+17.8↑
+14.5↑
+11.6
+
+3-2
+94.6
+78.3↑
+62.7↑
+68.0
+80.9↑
+53.5↑
+64.0↑
+54.5
+39.9
+34.2
+50.8↑
+31.7
+43.1↑
+20.6
+
+Application
+3-3
+3-4
+85.2
+88.6
+83.8↑
+76.8
+76.8↑
+58.7↑
+52.8
+75.8
+78.6
+74.9↑
+72.9
+60.6↑
+70.5
+62.4↑
+71.1
+54.5
+62.2
+45.8
+59.8↑
+38.8
+50.4
+43.5
+52.5↑
+37.7
+48.9↑
+37.8↑
+30.6
+26.0
+
+3-5†
+23.0↓
+8.7↓
+8.9↓
+20.6↓
+15.4↓
+10.6↓
+8.4↓
+9.2↓
+13.8↓
+12.1↓
+29.3↓
+13.6↓
+16.4↑
+21.2↓
+
+Table 5: Few-shot performance (%) of various models on Reasoning, Creativity, and Ethics levels. Different depth
+of color of the cells indicate that the values inside is higher. All tasks use accuracy except for ∗ creativity tasks (5-1,
+5-2, 5-3) which use GPT-based evaluation. Arrows indicate performance change compared to zero-shot.
+Model
+Spark-X1
+Qwen-plus
+Qwen-72B
+DeepseekR1-32B
+GPT-4o
+Qwen-14B-Chat
+GLM4-9B-Chat
+Yi-34B
+Qwen-7B
+EduChat-sft-002-13B
+Yi-6B
+BaiChuan-13B
+LLaMA3-8B
+LLaMA2-Chinese-13B
+
+4-1
+77.8
+70.8
+69.4
+70.0↑
+64.7
+51.0↑
+56.6
+52.8
+38.4
+30.2
+39.5
+33.5
+37.7
+27.4↑
+
+Reasoning
+4-2
+4-3
+89.1
+94.2↑
+69.7↑
+87.2
+70.3↑
+86.0↑
+61.2
+88.1↑
+52.2
+73.8↑
+53.0↑
+77.4
+50.2↑
+76.7↑
+47.8
+66.8
+40.9
+62.2
+37.2↑
+51.5↑
+42.2↑
+51.4
+30.7↑
+42.2↑
+35.2↑
+40.4↑
+21.2
+26.2↑
+
+4-4
+87.6
+84.8
+79.0↑
+77.9
+72.8↑
+74.5↑
+66.6
+62.7
+56.3
+50.2
+46.3
+41.3
+38.2
+28.7↑
+
+5-1
+74.0
+78.3
+79.7
+83.5
+63.2
+71.0
+58.9
+63.3
+62.6
+57.2
+66.7
+56.9
+42.8
+52.2
+
+Creativity∗
+5-2
+5-3
+43.6
+54.5
+59.0
+64.8
+35.9
+62.2
+52.4
+70.1
+37.5
+43.0
+39.4
+45.7
+32.2
+53.1
+34.5
+41.2
+40.7
+29.8
+43.1
+40.3
+39.5
+36.5
+41.7
+38.1
+20.6
+36.4
+34.8
+28.6
+
+tasks than on science applications, reflecting their
+natural advantage in language and text processing. In contrast, mathematical problem-solving
+and physics applications require stronger symbolic
+manipulation and logical reasoning abilities, areas
+where performance is relatively weaker. This disparity suggests that future model training should
+place greater emphasis on developing scientific
+thinking capabilities.
+Strong creative and ethical capabilities. Leading models demonstrate impressive abilities in educational content creation, with multiple systems
+performing excellently on creative generation tasks.
+Models also perform well in ethical reasoning, with
+Qwen-plus showing particularly outstanding results
+across ethical dimensions. These findings indicate that current LLMs have developed significant
+proficiency in generating pedagogically valuable
+materials and navigating ethical considerations in
+educational contexts.
+Does Few-shot prompting help?Tables 4 and
+Table 5 show the few-shot performance of various
+
+6-1
+81.2↑
+82.0↑
+79.6↑
+81.2↑
+83.2↑
+82.4
+72.0
+77.6↑
+67.6
+73.4↑
+73.6↑
+68.8↑
+63.2
+47.2
+
+Ethics
+6-2
+6-3
+84.2↑
+80.0↑
+89.4↑
+87.4↑
+82.1↑
+80.6↑
+83.6↑
+82.0↑
+88.2↑
+81.8↑
+81.4
+81.2
+84.0↑
+79.8↑
+81.0
+80.6↑
+69.4
+75.4↑
+75.2
+74.2↑
+78.6↑
+83.4↑
+60.0
+67.5↑
+70.2↑
+76.6↑
+48.8
+55.2↑
+
+6-4
+82.4↑
+87.4↑
+81.8↑
+83.4↑
+86.0↑
+72.4
+82.8↑
+81.2↑
+67.0
+71.4
+81.2↑
+58.6
+58.6
+51.4↑
+
+Average
+
+Rank
+
+77.4
+75.8
+72.1
+69.5
+67.3
+65.2
+62.9
+61.7
+53.7
+53.2
+52.3
+45.9
+43.5
+36.8
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+
+models across six cognitive dimensions. Comparing these results with zero-shot performance reveals that in-context examples affect models differently across educational tasks. most models show
+slightly lower average performance with few-shot
+prompting, challenging the assumption that examples universally improve capabilities. Performance
+shifts exhibit clear task dependent patterns. Classroom dialogue classification and ethical reasoning
+tasks benefit from examples because they clarify
+task specific conventions and evaluation criteria.
+Conversely, creative tasks suffer as examples constrain models’ generative freedom, limiting innovative thinking by anchoring responses to provided
+templates. Poetry appreciation and reading comprehension show modest improvements as examples guide response formatting without necessarily
+enhancing comprehension. Meanwhile, memory
+tasks remain largely unchanged since factual recall depends primarily on pre-training knowledge,
+while complex reasoning often deteriorates when
+example reasoning paths interfere with optimal
+
+problem solving approaches. These findings suggest educational applications should deploy fewshot prompting selectively based on specific learning objectives, recognizing that examples can either
+enhance or constrain model performance depending on the cognitive dimensions being evaluated.
+95
+90
+
+Performance (%)
+
+85
+
+Spark-X1
+
+89.9
+
+Qwen-plus
+87.8
+
+84.3
+
+83.9
+
+82.5
+
+80
+76.0
+
+75
+
+84.8
+82.2
+
+86.6
+
+GPT-4o
+
+Yi-34B
+
+86.3
+84.3
+
+84.0
+80.7
+
+DeepseekR1-32B
+87.6
+
+84.2
+
+79.9
+
+83.6
+78.3
+
+79.3 79.1 79.0
+
+74.9
+72.2
+
+71.4
+
+70
+
+68.4
+65.8
+
+65
+
+64.7
+
+60.9
+
+60
+55.3
+
+55
+50
+
+Memory
+
+Understanding
+
+54.1
+
+Application
+
+Reasoning
+
+Cognitive Levels
+
+Creativity
+
+that models process high school level content more
+effectively than elementary materials, despite the
+latter’s presumed simplicity. This counter intuitive
+pattern reveals a potential training distribution bias
+that favors more sophisticated academic content
+over fundamental educational concepts, suggesting that deliberate curriculum-balanced pretraining
+could yield more educationally versatile systems.
+
+Ethics
+
+Figure 2: The zero-shot performance of various models
+at different education cognitive ability levels.
+
+Figure 2 illustrates the performance of the top
+six models across six educational cognitive ability
+dimensions. From the results, we can derive several important observations. Models demonstrate
+significantly stronger capabilities in Memory tasks
+compared to Application tasks, revealing a fundamental challenge in translating recalled knowledge
+into practical problem-solving scenarios. This gap
+suggests that while models can effectively retrieve
+educational content, they struggle with the dynamic
+application of this knowledge, particularly in classroom discourse classification, where performance
+drops substantially across all systems.
+Performance in Reasoning and Ethics dimensions exhibits considerable variance across models.
+The highest performing systems achieve impressive results in logical reasoning tasks (85-90%),
+but even these models show a sharp decline when
+confronted with multi-step reasoning problems requiring sustained logical chains. This indicates that
+enhancing reasoning architectures through carefully designed pretraining objectives could yield
+substantial improvements in educational applications requiring complex problem solving.
+In the Creativity dimension, all models demonstrate moderate capabilities in content generation,
+yet struggle with more structured tasks like teaching design. This limitation stems primarily from
+the inherent tension between creative flexibility and
+pedagogical structure. Future development should
+focus on incorporating educational-specific templates and exemplars during fine-tuning to balance
+creative generation with instructional coherence.
+Understanding dimension performance shows
+
+Ethics represents the most consistent dimension across all models, with relatively strong performance even from mid tier systems. However,
+this uniformity masks significant variations in handling complex ethical scenarios involving competing values or culturally sensitive educational
+contexts, pointing to the need for more nuanced
+alignment techniques that incorporate diverse educational value systems.
+To address these limitations, we recommend developing specialized educational reasoning frameworks, incorporating curriculum-informed training objectives, and designing evaluation methods
+that better reflect authentic educational interactions.
+This would transform these systems from knowledge repositories into effective educational tools.
+
+5
+
+Conclusion and Future Work
+
+We presented EduEval, a comprehensive benchmark for LLMs in Chinese K-12 education
+grounded in the novel EduAbility Taxonomy. Our
+evaluation of 14 leading models revealed a critical gap between strong factual recall and weak
+practical application, particularly in authentic scenarios like classroom dialogue classification. Results also showed a surprising performance hierarchy: models like Spark-X1 and Qwen-plus outperformed other leading proprietary systems in complex educational reasoning. Additionally, narrow,
+domain-specific fine-tuning may constrain broader
+cognitive abilities. These insights validate EduEval as a powerful diagnostic tool and highlight the
+urgent need for curriculum-balanced pre-training
+and improved reasoning architectures. Looking
+ahead, we plan to expand EduEval by adding interactive and multimodal scenarios, developing finergrained metrics for creative tasks, and facilitating education-specific alignment strategies. We
+welcome community contributions to enrich this
+benchmark and advance AI systems that truly support diverse educational needs.
+
+Limitations
+Despite EduEval’s comprehensive assessment
+framework, there are several limitations. The
+benchmark primarily reflects Chinese educational
+contexts, potentially limiting international applicability. Our evaluation metrics for creativity and
+ethics tasks rely on GPT-based assessment, which
+may not fully capture the nuances of these complex
+cognitive dimensions despite high correlation with
+human judgments. The current benchmark also
+lacks multimodal components, overlooking the increasingly visual and interactive nature of modern
+education. Additionally, consistently poor performance across models in classroom dialogue classification points to significant challenges in modeling
+authentic teacher-student interactions. Future work
+will focus on incorporating multimodal tasks, developing more robust evaluation methods for higher
+cognitive dimensions, and expanding cross-cultural
+comparisons to enhance the benchmark’s utility for
+educational applications of LLMs.
+
+Ethics Statement
+The development of the EduEval benchmark was
+conducted with a strong commitment to ethical
+principles throughout the research process. Our
+ethical protocols addressed three primary areas:
+(1) the protection of data privacy through rigorous
+anonymization of all student and teacher-generated
+content; (2) the fair and ethical treatment of the
+12 educational experts who participated in the annotation process, including fair compensation and
+transparent guidelines; and (3) a thorough consideration of the broader societal impacts of our work,
+including potential risks and advocating for the responsible use of the benchmark. A comprehensive
+discussion of our legal and ethical considerations
+is provided in Appendix A.
+
+References
+01.AI. 2023. Yi: Open Multilingual Language Models. https://github.com/01-ai/Yi. Accessed
+May 2025.
+Laura Kristen Allen and Panayiota Kendeou. 2024. Edai lit: An interdisciplinary framework for ai literacy
+in education. Policy Insights from the Behavioral and
+Brain Sciences, 11(1):3–10.
+Jacob Austin, Augustus Odena, Maxwell I. Nye,
+Maarten Bosma, Henryk Michalewski, David Dohan,
+Ellen Jiang, Carrie J. Cai, Michael Terry, Quoc V. Le,
+
+and Charles Sutton. 2021. Program synthesis with
+large language models. CoRR, abs/2108.07732.
+Jinze Bai, Shuai Bai, Yunfei Chu, Zeyu Cui, Kai Dang,
+Xiaodong Deng, Yang Fan, Wenbin Ge, Yu Han, Fei
+Huang, and 1 others. 2023. Qwen technical report.
+arXiv preprint arXiv:2309.16609.
+Yuntao Bai, Andy Jones, Kamal Ndousse, Amanda
+Askell, Anna Chen, Nova DasSarma, Dawn Drain,
+Stanislav Fort, Deep Ganguli, Tom Henighan, and 1
+others. 2022. Training a helpful and harmless assistant with reinforcement learning from human feedback. arXiv preprint arXiv:2204.05862.
+Sumithra Bhakthavatsalam, Daniel Khashabi, Tushar
+Khot, Bhavana Dalvi Mishra, Kyle Richardson,
+Ashish Sabharwal, Carissa Schoenick, Oyvind
+Tafjord, and Peter Clark. 2021. Think you have
+solved direct-answer question answering? try arc-da,
+the direct-answer AI2 reasoning challenge. CoRR,
+abs/2102.03315.
+Ning Bian, Xianpei Han, Bo Chen, and Le Sun. 2021.
+Benchmarking knowledge-enhanced commonsense
+question answering via knowledge-to-text transformation. In Proceedings of the AAAI Conference
+on Artificial Intelligence, volume 35, pages 12574–
+12582.
+Ondřej Bojar, Christian Buck, Christian Federmann,
+Barry Haddow, Philipp Koehn, Johannes Leveling,
+Christof Monz, Pavel Pecina, Matt Post, Herve SaintAmand, and 1 others. 2014. Findings of the 2014
+workshop on statistical machine translation. In Proceedings of the ninth workshop on statistical machine
+translation, pages 12–58.
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie
+Subbiah, Jared D Kaplan, Prafulla Dhariwal, Arvind
+Neelakantan, Pranav Shyam, Girish Sastry, Amanda
+Askell, and 1 others. 2020. Language models are
+few-shot learners. Advances in neural information
+processing systems, 33:1877–1901.
+Yupeng Chang, Xu Wang, Jindong Wang, Yuan Wu,
+Linyi Yang, Kaijie Zhu, Hao Chen, Xiaoyuan Yi,
+Cunxiang Wang, Yidong Wang, and 1 others. 2024.
+A survey on evaluation of large language models.
+ACM transactions on intelligent systems and technology, 15(3):1–45.
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan,
+Henrique Pondé de Oliveira Pinto, Jared Kaplan,
+Harri Edwards, Yuri Burda, Nicholas Joseph, Greg
+Brockman, Alex Ray, Raul Puri, Gretchen Krueger,
+Michael Petrov, Heidy Khlaaf, Girish Sastry, Pamela
+Mishkin, Brooke Chan, Scott Gray, and 39 others.
+2021. Evaluating large language models trained on
+code. CoRR, abs/2107.03374.
+Zijian Chen, Wei Sun, Yuan Tian, Jun Jia, Zicheng
+Zhang, Wang Jiarui, Ru Huang, Xiongkuo Min,
+Guangtao Zhai, and Wenjun Zhang. 2024. Gaia: Rethinking action quality assessment for ai-generated
+videos. Advances in Neural Information Processing
+Systems, 37:40111–40144.
+
+Paul F Christiano, Jan Leike, Tom Brown, Miljan Martic, Shane Legg, and Dario Amodei. 2017. Deep
+reinforcement learning from human preferences. Advances in neural information processing systems, 30.
+Yiming Cui, Ziqing Yang, and Xin Yao. 2023. Efficient
+and effective text encoding for chinese llama and
+alpaca. arXiv preprint arXiv:2304.08177.
+Yuhao Dan, Zhikai Lei, Yiyang Gu, Yong Li, Jianghao
+Yin, Jiaju Lin, Linhao Ye, Zhiyan Tie, Yougen Zhou,
+Yilei Wang, and 1 others. 2023. Educhat: A largescale language model-based chatbot system for intelligent education. arXiv preprint arXiv:2308.02773.
+Qian Dong, Yiding Liu, Qingyao Ai, Haitao Li,
+Shuaiqiang Wang, Yiqun Liu, Dawei Yin, and Shaoping Ma. 2023. I3 retriever: incorporating implicit
+interaction in pre-trained language models for passage retrieval. In Proceedings of the 32nd ACM International Conference on Information and Knowledge
+Management, pages 441–451.
+Qian Dong, Yiding Liu, Qingyao Ai, Zhijing Wu, Haitao
+Li, Yiqun Liu, Shuaiqiang Wang, Dawei Yin, and
+Shaoping Ma. 2024. Unsupervised large language
+model alignment for information retrieval via contrastive feedback. In Proceedings of the 47th International ACM SIGIR Conference on Research and
+Development in Information Retrieval, pages 48–58.
+Wensheng Gan, Zhenlian Qi, Jiayang Wu, and Jerry
+Chun-Wei Lin. 2023. Large language models in education: Vision and opportunities. In 2023 IEEE international conference on big data (BigData), pages
+4776–4785. IEEE.
+Robert Glaser, Naomi Chudowsky, and James W Pellegrino. 2001. Knowing what students know: The
+science and design of educational assessment. National Academies Press.
+Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri,
+Abhinav Pandey, Abhishek Kadian, Ahmad AlDahle, Aiesha Letman, Akhil Mathur, Alan Schelten,
+Alex Vaughan, and 1 others. 2024. The llama 3 herd
+of models. arXiv e-prints, pages arXiv–2407.
+Junqi Guo, Ludi Bai, Zehui Yu, Ziyun Zhao, and Boxin
+Wan. 2021. An ai-application-oriented in-class teaching evaluation model by using statistical modeling
+and ensemble learning. Sensors, 21(1):241.
+
+Jinchang Hou, Chang Ao, Haihong Wu, Xiangtao Kong,
+Zhigang Zheng, Daijia Tang, Chengming Li, Xiping
+Hu, Ruifeng Xu, Shiwen Ni, and Min Yang. 2024.
+E-EVAL: A comprehensive chinese K-12 education
+evaluation benchmark for large language models. In
+Findings of the Association for Computational Linguistics, ACL 2024, Bangkok, Thailand and virtual
+meeting, August 11-16, 2024, pages 7753–7774. Association for Computational Linguistics.
+Min Huang, Jiarui Ma, and Sun Bo. 2025. Design and
+implementation of a multi-level personalized teaching framework based on llm. In 2025 14th International Conference on Educational and Information
+Technology (ICEIT), pages 8–14. IEEE.
+Yuzhen Huang, Yuzhuo Bai, Zhihao Zhu, Junlei
+Zhang, Jinghan Zhang, Tangjun Su, Junteng Liu,
+Chuancheng Lv, Yikai Zhang, Yao Fu, and 1 others. 2023. C-eval: A multi-level multi-discipline
+chinese evaluation suite for foundation models. Advances in Neural Information Processing Systems,
+36:62991–63010.
+Aaron Hurst, Adam Lerer, Adam P Goucher, Adam
+Perelman, Aditya Ramesh, Aidan Clark, AJ Ostrow,
+Akila Welihinda, Alan Hayes, Alec Radford, and 1
+others. 2024. Gpt-4o system card. arXiv preprint
+arXiv:2410.21276.
+iFLYTEK Research. 2024. Sparkdesk-x1: iflytek cognitive large language model. https://xinghuo.
+xfyun.cn. Accessed: 2024-05-01.
+Enkelejda Kasneci, Kathrin Seßler, Stefan Küchemann,
+Maria Bannert, Daryna Dementieva, Frank Fischer,
+Urs Gasser, Georg Groh, Stephan Günnemann, Eyke
+Hüllermeier, and 1 others. 2023. Chatgpt for good?
+on opportunities and challenges of large language
+models for education. Learning and individual differences, 103:102274.
+Matthijs Koopmans. 2020. Education is a complex
+dynamical system: Challenges for research. The
+Journal of Experimental Education, 88(3):358–374.
+David R Krathwohl. 2002. A revision of bloom’s taxonomy: An overview. Theory into practice, 41(4):212–
+218.
+
+Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou,
+Mantas Mazeika, Dawn Song, and Jacob Steinhardt.
+2020. Measuring massive multitask language understanding. arXiv preprint arXiv:2009.03300.
+
+Haonan Li, Yixuan Zhang, Fajri Koto, Yifei Yang, Hai
+Zhao, Yeyun Gong, Nan Duan, and Timothy Baldwin. 2024. CMMLU: measuring massive multitask
+language understanding in chinese. In Findings of
+the Association for Computational Linguistics, ACL
+2024, Bangkok, Thailand and virtual meeting, August 11-16, 2024, pages 11260–11285. Association
+for Computational Linguistics.
+
+Karl Moritz Hermann, Tomas Kocisky, Edward Grefenstette, Lasse Espeholt, Will Kay, Mustafa Suleyman,
+and Phil Blunsom. 2015. Teaching machines to read
+and comprehend. Advances in neural information
+processing systems, 28.
+
+Percy Liang, Rishi Bommasani, Tony Lee, Dimitris
+Tsipras, Dilara Soylu, Michihiro Yasunaga, Yian
+Zhang, Deepak Narayanan, Yuhuai Wu, Ananya Kumar, and 1 others. 2022. Holistic evaluation of language models. arXiv preprint arXiv:2211.09110.
+
+Carla Haelermans. 2022. The effects of group differentiation by students’ learning strategies. Instructional
+Science, 50(2):223–250.
+
+Chuang Liu, Renren Jin, Yuqi Ren, Linhao Yu, Tianyu
+Dong, Xiaohan Peng, Shuting Zhang, Jianxiang
+Peng, Peiyi Zhang, Qingqing Lyu, Xiaowen Su,
+Qun Liu, and Deyi Xiong. 2023. M3KE: A massive multi-level multi-subject knowledge evaluation
+benchmark for chinese large language models. CoRR,
+abs/2305.10263.
+Yun Long, Haifeng Luo, and Yu Zhang. 2024. Evaluating large language models in analysing classroom
+dialogue. npj Science of Learning, 9(1):60.
+Feruza Masharipova. 2024. From bloom’s taxonomy
+into webb’s depth of knowledge: Enhancing lesson
+planning strategies. Emergent: Journal of Educational Discoveries and Lifelong Learning (EJEDL),
+3(4):10–10.
+Shashi Narayan, Shay B. Cohen, and Mirella Lapata.
+2018. Don’t give me the details, just the summary!
+topic-aware convolutional neural networks for extreme summarization. In Proceedings of the 2018
+Conference on Empirical Methods in Natural Language Processing, Brussels, Belgium, October 31 November 4, 2018, pages 1797–1807. Association
+for Computational Linguistics.
+Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida,
+Carroll Wainwright, Pamela Mishkin, Chong Zhang,
+Sandhini Agarwal, Katarina Slama, Alex Ray, and 1
+others. 2022. Training language models to follow instructions with human feedback. Advances in neural
+information processing systems, 35:27730–27744.
+Baolin Peng, Chunyuan Li, Pengcheng He, Michel Galley, and Jianfeng Gao. 2023. Instruction tuning with
+gpt-4. arXiv preprint arXiv:2304.03277.
+Keisuke Sakaguchi, Ronan Le Bras, Chandra Bhagavatula, and Yejin Choi. 2021. Winogrande: An adversarial winograd schema challenge at scale. Communications of the ACM, 64(9):99–106.
+Paul-Edouard Sarlin, Daniel DeTone, Tomasz Malisiewicz, and Andrew Rabinovich. 2020. Superglue:
+Learning feature matching with graph neural networks. In Proceedings of the IEEE/CVF conference
+on computer vision and pattern recognition, pages
+4938–4947.
+Aarohi Srivastava, Abhinav Rastogi, Abhishek Rao,
+Abu Awal Md Shoeb, Abubakar Abid, Adam Fisch,
+Adam R Brown, Adam Santoro, Aditya Gupta, Adrià
+Garriga-Alonso, and 1 others. 2022. Beyond the
+imitation game: Quantifying and extrapolating the
+capabilities of language models. arXiv preprint
+arXiv:2206.04615.
+DeepSeek Team. 2024. Deepseek: Advancing language
+and multimodal understanding. https://github.
+com/deepseek-ai. Accessed May 2025.
+Alex Wang, Amanpreet Singh, Julian Michael, Felix
+Hill, Omer Levy, and Samuel R. Bowman. 2019.
+
+GLUE: A multi-task benchmark and analysis platform for natural language understanding. In 7th International Conference on Learning Representations,
+ICLR 2019, New Orleans, LA, USA, May 6-9, 2019.
+OpenReview.net.
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten
+Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou,
+and 1 others. 2022. Chain-of-thought prompting elicits reasoning in large language models. Advances
+in neural information processing systems, 35:24824–
+24837.
+Liang Xu, Hai Hu, Xuanwei Zhang, Lu Li, Chenjie Cao,
+Yudong Li, Yechen Xu, Kai Sun, Dian Yu, Cong
+Yu, Yin Tian, Qianqian Dong, Weitang Liu, Bo Shi,
+Yiming Cui, Junyi Li, Jun Zeng, Rongzhao Wang,
+Weijian Xie, and 13 others. 2020. CLUE: A chinese language understanding evaluation benchmark.
+In Proceedings of the 28th International Conference on Computational Linguistics, COLING 2020,
+Barcelona, Spain (Online), December 8-13, 2020,
+pages 4762–4772. International Committee on Computational Linguistics.
+Lixiang Yan, Lele Sha, Linxuan Zhao, Yuheng Li,
+Roberto Martinez-Maldonado, Guanliang Chen,
+Xinyu Li, Yueqiao Jin, and Dragan Gašević. 2024.
+Practical and ethical challenges of large language
+models in education: A systematic scoping review.
+British Journal of Educational Technology, 55(1):90–
+112.
+Aiyuan Yang, Bin Xiao, Bingning Wang, Borong Zhang,
+Ce Bian, Chao Yin, Chenxu Lv, Da Pan, Dian
+Wang, Dong Yan, and 1 others. 2023. Baichuan
+2: Open large-scale language models. arXiv preprint
+arXiv:2309.10305.
+Aohan Zeng, Xiao Liu, Zhengxiao Du, Zihan Wang,
+Hanyu Lai, Ming Ding, Zhuoyi Yang, Yifan Xu,
+Wendi Zheng, Xiao Xia, Weng Lam Tam, Zixuan Ma,
+Yufei Xue, Jidong Zhai, Wenguang Chen, Zhiyuan
+Liu, Peng Zhang, Yuxiao Dong, and Jie Tang. 2023.
+GLM-130B: an open bilingual pre-trained model. In
+The Eleventh International Conference on Learning
+Representations, ICLR 2023, Kigali, Rwanda, May
+1-5, 2023. OpenReview.net.
+Hui Zeng. 2023. Measuring massive multitask chinese
+understanding. CoRR, abs/2304.12986.
+Wanjun Zhong, Ruixiang Cui, Yiduo Guo, Yaobo Liang,
+Shuai Lu, Yanlin Wang, Amin Saied, Weizhu Chen,
+and Nan Duan. 2024. Agieval: A human-centric
+benchmark for evaluating foundation models. In
+Findings of the Association for Computational Linguistics: NAACL 2024, Mexico City, Mexico, June
+16-21, 2024, pages 2299–2314. Association for Computational Linguistics.
+
+A
+
+Discussion
+
+A.1
+
+Legal and Ethical Considerations.
+
+All data undergo strict anonymization procedures
+to remove personal identifiers from student content
+and classroom transcripts. We ensure full compliance with the General Data Protection Regulation (GDPR) and China’s Personal Information
+Protection Law (PIPL). The dataset is released exclusively for non-commercial academic use and
+has been reviewed under appropriate institutional
+ethics policies.
+A.2
+
+Broader Impact
+
+The EduEval benchmark has potential for a significant positive impact on educational technology and
+AI alignment with human learning processes. By
+providing a comprehensive evaluation framework
+for LLMs across diverse cognitive dimensions, our
+work can guide the development of more educationally relevant AI systems that better support authentic teaching and learning. The hierarchical
+approach of our benchmark enables targeted improvements in specific educational competencies
+from basic knowledge recall to complex ethical
+reasoning.
+A.3
+
+Licensing Information
+
+However, we also acknowledge potential societal
+concerns. The widespread adoption of AI in educational contexts raises legitimate questions about
+student privacy, algorithmic bias, and the role of
+human teachers. There is risk that systems optimized for our benchmark could be deployed prematurely in classrooms without proper safeguards.
+Additionally, cultural differences in educational
+values and practices may not be fully represented
+in our Chinese education-focused framework. We
+encourage responsible application of our benchmark with careful consideration of these issues,
+and advocate for continued human oversight of AI
+systems in education. The EduEval benchmark
+should serve as a tool for enhancing human-AI collaboration in education rather than replacing human
+judgment in teaching and assessment. The EduEval benchmark, including all associated datasets
+and source code, is made publicly available for
+non-commercial academic research purposes. The
+artifacts are released under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) license. This license
+permits others to share and adapt the material for
+
+non-commercial purposes, provided that appropriate credit is given, a link to the license is provided,
+and any derivatives are distributed under the same
+license.
+
+B
+
+EduAbility Taxonomy: Theoretical
+Foundation and Framework
+
+This appendix summarizes the theoretical basis of
+the EduAbility Taxonomy and its practical use in
+EduEval. Traditional taxonomies offer complementary but incomplete views for educational AI assessment: Bloom’s framework emphasizes the type
+of cognitive operation, while DOK emphasizes the
+depth and rigor of tasks. In authentic classroom
+scenarios and model-based evaluation, cognition
+is multidimensional and dynamic, so a single-axis
+view (type-only or depth-only) is insufficient. EduAbility therefore integrates both perspectives into
+a compact, coherent scheme tailored for evaluating
+LLMs in education.
+EduAbility defines six interrelated levels—Memory, Understanding, Application,
+Reasoning, Creativity, and Ethics—and treats
+them as an interconnected scaffold rather than a
+strict ladder. Memory and Understanding align
+with foundational processes and lower depth
+(roughly DOK 1–2, lower-order skills in Bloom).
+Application and Reasoning integrate strategy and
+multi-step inference (roughly DOK 3, Bloom’s
+apply/analyze/evaluate). Creativity corresponds to
+extended thinking and original synthesis (roughly
+DOK 4, Bloom’s create). Ethics is introduced as an
+education-specific dimension for moral judgment,
+fairness, privacy, and academic integrity, which
+is not explicitly covered by traditional cognitive
+taxonomies.
+The scaffolded nature of the framework reflects
+how real tasks recruit multiple abilities at once.
+Higher-level tasks routinely invoke foundational
+knowledge; conversely, foundational tasks can be
+embedded in richer contexts that require interpretation or ethical judgment. This view supports
+precise task design and principled difficulty control while preserving authenticity. It also clarifies
+why performance can vary across dimensions and
+subjects, and how targeted improvements can be
+planned.
+For implementation, task assignment follows a
+two-step principle: identify the dominant cognitive operation, then determine the required depth.
+Secondary processes (e.g., recalling facts within a
+
+creative task) are recorded but do not override the
+primary label. Ethics is applied whenever normative reasoning is integral to the correct or preferred
+outcome. This procedure promotes consistent classification across subjects and grade levels and facilitates reliable evaluation and analysis.
+Finally, EduAbility is intended as a practical, extensible taxonomy. The current mapping and definitions are optimized for Chinese K–12 contexts and
+LLM assessment; as data and use cases broaden,
+the framework can be refined (e.g., by adding sublevels or clarifying cross-level composites) while
+preserving the core integration of “operation type”
+and “depth” that underpins its validity and utility.
+
+C
+
+Task Details
+
+C.1
+
+Data Processing Pipeline
+
+We implement an agent-based pipeline that transforms 12,437 raw educational materials into 11,150
+standardized benchmark items through four specialized agents. Each agent addresses a specific
+processing challenge while maintaining modularity
+and error traceability.
+C.1.1
+
+Agent 1: Format Conversion Agent
+
+This agent handles heterogeneous input formats
+(PDFs, Word documents, LaTeX, web content) and
+performs intelligent OCR routing. Based on content analysis, it automatically selects: Tesseract
+5.0 for standard Chinese text (98.3% accuracy),
+MathPix API for mathematical notation (95.7%
+accuracy), or PaddleOCR for complex layouts.
+Documents with OCR confidence below 85% are
+flagged for human review. The agent applies postprocessing rules to correct common OCR errors
+(e.g., 0/O, l/I/1 disambiguation). Output: 12,201
+clean text representations (98.1% retention rate).
+C.1.2
+
+Agent 2: Standardization Agent
+
+This agent converts processed text into unified
+JSON schema containing: task ID, cognitive level,
+subject, grade, prompt, options, answer, explanation, difficulty, and evaluation metric. It performs
+three validation checks: (1) required field completeness, (2) encoding normalization to UTF-8,
+(3) semantic consistency using sentence-BERT to
+detect prompt-answer mismatches (threshold: 0.3
+similarity). Items failing validation are routed to expert correction queues. This process caught 67 answer key errors. Output: 12,201 schema-compliant
+items (100% pass rate).
+
+C.1.3
+
+Agent 3: Task Format Optimizer
+
+This agent determines optimal presentation format
+based on cognitive requirements. For objective
+tasks (Memory, Understanding, Application, Reasoning, Ethics), it converts items to standardized 4option multiple-choice format (9,250 items, 83%).
+When source materials lack sufficient options, it
+generates distractors using rule-based heuristics
+derived from documented student misconceptions.
+For open-ended tasks (Poetry Appreciation, Reading Comprehension, Essay Scoring, Creativity), it
+preserves free-form structure and extracts evaluation rubrics into machine-readable format (1,900
+items, 17%). Output: 11,991 optimally formatted
+items.
+C.1.4
+
+Agent 4: Quality Control Agent
+
+This agent implements four validation mechanisms:
+(1) Duplicate detection using MinHash LSH (85%
+threshold) removes 210 redundant items; (2) Difficulty calibration tests items with three baseline models (GPT-4o, Qwen-72B, GLM4-9B), flagging items with >95% or <10% accuracy—89
+outliers reviewed; (3) Cognitive alignment verification uses fine-tuned RoBERTa-Chinese classifier (91.3% accuracy) to validate EduAbility level
+assignments, flagging 91 misclassifications; (4)
+Anomaly detection identifies statistical outliers
+in length, answer distribution, or content quality,
+catching 178 additional issues. Output: 11,150
+validated items (93.0% final retention).
+C.1.5
+
+Agent Orchestration
+
+A central orchestration system coordinates agent
+execution, manages error handling, and routes
+flagged items to human reviewers. The review dashboard presents: original content, processing history,
+specific quality concerns, and contextual aids (e.g.,
+scanned images for OCR errors, taxonomy definitions for cognitive misalignments). Average expert
+review time: 4.2 minutes per flagged item (327
+items total). All agents maintain processing logs
+enabling full traceability from source to final item.
+Agent
+
+Input
+
+Output
+
+Format Conversion
+Standardization
+Format Optimizer
+Quality Control
+
+12,437
+12,201
+12,201
+11,991
+
+12,201 (98.1%)
+12,201 (100%)
+11,991 (98.3%)
+11,150 (93.0%)
+
+Table 6: Agent processing statistics
+
+C.2
+
+Task Statistics
+
+EdUEval includes a total of 24 distinct tasks spanning six cognitive levels as defined by the EduAbility taxonomy. As shown in Table 7, each cognitive
+level is represented by 3–5 task types, ensuring a
+balanced distribution across memory, understanding, application, reasoning, creativity, and ethics.
+In total, the dataset comprises 11,150 instances,
+offering broad task diversity while maintaining a
+manageable data scale.
+To reflect the range of linguistic and cognitive
+complexity present in real-world educational scenarios, Table 8 provides fine-grained statistics on
+each task, including the number of samples and the
+average input length (in characters). Tasks such
+as Reading Comprehension and Essay Scoring exhibit the longest average input lengths (1001 and
+819 characters, respectively), requiring models to
+process extended discourse. Conversely, tasks like
+Primary Formula Recall and Primary Reasoning
+are concise, averaging under 50 characters, and
+focus on factual retrieval. Creative tasks such as
+Text Writing and Teaching Design also demonstrate
+longer prompt structures due to their generative
+and open-ended nature.
+This variation in task type and input complexity
+ensures EdUEval serves as a robust benchmark for
+evaluating language models under diverse educational demands and input conditions.
+Table 7: Task types and total instances per cognitive
+level in EdUEval.
+Cognitive Level
+Memory
+Understanding
+Application
+Reasoning
+Creativity
+Ethics
+
+#Task Types
+
+#Instances
+
+3
+5
+5
+4
+3
+4
+
+1400
+3200
+2600
+2000
+200
+1750
+
+C.3 Task Definition and Construction Process
+Following the EduAbility cognitive taxonomy, we
+designed a suite of tasks targeting six hierarchical
+levels of educational ability: Memory, Understanding, Application, Reasoning, Creativity, and Ethics.
+Each task is categorized by its dominant cognitive
+level, although some tasks inevitably engage multiple levels of thinking. Our classification reflects
+the principal skill emphasized in the prompt and expected response, ensuring consistency across task
+design and evaluation.
+
+The task set includes both data-derived and
+expert-constructed components. Tasks aligned with
+Memory, Understanding, Reasoning, and Application are primarily adapted from real-world educational materials, including national and regional
+exams (e.g., Gaokao, Zhongkao), textbook-based
+assessments, and authentic classroom transcripts.
+In contrast, Creativity and Ethics tasks are fully designed by expert annotators to capture open-ended
+generation, pedagogical planning, and moral reasoning in education-specific contexts.
+For tasks requiring manual creation or postediting (e.g., classroom dialogue classification, ethical dilemmas, and all creativity tasks), we provide a high-level description of the construction
+workflow in this section. Annotators were trained
+in task-specific rubrics and followed standardized
+procedures to ensure validity and internal consistency. Each task is reviewed and validated by senior
+educators. Detailed prompt formats and example
+inputs are listed in Appendix C.4, and task-specific
+annotation guidelines are available in Appendix E.
+C.3.1
+
+Memorization
+
+Tasks at the Memorization level aim to evaluate a
+model’s ability to recall factual, curriculum-aligned
+knowledge across subjects and educational stages.
+These tasks emphasize short-context retrieval and
+are presented in multiple-choice format. The design spans primary to high school content and reflects core requirements from national educational
+standards. This section includes the following three
+tasks:
+Primary Formula Recall (1-1) This task focuses
+on foundational knowledge from primary education, especially in Mathematics and the Chinese
+Language. Questions include recalling area and
+volume formulas, converting measurement units,
+and recognizing character pronunciations, pinyin,
+common radicals, and mythological references. A
+total of 400 items were selected from standardized
+primary-level assessments to ensure alignment with
+the textbook scope and learning expectations.
+Junior Knowledge Recall (1-2) This task includes factual items from middle school subjects
+such as Science, Geography, History, and Information Technology. Examples include identifying the
+function of a keyboard shortcut, naming a historical figure, or recalling a chemical definition. The
+content emphasizes breadth across disciplines and
+regional test styles. A total of 500 questions were
+
+Table 8: Number of instances and average input length per task in EdUEval.
+Level
+
+Task
+
+Type
+
+Memory
+Memory
+Memory
+Understanding
+Understanding
+Understanding
+Understanding
+Understanding
+Application
+Application
+Application
+Application
+Application
+Reasoning
+Reasoning
+Reasoning
+Reasoning
+Creativity
+Creativity
+Creativity
+Ethics
+Ethics
+Ethics
+Ethics
+
+Junior Knowledge Recall
+Primary Formula Recall
+Senior Concept Recall
+Junior Understanding
+Primary Understanding
+Senior Understanding
+Poetry Appreciation
+Reading Comprehension
+Classroom Dialogue Classification
+Junior Problem Solving
+Primary Problem Solving
+Senior Problem Solving
+Essay Scoring
+Junior Reasoning
+General Logical Inference
+Primary Reasoning
+Senior Reasoning
+Question Generation
+Teaching Design
+Text Writing
+Junior Ethics Scenario
+Senior Ethics Scenario
+Educational Ethics Judgment
+Primary Moral
+
+MCQ
+MCQ
+MCQ
+MCQ
+MCQ
+MCQ
+MCQ
+Short Answer
+Classification
+MCQ
+MCQ
+MCQ
+Essay Score
+MCQ
+MCQ
+MCQ
+MCQ
+Generation
+Generation
+Generation
+MCQ
+MCQ
+MCQ
+MCQ
+
+collected from official mock exams and public test
+banks.
+Senior Concept Recall (1-3) This task targets advanced memorization needs in high school. Disciplines include Physics (e.g., electromagnetic laws),
+Chemistry (e.g., organic reaction equations), Mathematics (e.g., trigonometric identities), Chinese
+(e.g., classical prose interpretation), and English
+(e.g., complex sentence structures and grammar patterns). All questions are extracted from real highstakes exams such as Gaokao mock papers. The
+final dataset contains 500 questions with subjectbalanced coverage.
+These tasks emphasize accurate reproduction of
+textbook-based content and offer a foundation for
+evaluating whether language models can serve as
+reliable aids for early-stage educational reinforcement.
+C.3.2
+
+Understanding
+
+Understanding-level tasks aim to assess a model’s
+ability to process and internalize meaning from
+structured educational texts. These tasks require
+the model to grasp explicit and implicit information,
+interpret rhetorical or scientific intent, and identify
+relationships between concepts or events. Unlike
+simple recall, understanding involves cognitive operations such as summarizing main ideas, identifying supporting details, recognizing cause-and-
+
+#Instances
+
+Avg. Length (chars)
+
+500
+400
+500
+1000
+1000
+1000
+100
+100
+1000
+500
+500
+500
+100
+500
+500
+500
+500
+100
+50
+50
+500
+500
+500
+250
+
+75
+43
+79
+78
+62
+167
+165
+1001
+62
+71
+38
+74
+819
+86
+217
+49
+129
+101
+212
+148
+201
+213
+215
+186
+
+effect structures, interpreting literary techniques,
+and distinguishing between factual statements and
+inferred meanings. The task design spans diverse
+genres—narrative, expository, poetic, and scientific—across different grade levels. Primary-level
+tasks focus on literal comprehension and simple
+reasoning; middle-school tasks introduce structural
+logic and semantic nuance; high-school tasks emphasize conceptual depth and domain-specific textual analysis. Formats include both multiple-choice
+and short-answer questions, depending on the task
+objective and response requirements.
+Primary Understanding (2-1) At the elementary level, understanding is centered on grasping
+literal meaning, everyday scenarios, and simple
+inferencing. Selected texts use clear sentence structures, familiar vocabulary, and relatable themes
+such as family, school, or animals. Questions require identification of key facts, character actions,
+or intentions. All content is aligned with primary
+school language curricula and sourced from official
+exam papers and children’s reading materials.
+Junior Understanding (2-2) Designed for the
+middle school level, this task assesses a model’s
+ability to identify central ideas, extract factual details, and recognize logical relationships in expository and narrative texts. Question design emphasizes structural comprehension, temporal or causal
+
+Table 9: Details of tasks within EduEval across six cognitive levels.
+
+Level
+
+ID
+
+Task
+
+Metrics
+
+Data Source
+
+Memory
+
+1-1
+1-2
+1-3
+
+Primary Formula Recall
+Junior Knowledge Recall
+Senior Concept Recall
+
+Accuracy
+Accuracy
+Accuracy
+
+Primary Exams
+Exam Papers
+High School Exams
+
+400
+500
+500
+
+Understanding
+
+2-1
+2-2
+2-3
+2-4
+2-5
+
+Primary Understanding
+Junior Understanding
+Senior Understanding
+Poetry Appreciation
+Reading Comprehension
+
+Accuracy
+Accuracy
+Accuracy
+Rouge-L
+Rouge-L
+
+Primary Tests
+Middle School Tests
+Senior Tests
+Textbook
+Reading Bank
+
+1000
+1000
+1000
+100
+100
+
+Application
+
+3-1
+
+Accuracy
+
+Dialogue Corpus
+
+1000
+
+3-2
+3-3
+3-4
+3-5
+
+Classroom Dialogue Classification
+Primary Problem Solving
+Junior Problem Solving
+Senior Problem Solving
+Essay Scoring
+
+Accuracy
+Accuracy
+Accuracy
+RMSE
+
+Primary Assignments
+Mock Exams
+Primary Assignments
+Annotated Essays
+
+500
+500
+500
+100
+
+Reasoning
+
+4-1
+4-2
+4-3
+4-4
+
+General Logical Inference
+Primary Reasoning
+Junior Reasoning
+Senior Reasoning
+
+Accuracy
+Accuracy
+Accuracy
+Accuracy
+
+Logic Tasks
+Primary Logic Tests
+Math Puzzles
+Senior Logic Tasks
+
+500
+500
+500
+500
+
+Creativity
+
+5-1
+5-2
+5-3
+
+Question Generation
+Teaching Design
+Text Writing
+
+GPT-based
+GPT-based
+GPT-based
+
+Expert Annotation
+Expert Annotation
+Expert Annotation
+
+100
+50
+50
+
+Ethics
+
+6-1
+6-2
+6-3
+6-4
+
+Primary Moral
+Junior Ethics Scenario
+Senior Ethics Scenario
+Educational Ethics Judgment
+
+Accuracy
+Accuracy
+Accuracy
+Accuracy
+
+Expert Annotation
+Expert Annotation
+Expert Annotation
+Expert Annotation
+
+250
+500
+500
+500
+
+coherence, and contrastive reasoning. Texts are
+drawn from Chinese language textbooks, educational supplements, and online learning platforms
+to ensure age-appropriate difficulty and domain
+coverage.
+Senior Understanding (2-3) Comprehension at
+the high school level involves interpreting disciplinary texts across subjects such as Physics,
+Chemistry, Biology, History, and Political Science.
+Models must decode technical definitions, reason
+through scientific arguments, and synthesize multiparagraph information. Texts are adapted from national curricula, Gaokao mock exams, and subjectspecific academic articles to reflect cognitively demanding reading expected in upper secondary education.
+Poetry Appreciation (2-4) Poetic comprehension tasks evaluate the ability to interpret imagery,
+tone, structure, and rhetorical devices within classi-
+
+Test Set
+
+cal or modern Chinese poetry. Questions probe a
+model’s grasp of metaphor, thematic progression,
+and stylistic nuance across different eras and genres. All poems are selected from high school literature textbooks and curated poetry collections.
+Responses are formulated in short-answer format
+to reflect interpretive depth.
+Reading Comprehension (2-5) Long-form reading comprehension tasks assess multi-layered understanding of essays, nonfiction articles, and other
+extended texts. Questions are designed to probe
+core propositions, supporting arguments, logical
+structure, and implicit messages. Source texts are
+selected from authentic reading materials used in
+educational contexts. Responses are open-ended,
+and model output is evaluated with ROUGE-L to
+assess semantic coverage and precision.
+These tasks are essential for evaluating how well
+language models can replicate the comprehension
+skills taught in K–12 curricula and adapt to vary-
+
+ing difficulty levels across reading and subject domains.
+C.3.3
+
+Application
+
+Application-level tasks evaluate a model’s ability
+to transfer learned knowledge to practical, contextrich educational settings. These tasks simulate authentic classroom scenarios where students are expected to solve problems, interpret structured information, make pedagogical classifications, or assess
+open-ended work. The task set spans multimodal
+dialogue interpretation, quantitative reasoning, and
+evaluative writing feedback across primary to high
+school levels.
+Classroom classification tasks require models to
+categorize utterances into instructional roles and
+are evaluated using standard classification accuracy. Essay scoring tasks demand nuanced judgments along multiple dimensions such as coherence, grammar, and content relevance; models are
+expected to assign scalar scores aligned with expertannotated rubrics. Mathematical problem-solving
+tasks, ranging from basic arithmetic to multi-step
+scientific applications, assess models’ ability to
+process numerical and symbolic input in realistic educational formats. Depending on the task
+structure, responses are evaluated via accuracy for
+closed-form answers or correlation-based metrics
+(e.g., QWK, Pearson) for open-ended assessment.
+Classroom Dialogue Classification (3-1) This
+task involves analyzing authentic classroom dialogue transcripts and classifying utterances into
+pedagogically meaningful categories (e.g., teacher
+explanation, student elaboration, questioning, or
+feedback). The dialogues are sourced from real
+middle school classrooms in subjects such as Information Technology, Mathematics, and Chinese.
+Original classroom recordings were transcribed to
+text and annotated by domain experts. The detailed
+taxonomy used for classification is provided in Appendix E.
+Primary Problem Solving (3-2) The primarylevel application tasks focus on basic quantitative
+reasoning grounded in everyday life. Problem types
+include simple arithmetic word problems, timedistance calculations, shopping-related questions,
+and basic engineering/logistics scenarios adapted to
+the cognitive level of elementary students. Content
+is curated from elementary school test banks and
+real classroom assessments.
+
+Junior Problem Solving (3-3) Tasks at the junior high level include typical application-oriented
+problems in Mathematics, Physics, and Chemistry.
+These questions involve numerical calculation, data
+interpretation, and conceptual application in scenarios such as physical motion, chemical change,
+and geometric modeling. All questions are sourced
+from historical Zhongkao exams, regional mock
+tests, and online education platforms, reflecting the
+procedural rigor of national curriculum standards.
+Senior Problem Solving (3-4) At the high school
+level, application tasks require multi-step reasoning, cross-topic integration, and realistic problem
+contexts. Problems often span several knowledge
+points across disciplines—for example, combining
+algebra and geometry, or interpreting physics data
+within real-life scientific experiments. Questions
+are selected from Gaokao-level assessments and
+authentic academic preparation resources, representing the most complex application scenarios in
+the dataset.
+Essay Scoring (3-5) This task evaluates the
+model’s ability to assign scores to student-written
+essays in accordance with expert grading. Essays
+are collected from real classroom writing assignments in primary and middle school settings, covering narrative, argumentative, and descriptive genres. Each essay is paired with a reference score
+given by certified instructors following standard
+rubrics. Model responses are evaluated using QWK
+and Pearson correlation with human scores.
+C.3.4
+
+Reasoning
+
+Reasoning-level tasks evaluate a model’s capacity for deductive, multi-step, and abstract thinking
+across various educational contexts. These tasks
+require more than fact recall or surface comprehension—they challenge the model to infer, calculate,
+compare, or generalize based on limited or structured input. Reasoning items span all school stages
+and are primarily designed as multiple-choice questions. While some are discipline-specific, others
+are purely logical in nature, simulating standardized test conditions.
+General Logical Inference (4-1) Independent of
+school subjects, this task focuses purely on formal
+logic and critical reasoning. Question types include
+identifying assumptions, strengthening/weakening
+arguments, and detecting logical fallacies. For example, a question may require challenging a con-
+
+clusion about rainforest preservation based on environmental data or identifying which option undermines a policy argument. The format follows
+logical reasoning tests common in aptitude exams,
+using real-world scenarios from domains such as
+economics, environmental policy, and public health.
+Difficulty is moderate to slightly above moderate,
+with items often requiring multi-constraint deduction.
+
+integrate real-world applications and often require
+synthesis of multiple knowledge points, with difficulty ranging from "moderate" to "difficult".
+These tasks test a language model’s ability to
+handle structured constraints, domain-specific reasoning, and logical abstraction. They simulate
+classroom and exam conditions where inference,
+rather than memory, is the central demand.
+
+Primary Reasoning (4-2) Designed for
+elementary-level learners, this task emphasizes
+foundational reasoning within Mathematics and
+Chinese. Questions involve logical enumeration,
+basic inference, and intuitive problem solving.
+For instance, items include "What is the smallest
+number divisible by 9 that leaves a remainder of 5
+when divided by 6?", or "How many handshakes
+occur between three friends?". Other questions
+explore creative problems such as color-painting
+cubes or firecracker arrangements. Most items are
+labeled as "easy", with a few rising to "moderate",
+and maintain age-appropriate vocabulary and
+structure.
+
+Creativity-level tasks assess the model’s capacity
+to generate novel, coherent, and contextually appropriate content across a range of educational domains. These tasks move beyond recall or selection and require open-ended, pedagogically aligned
+language generation. All prompts are manually
+constructed by experienced educators to ensure diversity, authenticity, and alignment with modern
+instructional goals. Responses are evaluated using
+GPT-based scoring models to assess creativity, semantic relevance, and pedagogical appropriateness.
+
+Junior Reasoning (4-3) This task targets middle
+school students’ reasoning ability across nine disciplines: Chinese, Mathematics, English, Physics,
+Chemistry, Biology, History, Geography, and
+Civics. Items assess symbolic manipulation, spatial logic, experimental deduction, and semantic
+judgment. For example, Chinese questions involve
+sentence pair matching and rhetorical inference;
+geography questions test spatial reasoning, such as
+identifying provinces on a map. Chemistry problems may involve reactivity series, while physics
+questions assess optical phenomena (e.g., convex
+lens imaging). The overall difficulty is labeled as
+"easy to moderate," reflecting the cognitive profile
+of middle school learners.
+Senior Reasoning (4-4) This task presents high
+school students with complex, multi-disciplinary
+reasoning challenges. It includes domain-specific
+inference in subjects such as Mathematics (e.g.,
+complex numbers, probability, normal distribution),
+Physics (e.g., electromagnetic modeling), Biology
+(e.g., genetics and heredity), and Political Science
+(e.g., interest rate policy chains). For example, a
+chemistry question may involve interpreting electrochemical recovery of aluminum alloys; a history
+question may ask for reasoning behind defining
+the "14-year War of Resistance". These questions
+
+C.3.5
+
+Creativity
+
+Question Generation (5-1) This task involves
+generating original, subject-specific questions for
+students from primary to high school. The prompts
+emphasize cross-disciplinary design, encouraging
+the model to embed real-world contexts such as
+shopping scenarios in math or historical debates in
+social studies. The task targets the model’s ability
+to foster critical thinking, practical reasoning, and
+curriculum-oriented assessment skills. Question
+quality is evaluated by large language models along
+dimensions such as clarity, cognitive demand, and
+alignment with instructional objectives.
+Teaching Design (5-2) Given a specific subject,
+topic, and grade level, the model is required to propose a detailed teaching plan. Each plan should
+include learning objectives, instructional strategies, classroom activities, and assessment methods. The prompt structure reflects best practices in
+instructional design and encourages active, studentcentered pedagogy. This task evaluates the model’s
+instructional planning ability under realistic teaching constraints. Responses are automatically rated
+by GPT-based evaluators for pedagogical soundness, structure, and feasibility.
+Text Writing (5-3) Writing tasks span a wide
+variety of genre,s including narrative essays, poetic compositions, argumentative texts, and technical explanations. Prompts are designed to cover
+different proficiency levels and stylistic require-
+
+ments. The model must demonstrate creativity,
+genre awareness, and communicative clarity. Each
+response is assessed using large model-based metrics that measure semantic richness, structural coherence, and stylistic appropriateness across genres.
+By leveraging GPT-based evaluation models, we
+ensure a scalable, consistent assessment of creative
+outputs across open-ended tasks, covering multiple
+educational levels and writing purposes.
+C.3.6 Ethics
+Ethics-level tasks are designed to assess a model’s
+ability to make morally informed judgments and reflect normative reasoning in educational scenarios.
+The tasks simulate real-world ethical dilemmas or
+value-based decision-making processes, covering
+individual conduct, social behavior, and professional responsibility. Prompts are carefully constructed by experts in moral education and educational psychology, with responses evaluated based
+on alignment with educational norms, fairness, and
+contextual sensitivity.
+Ethics-level tasks are designed to assess a
+model’s ability to make morally informed judgments and reflect normative reasoning in educational scenarios. These tasks simulate real-world
+ethical dilemmas involving individual behavior,
+community responsibility, and professional values.
+Each task is carefully constructed by educational
+or ethics experts and evaluated based on alignment
+with commonly accepted moral standards in school
+or societal contexts.
+Primary Moral (6-1) This task focuses on
+elementary-level moral understanding. Scenarios
+involve basic ethical choices such as honesty, cooperation, empathy, and rule-following. The goal is to
+evaluate whether a model can correctly distinguish
+right from wrong in age-appropriate situations, including classroom behavior or helping others in
+community settings. All questions are multiplechoice and presented in simplified language suitable for primary students.
+Junior Ethics Scenario (6-2) At the junior high
+level, ethical dilemmas are framed around interpersonal and family issues, such as fairness, peer conflict, and communication. Questions are designed
+to reflect the psychosocial development stage of
+adolescents and assess their reasoning about relationships, social roles, and responsibility in group
+contexts.
+
+Senior Ethics Scenario (6-3) Senior high school
+tasks expand into themes of social responsibility,
+civic engagement, and ethical leadership. Scenarios require reasoning about digital behavior, public
+policy, or societal norms—for example, evaluating the ethics of reposting sensitive content online,
+or considering actions to mitigate climate change.
+These tasks demand higher-order moral judgment
+and trade-off evaluation.
+Educational Ethics Judgment (6-4) This task
+simulates ethical decision-making in educational
+professional settings, such as classroom equity,
+grading fairness, and student-teacher dynamics.
+It is intended for evaluating adult or pre-service
+teacher alignment with ethical codes in educational
+practice. Questions include dilemmas involving
+bias, academic honesty, and responsibility toward
+students’ well-being.
+C.4
+
+Task Instruction and Example
+
+In this section, we provide representative inputoutput examples for each task category in EdUEval.
+To ensure scalability and consistency across diverse
+tasks, we adopt a unified prompt format where possible, indicating the task description, input query,
+and expected response structure. Examples are
+grouped by task type and cognitive level. Tables 15
+illustrate multiple-choice tasks across various domains, covering memorization, understanding, application, and reasoning. Poetry appreciation tasks
+are shown in Table 14, while Table 16 presents
+the prompt and annotated answer format used for
+reading comprehension tasks.
+We further include examples of complex, realworld educational tasks. Table 17 illustrates classroom dialogue classification based on authentic
+teacher-student transcripts. Table 18 demonstrates
+how student-written compositions are paired with
+rubrics and model scoring. For open-ended generation tasks, Table 19 displays question generation
+prompts, Table 20 outlines a teaching design example, and Table 21 provides a complete instance of
+model-generated text writing.
+These examples serve as reference points for
+users and researchers to better understand the structure and intent of each task format in EdUEval.
+C.5
+
+Comparison with Existing Benchmarks
+
+C.6
+
+GPT-based Evaluation Protocols
+
+To evaluate open-ended tasks such as text writing,
+question generation, and teaching design, we adopt
+
+Table 10: Comparison of EdUEval with existing educational benchmarks.
+
+Benchmark
+
+Chinese
+Coverage
+
+Cognitive
+Levels
+
+Authentic
+Tasks
+
+Creative/
+Ethical
+
+Scale
+(# Questions)
+
+Partial
+Partial
+Partial
+Full
+Full
+Full
+Full
+Full
+Full
+
+2–3
+2–4
+2–3
+2–3
+2–3
+2–3
+2–4
+2–4
+1–6
+
+No
+No
+Limited
+No
+Limited
+No
+No
+Limited
+Yes
+
+No
+Limited
+No
+No
+No
+No
+No
+No
+Yes
+
+15,908
+204,000+
+16,400+
+11,528
+13,948
+11,528
+8,062
+18,717
+11,150
+
+MMLU
+BIG-bench
+HELM
+MMCU
+C-Eval
+CMMLU
+AGIEval
+E-Eval
+EdUEval (ours)
+
+GPT-based scoring as a consistent and scalable
+alternative to human annotation. We prompt GPT4 with task-specific rubrics and set the decoding
+temperature to zero to ensure deterministic output. Each rubric contains clearly defined criteria
+across multiple dimensions, such as content accuracy, structural coherence, pedagogical relevance,
+creativity, and feasibility. The model receives both
+the input content and the full rubric and returns a
+holistic score ranging from 0 to 100 without explanation. The detailed scoring rubrics used for
+each task type are shown in Tables 22 to 13. To
+validate reliability, we sample 100 examples and
+compare GPT-4 scores with human expert annotations, observing Pearson correlations above 0.87
+across all tasks. This automated evaluation framework allows efficient and robust benchmarking of
+model-generated outputs in educational settings
+while maintaining alignment with human grading
+standards.
+
+3090 and RTX 4090 GPUs to ensure consistent and
+fair performance comparison across all cognitive
+dimensions.
+
+D
+
+E
+
+Experimental Details
+
+All evaluation experiments were conducted on
+a high-performance computing server equipped
+with 3 NVIDIA GPUs (2 × GeForce RTX 3090
+with 24576MB VRAM each and 1 × RTX A6000
+with 49140MB VRAM) plus 4 additional NVIDIA
+GeForce RTX 4090 GPUs, all powered by a 128core Intel(R) Xeon(R) Platinum 8358 CPU @
+2.60GHz. Our software environment consisted
+of Ubuntu 22.04 LTS with CUDA 12.7, Python
+3.9.0, PyTorch 2.0.0, and Transformers 4.28.1. We
+utilized the RTX A6000 primarily for resourceintensive few-shot evaluations due to its larger
+VRAM capacity, while distributing smaller model
+evaluations and preprocessing tasks across the RTX
+
+Table 11: Models evaluated in this paper.
+Model
+
+#Parameters
+
+Access
+
+GPT-4o
+Spark-X1
+Qwen-plus
+Qwen-72B
+Qwen-14B-Chat
+Qwen-7B
+Yi-34B-Chat
+Yi-6B-Chat
+Chinese-LLaMA2-13B
+LLaMA3-8B
+GLM4-9B-Chat
+DeepSeekR1-32B
+EduChat-sft-002-13B
+BaiChuan-13B
+
+undisclosed
+undisclosed
+undisclosed
+72B
+14B
+7B
+34B
+6B
+13B
+8B
+9B
+32B
+13B
+13B
+
+API
+API
+API
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+
+Guidelines for Expert Annotation
+
+The expert annotation protocol was designed to systematically operationalize the EduAbility cognitive
+scaffold through rigorous human judgment, ensuring that each benchmark item is not only pedagogically sound but also theoretically grounded. To this
+end, we recruited 12 educational experts with an
+average of 8.5 years of teaching experience across
+primary, secondary, and higher education. All annotators possessed formal pedagogical training and
+curriculum development experience within the Chinese educational system, making them uniquely
+qualified to interpret and apply our nuanced cognitive framework.
+The core of the annotation process was a multi-
+
+stage validation pipeline, beginning with intensive
+training where experts were familiarized with the
+theoretical underpinnings of the EduAbility Taxonomy. The primary directive for all tasks was to
+identify and label the dominant cognitive operation required by an item, thereby mapping it to a
+specific level of the cognitive scaffold.
+Task-specific guidelines were established to ensure this principle was applied consistently: For
+Classroom Dialogue Classification, annotators
+were instructed to move beyond surface-level semantics and analyze the full conversational flow—
+including discourse function, speaker intention,
+and pedagogical role. This holistic analysis was essential for classifying utterances according to their
+function within the Application level of our framework (e.g., Guidance, Inference vs. simple Knowledge Recall). Ambiguous utterances were flagged
+for consensus discussions to maintain theoretical
+alignment. For Essay Scoring tasks, experts rated
+compositions using official grading rubrics that
+serve as practical proxies for the Application and
+Creativity dimensions of the taxonomy. Dimensions such as content, coherence, and expressiveness were evaluated to produce a holistic score. To
+ensure inter-rater reliability, annotators calibrated
+their scoring in periodic review meetings, and only
+essays with consensus scores or a variance within
+±2 points were retained. For Ethical Judgment
+tasks, the annotation process directly reflected the
+design of the Ethics dimension in our taxonomy,
+which prioritizes nuanced moral reasoning over
+simple right/wrong dichotomies. Consequently,
+these tasks were not labeled with "correct" answers.
+Instead, experts constructed the full scenario and
+option set to be pedagogically plausible and reflect
+genuine moral ambiguity, drawing from real-world
+dilemmas in teaching and school policy.
+To ensure the integrity of this process, participants were compensated at a rate of ¥150 (about
+$21) per hour and completed a paid training session
+before formal annotation began. Across all tasks,
+consistency was maintained through standardized
+glossaries and shared exemplars. All annotations
+underwent multi-round review by senior experts,
+with correction logs kept to trace decision rationale.
+This rigorous, human-led process was the crucial
+preparatory step for the final AI-driven validation
+performed by the Cognitive Alignment Verification Agent (as described in Section 3.2), ensuring
+that the final dataset is a faithful operationalization
+of the EduAbility framework.
+
+Scoring Dimension
+Accuracy and Clarity
+Content alignment with subject
+knowledge
+Clear and unambiguous phrasing
+
+Points
+20
+10
+10
+
+Educational Value
+Core concept coverage
+Cognitive demand (e.g., Bloom’s levels)
+
+20
+10
+10
+
+Task Design Quality
+Appropriate question format
+Realistic and engaging context
+Depth and integrative reasoning
+
+30
+10
+10
+10
+
+Difficulty and Challenge
+Proper difficulty gradient
+Opportunities for divergent thinking
+
+20
+10
+10
+
+Originality and Utility
+Novel framing or perspective
+Practical instructional usefulness
+
+10
+5
+5
+
+Total
+
+100
+
+Table 12: GPT-based scoring rubric for Question Generation tasks.
+
+Scoring Dimension
+
+Points
+
+Language Accuracy
+Grammar correctness
+Vocabulary precision
+
+20
+10
+10
+
+Content Quality
+Richness and specificity
+Coherence and flow
+Thematic depth
+
+30
+10
+10
+10
+
+Creativity and Thinking
+Originality and novel expression
+Critical thinking and perspective
+Emotional resonance
+
+30
+10
+10
+10
+
+Structure and Format
+Complete essay structure
+Formatting and conventions
+
+20
+10
+10
+
+Total
+
+100
+
+Table 13: GPT-based scoring rubric for Text Writing
+tasks.
+
+INSTRUCTION: Read the following classical Chinese poem and answer the short-answer questions in concise and
+coherent language.
+QUERY: Poem:
+On the Eastern Tower of Xianyang
+by Xu Hun (Tang Dynasty)
+Climbing high brings endless sorrow,
+Willows and reeds float like isles in water.
+Clouds rise by the creek, the sun falls behind the pavilion,
+Storm winds fill the tower—rain approaches the mountain.
+Birds soar over green fields at dusk near Qin gardens,
+Cicadas cry in yellow leaves around the Han palace.
+Ask not of the past—
+The Weishui still flows east through my ruined homeland.
+(1) What images are used in the third couplet to convey desolation and bleakness?
+(2) How does the fourth couplet express the poet’s reflection on historical change?
+ANSWER:
+(1) Cloud, setting sun, mountain rain, and wind.
+(2) The poet uses imagery of “birds flying over green fields” and “cicadas crying in yellow leaves” to depict the desolate
+atmosphere of autumn. By referencing the ruined states of the Qin and Han dynasties, he conveys deep sorrow over the
+passage of time and historical decline.
+
+Table 14: Example from Poetry Appreciation task.
+
+INSTRUCTION: Please answer the following multiple-choice question. Provide only the letter (e.g., A, B, C, or D).
+QUERY: Which of the following is the core city of the Northeastern Atlantic coastal urban cluster in the United States?
+A. Chicago
+B. New York
+C. Washington
+D. Boston
+ANSWER: B
+
+Table 15: Example from Senior Concept Recall task.
+
+INSTRUCTION: Read the passage carefully and answer the following short-answer questions. Each response should be
+concise and directly based on the passage content.
+PASSAGE (excerpt): “When we arrived at Gubei Water Town, the glow of sunset had faded and the town began to light up.
+The night enveloped the town in deep shadow. Gubei derives its name from the Gubeikou Great Wall, composed of famous
+sections like Wohu Mountain and Simatai, steeped in history and heroic imagery. Once a military stronghold linking
+the Liaodong Plain and Inner Mongolia, it is now peaceful and serene. Despite being in northern China, it resembles a
+southern water town with flowing rivers, weeping willows, and spring blossoms. From Simatai, lantern-lit Great Wall
+silhouettes glow as the town sparkles below. Returning to town, lively street cries, child laughter, and wood-structured
+buildings evoke an ancient charm, while the town remains modern with creative shops and music echoing into the night.”
+QUESTIONS:
+(1) What are the main characteristics of Gubei Water Town described in the passage?
+(2) Analyze the language used to portray the liveliness of the town at night.
+(3) What is the function of the inserted historical background?
+(4) Why is the town described as a “reversed relocation of regional geography” ?
+ANSWER:
+(1) Peaceful, elegant, lively, with Jiangnan-style charm.
+(2) The bustling market sounds and interactions create a vibrant and immersive atmosphere.
+(3) The historical context enriches the cultural depth and contrast between past and present.
+(4) Though in the north, it replicates the southern water town scenery, hence the metaphor.
+
+Table 16: Example from Reading Comprehension task.
+
+INSTRUCTION: Given the classroom dialogue content below, please determine its pedagogical category. Return only
+the corresponding category number (1–9). Categories include:
+1. Basic Knowledge 2. Personal Information 3. Analysis 4. Generalization 5. Inference and Transfer
+6. Extension and Response 7. Agreement 8. Doubt 9. Guidance
+DIALOGUE:
+"Well, numbers have addition and subtraction, right? Do vectors also have addition and subtraction? Please reflect based
+on your prior knowledge of displacement and force composition, and explore this at home. Lastly, I wish you all the best
+in life. No matter how winding the road ahead, as long as the direction is right, go forward with all your heart and share
+your happiness. Class dismissed."
+ANSWER: 9
+
+Table 17: Example from Classroom Dialogue Classification task.
+
+INSTRUCTION: Please assign a holistic score (0–100) to the following student essay. Do not provide any explanation.
+ESSAY PROMPT: The Calendar of Life
+STUDENT RESPONSE:
+The Calendar of Life
+Tearing off one page at a time, each one carrying your hope.
+—I don’t remember how long it has been since I last visited her. Childhood memories are fading, but I still recall her
+silver hair and the quiet traces of time etched into her face.
+One morning, a ringing phone woke me. As I hung up, I froze—Grandma had been in a car accident. When I rushed to the
+hospital, she was already in the ICU. Tears flooded my eyes. Following Grandpa’s instructions, I returned to our old home
+to retrieve some clothes.
+The house was the same one filled with my childhood memories. Hesitantly, I stepped up to the attic and into her room.
+The scent—her scent—rushed at me. On the desk, I saw large wall calendars torn apart, the pages scattered. On the back
+of each page were handwritten notes: “Feb 2003, Nannan came home today.” “May 2003, Nannan called and told me to
+dress warmly.” “July 2004, Nannan’s entrance exam.” “Feb 2006, it’s been a long time since Nannan called me.”
+I frantically turned each page. Each recorded my visits, my calls, our moments. I imagined her, night after night, under the
+dim lamp, her eyes behind reading glasses, noting down everything with love. Had I grown too busy, too distant? And yet
+she clung to hope through these calendar pages, waiting for the little girl who used to call her “Nannan.”
+I gathered the pages and returned to the hospital. There she lay—bandaged, asleep—yet still the face that once spoiled
+me. I took one last page, filled with all my longing, and placed it in her hand. “Grandma,” I whispered, “please wake up.
+Nannan’s here now. You don’t need to count the days anymore...”
+ANSWER: 90
+
+Table 18: Example from Essay Scoring task.
+
+INSTRUCTION: Please design an educational assessment question based on the following requirements. Ensure the
+question is clear, curriculum-aligned, and suitable for the specified grade level.
+INPUT:
+Grade: 5
+Subject: Geography
+Knowledge Point: Overview of World Geography
+Task Description: Create a fill-in-the-blank question on world geography. It should cover major countries on each
+continent, label locations of well-known mountains and rivers, and include causal reasoning about geographical phenomena.
+OUTPUT:
+Fill in the blanks below based on your knowledge of world geography:
+(1) The
+River is the longest river in Africa.
+(2) The
+Mountains separate Europe from Asia.
+(3) Brazil is located on the continent of
+.
+(4) Earthquakes are frequent along the Pacific Ring of Fire because of
+
+Table 19: Example from Question Generation task.
+
+.
+
+INSTRUCTION: Please create a detailed teaching plan based on the provided grade level, topic, and instructional goals.
+The design should include objectives, teaching methods, procedural steps, and resource requirements.
+INPUT:
+Grade: 2
+Subject: English
+Topic: Basic Grammar and Sentence Patterns
+Teaching Requirements: Design a lesson to teach the basic use of the simple present tense. Students should learn to
+correctly use simple sentence structures. Adopt discovery-based and practice-based approaches. Teachers should provide
+example sentences and guide students to find grammar rules. Students will complete substitution and creative exercises.
+The teaching flow includes:
+• Introduction: Present lively scenes using simple English sentences.
+• Example Analysis: Show example sentences using the simple present.
+• Rule Discovery: Guide students to extract grammatical patterns.
+• Substitution Practice: Replace subjects or verbs using a worksheet.
+• Creative Practice: Compose short texts using the target grammar.
+• Summary and Feedback: Review student work and reinforce key points.
+Resources: Grammar worksheets.
+OUTPUT:
+Lesson Title: Exploring the Simple Present Tense
+Grade Level: 2 Duration: 40 minutes
+Objectives:
+• Understand the basic use of the simple present tense.
+• Identify and apply sentence patterns with regular subjects and verbs.
+• Develop the ability to modify and create simple sentences.
+Teaching Procedure:
+1. Warm-up (5 min): Present engaging pictures (e.g., a dog runs, a boy eats an apple) and read sentences aloud. Ask
+students to guess the meaning.
+2. Example Analysis (5 min): Write examples on the board: "He plays soccer." "They eat lunch." Highlight subject–verb
+patterns.
+3. Grammar Discovery (5 min): Guide students to summarize that verbs change with the subject in present tense (e.g.,
++s/es).
+4. Substitution Practice (10 min): Use worksheets to replace subjects or verbs in given sentences. Peer check answers.
+5. Creative Practice (10 min): Students compose 3–5 sentence mini-paragraphs using the learned grammar.
+6. Review (5 min): Volunteers share their writing. Teacher gives positive feedback and recaps the grammar rule.
+Materials: Illustrated sentence cards, grammar worksheet.
+
+Table 20: Example from Teaching Design task.
+
+INSTRUCTION: Based on the following writing prompt, compose a complete short story of approximately 800 characters.
+The writing should be coherent, creative, and logically consistent with the given opening.
+PROMPT:
+You are given the beginning of a story. Please continue it into a complete narrative.
+Opening:
+Once there was a little boy named Pinpin. He was often bullied for being clumsy, until one day...
+OUTPUT:
+...he found an old box behind his school, glowing faintly under the setting sun. Inside lay a strange pair of glasses. When
+Pinpin put them on, the world changed—he could suddenly see patterns in how things moved, how people talked, and
+even how puzzles worked. At first he was scared, but soon he realized this was his gift.
+The next day at school, during math class, the teacher presented a tough logic problem. Pinpin raised his hand, something
+he’d never done before. He calmly walked to the board and solved it, step by step, as the whole class watched in awe. The
+bullies were speechless.
+As days passed, Pinpin grew more confident. He used the glasses not to show off, but to help others—he taught his friends
+how to understand math, comforted classmates when they felt stuck, and even wrote poems that made people smile.
+One day, he returned to the place where he found the glasses. They were gone. But Pinpin smiled. He didn’t need them
+anymore. What he discovered wasn’t magic in the glasses—it was magic in himself.
+
+Table 21: Example from Text Writing task.
+
+Scoring Dimension
+
+Points
+
+Teaching Objectives (Clarity, Suitability)
+Clear articulation of learning goals
+Alignment with standards and student level
+
+20
+10
+10
+
+Content Accuracy and Relevance
+Alignment with subject knowledge
+Support for stated objectives
+
+20
+10
+10
+
+Teaching Methods (Variety, Fit)
+Use of diverse, learner-centered strategies
+Appropriateness for content and learners
+
+20
+10
+10
+
+Instructional Flow and Coherence
+Logical sequencing of activities
+Complete stages (intro, practice, summary)
+
+20
+10
+10
+
+Resource Use
+Richness and suitability of teaching aids
+Match with teaching needs
+
+10
+5
+5
+
+Assessment Design
+Diverse and valid evaluation strategies
+Process and outcome balance
+
+10
+5
+5
+
+Innovation and Feasibility
+Novelty and classroom applicability
+Realistic timing and resource constraints
+
+10
+5
+5
+
+Total
+
+100
+
+Table 22: GPT-based scoring rubric for Teaching Design tasks.
+
+

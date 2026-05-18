@@ -1,0 +1,1510 @@
+                                            K12Vista: Exploring the Boundaries of MLLMs in
+                                                            K-12 Education
+
+
+                                                Chong Li1,2∗, Chenglin Zhu1,2∗ , Tao Zhang1∗ , Mingan Lin1†, Zenan Zhou1† , Jian Xie1†
+                                                                              1
+                                                                                  Baichuan Inc, 2 Peking University
+arXiv:2506.01676v1 [cs.AI] 2 Jun 2025
+
+
+
+
+                                                                                           Abstract
+                                                    Multimodal large language models (MLLMs) have demonstrated remarkable rea-
+                                                    soning capabilities in various visual tasks. However, their abilities in K12 (Grades
+                                                    1–12) scenarios are still systematically underexplored. Previous studies suffer
+                                                    from various limitations including narrow subject coverage, insufficient data scale,
+                                                    lack of diversity in question types, and naive answer-centric evaluation method,
+                                                    resulting in insufficient exploration of model capabilities. To address these gaps,
+                                                    we propose K12Vista, the most comprehensive multimodal benchmark for Chinese
+                                                    K12 subject knowledge understanding and reasoning to date, featuring 33,000
+                                                    questions across five core subjects from primary to high school and three ques-
+                                                    tion types. Moreover, beyond the final outcome, we are also concerned with
+                                                    the correctness of MLLMs’ reasoning processes. For this purpose, we meticu-
+                                                    lously compiles errors from MLLMs’ reasoning processes and leverage an auto-
+                                                    mated data pipeline to construct K12-PEM-800K, the largest process evaluation
+                                                    dataset offering detailed step-by-step judgement annotations for MLLMs’ rea-
+                                                    soning. Subsequently, we developed K12-PEM, an advanced process evaluation
+                                                    model that integrates an overall assessment of both the reasoning process and
+                                                    answer correctness. Moreover, we also introduce K12-PEBench, the first high-
+                                                    quality, human-annotated benchmark specifically designed for evaluating abilities
+                                                    of reasoning process evaluation. Extensive experiments reveal that current MLLMs
+                                                    exhibit significant flaws when reasoning within K12Vista, providing critical in-
+                                                    sights for the development of more capable MLLMs. We open our resources at
+                                                    https://github.com/lichongod/K12Vista.
+
+
+                                        1       Introduction
+                                        K12 (Grades 1–12) science knowledge is the center of various 21st-century skills [9], requiring
+                                        domain-specific expertise, rigorous logical thinking, and the capacity for multi-step reasoning. It
+                                        serves as a foundation for solving a wide set of real-world problems, such as coding to solve real-
+                                        world problems, analysing statistical data, and computing the expenses for a business plan. Moreover,
+                                        there are diverse question types in K12 education, which can more comprehensively and accurately
+                                        evaluate human knowledge understading and thinking reasoning. For example, multiple-choice
+                                        questions focus on information matching, fill-in-blank questions on key information completion,
+                                        while open-ended questions typically require complex logical reasoning and comprehensive linguistic
+                                        expression. The combination of these three question types allows for a more thorough evaluation
+                                        of the model’s various capabilities. Consequently, just like humans, the performance boundaries of
+                                        MLLMs in K12 scenarios stands for their general intelligence capabilities. Systematically exploring
+                                        the perfermance of MLLMs in k12 Education is crucial for the evaluation of model capabilities.
+                                        However, current studies evaluating MLLMs’ performance in K12 education surfer from several
+                                        limitations, including a narrow subject focus, insufficient data scale, and a lack of question types
+                                            ∗
+                                                Equal contribution. lichong@stu.pku.edu.cn, zhuchenglin@stu.pku.edu.cn, zhangtao.tanh@gmail.com.
+                                            †
+                                                Corresponding author. Correspondence to zenanchow@gmail.com, linmingan@baichuan-inc.com.
+                                         Math                                                                                 Physics
+    Question: As shown in the figure, the focus of the parabola C:y2 = 2px (p >0)      Question: As shown in the figure, m1 =0.10kg, R = 0.10Ω, m2= 0.14kg, B=0.5T,
+    is F . Point A is on C. A circle with center F and                                 h = l = 0.20m. The weight descends from a certain
+    radius p/2 intersects segment AF at point B. Given                                 position, causing the ab side to enter the magnetic
+    that the angle between line segment AF and the                                     field and start moving at a constant velocity.
+    x-axis, denoted as ∠AFx = 60°, and N is the                                        Calculate:(1) The constant velocity of the coil.
+    projection of A onto the y-axis, what is the measure                               (2) The heat generated from ab enters the magnetic
+    of ∠ONB?                                                                           field until the coil exits the magnetic field.
+
+    Answer: 30°                                                                        Answer: 4m/s; 0.16J
+    Subject: Math-Grade12                                                              Subject: Physics-Grade12
+    Question Type: Free Response                                                       Question Type: Free Response
+    Knowledge Point: Properties of parabolas                                           Knowledge Point: Induced electromotive force
+                        Chemistry                                                   Biology                                             Geography
+    Question: The structure of a compound is shown as     Question: The diagram shows a partial schematic            Question: The following is a day-night distribution
+    follows. What are the max                             diagram of the human                                       map of the Earth and
+    amounts of H2 and NaOH that                           internal environment.                                      a schematic diagram
+    can react with 1 mol of this                          Please answer the                                          of the Earth'srevolution.
+    compound respectively?                                following questions                                        The day shown in the
+    A. 5 mol, 2 mol                                       based on the diagram                                       figure is the ___ (solar
+    B. 7 mol, 2 mol                                       The internal environment in which capillary                term) in the NorthernHemisphere, and at this time, the
+    C. 5 mol, 1 mol                                       lymphatic cells live is ___ . If the circulation of ① is   Earth is located at the ____ positionin its revolution
+    D. 7 mol, 1 mol                                       blocked, ⑥ will ___.                                       orbit.
+
+    Answer: A                                             Answer: ⑥①;Increase                                        Answer: Winter Solstice; Position C
+    Subject: Chemistry-Grade12                            Subject: Biology-Grade12                                   Subject: Geography-Grade9
+    Question Type: Multi-Choice                           Question Type: Fill-in-Blank                               Question Type: Fill-in-Blank
+    Knowledge Point: Functional groups                    Knowledge Point: Human internal environment                Knowledge Point: Earth's movement
+
+
+Figure 1: Some examples in K12Vista. Each question in K12Vista features high-quality text and
+images, offers diverse question types, and is enriched with attributes like subject and knowledge
+points. We provide their corresponding English translations.
+
+
+
+
+diversity.For instance, MathVista [15], CMM-Math [12], and MM-PhyQA [2] focus on single
+subjects, while multidisciplinary evaluations like STEM [23] primarily target elementary levels.
+Furthermore, existing K12 benchmarks such as GaokaoMM [33] and CMMU [6] hampered by small
+dataset sizes and a prevalence of multiple-choice questions, with CMMU having 80% of its questions
+in this format, thus hindering a comprehensive exploration of MLLMs’ capabilities within K12
+contexts. Furthermore, current evaluation methods primarily focus on the accuracy of the final answer,
+neglecting the assessment of the model’s underlying reasoning process. This oversight is particularly
+pertinent for models like Deekseek-R1 [5], which have recently emphasized improving final answers
+through enhanced Chain-of-Thought (CoT) reasoning. Consequently, a thorough evaluation of their
+reasoning process is crucial for the advancement of reasoning models. However, effective methods
+for evaluating the entire reasoning process of models, as well as metrics for assessing the quality of
+this process, remain largely unexplored.
+To address these challenges, we introduce K12Vista, a Chinese scientific subjects benchmark across
+K12 with three question types. K12Vista comprises 33K questions spanning five core scientific
+subjects: mathematics, physics, chemistry, biology, and geography. For each question, we provide
+fine-grained metadata, including grade, question type, knowledge points, difficulty level, and detailed
+reference solution steps annotations. By enabling categorization across subjects, grades, and question
+types, K12Vista supports granular analyses of model performance. Moreover, comparing to traditional
+binary correct/incorrect judgments of model fianl answer, we introduce a novel evaluation method
+named step-by-step evaluation that employs a process evaluation model namely K12-PEM tailored
+to our benchmark, to first extract key reasoning steps from the chain-of-thought (CoT) reasoning
+response of MLLM, then judge the correctness of intermediate steps and answers, classify and analyze
+errors, and generate an overall score for the entire response. This approach systematically reveals the
+CoT reasoning quality of MLLMs, overcoming the limitations of superficial evaluation relying solely
+on final answers. Some examples are shown in Figure 1. Meanwhile, we leverage an automated data
+pipeline to construct K12-PEM-800K a large scale process evaluation multimodal dataset offering
+detailed step-by-step evaluation annotations for multimodal reasoning process. Fine-tuning on the
+K12-PEM-800K dataset can significantly enhance the model’s ability to evaluate reasoning processes.
+We also introduce K12-PEBench, a high-quality, human-annotated benchmark designed to assess the
+effectiveness of process evaluation.
+We evaluated a range of advanced MLLMs on K12Vista. Experimental results demonstrate that
+Models equipped with reasoning-enhanced capabilities such as Gemini-2-thinking, O3-mini typically
+demonstrate superior performance. Related analysis reveals notable deficiencies in the multimodal
+
+
+                                                                                      2
+Table 1: Comparison between K12Vista and existing K12 related multimodal benchmarks.
+K12Vista offers more comprehensive data and question coverage, alongside rich metadata and a
+step-by-step evaluation method that enable reliable assessments of MLLMs’ CoT reasoning process.
+Lang:language; KnowPoints: knowledge points; RefSolu: reference soluation; MC: Multiple Choice;
+FR: free-response; Fill: fill-in-blank.
+                                          Data Features                             1   Evaluation
+    Benchmarks        Lang    Num    KnowPoints       Grades   Question Types   RefSolu    ProcessEval
+MM-PhyQA[2]            en     4.5K       41           K10∼12       MC             ✗             ✗
+CMM-math[12]           zh     28K        13           K1∼12       MC,Fill         ✓             ✗
+Visscience[8]         en,zh   3.0K        -           K1∼12        MC             ✗             ✗
+STEM[23]               en     214K      448           K1∼K8        MC             ✗             ✗
+CMMU[6]                zh     3.6K        -           K7∼12       MC,Fill         ✓             ✗
+GAOKAO-MM[33]          zh     0.6K        -           K10∼12      MC,FR           ✓             ✗
+K12Vista               zh     33K      17721          K1∼12     MC,Fill,FR        ✓
+
+
+
+reasoning processes of current MLLMs, providing critical insights for the development of next-
+generation models.
+Our contributions are summarized as follows:
+
+1. We present a novel all-encompassing Chinese multimodal benchmark for efficiently evaluate K12
+   subjects knowledge understanding and reasoning performance across different educational levels
+   and question types.
+2. To enhance models’ ability to evaluate CoT reasoning processes, we constructed a massive multi-
+   modal process evaluation dataset, K12-PEM-800K. Building upon this dataset, we then introduced
+   K12-PEM, a process evaluation model designed to implement a novel process evaluation method.
+3. We develop K12-PEBench, a high-quality, human-annotated benchmark designed to evaluate the
+   abilities of MLLM-based process evaluation.
+4. We conducted massive experiments and performed a deep analysis of their performance on
+   K12Vista, providing clear pathways for model optimization.
+
+
+2     Related Work
+2.1    MLLM Benchmark
+
+With the rapid evolution of MLLMs, a variety of benchmarks have been proposed to assess their
+performance [18, 24, 28, 16, 11, 14]. However, most benchmarks predominantly focus on basic
+perceptual skills, falling short of evaluating in depth domain knowledge reasoning or only conducting
+reasoning in limited contexts. MathVista [15] emphasizes visual-mathematical comprehension,
+CMM-math [32] focuses on K12 mathematics, MM-PhyQA [2] centers on high-school physics,
+while MME and MMBench examine basic visual understanding and cross modality fusion [4, 13].
+Recently, more comprehensive evaluations have emerged. For example, MMMU [31] presents a
+university-level challenge across various academic disciplines. Despite these advancements, existing
+benchmarks still face limitations in data scale, annotation richness, and question type diversity.
+
+2.2    MLLM-based Process Judgement
+
+Process evaluators based on MLLMs have been widely utilized to automatically assess the multimodal
+reasoning steps of MLLMs [27, 17]. Visual-PRM [27] specifically focuses on the Best-of-N evalua-
+tion, enhancing multimodal reasoning performance by scaling the test-time of MLLMs. Additionally,
+there are already some reasoning benchmarks that employ MLLMs to evaluate the intermediate
+processes of model outputs. MathVerse leverages GPT-4V [19] to extract and assess key reasoning
+steps, providing detailed error analysis and an overall score. OlympicArena [7] uses GPT-4V to rate
+the correctness of each solution step, ensuring a rigorous evaluation. Currently, evaluations mainly
+rely on closed-source models, which are excessively costly and have unstable reproducibility.
+
+
+                                                  3
+      Stage1: Data Collection                                Stage2.1: Data Refinement                                   Stage2.3: Reference Solution Improvement
+
+                                                                               Difficulty
+                                                                                                                          Original Question and Reference Solution
+    K12 Exam PDFs           Quality Filtering                                                                   Question: As shown in the figure, m_1 = 0.10kg, R = 0.10Ω,
+                                                                               FIltering                        m_2 = 0.14kg, B = 0.5T, h = l = 0.20m. The weight descends from
+                                                                                                                a certain position, causing the ab side to enter the magnetic field
+                Meta Dataset                                             Text-Solvable                          and start moving at a constant velocity.
+                                                                           Filtering                            Calculate:The constant velocity of the coil.
+         Math          Biology         Physics                                                                  Reference Solution:
+                                                                                                                During the process of the wire frame entering the magnetic field, the magnitude of the
+           Geography             Chemistry                   Remove Low-Level Questions                         Ampere force it experiences is given by: F =        /R . According to the equilibrium
+       5 Subjects,3 Question Types                                                                              condition:     =       + F. Thus:                        /     = 4m/s.
+
+                                                                                                                                                 Prompt
+      Stage3: Manual                                  Stage2.2: Dataset Balancing
+        Refinement                                                                          Down Sample                                Refined Reference Solution
+                                                                                                                Step1: Calculate the Ampere force on the coil when it enters the magnetic field. From F = BIL
+                                                 Knowledge Point Clusters                                       and I = BLv/R, we can get F =         /R.
+    Rationality Effectiveness                                                                  Syste
+                                                 Cluster1   Cluster2         Clustern       matize
+                                                                                               1K
+                                                                                                                Step2: Let the tension in the rope be
+                                                                                                                                  and
+                                                                                                                                                         . According to the equilibrium condition:
+                                                                                                                                                   . Substitute F =       /R into                  , we can get
+                                                                         ...                                                          . Further solving for v, we have                                  .
+
+    Correctness Transparency                                                                      ...           Step3: Substitute    = 0.10kg,      = 0.14kg, B = 0.5T, L = 0.20m, and R = 0.10 , then we
+
+                                             Momentum Catalyst                 Derivative                       get v = 4m/s.
+
+
+
+
+                                             Figure 2: Overview of K12Vista dataset construcion process.
+
+
+3      K12Vista
+
+3.1     Overview of K12Vista
+
+The dataset construction of our benchmark involves three stages, as shown in Figure 2. To mitigate
+data contamination risks, our dataset primarily sources questions from various non-public offline
+school exams, rather than textbooks or online question banks.We developed K12Vista by continu-
+ously sourcing materials from the non-public school examinations with authorization from the data
+providers over a six month period. K12Vista is a novel Chinese multimodal benchmark designed
+to assess the comprehension and reasoning capabilities of MLLMs across five scientific disciplines:
+mathematics, physics, chemistry, biology, and geography. Spanning primary to high school levels, it
+supports systematic assessment of models’ knowledge mastery and reasoning abilities across different
+educational stages.Our K12Vista contains 3 types of questions: 1) Multiple Choice Questions: each
+question provides 4 options with only one correct answer. 2) Fill-in-blank: The model fills in the
+blanks with the correct answer to complete the sentence or article. 3) Free-response questions: The
+model uses its knowledge, understanding and thinking skills to respond in writing to the questions
+posed. As shown in Table 1, K12Vista offers more comprehensive data and question coverage.
+
+3.2     Data Construction
+
+Data Collection Questions were extracted
+from original PDF documents, then automatically                                                                          Table 2: The statistic of K12Vista
+processed into LaTeX files using the OCR tool
+Mathpix to retrieve text, which was subsequently                                                              Statistic                                                                        #Number
+converted into JSONL format. Corresponding
+images were resized to standardized dimensions,                                                               Question Number                                                                     33,660
+while all mathematical and scientific formulas                                                                Total Subjects                                                                         5
+were preserved as native LaTeX notation to main-                                                              Total Knowledge Points                                                              17721
+tain structural accuracy. This effort produced                                                                Total Question Types                                                                   3
+a large-scale question bank comprising approx-                                                                Avg. Problem Tokens                                                                 150.44
+imately 300,000 questions, covering the entire                                                                Avg. Reference Solution Tokens                                                      247.48
+K12 educational spectrum, multiple disciplines,                                                               Avg. Reference Solution Steps                                                         5.15
+diverse knowledge points, and question formats,                                                               Avg. Number of Answers                                                                3.24
+serving as the metadataset for K12Vista.                                                                      Avg. Answer Tokens                                                                   24.88
+Then, we first filtered out blurry images and those
+with resolutions below the predefined threshold using predetermined rules to ensure image quality
+standards. Subsequently, we developed a specialized prompt framework based on the Qwen-72B-
+Instruct model to conduct structural integrity validation on the metadataset: entries with JSON
+parsing errors, such as missing answer fields, garbled question text, or incomplete metadata were
+
+
+                                                                                                          4
+systematically removed. The prompts we use are detailed in Appendix A.1. Ultimately, we filtered
+and obtained approximately 160,000 valid questions.
+
+Data Refinement To further optimize data quality, we systematically enhanced the dataset by:
+1) filtering out low-challenge questions correctly answered by InternVL2-8B, Qwen2-VL-7B, and
+MiniCPM-V-2.6 to refine difficulty gradients; 2) excluding questions solvable by Qwen2.5-VL-
+Instruct-72B with text-only inputs to ensure strict multimodal reasoning dependency. Subsequently,
+we clustered questions based on their manually annotated knowledge points, identifying 17,000
+core knowledge units. A stratified sampling strategy was subsequently adopted: first, we ensured
+a minimum sample size of 1,000 questions for each discipline-grade-question type combination,
+maintaining balanced sample sizes; concurrently, uniform sampling across core knowledge points
+was implemented, requiring at least one representative instance of each key knowledge point within
+evaluation subsets (each instance may cover multiple knowledge points) to guarantee comprehensive
+knowledge coverage.
+
+Manual validation To ensure the quality of the
+K12-Vista benchmark, we implemented a rigor- Table 3: The Statistic of K12-PEM800K and K12-
+ous manual verification process across the entire PEBench
+dataset. First, we leveraged Qwen2.5-VL-72B
+to reconstruct the raw unstructured reference so-   Statistic                        #Number
+lutions, decomposing them into logically clear
+structured reasoning steps to form a high-quality,  K12-PEM-800K                      840,175
+uniformly standardized step-by-step solutions.      Av g Reference  Solution  Tokens  257.40
+Then, a validation team of ten senior undergrad-    Avg.  Problem  Tokens             150.59
+uate students meticulously reviewed each data       Avg.  Student Input Tokens        423.79
+item, conducting multidimensional verification      Avg. Output Tokens                331.04
+of the question content, image, and reconstructed   Avg.  Student Error Steps          3.99
+reference solutions to rectify logical fallacies or K12-PEBench                        3,033
+scientific inaccuracies. This ensured the scien-    Avg. Reference Solution Tokens 220.34
+tific validity of the reasoning process and the     Avg. Problem Tokens               134.43
+standardization of the solution format, providing   Avg. Student Input Tokens         317.59
+high-quality benchmark data for process evalua-     Avg. Student Input Steps           6.32
+tion evaluation.                                    Avg. Student Error Steps           2.95
+
+3.3   Data distribution and statistics
+
+As shown in Table 2, K12Vista comprises five core subjects, including mathematics, physics, chem-
+istry, biology, and geography, each subject featuring three question types: multiple-choice, fill-in-
+blank, and free-response. With 1,000 questions per type in each subject, the benchmark ensures
+comprehensive coverage across subjects and question formats to enable rich, multifaceted evaluation
+of MLLMs’ capabilities.
+
+3.4   Quality Evaluation
+
+To investigate K12Vista’s quality, we randomly selected 1000 samples for assessment. Three
+professional data inspectors evaluated them, resulting in high-quality rates of 99% for questions, 96%
+for answers, and 94% for reference solutions (see Appendix A.2).
+
+4     Process Evaluation Method
+4.1   K12-PEM-800K Construction
+
+MLLM Error Analysis As shown in Figure 3, to enable reliable and step-wise evaluation of
+CoT reasoning processes, we first systematically analyze common error types. We collected CoT
+solutions for each question in K12Vista from various MLLMs. Based on a comprehensive analysis
+of errors MLLMs typically make during CoT reasoning, we inductively defined nine step-wise
+error categories: Image cognition error, Question misunderstanding, Lack of relevant knowledge,
+Knowledge application error, Logical reasoning error, Hallucination error, Calculation error, and
+Incomplete answer error. Definitions for each category are provided in Appendix C.1.
+
+
+                                                  5
+                   Figure 3: Overview of K12-PEM-800K data construcion process.
+
+
+MLLMs’ CoT Collection Then, to replicate the complexities inherent in real-world evaluation
+scenarios, we leveraged 40 MLLMs of diverse scales including GPT-4o [1], Internal2.5VL series
+[3], QwenVL series [29], and LLaVA-Onevision series [10],to generate CoT reasoning outputs on
+K12Vista benchmark. The complete model list and generation prompts are detailed in Appendix C.2.
+
+
+MLLM Based Step-Wise annotation These outputs were first decomposed into structured step-
+wise reasoning paths using GPT-4o, which were then submitted to an expert model panel comprising
+GPT-4o, Gemini2-Thinking, Qwen2.5-V1-72B, and InternVL2.5-78B-MPO for granular step-level
+evaluation. The panel operated through a systematic workflow: individual models independently
+judged the correctness of each reasoning step and labeled error types, with final determinations
+made via a majority-voting mechanism; GPT-4o subsequently generated step-specific explanations,
+producing standardized triple-tag list [si , ji , ri ]for each step,where is the split reasoning step; j
+denotes the judgment type;r is the explanations of judgement. The aggregated triple-tag list for each
+reasoning path constituted its fianl evaluation result list. Please refer to Appendix C.3 for more
+details.
+
+
+Data Filtering To guarantee data integrity, a dual-filtering protocol was implemented: (1)
+Format Integrity: Samples deviating from the predefined format (each step must include
+reasoning step, judgment type, explanation as a list) (2) Explanation Rationality: Sam-
+ples with unreasonable explanation (e.g., judgment type and explanation are inconsistent).
+Through this automated data refinement pipeline, we ultimately generate almost 900,000 di-
+verse CoT evaluation samples. We selected 840,175 of these as the final K12-PEM-800K.
+
+                                                                              QM            ICE
+
+4.2   K12-PEBench Construction
+                                                                    LRK                               CS
+To construct K12-PEBench, we carefully selected                                                         100
+from our previously collected CoT evaluation sam-                                                  80
+                                                                                               60
+ples. After excluding the K12-PEM-800K dataset,                                           40
+                                                                                      20
+                                                          KAE                     0                       Overall
+we chose approximately 3,000 samples with rich rea-
+soning content to form its foundation, with detailed
+statistics presented in Table 3. Subsequently, a vali-
+dation team of ten undergraduate students, who had
+passed proficiency exams and completed annotation              LRE                                    IAE
+tutorials, performed a second round of manual anno-
+tation on these data. The annotators’ primary task                       HE              CE
+was to judge the correctness, identify error types, and      K12-PEM InternVL2.5-78B-MPO     InternVL2.5-8B-MPO
+analyze the root causes for each reasoning step in the       GPT-4o  Qwen2.5-VL-72B          Qwen2.5-VL-7B
+CoT solutions. We define the evaluation metrics as
+the classification accuracy for nine step-level annota- Figure 4: The result of K12-PEM on K12-
+tion types (comprising eight defined error types and PEBench.
+a correct step annotation) and the overall accuracy.
+
+
+                                                       6
+Table 4: Performance of MLLMs across Primary, Middle, and High School Grades under Direct
+Inference and CoT Reasoning Step-by-Step Evaluation. Overall performance represents the average
+accuracy across all questions.
+                                Direct Inference Score                       Step-by-Step Score
+         Model
+                          Primary    Middle    High    Overall   Primary       Middle   High      Overall
+                                    MLLMs: Text + Image as Input
+ Gemini2-thinking          60.79      57.75    52.02     55.47       62.06     59.52    54.18     57.36
+ Qwen2.5-VL-32B            59.03      58.49    51.51     55.42       57.91     56.50    49.17     53.35
+ Qwen2.5-VL-72B            54.08      54.72    47.39     51.39       55.27     53.83    44.79     49.93
+ Gemini2-flash             56.70      55.17    45.69     51.08       54.63     51.12    41.95     47.34
+ QVQ-72B-preview           54.99      51.99     45.9     49.54       47.42     48.15    44.17     46.31
+ InternVL2.5-MPO-78B       50.32      48.22    41.55     45.43       50.23     46.15    37.86     42.82
+ InternVL2.5-78B           45.49      43.62    36.04     40.41       47.29     42.10    33.05     38.53
+ GPT-4o                    45.56      37.42    30.39     35.02       48.28     37.44    29.80     35.00
+ Qwen2-VL-72B              40.17      37.92    29.74     34.48       32.88     29.32    20.48     25.71
+ LLaVA-OneVision-72B       33.68      34.59    28.01     31.57       32.70     30.10    22.88     27.11
+ Qwen2.5-VL-7B             40.40      44.97    34.32     39.82       38.67     30.90    20.89     27.16
+ InternVL2.5-MPO-8B        33.12      33.41    25.68     29.94       35.37     30.46    21.53     26.93
+ InternVL2.5-8B            28.90      30.53    23.63     27.31       29.89     25.88    17.93     22.69
+ Qwen2-VL-7B               31.22      28.47    21.71     25.70       18.74     14.62     9.21     12.58
+                                    LLMs: Text + Captions as Input
+ O3-mini                   56.64      52.25    48.89     51.14       57.49     52.95    50.05     52.06
+ Deepseek-v3               52.07      47.82    40.60     44.97       57.62     50.38    42.69     47.60
+ O1-mini                   55.02      46.38    39.07     43.89       56.19     45.66    38.75     43.51
+
+
+
+Quality Evaluation To investigate K12-PEBench’s quality, we randomly selected 100 samples for
+assessment. Three professional data inspectors evaluated them, resulting in high-quality rates of 99%
+for questions and student solutions, 90% for step-wise label (see Appendix D.1).
+
+
+4.3   Process Evaluation Model K12-PEM
+
+We fine-tuned Qwen2.5-VL-7B-Instruct model using the collected K12-PEM-800K train dataset,
+improving its reasoning quality judgments. We compared it against other candidate models on the
+K12-PEBench. As shown in Figure 4, the result demonstrates that our PEM can accurately reflect the
+correctness of reasoning steps. Please refer to Appendix E and F.2 for detailed information on the
+SFT phase and specific results on K12-PEBench.
+
+
+5     Evaluation
+
+To establish a comprehensive evaluation framework, we developed two evaluation modalities: direct
+inference evaluation and CoT reasoning step-by-step evaluation.
+
+
+5.1   Direct inference evaluation
+
+First, we instruct the model to output answers directly without intermediate reasoning steps. Under
+this modality, the model produces only the final answer without derivational steps. We then use
+Qwen2.5-VL-72B-Instruct to extract the final answer from the model’s output, compare it against the
+reference answer, determine correctness, and calculate the final score. The specific content of the
+infer prompts and answer extraction prompts is detailed in Appendix B.1. For questions containing
+multiple sub-questions or answer elements, we count the number of correctly answered components.
+For example, if a fill-in-the-blank question has two blanks and the model correctly completes one,
+the score is 0.5. Please refer to Appendix B.3 for more details.
+
+
+                                                  7
+               60              Direct Inference Score                               60             Step-by-Step Score
+
+
+Accuracy (%)
+
+
+
+
+                                                                     Accuracy (%)
+               50                                                                   50
+
+               40                                                                   40
+
+               30                                                                   30
+                      Math     Phy       Chem         Bio      Geo                       Math     Phy       Chem         Bio     Geo
+                                      Subjects                                                          Subjects
+                               Direct Inference Score                                              Step-by-Step Score
+               60                                                                   60
+Accuracy (%)
+
+
+
+
+                                                                     Accuracy (%)
+               50                                                                   50
+               40
+                                                                                    40
+               30
+                                                                                    30
+                        MCQ               FBQ                FRQ                           MCQ               FBQ               FRQ
+                                     Question Types                                                     Question Types
+                     Average   GPT-4o      InternVL2.5-78B      InternVL2.5-78B-MPO              Qwen2.5-VL-72B     Gemini2-thinking
+   Figure 5: Accuracy of MLLMs across different subjects and question types. We demonstrate
+   the results across five subjects (mathematics, physics, chemistry, biology, and geography) and three
+   question types (multiple-choice, fill-in-blank, free response).
+
+
+   5.2              CoT reasoning step-by-step evaluation
+
+   In the step-by-step evaluation mode, where the model directly evaluates the student’s entire CoT
+   output xS based on the problem xjP and its ground truth xjA and reference solution xjR . For each
+   CoT output, the model decomposes the student output xS into individual steps, with each step si
+   encompassing both the reasoning process and the answer to any sub-problem, organizing them into a
+   list where each element takes the form [si , ji , ri ] representing the step description, judgment, and
+   explanation, respectively. The final structured output is formalized as: [[si , ji , ri ]M
+                                                                                            i=1 ], M denotes
+   the total number of reasoning steps. Let N be the count of steps in these M steps whose judgment
+   is marked as correct. We define Step-by-Step Score as: score = N/M . This score equally weights
+   each reasoning step and sub-problem answer, thereby reflecting the quality of both the reasoning
+   process and the final answer. Please refer to Appendix B.3 for more details.
+
+   5.3              Evaluation Quality Assessment
+
+   To investigate evaluation quality, we randomly selected 1000 samples for assessment. Five experts
+   rated Qwen2.5-VL-7B outputs on a 0-1 scale across two evaluation modes. The kappa coefficient
+   between MLLM and expert evaluations were 0.88 for direct inference evaluation and 0.75 for step-by-
+   step evaluation, highlighting the effectiveness of our evaluation method and metrics, even for smaller
+   models. Further details are in Appendix B.4.
+
+
+   6                Experiments
+
+   6.1              Baselines and Setting
+
+   We evaluated a range of closed-source and open-source models, including: 1) Closed-source models:
+   GPT-4o [1], Gemini2-flash [25], Gemini2-thinking [25], O3-mini [21], O1-mini [20]; and 2) Open-
+   source models: Qwen2.5-VL[30], InternVL2.5[3], QVQ-72B-preview [22], InternVL2.5-MPO
+   [26], etc. To evaluate LLMs which only accept text input, we generated captions for image inputs
+   with Qwen2.5-VL-72B model (captioning details are provided in Appendix B.2) and concatenated
+   captions with questions as LLM inputs. Closed-source models were evaluated via their official APIs,
+   while open-source models were assessed using VLLM on NVIDIA H200 GPUs with default VLLM
+   parameters. See Appendix C.5 for more MLLMs’ result.
+
+
+                                                                     8
+          Error Distribution across Subjects     Error Distribution across Question Type    Error Distribution across Grades
+  Phy                                          FRQ                                      G12
+ Math
+  Geo                                          FBQ                                      G9
+Chem
+   Bio                                     MCQ                                       G6
+      0         25         50    75    100    0    25             50      75     100   0         25       50        75   100
+                     ICE            QM         LRK                KAE            LRE            HE             CE
+Figure 6: Distribution of Step-Wise Error Types We present the results across various subjects,
+question types, and grade levels, derived from Gemini2-thinking’s result on K12Vista. (ICE: Image
+Cognition Error; QM: Question Misunderstanding; LRK: Lack of Relevant Knowledge; KAE: Knowl-
+edge Application Error; LRE: Logical Reasoning Error; HE: Hallucination Error; CE: Calculation
+Error;)
+
+
+6.2   Main Results
+
+Table 7 presents baseline model performance across primary, middle, and high school grade levels
+using both Direct Inference and CoT step-by-step evaluation. Gemini2-thinking consistently achieves
+the highest accuracy in both settings, with overall scores of 55.47% and 57.36% respectively, show-
+casing its superior capability in complex multimodal understanding and reasoning. Qwen2.5-VL-32B
+follows closely in Direct Inference with 55.42% but shows a slight drop in Step-by-Step evalua-
+tion with 53.35%, suggesting weaker reasoning process performance. InternVL2.5-8B generally
+underperforms other models. Overall, larger models tend to perform better.
+A consistent trend reveals decreasing accuracy at higher grade levels across all MLLMs, in both
+evaluation modes, highlighting the increasing demand for deeper understanding and reasoning.
+The CoT step-by-step evaluation mode particularly challenges MLLMs, effectively differentiating
+reasoning proficiency. This mode generally yields lower scores for most models, except for reasoning-
+enhanced ones like Gemini2-thinking and O3-mini, suggesting unenhanced models struggle with
+reasoning steps. Additionally, LLMs generally perform worse than top MLLMs, underscoring the
+critical role of visual information in K12Vista.
+
+Results across Different Question Types The lower half of Figure 5 illustrates accuracy distribu-
+tion across fill-in-blank (FBQ), multiple-choice (MCQ), and free-response (FRQ) question types. All
+models score below 60% in all three types, indicating our benchmark’s challenging nature and its
+effectiveness in identifying model weaknesses. For all models, FBQs consistently yield lower scores
+than MCQs. This is because FBQs demand complex knowledge integration and generation, whereas
+MCQs only require selection from predefined answers, making FBQs generally more challenging.
+Furthermore, the performance gap between models is wider in FRQs than in FBQs and MCQs. This
+is attributed to FRQs’ higher complexity, which necessitates intricate logical reasoning, step-by-step
+derivation, and comprehensive content generation. Such demands highlight FRQs’ superior ability to
+differentiate model capabilities.
+
+Results across Different Subjects The upper part of Figure 5 shows accuracy distribution across
+different subjects. Chemistry, Biology, and Geography generally see relatively superior performance
+from most models under direct inference. For instance, Qwen2.5-VL-72B performs better in these
+subjects compared to Mathematics and Physics. We attribute this to the former subjects’ reliance
+on factual knowledge and rule-based reasoning, with a greater emphasis on memorization, making
+them easier for models. In contrast, Mathematics and Physics involve more abstract concepts,
+logical deduction, and quantitative analysis, demanding complex multi-step reasoning and real-world
+interpretation, posing a greater challenge. These discrepancies highlight how subject characteristics
+and knowledge complexity influence model performance, emphasizing the need for subject-specific
+MLLM benchmarks.
+
+Step-wise error Analysis Figure 6 illustrates a distributional analysis of step-wise errors generated
+by Gemini2-thinking during Step-by-Step Evaluation, revealing significant variations across subjects,
+question types, and grade levels. At the subject level, Geography shows a notably higher proportion
+
+
+                                                                9
+of image perception and text understanding errors due to complex, detail-rich images (e.g., isobaric
+charts, topographic maps) and substantial background text, which increases comprehension difficulty,
+while Other subjects primarily concentrate errors in knowledge application and logical reasoning.
+Mathematics and Physics exhibit slightly more image perception and text understanding errors than
+Biology and Chemistry, possibly due to prevalent geometry problems (e.g., mechanics diagrams,
+spatial geometry) and higher computational demands, leading to more calculation errors. At the
+question type level, Fill-in-Blank Questions show a relatively larger proportion of image perception
+errors, as they often contain multiple sub-questions and require detailed examination of image
+information. At the grade level, image and text perception errors significantly decrease with declining
+grade levels. Conversely, logical reasoning errors, including knowledge deficiency, insufficient
+knowledge application, and flaws in the reasoning process itself, gradually increase.
+
+
+7   Conclusion
+
+In this paper, we introduce K12Vista, a novel multidisciplinary Chinese multimodal benchmark,
+designed to evaluate the understanding and reasoning capabilities of MLLMs on high-difficulty
+problems in Chinese K-12 core science subjects. Curated from extensive metadata repositories,
+K12Vistacomprises 33,000 high-complexity questions spanning 12 grade levels, 5 core science
+subjects, and three question types, enabling comprehensive evaluation and addressing critical gaps in
+existing benchmarks—including limited data scale, narrow domain coverage, monotonous question
+formats, and insufficient difficulty. Additionally, we introduce step-by-step evaluation metrics: by
+training a special Process Evaluation Model on our benchmark, we enable fine-grained assessment
+of models’ multi-step reasoning processes, facilitating deeper insights into their performance. Our
+experiments reveal that current MLLMs face significant challenges in solving complex K-12 problems,
+particularly exhibiting numerous issues during reasoning. Future work could focus on enhancing
+the step-wise correctness of models of complex inference, laying the groundwork for more robust
+multimodal reasoning systems.
+
+
+References
+ [1] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Florencia Leoni
+     Aleman, Diogo Almeida, Janko Altenschmidt, Sam Altman, Shyamal Anadkat, et al. Gpt-4
+     technical report. arXiv preprint arXiv:2303.08774, 2023.
+ [2] Avinash Anand, Janak Kapuriya, Apoorv Singh, Jay Saraf, Naman Lal, Astha Verma, Rushali
+     Gupta, and Rajiv Shah. Mm-phyqa: Multimodal physics question-answering with multi-image
+     cot prompting. In Pacific-Asia Conference on Knowledge Discovery and Data Mining, pages
+     53–64. Springer, 2024.
+ [3] Zhe Chen, Weiyun Wang, Yue Cao, Yangzhou Liu, Zhangwei Gao, Erfei Cui, Jinguo Zhu, Shen-
+     glong Ye, Hao Tian, Zhaoyang Liu, et al. Expanding performance boundaries of open-source
+     multimodal models with model, data, and test-time scaling. arXiv preprint arXiv:2412.05271,
+     2024.
+ [4] Chaoyou Fu, Peixian Chen, Yunhang Shen, Yulei Qin, Mengdan Zhang, Xu Lin, Jinrui Yang,
+     Xiawu Zheng, Ke Li, Xing Sun, Yunsheng Wu, and Rongrong Ji. Mme: A comprehensive
+     evaluation benchmark for multimodal large language models, 2024.
+ [5] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Ruoyu Zhang, Runxin Xu, Qihao Zhu,
+     Shirong Ma, Peiyi Wang, Xiao Bi, et al. Deepseek-r1: Incentivizing reasoning capability in
+     llms via reinforcement learning. arXiv preprint arXiv:2501.12948, 2025.
+ [6] Zheqi He, Xinya Wu, Pengfei Zhou, Richeng Xuan, Guang Liu, Xi Yang, Qiannan Zhu, and
+     Hua Huang. Cmmu: A benchmark for chinese multi-modal multi-type question understanding
+     and reasoning. arXiv preprint arXiv:2401.14011, 2024.
+ [7] Zhen Huang, Zengzhi Wang, Shijie Xia, Xuefeng Li, Haoyang Zou, Ruijie Xu, Run-Ze Fan,
+     Lyumanshan Ye, Ethan Chern, Yixin Ye, et al. Olympicarena: Benchmarking multi-discipline
+     cognitive reasoning for superintelligent ai. Advances in Neural Information Processing Systems,
+     37:19209–19253, 2024.
+
+
+                                                  10
+ [8] Zhihuan Jiang, Zhen Yang, Jinhao Chen, Zhengxiao Du, Weihan Wang, Bin Xu, and Jie Tang.
+     Visscience: An extensive benchmark for evaluating k12 educational multi-modal scientific
+     reasoning. arXiv preprint arXiv:2409.13730, 2024.
+ [9] Teresa J Kennedy and Cheryl W Sundberg. 21st century skills. Science education in theory and
+     practice: An introductory guide to learning theory, pages 479–496, 2020.
+[10] Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen Zhang, Peiyuan
+     Zhang, Yanwei Li, Ziwei Liu, et al. Llava-onevision: Easy visual task transfer. arXiv preprint
+     arXiv:2408.03326, 2024.
+[11] Bohao Li, Rui Wang, Guangzhi Wang, Yuying Ge, Yixiao Ge, and Ying Shan. Seed-
+     bench: Benchmarking multimodal llms with generative comprehension. arXiv preprint
+     arXiv:2307.16125, 2023.
+[12] Wentao Liu, Qianjun Pan, Yi Zhang, Zhuo Liu, Ji Wu, Jie Zhou, Aimin Zhou, Qin Chen,
+     Bo Jiang, and Liang He. Cmm-math: A chinese multimodal math dataset to evaluate and enhance
+     the mathematics reasoning of large multimodal models. arXiv preprint arXiv:2409.02834, 2024.
+[13] Yuan Liu, Haodong Duan, Yuanhan Zhang, Bo Li, Songyang Zhang, Wangbo Zhao, Yike Yuan,
+     Jiaqi Wang, Conghui He, Ziwei Liu, et al. Mmbench: Is your multi-modal model an all-around
+     player? In European conference on computer vision, pages 216–233. Springer, 2024.
+[14] Yuliang Liu, Zhang Li, Biao Yang, Chunyuan Li, Xucheng Yin, Cheng-lin Liu, Lianwen Jin,
+     and Xiang Bai. On the hidden mystery of ocr in large multimodal models. arXiv e-prints, pages
+     arXiv–2305, 2023.
+[15] Pan Lu, Hritik Bansal, Tony Xia, Jiacheng Liu, Chunyuan Li, Hannaneh Hajishirzi, Hao
+     Cheng, Kai-Wei Chang, Michel Galley, and Jianfeng Gao. Mathvista: Evaluating mathematical
+     reasoning of foundation models in visual contexts. arXiv preprint arXiv:2310.02255, 2023.
+[16] Pan Lu, Swaroop Mishra, Tanglin Xia, Liang Qiu, Kai-Wei Chang, Song-Chun Zhu, Oyvind
+     Tafjord, Peter Clark, and Ashwin Kalyan. Learn to explain: Multimodal reasoning via thought
+     chains for science question answering. Advances in Neural Information Processing Systems,
+     35:2507–2521, 2022.
+[17] Liangchen Luo, Yinxiao Liu, Rosanne Liu, Samrat Phatale, Meiqi Guo, Harsh Lara, Yunxuan
+     Li, Lei Shu, Yun Zhu, Lei Meng, et al. Improve mathematical reasoning in language models by
+     automated process supervision. arXiv preprint arXiv:2406.06592, 2024.
+[18] Kenneth Marino, Mohammad Rastegari, Ali Farhadi, and Roozbeh Mottaghi. Ok-vqa: A visual
+     question answering benchmark requiring external knowledge. In Proceedings of the IEEE/cvf
+     conference on computer vision and pattern recognition, pages 3195–3204, 2019.
+[19] OpenAI. Gpt-4v(ision) system card. 2024.
+[20] OpenAI. Gpt-o1-mini: A multimodal language model. 2024.
+[21] OpenAI. Gpt-o3-mini: A cost-effective reasoning model. 2024.
+[22] qwen Team. Qvq: To see the world with wisdom. 2024.
+[23] Jianhao Shen, Ye Yuan, Srbuhi Mirzoyan, Ming Zhang, and Chenguang Wang. Measuring
+     vision-language stem skills of neural models. arXiv preprint arXiv:2402.17205, 2024.
+[24] Amanpreet Singh, Vivek Natarajan, Meet Shah, Yu Jiang, Xinlei Chen, Dhruv Batra, Devi
+     Parikh, and Marcus Rohrbach. Towards vqa models that can read. In Proceedings of the
+     IEEE/CVF conference on computer vision and pattern recognition, pages 8317–8326, 2019.
+[25] Gemini Team, Rohan Anil, Sebastian Borgeaud, Jean-Baptiste Alayrac, Jiahui Yu, Radu Soricut,
+     Johan Schalkwyk, Andrew M Dai, Anja Hauth, Katie Millican, et al. Gemini: a family of highly
+     capable multimodal models. arXiv preprint arXiv:2312.11805, 2023.
+[26] Weiyun Wang, Zhe Chen, Wenhai Wang, Yue Cao, Yangzhou Liu, Zhangwei Gao, Jinguo Zhu,
+     Xizhou Zhu, Lewei Lu, Yu Qiao, et al. Enhancing the reasoning ability of multimodal large
+     language models via mixed preference optimization. arXiv preprint arXiv:2411.10442, 2024.
+[27] Weiyun Wang, Zhangwei Gao, Lianjie Chen, Zhe Chen, Jinguo Zhu, Xiangyu Zhao, Yangzhou
+     Liu, Yue Cao, Shenglong Ye, Xizhou Zhu, et al. Visualprm: An effective process reward model
+     for multimodal reasoning. arXiv preprint arXiv:2503.10291, 2025.
+[28] x.ai. Grok-1.5 vision preview. https://x.ai/news/grok-1.5v, 2024.
+
+
+                                                11
+[29] An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chengyuan
+     Li, Dayiheng Liu, Fei Huang, Haoran Wei, et al. Qwen2. 5 technical report. arXiv preprint
+     arXiv:2412.15115, 2024.
+[30] An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chengyuan
+     Li, Dayiheng Liu, Fei Huang, Haoran Wei, et al. Qwen2. 5 technical report. arXiv preprint
+     arXiv:2412.15115, 2024.
+[31] Xiang Yue, Yuansheng Ni, Kai Zhang, Tianyu Zheng, Ruoqi Liu, Ge Zhang, Samuel Stevens,
+     Dongfu Jiang, Weiming Ren, Yuxuan Sun, et al. Mmmu: A massive multi-discipline multimodal
+     understanding and reasoning benchmark for expert agi. In Proceedings of the IEEE/CVF
+     Conference on Computer Vision and Pattern Recognition, pages 9556–9567, 2024.
+[32] Renrui Zhang, Dongzhi Jiang, Yichi Zhang, Haokun Lin, Ziyu Guo, Pengshuo Qiu, Aojun
+     Zhou, Pan Lu, Kai-Wei Chang, Yu Qiao, et al. Mathverse: Does your multi-modal llm truly see
+     the diagrams in visual math problems? In European Conference on Computer Vision, pages
+     169–186. Springer, 2024.
+[33] Yi Zong and Xipeng Qiu. Gaokao-mm: A chinese human-level benchmark for multimodal
+     models evaluation. arXiv preprint arXiv:2402.15745, 2024.
+
+
+
+
+                                              12
+        K12Vista: Exploring the Boundaries of MLLMs in K-12
+                              Education
+
+                                           Supplementary Materials
+
+A     K12Vista Detail
+A.1     Data Construction Detail
+
+
+      PROMPT
+    1. System Prompt
+    You are a professional educational item developer with a deep expertise in evaluating question correctness, logical coherence, and
+    alignment with educational objectives.
+
+    2. User Content
+    Task: You are a professional multimodal exam item reviewer. review the following exam item including a textual question with
+    corresponding image,reference solution and answer, and determine if the item is qualified. Directly output "0" or "1" first (0 =
+    unqualified, 1 = qualified).
+
+    Instructions:
+    Here are the detailed evaluation criteria:
+    1. Image Criteria:
+    The item is unqualified if any of the following image related standards are violated:
+    1) Image content must be clear and relevant. Garbled content, unidentifiable subjects, or nonsensical elements are prohibited.
+    2) Images cannot consist solely of textual information (e.g., mathematical symbols, letters, or plain text).
+    3) Images must be clearly visible; blurry or unrecognizable content is not allowed.
+
+    2. Textual Question Criteria :
+    1) The question stem must contain a complete problem description, free of grammatical errors, semantic ambiguity, or missing
+    critical information e.g. unclear question focus or undefined conditions.
+    2) The question and its answer must be logically consistent based on the reference solution; any logical inconsistency will result in
+    the item being deemed unqualified.
+    3) Disciplinary terminology, concepts, and formulas in the stem must align with definitions from authoritative textbooks, prohibiting
+    factual errors e.g. formula derivation errors in mathematics.
+
+    Input Format:
+    * Input question item:{question}
+    * Input reference solution:{reference solution}
+    * Input answer:{answer}
+
+    Output Format:
+    Directly output "0" (unqualified) or "1" (qualified). Do not output any other content.
+
+
+Figure 7: Prompt for question item reviewing. We mainly checked issues with images and question
+text. We provide their corresponding English translations.
+
+To significantly conserve human resources and streamline our workflow, we primarily leveraged
+Multimodal Large Language Models (MLLMs) for the critical task of data inspection. This automated
+approach was instrumental in ensuring the quality and integrity of our dataset while minimizing the
+intensive manual effort typically required.
+Our methodology for this MLLM-driven data in-
+spection involved a systematic, iterative process. Table 5: The High-Quality Rate of 1000 selected
+We began by thoroughly analyzing a carefully Samples
+selected sample dataset to identify and catego-
+rize prevalent data issues. This initial qualitative Set          Question Answer RefeSolu
+assessment allowed us to gain a granular under-
+standing of the types of errors, inconsistencies, Math              99.50     99.50       96.00
+or irrelevant content present. Based on these        Physics       100.00     98.00       96.00
+                                                     Chemistry      98.00     93.50       92.00
+insights, we meticulously designed a series of fil-
+                                                     Biology        99.00     95.00       94.00
+tering prompts specifically engineered to detect
+                                                     Geography      98.50     94.00       92.00
+these identified issues. These prompts were not      Overall        99.00     96.00       94.00
+static; instead, they underwent continuous and
+iterative refinement. Through repeated testing
+
+
+                                                                      13
+and adjustment against subsets of the data, we optimized their effectiveness in accurately flagging
+problematic entries. The culmination of this iterative development, resulting in our most effective
+and robust prompt, is visually represented and detailed in Figure 7, showcasing its final structure and
+functionality. This rigorous process ensured that our MLLM-based inspection system was highly
+precise and efficient in identifying relevant data anomalies.
+
+A.2     Quality Assessment
+
+We randomly sampled 200 questions from each subject, ensuring coverage of different grades. Three
+data reviewers verified the logical consistency of the questions, the correctness of answers, and
+whether the reference solutions represented valid problem-solving approaches. The inspection results
+are presented in Table 5, demonstrating high-quality rates of 99% for questions, 96% for answers,
+and 94% for reference solutions.
+
+B     Evaluation
+B.1     Prompt for MLLMs Inference
+
+To comprehensively address the unique challenges posed by various question types across different
+inference modes, we meticulously designed a dedicated system of prompts. This prompt system is
+primarily categorized into two core modes: Direct Inference and Step-by-Step Inference. Within each
+main category, we further refined and customized the prompts, creating specialized versions for three
+distinct question types: Multiple-Choice Questions, Fill-in-Blank Questions, and Free-Response
+Questions. This layered and customized design ensures that the model receives the most precise and
+effective instructions when tackling exams of varying task types and reasoning complexities, thereby
+maximizing its latent capabilities and guiding it to produce outputs that adhere to the expected format
+and content. Figure 9 illustrates this in detail.
+
+B.2     Prompt for Caption
+
+
+      PROMPT
+    PROMPT
+    User Content
+    You are a multimodal assistant skilled at describing problem information. I will provide you with a problem
+    (including a text question and an image).
+    Your task is:
+    1) Based on the input text question and combined with the input image, generate a description of the image. The
+    description should detail the image's content, such as the spatial and geometric relationships of objects, quantities,
+    numerical values, or other information, ensuring that the generated description is sufficient to answer the text
+    question.
+    2) Input text question : {question}.
+    3) Output format: Your output should only be the description of the image, with no other content.
+
+
+Figure 8: Prompt for image caption. To facilitate LLM inference, we transformed image content into
+textual representations. We provide their corresponding English translations.
+
+To more comprehensively assess the generality and efficacy of our proposed K12Vista framework
+across different model capabilities, we not only tested Multimodal Large Language Models (MLLMs)
+but also conducted extended evaluations on purely text-based Large Language Models (LLMs) using
+the K2vista dataset. Our specific implementation strategy involved first leveraging the powerful
+Qwen2.5-VL-72B visual language model to generate detailed textual captions for all image content
+within the K2vista dataset. Subsequently, we intelligently fused these high-quality image descrip-
+tions with the original textual content of the questions. This combined input then served as the
+processing object for the pure text LLM. This method effectively transformed visual information
+into a text-comprehensible format, thereby allowing pure text LLMs to indirectly "perceive" and
+utilize image information for reasoning. The specific prompt used to generate these image captions
+is detailed in Figure 8, ensuring the reproducibility and transparency of our methodology. Through
+this approach, we were able to conduct an in-depth analysis of pure text LLMs’ performance in
+
+
+                                                               14
+this "indirect multimodal" scenario, further validating the comprehensive nature of the K12Vista
+evaluation framework.
+
+
+B.3   Prompt for Result Evaluation
+
+Direct inference evaluation. To thoroughly and precisely assess the capabilities of MLLMs in
+understanding and answering complex questions, we developed and implemented a precise evaluation
+strategy. This method aims to meticulously evaluate the model’s performance by breaking down
+the assessment into distinct stages. First, in the Question Comprehension and Intent Identification
+phase, the model’s primary task is to accurately understand the key content required by the question,
+leveraging the provided original question, standard answer, and detailed explanation. Next, in the
+Answer Extraction phase, once the model accurately comprehends the question, it proceeds to
+precisely process the student’s free-text responses. This involves accurately extracting the specific
+answers for each sub-question from the student’s response, a process that demands robust information
+extraction capabilities from the model. Finally, in the Sub-Answer Scoring phase, for each extracted
+sub-answer, we perform an independent, binary scoring. If the student’s sub-answer is consistent
+in content and semantics with the standard answer, it’s judged as correct and assigned 1 point;
+conversely, any deviation or error results in it being judged as incorrect and assigned 0 points. The
+average score of these sub-answers is then calculated to provide a comprehensive evaluation. The
+specific prompt used to direct inference evaluation is detailed in Figure 10
+Step-by-Step evaluation. In the step-by-step evaluation mode, where the model directly evaluates
+the student’s entire CoT output xS based on the problem xjP and its ground truth xjA and reference
+solution xjR . For each CoT output, the model decomposes the student output xS into individual
+steps, with each step si encompassing both the reasoning process and the answer to any sub-problem,
+organizing them into a list where each element takes the form [si , ji , ri ] representing the step
+description, judgment, and explanation, respectively. The final structured output is formalized as:
+[[si , ji , ri ]M
+                i=1 ], M denotes the total number of reasoning steps. Let N be the count of steps in these
+M steps whose judgment is marked as correct. We define Step-by-Step Score as: score = N/M .
+This score equally weights each reasoning step and sub-problem answer, thereby reflecting the quality
+of both the reasoning process and the final answer. Please refer to Figure 11 more details.
+
+
+B.4   Quality Assessment
+
+To comprehensively evaluate the performance of
+models under two evaluation modes, we used Table 6: The kappa coefficient between expert
+GPT-4o, Qwen2.5-VL-72B, and InternVL2.5- evaluations and various evaluation modes
+MPO-78B for evaluation, respectively. Mean-
+while, we invited 5 experts to provide evaluation Evaluation Modes       Direct Score Step-by-Step Score
+under the same two evaluation modes and calcu- Avg.Expert                      1               1
+lated the average. By computing the Kappa coef- Qwen2.5-VL-72B               0.88            0.67
+                                                     GPT-4o                  0.91            0.73
+ficient, we found that the two proposed evaluation InternVL2.5-MPO-78B       0.83            0.62
+metrics showed a high degree of consistency with K12-PEM                     0.79            0.75
+human experts’ evaluations, with detailed results
+listed in Table 6. Finally, considering both cost and accuracy, we decided that Qwen2.5-VL-72B
+would be used for the Direct Inference evaluation mode, while K12-PEM would be applied to the
+Step-by-Step evaluation. The Kappa coefficient scoring criteria are as follows: below 0.2 indi-
+cates slight agreement, 0.21–0.40 indicates fair agreement, 0.41–0.60 indicates moderate agreement,
+0.61–0.80 indicates substantial agreement, and 0.81–1.00 indicates almost perfect agreement.
+
+
+C     K12-PEM-800K Detail and More Result
+
+In this section, we provide detailed information on K12-PEM-800K, including the list of MLLMs
+used for generating solutions in data construction, data construction process, and more result about
+experiment.
+
+
+                                                   15
+Table 7: Performance of MLLMs across Primary, Middle, and High School Grades under Direct
+Inference and CoT Reasoning Step-by-Step Evaluation. Overall performance represents the average
+accuracy across all questions.
+                                 Direct Inference Score                      Step-by-Step Score
+         Model
+                          Primary    Middle    High    Overall    Primary      Middle   High      Overall
+                                    MLLMs: Text + Image as Input
+ Gemini2-thinking           60.79     57.75    52.02      55.47      62.06     59.52    54.18     57.36
+ Qwen2.5-VL-32B             59.03     58.49    51.51      55.42      57.91     56.50    49.17     53.35
+ Qwen2.5-VL-72B             54.08     54.72    47.39      51.39      55.27     53.83    44.79     49.93
+ Gemini2-flash              56.70     55.17    45.69      51.08      54.63     51.12    41.95     47.34
+ QVQ-72B-preview            54.99     51.99     45.9      49.54      47.42     48.15    44.17     46.31
+ InternVL2.5-MPO-78B        50.32     48.22    41.55      45.43      50.23     46.15    37.86     42.82
+ InternVL2.5-MPO-38B        46.97     44.02    36.31      40.85      46.70     41.84    33.46     38.54
+ InternVL2.5-78B            45.49     43.62    36.04      40.41      47.29     42.10    33.05     38.53
+ GPT-4o                     45.56     37.42    30.39      35.02      48.28     37.44    29.80     35.00
+ InternVL2.5-38B             41.7     39.89    31.82      36.45      42.33     36.74    28.09     33.40
+ InternVL2.5-MPO-26B        36.05     37.15    29.37      33.58      37.34     33.59     24.6     29.92
+ Qwen2.5-VL-7B              40.40     44.97    34.32      39.82      38.67     30.90    20.89     27.16
+ LLaVA-OneVision-72B        33.68     34.59    28.01      31.57      32.70     30.10    22.88     27.11
+ Qwen2-VL-72B               40.17     37.92    29.74      34.48      32.88     29.32    20.48     25.71
+ InternVL2.5-MPO-8B         33.12     33.41    25.68      29.94      35.37     30.46    21.53     26.93
+ InternVL2.5-MPO-4B         34.88     32.49    24.92      29.33      33.76     27.91    20.39     25.09
+ InternVL2.5-26B            33.81     34.23    26.18      30.60      32.55     27.85    19.75     24.66
+ InternVL2.5-8B             28.90     30.53    23.63      27.31      29.89     25.88    17.93     22.69
+ InternVL2-76B              35.82     32.17    24.22      28.95      33.41     23.21    15.89     20.85
+ InternVL2.5-4B             33.14     30.55    22.48      27.18      29.62     23.43    16.07     20.70
+ MiniCPM-o-2.6              38.34     29.78    21.64      26.91      32.24     21.36    14.08     19.09
+ Qwen2.5-VL-3B              34.39     36.46    26.88      31.99      25.54     18.98    11.98     16.45
+ InternVL2-40B              31.43     31.89    23.66      28.18      23.01     15.97     9.91     13.90
+ InternVL2-8B               27.95     28.96    21.93      25.73      22.37     14.64     9.34     12.97
+ Qwen2-VL-7B                31.22     28.47    21.71      25.70      18.74     14.62     9.21     12.58
+ LLaVA-OneVision-7B         24.89     26.72    20.87      23.94      16.70     13.18     9.64     11.92
+                                    LLMs: Text + Captions as Input
+ O3-mini                    56.64     52.25    48.89      51.14      57.49     52.95    50.05     52.06
+ Deepseek-v3                52.07     47.82    40.60      44.97      57.62     50.38    42.69     47.60
+ O1-mini                    55.02     46.38    39.07      43.89      56.19     45.66    38.75     43.51
+
+
+
+C.1   Definitions for each category
+
+After analyzing numerous instances, we’ve summarized the following 8 frequently occurring errors
+and their definitions:
+(1) Image Cognition Error: Misidentification in understanding charts, graphs, objects, or spatial
+relationships (e.g., misinterpreting coordinate axes, misjudging geometric shapes, confusing spatial
+relationships, or inaccurate numerical reading).
+(2) Question Misunderstanding: Errors due to misunderstanding question requirements, conditions,
+or key information (e.g., misreading questions, ignoring constraints, or misinterpreting instructions).
+(3) Lack of Relevant Knowledge: Inability to understand or integrate subject knowledge (e.g.,
+misinterpreting concepts or using incorrect problem-solving methods).
+(4) Knowledge Application Error: Errors from flawed mastery or misinterpretation of concepts,
+principles, formulas, or methods (e.g., misapplying theorems or formulas).
+(5) Logical Reasoning Error: Systematic errors in reasoning (e.g., improper use of premises, broken
+logical chains, insufficient evidence, or flawed argumentation leading to incorrect conclusions).
+(6) Hallucination Error: Factual errors, logical inconsistencies, or unwarranted inferences (e.g.,
+answers contradicting known facts, logical contradictions, or baseless assumptions).
+
+
+                                                  16
+(7) Calculation Error: Specific mistakes in mathematical operations or algebraic manipulations (e.g.,
+arithmetic errors, incorrect equation solving, or flawed factorization).
+(8) Incomplete Answer Error: Failing to provide a final answer or omitting parts of the answer (e.g.,
+only addressing some sub-questions in a multi-part problem).
+
+
+C.2   Models for Solution Generation
+
+To more fully simulate the problem solving processes of MLLMs in real world scenarios, we
+employ the following 40 models to construct the problem Step-by-Step solution: Qwen2-VL(2B,
+7B, 72B), Qwen2.5-VL(3B, 7B, 32B, 72B), GPT-4o, Gemini2-flash, Gemini2-thinking, O3-mini,
+O1-mini, InternVL2(4B, 8B, 26B, 40B, 76B), InternVL2.5(4B, 8B, 26B, 38B, 78B), QVQ-72B-
+preview, InternVL2.5-MPO(4B, 8B, 26B, 38B, 78B), LLaVA1.6(7B, 13B, 34B, 72B, 110B), and
+LLaVA-OneVison-(7B, 72B).
+
+
+C.3   Prompt for K12-PEM-800K Generation
+
+The development of K12-PEM-800K primarily involves two stages: decomposing the MLLMs’
+solutions into step-by-step reasoning paths, judging and explaining each reasoning step. The corre-
+sponding prompts for each stage are illustrated in Figures 12 and 13, respectively.
+
+
+C.4   Data Filtering
+
+We ensure data quality through rigorous data filtering processes, implementing four quality control
+mechanisms: (1) Format Accuracy: Remove samples that deviate from the predefined format — each
+step in the student’s solution must be annotated as a tuple containing the step description, correctness,
+error type, and a brief explanation. Samples with mismatched step counts between annotations and
+student solutions are also discarded. (2) Annotation Accuracy: Exclude samples with contradictory or
+incomplete annotations, such as steps marked as incorrect but lacking error type or cause descriptions.
+(3) Question Coverage Assurance: Ensure that each question in K12-Vista appears at least three times
+in K12-PEM-800K. (4) Error Type Balance: Maintain a balanced proportion of each error type to
+ensure diversity in the dataset.
+
+
+C.5   More Result about K12-Vista
+
+In this section, we present additional model results on K12-Vista, as shown in Table 6.
+
+
+D     K12-PEMBench Detail
+
+We have manually and carefully constructed a K2-PEMBench dataset containing 3,000 data points,
+covering diverse question types across 5 disciplines, to test models’ capabilities in evaluating problem
+solving processes.
+
+
+D.1   Quality Assessment
+
+We randomly sampled 100 questions from each Table 8: The High-Quality Rate of 100 selected
+subject, ensuring coverage of different grades. Samples
+Three data reviewers verified the logical consis-
+tency of the questions with students’ problem Set           Question and Solution Step-wise Label
+solving approaches, and the correctness of step- Math               99.50              93.00
+wise label. The inspection results are presented Physics           100.00              95.50
+in Table 8, demonstrating high-quality rates of Chemistry           98.00              88.50
+99% for questions and student solutions, 90% for Biology            99.00              87.00
+                                                  Geography         98.50              86.00
+step-wise label.                                  Overall           99.00              90.00
+
+
+                                                   17
+Table 9: Accuracy of MLLMs across every step-wise labels. Overall performance represents the
+average accuracy across all step-wise labels. CS: correct step; ICE:mage Cognition Error; QM:
+Question Misunderstanding; LRK:Lack of Relevant Knowledge; KAE: Knowledge Application Error;
+LRE: Logical Reasoning Error; HE: Hallucination Error; CE: Calculation Error; IAE: Incomplete
+Answer Error;
+ Model                     Overall    CS      ICE     QM      LRK     KAE     LRE      HE      CE      IAE
+ K12-PEM                    69.38    94.33   53.55   34.51    24.87   44.13   30.14   25.32   48.87   68.69
+ GPT-4o                     63.90    89.17   47.92   27.40     7.95   41.68   29.75   20.74   45.76   61.38
+ InternVL2.5-MPO-78B        63.44    94.10   37.12   15.55     5.81   43.31   29.36   13.64   44.92   52.14
+ Qwen2.5-VL-72B             63.17    89.83   43.54   29.53     3.28   41.27   22.97   17.51   45.20   62.21
+ InternVL2.5-78B            60.38    92.62   25.76   17.01     6.82   39.53   25.29   12.85   33.33   39.45
+ Qwen2-VL-72B               54.89    84.78   14.64   23.94     2.65   33.71   25.19    9.23   31.92   41.93
+ InternVL2.5-MPO-8B         53.19    92.11   14.04    2.92     4.92   11.03   3.78     3.39   15.82   19.45
+ Qwen2.5-VL-7B              48.74    81.88   3.74     4.80    19.44   11.95   27.13    4.73   10.45   22.34
+ InternVL2.5-8B             46.96    72.67   17.77   14.76     2.65   24.92   28.10   11.04   26.27   21.66
+
+
+
+E     K12-PEM Train Detail
+In the SFT phase, where the model directly evaluates the student’s solution xS based on the problem
+xjP and its final answer xjA and reference solution xjR . For each solution, the model decomposes
+the student solution xS into steps and evaluates each step si , organizing them into a list where
+each element takes the form [si , ji , ri ] representing the step description, judgment, and explanation,
+respectively. The final structured output is formalized as: [[si , ji , ri ]M
+                                                                            i=1 ], M denotes the total number
+of reasoning steps.
+The training set for this task can be expressed as: D = {[[si , ji , ri ]M          N          j
+                                                                            i=1 ]}j=1 , where y represents the
+ground - truth step annotations and N denotes the dataset size. During training, the model minimizes
+the cross - entropy loss between its predictions and the ground - truth annotations:
+                                           j                                               
+                                        N   |y |
+                                    1 X X
+                     L(θ, D) = −                 log p(ytj |xjP , xjA , xjS , xjR , y<t
+                                                                                     j
+                                                                                        ; θ)              (1)
+                                    N j=1 t=1
+
+                                                                  j
+where ytj denotes the t-th token in the ground - truth sequence, y<t represents the preceding tokens.
+We fine-tune Qwen2.5-VL-7B-Instruct on K12-PEM-800K. The training is conducted on 64 H200
+GPUS. The global batch size is set to 128, with per-device batch size of 2 and gradient accumulation
+steps of 4. Additionally, we applied weight decay of 0.05 to regularize the training process and
+prevent overfitting. The models are trained with a learning rate of 2.0e-6, also using a cosine learning
+rate scheduler and a warmup ratio of 0.1. Both fine-tuning processes utilize mixed-precision training
+(bf16) to accelerate computation and reduce memory usage.
+
+F     Results
+F.1   Cases Study
+
+We have selected one sample from three subjects in K12-Vista, as shown in Figures 14, 15, 16.
+
+F.2   K12-PEMBench Result
+
+We evaluated the process evaluation capabilities of various models on K12-PEMBench, as detailed in
+Table 9.
+
+
+
+
+                                                     18
+    PROMPT
+  1. Direct Infer Prompt:
+
+  MCQ:
+  Question: {question}. Question Type: Multiple Choice. Please read the question carefully and answer it. Your final answer should be
+  the letter of the correct option. Do not output anything other than the final answer.
+
+  FBQ:
+  Question: {question}. Question Type: Fill-in-the-Blank. Please read the content of the question. There is one or more '___' sections that
+  you need to fill in. You need to provide the most appropriate answer based on the requirements of the question and the information
+  provided. If there are multiple '___' sections, your answers should be separated by ';'. Do not output anything other than the final
+  answer.
+
+  FRQ:
+  Question: {question}. Question Type: Free Response. Please read the question content and the problem. Provide the most appropriate
+  answer based on the requirements of the question and the information provided. Do not output anything other than the final answer.
+
+
+  2. Step-by-Step Infer Prompt:
+
+  MCQ:
+  Question: {question}. Question Type: Multiple Choice. Please read the question carefully, think step-by-step, and answer it. Provide a
+  detailed thought process and the final answer. Your final answer should be the letter of the correct option.
+  Please output in the following format:
+  1) Thought and Reasoning Process:
+  2) Final Answer:
+
+  FBQ:
+  Question: {question}. Question Type: Fill-in-Blank. Please read the question content. There is one or more '___' sections that require
+  filling in. Provide the most appropriate answer based on the question's requirements and the provided information. If there are multiple
+  '___' sections, separate your answers with ';'. Read the question carefully and think through the solution steps. Provide a detailed
+  thought process and the final answer. Your final answer should be separated by ';'.
+  Please output in the following format:
+  1) Thought and Reasoning Process:
+  2) Final Answer:
+
+  FRQ:
+  Question: {question}. Question Type: Free Response. Please read the question content and the problem. Provide the most appropriate
+  answer based on the question's requirements and the provided information. Read the question carefully, think step-by-step, and answer
+  it. Provide a detailed thought process and the final answer.
+  Please output in the following format:
+  1) Thought and Reasoning Process:
+  2) Final Answer:
+
+
+Figure 9: Prompt for MLLMs inference. We designed six distinct prompts for MLLM inference,
+tailored to different reasoning modes and question types. We provide their corresponding English
+translations.
+
+
+
+
+                                                                    19
+    PROMPT
+   User Content
+   You are an answer evaluation assistant. Below is a question, its standard answer and explanation, and a student's response.
+   Your task is to extract the student's answer to the question, then evaluate the extracted student's answer based on the standard
+   answer, and finally calculate and output the total score.
+
+   Instructions:
+   Here are the detailed evaluation rules:
+   1. Definition of Question and Standard Answer:
+   The question includes a text question and relevant images. The text question contains one or more parts that require the student's
+   answer, which should be one or more words or phrases. A single question-and-answer item may have multiple parts requiring a
+   response. The standard answer is the reference answer list for that question-and-answer item, containing the corresponding
+   reference answers for all parts that need to be answered.
+
+   2. Scoring Steps:
+   1) Extract Reference Answer List: Based on the relative positions of sub-questions within the question or other numbering schemes
+   (e.g., letters, numbers), and the semantic meaning of the question, sequentially extract the corresponding reference answers for the
+   blank positions from the standard answer and explanation to form a complete reference answer list, preparing for the next scoring
+   step.
+   2) Extract Student Answer List: Based on the relative positions of blank areas within the question or other numbering schemes (e.g.,
+   letters, numbers), and the semantic meaning of the question, sequentially extract the corresponding answers for the blank positions
+   from each student's response to form a complete student answer list, preparing for the next scoring step. If a student's answer for a
+   specific blank position is not found, record it as 'empty'. It is crucial to ensure that the number of elements in the student answer list
+   is equal to the number of elements in the input standard answer list.
+   3) Evaluate Student's Answer: Based on the extracted reference answer list and student answer list, sequentially judge the
+   correctness of each corresponding student answer. For student answers and reference answers, if both are phrases or sentences, their
+   narrative content must be identical in meaning to be considered correct; if they are nouns, they must refer to the same entity to be
+   considered correct. Output '1' for correct and '0' for incorrect. This step yields the evaluation result list.
+
+   Input Format:
+   * Input Question: {question}
+   * Input Standard Answer: {answer}
+   * Input Analysis: {solution}
+   * Input Student's Answer: {student_answer}
+
+   Output Format:
+   Your output must be a Python list, starting with '<evaluation>' and ending with '</evaluation>'. Do not add any comments. The list
+   content should be the extracted reference answer list, the extracted student answer list, and the student score list. Ensure that the
+   number of elements in all three lists is equal. Make sure your list can be parsed by Python's eval() function. Strictly adhere to the
+   format! Do not add any explanations, extra content, or comments outside the specified format! The format is as
+   follows:<evaluation>[["Reference Answer 1","Reference Answer 2",,,"Reference Answer N"],["Student Answer 1","Student
+   Answer 2",,,"Student Answer N"],[0,1,,,1]]</evaluation>"""
+
+
+Figure 10: Prompt for direct inference evaluation. We require the MLLM to first extract reference
+answers, then retrieve students’ answers, and subsequently generate a score list through one-to-one
+comparison. We provide their corresponding English translations.
+
+
+
+
+                                                                      20
+    PROMPT
+   I. Role Definition
+   You are a professional exam grader skilled at evaluating student test papers. I will provide a question , a reference answer, solution
+   and a student’s problem solving process. The question may contain multiple sub-questions. Your task is to evaluate and grade the
+   student’s problem solving process.
+
+   II. Instructions:
+   Here are the detailed evaluation workflow:
+   Step 1: Read the question, reference answer, and solution analysis. Understand the question and deduce the correct steps and results
+   based on the solution analysis.
+
+   Step 2: Read the student’s problem-solving process and perform "step decomposition," "step tagging," and "step tagging
+   explanation" based on the question, reference answer, solution analysis, and insights from Step 1.
+   Step 2-1: Step Decomposition: Split the student’s problem-solving process into several deductive steps according to semantic and
+   logical flow. Use the original content without omissions, ensuring logical coherence, integrity, and no repetition to form a list of
+   steps. If the process contains only one step or sentence, treat it as a single step without further decomposition.
+   Step 2-2: Step Tagging: Classify each step in the decomposed list using the tags from the list: ["step correct," "image cognition
+   error," "misinterpretation of question meaning," "lack of relevant knowledge," "knowledge application error," "logical process error,"
+   "hallucination error," "computational error," "incomplete answer error"].
+   Tag Definitions:
+
+   1. Step Correct: No errors of the following 7 types are present.
+   2. Image Cognition Error: Misidentification in understanding charts, graphs, objects, or spatial relationships (e.g., misinterpreting
+      coordinate axes, misjudging geometric shapes, confusing spatial relationships, or inaccurate numerical reading).
+   3. Misinterpretation of Question Meaning: Errors due to misunderstanding question requirements, conditions, or key information
+      (e.g., misreading questions, ignoring constraints, or misinterpreting instructions).
+   4. Lack of Relevant Knowledge: Inability to understand or integrate subject knowledge (e.g., misinterpreting concepts or using
+      incorrect problem-solving methods).
+   5. Knowledge Application Error: Errors from flawed mastery or misinterpretation of concepts, principles, formulas, or methods
+      (e.g., misapplying theorems or formulas).
+   6. Logical Process Error: Systematic errors in reasoning (e.g., improper use of premises, broken logical chains, insufficient
+      evidence, or flawed argumentation leading to incorrect conclusions).
+   7. Hallucination Error: Factual errors, logical inconsistencies, or unwarranted inferences (e.g., answers contradicting known facts,
+      logical contradictions, or baseless assumptions).
+   8. Computational Error: Specific mistakes in mathematical operations or algebraic manipulations (e.g., arithmetic errors, incorrect
+      equation solving, or flawed factorization).
+   9. Incomplete Answer Error: Failing to provide a final answer or omitting parts of the answer (e.g., only addressing some sub-
+        questions in a multi-part problem).
+
+   Step 2-3: Step Tagging Explanation: Briefly explain the classification result for each "step tagging."
+   III. Input Format:
+         Question: {question}
+         Reference Solution Analysis: {solution}
+         Reference Answer: {answer}
+         Student’s Problem Solving Process: {student_answer}
+   IV. Output Format Constraints:
+   1.    Overall Format: A two-layer list in the form:
+   2.    [[step1_decomposition, step1_tag, step1_explanation], [step2_decomposition, step2_tag, step2_explanation], ...]
+              The first layer has as many elements as the number of decomposed steps.
+              Each second-layer element is a list of 3 strings: [decomposition result, tag result, explanation result].
+   1.    Tag Selection: Use only the 9 tags from the list: ["step correct", "image cognition error", "misinterpretation of question
+         meaning", "lack of relevant knowledge", "knowledge application error", "logical process error", "hallucination error",
+         "computational error", "incomplete answer error"].
+   2.    Format Validity: Ensure the output is a valid double-layer list parsable by Python’s eval() function. Do not add extra
+         explanations or content outside the specified format.
+
+
+
+Figure 11: Prompt for step-by-step evaluation. We require K12-PEM to first decompose students’
+responses into steps and then label each step with one of nine predefined judgement according to the
+definition. We provide their corresponding English translations.
+
+
+
+
+                                                                      21
+    PROMPT
+  I. Role Definition
+  You are an expert examiner skilled at evaluating student test papers.
+  I will provide a question, a reference answer, an reference solution, and a student's solution process.
+
+  Your tasks are as follows:
+   1.Read the question, reference answer, and reference solution. Understand the problem and reason through the correct solution
+     based on the provided solution.
+   2.Read the student's solution process. Combine the question (with text and images), reference analysis, answer, and your prior
+     reasoning to split the process into logical reasoning steps according to semantic and logical flow. Steps must maintain logic,
+     coherence, and integrity without omissions, repetition, or truncation, forming a list of steps. If the solution contains only one step
+     or sentence, treat it as a single step without further decomposition.
+
+  Input Format:
+
+        Question: {question}
+        Solution Analysis: {solution}
+        Reference Answer: {answer}
+        Student's Solution Process: {student_answer}
+
+  Output Format:
+  Organize the decomposed steps into a Python list, prefixed with <evaluation> and suffixed with </evaluation>, with no comments.
+  Ensure the list is parseable by Python’s eval() function. Strictly adhere to the format—do not add explanations, extra content, or
+  comments outside the specified structure. Format example:<evaluation>["step1: Original text of decomposed step 1", "step2: Original
+  text of decomposed step 2", ..., "stepn: Original text of decomposed step N"]</evaluation>
+
+
+Figure 12: Prompt for split solution to steps. We have the GPT-4o decompose complete student
+responses into logically independent problem-solving steps for subsequent annotation. We provide
+their corresponding English translations.
+
+
+
+
+                                                                     22
+     PROMPT
+  I. Role Definition
+  You are an expert examiner specialized in evaluating student test papers. I will provide a question, a reference answer, an analysis, and
+  a step-by-step list of a student’s solution process. The question may contain multiple sub-questions, and your task is to assess and
+  grade the "student’s solution process step list."
+  II. Work Steps
+  Step 1: Understand the Question and Correct Reasoning Logic
+  Read the question, reference answer, and analysis. Deduce the key steps and logic for deriving the correct answer based on the
+  analysis.
+
+  Step 2: Evaluate the Student’s Solution Process Step-by-Step
+  Read the student’s step-by-step solution list. Using the question, reference answer, analysis, and the correct logic from Step 1, apply a
+  "step judgement" to each step and explain the basis for the judgement.
+  Step 2-1: Step Judgement
+  Assign a unique judgement to each step from the following 9 categories:
+        Image Cognition Error: Misidentification in understanding charts, graphs, objects, or spatial relationships (e.g., misinterpreting
+        coordinate axes, misjudging geometric shapes, confusing spatial relationships, or inaccurate numerical reading).
+        Question Misunderstanding: Errors due to misunderstanding question requirements, conditions, or key information (e.g.,
+        misreading questions, ignoring constraints, or misinterpreting instructions).
+        Lack of Relevant Knowledge: Inability to understand or integrate subject knowledge (e.g., misinterpreting concepts or using
+        incorrect problem-solving methods).
+        Knowledge Application Error: Errors from flawed mastery or misinterpretation of concepts, principles, formulas, or methods (e.g.,
+        misapplying theorems or formulas).
+        Logical Reasoning Error: Systematic errors in reasoning (e.g., improper use of premises, broken logical chains, insufficient
+        evidence, or flawed argumentation leading to incorrect conclusions).
+        Hallucination Error: Factual errors, logical inconsistencies, or unwarranted inferences (e.g., answers contradicting known facts,
+        logical contradictions, or baseless assumptions).
+        Calculation Error: Specific mistakes in mathematical operations or algebraic manipulations (e.g., arithmetic errors, incorrect
+        equation solving, or flawed factorization).
+        Incomplete Answer Error: Failing to provide a final answer or omitting parts of the answer (e.g., only addressing some sub-
+        questions in a multi-part problem).
+  Step 2-2: Step Judgement Explanation
+  Briefly explain the basis for each judgement (must reference the question requirements and correct analysis).
+  III. Input Specifications
+        Question: {question} (including text and images)
+        Solution Analysis: {solution} (correct problem-solving process)
+        Reference Answer: {answer} (correct answer to the question)
+        Student’s Solution Process Step List: {student_answer} (student’s step-by-step responses, ordered sequentially)
+  IV. Output Format Constraints
+  (1). Structure
+  Strictly use a nested list format. The first layer has the same number of elements as the student’s step list, and each sublist contains 3
+  elements:
+  [[Step 1 Text, "Judgement Result", "Judgement Explanation"], [Step 2 Text, "Judgement Result", "Judgement Explanation"], ...]
+  (2). Judgement Standards
+  Judgement results must be selected from the specified 9 categories. Avoid vague terms (e.g., "error" or "correct").
+  (3). Format Validity
+  The output must be parsable by Python’s eval() function. Do not add any comments or extra content outside the list structure.
+
+
+
+Figure 13: Prompt for step-wise judgement. We defined nine Step-wise labels, enabling the MLLM
+to judge each step with one of Step-wise labels according to the definitions. We provide their
+corresponding English translations.
+
+
+
+
+                                                                     23
+                                               Math-G12
+   Question: As shown in the figure, in the quadrangular pyramid P-ABCD, M and N are points on AC
+   and PC respectively, and MN is parallel to the plane PAD. If the ratio of CM to MA is 1:4, then the
+   value of NC:NP is ______.
+
+
+
+
+          ：
+   GPT-4o We need to solve how to find the ratio of NC to NP. In the quadrangular pyramid P-
+   ABCD, it is known that M and N are points on AC and PC respectively, and MN is parallel to the
+   plane PAD. First, note that CM:MA = 1:4, which means point M divides AC into a ratio of 1:4. Next,
+   consider the condition that MN  ∥     plane PAD. If MN is parallel to this plane, then according to the
+   property of proportional line segments, in triangle PAC, point N must also divide PC such that the
+   length, ratio, and position of line segment MN correspond to the dividing point M on AC.
+   Specifically, let P be N, then the following ratio holds: NC:PC = CM:MA = 1:4, that is, NC is 1 part
+   out of 5 parts. Therefore, the ratio of NC to NP is:
+   NC = 1 part,
+   NP = 4 parts + 1 part = 5 parts,
+   In summary, NC:NP = 1:5.
+   Final answer:1:5
+
+   Step-by-Step Evaluation
+   "Step1: We need to solve how to find the ratio of NC to NP. In the quadrangular pyramid P-ABCD, it
+   is known that M and N are points on AC and PC respectively, and MN is parallel to the plane PAD.
+   First, note that CM:MA = 1:4, which means point M divides AC into a ratio of 1:4.", "Correct step",
+   "Accurately interprets the given ratio and geometric setup."
+
+   "Step2: Next, consider the condition that MN  ∥     plane PAD. If MN is parallel to this plane, then
+   according to the property of proportional line segments, in triangle PAC, point N must also divide PC
+   such that the length, ratio, and position of line segment MN correspond to the dividing point M on
+   AC.", "Knowledge Application Error", "Student incorrectly assumes the ratio on AC directly applies
+   to PC without valid geometric justification "
+
+   "Step3: Specifically, let P be N, then the following ratio holds: NC:PC = CM:MA = 1:4, that is, NC
+   is 1 part out of 5 parts. Therefore, the ratio of NC to NP is:
+   NC = 1 part,
+   NP = 4 parts + 1 part = 5 parts,,", "Calculation Error", "Mistakenly equates CM:MA (1:4) to NC:PC,
+   ignoring that CA = CM + MA = 5 parts"
+
+   "Step4: In summary, NC:NP = 1:5. Final answer:1:5", "Final Answer Error", "The correct ratio is 1:4.
+   The student failed to verify the proportional relationship using theorems"
+
+   Step-by-Step Score: 0.25
+
+
+Figure 14: A sample error case of Math from response of GPT-4o. We provide their corresponding
+English translations.
+
+
+
+
+                                                     24
+                                                Chemistry-G12
+   Question: For the reaction mA(s) + nB(g)   ⇌  eC(g) + fD(g), the relationship between the percentage
+   content of C (C%), temperature (T), and pressure (P) is shown in the figure when other conditions
+   remain unchanged. Which of the following statements is incorrect?
+   A. After reaching equilibrium, adding a catalyst does not change C%.
+   B. This reaction is exothermic.
+   C. In the chemical equation, m + n > e + f.
+   D. After reaching equilibrium, increasing the mass of A favors the forward shift of the equilibrium.
+
+
+
+
+   GPT-4o:Analyze each option using the graph’s information:
+   Pressure Effect: C% increases with higher pressure at all temperatures, indicating pressure favors C’s
+   formation.
+   Option A: Catalysts alter rate but not equilibrium position; C% remains unchanged. Correct.
+   Option B: Rising temperature decreases C%, consistent with an exothermic reaction (equilibrium
+   shifts left). Correct.
+   Option C: Pressure favors fewer gas molecules. Since A is solid, n > e + f, thus m + n > e + f. Correct.
+   Option D: Solids (A) do not affect equilibrium position; mass changes only impact rate. Incorrect.
+   Final Answer: D
+   Step-by-Step Evaluation
+   "Step1: Analyze each option using the graph’s information:Pressure Effect: C% increases with higher
+   pressure at all temperatures, indicating pressure favors C’s formation.","Correct Step","Accurate
+   interpretation of graph aligns with trend."
+
+   "Step2: Option A: Catalysts alter rate but not equilibrium position; C% remains unchanged.
+   Correct.","Correct Step","Correct explanation of catalyst effect on equilibrium."
+
+   "Step3: Option B: Rising temperature decreases C%, consistent with an exothermic reaction
+   (equilibrium shifts left). Correct.","Correct Step","Proper application of temperature effect for
+   exothermic reactions."
+
+   "Step4: Option C: Pressure favors fewer gas molecules. Since A is solid, n > e + f, thus m + n > e + f.
+   Correct.","Correct Step","Sound analysis of pressure vs. gas molecules for stoichiometry."
+
+   "Step5: Option D: Solids (A) do not affect equilibrium position; mass changes only impact rate.
+   Incorrect.","Correct Step","Rightly identifies solids’ irrelevance to equilibrium shifts."
+
+   "Step6: Final Answer: D","Correct Step","Conclusion matches analysis."
+
+   Step-by-Step Score: 1
+
+Figure 15: A sample correct case of Chemistry from response of GPT-4o. We provide their corre-
+sponding English translations.
+
+
+
+
+                                                      25
+                                              Physics-G12
+   Question: As shown in the figure, during the process of pulling B out from under A, determine
+   whether the frictional force between A and B does positive work, negative work, or zero work on A
+   and on B, respectively.
+
+
+
+
+   GPT-4o:When block B is acted upon by a force F, it moves to the right. Due to friction, block A also
+   moves. A frictional force exists between A and B:
+   As B moves right, it drags A along. The friction force on A acts to the right (in the direction of A’s
+   motion).
+   Conversely, the friction force on B from A acts to the left (opposite to B’s motion).
+   Work done by friction between A and B:
+   On block A: The friction force is in the same direction as A’s displacement, so friction does positive
+   work on A.
+   On block B: The friction force is opposite to B’s displacement, so friction does negative work on B.
+   The friction force between A and B does positive work on A.
+   The friction force between A and B does negative work on B.
+   Step-by-Step Evaluation
+   "Step1: There is friction between A and B. Since A is on top of B, the movement of block B will drive
+   block A to move together. The frictional force between A and B acts to the right on block A and to the
+   left on block B.", "Misinterpretation of the Problem", "Block A actually has no displacement and does
+   not move with block B. Therefore, friction does no work on A."
+
+   "Step2: Block A moves to the right, so the frictional force does positive work on block A.",
+   "Misunderstanding of the Diagram", "Based on the diagram and analysis, block A does not undergo
+   displacement, so the work done by friction on A is zero."
+
+   "Step3: The frictional force is to the right, and the direction of block A's movement is also to the
+   right.", "Logical Error", "Since A does not displace, friction does no work on A—there is no basis for
+   judging direction of movement."
+
+   "Step4: For block B: The frictional force is to the left, while block B moves to the right, so the
+   frictional force does negative work on block B.", "Correct Step", "Block B displaces to the right, and
+   the frictional force from A acts to the left, satisfying the condition for negative work."
+
+   "Step5: Final Answer: The friction between A and B does positive work on A; the friction between A
+   and B does negative work on B.", "Incomplete Answer Error", "The work done on block A should be
+   0, not positive."
+
+   Step-by-Step Score: 0.2
+
+
+Figure 16: A sample correct case of Phtsics from response of GPT-4o. We provide their corresponding
+English translations.
+
+
+
+
+                                                     26
+

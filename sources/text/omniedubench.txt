@@ -1,0 +1,2890 @@
+Preprint
+
+O MNI E DU B ENCH : A C OMPREHENSIVE C HINESE
+B ENCHMARK FOR E VALUATING L ARGE L ANGUAGE
+M ODELS IN E DUCATION
+Min Zhang1∗ Hao Chen1 Hao Chen1 Wenqi Zhang2 Didi Zhu3 Xin Lin1
+Bo Jiang1† Aimin Zhou1† Fei Wu2 Kun Kuang2
+1
+East China Normal University 2 Zhejiang University 3 Imperial College London
+
+arXiv:2510.26422v1 [cs.CL] 30 Oct 2025
+
+mzhang@cs.ecnu.edu.cn
+
+bjiang@deit.ecnu.edu.cn
+
+amzhou@cs.ecnu.edu.cn
+
+https://mind-lab-ecnu.github.io/OmniEduBench/
+
+A BSTRACT
+With the rapid development of large language models (LLMs), various LLMbased works have been widely applied in educational fields. However, most existing LLMs and their benchmarks focus primarily on the knowledge dimension,
+largely neglecting the evaluation of cultivation capabilities that are essential for
+real-world educational scenarios. Additionally, current benchmarks are often limited to a single subject or question type, lacking sufficient diversity. This issue
+is particularly prominent within the Chinese context. To address this gap, we introduce OmniEduBench, a comprehensive Chinese educational benchmark.
+OmniEduBench consists of 24.602K high-quality question-answer pairs. The data
+is meticulously divided into two core dimensions: the knowledge dimension and
+the cultivation dimension, which contain 18.121K and 6.481K entries, respectively. Each dimension is further subdivided into 6 fine-grained categories, covering a total of 61 different subjects (41 in the knowledge and 20 in the cultivation).
+Furthermore, the dataset features a rich variety of question formats, including 11
+common exam question types, providing a solid foundation for comprehensively
+evaluating LLMs’ capabilities in education. Extensive experiments on 11 mainstream open-source and closed-source LLMs reveal a clear performance gap. In
+the knowledge dimension, only Gemini-2.5 Pro surpassed 60% accuracy, while
+in the cultivation dimension, the best-performing model, QWQ, still trailed human intelligence by nearly 30%. These results highlight the substantial room for
+improvement and underscore the challenges of applying LLMs in education.
+
+1
+
+I NTRODUCTION
+
+With the rapid emergence of large language models (LLMs), evaluation benchmarks have become
+increasingly critical, shifting the focus of assessment toward broader and complex skills. To address
+the demands of this complex paradigm, a variety of benchmarks have been proposed to evaluate
+the diverse capabilities of LLMs. These benchmarks cover a wide spectrum of areas, including
+knowledge and language understanding (e.g., MMLU (Hendrycks et al., 2021), ARC (Clark et al.,
+2018)), reasoning (e.g., GSM8K (Cobbe et al., 2021), AIME (Patel et al., 2024)), multi-turn openended dialogue (e.g., MT-bench (Bai et al., 2024)), and coding (e.g., MBPP (Austin et al., 2021)).
+Serving as indispensable tools for advancing LLM development, these benchmarks have been widely
+adopted in recent influential works (Hurst et al., 2024; Liu et al., 2024a; Team, 2025b; Comanici
+et al., 2025; Taylor et al., 2022; Touvron et al., 2023; OpenAI, 2023; Hoffmann et al., 2022).
+In recent years, a series of powerful Chinese LLMs emerged, such as the Qwen (Yang et al., 2024;
+2025), DeepSeek (Liu et al., 2024a; Guo et al., 2025; Liu et al., 2024b), achieving performance levels comparable to overseas LLMs. With the growing application of LLMs in education, researchers
+∗
+†
+
+Project leader. Min Zhang (mzhang@cs.ecnu.edu.cn)
+Corresponding authors. Bo Jiang (bjiang@deit.ecnu.edu.cn) and Aimin Zhou (amzhou@cs.ecnu.edu.cn)
+
+1
+
+Preprint
+
+Secondary mathematics
+Middle school physics
+Middle school biographies
+Secondary school chemistry
+Nature and science
+Higher mathematics
+Probability theory and mathematical statistics
+Introduction to computers
+Computer operating system
+Computer network
+Plant physiology
+Biochemistry
+Jurisprudence
+Criminal law
+Civil law
+Politics
+Information technology
+Civil engineering materials
+Psychology
+Pedagogy
+Traditional Chinese medicine integration
+Western medicine comprehensive
+Nursing
+Middle school Chinese
+Secondary school history
+Secondary school geography
+History
+History of ancient Chinese literature
+A brief history of foreign art
+History of western philosophy
+Introduction to linguistics
+Introduction to art
+Introduction to archaeology
+Ideological and political in middle school
+Management
+Economics logic ability
+Taxation
+Ideological and political theory in universities
+Marxist theory
+Human resource management
+
+Sense of responsibility & Accountability
+Integrity & Honesty
+Innovation & Creativity
+Problem-solving skills
+Critical thinking
+Metacognitive skills
+Guiding knowledge transfer
+Reflective learning
+Personalized learning paths
+Interest-driven learning
+Heuristic teaching
+
+Emotional regulation skills
+Empathy & Sympathy
+Self-confidence & Self-efficacy
+Psychological resilience & Anti-frustration ability
+Growth mindset
+Team collaboration skills
+Effective communication skills
+Social responsibility
+Constructiveness & Timeliness of feedback
+
+Figure 1: Overview of OmniEduBench. The benchmark comprises two dimensions: 41 subjects
+across six categories in the knowledge, and 20 subjects across six categories in the cultivation.
+have also begun to propose Chinese education benchmarks, which can be broadly categorized into
+two types: (1) datasets translated from other languages and (2) datasets natively constructed from
+Chinese education corpora. Specifically, (1) Datasets translated from other languages refer to benchmarks constructed by directly translating existing benchmarks from other languages into Chinese. A
+representative work is CLUE (Xu et al., 2020a), which was translated from the English GLUE (Wang
+et al., 2019). However, a simple translation approach is insufficient for a rigorous evaluation of
+LLMs in Chinese. These datasets often fail to reflect the unique linguistic and cultural challenges
+of the Chinese education and inherently carry biases from their original environment, thus limiting
+their ability to assess LLMs’ understanding of local education knowledge and teacher-student needs.
+(2) Datasets natively constructed from Chinese educational corpora refer to benchmarks directly collected from Chinese educational text resources, such as C-Eval (Huang et al., 2023), Edubench (Xu
+et al., 2025), Scieval (Sun et al., 2024), AGIEval (Zhong et al., 2023), and SuperCLUE (Xu et al.,
+2023). However, most existing education benchmarks are often limited to a single subject or question type, lacking sufficient diversity. Additionally, these datasets typically focus on the knowledge
+dimension, overlooking the unique cultivation aspects that are essential in real-world education.
+We present OmniEduBench, a comprehensive Chinese education benchmark designed to thoroughly
+evaluate LLMs in terms of both knowledge understanding and skill cultivation in educational scenarios. OmniEduBench encompasses knowledge and cultivation dimension and comprises a total
+of 24.602K high-quality question–answer pairs, covering 11 common exam question types (e.g.,
+multiple choice (单选题), multiple answer (多选题), fill-in-the-blank (填空题), short answer (简答
+题), composite questions (复合题), term explanation (名词解释), True/False (判断题), calculation
+(计算题), logical reasoning (逻辑推理题), case analysis (案例分析题), and essay (论述题)), as illustrated in Figure 1. The knowledge dimension includes 18.121K question–answer pairs spanning
+41 subject areas, from humanities to science and engineering, and covering five difficulty levels:
+elementary school, middle school, high school, college, and professional examinations. The cultivation dimension comprises 6.481K question–answer pairs across 20 teaching-related comments,
+including guided teaching, student emotional support, and moral education (see Table 1 for details),
+aiming to comprehensively assess the diverse competencies required in real-world educational settings. Extensive experiments demonstrate that our proposed OmniEduBench presents a highly challenging and significant benchmark for Chinese educational evaluation. Additionally, we introduce
+OmniEduBench HARD, a high-difficulty subset of OmniEduBench, specifically targeting particularly demanding subjects such as advanced mathematics and competitions that require sophisticated
+reasoning skills. Even the state-of-the-art LLMs achieve less than 50% accuracy on this subset,
+highlighting the rigor and necessity of our proposed OmniEduBench education benchmark.
+2
+
+Preprint
+
+Dataset collection& cleaning
+
+Expert verification
+
+Dual-machine filtering
+Correct?
+
+Multipletype files
+
+Private
+data
+LLMsynthesized
+data
+
+Classification Metadata
+&Info
+&Indexing
+extraction
+Field
+Grade
+Problem type Data
+
+Markdown files
+
+21K Q&A
+
+106K Q&A
+
+Q&A pairs
+
+Stage 1:
+QWQ-32B
+
+Structured
+data
+
+800K Q&A
+
+Number of Q&A pairs in the collection process
+
+927K Q&A
+
+sum
+
+OmniEdu Expert annotator
+Bench
+review
+Ambiguity
+
+Output:
+OmniEduBench
+
+formatting
+
+Remove
+
+Publicly
+data
+
+657K Q&A
+
+cleaning
+
+Stage 2:
+Qwen3-235B
+
+50K Q&A
+
+filtering
+
+Incomplete
+Revise/Re
+move
+
+24.602K Q&A
+
+Challenging
+Meaningful Final
+
+OmniEdu
+Bench
+
+OmniEduBench
+
+verification
+
+Figure 2: Overview of the construction process, including collection, cleaning, filtering, verification.
+
+2
+
+O MNI E DU B ENCH
+
+Our proposed OmniEduBench education benchmark is designed as a natively Chinese education
+evaluation benchmark that captures the unique linguistic and cultural knowledge of Chinese education, encompasses diverse question types, and assesses LLMs not only on their knowledge capabilities but also on the distinctive cultivation competencies required in real-world educational scenarios.
+2.1
+
+TASK D EFINITION
+
+Knowledge dimension focuses on evaluating the model’s mastery of subject-specific knowledge.
+Tasks in this dimension include 11 common exam question types (e.g., multiple choice, multiple answer, fill-in-the-blank, short answer, composite questions, term explanation, True/False, calculation,
+logical reasoning, case analysis, and essay). These 11 question types span a wide range of disciplines, from humanities and history to science, engineering, and professional fields. The primary
+goal is to assess the LLM’s problem-solving capabilities within the context of real-world education.
+Cultivation dimension assesses LLMs on their ability to support holistic educational objectives
+beyond mere knowledge acquisition. This includes guiding students’ thinking processes, fostering
+moral and value development, enhancing emotional understanding, and promoting critical reasoning
+skills. Tasks in this dimension are designed to reflect realistic learning scenarios, where models must
+provide pedagogically sound feedback that aligns with students’ cognitive and emotional needs.
+2.2
+
+B ENCHMARK C ONSTRUCTION
+
+In this section, we provide a detailed overview of the construction process for the proposed OmniEduBench education evaluation benchmark, as illustrated in Figure 2. The process consists of
+four key stages: dataset collection, dataset cleaning, dual-machine filtering, and expert verification.
+Dataset collection. OmniEduBench is designed to encompass a wide range of diverse scenarios to
+enable comprehensive evaluation. To achieve this, we employ three distinct data collection methods,
+carefully balancing diversity and efficiency in the construction of the OmniEduBench benchmark.
+Manual collection of publicly available data. Existing benchmarks often lack sufficient diversity
+in question types and knowledge coverage, making them inadequate for our 41 subjects in knowledge dimensions. To address this gap, we manually collected additional data from publicly available
+online resources (e.g., XuekeNet, ZujuanNet, ShijuanNet, ShitiNet) to enrich diversity and ensure
+coverage of underrepresented scenarios, such as primary and career education. Furthermore, guided
+by the Catalogue of Undergraduate Programs in Regular Higher Education Institutions 1 issued by
+China’s Ministry of Education, we curated a large body of review materials and exam questions
+across 13 academic disciplines, including philosophy, education, law, literature, history, science,
+engineering, agriculture, medicine, military science, management, and the arts. This effort significantly improves distributional balance and provides a more faithful reflection of real applications.
+1
+http://www.moe.gov.cn/srcsite/A08/moe_1034/s4930/202403/
+W020240319305498791768.pdf
+
+3
+
+Preprint
+
+Manual collection of private data. Data contamination remains one of the most critical challenges in
+constructing evaluation datasets for LLMs. To mitigate this risk, we manually collected additional
+data from private resources, such as internal school exam papers. Unlike widely circulated national
+exams, these materials have never appeared on the public Internet or been included in large-scale
+web crawls, effectively reducing the risk of leakage. Incorporating such private data enhances the
+reliability and fairness of the benchmark, while providing a more rigorous assessment of models.
+LLM-generated data. Given the difficulty of directly obtaining data in the cultivation dimension, we
+leveraged LLMs to generate a substantial number of scenario-based question–answer pairs, aiming
+to supplement gaps in existing resources. To ensure the quality of the synthetic data, we invited five
+education experts to conduct discussions on 20 cultivation subjects and consulted relevant books,
+papers, and other materials. The collected content was organized into a database, which was then
+provided to the LLM to enhance the fidelity and accuracy of the generated data. For generated
+questions, to increase their challenge, we designed highly confounding distractors via prompts and
+conducted sampling checks and revisions with expert verification (please see more details in expert
+verification). Finally, we collected a total of 927K question–answer (Q&A) pairs, including 21K
+from publicly available data, 106K from private data, and 800K generated by LLMs.
+Dataset cleaning. The entire data cleaning process consists of multiple steps. (1) We used
+MinerU (Wang et al., 2024) to convert the collected 927K Q&A pairs into Markdown (md) format,
+enabling structured management and efficient information extraction. (2) Detailed metadata were
+extracted for each question, including subject, grade level, question type, and knowledge tags, to
+construct comprehensive question profiles that facilitate data management and subsequent analysis.
+(3) Standard data cleaning procedures were applied, including deduplication, removal of questions
+with missing key content, filtering of sensitive or inappropriate content, and exclusion of questions
+that rely on external information.After the cleaning process, we obtained a total of 657K Q&A pairs.
+Dual-machine filtering. To ensure OmniEduBench is a high-quality and challenging benchmark,
+we implemented a dual-model filtering mechanism on an initial set of 657K Q&A pairs. Specifically,
+we first evaluated all questions using QWQ32B (Team, 2025c), retaining only those that the model
+answered incorrectly. This initial filtering resulted in a subset of 430K Q&A pairs. These questions
+then underwent a second filtering stage with the same strategy, this time using Qwen3-235B (Yang
+et al., 2025), ultimately yielding the final set of 50K high-quality and challenging data.
+Expert verification. We recruited 50 master’s students to perform an initial quality check on the
+dataset based on five predefined dimensions (as shown in Table 2), removing any data that did not
+meet the criteria, which resulted in a final set of 24.602K Q&A pairs for OmniEduBench. Subsequently, we invited 5 senior annotation experts to conduct a rigorous quality review on a 15%
+random sample of the OmniEduBench. The review results, shown in Table 2, indicate that the
+dataset maintains high overall quality, demonstrating both reliability and applicability.
+2.3
+
+E VALUATION C RITERIA
+
+Based on the characteristics of different question types, we adopt two evaluation metrics: (1) Choice.
+For questions with a standard answer, we directly evaluate the provided answer. This simplifies the
+scoring process, as the model only needs to select the most appropriate option, thereby reducing
+ambiguity in assessment. (2) LLM-assisted scoring. For short-answer questions that may have
+multiple valid forms but are semantically equivalent, we employ an LLM-assisted scoring method.
+This approach provides greater flexibility, avoids imposing unnecessary constraints on the model,
+and allows for a more accurate evaluation of the model’s semantic understanding and expression.
+2.4
+
+S TATISTICS
+
+Through rigorous data filtering and expert validation, we collected 18.121K high-quality question–answer pairs for the knowledge and 6.481K for the cultivation. As illustrated in Figure 1
+and summarized in Table 1, with more detailed per-subject statistics provided in the Appendix, the
+dataset spans 12 major categories, as shown in Table 1, including K-12, higher school, universitylevel courses, and cultivation aspects such as emotion and reasoning, covering a total of 61 specific
+scenarios. Figures 3 and 4 present some representative examples in different dimensions and ques4
+
+Preprint
+
+Table 1: Statistics of OmniEduBench and more detailed per-subject information are shown in the
+Appendix. Bilingual names and abbreviations of six knowledge and six cultivation dimensions.
+Knowledge dimension
+Abbreviation
+
+English name
+
+Law & Politics
+Foundational Disciplines
+Humanities & History
+Medicine & Health
+Interdisciplinary & Integrated Subjects
+Social Sciences & Economics Management
+
+Category
+
+Subjects
+
+Category
+
+Cultivation dimension
+Abbreviation
+
+English name
+
+法律与政治
+基础学科
+人文与历史
+医学与健康
+综合与交叉学科
+社会科学与经济管理
+
+LP
+FD
+HH
+MH
+IIS
+SSEM
+
+Questions
+
+Chinese name
+
+Character & Values
+Personalized Development
+Social & Interpersonal Skills
+Thinking & Cognitive Skills
+Teaching Feedback & Support
+Emotional & Mental Health
+
+Subjects
+
+Questions
+
+Chinese name
+品格与价值观
+个性化发展
+社会与人际交往
+思维与认知能力
+教学反馈与支持)
+情感与心理健康
+
+CV
+PD
+SIS
+TCS
+TFS
+EMH
+
+Category
+
+Subjects
+
+Questions
+
+In terms of dimension
+Knowledge
+41
+18,121
+Cultivation
+20
+6,481
+In terms of different level
+K-12 Schools
+10
+4,384
+High school
+11
+6,735
+College
+30
+6,364
+
+In terms of Knowledge
+LP
+4
+1,455
+FD
+11
+7,918
+HH
+10
+5,331
+MH
+3
+918
+IIS
+4
+914
+SSEM
+9
+1,643
+
+In terms of Cultivation
+CV
+2
+694
+PD
+3
+1,031
+SIS
+3
+736
+TCS
+6
+1,900
+TFS
+1
+193
+EMH
+5
+1,833
+
+Total
+
+Total
+
+Total
+
+61
+
+24,602
+
+41
+
+18,179
+
+20
+
+6,387
+
+Table 2: Expert validation results for the OmniEduBench dataset.
+Metric English name
+
+Metric Chinese name
+
+Average
+
+Standard deviation
+
+Inter-rater agreement
+
+Overall quality
+Clarity
+Option perplexity
+Accuracy
+Cultivation value
+
+整体质量
+问题清晰度
+选项困惑度
+答案准确性
+育人价值
+
+4.8
+4.5
+4.8
+4.8
+4.6
+
+0.1
+0.2
+0.3
+0.1
+0.2
+
+0.90
+0.85
+0.83
+0.90
+0.88
+
+tion types. The questions exhibit wide variability in type and difficulty and are sourced from diverse
+origins, primarily newly collected from public or private resources or manually constructed.
+
+3
+
+E XPERIMENTS
+
+In this section, we evaluate the performance of state-of-the-art (SOTA) methods in both English and
+Chinese. The experimental results indicate that OmniEduBench remains a competitive benchmark.
+3.1
+
+E XPERIMENTAL S ETUP
+
+Baselines. We evaluate 11 mainstream large language models (LLMs) in total, including 3 cuttingedge closed-source models and 8 open-source models, one of which is a newly released educationoriented model. The closed-source models are GPT-4o (Hurst et al., 2024), Gemini-2.5 Pro (Comanici et al., 2025), and Claude-4 Sonnet (Team, 2025a). For the open-source models, we consider
+two main factors. First, they are grouped by parameter size into small (8B), medium (14B/32B/36B),
+and large (72B/235B/671B) scales. Second, they are categorized by functionality into: (a) general
+有学生在参观烈士陵园时嬉笑打闹，我很生气，该怎么处理？
+
+下列说法错误的是:
+
+Some students laughed and played while visiting the martyrs' cemetery, I
+feel very angry, how should I deal with it?
+
+The following statements are incorrect:
+
+A. 甲苯与甘油燃烧时产生的水量在等物质的量条件下保持恒定
+A. The amount of water produced by the combustion of toluene and glycerol
+remains constant under the condition of equal amounts
+
+A.当场严厉批评，让他道歉并写检讨。
+
+B. 溴乙烷发生消去反应后，可用酸性高锰酸钾溶液直接检验生成的乙烯
+
+B.暂停他的课外活动资格一周作为惩罚。
+
+A. Criticize harshly on the spot, ask him to apologize and write a review.
+
+B. After the elimination reaction of ethyl bromoide, the ethylene produced can be
+directly tested with acidic potassium permanganate solution
+
+B. Suspension of his extracurricular activities for one week as punishment.
+
+C.课后找他谈话:你知道我们为什么要来这里吗？你觉得这样的行为
+对得起先烈吗？你希望别人怎么纪念你？
+
+C. 醛类物质在碱性条件下与银氨溶液共热可发生银镜反应
+C. Aldehydes can undergo silver mirror reaction when co-heated with silver
+ammonia solution under alkaline conditions
+
+C. Talk to him after class: Do you know why we are here? Do you think such
+behavior is worthy of the martyrs? How do you want others to remember you?
+
+D. 碳酸钠溶液可溶解苯酚生成苯酚钠和碳酸氢钠
+
+D.让他下次参观时担任讲解员，负责介绍一位烈士的事迹。
+
+D. Sodium carbonate solution dissolves phenol to produce sodium phenol
+and sodium bicarbonate
+
+D. Let him serve as a docent on his next visit, responsible for introducing the
+deeds of a martyr.
+
+答案：B
+
+答案：D
+
+Answer: B
+
+Answer: D
+
+(a) Single-choice question type within the knowledge dimension
+
+(b) Single-choice question type within the cultivation dimension
+
+Figure 3: Example of (a) a single-choice question in the knowledge from a college chemist. (b) A
+single-choice question in the cultivation. English translations are shown for better readability.
+5
+
+Preprint
+
+BAT（棕色脂肪组织）细胞膜上具有下列哪些受体？（多选）
+
+已知抛物线Γ：y²＝4x的焦点为F，过F作斜率为k的直线交Γ于
+A、B两点。（1）若|AB|＝10，求线段AB中点的横坐标；（2）
+证明：在抛物线Γ上所有的点中，顶点到焦点F的距离最小；
+
+Which of the following receptors are present on the BAT (brown adipose
+tissue) cell membrane? (Multiple Choice)
+
+A. 葡萄糖受体
+
+It is known that the focus of the parabolic Γ: y²=4x is F, and the straight
+line with a slope of k crosses F Γ at points A and B. (1) If | AB|=10, find
+the abscissa of the midpoint of the line segment AB. (2) Prove: Among
+all the points on the parabolic Γ, the distance from the vertex to the
+focal point F is the smallest.
+
+A. Glucose receptors
+
+B. 神经递质受体
+B. Neurotransmitter receptors
+
+C. 促胰液素受体
+C. Secretin-stimulating receptors
+
+D. 甲状腺激素受体
+D. Thyroid hormone receptors
+
+答案：（1）AB中点横坐标为4；（2）顶点到焦点距离最小；
+Answer: (1) The abscissa of the midpoint of AB is 4. (2) The distance
+from the vertex to the focal point is the smallest.
+
+答案：B;C
+Answer: B; C
+
+(b) Short-answer question within the knowledge dimension
+
+(a) Multiple-choice question within the knowledge dimension
+
+Figure 4: Example of (a) a multiple-choice question in the knowledge from Biology. (b) A shortanswer question in the knowledge from Math. English translations are shown for better readability.
+
+Table 3: Zero-shot average accuracy (%) across six categories in the knowledge. The highest accuracy is bold, and the second highest is underlined. More results are provided in the Appendix.
+Model
+
+Parameters
+
+Access
+
+Creator
+
+FD
+
+HH
+
+SSEM
+
+LP
+
+MH
+
+IIS
+
+Average
+
+Qwen3
+Qwen3
+MuduoLLM
+QwQ
+Seed-OSS
+Qwen2.5
+Qwen3
+DeepSeek-V3.1
+
+8B
+14B
+14B
+32B
+36B
+72B
+235B (22B active)
+671B (37B active)
+
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+
+Alibaba
+Alibaba
+BNU & TAL
+Alibaba
+ByteDance
+Alibaba
+Alibaba
+DeepSeek
+
+53.02
+36.32
+28.20
+61.25
+48.81
+19.53
+34.24
+31.65
+
+38.53
+36.78
+40.82
+48.51
+50.14
+30.95
+47.01
+40.65
+
+36.58
+35.12
+32.99
+42.24
+45.34
+20.57
+36.21
+35.00
+
+30.17
+27.29
+36.15
+49.90
+48.66
+13.26
+44.26
+29.42
+
+36.71
+36.82
+39.11
+55.01
+61.00
+23.86
+58.71
+50.54
+
+37.75
+35.67
+31.40
+47.26
+49.56
+20.90
+46.61
+45.19
+
+43.86
+35.62
+33.68
+53.87
+49.53
+22.76
+40.82
+36.05
+
+GPT-4o
+Claude-4 Sonnet
+Gemini-2.5 Pro
+
+Undisclosed
+Undisclosed
+Undisclosed
+
+API
+API
+API
+
+OpenAI
+Anthropic
+Google
+
+21.15
+41.49
+73.83
+
+26.94
+44.29
+55.13
+
+23.92
+35.36
+46.68
+
+22.13
+27.56
+55.40
+
+34.75
+34.86
+60.68
+
+27.13
+42.34
+54.16
+
+24.17
+40.35
+62.76
+
+instruction-following models (Qwen2.5 (Yang et al., 2024), Qwen3 (Yang et al., 2025)); (b) general reasoning models (QwQ (Team, 2025c), Seed-OSS (Team, 2025b), DeepSeek-V3.1 (Liu et al.,
+2024b)); and (c) education-specific models (MuduoLLM (from BNU & TAL, 2025)).
+Implementation details. In our experimental setup, we evaluate all large language models under
+both zero-shot and few-shot settings, with few-shot examples (0-, 1-, 3-, and 5-shot) drawn from
+a separately partitioned development set, distinct from the evaluation set. All open-source models
+are run using their official code, while closed-source models are accessed via official APIs. We
+consistently use Gemini-2.5 Pro as the LLM-assisted scoring model, unless otherwise specified.
+
+3.2
+
+M AIN R ESULTS
+
+We evaluated all baseline models on OmniEduBench, reporting both per-task category and overall
+accuracy, as shown in Tables 3 and 4). Results show that in the knowledge dimension, Gemini-2.5
+Pro achieves the highest accuracy at 62.78%, while in the cultivation dimension, the reasoningenhanced version of QWQ performs best with an accuracy of 70.27%. This performance highlights
+the challenging nature and strong discriminative power of the constructed OmniEduBench.
+In the knowledge dimension, it is evident that, except for Gemini-2.5 Pro, closed-source models
+generally perform worse than open-source models on our OmniEduBench. For example, GPT-4o
+achieves an accuracy of 24.17%, far below that of Qwen3-8B. This may indicate that the GPT series
+has relatively weak robustness when handling Chinese education exam-style questions. Meanwhile,
+model architecture has a significant impact on performance, such as Seed-OOS outperforms the
+Qwen family by more than 10%. In the cultivation dimension, models generally perform better than
+in the knowledge dimension, which may be due to the fact that the cultivation tasks mainly consist
+of multiple-choice questions, making them simpler compared to knowledge tasks with 11 common
+exam question types. However, differences in performance between different model architectures
+still exist. Overall, GPT-40 performs the worst in both dimensions, with accuracy largely concentrated around 59.57%, possibly because it has not been specifically optimized for this dimension.
+6
+
+Preprint
+
+Table 4: Zero-shot average accuracy (%) across six categories in the cultivation. The highest accuracy is bold, and the second highest is underlined. More results are provided in the Appendix.
+Model
+
+Parameters
+
+Access
+
+Creator
+
+TCS
+
+EMH
+
+SIS
+
+CV
+
+PD
+
+TFS
+
+Average
+
+Qwen3
+Qwen3
+MuduoLLM
+QwQ
+Seed-OSS
+Qwen2.5
+Qwen3
+DeepSeek-V3.1
+
+8B
+14B
+14B
+32B
+36B
+72B
+235B (22B active)
+671B (37B active)
+
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+
+Alibaba
+Alibaba
+BNU & TAL
+Alibaba
+ByteDance
+Alibaba
+Alibaba
+DeepSeek
+
+70.95
+67.79
+64.42
+73.16
+70.74
+67.89
+67.84
+71.58
+
+66.67
+60.77
+60.77
+68.36
+65.30
+64.38
+61.10
+65.41
+
+69.16
+63.72
+63.45
+69.84
+66.03
+65.62
+64.54
+69.02
+
+62.25
+56.20
+66.14
+65.13
+62.82
+59.51
+55.76
+61.96
+
+70.13
+64.31
+67.51
+71.77
+67.12
+65.57
+64.40
+71.00
+
+77.20
+71.50
+64.77
+72.02
+70.47
+67.88
+70.47
+77.20
+
+68.62
+63.60
+63.96
+70.27
+67.18
+65.34
+63.74
+68.55
+
+GPT-4o
+Claude-4-sonnet
+Gemini-2.5-pro
+
+Undisclosed
+Undisclosed
+Undisclosed
+
+API
+API
+API
+
+OpenAI
+Anthropic
+Google
+
+61.63
+71.95
+72.26
+
+59.57
+70.05
+66.07
+
+59.24
+70.92
+70.79
+
+55.33
+64.55
+65.71
+
+57.71
+69.25
+70.32
+
+65.80
+71.50
+67.36
+
+59.57
+70.03
+69.14
+
+Table 5: Average accuracy (%) across six categories in one-shot, three-shot, and five-shot settings
+for the knowledge dimension. The highest accuracy is bold, and the second highest is underlined.
+Model
+
+Parameters
+
+Access
+
+Creator
+
+FD
+
+HH
+
+SSEM
+
+LP
+
+MH
+
+IIS
+
+Average
+
+46.45
+47.79
+40.43
+60.79
+41.73
+
+41.90
+36.72
+27.04
+44.03
+34.65
+
+29.76
+34.98
+20.96
+45.77
+30.72
+
+40.20
+40.74
+28.10
+59.59
+49.67
+
+40.59
+34.35
+22.65
+54.05
+42.12
+
+41.95
+36.99
+26.77
+50.12
+38.15
+
+Qwen3
+MuduoLLM
+Qwen2.5
+Qwen3
+DeepSeek-V3.1
+
+8B
+14B
+72B
+235B (22B activate)
+671B (37B activate)
+
+Weights
+Weights
+Weights
+Weights
+Weights
+
+One-shot setting
+52.80
+Alibaba
+BNU & TAL 27.36
+Alibaba
+21.42
+37.72
+Alibaba
+DeepSeek
+30.00
+
+Qwen3
+MuduoLLM
+Qwen2.5
+Qwen3
+DeepSeek-V3.1
+
+8B
+14B
+72B
+235B (22B activate)
+671B (37B activate)
+
+Weights
+Weights
+Weights
+Weights
+Weights
+
+Three-shot setting
+Alibaba
+52.98
+BNU & TAL 27.32
+Alibaba
+21.43
+Alibaba
+37.52
+DeepSeek
+29.09
+
+46.00
+46.86
+40.86
+60.70
+41.42
+
+39.74
+35.79
+27.27
+43.40
+34.02
+
+30.65
+33.81
+20.41
+45.77
+28.59
+
+39.32
+39.54
+27.12
+59.48
+48.80
+
+40.85
+32.42
+23.88
+52.57
+42.06
+
+41.59
+35.96
+26.83
+49.54
+37.33
+
+Qwen3
+MuduoLLM
+Qwen2.5
+Qwen3
+DeepSeek-V3.1
+
+8B
+14B
+72B
+235B (22B activate)
+671B (37B activate)
+
+Weights
+Weights
+Weights
+Weights
+Weights
+
+Five-shot setting
+56.86
+Alibaba
+BNU & TAL 26.93
+Alibaba
+21.46
+Alibaba
+37.40
+DeepSeek
+29.39
+
+46.70
+46.57
+41.19
+60.41
+41.17
+
+39.44
+36.28
+26.96
+44.13
+32.87
+
+30.65
+35.74
+20.82
+45.77
+28.45
+
+38.24
+39.11
+26.03
+58.61
+47.49
+
+42.23
+34.57
+28.56
+55.58
+38.95
+
+42.35
+36.53
+27.50
+50.32
+36.39
+
+3.3
+
+A NALYSIS AND F INDINGS
+
+In this section, we further conduct extensive experiments at multiple levels, including few-shot examples, OmniEduBench HARD, and various LLM-assisted scoring methods.
+Results in few-shot examples. In Table 5, we present in-context experimental results using different numbers of shots. As the number of shots increases, model performance generally improves;
+however, the overall gain is limited when considering the average results. We speculate that the drop
+in accuracy for some models is due to the fact that they have not (or not appropriately) incorporated
+few-shot examples during the instruction tuning stage. These findings suggest that while few-shot
+prompting can be beneficial for certain models, its effectiveness strongly depends on the model’s
+pretraining and instruction tuning strategies. Moreover, the limited average improvement indicates
+that simply increasing the number of shots may not always lead to substantial gains, highlighting
+the need for more sophisticated methods to integrate few-shot examples effectively.
+Results on OmniEduBench HARD. In Figures 5 and 6, we present the average accuracy of each
+model on OmniEduBench HARD. OmniEduBench HARD is a subset of OmniEduBench, consisting
+of the bottom 26% of samples based on model performance, including approximately 1.552K cultivation samples and 7.620K knowledge samples, for a total of 9.172K examples. The experimental
+results show that: (1) all 11 LLMs exhibit a significant performance drop on OmniEduBench HARD,
+with even the best-performing model, Gemini, achieving less than 50% accuracy; (2) Qwen2.5-72
+performs the worst, significantly lower than the other models, indicating limited capability in handling difficult samples. These findings indicate that further research is needed to enhance LLMs’
+ability to generalize and maintain high performance on hard subsets of educational benchmarks.
+Results using different LLM-assisted scoring methods. In Table 6, we present the experimental results using different LLM-assisted scoring methods. The performance of the scoring model
+7
+
+Preprint
+
+  
+ ) '
+
+ / 3
+
+ + +
+
+ 0 +
+
+ 6 6 ( 0
+
+ , , 6
+
+ $ Y H U D J H
+
+  
+
+  
+
+  
+
+  
+
+ 
+
+    %
+ Q   
+ 4 Z H
+
+   R
+ * 3 7
+
+ 4 Z H
+
+ %
+  %
+ Q H W
+   
+ / 0
+   %
+ Q   
+ N  9
+  V R Q
+ Q   
+ X R /
+    $
+ 4 Z H
+ G H  
+ S 6 H H
+ 0 X G
+ Q   
+ ' H H
+ & O D X
+ 4 Z H
+
+ %
+ U R
+    %
+    S
+ 6   
+  2 6
+ L Q L  
+ 6 H H G
+ * H P
+
+ 4 Z 4
+
+Figure 5: Zero-shot average accuracy (%) on the knowledge dimension of OmniEduBench HARD.
+  
+ 7 & 6
+
+ ( 0 +
+
+ 6 , 6
+
+ & 9
+
+ 3 '
+
+ 7 ) 6
+
+ $ Y H U D J H
+
+  
+
+  
+
+  
+
+  
+
+ 
+
+ 
+
+  %
+    %
+ Q   
+ Q   
+ 4 Z H
+ 4 Z H
+
+ %
+ %
+   
+   R
+ / 0
+   %
+ Q   
+ 6   
+ N  9
+ X R /
+ * 3 7
+    $
+  2 6
+ 4 Z H
+ S 6 H H
+ 0 X G
+ Q   
+ 6 H H G
+ ' H H
+ 4 Z H
+
+ U R
+ Q H W
+    %
+    S
+  V R Q
+ L Q L  
+ G H  
+ * H P
+ & O D X
+
+ 4 Z 4
+
+Figure 6: Zero-shot average accuracy (%) on the cultivation dimension of OmniEduBench HARD.
+directly affects the evaluation outcomes: higher-quality scoring models provide more accurate assessments, leading to more precise measurements of the evaluated models’ capabilities. In this
+study, we employed three scoring models of varying quality. Overall, GPT-4o performed relatively
+poorly as a scoring model, failing to accurately evaluate the responses of LLMs. Consequently,
+the overall effectiveness of LLM-assisted evaluation is reduced when GPT-4o is used, highlighting
+the critical importance of selecting high-quality scoring models to ensure accurate and meaningful
+assessments. These findings suggest that the choice of scoring model can substantially influence the
+perceived performance of evaluated LLMs, and careful selection of scoring models is necessary.
+
+4
+
+R ELATED W ORK
+
+In this section, we present a comprehensive survey of large language models (LLMs) and benchmarks related to our constructed OmniEduBench, encompassing both English and Chinese datasets.
+4.1
+
+L ARGE L ANGUAGE M ODELS
+
+Recently large language models have advanced at an unprecedented pace. Leveraging increasingly
+sophisticated architectures and ever-larger pretraining corpora, they have continuously pushed the
+boundaries of performance in language understanding, reasoning, and generation tasks. Researchers
+have explored various approaches to enhance LLMs’ capabilities. For example, Chain-of-Thought
+prompting (Wei et al., 2022; Team, 2025c;b; Guo et al., 2025; Liu et al., 2024a) has been shown to be
+highly effective in guiding models to perform step-by-step reasoning for complex problem-solving.
+In addition, instruction tuning (Dong et al., 2025; Hu et al., 2025; Yang et al., 2024; 2025) and
+reinforcement learning from human feedback (RLHF) (Ouyang et al., 2022; Schulman et al., 2017)
+have been widely adopted to align model outputs with human intentions and preferences, enabling
+8
+
+Preprint
+
+Table 6: Zero-shot average accuracy (%) across six categories in the knowledge using different
+LLM-assisted scoring methods. The highest accuracy is bold, and the second highest is underlined.
+Model
+
+Parameters
+
+LP
+
+MH
+
+IIS
+
+Average
+
+QwQ
+Seed-OSS
+GPT-4o
+Claude-4 Sonnet
+Gemini-2.5 Pro
+
+Qwen3-A235B-assisted scoring method (Yang et al., 2025)
+32B
+Weights
+Alibaba
+61.26 55.82 45.22 50.10
+36B
+Weights ByteDance 51.16 63.04 51.55 50.38
+Undisclosed
+API
+OpenAI
+23.59 36.77 28.79 23.92
+Undisclosed
+API
+Anthropic 43.54 55.52 40.47 27.77
+Undisclosed
+API
+Google
+75.01 65.67 52.95 56.29
+
+Access
+
+Creator
+
+FD
+
+HH
+
+SSEM
+
+55.66
+62.31
+35.73
+36.17
+61.44
+
+48.36
+57.33
+31.40
+47.48
+61.49
+
+56.39
+55.49
+28.96
+45.34
+67.41
+
+QwQ
+Seed-OSS
+GPT-4o
+Claude-4 Sonnet
+Gemini-2.5 Pro
+
+Gemini-2.5 Pro-assisted scoring method (Comanici et al., 2025)
+32B
+Weights
+Alibaba
+61.25 48.51 42.24 49.90
+36B
+Weights ByteDance 48.81 50.14 45.34 48.66
+Undisclosed
+API
+OpenAI
+21.15 26.94 23.92 22.13
+Undisclosed
+API
+Anthropic 41.49 44.29 35.36 27.56
+Undisclosed
+API
+Google
+73.83 55.13 46.68 55.40
+
+55.01
+61.00
+34.75
+34.86
+60.68
+
+47.26
+49.56
+27.13
+42.34
+54.16
+
+53.87
+49.53
+24.17
+40.35
+62.76
+
+QwQ
+Seed-OSS
+GPT-4o
+Claude-4 Sonnet
+Gemini-2.5 Pro
+
+32B
+36B
+Undisclosed
+Undisclosed
+Undisclosed
+
+GPT-4o-assisted scoring method (Hurst et al., 2024)
+Weights
+Alibaba
+56.61 42.87 37.86 49.28
+Weights ByteDance 45.07 47.89 41.94 48.52
+20.38 23.78 22.03 22.06
+API
+OpenAI
+API
+Anthropic 40.43 41.70 31.89 27.90
+API
+Google
+70.15 51.38 44.13 55.88
+
+54.58
+60.78
+34.31
+35.08
+60.57
+
+37.97
+43.54
+23.30
+34.79
+46.83
+
+49.26
+46.61
+22.51
+38.48
+59.49
+
+LLMs to generate responses that are more natural and reliable in open-ended dialogue and creative
+tasks. Despite these remarkable advances, however, the question of how to comprehensively and
+effectively evaluate the true capabilities of LLMs remains a critical and open challenge.
+4.2
+
+E NGLISH E DUCATION B ENCHMARKS
+
+Researchers have proposed a variety of benchmarks to evaluate the capabilities of LLMs, which
+can be broadly categorized into three types: (1) task-specific evaluations, such as reading comprehension (SQuAD (Rajpurkar et al., 2016)), machine translation (Bojar et al., 2014)), and summarization (Hermann et al., 2015); (2) general knowledge and advanced ability evaluations, for
+example, the Massive Multitask Language Understanding (MMLU) benchmark (Hendrycks et al.,
+2021), which collects questions from real-world exams and textbooks to provide a diverse, multidomain test that effectively probes the breadth and depth of model knowledge. Similarly, the BIGbench benchmark (Srivastava et al., 2022) comprises 204 diverse tasks; and (3) specialized ability
+evaluations. In mathematical reasoning, benchmarks such as GSM8K (Cobbe et al., 2021) and
+MATH (Hendrycks et al., 2021) assess models’ ability to solve complex multi-step problems. In
+code generation, HumanEval (Chen et al., 2021) and MBPP (Austin et al., 2021) have become
+standard benchmarks for measuring programming proficiency. Additionally, datasets such as MTbench (Zheng et al., 2023) have been introduced to evaluate performance in multi-turn, open-ended
+dialogues. Despite the significant contributions of these datasets to advancing LLMs evaluation,
+most of them remain heavily focused on English, with limited coverage of Chinese scenarios.
+4.3
+
+C HINESE E DUCATION B ENCHMARKS
+
+A series of comprehensive Chinese benchmarks have been proposed. For example, CLUE (Xu et al.,
+2020b), as an early work, integrates multiple natural language understanding tasks and has become
+an important reference for evaluating LLMs. Subsequently, benchmarks such as CMMLU (Li et al.,
+2023) and C-Eval (Huang et al., 2023) collect multi-disciplinary, multi-task questions from Chinese university exams, professional qualification tests, and textbooks, effectively assessing models’
+general knowledge and their understanding. Beyond general capability evaluation, researchers have
+also developed Chinese benchmarks targeting specific advanced skills. For example, in mathematical reasoning, CMATH (Wei et al., 2023) tests models’ abilities to solve complex mathematical
+problems. Meanwhile, EduBench (Xu et al., 2025) constructs synthetic corpora for the education,
+but its question types are relatively limited, making it difficult to fully capture models’ Chinese
+potential. To address this critical gap, we propose OmniEduBench — a comprehensive Chinese education benchmark that uniquely combines knowledge and nurturing dimensions, providing a novel,
+holistic framework for systematically evaluating LLMs’ potential as educational assistants.
+9
+
+Preprint
+
+5
+
+C ONCLUSIONS , D ISCUSSIONS AND L IMITATIONS
+
+In this paper, we present OmniEduBench, a comprehensive Chinese educational benchmark designed to address the limitations of existing Chinese educational evaluation benchmarks. By moving beyond simple knowledge retrieval, the benchmark provides a holistic assessment of LLMs’
+capabilities across two core dimensions: the knowledge and cultivation dimensions. We conducted
+extensive experiments on 11 mainstream LLMs, revealing significant performance gaps. While
+some models performed well on the knowledge dimension, their performance on cultivation tasks
+dropped substantially, with even the best-performing models trailing human-level performance by
+nearly 30%. These findings indicate that despite recent advancements in LLM technology, current models still lack the deep reasoning and pedagogical skills necessary to function effectively
+as educational assistants. We believe OmniEduBench will serve as an important tool for guiding
+future research. Looking ahead, OmniEduBench plans to explore more complex question types in
+the cultivation dimension and introduce multimodal educational scenarios, further enhancing the
+benchmark’s role in evaluating and guiding the comprehensive capabilities of LLMs and MLLMs.
+Ethics statement. Our constructed OmniEduBench educational benchmark is built from publicly
+available educational resources as well as authorized private resources permitting open-source use,
+strictly adhering to copyright and licensing requirements. All data have been systematically processed to remove personally identifiable information (PII) and sensitive content, ensuring privacy
+and security. The dataset is intended solely for research purposes, aiming to advance the development and evaluation of large language models (LLMs) in educational scenarios.
+Reprodicibility statement. To ensure reproducibility, we provide detailed descriptions of the
+dataset construction process, annotation criteria, and experimental settings in both the main paper
+and the Appendix. The proposed OmniEduBench education dataset, together with preprocessing
+scripts, evaluation metrics, and model prompts, will be publicly released upon acceptance. All
+experiments were conducted using standard LLM APIs or open-source checkpoints, with model
+versions, hyperparameters, and evaluation protocols explicitly documented. This ensures that other
+researchers can faithfully replicate our results and readily extend the benchmark in future studies.
+
+R EFERENCES
+Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma, Henryk Michalewski, David Dohan,
+Ellen Jiang, Carrie Cai, Michael Terry, Quoc Le, et al. Program synthesis with large language
+models. arXiv preprint arXiv:2108.07732, 2021.
+Ge Bai, Jie Liu, Xingyuan Bu, Yancheng He, Jiaheng Liu, Zhanhui Zhou, Zhuoran Lin, Wenbo Su,
+Tiezheng Ge, Bo Zheng, et al. Mt-bench-101: A fine-grained benchmark for evaluating large
+language models in multi-turn dialogues. arXiv preprint arXiv:2402.14762, 2024.
+Ondřej Bojar, Christian Buck, Christian Federmann, Barry Haddow, Philipp Koehn, Johannes Leveling, Christof Monz, Pavel Pecina, Matt Post, Herve Saint-Amand, Radu Soricut, Lucia Specia,
+and Aleš Tamchyna. Findings of the 2014 workshop on statistical machine translation. In Proceedings of the Ninth Workshop on Statistical Machine Translation, pp. 12–58, 2014.
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Ponde De Oliveira Pinto, Jared
+Kaplan, Harri Edwards, Yuri Burda, Nicholas Joseph, Greg Brockman, et al. Evaluating large
+language models trained on code. arXiv preprint arXiv:2107.03374, 2021.
+Peter Clark, Isaac Cowhey, Oren Etzioni, Tushar Khot, Ashish Sabharwal, Carissa Schoenick, and
+Oyvind Tafjord. Think you have solved question answering? try arc, the ai2 reasoning challenge.
+arXiv:1803.05457v1, 2018.
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser,
+Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, Christopher Hesse, and John
+Schulman. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168,
+2021.
+Gheorghe Comanici, Eric Bieber, Mike Schaekermann, Ice Pasupat, Noveen Sachdeva, Inderjit
+Dhillon, Marcel Blistein, Ori Ram, Dan Zhang, Evan Rosen, et al. Gemini 2.5: Pushing the
+10
+
+Preprint
+
+frontier with advanced reasoning, multimodality, long context, and next generation agentic capabilities. arXiv preprint arXiv:2507.06261, 2025.
+Xinpeng Dong, Min Zhang, Didi Zhu, Ye Jun Jian, Zhang Keli, Aimin Zhou, Fei Wu, and Kun
+Kuang. Erict: Enhancing robustness by identifying concept tokens in zero-shot vision language
+models. In Forty-second International Conference on Machine Learning, 2025.
+MuduoLLM Contributors from BNU and TAL. Muduollm: A high-performance llm for intelligent
+education solutions. https://huggingface.co/ERC-ITEA/MuduoLLM, 2025.
+Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Peiyi Wang, Qihao Zhu, Runxin Xu, Ruoyu
+Zhang, Shirong Ma, Xiao Bi, et al. Deepseek-r1 incentivizes reasoning in llms through reinforcement learning. Nature, 645(8081):633–638, 2025.
+Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt. Measuring massive multitask language understanding. In International Conference on Learning Representations, 2021. URL https://openreview.net/forum?id=
+d7KBjmI3GmQ.
+Karl Moritz Hermann, Tomas Kocisky, Edward Grefenstette, Lasse Espeholt, Will Kay, Mustafa
+Suleyman, and Phil Blunsom. Teaching machines to read and comprehend. Advances in neural
+information processing systems, 28, 2015.
+Jordan Hoffmann, Sebastian Borgeaud, Arthur Mensch, Elena Buchatskaya, Trevor Cai, Eliza
+Rutherford, Diego de Las Casas, Lisa Anne Hendricks, Johannes Welbl, Aidan Clark, et al. Training compute-optimal large language models. arXiv preprint arXiv:2203.15556, 2022.
+Hanglei Hu, Yingying Guo, Zhikang Chen, Sen Cui, Fei Wu, Kun Kuang, Min Zhang, and Bo Jiang.
+Advancing personalized learning with neural collapse for long-tail challenge. In Forty-second
+International Conference on Machine Learning, 2025.
+Yuzhen Huang, Yuzhuo Bai, Zhihao Zhu, Junlei Zhang, Jinghan Zhang, Tangjun Su, Junteng Liu,
+Chuancheng Lv, Yikai Zhang, Yao Fu, et al. C-eval: A multi-level multi-discipline chinese evaluation suite for foundation models. Advances in Neural Information Processing Systems, 36:
+62991–63010, 2023.
+Aaron Hurst, Adam Lerer, Adam P Goucher, Adam Perelman, Aditya Ramesh, Aidan Clark, AJ Ostrow, Akila Welihinda, Alan Hayes, Alec Radford, et al. Gpt-4o system card. arXiv preprint
+arXiv:2410.21276, 2024.
+Haonan Li, Yixuan Zhang, Fajri Koto, Yifei Yang, Hai Zhao, Yeyun Gong, Nan Duan, and Timothy
+Baldwin. Cmmlu: Measuring massive multitask language understanding in chinese, 2023.
+Aixin Liu, Bei Feng, Bin Wang, Bingxuan Wang, Bo Liu, Chenggang Zhao, Chengqi Dengr, Chong
+Ruan, Damai Dai, Daya Guo, et al. Deepseek-v2: A strong, economical, and efficient mixtureof-experts language model. arXiv preprint arXiv:2405.04434, 2024a.
+Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang, Bochao Wu, Chengda Lu, Chenggang Zhao,
+Chengqi Deng, Chenyu Zhang, Chong Ruan, et al. Deepseek-v3 technical report. arXiv preprint
+arXiv:2412.19437, 2024b.
+OpenAI. GPT-4 technical report. arXiv preprint arXiv:2303.08774, 2023.
+Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida, Carroll Wainwright, Pamela Mishkin, Chong
+Zhang, Sandhini Agarwal, Katarina Slama, Alex Ray, et al. Training language models to follow instructions with human feedback. Advances in neural information processing systems, 35:
+27730–27744, 2022.
+Bhrij Patel, Souradip Chakraborty, Wesley A Suttle, Mengdi Wang, Amrit Singh Bedi, and Dinesh Manocha. Aime: Ai system optimization via multiple llm evaluators. arXiv preprint
+arXiv:2410.03131, 2024.
+Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. Squad: 100,000+ questions
+for machine comprehension of text. arXiv preprint arXiv:1606.05250, 2016.
+11
+
+Preprint
+
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal policy
+optimization algorithms. arXiv preprint arXiv:1707.06347, 2017.
+Aarohi Srivastava, Abhinav Rastogi, Abhishek Rao, Abu Awal Md Shoeb, Abubakar Abid, Adam
+Fisch, Adam R Brown, Adam Santoro, Aditya Gupta, Adrià Garriga-Alonso, et al. Beyond the
+imitation game: Quantifying and extrapolating the capabilities of language models. arXiv preprint
+arXiv:2206.04615, 2022.
+Liangtai Sun, Yang Han, Zihan Zhao, Da Ma, Zhennan Shen, Baocai Chen, Lu Chen, and Kai
+Yu. Scieval: A multi-level large language model evaluation benchmark for scientific research.
+In Proceedings of the AAAI Conference on Artificial Intelligence, volume 38, pp. 19053–19061,
+2024.
+Ross Taylor, Marcin Kardas, Guillem Cucurull, Thomas Scialom, Anthony Hartshorn, Elvis Saravia,
+Andrew Poulton, Viktor Kerkez, and Robert Stojnic. Galactica: A large language model for
+science. arXiv preprint arXiv:2211.09085, 2022.
+Anthropic Team. Claude-4 sonnet, 2025a. URL https://www.anthropic.com/news/
+claude-4. [Online; accessed 23-May-2025].
+ByteDance Seed Team.
+Seed-oss open-source models.
+ByteDance-Seed/seed-oss, 2025b.
+
+https://github.com/
+
+Qwen Team. Qwq-32b: Embracing the power of reinforcement learning, March 2025c. URL
+https://qwenlm.github.io/blog/qwq-32b/.
+Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée
+Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, et al. Llama: Open and
+efficient foundation language models. arXiv preprint arXiv:2302.13971, 2023.
+Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel R. Bowman.
+GLUE: A multi-task benchmark and analysis platform for natural language understanding. In
+International Conference on Learning Representations, ICLR, 2019.
+Bin Wang, Chao Xu, Xiaomeng Zhao, Linke Ouyang, Fan Wu, Zhiyuan Zhao, Rui Xu, Kaiwen Liu,
+Yuan Qu, Fukai Shang, et al. Mineru: An open-source solution for precise document content
+extraction. arXiv preprint arXiv:2409.18839, 2024.
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny
+Zhou, et al. Chain-of-thought prompting elicits reasoning in large language models. Advances in
+neural information processing systems, 35:24824–24837, 2022.
+Tianwen Wei, Jian Luan, Wei Liu, Shuang Dong, and Bin Wang. Cmath: Can your language model
+pass chinese elementary school math test?, 2023.
+Bin Xu, Yu Bai, Huashan Sun, Yiguan Lin, Siming Liu, Xinyue Liang, Yaolin Li, Yang Gao, and
+Heyan Huang. Edubench: A comprehensive benchmarking dataset for evaluating large language
+models in diverse educational scenarios. arXiv preprint arXiv:2505.16160, 2025.
+Liang Xu, Hai Hu, Xuanwei Zhang, Lu Li, Chenjie Cao, Yudong Li, Yechen Xu, Kai Sun, Dian
+Yu, Cong Yu, Yin Tian, Qianqian Dong, Weitang Liu, Bo Shi, Yiming Cui, Junyi Li, Jun Zeng,
+Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
+Shaoweihua Liu, Zhe Zhao, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Kyle
+Richardson, and Zhenzhong Lan. CLUE: A Chinese language understanding evaluation benchmark. In Proceedings of the 28th International Conference on Computational Linguistics, pp.
+4762–4772. International Committee on Computational Linguistics, December 2020a.
+Liang Xu, Xuanwei Zhang, Lu Li, Hai Hu, Chenjie Cao, Weitang Liu, Junyi Li, Yudong Li, Kai
+Sun, Yechen Xu, Yiming Cui, Cong Yu, Qianqian Dong, Yin Tian, Dian Yu, Bo Shi, Jun Zeng,
+Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
+Shaoweihua Liu, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, and Zhenzhong Lan.
+Clue: A chinese language understanding evaluation benchmark, 2020b.
+12
+
+Preprint
+
+Liang Xu, Anqi Li, Lei Zhu, Hang Xue, Changtai Zhu, Kangkang Zhao, Haonan He, Xuanwei
+Zhang, Qiyue Kang, and Zhenzhong Lan. Superclue: A comprehensive chinese large language
+model benchmark. arXiv preprint arXiv:2307.15020, 2023.
+An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chengyuan Li,
+Dayiheng Liu, Fei Huang, Haoran Wei, Huan Lin, Jian Yang, Jianhong Tu, Jianwei Zhang, Jianxin
+Yang, Jiaxi Yang, Jingren Zhou, Junyang Lin, Kai Dang, Keming Lu, Keqin Bao, Kexin Yang,
+Le Yu, Mei Li, Mingfeng Xue, Pei Zhang, Qin Zhu, Rui Men, Runji Lin, Tianhao Li, Tianyi Tang,
+Tingyu Xia, Xingzhang Ren, Xuancheng Ren, Yang Fan, Yang Su, Yichang Zhang, Yu Wan,
+Yuqiong Liu, Zeyu Cui, Zhenru Zhang, and Zihan Qiu. Qwen2.5 technical report. arXiv preprint
+arXiv:2412.15115, 2024.
+An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu,
+Chang Gao, Chengen Huang, Chenxu Lv, et al. Qwen3 technical report. arXiv preprint
+arXiv:2505.09388, 2025.
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang,
+Zi Lin, Zhuohan Li, Dacheng Li, Eric Xing, et al. Judging llm-as-a-judge with mt-bench and
+chatbot arena. Advances in neural information processing systems, 36:46595–46623, 2023.
+Wanjun Zhong, Ruixiang Cui, Yiduo Guo, Yaobo Liang, Shuai Lu, Yanlin Wang, Amin Saied,
+Weizhu Chen, and Nan Duan. Agieval: A human-centric benchmark for evaluating foundation
+models. arXiv preprint arXiv:2304.06364, 2023.
+
+A
+
+S UPPLEMENTARY M ATERIAL
+
+Use of LLMs. In this paper, LLMs were utilized in two primary ways: (1) as auxiliary tools for
+data cleaning and preliminary quality checks under human supervision. (2) As evaluation targets
+in benchmark experiments. To ensure data quality, no content directly generated by LLMs was
+included in the released dataset. During manuscript preparation, LLMs were employed for minor
+language polishing. All ideas, methodologies, and conclusions are original contributions of authors.
+A.1
+
+S UPPLEMENTARY S TATISTICS OF O MNI E DU B ENCH
+
+In Table 7, we present the bilingual names and abbreviations of all subjects in the knowledge dimension. In Table 8, we present the bilingual names and abbreviations of all subjects in the cultivation
+dimension. In Tables 9, 10, and 11, we present the detailed data distribution for all 61 subjects.
+In Figures 8 and 7, more examples of various questions in the knowledge and cultivation dimensions.
+
+13
+
+Preprint
+
+Table 7: Bilingual names and abbreviations of all subject in the knowledge dimension.
+
+Abbreviation
+
+English Name
+
+Chinese Name
+
+MATH
+CHEM
+BIO
+PHY
+NSCI
+PSTAT
+PPHY
+CS
+BCHEM
+OS
+AMATH
+CNET
+LANG
+GEO
+HIST
+IART
+ILING
+HSTUD
+HFA
+IARCH
+HACL
+HWP
+POL
+IMOR
+MGMT
+HRM
+TAX
+PSCI
+MARX
+ELOG
+NJE
+CLAW
+CVLAW
+LAW
+TCM
+WMED
+NURS
+IT
+CEM
+EDU
+PSY
+
+Mathematics
+Chemistry
+Biology
+Physics
+Nature & Science
+Probability & Statistics
+Plant Physiology
+Computer Science
+Biochemistry
+Operating Systems
+Advanced Mathematics
+Computer Networks
+Chinese Language
+Geography
+History
+Introduction to Arts
+Introduction to Linguistics
+History Studies / Historiography
+History of Foreign Art
+Introduction to Archaeology
+History of Ancient Chinese Literature
+History of Western Philosophy
+Politics
+Ideology & Morality
+Management
+Human Resource Management
+Taxation
+Political Science
+Marxist Theory
+Economic Logic
+National Judicial Exam
+Criminal Law
+Civil Law
+Law / Jurisprudence
+Traditional Chinese Medicine
+Western Medicine
+Nursing
+Information Technology
+Civil Engineering Materials
+Education
+Psychology
+
+数学
+化学
+生物
+物理
+自然与科学
+概率论与数理统计
+植物生理学
+计算机
+生物化学
+操作系统
+高等数学
+计算机网络
+语文
+地理
+历史
+艺术概论
+语言学概论
+历史学
+外国美术简史
+考古学概论
+中国古代文学史
+西方哲学史
+政治
+思想品德
+管理学
+人力资源管理
+税收学
+政治学
+马克思主义理论
+经济学逻辑能力
+法考真题
+刑法学
+民法学
+法学
+中医综合
+西医综合
+护理学
+信息技术
+土木工程材料
+教育学
+心理学
+
+14
+
+Preprint
+
+Table 8: Bilingual names and abbreviations of all subject in the cultivation dimension
+
+Abbreviation
+
+English Meaning
+
+Chinese Name
+
+Major Categories
+TCS
+EMH
+SIS
+CV
+PD
+TFS
+
+Thinking & Cognitive Skills
+Emotional & Mental Health
+Social & Interpersonal Skills
+Character & Values
+Personalized Development
+Teaching Feedback & Support
+
+思维与认知能力
+情感与心理健康
+社会与人际交往
+品格与价值观
+个性化发展
+教学反馈与支持
+
+Innovation & Creativity
+Problem-Solving Skills
+Critical Thinking
+Guided Reflective Learning
+Metacognitive Abilities
+Guiding Knowledge Transfer
+Emotional Regulation
+Empathy & Compassion
+Self-Confidence & Self-Efficacy
+Psychological Resilience
+Growth Mindset
+Teamwork & Collaboration
+Effective Communication
+Social Responsibility
+Responsibility & Accountability
+Integrity & Honesty
+Personalized Learning Paths
+Interest-Driven Learning
+Heuristic Teaching
+Constructive & Timely Feedback
+
+创新与创造力
+问题解决能力
+批判性思维
+反思性学习引导
+元认知能力
+引导知识迁移能力
+情绪调控能力
+同理心与共情
+自信心与自我效能感
+心理韧性与抗挫力
+成长型思维
+团队协作能力
+有效沟通能力
+社会责任感
+责任感与担当
+正直与诚信
+个性化学习路径
+兴趣驱动学习
+启发式教学
+反馈的建设性与及时性
+
+Subcategories
+IC
+PSS
+CT
+GRL
+MA
+GKT
+ER
+EC
+SCSE
+PR
+GM
+TC
+ECOM
+SR
+RA
+IH
+PLP
+IDL
+HT
+CTF
+
+Table 9: Statistics of OmniEduBench for K-12 in the knowledge dimension.
+English Name
+
+Chinese Name
+
+选择题
+Multiple
+choice
+
+多选题
+Multiple
+answer
+
+填空题
+Fill-inthe-blank
+
+解答题
+Short
+-answer
+
+复合题
+Composite
+questions
+
+总计
+Total
+
+Chinese
+Mathematics
+Chemistry
+History
+Geography
+Moral Education
+Politics
+Physics
+Biology
+Nature Science
+Information
+Technology
+
+语文
+数学
+化学
+历史
+地理
+思想品德
+政治
+物理
+生物
+自然与科学
+
+350
+527
+274
+67
+78
+14
+260
+82
+115
+8
+
+8
+12
+76
+24
+31
+30
+241
+15
+94
+0
+
+1697
+1865
+799
+63
+277
+34
+281
+178
+360
+23
+
+1261
+1181
+477
+211
+173
+56
+64
+46
+124
+22
+
+51
+142
+14
+5
+4
+4
+12
+16
+0
+0
+
+3367
+3727
+1640
+370
+563
+138
+858
+337
+693
+53
+
+信息技术
+
+18
+
+2
+
+14
+
+1
+
+1
+
+36
+
+Total
+
+总计
+
+1793
+
+533
+
+5591
+
+3616
+
+249
+
+11.782K
+
+15
+
+单选题
+Single
+Choice
+230
+31
+36
+109
+158
+26
+36
+0
+146
+61
+98
+7
+179
+43
+66
+0
+91
+193
+62
+19
+0
+2
+0
+57
+159
+51
+137
+91
+53
+0
+2141
+
+Chinese Name
+中医综合
+中国古代文学史
+人力资源管理
+法学
+刑法学
+历史学
+土木工程材料
+外国美术简史
+心理学
+护理学
+操作系统
+政治
+教育学
+高等数学
+植物生理学
+概率论与数理统计
+民法学
+法考真题
+高等生物化学
+税收学
+管理学
+经济学逻辑能力
+考古学概论
+艺术概论
+西医综合
+西方哲学史
+计算机
+计算机网络
+语言学概论
+马克思主义理论
+总计
+
+English Name
+
+Traditional Chinese Medicine
+Chinese Ancient Literary History
+Human Resource Management
+Jurisprudence
+Criminal Law
+History
+Civil Engineering Materials
+A Brief History of Foreign Art
+Psychology
+Nursing
+Operating Systems
+Politics
+Pedagogy
+Advanced Mathematics
+Plant Physiology
+Probability and Mathematical Statistics
+Civil Law
+judicial Practice
+Biochemistry
+Taxation
+Management
+Economics
+Archaeology
+Introduction to Archaeology
+Western Medicine
+Western Philosophy
+Computer Science
+Computer Networks
+Introduction to Linguistics
+Marxist Theory
+
+Total
+
+16
+1635
+
+317
+14
+35
+153
+171
+0
+2
+0
+45
+41
+0
+47
+0
+0
+0
+0
+187
+430
+0
+2
+0
+0
+0
+43
+119
+0
+0
+0
+29
+0
+
+多选题
+Multiple
+choice
+
+479
+
+0
+20
+9
+0
+2
+68
+67
+61
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+7
+0
+0
+121
+80
+0
+0
+0
+0
+24
+20
+
+名词解释
+Term
+explanation
+
+551
+
+0
+27
+38
+0
+3
+6
+21
+37
+35
+5
+0
+0
+45
+0
+134
+2
+0
+0
+70
+30
+0
+0
+0
+45
+0
+0
+0
+0
+22
+31
+
+简答题
+Short
+answer
+
+291
+
+0
+19
+19
+0
+1
+17
+57
+15
+0
+0
+0
+0
+39
+3
+33
+0
+0
+0
+23
+0
+0
+0
+0
+26
+0
+0
+0
+0
+26
+13
+
+Essay
+
+论述题
+
+392
+
+0
+0
+6
+0
+0
+12
+2
+14
+1
+16
+59
+36
+0
+0
+48
+74
+0
+0
+0
+2
+0
+0
+0
+0
+0
+0
+47
+50
+18
+7
+
+案例分析题
+Case
+analysis
+
+151
+
+0
+0
+4
+0
+0
+0
+107
+0
+0
+0
+0
+0
+0
+40
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+填空题
+Fill-inblank
+
+374
+
+0
+0
+0
+0
+0
+0
+39
+0
+0
+0
+0
+0
+0
+55
+0
+257
+0
+0
+0
+23
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+Calculation
+
+计算题
+
+Table 10: Statistics of OmniEduBench for high, college, and professional schools in the knowledge dimension
+
+65
+
+0
+0
+0
+0
+0
+0
+3
+0
+0
+0
+0
+0
+14
+0
+0
+0
+0
+0
+0
+11
+0
+0
+0
+37
+0
+0
+0
+0
+0
+0
+
+判断题
+True/
+False
+
+260
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+202
+58
+0
+0
+0
+0
+0
+0
+0
+0
+
+逻辑推理
+Logical
+reasoning
+
+总计
+
+6339
+
+547
+111
+147
+262
+335
+129
+334
+127
+227
+123
+157
+90
+277
+141
+281
+333
+278
+623
+155
+94
+202
+60
+121
+288
+278
+51
+184
+141
+172
+71
+
+Total
+
+Preprint
+
+Preprint
+
+Table 11: Statistics of OmniEduBench for 20 subjects in the cultivation dimension.
+
+English Name
+
+Chinese Name
+
+Count
+
+Emotional Regulation Skills
+Innovation & Creativity
+Heuristic Teaching
+Sense of Responsibility & Accountability
+Problem-Solving Skills
+Team Collaboration Skills
+Empathy & Sympathy
+Self-Confidence & Self-Efficacy
+Constructiveness & Timeliness of Feedback
+Integrity & Honesty
+Psychological Resilience & Anti-Frustration Ability
+Personalized Learning Paths
+Reflective Learning
+Guiding Knowledge Transfer
+Metacognitive Skills
+Interest-Driven Learning
+Critical Thinking
+Growth Mindset
+Social Responsibility
+Effective Communication Skills
+
+情绪调控能力
+创新与创造力
+启发式教学
+责任感与担当
+问题解决能力
+团队协作能力
+同理心与共情
+自信心与自我效能感
+反馈的建设性与及时性
+正直与诚信
+心理韧性与抗挫力
+个性化学习路径
+反思性学习引导
+知识迁移能力
+元认知能力
+兴趣驱动学习
+批判性思维
+成长型思维
+社会责任感
+有效沟通能力
+
+325
+275
+434
+330
+288
+291
+385
+358
+196
+371
+393
+292
+224
+384
+338
+320
+428
+393
+317
+139
+
+Total
+
+总计
+
+6.481K
+
+我班上有学⽣因家庭暴⼒表现出攻击性⾏为，其他⽼师建议开除他。我认为他需要帮助⽽⾮惩罚。如何说
+服同事？请选择最能体现‘同理⼼与共情’和‘问题解决能⼒’的回答:
+A.这个孩⼦本质不坏，他只是⽤攻击来保护⾃⼰。我们应该分析他的⾏为背后的原因，制定⽀持计划。
+B.开除他只会让他更恨社会，不如我们联合⼼理⽼师做⼀次⾏为评估，再决定⼲预⽅案。
+C.反正他⼜不是我亲⽣的，你们决定吧，别到时候出事怪我没提醒。
+D.我觉得他应该去特殊学校，普通班根本管不了这种孩⼦。
+A student in my class exhibited aggressive behavior due to domestic violence, and other teachers recommended expelling him. I
+think he needs help rather than punishment. How to convince a colleague? Please choose the answer that best reflects 'empathy
+and empathy' and 'problem-solving skills': A. This child is not bad by nature, he just uses aggression to protect himself. We should
+analyze the reasons behind his behavior and develop a support plan.
+B. Expelling him will only make him hate society more, so why not do a behavioral assessment with a psychologist and then
+decide on an intervention plan.
+C. Anyway, he is not my biological son, you decide, don't blame me for not reminding me when something happens.
+D. I think he should go to a special school, ordinary classes can't control this kind of child at all.
+
+答案：B
+Answer: B
+Question within the cultivation dimension
+我在背诵古诗词时总觉得枯燥，记不住，也不知道有什么⽤。怎么才能让传统⽂化学习变得有意义？请选
+择最能体现“兴趣驱动学习”和“知识迁移能⼒”的回答:
+A.你得多抄⼏遍，熟能⽣巧。
+B.考试要考，必须死记硬背下来。
+C.试着把这些诗句⽤在⽇记或作⽂⾥，⽐如⽤‘⻓⻛破浪会有时’⿎励⾃⼰⾯对考试压⼒，你会发现它有现
+实⼒量。
+D.找⼀⾸你喜欢的流⾏歌，看看有没有引⽤古诗的歌词，⽐较⼀下意境。
+I always feel bored when reciting ancient poems, I can't remember them, and I don't know what they are used for. How can we
+make traditional culture learning meaningful? Please choose the answer that best reflects "interest-driven learning" and
+"knowledge transfer ability":
+A. You have to copy it several times, practice makes perfect.
+B. To take the exam, you must memorize it.
+C. Try to use these verses in your diary or composition, such as 'There will be times when the wind and waves will be long' to
+encourage yourself to face the pressure of the exam, and you will find that it has practical power.
+D. Find a pop song you like, see if there are lyrics quoted from ancient poems, and compare the artistic conception.
+.
+
+答案：C
+Answer: C
+Question within the cultivation dimension
+
+Figure 7: Examples of different questions in the knowledge dimension and cultivation dimensions.
+
+17
+
+Preprint
+
+名词解释：⼤晟词派
+Definition:Dasheng School of Ci Poetry:
+
+答案：词是⾳乐⽂学，词⻛常随乐曲的推移⽽产⽣变化，北宋后期⾳乐机构⼤晟府的建
+⽴，促进了当时词⻛的变化，有以周邦彦为代表的⼤晟词派的产⽣。周邦彦作词以协律
+为主，⻓调尤尚铺叙，于⾳律和谐中求词句的浑雅，极沉郁顿挫之致，北宋的慢词发展
+到周邦彦的清真 词，以知⾳律、备法度和⻛格醇雅著称，既⽆柳永的'词语尘下'之病，
+⼜⽆苏轼的'多不协律'之讥，成为后世词⼈取法的榜样，影响极为深远。
+Answer: The establishment of the Dasheng Mansion, a music institution in the late Northern Song Dynasty,
+promoted the change of the style of words at that time, and the emergence of the Dasheng Poetry School
+represented by Zhou Bangyan. Zhou Bangyan's lyrics are mainly based on harmony, and the long tone is
+especially laid out, seeking the elegance of the words and sentences in the harmony of the rhythm,
+extremely melancholic and frustrated, the slow words of the Northern Song Dynasty developed to Zhou
+Bangyan's halal words, known for knowing the rhythm, preparing the law and the style of mellow elegance,
+neither Liu Yong's 'words under the dust', nor Su Shi's ridicule of 'more incongruity', which has become a
+model for later generations of poets to learn from, and the influence is extremely far-reaching.
+
+Noun explanation question within the knowledge dimension
+《⻄厢记》的戏剧冲突线索和情节发展
+The dramatic conflict clues and plot development of "The West Chamber"
+答案：⻄厢记》的戏剧冲突有两条线索⼀是以⽼夫⼈及郑恒为⼀⽅，以崔莺莺、张⽣、红娘为另⼀⽅的冲突⼆是崔莺莺、张⽣、红娘之间的⽭盾冲突。前者
+是主线，后者是辅线。两条线索互相制约，交错展开。第⼆本中孙⻜⻁兵围普救寺是⼀个⼤关⽬。在此之前，莺莺、张⽣与⽼夫⼈的⽭盾冲突是潜在的·表现
+为崔、张⼀⻅钟情之后，两⼈相互爱慕、希望接近，与⽼夫⼈治家谨严、冰霜之操之间的⽭盾，也就是莺莺对爱情的渴望与⽼夫⼈维护礼教、维护⻔阀体⾯
+之间的⽆形冲突。孙⻜⻁的出现，使剧情的发展顿时激化。⽼夫⼈的许愿，张⽣的退敌，崔、张⼆⼈以为天遂⼈愿，不料⽼夫⼈变卦，使他们的理想顿成泡
+影。此后，戏剧冲突发⽣了⼀系列变化崔、张与⽼夫⼈的冲突表⾯化，并且，由于对⽼夫⼈的极端不满，他们私下以'⾮法'的形式结合了。'拷红'是戏剧冲
+突的⼜⼀⼤转折。崔、张私下结合被⽼夫⼈发觉，于是拷问红娘，⽼夫⼈与红娘之间发⽣直接冲突。红娘抓住⽼夫⼈的弱点，勇敢⽃争，迫使⽼夫⼈不得不
+承认崔、张的关系。但⽭盾并没有就此解决。⽼夫⼈在承认了崔、张的婚事后，⽴即提出附加条件张⽣必须应举得官，才能成就婚事，这使得戏剧冲突再起
+波澜。张⽣答应⽼夫⼈的条件，崔、张被迫分离。但崔莺莺却明确提出'此⼀去得官不得官，疾便回来'。⽼夫⼈坚持相府不招⽩⾐⼥婿，莺莺则认为：'但得
+⼀个并头莲，强似状元及第⼆⼈物之间的冲突，已经明显表现为两种婚姻观念的冲突。第五本是戏剧冲突的最后解决。尽管郑恒竭⼒破坏，张⽣仍然在得官
+归来后与莺莺成婚，使故事得以⼤团圆结局。
+Answer: There are two clues to the dramatic conflict in "The West Chamber": one is the conflict between the old lady and Zheng Heng on one side and Cui Yingying,
+Zhang Sheng, and the matchmaker on the other, and the other is the conflict between Cui Yingying, Zhang Sheng, and the matchmaker. The former is the main line, and
+the latter is the auxiliary line. The two clues restrict each other and unfold in a staggered manner. In the second book, Sun Feihu's siege of the Pujiu Temple is a big pass.
+Prior to this, the contradictions and conflicts between Yingying, Zhang Sheng and the old lady were latent After falling in love with Cui and Zhang at first sight, the two
+fell in love with each other and hoped to get closer, and the contradiction between the old lady's rigorous management of the family and the frosty conduct, that is, the
+invisible conflict between Yingying's desire for love and the old lady's maintenance of etiquette and the decency of the gatekeeper. The appearance of Sun Feihu
+suddenly intensified the development of the plot. The old lady's wish, Zhang Sheng's retreat from the enemy, Cui and Zhang thought that heaven had fulfilled their
+wishes, but the old lady changed her mind and their ideals came to naught. Since then, a series of theatrical conflicts have taken place, and the conflict between Cui,
+Zhang and the old lady has surfaced, and, due to extreme dissatisfaction with the old lady, they have been united in private in an 'illegal' form. 'Torture Red' is another
+major turning point in the dramatic conflict. Cui and Zhang's private union was discovered by the old lady, so they tortured the matchmaker, and there was a direct
+conflict between the old lady and the matchmaker. The matchmaker seized the old lady's weakness and fought bravely, forcing the old lady to admit the relationship
+between Cui and Zhang. But the contradiction was not resolved. After the old lady admitted the marriage of Cui and Zhang, she immediately put forward additional
+conditions: Zhang Sheng must be an official in order to achieve the marriage, which made the dramatic conflict make waves again. Zhang Sheng agreed to the old lady's
+conditions, and Cui and Zhang were forced to separate. But Cui Yingying clearly proposed that 'if you go to an official position this time, you will come back when you are
+sick'. The old lady insisted that the prime minister's mansion did not recruit a son-in-law in white, and Yingying believed: 'But there is a parallel lotus, which is stronger
+than the conflict between the champion and the second person, which has obviously manifested itself as a conflict between the two marriage concepts. The fifth book is
+the final resolution of the dramatic conflict. Despite Zheng Heng's efforts to destroy it, Zhang Sheng still married Yingying after returning from the official position, so
+that the story could end happily.
+
+Essay Question within the knowledge dimension
+
+我班上有学⽣因家庭暴⼒表现出攻击性⾏为，其他⽼师建议开除他。我认为他需要帮助⽽⾮惩罚。如何说
+服同事？请选择最能体现‘同理⼼与共情’和‘问题解决能⼒’的回答:
+A.这个孩⼦本质不坏，他只是⽤攻击来保护⾃⼰。我们应该分析他的⾏为背后的原因，制定⽀持计划。
+B.开除他只会让他更恨社会，不如我们联合⼼理⽼师做⼀次⾏为评估，再决定⼲预⽅案。
+C.反正他⼜不是我亲⽣的，你们决定吧，别到时候出事怪我没提醒。
+D.我觉得他应该去特殊学校，普通班根本管不了这种孩⼦。
+A student in my class exhibited aggressive behavior due to domestic violence, and other teachers recommended expelling him. I
+think he needs help rather than punishment. How to convince a colleague? Please choose the answer that best reflects 'empathy
+and empathy' and 'problem-solving skills': A. This child is not bad by nature, he just uses aggression to protect himself. We should
+analyze the reasons behind his behavior and develop a support plan.
+B. Expelling him will only make him hate society more, so why not do a behavioral assessment with a psychologist and then
+decide on an intervention plan.
+C. Anyway, he is not my biological son, you decide, don't blame me for not reminding me when something happens.
+D. I think he should go to a special school, ordinary classes can't control this kind of child at all.
+
+答案：B
+Answer: B
+Question within the cultivation dimension
+周经理近来很不顺⼼，各部⻔都向⼈⼒资源部⻔要⼈，可⼀时哪有那么多合适的⼈啊？这种情况在⼀年中已出现了三次，周经理不明⽩是这
+些部⻔发了疯，还是⾃⼰的⼯作出了错。为了减轻⼯作压⼒，周经理独⾃来到熟悉的酒楼⽤餐，⽆意间听到了⼀段酒楼经理和顾客的对话。
+⼀名顾客⼀脸不悦地向酒按经理抱怨：“前天我和家⼈来⽤餐，⼀致认为⻘椒童⼦鸡最好吃，当时⻘椒童⼦鸡是限量供应特⾊菜；今天我专⻔
+请同事来尝，还特地赶了个早。不想今天⻘椒童⼦鸡成了限时特价菜，害得我被同事嘲笑了⼀番，说我赶早是为了请⼤家吃便宜菜。你听，
+他们还在包间⾥笑呢。”⼀旁的周经理不禁失笑，⼀个不知道外⾯供应什么，⼀个不知道⾃⼰供应什么，不出乱才怪。但转念⼀想，⾃⼰不正
+也犯着同样的错误吗？⼀⽅⾯不清楚公司内部的⼈员情况，每次招⼈都措⼿不及；⼀⽅⾯也不清楚劳动⼒市场供给情况，常常⼀时招不到合
+适的⼈。原先的嘲笑变成了⾃嘲，但这顿晚餐让周经理觉得⾮常满意。请问：(1)周经理从对话中悟出了什么？(2)你认为周经理回到公司后，
+会如何解决他所⾯临的难题？
+Manager Zhou has been very unhappy recently, and all departments are asking for people from the human resources department, but how can there be so many suitable people at one time? This
+situation has occurred three times in a year, and Manager Zhou doesn't understand whether these departments are crazy or his work is wrong. In order to reduce work pressure, Manager Zhou came to
+a familiar restaurant alone to dine and overheard a conversation between the restaurant manager and the customer. A customer complained to the wine manager with a displeased face: "The day
+before yesterday, my family and I came to dine and agreed that the green pepper boy chicken was the most delicious, and the green pepper boy chicken was a limited supply specialty at that time;
+Today I specially invited my colleagues to taste it, and I rushed early. I didn't want the green pepper boy chicken to become a limited-time special dish today, which caused me to be ridiculed by my
+colleagues, saying that I rushed to treat everyone to cheap dishes. Listen, they are still laughing in the private room. Manager Zhou on the side couldn't help but laugh, one didn't know what was
+supplied outside, and the other didn't know what he was supplying, so it was strange that there was no chaos. But on second thought, am I not making the same mistake? On the one hand, I don't know
+the personnel situation within the company, and I am caught off guard every time I recruit people; On the one hand, it is also unclear about the supply of the labor market, and it is often impossible to
+recruit suitable people for a while. The original ridicule turned into self-deprecation, but this dinner made Manager Zhou feel very satisfied. \nMay I ask: (1) What did Manager Zhou learn from the
+conversation? (2) How do you think Manager Zhou will solve the problems he faces after returning to the company?
+
+答案：(1)悟出了⼈⼒资源规划的重要性。（5分）\n(2)制定企业的⼈⼒资源规划，⾸先确认现阶段企业经营战略；（2
+分）其次对现有⼈⼒资源进⾏盘点；（2分）再次对⼈⼒资源的需求和供给进⾏预测，确定⼈⼒资源的净需求；（2分）
+最后执⾏规划。（2分）并对规划实施监控与评估。（2分）
+Answer: (1) Realize the importance of human resource planning. (5 points)\n(2) Formulate the human resource plan of the enterprise, first confirm
+the current business strategy of the enterprise; (2 points) secondly, take stock of existing human resources; (2 points) Forecast the demand and
+supply of human resources again, and determine the net demand for human resources; (2 points) Final implementation plan. (2 points) and
+implement monitoring and evaluation of the plan. (2 points)
+
+Case analysis question within the knowledge dimension
+
+Figure 8: Examples of different questions in the knowledge dimension and cultivation dimensions.
+18
+
+

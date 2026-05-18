@@ -1,0 +1,981 @@
+                                             From EduVisBench to EduVisAgent: A Benchmark and Multi-Agent
+                                                Framework for Reasoning-Driven Pedagogical Visualization
+
+                                                                    Haonian Ji1* , Shi Qiu1* , Siyang Xin1* , Siwei Han1*
+                                                                Zhaorun Chen2 , Dake Zhang3 , Hongyi Wang3 , Huaxiu Yao1
+                                                                1
+                                                                  UNC-Chapel Hill, 2 University of Chicago, 3 Rutgers University
+
+
+
+                                                                   Abstract                                          The common method for producing carbon
+                                                                                                                     dioxide in the laboratory is ( )
+                                                                                                                     A: Charcoal burns.
+                                                 While foundation models (FMs), such as diffu-                       B: Sodium carbonate reacts with dilute hydrochloric acid.
+                                                                                                                     C: Reaction between Marble and Dilute Sulfuric Acid.
+                                                                                                                     D: Reaction between Limestone and Dilute Hydrochloric Acid.
+                                                 sion models and large vision-language models
+arXiv:2505.16832v2 [cs.AI] 27 May 2025
+
+
+
+
+                                                 (LVLMs), have been widely applied in educa-                              Visualize the problem-solving process.
+                                                 tional contexts, their ability to generate peda-
+                                                 gogically effective visual explanations remains
+                                                 limited. Most existing approaches focus pri-
+                                                 marily on textual reasoning, overlooking the
+                                                 critical role of structured and interpretable vi-
+                                                 sualizations in supporting conceptual under-
+                                                 standing. To better assess the visual reason-
+                                                 ing capabilities of FMs in educational settings,
+                                                 we introduce EduVisBench, a multi-domain,                Figure 1: GPT-4o fails to illustrate its problem-solving
+                                                 multi-level benchmark. EduVisBench features              with high-quality, logical, and explanatory visualization.
+                                                 diverse STEM problem sets requiring visually
+                                                 grounded solutions, along with a fine-grained            2024a), including pedagogical agents providing au-
+                                                 evaluation rubric informed by pedagogical the-           tomated classroom assistance and science learning
+                                                 ory. Our empirical analysis reveals that ex-             agents offering textual explanations of problem-
+                                                 isting models frequently struggle with the in-           solving processes (Wu et al., 2023), their appli-
+                                                 herent challenge of decomposing complex rea-
+                                                                                                          cations have predominantly focused on text-based
+                                                 soning and translating it into visual representa-
+                                                 tions aligned with human cognitive processes.            interactions (Wu et al., 2023; Xu et al., 2024). How-
+                                                 To address these limitations, we propose Edu-            ever, in education, especially K-12 settings, creat-
+                                                 VisAgent, a multi-agent collaborative frame-             ing compelling visualizations is crucial for cog-
+                                                 work that coordinates specialized agents for in-         nitive comprehension and overall learning effec-
+                                                 structional planning, reasoning decomposition,           tiveness (Presmeg, 2006). Despite its importance,
+                                                 metacognitive prompting, and visualization de-           there is currently limited understanding of how
+                                                 sign. Experimental results show that EduVis-             FMs can effectively generate visually grounded el-
+                                                 Agent substantially outperforms all baselines,
+                                                                                                          ements (e.g., diagrams, interactive education tools,
+                                                 achieving a 40.2% improvement and deliver-
+                                                 ing more educationally aligned visualizations.           illustrative graphics) to support the pedagogical
+                                                 EduVisBench and EduVisAgent are available                illustration of problem-solving processes.
+                                                 at github.com/aiming-lab/EduVisBench and                    Currently, generating visually grounded ele-
+                                                 github.com/aiming-lab/EduVisAgent.                       ments for pedagogical reasoning poses several chal-
+                                         1       Introduction                                             lenges: (1) decomposing complex reasoning into
+                                                                                                          representable steps that align closely with human
+                                         “To truly teach is not to tell the answer, but to                cognitive processes is non-trivial (Yang et al., 2024;
+                                          illuminate the path."                                           Chen et al., 2024d); (2) precisely producing visual
+                                             While foundation models (FMs), such as dif-                  aids for each sub-step to optimally support learners
+                                          fusion models and large vision-language models                  is challenging (Hong et al., 2025); and (3) different
+                                          (LVLMs), have been extensively adopted in edu-                  educational domains require distinct visualization
+                                          cational domains (Chu et al., 2025; Wang et al.,                styles and formats, making consistent and adequate
+                                             *
+                                             Equal contribution.      Correspondence to: {haonianj,       visual aid delivery difficult (Pandey and Ottley,
+                                         huaxiu}@cs.unc.edu                                               2025). Addressing these obstacles first requires
+
+                                                                                                      1
+a clear picture of how current FMs perform, so
+that future models can be purpose-built to close
+the gaps. Consequently, a comprehensive evalua-
+tion platform is critical for systematically assessing
+FMs on visual pedagogical reasoning.
+   To bridge this gap, we introduce EduVisBench,
+a multi-domain, multi-level benchmark designed
+to evaluate the capacity of foundation models to
+generate pedagogically effective, step-by-step vi-
+sual reasoning. EduVisBench comprises structured
+problem sets across diverse domains, each requir-
+ing multimodal-centric reasoning and solutions
+that prioritize visualization principles such as inter-
+pretability, cognitive alignment, and instructional           Figure 2: Dataset distribution of EduVisBench. Each
+clarity to achieve high evaluation score. To facil-           domain encompasses various sub-domains, collectively
+itate a detailed evaluation, we further develop a             covering 15 comprehensive pedagogical scenarios.
+fine-grained rubric enabling multidimensional as-             2     EduVisBench Benchmark
+sessments of AI-generated visual outputs, focusing            2.1 Overview
+explicitly on pedagogical criteria such as contextual         In this section, we introduce EduVisBench, a novel
+relevance, visual clarity, multimodal coherence,              and challenging benchmark designed to evaluate
+reasoning support, and interactive engagement.                the capability of models to generate logical and ex-
+   Utilizing this benchmark, we conduct exten-                planatory visualizations for educational purposes.
+sive evaluations on a variety of FMs and agents.              As shown in Figure 2, EduVisBench comprises
+Our findings reveal that although current models              1,154 carefully curated STEM questions across
+achieve predominantly correct step-by-step textual            three academic subjects and 15 distinct domains,
+analyses, they frequently fail to generate useful             organized into three levels of difficulty. In addi-
+or faithful visualizations, as depicted in Figure 1.          tion to assessing accuracy in step-by-step problem
+Specifically, our systematic analysis highlights re-          solving, EduVisBench places particular emphasis
+curring challenges including (1) semantic misalign-           on a model’s ability to communicate the reasoning
+ments between textual explanations and visual com-            process clearly and visually—helping students un-
+ponents, (2) omissions of critical steps within ren-          derstand problems through structured, interpretable
+dered diagrams, and (3) structural inconsistencies            visual outputs, as illustrated in Figure 3.
+in code-based visual outputs, collectively under-                Specifically, EduVisBench adopts a multimodal
+mining accuracy, clarity, and interactivity.                  setting in which models are provided with both
+   To address these limitations, we introduce                 textual and visual inputs and are tasked with pro-
+a multi-agent collaborative framework, EduVis-                ducing diverse output formats, including interactive
+Agent, designed to simulate the complete learn-               web pages and visual diagrams. Beyond evaluat-
+ing journey—from initial problem exposure to                  ing the correctness of final answers, we introduce
+deep conceptual understanding. Specifically, a                a fine-grained evaluation framework that assesses
+central planning agent orchestrates six specialized           the quality of visualizations across five key dimen-
+expert agents dedicated to visualization design,              sions: (1) the logical sequencing of visual elements,
+cognitive scaffolding, and metacognitive regula-              (2) the structural richness of the visuals, (3) seman-
+tion. A synthesis module then integrates these                tic alignment with the underlying subject matter,
+expert outputs into interactive, personalized learn-          (4) the clarity and guidance provided for problem-
+ing webpages tailored specifically to human learn-            solving, and (5) the level of interactivity and en-
+ers. Experimental results demonstrate that our                gagement. In the following subsections, we de-
+proposed method EduVisAgent achieves an av-                   scribe our dataset curation process and the design
+erage improvement of 40.2% than current SOTA                  of the evaluation rubric in detail.
+method. This underscores the effectiveness of our
+approach—leveraging modular specialization and                2.2    Dataset Curation
+collaborative integration to produce robust and vi-           EduVisBench is built from several high-quality
+sually grounded learning solutions.                           public educational resources that we carefully cu-
+
+                                                          2
+               Mathematics                                      Chemistry                                         Physics
+                      Question                                      Question                                      Question
+                                                     Discuss the properties and effects of          A force of 50 N is applied to a 5 kg
+        Fill in the blank to make the                oxygen based on your knowledge. In your
+        equation true. 7 + 9 =                                                                      block. What is the acceleration of
+                                                     answer, address whether: 1.Oxygen can
+                                                     act as a fuel. 2.The proportion of oxygen in
+                                                                                                    the block?
+                                                     the air is approximately 21%.
+                   Visualization                                                                               Visualization
+                                                                 Visualization
+
+
+
+
+                           …
+                                                                          …                                              …
+        Visual Guidance: 5/5, Visual Design: 5/5,
+        Coordination: 5/5, Learning Guidance: 5/5,    Visual Guidance: 5/5, Visual Design: 4/5,     Visual Guidance: 5/5, Visual Design: 4/5,
+        Interactivity: 5/5                            Coordination: 5/5, Learning Guidance: 5/5,    Coordination: 5/5, Learning Guidance: 5/5,
+        Total Score: 100%                             Interactivity: 3/5                            Interactivity: 4/5
+                                                      Total Score: 88%                              Total Score: 92%
+
+
+
+Figure 3: Representative examples from EduVisBench, featuring questions from Maths, Chemistry, and Physics
+alongside their corresponding high-scoring visual explanations. These interactive visualizations, generated by our
+multi-agent system EduVisAgent, exemplify well-designed, pedagogically effective outputs for STEM problems.
+
+rated, translated, and adapted to support multi-                               sualization situates the problem within a relevant
+modal visualization learning tasks. Specifically,                              context; (2) Diagram Design: assesses the clarity,
+the chemistry questions are sourced from the C-                                accuracy, and effectiveness of the diagrams used
+MHChem-Benchmark (Zhang et al., 2024a), orig-                                  to represent information; (3) Text–Graphic Inte-
+inally presented in Chinese and meticulously trans-                            gration: measures the coherence between textual
+lated into English with careful attention to scien-                            explanations and visual elements, ensuring mutual
+tific accuracy and terminology. The physics ques-                              interaction; (4) Thought Guidance: examines the
+tions are drawn from the high-school-physics (Ro-                              extent to which the visualization supports reason-
+hith, 2023) dataset, which includes a range of                                 ing processes and highlights critical thinking steps;
+conceptual and quantitative exercises suitable for                             (5) Interactivity: evaluates whether and how the vi-
+secondary-level learners. The mathematics com-                                 sualization invites students engagement, reflection,
+ponent combines easy-level problems from the Il-                               or active manipulation. Each dimension captures
+lustrative Mathematics curriculum with medium-                                 a distinct aspect of effective multimedia learning,
+to hard-level questions selected from the MATH-                                with detailed rubrics provided in Appendix A.1 to
+500 (Lightman et al., 2023) dataset. Furthermore,                              guide the scoring process.
+each domain encompasses diverse sub-domains,
+collectively covering 15 comprehensive pedagog-
+ical scenarios, as illustrated in Figure 2. All data                           Rubrics and Evaluation Procedure. To ensure
+sources were standardized into a unified format and                            a systematic and replicable evaluation pipeline,
+consolidated to enable consistent and comprehen-                               we manually construct detailed scoring rubrics for
+sive evaluation across subjects.                                               each of the five evaluation dimensions, with clear
+                                                                               criteria defined for every level on a 0–5 scale. The
+2.3   Evaluation Metric                                                        visual outputs generated by each model are then as-
+In this subsection, we will detail the performance                             sessed using GPT-4o within a controlled evaluation
+evaluation rubrics in EduVisBench.                                             environment. For static image outputs from text-
+Evaluation Dimensions. To comprehensively eval-                                to-image models, the images are evaluated directly.
+uate the quality of generated visualizations in sup-                           For LVLMs, the generated SVG or HTML code is
+porting student understanding and learning, we in-                             first rendered into its final visual form—either as
+troduce a fine-grained scoring metric grounded in                              a static image or an interactive webpage—before
+five pedagogically motivated dimensions: (1) Con-                              being evaluated. The detailed demonstration of our
+text Visualization: evaluates how clearly the vi-                              scoring procedure is in Figure 4.
+
+                                                                           3
+                                                                                                      Task Planning
+                                                                                                          Agent
+            Visualization Prompt                 + Question                           Question
+
+                                                                                           subgoals    expectation     formula   …
+
+
+
+                                                                                      Conceptual        Reasoning       Metacognitive
+                                                                                       Mapping        Decomposition      Reviewer
+          Diffusion                  LVLMs               Visual Agent                   Agent             Agent
+          Models
+
+                                         Code                  Code
+                                                                                                       Visualization         Interactive
+                                                   Render                                                 Agent               Webpage
+            Image
+                                          or
+    Visualization
+                                                                                     Figure 5: The structure of EduVisAgent.
+                            Web Page            SVG          Web Page
+                            Screenshot         Image         Screenshot
+                                                                               interpretability by embedding distinct instructional
+                                                                               roles directly into the agent workflow. The overall
+                                                                               operation of EduVisAgent proceeds in two stages:
+     Evaluation                           GPT-4o
+                                                                               (1) instructional flow construction and (2) collabo-
+         Visual Guidance: …, Visual Design: …, Coordination: …, Learning
+         Guidance: …, Interactivity: …            Total Score: …
+                                                                               rative solution generation, as detailed below.
+
+                                                                               3.1   Instructional Flow Construction
+Figure 4: Workflow for the EduVisBench benchmark                               The first stage of EduVisAgent focuses on formulat-
+evaluation. Models receive a visualization prompt and
+                                                                               ing a well-structured instructional task based on the
+a question to generate visual outputs. All resulting vi-
+sualizations undergo evaluation by GPT-4o across five                          original problem. A key challenge lies in analyz-
+dimensions to compute a total performance score.                               ing the underlying reasoning structure, identifying
+                                                                               implicit logical dependencies, and associating each
+3   EduVisAgent                                                                reasoning step with relevant conceptual knowledge.
+                                                                               To address this, we employ the Task Planning
+Using the proposed EduVisBench benchmark, we                                   Agent, which systematically organizes the prob-
+systematically evaluate the performance of exist-                              lem into an instructional format suitable for multi-
+ing text-to-image models and LVLMs (see detailed                               modal visualization. Its main functions include: (1)
+results in Table 1 in Section 4). We find that most                            breaking down the problem into coherent subgoals,
+models perform poorly, with average scores below                               (2) clarifying the reasoning expected at each step,
+50 on a 0–100 scale. This underperformance un-                                 (3) aligning each step with domain-specific prin-
+derscores the inherent challenge of decomposing                                ciples or formulas, and (4) anticipating potential
+complex reasoning and translating it into visual                               student misconceptions or cognitive needs. This
+representations that align with human cognitive                                structured formulation provides a pedagogically
+processes to effectively support education—a task                              grounded foundation that guides the downstream
+that remains highly non-trivial.                                               agents in generating coherent, targeted, and educa-
+   To address these challenges, we propose a multi-                            tionally effective visual explanations.
+agent system, EduVisAgent, inspired by pedagog-
+ical theories and designed to emulate the division                             3.2   Collaborative Solution Generation
+of labor and collaborative reasoning found in ex-                              In this stage, EduVisBench executes the instruc-
+pert instructional design. EduVisAgent consists of                             tional task constructed by sequentially activating
+five specialized yet interdependent agents: a Task                             a set of specialized agents, each responsible for
+Planning Agent, which structures the instructional                             completing a specific aspect of the task. As shown
+objective; a Conceptual Mapping Agent, which                                   in Figure 5, these agents operate in a coordinated
+extracts and organizes key information; a Rea-                                 manner to enhance the coherence of instructional
+soning Decomposition Agent, which constructs                                   logic, improving the clarity of visual representation,
+step-by-step problem-solving logic; a Metacogni-                               and ensure alignment with educational objectives.
+tive Reviewer, which encourages summarization                                  Specifically:
+and learner reflection; and a Visualization Agent,                             Conceptual Mapping Agent. This agent is re-
+which generates appropriate visual representations.                            sponsible for extracting and organizing the core
+This design introduces modularity and pedagogical                              components of the input problem. Drawing on
+
+                                                                           4
+the Concrete–Representational–Abstract (CRA) in-             formance patterns emerge across different model
+structional model (Nugroho and Jailani, 2019), it            architectures, academic disciplines, and evaluation
+classifies information into three categories: con-           dimensions in EduVisBench?
+crete entities, representational elements, and ab-
+stract constructs. The agent conducts fine-grained           4.1   Experiment Setup
+categorization and semantic summarization to sup-            Baseline Models. Our experimental evaluation
+port downstream visualization modules.                       encompasses a range of FMs, categorized as fol-
+Reasoning Decomposition Agent. This agent                    lows: (1) Image Generation Models: This cat-
+decomposes complex problems into manageable                  egory includes Flux.1-dev (Labs, 2024), Stable
+subcomponents and provides step-specific instruc-            Diffusion 3.5 Large (SD3.5) (IT Admin, 2024),
+tional guidance. It applies the memory-oriented              and Stable Diffusion XL Base 1.0 (SDXL) (Podell
+FOPS strategy (Miller and Cohen, 2020)—find the              et al., 2023). These models are tasked with gen-
+problem type (e.g., equation solving, conceptual             erating static images directly from textual or vi-
+reasoning, commonsense application, or graphical             sual inputs. (2) Large Vision-Language Models
+interpretation), organize the structure via equations        (LVLMs): We evaluate Deepseek-VL2 (Wu et al.,
+or diagrams, plan the solution path, and solve the           2024), GLM-4V-9B (GLM et al., 2024), MiniCPM-
+task. Based on the decomposed steps, the agent               V2.6 (Yao et al., 2024), Mistral-Small-3.1-24B-
+also identifies critical instructional points that re-       Instruct-2503 (Mistral AI, 2025), Phi-3.5-Vision-
+quire additional support, especially those that bene-        Instruct (Abdin et al., 2024), Phi-4-Multimodal-
+fit from visual scaffolding or interactive guidance.         Instruct (Abouelenin et al., 2025), Qwen2.5-VL-
+Metacognitive Reviewer. Grounded in metacog-                 72B (Team, 2025), GPT-4o (Hurst et al., 2024),
+nitive theory (Schraw and Moshman, 1995), this               Claude 3.7 Sonnet (Anthropic, 2025), and Gemini
+agent supports learners in monitoring their com-             2.0 Flash (Mallick and Kilpatrick, 2025). These
+prehension and reasoning processes. It generates             models are prompted to generate SVG or HTML
+reflective prompts that foster self-questioning and          code, which is then rendered into visual outputs for
+self-correction, encouraging learners to evaluate            evaluation. (3) Specialized Visualization Agent:
+the soundness of their problem-solving approaches.           We also assess v0 (Vercel, 2025), an AI agent
+Visualization Agent. This agent is responsible for           specifically designed to create interactive web
+constructing the “visual guidance” component of              pages based on instructional content.
+the instructional output. Instead of relying on dec-         Evaluation Setups. During evaluation, all gener-
+orative visuals, it emphasizes the use of abstract           ated visualizations are standardized into image for-
+yet pedagogically effective representations—such             mat. For interactive web pages containing buttons,
+as number lines, bar charts, schematic object illus-         an automated script navigates through all accessi-
+trations, graphic organizers, sketch diagrams, and           ble sub-pages, capturing individual screenshots of
+structured data tables. The agent ensures that each          each. Performance is assessed using the evalua-
+visualization is tightly aligned with the underly-           tion metric described in Section 2.3, where GPT-
+ing abstract concept being taught. All visuals are           4o scores the visual outputs based on predefined
+rendered using the v0 (Vercel, 2025) system for              rubrics, assigning a score from 0 to 5 for each of
+web-based deployment.                                        the five dimensions. The cumulative score (maxi-
+                                                             mum 25 points) is then normalized to a 0–100 scale
+4   Experiments                                              for standardized reporting and comparison.
+
+This section outlines the experimental setup for             4.2   Baseline Benchmarking
+benchmarking various foundation models on Edu-               The performance of all evaluated baseline models
+VisBench. We evaluate Diffusion Models, LVLMs,               is detailed in Table 1. Across all evaluated models,
+a specialized visualization agent (v0), and our pro-         the average scores indicate significant room for im-
+posed EduVisAgent. Our investigation seeks to                provement. Diffusion Models generally exhibited
+address the following key questions: (1) How profi-          the lowest performance, with average scores rang-
+cient are existing models at generating high-quality,        ing from 13.8% (Flux.1-dev) to 21.8% (SDXL).
+explanatory visualizations within EduVisBench?               This suggests that direct static image generation,
+(2) Can the proposed EduVisAgent system out-                 while capable of producing visual elements, strug-
+perform current models? (3) What distinct per-               gles substantially with the nuanced requirements of
+
+                                                         5
+      Table 1: Performance of Diffusion Models, Large Vision Language Models and v0 on EduVisBench.
+
+                                        Maths                         Physics                 Chemistry        Avg
+ Method              Vis. Type
+                                 Easy   Medium     Hard        Easy   Medium    Hard   Easy    Medium Hard
+                                                  Diffusion Model
+ Flux.1-dev          Image       13.8    13.4       13.2       11.7     8.5     10.0   20.0     16.6    16.0   13.8
+ SD3.5               Image       17.3    20.3       18.8       16.8    13.0     12.0   22.8     21.7    34.0   18.4
+ SDXL                Image       17.3    23.3       25.5       18.9    15.4     24.0   33.6     30.2    24.0   21.8
+                                          Large Vision Language Model
+ Deepseek VL2        Webpage     20.3    17.1       15.7       17.9    17.0     20.0   16.4     13.8    14.0   17.5
+ GLM-4V-9B           Webpage     22.3    21.1       19.4       24.5    21.5     24.0   22.3     21.5    16.0   21.9
+ MiniCPM-V-2.6       Webpage     24.1    17.3       15.5       19.1    17.4     20.0   14.5     15.2    12.0   19.3
+ Mistral-Small-3.1   Webpage     29.1    31.6       32.2       32.3    33.5     20.0   30.6     27.5    24.0   30.2
+ Phi-3.5             Webpage     25.3    20.7       19.1       21.2    19.5     12.0   20.0     18.6    20.0   21.8
+ Phi-4               Webpage     26.1    25.1       22.9       27.8    25.5     24.0   31.2     27.5    12.0   26.4
+ Qwen2.5-VL-72B      Webpage     24.3    18.1       15.8       19.7    17.1     24.0   18.2     16.4    12.0   20.0
+ Claude 3.7 Sonnet   SVG         61.2    26.7       23.6       18.5    16.9     14.0   47.5     47.2    18.0   42.0
+ Claude 3.7 Sonnet   Webpage     56.2    57.5       55.6       44.8    42.6     24.0   61.1     60.6    64.0   54.6
+ GPT-4o              Webpage     47.6    39.3       37.9       25.7    24.2     24.0   34.3     32.6    36.0   38.1
+ GPT-4o              SVG         36.1    19.7       19.5       13.0    12.8      4.0   30.0     27.5    22.0   26.3
+ Gemini 2.0 Flash    Webpage     46.9    9.5        15.7       31.7    26.5     24.0   32.0     25.8    30.0   43.6
+                                                 Visualization Agent
+ v0                  Webpage     63.0    37.6       47.2       53.3    58.5     52.0   74.7     52.8    68.0   58.2
+
+
+explanative and guiding visualizations for complex             able 23.4 percentage points. This constitutes an
+logical problems in our benchmark.                             approximately 40.2% relative improvement, under-
+   LVLMs typically scored between 17.5%                        scoring the efficacy of our multi-agent architecture
+(Deepseek VL2) and 30.2% (Mistral-Small-3.1).                  and the integration of educational methodologies.
+Notable exceptions include Gemini 2.0 Flash                    Compared to the best performing LVLM (Claude
+(43.6%) and Claude 3.7 Sonnet; the latter’s                    3.7 Sonnet Webpage at 54.6%) and the top diffu-
+significantly better performance with Webpages                 sion model (SDXL at 21.8%), the advancement
+(54.6%) over SVG (42.0%). GPT-4o also showed                   offered by EduVisAgent is even more pronounced.
+a preference for Webpage generation (38.1%) over               These results clearly indicate that the design princi-
+SVG (26.3%), suggesting that prompting advanced                ples underlying EduVisAgent, which incorporate a
+LVLMs for structured interactive webpages                      multi-agent structure and pedagogical strategies, ef-
+can yield more effective visual explanations.                  fectively address many of the limitations observed
+Nevertheless, even these top-tier LVLMs face                   in existing generative models.
+considerable challenges in consistently meeting
+all of evaluation criteria. The visualization agent             4.4   Case Analysis
+v0, specifically designed for webpage generation,
+                                                               To further illustrate the limitations of existing base-
+achieved the highest average score among all
+                                                               lines and how our approach addresses these chal-
+baseline models at 58.2%. This result highlights
+                                                               lenges, we present two case studies in Figure 6.
+the advantage of a specialized agent in this task
+                                                               On the left, for a chemistry question, the GPT-4o-
+over more general-purpose FMs.
+                                                               generated solution lacks intuitive visualization of
+                                                               the chemical processes, resulting in fragmented in-
+4.3   Performance Analysis of EduVisBench                      formation without visual guidance—reflected in a
+Building upon the insights gained from the baseline            low score of just 28%. In contrast, EduVisAgent
+evaluations, we assessed our proposed multi-agent              begins by displaying background images of the rel-
+system, EduVisAgent. The results, presented in Ta-             evant chemical elements, activating students’ prior
+ble 2 demonstrate a substantial leap in performance            knowledge. It then contextualizes each of the four
+for generating explanative and logical valuable vi-            answer options with real-world scenarios, thereby
+sualizations for STEM problems. EduVisAgent                    enhancing students’ understanding of the underly-
+achieved an impressive overall average score of                ing chemical transformations.
+81.6%. Specifically, EduVisAgent surpasses the                    Conversely, for the Carnot cycle efficiency
+best-performing baseline v0 (58.2%), by a remark-              physics problem (right side of Figure 6), the Gem-
+
+                                                           6
+           Method                   Vis. Type         Easy   Medium      Hard   Avg
+
+                                                              Maths
+                                                      90.2     64.5      65.0
+
+           EduVisAgent              Webpage                   Physics           81.6
+                                                      85.3     81.7      84.0
+
+                                                             Chemistry
+                                                      69.0     76.3      76.0
+
+         (a) Performance of our EduVisAgent on EduVisBench.                                 (b) Comparison of average score across all models.
+
+Table 2: Overall comparison of models: left is our EduVisAgent performance, right is the bar chart. EduVisAgent
+achieves the highest average score among all models.
+
+
+                              Lack of Visual Guidance                                               Visual Information Mispresentation
+
+                    Question                                       GPT-4o                                      Question                         Gemini
+       The following changes belong to chemical                                               A Carnot engine operates between 27°C
+       changes are ( )
+       A: Dry the wet clothes B: The glass shatters                                           and 127°C. What is its efficiency?
+       C: Melting Snow        D: Paper Burning
+                                                                                                Visual Guidance: 2/5, Visual Design: 3/5,
+       Visual Guidance: 2/5, Visual Design: 2/5,                                                Coordination: 3/5, Learning Guidance: 2/5,
+       Coordination: 2/5, Learning Guidance: 1/5,                                               Interactivity: 0/5 Total Score: 40%
+       Interactivity: 0/5 Total Score: 28%
+
+                                                                                                The image contains only one chart, and
+       The image fails to illustrate the chemical
+                                                                                                the values represented are incorrect. The
+       process, lacks a clear step-by-step
+                                                                                                heights of 300k and 400k are identical,
+       instructional approach, and offers no
+                                                                                                not reflecting the difference in data values.
+       intuitive visual representation.
+
+
+                                        EduVisAgent (Ours)                                                                 EduVisAgent (Ours)
+
+                                                               …
+
+
+
+                                                                                                                                  …
+                                                                                                                                                 …
+
+
+
+                                                               …
+
+
+
+
+Figure 6: Baseline models versus our EduVisAgent. These examples clearly demonstrate the often poor output qual-
+ity of baseline models, contrasting sharply with the high-quality, effective visualizations produced by EduVisAgent.
+
+ini solution presents a single, flawed chart. Its                                          and learning pathways, EduVisAgent significantly
+depiction of 300K and 400K temperatures with                                               outperforms traditional single-model approaches
+identical heights introduces visual misinformation,                                        in accuracy, guidance, and interactivity.
+failing to accurately represent data differences and
+thereby diminishing its pedagogical value. In stark                                        4.5 Fine-Grained Analysis on Five Evaluation
+contrast, EduVisAgent employs a multi-agent col-                                               Dimensions
+laborative approach: it first generates a concrete
+factory scene to activate students’ working memory                                         Figure 7 reveals distinct performance profiles for
+of the "heat engine" concept. Subsequently, it con-                                        eight well performed evaluated models. In Context
+structs an accurate Carnot cycle diagram and offers                                        Visualization and Diagram Design, most baselines,
+a step-by-step problem breakdown, fostering clear                                          including SDXL, Claude 3.7, and v0, exhibit mod-
+conceptual understanding. Crucially, EduVisAgent                                           erate to low scores, often struggling with providing
+provides interactive visualization components, en-                                         rich situational cues or pedagogically sound visual
+abling users to dynamically adjust temperatures                                            structures, especially for complex problems. v0
+via sliders and observe real-time changes in heat                                          and Claude show relatively better capabilities in
+engine efficiency. This interactive engagement sig-                                        Text-Graphic Integration and Thought Guidance
+nificantly facilitates higher-order thinking skills.                                       compared to other FMs, which generally offer min-
+                                                                                           imal support in these areas. However, all baseline
+  Overall, through coordinated multi-agent opti-                                           models, including v0, are significantly limited in
+mization of image design, instructional structure,                                         the Interactivity dimension, primarily due to their
+
+                                                                                       7
+           Figure 7: Fine-grained performance comparison across our five key evaluation dimensions.
+
+output format (static images/SVG or less dynamic             ing, covering 15 diverse visually grounded educa-
+webpages). In contrast, our EduVisAgent demon-               tional scenarios with multi-level problem sets and
+strates consistently strong performance across all           multimodal-centric solutions, providing a rigorous
+five dimensions. It particularly excels in creating          platform for visual pedagogy assessment.
+rich context visualizations, well-structured diagram         LLM for Scientific Visualization. While some
+designs, and ensuring seamless text-graphic inte-            existing works have preliminarily explored the
+gration. Furthermore, EduVisAgent provides su-               potential of FMs in supporting visual scaffold-
+perior thought guidance and achieves notably high            ing (Podo et al., 2024; Chen et al., 2024c; Pandey
+scores in Interactivity, areas where baseline mod-           and Ottley, 2025; Hong et al., 2025), they are
+els significantly lag. This comprehensive strength           typically fragmented, lack pedagogical grounding,
+highlights EduVisAgent’s advanced ability to gen-            and fail to generalize across diverse educational
+erate not just visualizations, but truly effective and       tasks (Wang et al., 2023a; Ku et al., 2025). For
+interactive pedagogical tools.                               instance, Visual Sketchpad (Hu et al., 2024) at-
+5   Related Work                                             tempts to illustrate problem-solving processes with
+                                                             sketches generated from code. However, these visu-
+LLM for Pedagogical Assistance. Foundation
+                                                             als are often low in quality, lack logical coherence,
+models (FMs), including diffusion models and
+                                                             and fall short in explanatory depth (Wang et al.,
+large vision-language models (LVLMs), have been
+                                                             2025). Other approaches like MatplotAgent (Yang
+increasingly adopted in educational contexts (Chu
+                                                             et al., 2024), PlotGen (Goswami et al., 2025), and
+et al., 2025; Wang et al., 2024a) to support teach-
+                                                             OmniSVG (Yang et al., 2025) leverage plotting
+ing and classroom interactions. EduAgent (Xu
+                                                             and SVG tools to produce more accurate, data-
+et al., 2024) and Teachtune (Jin et al., 2025) en-
+                                                             grounded visualizations. Still, these methods are
+hance the problem-solving process through auto-
+                                                             limited in scope, often addressing only isolated
+mated simulations of student-teacher dialogues,
+                                                             steps rather than providing systematic, end-to-end
+collaborative learning, and task-oriented reason-
+                                                             visual explanations of multi-step problem-solving
+ing. Agents such as SEFL (Zhang et al., 2025)
+                                                             tasks (Vázquez, 2024; Chen et al., 2024a, 2025b).
+and PROF (Nair et al., 2024) synthesize immediate,
+                                                             To overcome these limitations, we propose a multi-
+on-demand feedback to support large-scale instruc-
+                                                             agent collaborative framework, EduVisAgent, that
+tional scenarios. Furthermore, domain-specific
+                                                             simulates the full learning journey—from initial
+agents such as MathChat (Wu et al., 2023), NEW-
+                                                             problem exposure to deep conceptual understand-
+TON (Wang et al., 2023b), and MEDCO (Wei
+                                                             ing—by coordinating specialized agents to gener-
+et al., 2024) further provide textual explanations
+                                                             ate coherent, pedagogically aligned visualizations
+tailored to scientific and medical education. While
+                                                             throughout the reasoning process.
+these systems address diverse pedagogical needs,
+their focus remains largely on text-based interac-           6   Conclusion
+tions (Wu et al., 2023; Xu et al., 2024; Cui et al.,         This paper addressed the challenge of generating
+2024), overlooking the critical role of visualization        pedagogically meaningful visual explanations with
+in fostering conceptual understanding and improv-            AI systems. We introduced EduVisBench, a bench-
+ing learning outcomes (Presmeg, 2006). Despite               mark revealing that existing models often produce
+its pedagogical importance, the capacity of FMs              inadequate visual outputs. To overcome this, we
+and agents to generate logical, explanatory visual           proposed EduVisAgent, a collaborative multi-agent
+illustrations remains underexplored. EduVisBench             framework. Experiments show EduVisAgent sig-
+is the first comprehensive benchmark designed to             nificantly outperforms all baselines, demonstrating
+systematically evaluate FMs’ ability to produce              the potential of agent-based systems for advancing
+pedagogically effective, step-by-step visual reason-         educational visualization.
+
+                                                         8
+References                                                      2024d. Autoprm: Automating procedural su-
+                                                                pervision for multi-step reasoning via control-
+Marah Abdin, Sam Ade Jacobs, Ammar Ahmad                        lable question decomposition.    arXiv preprint
+ Awan, Jyoti Aneja, Ahmed Awadallah, Hany Has-                  arXiv:2402.11452.
+ san Awadalla, Nguyen Bach, Amit Bahree, Arash
+ Bakhtiari, Harkirat Singh Behl, Alon Benhaim,
+                                                              Zhendong Chu, Shen Wang, Jian Xie, Tinghui Zhu,
+ Misha Bilenko, Johan Bjorck, Sébastien Bubeck,
+                                                                Yibo Yan, Jinheng Ye, Aoxiao Zhong, Xuming Hu,
+ Martin Cai, Caio C’esar Teodoro Mendes, Weizhu
+                                                                Jing Liang, Philip S Yu, and 1 others. 2025. Llm
+ Chen, Vishrav Chaudhary, Parul Chopra, and 69 oth-
+                                                                agents for education: Advances and applications.
+ ers. 2024. Phi-3 technical report: A highly capa-
+                                                                arXiv preprint arXiv:2503.11733.
+ ble language model locally on your phone. ArXiv,
+ abs/2404.14219.
+                                                              Chenhang Cui, An Zhang, Yiyang Zhou, Zhaorun Chen,
+Abdelrahman Abouelenin, Atabak Ashfaq, Adam Atkin-              Gelei Deng, Huaxiu Yao, and Tat-Seng Chua. 2024.
+  son, Hany Hassan Awadalla, Nguyen Bach, Jianmin               Fine-grained verifiers: Preference modeling as next-
+  Bao, Alon Benhaim, Martin Cai, Vishrav Chaudhary,             token prediction in vision-language alignment. arXiv
+  Congcong Chen, Dongdong Chen, Dongdong Chen,                  preprint arXiv:2410.14148.
+  Junkun Chen, Weizhu Chen, Yen-Chun Chen, Yi ling
+  Chen, Qi Dai, Xiyang Dai, Ruchao Fan, and 54 oth-           Team GLM, Aohan Zeng, Bin Xu, Bowen Wang, Chen-
+  ers. 2025. Phi-4-mini technical report: Compact yet           hui Zhang, Da Yin, Diego Rojas, Guanyu Feng, Han-
+  powerful multimodal language models via mixture-              lin Zhao, Hanyu Lai, Hao Yu, Hongning Wang, Jiadai
+  of-loras. ArXiv, abs/2503.01743.                              Sun, Jiajie Zhang, Jiale Cheng, Jiayi Gui, Jie Tang,
+                                                                Jing Zhang, Juanzi Li, and 37 others. 2024. Chatglm:
+Cognition AI. 2024. Devin ai: World’s first ai software         A family of large language models from glm-130b to
+  engineer.                                                     glm-4 all tools. Preprint, arXiv:2406.12793.
+
+Anthropic. 2025. Claude 3.7 sonnet and claude code.           Kanika Goswami, Puneet Mathur, Ryan Rossi, and
+  https://www.anthropic.com/news/claude-3-7                     Franck Dernoncourt. 2025. Plotgen: Multi-agent
+ -sonnet. Accessed: 2025-05-16.                                 llm-based scientific data visualization via multimodal
+                                                                feedback. arXiv preprint arXiv:2502.00988.
+Jun Shern Chan, Neil Chowdhury, Oliver Jaffe, James
+  Aung, Dane Sherburn, Evan Mays, Giulio Starace,
+                                                              Siwei Han, Peng Xia, Ruiyi Zhang, Tong Sun, Yun Li,
+  Kevin Liu, Leon Maksin, Tejal Patwardhan, and 1
+                                                                Hongtu Zhu, and Huaxiu Yao. 2025. Mdocagent: A
+  others. 2024. Mle-bench: Evaluating machine learn-
+                                                                multi-modal multi-agent framework for document
+  ing agents on machine learning engineering. arXiv
+                                                                understanding. arXiv preprint arXiv:2503.13964.
+  preprint arXiv:2410.07095.
+
+Jiawen Chen, Jianghao Zhang, Huaxiu Yao, and Yun              Jiayi Hong, Christian Seto, Arlen Fan, and Ross Ma-
+   Li. 2025a. Celltypeagent: Trustworthy cell type an-           ciejewski. 2025. Do llms have visualization literacy?
+   notation with large language models. arXiv preprint           an evaluation on modified visualizations to test gen-
+   arXiv:2505.08844.                                             eralization in data interpretation. IEEE Transactions
+                                                                 on Visualization and Computer Graphics.
+Zhaorun Chen, Yichao Du, Zichen Wen, Yiyang Zhou,
+  Chenhang Cui, Zhenzhen Weng, Haoqin Tu, Chaoqi              Yushi Hu, Weijia Shi, Xingyu Fu, Dan Roth, Mari Os-
+  Wang, Zhengwei Tong, Qinglan Huang, and 1 others.             tendorf, Luke Zettlemoyer, Noah A Smith, and Ran-
+  2024a. Mj-bench: Is your multimodal reward model              jay Krishna. 2024. Visual sketchpad: Sketching as
+  really a good judge for text-to-image generation?             a visual chain of thought for multimodal language
+  arXiv preprint arXiv:2407.04842.                              models. arXiv preprint arXiv:2406.09403.
+Zhaorun Chen, Mintong Kang, and Bo Li. 2025b.                 Aaron Hurst, Adam Lerer, Adam P Goucher, Adam
+  Shieldagent: Shielding agents via verifiable safety           Perelman, Aditya Ramesh, Aidan Clark, AJ Ostrow,
+  policy reasoning. arXiv preprint arXiv:2503.22738.            Akila Welihinda, Alan Hayes, Alec Radford, and 1
+                                                                others. 2024. Gpt-4o system card. arXiv preprint
+Zhaorun Chen, Zhen Xiang, Chaowei Xiao, Dawn
+                                                                arXiv:2410.21276.
+  Song, and Bo Li. 2024b. Agentpoison: Red-teaming
+  llm agents via poisoning memory or knowledge
+  bases. Advances in Neural Information Processing            IT Admin. 2024. Introducing Stable Diffusion 3.5. ht
+  Systems, 37:130185–130213.                                     tps://stability.ai/news/introducing-sta
+                                                                 ble-diffusion-3-5. Updated October 29, 2024;
+Zhaorun Chen, Zhuokai Zhao, Hongyin Luo, Huaxiu                 Accessed: 2025-05-20.
+  Yao, Bo Li, and Jiawei Zhou. 2024c. Halc: Object
+  hallucination reduction via adaptive focal-contrast         Carlos E Jimenez, John Yang, Alexander Wettig,
+  decoding. arXiv preprint arXiv:2403.00425.                    Shunyu Yao, Kexin Pei, Ofir Press, and Karthik
+                                                                Narasimhan. 2023. Swe-bench: Can language mod-
+Zhaorun Chen, Zhuokai Zhao, Zhihong Zhu, Ruiqi                  els resolve real-world github issues? arXiv preprint
+  Zhang, Xiang Li, Bhiksha Raj, and Huaxiu Yao.                 arXiv:2310.06770.
+
+
+                                                          9
+Hyoungwook Jin, Minju Yoo, Jeongeon Park, Yokyung               Luca Podo, Muhammad Ishmal, and Marco Angelini.
+  Lee, Xu Wang, and Juho Kim. 2025. Teachtune:                    2024. Vi (e) va llm! a conceptual stack for evaluating
+  Reviewing pedagogical agents against diverse stu-               and interpreting generative ai-based visualizations.
+  dent profiles with simulated students. In Proceedings           arXiv preprint arXiv:2402.02167.
+  of the 2025 CHI Conference on Human Factors in
+  Computing Systems, pages 1–28.                                Norma Presmeg. 2006. Research on visualization
+                                                                  in learning and teaching mathematics. Handbook
+Max Ku, Thomas Chong, Jonathan Leung, Krish                       of research on the psychology of mathematics
+ Shah, Alvin Yu, and Wenhu Chen. 2025. The-                       education, pages 205–235.
+ oremexplainagent: Towards multimodal explana-
+ tions for llm theorem understanding. arXiv preprint            Jianing Qiu, Kyle Lam, Guohao Li, Amish Acharya,
+ arXiv:2502.19400.                                                 Tien Yin Wong, Ara Darzi, Wu Yuan, and Eric J
+Black Forest Labs. 2024. Flux. https://github.com                  Topol. 2024. Llm-based agentic systems in medicine
+  /black-forest-labs/flux.                                         and healthcare.    Nature Machine Intelligence,
+                                                                   6(12):1418–1420.
+Hunter Lightman, Vineet Kosaraju, Yura Burda, Harri
+  Edwards, Bowen Baker, Teddy Lee, Jan Leike,                   M. Rohith. 2023. High school physics. https://hugg
+  John Schulman, Ilya Sutskever, and Karl Cobbe.                  ingface.co/datasets/mrohith29/high-schoo
+  2023. Let’s verify step by step. arXiv preprint                 l-physics. Accessed: 2025-05-15.
+  arXiv:2305.20050.
+                                                                Gregory Schraw and David Moshman. 1995. Metacog-
+Shrestha Basu Mallick and Logan Kilpatrick. 2025.                 nitive theories. Educational Psychology Review,
+  Gemini 2.0: Flash, flash-lite and pro. https:                   7(4):351–371.
+  //developers.googleblog.com/en/gemini-2
+  -family-expands/. Accessed: 2025-05-20.                       Mohit Shridhar, Xingdi Yuan, Marc-Alexandre Côté,
+Jiageng Mao, Junjie Ye, Yuxi Qian, Marco Pavone, and             Yonatan Bisk, Adam Trischler, and Matthew
+   Yue Wang. 2023. A language agent for autonomous               Hausknecht. 2020. Alfworld: Aligning text and em-
+   driving. arXiv preprint arXiv:2311.10813.                     bodied environments for interactive learning. arXiv
+                                                                 preprint arXiv:2010.03768.
+Chad M. Miller and Jonathan D. Cohen. 2020.
+  Metacognitive prompts in multimedia learning: A               Chan Hee Song, Jiaman Wu, Clayton Washing-
+  meta-analysis. Educational Psychology Review,                   ton, Brian M Sadler, Wei-Lun Chao, and Yu Su.
+  32(3):979–1003.                                                 2023. Llm-planner: Few-shot grounded planning
+                                                                  for embodied agents with large language mod-
+Mistral AI. 2025. Mistral small 3.1: Sota. multimodal.            els. In Proceedings of the IEEE/CVF international
+  multilingual. apache 2.0. https://mistral.ai/n                  conference on computer vision, pages 2998–3009.
+  ews/mistral-small-3-1. Accessed: 2025-05-20.
+Inderjeet Nair, Jiaye Tan, Xiaotian Su, Anne Gere,              Giulio Starace, Oliver Jaffe, Dane Sherburn, James
+  Xu Wang, and Lu Wang. 2024. Closing the loop:                   Aung, Jun Shern Chan, Leon Maksin, Rachel Dias,
+  Learning to generate writing feedback via language              Evan Mays, Benjamin Kinsella, Wyatt Thompson,
+  model simulated student revisions. arXiv preprint               and 1 others. 2025. Paperbench: Evaluating ai’s
+  arXiv:2410.08058.                                               ability to replicate ai research. arXiv preprint
+                                                                  arXiv:2504.01848.
+Fan Nie, Lan Feng, Haotian Ye, Weixin Liang, Pan
+  Lu, Huaxiu Yao, Alexandre Alahi, and James                    Qwen Team. 2025. Qwen2.5-vl.
+  Zou. 2025. Weak-for-strong: Training weak meta-
+  agent to harness strong executors. arXiv preprint             Pere-Pau Vázquez. 2024. Are llms ready for visual-
+  arXiv:2504.04785.                                               ization? In 2024 IEEE 17th Pacific Visualization
+                                                                  Conference (PacificVis), pages 343–352. IEEE.
+Satria Nugroho and Jailani Jailani. 2019. The effective-
+  ness of concrete representational abstract approach           Vercel. 2025. v0: Ai chat interface for web automation.
+  (cra) approach and problem solving approach on                  https://v0.dev. Accessed: 2025-05-20.
+  mathematical representation ability at elementary
+  school. KnE Social Sciences.                                  Lei Wang, Songheng Zhang, Yun Wang, Ee-Peng Lim,
+Saugat Pandey and Alvitta Ottley. 2025. Benchmarking              and Yong Wang. 2023a. Llm4vis: Explainable vi-
+  visual language models on standardized visualization            sualization recommendation using chatgpt. arXiv
+  literacy tests. arXiv preprint arXiv:2503.16632.                preprint arXiv:2310.07652.
+
+Dustin Podell, Zion English, Kyle Lacey, A. Blattmann,          Shen Wang, Tianlong Xu, Hang Li, Chaoli Zhang,
+  Tim Dockhorn, Jonas Muller, Joe Penna, and Robin                Joleen Liang, Jiliang Tang, Philip S Yu, and Qing-
+  Rombach. 2023. Sdxl: Improving latent diffusion                 song Wen. 2024a. Large language models for ed-
+  models for high-resolution image synthesis. ArXiv,              ucation: A survey and outlook. arXiv preprint
+  abs/2307.01952.                                                 arXiv:2403.18105.
+
+
+                                                           10
+Yaoting Wang, Shengqiong Wu, Yuecheng Zhang,                     performance-enhanced llm trading agent with layered
+  Shuicheng Yan, Ziwei Liu, Jiebo Luo, and Hao                   memory and character design. In Proceedings of the
+  Fei. 2025. Multimodal chain-of-thought reason-                 AAAI Symposium Series, volume 3, pages 595–597.
+  ing: A comprehensive survey. arXiv preprint
+  arXiv:2503.12605.                                            Puzhen Yuan, Angyuan Ma, Yunchao Yao, Huaxiu
+                                                                 Yao, Masayoshi Tomizuka, and Mingyu Ding. 2025.
+Yi Ru Wang, Jiafei Duan, Dieter Fox, and Siddhartha              Remac: Self-reflective and self-evolving multi-agent
+  Srinivasa. 2023b. Newton: Are large language mod-              collaboration for long-horizon robot manipulation.
+  els capable of physical reasoning? arXiv preprint              arXiv preprint arXiv:2503.22122.
+  arXiv:2310.07018.
+                                                               Di Zhang, Wei Liu, Qian Tan, Jingdan Chen, Hang
+Zora Zhiruo Wang, Jiayuan Mao, Daniel Fried, and                 Yan, Yuliang Yan, Jiatong Li, Weiran Huang, Xi-
+  Graham Neubig. 2024b. Agent workflow memory.                   angyu Yue, Dongzhan Zhou, Shufei Zhang, Mao
+  arXiv preprint arXiv:2409.07429.                               Su, Hansen Zhong, Yuqiang Li, and Wanli Ouyang.
+                                                                 2024a. Chemllm: A chemical large language model.
+Hao Wei, Jianing Qiu, Haibao Yu, and Wu Yuan. 2024.              Preprint, arXiv:2402.06852.
+  Medco: Medical education copilots based on a multi-
+  agent framework. arXiv preprint arXiv:2408.12496.            Kechi Zhang, Jia Li, Ge Li, Xianjie Shi, and Zhi
+                                                                 Jin. 2024b. Codeagent: Enhancing code gener-
+Yiran Wu, Feiran Jia, Shaokun Zhang, Hangyu Li,                  ation with tool-integrated agent systems for real-
+  Erkang Zhu, Yue Wang, Yin Tat Lee, Richard Peng,               world repo-level coding challenges. arXiv preprint
+  Qingyun Wu, and Chi Wang. 2023. Mathchat: Con-                 arXiv:2401.07339.
+  verse to tackle challenging math problems with llm
+  agents. arXiv preprint arXiv:2306.01337.                     Mike Zhang, Amalie Pernille Dilling, Léon Gondel-
+                                                                 man, Niels Erik Ruan Lyngdorf, Euan D Lindsay,
+Zhiyu Wu, Xiaokang Chen, Zizheng Pan, Xingchao                   and Johannes Bjerva. 2025. Sefl: Harnessing large
+  Liu, Wen Liu, Damai Dai, Huazuo Gao, Yiyang                    language model agents to improve educational feed-
+  Ma, Chengyue Wu, Bingxuan Wang, Zhenda Xie,                    back systems. arXiv preprint arXiv:2502.12927.
+  Yu Wu, Kai Hu, Jiawei Wang, Yaofeng Sun, Yukun
+  Li, Yishi Piao, Kang Guan, Aixin Liu, and 8 oth-             Shuyan Zhou, Frank F Xu, Hao Zhu, Xuhui Zhou,
+  ers. 2024. Deepseek-vl2: Mixture-of-experts vision-            Robert Lo, Abishek Sridhar, Xianyi Cheng, Tianyue
+  language models for advanced multimodal under-                 Ou, Yonatan Bisk, Daniel Fried, and 1 others.
+  standing. Preprint, arXiv:2412.10302.                          2023. Webarena: A realistic web environment
+                                                                 for building autonomous agents. arXiv preprint
+Songlin Xu, Xinyu Zhang, and Lianhui Qin. 2024. Edu-             arXiv:2307.13854.
+  agent: Generative student agents in learning. arXiv
+  preprint arXiv:2404.07963.                                   Yiyang Zhou, Zhaoyang Wang, Tianle Wang, Shangyu
+                                                                 Xing, Peng Xia, Bo Li, Kaiyuan Zheng, Zijian Zhang,
+Yiying Yang, Wei Cheng, Sijin Chen, Xianfang Zeng,               Zhaorun Chen, Wenhao Zheng, and 1 others. 2025.
+  Jiaxu Zhang, Liao Wang, Gang Yu, Xingjun Ma, and               Anyprefer: An agentic framework for preference data
+  Yu-Gang Jiang. 2025. Omnisvg: A unified scalable               synthesis. arXiv preprint arXiv:2504.19276.
+  vector graphics generation model. arXiv preprint
+  arXiv:2504.06263.
+
+Zhiyu Yang, Zihan Zhou, Shuo Wang, Xin Cong,
+  Xu Han, Yukun Yan, Zhenghao Liu, Zhixing Tan,
+  Pengyuan Liu, Dong Yu, and 1 others. 2024. Mat-
+  plotagent: Method and evaluation for llm-based
+  agentic scientific data visualization. arXiv preprint
+  arXiv:2402.11453.
+
+Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak
+  Shafran, Karthik Narasimhan, and Yuan Cao. 2023.
+  React: Synergizing reasoning and acting in language
+  models. In International Conference on Learning
+  Representations (ICLR).
+
+Yuan Yao, Tianyu Yu, Ao Zhang, Chongyi Wang, Junbo
+  Cui, Hongji Zhu, Tianchi Cai, Haoyu Li, Weilin
+  Zhao, Zhihui He, and 1 others. 2024. Minicpm-v:
+  A gpt-4v level mllm on your phone. arXiv preprint
+  arXiv:2408.01800.
+
+Yangyang Yu, Haohang Li, Zhi Chen, Yuechen Jiang,
+  Yang Li, Denghui Zhang, Rong Liu, Jordan W Su-
+  chow, and Khaldoun Khashanah. 2024. Finmem: A
+
+
+                                                          11
+A     Appendix
+
+A.1    Visualization disciplines
+Table 3 illustrates the disciplines and types in our EduVisBench.
+
+
+                       Discipline                   Common Visualization Types
+                                                    Number lines, function graphs, and other formalized visual
+                      Mathematics
+                                                    tools.
+                        Physics                     Diagrams involving levers, rigid body motion, forces, and fields.
+                                                    Molecular structures and schematic representations of standard
+                       Chemistry
+                                                    laboratory apparatus.
+
+
+
+                     Table 3: Representative Visualization Types Across Academic Disciplines
+
+
+
+A.2    Evaluation Metric
+Visual Scenario Design Guidance The category of "Visual Scenario Design Guidance" outlines differ-
+ent levels of visualizing mathematical concepts, progressing from basic text-only representations to highly
+integrated visual-text formats. Through five defined levels, the framework demonstrates how visual ele-
+ments can enhance students’ understanding and engagement with abstract ideas, guiding instructional de-
+signers to gradually enrich scenarios, add annotations, and strengthen contextual connections—ultimately
+achieving the goal of visually presenting the full flow and conceptual structure of the content.The five
+levels of Visual Scenario Design Guidance are as follows:
+
+
+             Level          Description
+                            The image contains no scenes or illustrations, presenting only text and formulas. It
+            Level 1         lacks contextual visual cues, failing to spark interest or connect the concepts to real-life
+                            situations.
+                            The image includes a single static illustration or low-fidelity mockup with minimal
+            Level 2         labeling that does not highlight variables or key objects, offering limited context and
+                            poor immersion.
+                            Multiple static schematic diagrams or sketch-style illustrations appear in the image,
+            Level 3         labeling core objects, variables, and simple steps, providing basic visual guidance but
+                            lacking layered coherence.
+                            The image integrates scenario illustrations, storyboard panels, and infographics to
+            Level 4         present the process in multiple views and steps, with annotations and captions guiding
+                            students through mapping abstract concepts to context.
+                            Storyboard-style illustrations and infographics are fused into a single image, including
+            Level 5         overview, detailed close-ups, and key pathway diagrams with comprehensive annota-
+                            tions, allowing students to grasp the entire flow and conceptual network at a glance.
+
+
+
+                             Table 4: Five Levels of Visual Scenario Design Guidance
+
+
+
+Visual Illustration Design The category of "Visual Illustration Design" describes progressive levels
+of visual elements used to support students’ systematic understanding of quantities and relationships. It
+ranges from no visual aids to complex integrated dashboards that deeply connect data and model structures.
+Through five levels, the framework guides designers to improve clarity, coherence, and contextual richness
+of visual illustrations, enhancing students’ analytic and comparative abilities.
+
+                                                             12
+             Level       Description
+                         The image contains no charts, axes, or flow diagrams—only text. Without embedded
+            Level 1      visual tools, students cannot systematically organize or analyze quantities and relation-
+                         ships.
+                         The image presents a static number line and colored bar chart with complete scales and
+            Level 2      a legend, helping students gain a basic understanding of numerical changes. However,
+                         it lacks comparison and contextual layering.
+                         The image presents a static number line and colored bar chart with complete scales and
+            Level 3      legends, helping students grasp basic numerical changes visually, though comparison
+                         and context layering are absent.
+                         The image combines number lines, flowcharts, infographics, and arrow annotations;
+            Level 4      multiple visuals are juxtaposed or overlaid to show processes and variable changes for
+                         a coherent modeling view.
+                         The image presents a dashboard-style visualization integrating axes, bar charts, flow
+            Level 5      diagrams, heatmaps, etc., with linked elements that deeply visualize data relationships
+                         and model structure.
+
+
+
+                              Table 5: Five Levels of Visual Illustration Design
+
+
+Text–Illustration Coordination The category of "Text–Illustration Coordination" describes levels of
+alignment and integration between textual content and visual elements within images. This progression
+ranges from complete disconnection to seamless fusion, enabling students to effectively map and synthe-
+size text, formulas, and graphics. The framework guides designers in strengthening links between verbal
+and visual information to enhance comprehension and structural understanding.
+
+
+             Level       Description
+                         Text and illustrations in the image are completely disconnected, with no labels, legends,
+            Level 1
+                         or connectors—students cannot use visuals to understand text or formulas.
+                         Text occasionally prompts “see diagram” or “refer to the illustration,” but the image
+            Level 2
+                         lacks legends or clear labels, so mapping between text and graphics remains ambiguous.
+                         Text descriptions and image elements share consistent numbering, color blocks, or
+            Level 3      arrows linked to a simple legend, explaining core symbols and variables to support
+                         initial mapping.
+                         Text paragraphs are laid out alongside corresponding visuals within the same image,
+            Level 4      with detailed legends and color-coded annotations enabling simultaneous reading and
+                         mapping.
+                         Text, formulas, and legends are fully integrated in one image, using consistent colors,
+            Level 5      numbering, and layered layout to achieve seamless text–graphic fusion for complete
+                         structural understanding.
+
+
+
+                            Table 6: Five Levels of Text–Illustration Coordination
+
+
+Learning Thought Guidance The category of "Learning Thought Guidance" describes the progressive
+inclusion of visualized problem-solving strategies and reflective cues in images. From presenting only
+problem statements to complex integrated dashboards, this framework guides designers to scaffold
+students’ strategic thinking and metacognitive reflection through visual tools, enabling deeper reasoning
+and transfer of learning.
+Interactivity and Personalized Support The category of "Interactivity and Personalized Support"
+outlines levels of incorporating feedback, hints, and tailored assistance into images, evolving from static
+presentations to dynamic, student-responsive visual supports. This framework encourages designers
+
+                                                         13
+              Level        Description
+                           The image offers no visualized problem-solving guidance, showing only the problem
+             Level 1
+                           statement and formulas, leaving students without strategic cues or reflection prompts.
+                           The image embeds a simple flowchart or two title-style hints (e.g., “Identify problem
+             Level 2       type,” “Check result”), but the flowchart is overly simplistic and hints lack hierarchical
+                           detail.
+                           The image displays a step-by-step flowchart template with key thinking nodes and
+             Level 3       self-check checkpoints, leaving annotation space for students to visually record their
+                           reasoning.
+                           The image combines a near-transfer exercise with a comparative thought diagram,
+             Level 4       visually highlighting strategy differences so students can apply existing reasoning to a
+                           new context.
+                           The image fuses near- and far-transfer exercises, concept mind maps, and a reflection
+             Level 5       panel into a dashboard-style layout, allowing students to review and extend their
+                           problem-solving network visually.
+
+
+
+                               Table 7: Five Levels of Learning Thought Guidance
+
+
+to embed interactive elements that adapt to learner needs, promoting engagement and personalized
+problem-solving.
+
+
+              Level        Description
+                           The image includes no feedback or support components—only a static problem state-
+             Level 1       ment and answer field—offering no hints, examples, or error cues and resulting in a
+                           nonresponsive visual.
+                           The image shows fixed hint boxes (e.g., “Hint: draw a number line,” “Hint: check
+             Level 2       rounding”), but hints are not tailored to student responses, limiting personalized guid-
+                           ance.
+                           The image integrates multiple static correction tips and example solution modules
+             Level 3       (common mistakes and standard approaches), which students can reference visually but
+                           without intelligent recommendations.
+                           The image presents example solution workflows, text hints, and a common-errors
+             Level 4       analysis section highlighted with color blocks and arrows, providing diverse visual
+                           support in a single layout.
+                           The image displays a comprehensive visual support panel with difficulty suggestions,
+             Level 5       personalized hints, worked examples, and extension resource links, enabling students to
+                           select tailored guidance directly from the visual layout.
+
+
+
+                          Table 8: Five Levels of Interactivity and Personalized Support
+
+
+
+A.3   Similarity between GPT and Human Evaluation
+
+
+                         Metric                  Chemistry       Math       Physics     Average
+
+                         Cosine Similarity ↑       0.9742        0.9557     0.9666       0.9655
+                         MSE ↓                     0.3895        0.7093     0.6118       0.5702
+
+Table 9: Cosine similarity and mean squared error across subjects. Math is the average of Math500 and Illustrative-
+Math, each with 50 samples.
+
+
+                                                            14
+   We evaluated the similarity between GPT-based evaluations and human evaluations to assess the
+reliability of GPT’s scoring capabilities. Specifically, we selected 50 samples from each subject category
+(Chemistry, Math, and Physics) and had both GPT and human evaluators independently rate these samples.
+Our human evaluators were undergraduate students from top universities, ensuring high-quality and
+informed assessments. We measured agreement using two standard metrics: Cosine Similarity and Mean
+Squared Error (MSE). As shown in Table 9, the high Cosine Similarity scores (averaging 0.9655) and low
+MSE values (averaging 0.5702) across all subjects indicate that GPT’s scoring aligns closely with human
+judgment. These results demonstrate that GPT-based evaluation is highly reliable and sufficiently robust
+for practical usage, closely approximating human evaluative standards.
+
+A.4    Evaluation Prompt
+The instructional web page evaluation prompt is structured as follows:
+
+      Evaluation Prompt
+
+      As a professional evaluator of instructional web pages, your task is to determine whether the
+      generated web page meets expectations across five specific categories.
+      Instructions:
+         • Assign an integer score from 0 to 5 for each of the five categories (1–5).
+
+         • 0 = completely missing or extremely poor
+           5 = fully meets the highest standard
+
+         • Evaluation should be based solely on the specified aspect: {category}.
+           The definition of {category} is: {description}.
+
+         • Do not include any explanation, justification, or additional commentary. Refusing to
+           provide a score is not allowed.
+
+
+
+      Evaluation Output Format
+
+      {{RATING: {"1":score, "2":score, "3":score, "4":score, "5":score}}}
+
+A.5    Additional Related Works
+LLM-based AI Agents. Recent advancements in LLM-based agents have led to the development of
+specialized architectures capable of long-horizon planning, tool use, and memory management across
+a range of real-world domains (Yao et al., 2023; Chan et al., 2024; Chen et al., 2024b, 2025a; Nie
+et al., 2025; Han et al., 2025; Zhou et al., 2025). In software engineering, agents like Devin (AI, 2024),
+CodeAgent (Zhang et al., 2024b), and SWE-agent (Jimenez et al., 2023) manage full development
+pipelines and perform iterative code debugging. In the domain of web automation, agents have been
+deployed for complex web navigation and interaction tasks (Wang et al., 2024b; Chen et al., 2025b; Zhou
+et al., 2023). LLM-based agents have also demonstrated effectiveness in embodied settings such as robotic
+manipulation, autonomous driving, and embodied navigation (Song et al., 2023; Shridhar et al., 2020;
+Mao et al., 2023; Yuan et al., 2025). Beyond these, specialized agents have emerged in domains including
+healthcare (Qiu et al., 2024), finance (Yu et al., 2024), and academic research (Starace et al., 2025).
+   In the educational domain, AI agents such as EduAgent (Xu et al., 2024) and Teachtune (Jin et al.,
+2025) simulate student-teacher dialogues, collaborative learning activities, and task-oriented reasoning to
+enhance problem-solving instruction. Agents like SEFL (Zhang et al., 2025) and PROF (Nair et al., 2024)
+generate on-demand feedback for large-scale educational settings, while domain-specific tools such as
+MathChat (Wu et al., 2023), NEWTON (Wang et al., 2023b), and MEDCO (Wei et al., 2024) provide
+textual explanations for scientific and medical learning.
+
+                                                    15
+  Despite these advancements, few works explore collaborative, multi-agent designs tailored for edu-
+cational reasoning and visualization. EduVisAgent is the first systematic multi-agent framework that
+coordinates specialized agents for instructional planning, reasoning decomposition, metacognitive prompt-
+ing, and visualization design, offering a comprehensive approach to support step-by-step pedagogical
+problem-solving.
+
+
+
+
+                                                   16
+

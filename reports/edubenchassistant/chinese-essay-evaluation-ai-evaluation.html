@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI+语文作文评价应用评测报告</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18202a;
+      --muted: #5b6573;
+      --line: #d8dde5;
+      --soft: #f6f8fb;
+      --accent: #176b87;
+      --accent-2: #7a4b12;
+      --risk: #9b2c2c;
+      --ok: #276749;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.62;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 40px 28px 64px;
+    }
+    h1, h2, h3 { line-height: 1.25; margin: 0; }
+    h1 { font-size: 32px; letter-spacing: 0; }
+    h2 { font-size: 22px; margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }
+    h3 { font-size: 17px; margin-top: 22px; }
+    p { margin: 10px 0; }
+    .meta { color: var(--muted); margin-top: 8px; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 24px 0 28px;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      background: var(--soft);
+    }
+    .tile b { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    .tile span { font-size: 18px; font-weight: 700; }
+    .tag {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 9px;
+      margin: 2px 4px 2px 0;
+      font-size: 13px;
+      background: #fff;
+      white-space: nowrap;
+    }
+    .tag.primary { border-color: #9cc7d4; color: var(--accent); background: #eef8fb; }
+    .tag.warn { border-color: #e2c187; color: var(--accent-2); background: #fff8eb; }
+    .tag.risk { border-color: #e6aaa7; color: var(--risk); background: #fff4f3; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #f1f4f8; }
+    ul { margin: 8px 0 16px 22px; padding: 0; }
+    li { margin: 6px 0; }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #f2f8fa;
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+    .riskbox {
+      border-left-color: var(--risk);
+      background: #fff5f5;
+    }
+    .small { font-size: 13px; color: var(--muted); }
+    code {
+      background: #f3f5f7;
+      border: 1px solid #e1e5ea;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+    @media (max-width: 860px) {
+      main { padding: 28px 16px 48px; }
+      .summary { grid-template-columns: 1fr 1fr; }
+      table { display: block; overflow-x: auto; white-space: normal; }
+    }
+    @media (max-width: 560px) {
+      .summary { grid-template-columns: 1fr; }
+      h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>AI+语文作文评价应用评测报告</h1>
+  <p class="meta">生成日期：2026-05-13。依据本仓库 AI-教育统一 benchmark 框架、benchmark 目录和数据获取清单。</p>
+
+  <section class="summary" aria-label="summary">
+    <div class="tile"><b>覆盖判断</b><span>部分覆盖</span></div>
+    <div class="tile"><b>主场景</b><span>S4 批改评价</span></div>
+    <div class="tile"><b>风险级别</b><span>中高</span></div>
+    <div class="tile"><b>必须自建</b><span>中文作文闭环集</span></div>
+  </section>
+
+  <div class="callout">
+    <b>一句话结论：</b>作文自动评分有 ASAP-AES、EssayJudge 等可参考，短答案/分步评分有 ASAP-SAS、SAS-Bench；中文 K12 和高考语境可用 GaokaoBench、E-EVAL、C-EVAL 作门槛项。但这些公开评测还不能充分证明一个产品能“公平、稳定、可解释地评价中文作文并促进修改”。上线前需要自建中文语文作文评价集、教师复核协议、学生改写增益评测和本地化安全评测。
+  </div>
+
+  <h2>1. 场景解释</h2>
+  <p>假设应用面向中小学语文教学，核心功能是接收学生作文文本或作文图片，输出总分、分项评分、扣分依据、亮点、问题定位、修改建议和教师可复核记录。主要用户包括学生、语文教师和教研/学校管理者。</p>
+  <p>该场景不只是“让模型写点评”。它会影响学生成绩感知、写作自信、教师工作流和家校沟通，因此评测风险级别为中高。若产品输出直接进入正式成绩或排名，风险应上调为高。</p>
+  <p>
+    映射尺度：
+    <span class="tag primary">S4 反馈、批改与评价</span>
+    <span class="tag primary">S1 中文学科知识</span>
+    <span class="tag primary">S3 教学诊断</span>
+    <span class="tag primary">S7 教育安全</span>
+    <span class="tag warn">S8 真实学习效果</span>
+    <span class="tag warn">S6 多模态理解</span>
+  </p>
+
+  <h2>2. 原子能力映射</h2>
+  <table>
+    <thead>
+      <tr><th>能力</th><th>名称</th><th>为什么关键</th><th>评测重点</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>D10</td>
+        <td>作文评分</td>
+        <td>应用的核心价值。需要总分和分项评分与教师评分一致，并能解释依据。</td>
+        <td>QWK、trait-level agreement、分档准确率、跨题目一致性、长度/文风偏差。</td>
+      </tr>
+      <tr>
+        <td>D11</td>
+        <td>短答案和分步评分</td>
+        <td>语文阅读理解、古诗文、语言运用和论述题常常是半开放答案，作文产品也会扩展到主观题批改。</td>
+        <td>分步评分一致性、错因一致性、关键点召回、误扣/漏扣。</td>
+      </tr>
+      <tr>
+        <td>D12</td>
+        <td>纠错反馈</td>
+        <td>学生真正需要的是知道哪里改、怎么改，而不是只看到一个分数。</td>
+        <td>问题定位、建议可执行性、不过度代写、反馈语气和分层。</td>
+      </tr>
+      <tr>
+        <td>D02</td>
+        <td>中文 K12 学科体系</td>
+        <td>作文评价要理解中文课程标准、文体要求、命题材料、表达规范和本土文化语境。</td>
+        <td>语文学科题、中文本土知识、文体识别、审题立意。</td>
+      </tr>
+      <tr>
+        <td>D03</td>
+        <td>标准化考试与主观题</td>
+        <td>如果产品服务中高考、区统考或校内大考，需要贴合考试评分口径。</td>
+        <td>高考语文主观题、评分细则对齐、分数校准。</td>
+      </tr>
+      <tr>
+        <td>D21</td>
+        <td>教育安全</td>
+        <td>作文可能包含自伤、霸凌、家庭冲突、隐私和价值敏感内容，批改系统必须有边界。</td>
+        <td>风险识别、转介建议、年龄适配、拒答质量、教师监督。</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>次级能力：D14 教学法知识、D15 学习规划、D22 多模态教学可视化、D24 端到端系统边界。它们不一定是 MVP 的主排序项，但会决定产品从“评分器”走向“教学工具”时的质量。</p>
+
+  <h2>3. 现有评测做过什么，效果如何</h2>
+  <table>
+    <thead>
+      <tr><th>Benchmark</th><th>测试内容</th><th>原生指标</th><th>公开结果观察</th><th>对作文产品的解释边界</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>ASAP-AES</td>
+        <td>经典自动作文评分数据/任务协议。</td>
+        <td>本地目录记录为无统一公开模型榜单。</td>
+        <td>权威性高，是作文自动评分事实标准之一；本仓库未记录可直接引用的统一模型结果。</td>
+        <td>适合做评分协议参考，不足以证明中文语文作文效果；需注意跨 prompt、公平性和长度偏差。</td>
+      </tr>
+      <tr>
+        <td>EssayJudge</td>
+        <td>作文自动评分，含多维 trait 评分；本地目录标注为多模态作文评分。</td>
+        <td>QWK 或 trait-level 一致性，指标包括 AC、CH、EL、GA、GD、JP、LA、LD、OS、PA。</td>
+        <td>本地结果中 Human 平均约 0.829，GPT-4o 平均约 0.735；Claude-3.5-Sonnet、GPT-4o-mini、Qwen-Max 等在 0.48-0.52 左右。说明前沿模型已有较强评分一致性，但不同维度差异明显。</td>
+        <td>最贴近作文评分，但数据状态为论文/待发布，复现性有限；还不能覆盖中文课程标准、教师反馈可用性和学生修改效果。</td>
+      </tr>
+      <tr>
+        <td>ASAP-SAS</td>
+        <td>经典短答案评分数据/任务协议。</td>
+        <td>本地目录记录为无统一公开模型榜单。</td>
+        <td>作为短答案评分历史基准有价值，但当前本地证据没有统一模型榜。</td>
+        <td>可用于阅读理解/语言运用类主观题扩展，不直接等同于作文评分。</td>
+      </tr>
+      <tr>
+        <td>SAS-Bench</td>
+        <td>中文高考短答案、分步评分和错误诊断。</td>
+        <td>CCS Avg 分步评分一致性，ECS Avg 错误原因一致性。</td>
+        <td>本地结果显示 DeepSeek-R1 CCS 73.76、ECS 55.90；DeepSeek-V3 CCS 74.11、ECS 54.00；GPT-4o-mini CCS 58.56、ECS 50.53。说明评分一致性通常高于错因一致性，错误解释更难。</td>
+        <td>很适合验证语文主观题批改和错因说明，但不是长作文综合评价。</td>
+      </tr>
+      <tr>
+        <td>GaokaoBench</td>
+        <td>中文高考客观题和主观题。</td>
+        <td>Objective Overall、Subjective Overall、weighted average。</td>
+        <td>有公开模型结果。本地补充记录中 GPT-4-0409 weighted average 76.0，Claude-3-Opus 74.2，GPT-4-1106 74.8。</td>
+        <td>可作为中文考试能力门槛；主观题有用，但不能替代作文 trait 评分和教学反馈评测。</td>
+      </tr>
+      <tr>
+        <td>C-EVAL / CMMLU / E-EVAL</td>
+        <td>中文考试、通识、本土知识和 K12 选择题。</td>
+        <td>平均正确率、CoT/Five-shot/Zero-shot 等。</td>
+        <td>有公开模型结果，适合筛查中文学科基础。</td>
+        <td>只能说明基础知识，不证明模型会批改作文、解释扣分或促进学生修改。</td>
+      </tr>
+      <tr>
+        <td>EduBench / EduEval / OmniEduBench</td>
+        <td>教育生成、中文教育知识、新课标知识/培养维度。</td>
+        <td>Avg、Few-shot/Zero-shot Avg、Knowledge Avg、Cultivation Avg。</td>
+        <td>有公开结果；部分依赖自动或模型评委。</td>
+        <td>适合作为教学法和课程标准补充诊断，不能单独作为作文评分主证据。</td>
+      </tr>
+      <tr>
+        <td>EduGuard-Bench</td>
+        <td>教育角色遵循和安全。</td>
+        <td>RFS、ASR、Acc、Incl、Omit。</td>
+        <td>有公开模型结果；本地说明提醒教学角色质量和安全攻击成功率不总是一致。</td>
+        <td>作文场景必须补测安全边界，尤其是未成年人风险文本、隐私和心理危机。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. 数据状态</h2>
+  <table>
+    <thead>
+      <tr><th>数据/Benchmark</th><th>本地建议路径</th><th>获取状态</th><th>备注</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ASAP-AES</td><td><code>sources/datasets/asap_aes</code></td><td>download_command_available_not_bulk_downloaded</td><td>需要 Kaggle 账号、竞赛条款确认和 API token。</td></tr>
+      <tr><td>ASAP-SAS</td><td><code>sources/datasets/asap_sas</code></td><td>download_command_available_not_bulk_downloaded</td><td>同样需要 Kaggle 授权和条款确认。</td></tr>
+      <tr><td>EssayJudge</td><td><code>sources/datasets/essayjudge</code></td><td>paper_only_or_release_pending</td><td>目前只能作为论文结果证据，不能作为本地可复现主评测。</td></tr>
+      <tr><td>SAS-Bench</td><td><code>sources/datasets/sas_bench</code></td><td>download_command_available_not_bulk_downloaded</td><td>GitHub 仓库入口可用，适合优先下载做主观题诊断。</td></tr>
+      <tr><td>GaokaoBench</td><td><code>sources/datasets/gaokaobench</code></td><td>download_command_available_not_bulk_downloaded</td><td>中文高考语境的门槛和诊断项。</td></tr>
+      <tr><td>C-EVAL / CMMLU / E-EVAL</td><td><code>sources/datasets/ceval</code> 等</td><td>download_command_available_not_bulk_downloaded</td><td>中文基础知识门槛项，不作为作文主排序。</td></tr>
+      <tr><td>EduBench / EduEval</td><td><code>sources/datasets/edubench</code> 等</td><td>download_command_available_not_bulk_downloaded</td><td>教学任务和中文教育生成补充。</td></tr>
+      <tr><td>OmniEduBench</td><td><code>sources/datasets/omniedubench</code></td><td>manual_access_or_metadata_only</td><td>中文新课标相关，但需要人工访问或仅元数据。</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. 推荐评测方案</h2>
+  <h3>5.1 Gate：上线门槛检查</h3>
+  <ul>
+    <li>中文语文基础：C-EVAL、CMMLU、E-EVAL、GaokaoBench，要求达到可接受阈值后只作为门槛，不继续放大权重。</li>
+    <li>安全边界：EduGuard-Bench 加内部中文未成年人风险集，覆盖自伤、霸凌、家庭冲突、隐私、政治/价值敏感、歧视性评价。</li>
+    <li>评分格式稳定性：固定输出 JSON schema，检查总分、分项分、证据句、建议、风险标签是否完整。</li>
+  </ul>
+
+  <h3>5.2 Primary：主排序检查</h3>
+  <ul>
+    <li>作文评分一致性：EssayJudge 结果作外部参考；内部必须建设中文作文集，按学段、文体、题型、分数段、地区评分口径分层。</li>
+    <li>短答案/主观题评分：SAS-Bench 做中文主观题评分和错因诊断主证据，观察 CCS 与 ECS，不只看总分。</li>
+    <li>教师评分对齐：至少双教师标注，计算教师间一致性、模型-教师一致性、模型是否系统性偏高/偏低。</li>
+    <li>分项评价：审题立意、内容充实、结构、语言、文体、素材使用、错别字/病句、书写或图片识别质量分别测。</li>
+  </ul>
+
+  <h3>5.3 Diagnostic：错误分析检查</h3>
+  <ul>
+    <li>长度偏差：同质量不同字数、堆砌华丽词藻、模板化作文，检查模型是否给高分。</li>
+    <li>文体偏差：记叙文、议论文、说明文、应用文、小学想象作文分开评。</li>
+    <li>题目迁移：训练/调参题目和测试题目严格隔离，避免 prompt 泄漏和题库污染。</li>
+    <li>反馈质量：建议是否可执行、是否具体到段落/句子、是否过度代写、是否打击学生。</li>
+    <li>多模态输入：若支持作文拍照，单独测 OCR 错误、涂改、字迹潦草、排版、漏页和图片隐私。</li>
+  </ul>
+
+  <h3>5.4 Internal：产品级内部评测</h3>
+  <ul>
+    <li>教师工作流：教师是否采纳、修改、拒绝 AI 建议；统计编辑距离、复核时间、错判召回。</li>
+    <li>学生修改效果：比较 AI 反馈前后作文提升、延迟保持和迁移到新题的表现。</li>
+    <li>一致性与稳定性：同一作文多次评分、不同 prompt、不同模型版本、不同温度下是否稳定。</li>
+    <li>公平性：按年级、地区、性别线索、方言表达、特殊教育需求、低频写作风格做差异分析。</li>
+    <li>申诉机制：建立教师复核、学生申诉、评分解释留痕和不可自动定最终成绩的产品规则。</li>
+  </ul>
+
+  <h2>6. 额外注意点</h2>
+  <div class="callout riskbox">
+    <b>不要把公开模型分数直接平均成一个总分。</b>作文评分、短答案评分、中文学科知识、安全、学习效果的指标尺度不同。更合理的是输出能力画像：D10 强/中/弱、D11 强/中/弱、D12 反馈质量、D21 安全合格与否、S8 是否有真实学习证据。
+  </div>
+  <ul>
+    <li><b>Rubric 可靠性：</b>先校准教师评分标准，再评模型；如果教师间一致性低，模型-教师一致性也没有明确解释价值。</li>
+    <li><b>反馈不等于代写：</b>产品应给修改方向、例句对比和问题定位，避免直接替学生完成整篇作文。</li>
+    <li><b>分数校准：</b>需要按年级和题目口径校准，不能把高考作文、初中作文、小学作文混用同一分布。</li>
+    <li><b>数据污染：</b>公开作文题、范文、评分细则很容易进入模型训练语料；评测集应包含新题和私有教师标注。</li>
+    <li><b>心理和价值风险：</b>作文常暴露学生真实经历，系统必须识别风险文本并把高风险输出转交教师，而不是只给写作建议。</li>
+    <li><b>长期效果缺口：</b>公开 benchmark 几乎不证明学生写作能力真的提升，必须用课堂试点、A/B 或准实验补证据。</li>
+  </ul>
+
+  <h2>7. 最小可行评测包</h2>
+  <table>
+    <thead>
+      <tr><th>阶段</th><th>样本建议</th><th>指标</th><th>通过标准建议</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>离线评分集</td>
+        <td>每学段至少 300-500 篇，覆盖 5-8 个作文题；每篇双教师评分。</td>
+        <td>总分 QWK、分项 QWK、分档准确率、偏高/偏低率。</td>
+        <td>模型-教师一致性接近教师间一致性；低分和高分段不系统性失真。</td>
+      </tr>
+      <tr>
+        <td>反馈质量集</td>
+        <td>100-200 篇典型作文，人工标注关键问题和建议要点。</td>
+        <td>问题定位召回、建议可执行性、人评偏好、过度代写率。</td>
+        <td>关键问题召回高于教师设定阈值；过度代写和错误建议低于红线。</td>
+      </tr>
+      <tr>
+        <td>安全集</td>
+        <td>200-500 条作文片段/对话，覆盖自伤、霸凌、隐私和敏感主题。</td>
+        <td>风险识别准确率、漏报率、转介质量、拒答质量。</td>
+        <td>高风险漏报为硬门槛；教师转交流程必须可用。</td>
+      </tr>
+      <tr>
+        <td>课堂试点</td>
+        <td>2-4 个班级，至少 2 次写作任务，保留教师修改记录。</td>
+        <td>教师采纳率、复核时间、学生改写提升、满意度和投诉率。</td>
+        <td>证明节省教师时间且不降低评分质量；学生改写有可观提升。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>8. 覆盖判断</h2>
+  <p><span class="tag warn">部分覆盖，需要自建 benchmark</span></p>
+  <p>公开评测足以支撑早期选型：EssayJudge 看作文评分一致性，SAS-Bench 看中文主观题评分和错因，GaokaoBench/C-EVAL/CMMLU/E-EVAL 看中文基础能力，EduGuard-Bench 看教育安全。但公开评测不足以支撑产品级结论，尤其缺少本地中文作文 rubrics、教师复核、学生修改增益、长期写作能力提升和端到端教学工作流价值。</p>
+
+  <p class="small">主要本地来源：<code>reports/2026-05-13/ai_edu_unified_benchmark_framework_2026-05-13.md</code>、<code>reports/2026-05-13/ai_edu_benchmark_catalog_2026-05-13.md</code>、<code>data/exhaustive_2026-05-13/dataset_acquisition_report.md</code>、<code>benchmarks.jsonl</code>、<code>metrics.jsonl</code>、<code>results.jsonl</code>、<code>dataset_acquisition.jsonl</code>。</p>
+</main>
+</body>
+</html>

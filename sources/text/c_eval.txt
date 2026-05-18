@@ -1,0 +1,2227 @@
+C-E VAL: A Multi-Level Multi-Discipline Chinese
+Evaluation Suite for Foundation Models
+
+arXiv:2305.08322v3 [cs.CL] 6 Nov 2023
+
+Yuzhen Huang∗1
+Tangjun Su1
+
+Yuzhuo Bai∗2 Zhihao Zhu1 Junlei Zhang1 Jinghan Zhang1
+Junteng Liu1 Chuancheng Lv2 Yikai Zhang1 Jiayi Lei1
+Yao Fu3 Maosong Sun2 Junxian He†4
+1
+Shanghai Jiao Tong University 2 Tsinghua University 3 University of Edinburgh
+4
+The Hong Kong University of Science and Technology
+ceval.benchmark@gmail.com
+https://cevalbenchmark.com
+
+Abstract
+New NLP benchmarks are urgently needed to align with the rapid development of
+large language models (LLMs). We present C-E VAL , the first comprehensive Chinese evaluation suite designed to assess advanced knowledge and reasoning abilities
+of foundation models in a Chinese context. C-E VAL comprises multiple-choice
+questions across four difficulty levels: middle school, high school, college, and
+professional. The questions span 52 diverse disciplines, ranging from humanities
+to science and engineering. C-E VAL is accompanied by C-E VAL H ARD, a subset
+of very challenging subjects in C-E VAL that requires advanced reasoning abilities
+to solve. We conduct a comprehensive evaluation of the most advanced LLMs on
+C-E VAL, including both English- and Chinese-oriented models. Results indicate
+that only GPT-4 could achieve an average accuracy of over 60%, suggesting that
+there is still significant room for improvement for current LLMs. We anticipate
+C-E VAL will help analyze important strengths and shortcomings of foundation
+models, and foster their development and growth for Chinese users.1
+
+1
+
+Introduction
+
+Evaluation benchmarks are at the core role for AI development. While traditional NLP benchmarks
+were mostly designed to measure specific and relatively simple abilities, large language models
+(LLMs), or foundation models, have demonstrated various new capabilities and shifted the evaluation
+focus to more general and intricate skills, such as broad world knowledge and complex reasoning. To
+align with the new era of LLMs, new benchmarks are proposed recently to probe a diverse set of LLM
+abilities. For example, MMLU (Hendrycks et al., 2021a), BIG-bench (Srivastava et al., 2022), and
+HELM (Liang et al., 2022) benchmarks attempt to aggregate a wide range of NLP tasks for holistic
+evaluation. Some other benchmarks specifically focus on advanced LLM abilities that emerge with
+scale, such as reasoning (Cobbe et al., 2021), hard math problem-solving (Hendrycks et al., 2021b),
+and coding (Chen et al., 2021). While traditional NLP benchmarks are becoming obsolete, these new
+ones are extensively used in recent research to drive development of the latest LLMs (Taylor et al.,
+2022; Chowdhery et al., 2022; Hoffmann et al., 2022; Touvron et al., 2023; OpenAI, 2023).
+However, these modern benchmarks primarily target English language, resulting in limited understanding of LLMs’ capabilities in other languages. In this work, we focus on evaluating the advanced
+abilities of foundation models in a Chinese context, one of the most widely spoken language in the
+∗
+
+Equal Contribution. Full list of individual contributions is detailed in Appendix A.
+Correspondence to Junxian He <junxianh@cse.ust.hk>. Work done while affiliated with SJTU.
+1
+The C-E VAL data and evaluation code are available at https://github.com/hkust-nlp/ceval.
+
+†
+
+37th Conference on Neural Information Processing Systems (NeurIPS 2023) Track on Datasets and Benchmarks.
+
+注册电气工程师/ E l e c t r i c a l E n g i n e e r
+
+环境影响评价工程师
+/Environmental Impact Assessment Engineer
+
+注册计量师/ Me t r o l o g y E n g i n e e r
+大学编程/ C o l l e g e P r o g r a mmi n g
+
+注册城乡规划师
+/Urban and Rural Planner
+
+计算机组成/ C o mp u t e r A r c h i t e c t u r e
+操作系统/ Op e r a t i n g S y s t e m
+
+注册消防工程师/ F i r e E n g i n e e r
+
+计算机网络/ C o mp u t e r Ne t wo r k
+
+医师资格/ P h y s i c i a n
+
+离散数学/ D i s c r e t e Ma t h e ma t i c s
+
+税务师/ T a x A c c o u n t a n t
+
+概率统计/ P r o b a b i l i t y a n d S t a t i s t i c s
+
+注册会计师/ A c c o u n t a n t
+
+高等数学/ A d v a n c e d Ma t h e ma t i c s
+
+公务员/ C i v i l S e r v a n t
+
+大学化学/ C o l l e g e C h e mi s t r y
+大学物理/ C o l l e g e P h y s i c s
+
+临床医学/ C l i n i c a l Me d i c i n e
+
+兽医学/ V e t e r i n a r y Me d i c i n e
+
+基础医学/ B a s i c Me d i c i n e
+
+高中生物/ H i g h S c h o o l B i o l o g y
+高中化学/ H i g h S c h o o l C h e mi s t r y
+高中物理/ H i g h S c h o o l P h y s i c s
+高中数学/ H i g h S c h o o l Ma t h e ma t i c s
+初中化学/ Mi d d l e S c h o o l C h e mi s t r y
+初中物理/ Mi d d l e S c h o o l P h y s i c s
+
+植物保护/ P l a n t P r o t e c t i o n
+
+C-EVAL
+
+初中生物/ Mi d d l e S c h o o l B i o l o g y
+
+体育学/ S p o r t s S c i e n c e
+
+导游资格/ P r o f e s s i o n a l T o u r Gu i d e
+法律职业资格/ L e g a l P r o f e s s i o n a l
+
+初中数学/ Mi d d l e S c h o o l Ma t h e ma t i c s
+
+艺术学/ A r t S t u d i e s
+
+教师资格/ T e a c h e r Qu a l i f i c a t i o n
+
+中国语言文学
+/Chinese Language and Literature
+
+工商管理/ B u s i n e s s A d mi n i s t r a t i o n
+毛泽东思想和中国特色社会主义理论体系概论
+/ Ma o Z e d o n g T h o u g h t
+
+法学/ L a w
+逻辑学/ L o g i c
+
+马克思主义基本原理/ Ma r x i s m
+
+思想道德修养与法律基础
+/ I d e o l o g i c a l a n d Mo r a l C u l t i v a t i o n
+
+大学经济学/ C o l l e g e E c o n o mi c s
+教育学/ E d u c a t i o n S c i e n c e
+
+近代史纲要/ Mo d e r n C h i n e s e H i s t o r y
+
+高中地理/ H i g h S c h o o l Ge o g r a p h y
+高中政治/ H i g h S c h o o l P o l i t i c s
+
+高中历史/ H i g h S c h o o l H i s t o r y
+
+初中地理/ Mi d d l e S c h o o l Ge o g r a p h y
+
+高中语文/ H i g h S c h o o l C h i n e s e
+
+初中政治/ Mi d d l e S c h o o l P o l i t i c s
+
+初中历史/ Mi d d l e S c h o o l H i s t o r y
+
+Figure 1: Overview diagram of C-E VAL. Different colors of the subjects indicate four difficulty levels: middle
+school, high school, college, and professional.
+
+world. Although there has been a recent surge in powerful Chinese LLMs, such as GLM-130B (Zeng
+et al., 2023), Wenxin Yiyan (Baidu, 2023), and MOSS (OpenLMLab, 2023), the corresponding
+evaluation significantly lags behind, with the CLUE benchmark (Xu et al., 2020), the Chinese counterpart of GLUE (Wang et al., 2019), serving as the best available standard. We emphasize that
+simply translating English benchmarks as in OpenAI (2023), even with flawless translations, does
+not fulfill the goal – LLMs intended for use in a Chinese environment should be evaluated on their
+knowledge of Chinese users’ primary interests, such as Chinese culture, history, and laws, as well
+as other competencies unique in Chinese society. In contrast, English benchmarks tend to exhibit
+geographical biases towards the domestic knowledge of the regions that produce them.
+To narrow the gap between Chinese LLM development and evaluation, we present C-E VAL, the
+first comprehensive Chinese evaluation suite to thoroughly assess LLMs’ advanced knowledge and
+reasoning abilities in a Chinese context. C-E VAL consists of 13948 multiple-choice exam questions
+spanning 52 diverse disciplines, ranging from humanities to science and engineering, as depicted
+in Figure 1. The questions are collected from four difficulty levels: middle school, high school,
+college, and professional tests. Along with C-E VAL, we introduce C-E VAL H ARD as an accompanied
+benchmark, a subset of particularly challenging subjects in C-E VAL that demands highly advanced
+reasoning abilities to solve, such as advanced mathematics and college physics. Notably, C-E VAL
+H ARD is among the few benchmarks for advanced reasoning where GPT-4 still struggles, achieving
+an accuracy of 53.3%, making it the first Chinese benchmark at this level.
+We conduct experiments to evaluate the most advanced LLMs on C-E VAL in both answer-only and
+chain-of-thought settings. Results show that GPT-4 is the only model that surpasses 60% average
+accuracy. However, its 66.4% accuracy indicates that there is still large room for improvement
+in current LLMs. Despite not specially tailored for Chinese data, GPT-4, ChatGPT, and Claude
+emerge as the top three performers on C-E VAL. Upon examining the results of LLMs focused on
+Chinese, we find that while some models managed to narrow the gap on Chinese knowledge test with
+ChatGPT, acquiring reasoning abilities seems more challenging. On C-E VAL H ARD, in particular,
+most models could only retain near-random accuracy. In addition to its use as a whole, we envision
+C-E VAL as a suite of benchmarks, subsets of which could be separately utilized to assess certain
+model abilities of interest and analyze important strengths and limitations of foundation models. We
+hope C-E VAL could guide the developers to understand the abilities of their models from multiple
+dimensions and facilitate the growth of foundation models for Chinese users.
+
+2
+
+The C-E VAL Evaluation Suite
+
+2.1
+
+Design Principle
+
+Overview: The motivation of C-E VAL is to help developers quickly understand the abilities of
+their models from multiple dimensions, so that they could target the shortcomings of the models and
+2
+
+Category
+
+# Subjects
+
+# Questions
+
+In terms of topic
+STEM
+20
+Humanities
+11
+Social Science
+10
+Other
+11
+
+4495
+2676
+2845
+3932
+
+In terms of difficulty level
+Middle School
+7
+High School
+8
+College
+25
+Professional
+12
+
+1409
+1594
+6249
+4696
+
+Dev
+Valid
+Test
+
+In terms of split
+52
+52
+52
+
+260
+1346
+12342
+
+52
+
+13948
+
+Total
+
+Table 1: Statistics of C-E VAL.
+
+洛伦兹曲线越是向横轴凸出____
+The more the Lorenz curve is convex to the horizontal axis,
+____.
+A. 基尼系数就越大，收入就越不平等
+the larger the Gini coefficient, the more unequal the income.
+B. 基尼系数就越大，收入就越平等
+the larger the Gini coefficient, the more equal the income.
+C. 基尼系数就越小，收入就越不平等
+the smaller the Gini coefficient, the more unequal the income.
+D. 基尼系数就越小，收入就越平等
+the smaller the Gini coefficient, the more equal the income.
+答案：A
+Answer: A
+
+Figure 2: Example from college economics. English translations are shown for better readability.
+
+improve them accordingly. To this end, we focus on the relatively advanced abilities of LLMs such
+as world knowledge and reasoning, which are arguably the most critical skills for LLMs nowadays.
+While different LLMs may perform similarly in simple scenarios like casual conversations, complex
+tasks are often the key differentiators between LLMs (OpenAI, 2023). Therefore, we construct
+C-E VAL from real-world, challenging human exams in China that are used to assess humans’ abilities
+from multiple dimensions. We only select questions of a multi-choice format, similar to Hendrycks
+et al. (2021a), because: (1) metrics are clearly defined (i.e. accuracy), and (2) multi-choice questions
+are a simple but good proxy to evaluate the potential of advanced abilities of foundation models,
+which we consider could be easily exploited and reflected in various downstream applications through
+specialized instruction tuning (Chung et al., 2022; Wang et al., 2022). Each question has four choices
+and only one choice is the correct answer. LLMs are intended to be used to solve these questions
+through prompting. The questions in C-E VAL span 52 diverse disciplines that we later cluster them
+into broader categories as STEM, humanities, social science, and other areas. Summarized statistics
+of C-E VAL is shown in Table 1, and more detailed statistics per subject are in Appendix B.
+Attempt to mitigate data contamination: Exam questions from national tests, such as China’s
+national college entrance exams (commonly known as Gaokao) and national professional exams, are
+often widely distributed and accessible online. Consequently, these questions may inadvertently be
+crawled and incorporated into LLM pretraining, leading to potential data leakage issues. To mitigate
+this risk, we collect our data either from mock exams or from small-scale local exams, such as those
+available online from specific high schools. This deviates from previous work that built benchmarks
+using the exact questions from official national exams (Zhong et al., 2023). Moreover, most samples
+in C-E VAL are sourced from PDF or Microsoft Word documents on the Internet, rather than directly
+from plain text or structured questions. These documents are subsequently parsed and carefully
+annotated by the authors to obtain the final structured format, a process that often involves complex
+LATEX equation conversion for certain subjects. This further minimizes the risk of data contamination.
+2.2
+
+Data Collection
+
+Subject selection: C-E VAL covers four difficulty levels: middle school, high school, college, and
+professional. We include the standard subjects for middle and high school levels in China, except
+for the English subject.2 For the college level, we select 25 representative subjects from all the 13
+official categories of undergraduate majors listed by the Ministry of Education in China,3 at least one
+subject from each category is included in C-E VAL to assure comprehensiveness. For the professional
+level, we refer to the official national vocational qualification directory in China4 and choose 12
+2
+We also exclude the middle school Chinese subject since the corresponding exam mostly focuses on writing
+responses to questions with few multi-choice questions.
+3
+The Undergraduate Major Catalogue of Higher Institutions in China.
+4
+National Vocational Qualifications Directory in China.
+
+3
+
+25 ℃时，将pH=2的强酸溶液与pH=13的强碱溶液混合，所得混合液的pH=11，则强酸溶液与强碱溶液
+的体积比是(忽略混合后溶液的体积变化)____
+At 25 ℃, when a strong acid solution with pH=2 is mixed with a strong alkali solution with pH=13, the resulting
+mixture has a pH of 11. The volume ratio of the strong acid solution to the strong alkali solution is (ignoring any
+volume changes upon mixing) ____.
+A. 11:1
+
+B. 9:1
+
+C. 1:11
+
+D. 1:9
+
+答案：B
+Answer: B
+答案解析:
+1. pH=13的强碱溶液中c(��− )=0.1mol/L，pH=2的强酸溶液中c(�+ )=0.01mol/L，酸碱混合后pH=11，即
+c(��− )=0.001mol/L。
+2. 设强酸和强碱溶液的体积分别为x和y，则:c(��− )=(0.1y-0.01x)/(x+y)=0.001，解得x:y=9:1。
+Explanation:
+1. In the strong alkali solution with pH=13, c(��− ) = 0.1mol/L, and in the strong acid solution with pH=2, c(�+ )
+= 0.01mol/L. After mixing, the pH is 11, which means that c(��− ) = 0.001mol/L.
+2. Assuming the volumes of the strong acid and strong alkali solutions are x and y, respectively, then: c(��− ) =
+(0.1y - 0.01x)/(x+y) = 0.001. Solving for x:y = 9:1.
+
+Figure 3: An development example with explanations from high school chemistry. English translations are
+shown below the corresponding Chinese text for better readability.
+
+representative ones, such as physician, legal professional, and civil servant qualification exams. We
+also cluster these subjects into four categories in terms of their topic: STEM (Science, Technology,
+Engineering, and Mathematics), Social Science, Humanities, and Other areas. All the 52 subjects and
+their assigned categories are illustrated in Figure 1.
+Data sources: The primary source of our data is mock exams freely available on the internet. In
+addition, a portion of the college-level questions are past exam questions from top universities in
+China, publicly shared by the students. A minor fraction of college questions are mock questions
+for the national graduate entrance exam, sourced from the Weipu website5 – these questions are not
+freely available to the public, and we have obtained their authorization to include around 2000 such
+questions into C-E VAL.
+Data Processing: The collected data come in various formats, primarily as PDF or Microsoft
+Word documents and a minor fraction as web pages. PDF documents are initially processed into
+text. All questions are subsequently parsed – automatically when possible, and otherwise manually
+by the authors – into a structured format, as exemplified in Figure 2. For subjects with complex
+mathematical notations such as many subjects in the STEM category, we manually convert them into
+standard LATEX formats, similar to Hendrycks et al. (2021b); Taylor et al. (2022). All the questions
+in C-E VAL are processed to include exactly four choices. Most of the original questions were
+accompanied by four choices already, and we eliminate questions with fewer than four options and
+randomly drop incorrect choices for questions with more than four options. All questions also go
+through the standard data preprocessing pipeline, such as deduplication and cleaning. Following this,
+the questions undergo several rounds of human validation by the authors, and all the LATEX notations
+are ensured to be complied without syntax errors. We process at least around 200 questions for
+each subject, and randomly split the questions into a development set, a validation set, and a test
+set within each subject. The development split per subject consists of five exemplars to facilitate
+few-shot evaluation. These dev exemplars are also annotated with explanations to enable few-shot
+chain-of-thought settings (Wei et al., 2022), as we detail next. The validation and test set are created
+with a 1:9 ratio, where the validation set is intended to be used for hyperparameter tuning.
+Explanation data generation: Chain-of-thought (COT) reasoning (Kojima et al., 2022; Wei et al.,
+2022) – that prompts LLMs to generate a text sequence of reasoning process along with the final
+answer – has shown great success on reasoning-heavy tasks. Compared to zero-shot COT, the
+few-shot version is more commonly used and achieves the state-of-the-art performance on various
+tasks (Gao et al., 2022; Wang et al., 2023; Zhou et al., 2023; Xie et al., 2023). To facilitate the
+potential usage of C-E VAL in a few-shot COT setting, we combine automatic generation and human
+annotation to produce high-quality explanation data for the development split. Specifically, we first
+prompt GPT-4 to generate step-by-step explanation to explain the ground-truth answer, then we
+5
+
+https://kaoyan.cqvip.com/view/postgraduate/index.aspx
+
+4
+
+设有界区域Ω由曲面2� + � + 2� = 2与三个坐标平面围成，Σ为整个表面的外侧；计算曲面积分：
+
+� = Σ �2 + 1 ⅆ�ⅆz − 2�ⅆ�ⅆ� + 3�ⅆ�ⅆ� =____
+Let Ω be a bounded region enclosed by the surface 2� + � + 2� = 2 and three coordinate planes, and let Σ be the
+surface of the region Ω. Calculate the surface integral: � = Σ �2 + 1 ⅆ�ⅆz − 2�ⅆ�ⅆ� + 3�ⅆ�ⅆ� =____
+A. 1/2
+B. 1
+C. 3/2
+D. 5/2
+答案：A
+Answer: A
+
+Figure 4: Example from advanced mathematics, a subject in C-E VAL H ARD. English translations are shown
+below the corresponding Chinese text for better readability.
+
+manually revise the generated explanations to obtain the final explanations. Details on prompting
+GPT-4 are in Appendix C. A dev example with explanations is illustrated in Figure 3.
+2.3
+
+C-E VAL H ARD
+
+We select 8 challenging math, physics, and chemistry subjects from C-E VAL to form a separate
+benchmark, C-E VAL H ARD, which includes advanced mathematics, discrete mathematics, probability
+and statistics, college chemistry, college physics, high school mathematics, high school chemistry,
+and high school physics. These subjects often involve with complex LATEX equations and require
+non-trivial reasoning abilities to solve. An example from advanced mathematics is shown in Figure 4.
+C-E VAL H ARD aligns with recent efforts to create difficult benchmarks to assess advanced reasoning
+abilities (Hendrycks et al., 2021b; Suzgun et al., 2022), which are the key differentiators among
+various LLMs and could reflect LLMs’ potential in general and complex scenarios. We emphasize that
+C-E VAL H ARD is the first Chinese benchmark to provide highly complicated reasoning questions.
+2.4
+
+Evaluation
+
+We use accuracy as the metric. While ground-truth labels of the development and validation splits are
+released, we keep the labels of the test split private. This is to ensure the fair use of the C-E VAL, as
+the C-E VAL data may unconsciously be included in pretraining data due to web crawling. Instead,
+users are required to submit their model predictions to https://cevalbenchmark.com to automatically
+obtain the test accuracy, where a public leaderboard is maintained. Users have the option to include
+their submission results in the live leaderboard, depending on their own preference.
+
+3
+
+Experiment
+
+3.1
+
+Setup
+
+We evaluate LLMs in both zero- and five-shot settings on C-E VAL, where the five exemplars are
+from the development split. We adopt regular expressions to extract answer choices from the model
+responses, ensuring that we can successfully extract answers for nearly all cases. We report answeronly (AO) results on both zero- and five-shot settings and chain-of-thought (COT) results on the
+five-shot setting only, as we found that it was often difficult to extract the answer choices from
+zero-shot COT predictions where the generation does not follow specific patterns. Prompts of AO and
+COT are shown in Appendix D. We note that in the COT setting, the five-shot exemplars could exceed
+the maximum context length of some LLMs for certain subjects. In such cases, we dynamically
+reduce the number of exemplars to fit within the context window.
+3.2
+
+Models
+
+To give a comprehensive view of the status of LLM in a Chinese language context, we evaluate 11
+accessible top-performing LLMs that are able to process Chinese input, covering diverse organizations
+and varying in size, as shown in Table 2. ChatGPT (OpenAI, 2022) and GPT-4 (OpenAI, 2023) are
+the strongest GPT model variants from OpenAI. Claude (Anthropic, 2022), developed by Anthropic,
+is often considered comparable to ChatGPT. We evaluate both the Claude-v1.3 and Claude-instantv1.0 variants, with Claude-instant being a lighter version. Bloomz-mt (Muennighoff et al., 2022) is
+based on the pretrained multilingual BLOOM model (Scao et al., 2022) with multitask prompted
+finetuning, thus is suitable for non-English languages. LLaMA (Touvron et al., 2023) is probably
+5
+
+Model
+
+Creator
+
+#Parameters
+
+Access
+
+GPT-4
+ChatGPT
+Claude-v1.3
+Claude-instant-v1.0
+Bloomz-mt
+LLaMA-65B
+GLM-130B
+ChatGLM-6B
+Chinese-LLaMA-13B
+Chinese-Alpaca-13B
+MOSS
+
+OpenAI
+OpenAI
+Anthropic
+Anthropic
+BigScience
+Meta
+Tsinghua
+Tsinghua
+Cui et al.
+Cui et al.
+Fudan
+
+undisclosed
+undisclosed
+undisclosed
+undisclosed
+176B
+65B
+130B
+6B
+13B
+13B
+16B
+
+API
+API
+API
+API
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+Weights
+
+Table 2: Models evaluated in this paper.
+
+Model
+
+STEM
+
+Social Science
+
+Humanities
+
+Other
+
+Average
+
+Random
+
+25.0
+
+25.0
+
+25.0
+
+25.0
+
+25.0
+
+GPT-4
+ChatGPT
+Claude-v1.3
+Bloomz-mt
+GLM-130B
+Claude-instant-v1.0
+ChatGLM-6B
+LLaMA-65B
+MOSS
+Chinese-Alpaca-13B
+Chinese-LLaMA-13B
+
+65.2
+49.0
+48.5
+39.1
+36.7
+38.6
+33.3
+32.6
+31.6
+27.4
+28.8
+
+74.7
+58.0
+58.6
+53.0
+55.8
+47.6
+48.3
+41.2
+37.0
+39.2
+32.9
+
+62.5
+48.8
+47.3
+47.7
+47.7
+39.5
+41.3
+34.1
+33.4
+32.5
+29.7
+
+64.7
+50.4
+50.1
+42.7
+43.0
+39.0
+38.0
+33.0
+32.1
+28.0
+28.0
+
+66.4
+51.0
+50.5
+44.3
+44.0
+40.6
+38.9
+34.7
+33.1
+30.9
+29.6
+
+Table 3: Zero-shot average accuracy (%) in answer-only setting. We report the average accuracy over the subjects
+within each category. “Average” column indicates the average accuracy over all the subjects.
+
+the best open-weight foundation model so far that achieves the highest accuracy on the English
+MMLU benchmark within open-weight models. The aforementioned models except Bloomz-mt are
+English-oriented during development, while they are able to process Chinese input because a minor
+fraction of Chinese text is present in the pretraining data.
+We further include recent LLMs developed by Chinese institutions or individuals that is Chineseoriented. GLM-130B (Zeng et al., 2023) and ChatGLM-6B (THUDM, 2023a) are based on the
+General Language Model architecture (GLM, Du et al. (2022)) trained on English and Chinese data.
+ChatGLM-6B is further adapted on conversational data. Chinese-LLaMA (Cui et al., 2023) is an
+adaptation of LLaMA, which is further pretrained on Chinese data. Chinese-Alpaca (Cui et al.,
+2023) performs instruction tuning based on Chinese-LLaMA. MOSS (OpenLMLab, 2023) is the
+first publicly available Chinese LLM, and it follows a training procedure similar to ChatGPT. We
+note that there are some other commercial Chinese-oriented LLMs whose weights and APIs are not
+directly open to the public at the time of writing this paper, such as Wenxin Yiyan (Baidu, 2023),
+Tongyi Qianwen (Alibaba, 2023), and Xunfei Xinghuo (iFLYTEK, 2023), these models may have
+strong performance, yet we are not authorized to evaluate and publicize their results. Therefore, we
+only report results from models with open APIs or weights in this work, while we anticipate the
+developers of other models to submit and optionally publicize their models’ results in our website. A
+detailed description of the evaluated models can be found in Appendix E.
+3.3
+
+Results
+
+General comparison: Zero- and five-shot answer-only results are shown in Table 3 and Table 4
+respectively. We report the average accuracy, while a detailed breakdown of accuracy per subject is
+provided in Appendix F. GPT-4 is the only model that exceeds 60% average accuracy, highlighting
+the challenge presented by C-E VAL. GPT-4 significantly outperforms all other models, with the
+second-best model, ChatGPT, trailing over 14 percentage points behind in both zero- and five-shot
+settings. Claude-v1.3 achieves similar performance to ChatGPT, in terms of both the category-wise
+6
+
+Model
+
+STEM
+
+Social Science
+
+Humanities
+
+Other
+
+Average
+
+Random
+
+25.0
+
+25.0
+
+25.0
+
+25.0
+
+25.0
+
+GPT-4
+ChatGPT
+Claude-v1.3
+Claude-instant-v1.0
+GLM-130B
+Bloomz-mt
+LLaMA-65B
+ChatGLM-6B
+Chinese-LLaMA-13B
+MOSS
+Chinese-Alpaca-13B
+
+67.1
+52.9
+51.9
+43.1
+34.8
+35.3
+37.8
+30.4
+31.6
+28.6
+26.0
+
+77.6
+61.8
+61.7
+53.8
+48.7
+45.1
+45.6
+39.6
+37.2
+36.8
+27.2
+
+64.5
+50.9
+52.1
+44.2
+43.3
+40.5
+36.1
+37.4
+33.6
+31.0
+27.8
+
+67.8
+53.6
+53.7
+45.4
+39.8
+38.5
+37.1
+34.5
+32.8
+30.3
+26.4
+
+68.7
+54.4
+54.2
+45.9
+40.3
+39.0
+38.8
+34.5
+33.3
+31.1
+26.7
+
+Table 4: Five-shot average accuracy (%) in answer-only setting. We report the average accuracy over the subjects
+within each category. “Average” column indicates the average accuracy over all the subjects.
+
+Model
+
+STEM
+
+Social Science
+
+Humanities
+
+Other
+
+Average
+
+Random
+
+25.0
+
+25.0
+
+25.0
+
+25.0
+
+25.0
+
+GPT-4
+Claude-v1.3
+ChatGPT
+Claude-instant-v1.0
+ChatGLM-6B
+MOSS
+LLaMA-65B
+GLM-130B
+Chinese-LLaMA-13B
+
+67.3
+51.9
+47.8
+43.3
+29.9
+27.3
+28.0
+24.8
+20.5
+
+76.5
+63.2
+58.3
+52.7
+40.0
+38.1
+36.3
+33.1
+30.5
+
+64.4
+50.9
+47.7
+41.3
+37.9
+33.6
+29.3
+30.8
+28.2
+
+66.6
+53.6
+48.5
+42.4
+34.5
+29.4
+30.0
+30.0
+27.1
+
+68.3
+54.2
+50.0
+44.5
+34.5
+31.2
+30.3
+28.8
+25.4
+
+Table 5: Five-shot average accuracy (%) in chain-of-thought setting. We report the average accuracy over the
+subjects within each category. “Average” column indicates the average accuracy over all the subjects. Bloomz-mt
+and Chinese-Alpaca-13B are excluded as they could not generate valid reasoning and thus fail to answer for
+many questions.
+
+average and the overall average. In addition to average accuracy, Table 9 in Appendix F reveals that
+GPT-4 surpasses ChatGPT in almost every subject, indicating a comprehensive advantage. Among
+Chinese-oriented models, GLM-130B exhibits the best performance, ranking the fifth in terms of both
+zero- and few-shot performance, 7.0 and 14.1 points behind ChatGPT in zero- and five-shot settings
+respectively. We observe that smaller models, despite undergoing instruction tuning, still struggle
+to achieve a 40% accuracy. This contradicts recent assertions that a 10B-scale instruction-tuned
+model can achieve comparable performance to ChatGPT (Taori et al., 2023; Chiang et al., 2023) – we
+argue that while these models may perform well on simpler tasks, their inherent advanced abilities
+significantly lag behind when faced with more complex scenarios.
+Does few-shot prompting help? Comparing Table 4 to Table 3, we find that while few-shot
+prompting helps many models achieve better results, it hurts performance of GLM-130B, Bloomz-mt,
+ChatGLM-6B, MOSS, and Chinese-Alpaca-13B. All of these models have undergone instruction tuning,6 and we hypothesize that the accuracy drop is because that these models have not (appropriately)
+incorporated few-shot demonstrations into the instruction tuning stage, as emphasized in Chung
+et al. (2022), thus sacrificing few-shot in-context learning performance to obtain enhanced zero-shot
+instruction-following abilities.
+Does chain-of-thought prompting help? The average accuracy in the COT setting is reported in
+Table 5, while Table 10 in Appendix F provides a detailed breakdown of the accuracy per subject.
+We exclude Bloomz-mt and Chinese-Alpaca-13B since these two models are unable to generate
+valid COT reasoning for a large portion of questions, failing to produce final answers. All models
+achieve comparable or lower average accuracy than in the answer-only setting. This suggests that
+6
+
+GLM-130B incorporates instruction tuning in the pretraining stage.
+
+7
+
+Model
+GPT-4
+Claude-v1.3
+ChatGPT
+Claude-instant-v1.0
+Bloomz-mt
+GLM-130B
+LLaMA-65B
+ChatGLM-6B
+MOSS
+Chinese-LLaMA-13B
+Chinese-Alpaca-13B
+
+Zero-shot AO
+
+Five-shot AO
+
+Five-shot COT
+
+53.3
+37.6
+36.7
+32.1
+30.8
+30.7
+29.8
+29.2
+28.4
+27.5
+24.4
+
+54.9
+39.0
+41.4
+35.5
+30.4
+30.3
+31.7
+23.1
+24.0
+27.3
+27.1
+
+56.8
+39.2
+35.0
+33.4
+–
+22.6
+21.4
+26.1
+21.6
+15.4
+–
+
+Table 6: Average accuracy on C-E VAL H ARD in both answer-only (AO) and chain-of-thought (COT) settings.
+
+COT prompting does not necessarily improve results for many subjects in C-E VAL. The primary
+reasons for this are twofold: (1) many subjects in C-E VAL are not reasoning-intensive, and additional
+reasoning steps may impair performance. This observation is supported by Chung et al. (2022), who
+noted performance degradation on MMLU with COT prompting. (2) Some models fail to leverage
+the benefits of COT prompting, particularly those that did not undergo COT-inclusive instruction
+tuning. Chung et al. (2022) reported this, noting an 8-point accuracy drop when using COT on MMLU
+with the 540B PaLM model. This finding partly elucidates the significant decrease in performance
+of the GLM-130B and LLaMA-65B models in the COT setting. Encouragingly, we still observe
+that COT prompting leads to considerable improvements for some models in certain subjects – for
+example, detailed results in Table 10 show that COT improves GPT-4’s performance in college physics
+from 50.6% to 60.2%, in probability and statistics from 53.6% to 62.0%, ChatGLM’s performance in
+middle school physics from 20.2% to 41.0%, and in high school geography from 29.2% to 38.2%.
+Difference between English- and Chinese-oriented models: GLM-130B is the best-performing
+Chinese-oriented model in our assessment, thus we focus on comparing it to the represented Englishoriented model, ChatGPT, in zero-shot answer-only settings. We do not analyze GPT-4 here since it
+is not at the same level as all other models, and comparing GLM-130B to it is not very helpful and
+informative. As illustrated in Table 3, while GLM-130B underperforms ChatGPT by 7.0 points on
+overall average, the gap significantly narrows on the social science and humanities category, lagging
+only 2.2 and 1.1 points behind respectively. This reflects that by leveraging more Chinese data, the
+model might achieve performance on par with or even superior to ChatGPT in areas pertaining to
+Chinese knowledge, such as history, politics, and law, highlighting situations where Chinese-oriented
+models may have the upper hand. However, concurrently, we note a significant difference of 12.3
+points between GLM-130B and ChatGPT in the STEM category, which implies a substantial gap in
+more complex tasks that necessitate advanced reasoning skills.
+Results on C-E VAL H ARD: Table 6 shows the average accuracy on C-E VAL H ARD. GPT-4 can
+only achieve 53.3%, 54.9%, 56.8% accuracy on zero-shot AO, five-shot AO, and five-shot COT
+settings respectively, implying the difficulty of C-E VAL H ARD. Interestingly, chain-of-thought
+prompting improves GPT-4 slightly on these extremely challenging subjects. Indeed, only GPT-4,
+ChatGPT, and Claude manage to make meaningful progress – improving by at least 10 points – over
+a random baseline. Our results further confirm that some critical distinction among LLMs comes
+out when the tasks become complex enough. We underscore the importance of evaluating LLMs in
+such challenging settings, as current LLM development goes beyond creating a casual chatbot – it
+involves the development of complex systems or agents capable of interacting with various data types,
+receiving feedback, reasoning and using tools, and even performing actions (Mialon et al., 2023).
+Results on the validation split: Since we do not publicly release the labels for our test split, we
+provide the average accuracy on the validation split as a reference for developers. The validation
+split comprises a total of 1346 questions, with each subject contributing fewer than 30 validation
+questions on average. Therefore, tracking accuracy on a specific subject may not yield significant
+insights. Instead, we report the average answer-only accuracy across all subjects in Table 7. The
+average validation accuracy closely mirrors the average test accuracy as presented in Table 3 and
+Table 4. Additionally, the model ranking on the validation split broadly corresponds to that on the
+test split. These observations suggest that developers may use the average validation accuracy as a
+good indicator for expedited development processes.
+8
+
+Model
+GPT-4
+Claude-v1.3
+ChatGPT
+Bloomz-mt
+GLM-130B
+Claude-instant-v1.0
+ChatGLM-6B
+LLaMA-65B
+MOSS
+Chinese-Alpaca-13B
+Chinese-LLaMA-13B
+
+Zero-shot
+
+Five-shot
+
+66.7
+52.1
+50.8
+45.9
+44.2
+43.2
+39.7
+38.6
+35.1
+32.0
+29.4
+
+69.9
+55.5
+53.5
+38.0
+40.8
+47.4
+37.1
+39.8
+28.9
+27.2
+33.1
+
+Table 7: Average accuracy on the validation split in the answer-only setting.
+
+4
+
+Related Work
+
+English benchmarks: Traditional English benchmarks mainly focus on assessing certain abilities of
+models on a single task or a single type of tasks, such as natural language understanding (NLU, Wang
+et al. (2019)), reading comprehension (Rajpurkar et al., 2018), machine translation (Bojar et al.,
+2014), and summarization (Hermann et al., 2015; Narayan et al., 2018). As a representative example,
+the GLUE benchmark (Wang et al., 2019) combines a collection of NLU tasks, and has witnessed
+superhuman model performance due to the burst of pretraining models such as BERT (Kenton &
+Toutanova, 2019) and GPT (Radford et al., 2019). In order to assess the capabilities of LLMs more
+comprehensively, recent benchmarks have cast light on the broader knowledge and advanced abilities.
+The MMLU benchmark (Hendrycks et al., 2021a) provides multi-domain and multi-task evaluation
+collected from real-world examinations and books. LLMs’ performance on MMLU fluctuates around
+random-chance accuracy until they reach the scale of GPT-3. The BIG-bench benchmark (Srivastava
+et al., 2022) consists of 204 diverse tasks, some of which are considered to be beyond the capabilities
+of current LLMs. The HELM benchmark (Liang et al., 2022) aggregates 42 different tasks and
+evaluates LLMs with 7 metrics ranging from accuracy to robustness.
+Chinese benchmarks: Despite the flourishing of English benchmark, language abilities in Chinese
+language environment remain under-developed. The CLUE benchmark (Xu et al., 2020) is the first
+large-scale Chinese NLU benchmark, and still serves as the most widely-used and best available
+Chinese benchmark. Recently, the AGIEval benchmark (Zhong et al., 2023) contains data from
+the Chinese College Entrance Exam, Chinese lawyer qualification test and Chinese civil service
+examination. The MMCU benchmark (Zeng, 2023) consists of tests from four major domains
+including medicine, law, psychology and education, which are also collected from Chinese College
+Entrance Exam, qualification test as well as university examinations. Compared to AGIEval and
+MMCU, C-E VAL (1) has a broader coverage of domains (§2.2), (2) features four different levels of
+difficulty – particularly, the C-E VAL H ARD benchmark is the first Chinese benchmark to provide
+sophisticated reasoning problems, and (3) makes an effort to mitigate data leakage – our questions
+mostly come from mock exams as PDF or Microsoft Word documents that are further processed by
+us, while AGIEval and MMCU collects the exact questions from past national exams in China.
+
+5
+
+Discussion
+
+We believe that the evaluation of LLMs should transcend the scope of casual conversational bots,
+guiding developers in preparing LLMs to function in more complex scenarios. This was the primary motivation behind the creation of C-E VAL, a challenging evaluation suite. We hope that
+C-E VAL along with C-E VAL H ARD have made important progress on this direction particularly in a
+Chinese context. We also note that, C-E VAL, along with all the English-language benchmarks, is far
+from perfect for LLM evaluation. There are many other abilities such as reasoning over and calling
+APIs, as well as multiple aspects that extend beyond accuracy, including safety, bias, and robustness.
+We leave further exploration on their evaluation for future work.
+9
+
+Acknowledgement
+We thank the anonymous reviewers for their comments. Yuzhuo Bai is supported by the National Key
+R&D Program of China (No. 2020AAA0106502) and Institute Guo Qiang at Tsinghua University.
+
+References
+Alibaba. Tongyi qianwen. Alibaba Blog, 2023. URL https://tongyi.aliyun.com.
+Anthropic. Introducing claude. Anthropic Blog, 2022. URL https://www.anthropic.com/
+index/introducing-claude.
+Yuntao Bai, Saurav Kadavath, Sandipan Kundu, Amanda Askell, Jackson Kernion, Andy Jones, Anna
+Chen, Anna Goldie, Azalia Mirhoseini, Cameron McKinnon, et al. Constitutional ai: Harmlessness
+from ai feedback. arXiv preprint arXiv:2212.08073, 2022.
+Baidu. Wenxin yiyan. Baidu Blog, 2023. URL https://yiyan.baidu.com.
+Ondřej Bojar, Christian Buck, Christian Federmann, Barry Haddow, Philipp Koehn, Johannes Leveling, Christof Monz, Pavel Pecina, Matt Post, Herve Saint-Amand, Radu Soricut, Lucia Specia, and
+Aleš Tamchyna. Findings of the 2014 workshop on statistical machine translation. In Proceedings of the Ninth Workshop on Statistical Machine Translation, pp. 12–58, Baltimore, Maryland,
+USA, June 2014. Association for Computational Linguistics. doi: 10.3115/v1/W14-3302. URL
+https://aclanthology.org/W14-3302.
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Ponde de Oliveira Pinto, Jared
+Kaplan, Harri Edwards, Yuri Burda, Nicholas Joseph, Greg Brockman, et al. Evaluating large
+language models trained on code. arXiv preprint arXiv:2107.03374, 2021.
+Wei-Lin Chiang, Zhuohan Li, Zi Lin, Ying Sheng, Zhanghao Wu, Hao Zhang, Lianmin Zheng,
+Siyuan Zhuang, Yonghao Zhuang, Joseph E. Gonzalez, Ion Stoica, and Eric P. Xing. Vicuna:
+An open-source chatbot impressing gpt-4 with 90%* chatgpt quality, March 2023. URL https:
+//lmsys.org/blog/2023-03-30-vicuna/.
+Aakanksha Chowdhery, Sharan Narang, Jacob Devlin, Maarten Bosma, Gaurav Mishra, Adam
+Roberts, Paul Barham, Hyung Won Chung, Charles Sutton, Sebastian Gehrmann, et al. Palm:
+Scaling language modeling with pathways. arXiv preprint arXiv:2204.02311, 2022.
+Hyung Won Chung, Le Hou, Shayne Longpre, Barret Zoph, Yi Tay, William Fedus, Eric Li, Xuezhi
+Wang, Mostafa Dehghani, Siddhartha Brahma, et al. Scaling instruction-finetuned language models.
+arXiv preprint arXiv:2210.11416, 2022.
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser,
+Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, Christopher Hesse, and John
+Schulman. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168,
+2021.
+Yiming Cui, Ziqing Yang, and Xin Yao. Efficient and effective text encoding for chinese llama and
+alpaca. arXiv preprint arXiv:2304.08177, 2023. URL https://arxiv.org/abs/2304.08177.
+Zhengxiao Du, Yujie Qian, Xiao Liu, Ming Ding, Jiezhong Qiu, Zhilin Yang, and Jie Tang. Glm:
+General language model pretraining with autoregressive blank infilling. In Proceedings of the 60th
+Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pp.
+320–335, 2022.
+Luyu Gao, Aman Madaan, Shuyan Zhou, Uri Alon, Pengfei Liu, Yiming Yang, Jamie Callan, and
+Graham Neubig. Pal: Program-aided language models. arXiv preprint arXiv:2211.10435, 2022.
+Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob
+Steinhardt. Measuring massive multitask language understanding. In International Conference on
+Learning Representations, 2021a. URL https://openreview.net/forum?id=d7KBjmI3GmQ.
+10
+
+Dan Hendrycks, Collin Burns, Saurav Kadavath, Akul Arora, Steven Basart, Eric Tang,
+Dawn Song, and Jacob Steinhardt. Measuring mathematical problem solving with the
+math dataset. In J. Vanschoren and S. Yeung (eds.), Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks, volume 1. Curran, 2021b.
+URL https://datasets-benchmarks-proceedings.neurips.cc/paper_files/paper/
+2021/file/be83ab3ecd0db773eb2dc1b0a17836a1-Paper-round2.pdf.
+Karl Moritz Hermann, Tomas Kocisky, Edward Grefenstette, Lasse Espeholt, Will Kay, Mustafa
+Suleyman, and Phil Blunsom. Teaching machines to read and comprehend. Advances in neural
+information processing systems, 28, 2015.
+Jordan Hoffmann, Sebastian Borgeaud, Arthur Mensch, Elena Buchatskaya, Trevor Cai, Eliza
+Rutherford, Diego de Las Casas, Lisa Anne Hendricks, Johannes Welbl, Aidan Clark, et al.
+Training compute-optimal large language models. arXiv preprint arXiv:2203.15556, 2022.
+iFLYTEK. Xunfei xinghuo. iFLYTEK Blog, 2023. URL https://xinghuo.xfyun.cn.
+Jacob Devlin Ming-Wei Chang Kenton and Lee Kristina Toutanova. Bert: Pre-training of deep
+bidirectional transformers for language understanding. In Proceedings of NAACL-HLT, pp. 4171–
+4186, 2019.
+Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yutaka Matsuo, and Yusuke Iwasawa. Large
+language models are zero-shot reasoners. In Alice H. Oh, Alekh Agarwal, Danielle Belgrave,
+and Kyunghyun Cho (eds.), Advances in Neural Information Processing Systems, 2022. URL
+https://openreview.net/forum?id=e2TBb5y0yFf.
+Percy Liang, Rishi Bommasani, Tony Lee, Dimitris Tsipras, Dilara Soylu, Michihiro Yasunaga, Yian
+Zhang, Deepak Narayanan, Yuhuai Wu, Ananya Kumar, et al. Holistic evaluation of language
+models. arXiv preprint arXiv:2211.09110, 2022.
+Grégoire Mialon, Roberto Dessì, Maria Lomeli, Christoforos Nalmpantis, Ram Pasunuru, Roberta
+Raileanu, Baptiste Rozière, Timo Schick, Jane Dwivedi-Yu, Asli Celikyilmaz, et al. Augmented
+language models: a survey. arXiv preprint arXiv:2302.07842, 2023.
+Niklas Muennighoff, Thomas Wang, Lintang Sutawika, Adam Roberts, Stella Biderman, Teven Le
+Scao, M Saiful Bari, Sheng Shen, Zheng-Xin Yong, Hailey Schoelkopf, et al. Crosslingual
+generalization through multitask finetuning. arXiv preprint arXiv:2211.01786, 2022.
+Shashi Narayan, Shay B. Cohen, and Mirella Lapata. Don’t give me the details, just the summary!
+topic-aware convolutional neural networks for extreme summarization. In Proceedings of the 2018
+Conference on Empirical Methods in Natural Language Processing, pp. 1797–1807, Brussels,
+Belgium, October-November 2018. Association for Computational Linguistics. doi: 10.18653/v1/
+D18-1206. URL https://aclanthology.org/D18-1206.
+Erik Nijkamp, Bo Pang, Hiroaki Hayashi, Lifu Tu, Huan Wang, Yingbo Zhou, Silvio Savarese,
+and Caiming Xiong. Codegen: An open large language model for code with multi-turn program
+synthesis. arXiv preprint arXiv:2203.13474, 2022.
+OpenAI. Chatgpt: Optimizing language models for dialogue. OpenAI Blog, 2022. URL https:
+//openai.com/blog/chatgpt/.
+OpenAI. GPT-4 technical report. arXiv preprint arXiv:2303.08774, 2023.
+OpenLMLab. Moss. https://github.com/OpenLMLab/MOSS, 2023.
+Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever, et al. Language
+models are unsupervised multitask learners. OpenAI blog, 1(8):9, 2019.
+Pranav Rajpurkar, Robin Jia, and Percy Liang. Know what you don’t know: Unanswerable questions
+for squad. In Proceedings of the 56th Annual Meeting of the Association for Computational
+Linguistics (Volume 2: Short Papers), pp. 784–789, 2018.
+Teven Le Scao, Angela Fan, Christopher Akiki, Ellie Pavlick, Suzana Ilić, Daniel Hesslow, Roman
+Castagné, Alexandra Sasha Luccioni, François Yvon, Matthias Gallé, et al. Bloom: A 176bparameter open-access multilingual language model. arXiv preprint arXiv:2211.05100, 2022.
+11
+
+Aarohi Srivastava, Abhinav Rastogi, Abhishek Rao, Abu Awal Md Shoeb, Abubakar Abid, Adam
+Fisch, Adam R Brown, Adam Santoro, Aditya Gupta, Adrià Garriga-Alonso, et al. Beyond the
+imitation game: Quantifying and extrapolating the capabilities of language models. arXiv preprint
+arXiv:2206.04615, 2022.
+Mirac Suzgun, Nathan Scales, Nathanael Schärli, Sebastian Gehrmann, Yi Tay, Hyung Won Chung,
+Aakanksha Chowdhery, Quoc V Le, Ed H Chi, Denny Zhou, et al. Challenging big-bench tasks
+and whether chain-of-thought can solve them. arXiv preprint arXiv:2210.09261, 2022.
+Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li, Carlos Guestrin, Percy
+Liang, and Tatsunori B. Hashimoto. Stanford alpaca: An instruction-following llama model.
+https://github.com/tatsu-lab/stanford_alpaca, 2023.
+Ross Taylor, Marcin Kardas, Guillem Cucurull, Thomas Scialom, Anthony Hartshorn, Elvis Saravia,
+Andrew Poulton, Viktor Kerkez, and Robert Stojnic. Galactica: A large language model for science.
+arXiv preprint arXiv:2211.09085, 2022.
+THUDM. ChatGLM. https://github.com/THUDM/ChatGLM-6B, 2023a.
+THUDM. ChatGLM2. https://github.com/THUDM/ChatGLM2-6B, 2023b.
+Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée
+Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, et al. Llama: Open and
+efficient foundation language models. arXiv preprint arXiv:2302.13971, 2023.
+Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel R. Bowman.
+GLUE: A multi-task benchmark and analysis platform for natural language understanding. In
+International Conference on Learning Representations, 2019. URL https://openreview.net/
+forum?id=rJ4km2R5t7.
+Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc V Le, Ed H. Chi, Sharan Narang, Aakanksha
+Chowdhery, and Denny Zhou. Self-consistency improves chain of thought reasoning in language
+models. In The Eleventh International Conference on Learning Representations, 2023. URL
+https://openreview.net/forum?id=1PL1NIMMrw.
+Yizhong Wang, Yeganeh Kordi, Swaroop Mishra, Alisa Liu, Noah A Smith, Daniel Khashabi, and
+Hannaneh Hajishirzi. Self-instruct: Aligning language model with self generated instructions.
+arXiv preprint arXiv:2212.10560, 2022.
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, brian ichter, Fei Xia, Ed H. Chi,
+Quoc V Le, and Denny Zhou. Chain of thought prompting elicits reasoning in large language
+models. In Alice H. Oh, Alekh Agarwal, Danielle Belgrave, and Kyunghyun Cho (eds.), Advances
+in Neural Information Processing Systems, 2022. URL https://openreview.net/forum?id=
+_VjQlMeSB_J.
+Yuxi Xie, Kenji Kawaguchi, Yiran Zhao, Xu Zhao, Min-Yen Kan, Junxian He, and Qizhe Xie. Decomposition enhances reasoning via self-evaluation guided decoding. arXiv preprint arXiv:2305.00633,
+2023.
+Liang Xu, Hai Hu, Xuanwei Zhang, Lu Li, Chenjie Cao, Yudong Li, Yechen Xu, Kai Sun, Dian
+Yu, Cong Yu, Yin Tian, Qianqian Dong, Weitang Liu, Bo Shi, Yiming Cui, Junyi Li, Jun Zeng,
+Rongzhao Wang, Weijian Xie, Yanting Li, Yina Patterson, Zuoyu Tian, Yiwen Zhang, He Zhou,
+Shaoweihua Liu, Zhe Zhao, Qipeng Zhao, Cong Yue, Xinrui Zhang, Zhengliang Yang, Kyle
+Richardson, and Zhenzhong Lan. CLUE: A Chinese language understanding evaluation benchmark.
+In Proceedings of the 28th International Conference on Computational Linguistics, pp. 4762–
+4772, Barcelona, Spain (Online), December 2020. International Committee on Computational
+Linguistics. doi: 10.18653/v1/2020.coling-main.419. URL https://aclanthology.org/2020.
+coling-main.419.
+Aohan Zeng, Xiao Liu, Zhengxiao Du, Zihan Wang, Hanyu Lai, Ming Ding, Zhuoyi Yang, Yifan
+Xu, Wendi Zheng, Xiao Xia, Weng Lam Tam, Zixuan Ma, Yufei Xue, Jidong Zhai, Wenguang
+Chen, Zhiyuan Liu, Peng Zhang, Yuxiao Dong, and Jie Tang. GLM-130b: An open bilingual
+pre-trained model. In The Eleventh International Conference on Learning Representations, 2023.
+URL https://openreview.net/forum?id=-Aw0rrrPUF.
+12
+
+Hui Zeng. Measuring massive multitask chinese understanding. arXiv preprint arXiv:2304.12986,
+2023.
+Wanjun Zhong, Ruixiang Cui, Yiduo Guo, Yaobo Liang, Shuai Lu, Yanlin Wang, Amin Saied, Weizhu
+Chen, and Nan Duan. Agieval: A human-centric benchmark for evaluating foundation models.
+arXiv preprint arXiv:2304.06364, 2023.
+Denny Zhou, Nathanael Schärli, Le Hou, Jason Wei, Nathan Scales, Xuezhi Wang, Dale Schuurmans,
+Claire Cui, Olivier Bousquet, Quoc V Le, and Ed H. Chi. Least-to-most prompting enables
+complex reasoning in large language models. In The Eleventh International Conference on
+Learning Representations, 2023. URL https://openreview.net/forum?id=WZH7099tgfM.
+
+13
+
+A
+
+Author Contributions
+
+Data collection, annotation, and initial validation: Yuzhen Huang, Yuzhuo Bai, Zhihao Zhu,
+Junlei Zhang, Jinghan Zhang, Tangjun Su, Junteng Liu, Yikai Zhang, and Jiayi Lei collected the first
+version of the data, including some necessary manual annotation from PDF or Word documents. They
+then cross-validated the collected data. Junlei Zhang prompted GPT-4 to generate the explanation
+data, and then Yuzhen Huang, Yuzhuo Bai, and Junxian He manually revised the explanations.
+Data processing: Yuzhen Huang did most of the data processing job including a lot of manual
+revisions, such as fixing typos/incorrect formats of the questions from PDF documents and ensuring
+all the LATEX notations can be correctly compiled. Jinghan Zhang did the data deduplication.
+Evaluation: Yuzhen Huang tested ChatGPT and MOSS; Yuzhuo Bai tested ChatGLM; Junlei Zhang
+tested GLM-130B; Chuancheng Lv tested Bloomz-mt, LLaMA, Chinese-LLaMA, and ChineseAlpaca; Yao Fu tested GPT-4 and the Claude model variants.
+Website and submission system: Zhihao Zhu built the website and the online submission system.
+Paper Writing: Yuzhen Huang, Yuzhuo Bai, and Junxian He wrote the main content of this paper,
+while other authors helped proofread.
+Advising: Yao Fu, Maosong Sun, and Junxian He take advisor roles in this project. Junxian He is
+the main advisor, initializing and organizing this project.
+
+B
+
+Detailed Stats of C-E VAL
+
+Table 8 lists all the C-E VAL tasks and their broader categories, as well as the number of questions
+included in each task.
+
+C
+
+Explanation Data Generation
+
+We show an example of the automatic COT explanation generation via GPT-4 in Figure 5. We use five
+human-written question-explanation pairs to prompt GPT-4 to generate explanation giving question
+and its correct answer. The generated explanations are further revised manually to obtain the final
+explanations.
+
+D
+
+Evaluation Prompts
+
+We show the evaluation prompts of answer-only and chain-of-thought test in Figure 6 and Figure 7
+respectively.
+
+E
+
+Details of the models being evaluated
+
+ChatGPT and GPT-4 are GPT-series models that are enhanced to follow human instructions
+and be more helpful, harmless and honest using Reinforcement Learning from Human Feedback.
+GPT-4 additionally enables image inputs and goes through well-designed post-training alignment
+process, as well as having a larger scale than most of the existing model. GPT-4 achieves human-level
+performance on various benchmark, and even scored to be the top 10% in some simulated exams.
+Claude is the latest Anthropic-series LLM that also focuses on human intention alignment. Applying the constitutional AI approach(Bai et al., 2022), Claude manages to be both helpful and
+trustworthy. Claude-instant is the lighter vesrion with less cost and faster inference of Claude.
+BLOOMZ-mt (Muennighoff et al., 2022) is created by combining multitask prompted finetuning
+to the pretrained multilingual BLOOM model(Scao et al., 2022), using not only English prompts
+but also machine-translated prompts to match the language of multilingual tasks, and are found
+to be capable at task- and language-agnostic generalization. We evaluate the 176B version in our
+experiment.
+14
+
+Subject
+Advanced Mathematics (高等数学)
+College Chemistry (大学化学)
+College Physics (大学物理)
+College Programming (大学编程)
+Computer Architecture (计算机组成)
+Computer Network (计算机网络)
+Discrete Mathematics (离散数学)
+Electrical Engineer (注册电气工程师)
+High School Biology (高中生物)
+High School Chemistry (高中化学)
+High School Mathematics (高中数学)
+High School Physics (高中物理)
+Metrology Engineer (注册计量师)
+Middle School Biology (初中生物)
+Middle School Chemistry (初中化学)
+Middle School Mathematics (初中数学)
+Middle School Physics (初中物理)
+Operating System (操作系统)
+Probability and Statistics (概率统计)
+Veterinary Medicine (兽医学)
+Business Administration (工商管理)
+College Economics (大学经济学)
+Education Science (教育学)
+High School Geography (高中地理)
+High School Politics (高中政治)
+Mao Zedong Thought (毛泽东思想和中国特色社会主义理论体系概论)
+Marxism (马克思主义基本原理)
+Middle School Geography (初中地理)
+Middle School Politics (初中政治)
+Teacher Qualification (教师资格)
+Art Studies (艺术学)
+Chinese Language and Literature (中国语言文学)
+High School Chinese (高中语文)
+High School History (高中历史)
+Ideological and Moral Cultivation (思想道德修养与法律基础)
+Law (法学)
+Legal Professional (法律职业资格)
+Logic (逻辑学)
+Middle School History (初中历史)
+Modern Chinese History (近代史纲要)
+Professional Tour Guide (导游资格)
+Accountant (注册会计师)
+Basic Medicine (基础医学)
+Civil Servant (公务员)
+Clinical Medicine (临床医学)
+Environmental Impact Assessment Engineer (环境影响评价工程师)
+Fire Engineer (注册消防工程师)
+Physician (医师资格)
+Plant Protection (植物保护)
+Sports Science (体育学)
+Tax Accountant (税务师)
+Urban and Rural Planner (注册城乡规划师)
+
+Category
+
+# Questions
+
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+STEM
+Social Science
+Social Science
+Social Science
+Social Science
+Social Science
+Social Science
+Social Science
+Social Science
+Social Science
+Social Science
+Humanities
+Humanities
+Humanities
+Humanities
+Humanities
+Humanities
+Humanities
+Humanities
+Humanities
+Humanities
+Humanities
+Other
+Other
+Other
+Other
+Other
+Other
+Other
+Other
+Other
+Other
+Other
+
+197
+253
+200
+384
+219
+195
+174
+381
+199
+196
+189
+199
+248
+218
+210
+201
+202
+203
+189
+238
+339
+557
+304
+202
+200
+248
+203
+125
+219
+448
+336
+237
+202
+207
+196
+250
+243
+231
+234
+240
+300
+497
+199
+481
+227
+317
+318
+497
+226
+204
+497
+469
+
+Table 8: Summary of all 52 subjects.
+
+LLaMA (Touvron et al., 2023) is a Transformer-architecture LLM that is trained on a mixture
+of several open sources. Applying several improvements on vanilla Transformers used by previous
+LLMs, and optimized to improve the training efficiency, LLaMA shows strong language abilities
+and can surpass models having 10x larger parameters than LLaMA. We evaluate the LLaMA-65B
+version in our experiment.
+GLM-130B and ChatGLM-6B are based on the General language model (GLM) structure that
+gain benefits from its bidirectional attention advantage. By using alterable number and length of
+15
+
+... [5-shot examples] ...
+以下是中国关于初中物理的单项选择题，请根据以下题目和答案，生成一段正确，合理的答案解析。
+The following are multiple-choice questions about middle school physics in China. Please generate a correct and
+reasonable explanation based on the following questions and answers.
+下列属于可再生能源的是____。
+Which of the following is a renewable energy source?
+A. 石油
+B.煤炭
+C. 核燃料
+D. 太阳能
+A. petroleum B. coal C. nuclear fuel D. solar energy
+答案：D
+Answer: D
+你生成的答案解析是什么？
+What is your explanation generated?
+答案解析: 让我们一步一步思考，
+1. (A) 石油是一种化石能源，是从地下深处开采出来的，不属于可再生能源。
+2. (B) 煤炭也是一种化石能源，是从地下深处开采出来的，不属于可再生能源。
+3. (C) 核燃料是指用于核反应堆中的燃料，包括铀、钚等，虽然可以通过核反应产生能量，但是核燃料是
+有限的，不属于可再生能源。
+4. (D) 太阳能是指从太阳辐射中获取的能量，是一种可再生能源，因为太阳每天都会升起，不会因为使用
+而枯竭。
+所以答案是D。
+Explanation: Let‘s think step by step,
+1. (A) Petroleum is a fossil fuel extracted from deep underground and is not a renewable energy source.
+2. (B) Coal is also a fossil fuel extracted from deep underground and is not a renewable energy source.
+3. (C) Nuclear fuel refers to the fuel used in nuclear reactors, including uranium, plutonium, etc. Although energy
+can be generated through nuclear reactions, nuclear fuel is limited and is not a renewable energy source.
+4. (D) Solar energy refers to the energy obtained from solar radiation and is a renewable energy source, because
+the sun rises every day and will not be exhausted due to use.
+Therefore, the answer is C.
+
+Figure 5: An example of generating explanations via GPT-4. The red text is the autocompleted response
+from model, while the preceding text is the user-inputted prompt. We indicate English translation below the
+corresponding Chinese text for each paragraph.
+以下是中国关于临床医学的单项选择题，请选出其中的正确答案。
+The following are multiple-choice questions about clinical medicine in China. Please select the correct answer.
+男性，65岁，昏迷10小时。血气分析：pH 7.26，PaCO2 82mmHg，PaO2 45mmHg。下列哪项处理不适
+宜____
+A 65-year-old male patient has been in a coma for 10 hours. Blood gas test shows a pH of 7.26, PaCO2 82mmHg,
+and PaO2 45mmHg. Which of the following treatments is not appropriate?____
+A. 机械通气
+B. 呼吸兴奋剂
+C. 支持疗法
+D. 高浓度给氧
+A. mechanical ventilation B. respiratory stimulants C. supportive therapy D. high concentration oxygen therapy
+答案：D
+Answer: D
+... [5-shot examples] ...
+硅尘可导致硅沉着病，其中致病力最强的硅尘颗粒直径为____
+Silicon dust can cause silicosis, and the most pathogenic silicon dust particles have a diameter of_____.
+A. ＞5μm
+答案：C
+Answer: C
+
+B. 4～5μm
+
+C. 1～2μm
+
+D. 2～3／μm
+
+Figure 6: An example of few-shot evaluation in answer-only scenarios, while zero-shot evaluation is similar by
+removing the exemplars. The red text is the autocompleted response from model, while the preceding text is the
+inputted prompt. We indicate English translation below the corresponding Chinese text.
+
+blanks, GLM can adapt to various tasks. GLM-130B is a bilingual pre-trained GLM that ultilizes selfsupervised learning and multitask instruction pretraining. GLM-130B also realized INT4 quantization
+16
+
+以下是中国关于计算机组成考试的单项选择题，请选出其中的正确答案。
+The following are multiple-choice questions about computer architecture in China. Please select the correct
+answer.
+... [5-shot examples] ...
+设寄存器R的内容(R)=1500H，内存单元1500H的内容为2500H，内存单元2500H的内容为3500H，PC的值
+为4500H，采用相对寻址方式，有效地址为2500H的操作数是____。
+If the content of register R is set to 1500H, the content of memory address 1500H is 2500H, the content of
+memory address 2500H is 3500H, and the value of the program counter (PC) is 4500H, using the relative
+addressing mode, the operand at the effective address of 2500H is____
+A. 1500H
+B. 2500H
+C. 3500H
+D. 4500H
+答案：让我们一步一步思考，
+1. 根据题目中的信息，内存单元1500H的内容为2500H，内存单元2500H的内容为3500H，表示当前指令
+的地址为2500H-1500H=1000H。
+2. 根据相对寻址方式，有效地址为2500H的操作数需要加上当前指令地址1000H才能得到实际的操作数地
+址，即3500H。
+所以答案是C。
+Answer: Let‘s think step by step,
+1. According to the information given in the question, the content of memory unit 1500H is 2500H, and the
+content of memory unit 2500H is 3500H. This indicates that the current instruction address is 2500H1500H=1000H.
+2. According to the relative addressing mode, in order to obtain the actual operand address of the effective
+address with the value of 2500H, the current instruction address of 1000H needs to be added to it, resulting in the
+actual operand address of 3500H.
+Therefore, the answer is C.
+
+Figure 7: An example of few-shot evaluation in chain-of-thought scenarios, while zero-shot evaluation is similar
+by removing the exemplars. The red text is the autocompleted response from model, while the preceding text is
+the inputted prompt. We indicate English translation below the corresponding Chinese text.
+
+with little to no quality degradation that significantly accelerate its inference efficiency. ChatGLM-6B
+is a lightweight conversational version of the GLM family that has been specially optimized for
+Chinese contexts. ChatGLM-6B also applies quantization so it can be deployed with a consumergrade graphic memory requirement as little as 6GB. We evaluate on the fp16 settings for both two
+models in our experiment.
+Chinese-LLaMA is an adaptation of original LLaMA into Chinese language environments.
+Chinese-LLaMA expands the original LLaMA by adding 20K Chinese tokens into its vocabulary, and
+is secondarily pre-trained and instruction fine-tuned on Chinese data. We evaluate Chinese-LLaMA13B in our experiment, the largest Chinese-LLaMA variant.
+Chinese-Alpaca is based on the Chinese-LLaMA checkpoint that is further tuned on Chinese
+instruction tuning data. We evaluate Chinese-Alpaca-13B in our experiment, the largest ChineseAlpaca variant.
+MOSS is the first open-source Chinese LLM that matchs ChatGPT on both the training scale and
+alignment techniques. MOSS is initialized with CodeGen(Nijkamp et al., 2022), being pretrained on
+100B Chinese tokens and 20B English tokens, and has further integrated supervised fine-tuning and
+preference model, as well as plugin augmentation, but not all the version are publicly available. We
+evaluate the moss-moon-003-sft version in our experiment.
+
+F
+
+Breakdown of Model Performance
+
+Table 9 and Table 10 show the detailed breakdown of accuracy per subject of four representative
+models in zero- and five-shot settings respectively, while we refer the readers to our website leaderboard https://cevalbenchmark.com/static/leaderboard.html for a detailed breakdown of results for all
+models.
+17
+
+Subject
+Advanced Mathematics
+College Chemistry
+College Physics
+College Programming
+Computer Architecture
+Computer Network
+Discrete Mathematics
+Electrical Engineer
+High School Biology
+High School Chemistry
+High School Mathematics
+High School Physics
+Metrology Engineer
+Middle School Biology
+Middle School Chemistry
+Middle School Mathematics
+Middle School Physics
+Operating System
+Probability and Statistics
+Veterinary Medicine
+Business Administration
+College Economics
+Education Science
+High School Geography
+High School Politics
+Mao Zedong Thought
+Marxism
+Middle School Geography
+Middle School Politics
+Teacher Qualification
+Art Studies
+Chinese Language and Literature
+High School Chinese
+High School History
+Ideological and Moral Cultivation
+Law
+Legal Professional
+Logic
+Middle School History
+Modern Chinese History
+Professional Tour Guide
+Accountant
+Basic Medicine
+Civil Servant
+Clinical Medicine
+Environmental Impact Assessment Engineer
+Fire Engineer
+Physician
+Plant Protection
+Sports Science
+Tax Accountant
+Urban and Rural Planner
+
+GPT-4
+
+ChatGPT
+
+GLM-130B
+
+Claude-instant-v1.0
+
+48.6
+54.0
+50.6
+72.2
+73.1
+74.9
+62.1
+48.7
+69.1
+55.2
+41.0
+65.1
+68.0
+88.0
+82.7
+65.5
+80.9
+79.3
+50.0
+75.7
+63.1
+67.6
+67.4
+73.6
+74.4
+74.9
+77.7
+78.7
+85.5
+84.5
+57.4
+61.2
+38.8
+66.5
+73.8
+56.1
+55.3
+62.3
+83.6
+63.7
+68.8
+63.4
+78.9
+62.2
+70.5
+59.4
+45.0
+75.6
+71.4
+70.0
+56.0
+59.1
+
+38.2
+36.2
+34.1
+56.1
+62.7
+60.8
+37.9
+38.9
+49.1
+45.3
+28.3
+36.6
+58.4
+68.2
+63.2
+40.1
+61.2
+70.4
+36.7
+56.7
+48.2
+47.3
+54.8
+55.6
+50.0
+56.6
+70.9
+57.4
+69.4
+69.9
+47.7
+51.7
+37.6
+48.4
+65.1
+42.1
+40.5
+38.7
+65.2
+46.2
+53.4
+46.3
+61.1
+45.5
+51.0
+52.0
+41.5
+59.4
+56.3
+53.9
+38.4
+49.0
+
+28.9
+29.0
+29.5
+33.3
+38.3
+36.3
+34.6
+31.6
+37.7
+36.0
+34.9
+26.9
+49.8
+51.6
+45.9
+32.2
+41.6
+42.5
+25.9
+47.6
+43.2
+38.6
+52.6
+51.1
+45.5
+67.6
+69.3
+58.3
+61.1
+70.7
+49.3
+46.4
+25.8
+48.4
+59.3
+37.6
+35.8
+34.3
+65.2
+59.9
+63.2
+39.7
+46.9
+45.2
+43.5
+45.6
+35.8
+44.7
+49.7
+44.4
+33.9
+43.5
+
+36.4
+25.9
+33.5
+40.6
+42.5
+44.4
+28.8
+32.7
+40.0
+39.5
+24.7
+40.0
+48.4
+46.4
+47.0
+34.5
+48.9
+46.4
+27.7
+43.8
+40.2
+40.8
+43.0
+42.7
+37.5
+49.3
+62.0
+49.1
+57.0
+54.9
+33.2
+35.9
+31.5
+41.2
+58.1
+34.8
+36.7
+36.3
+48.8
+42.5
+35.0
+38.1
+39.4
+36.1
+38.0
+41.3
+29.4
+41.5
+48.2
+40.6
+38.1
+38.0
+
+Table 9: Zero-shot answer only accuracy per subject.
+
+G
+
+Option Bias
+
+The distribution of the correct answer is shown in the table 11. We admit that there are fluctuations in
+the proportion of different options. However, these fluctuations are relatively small around a random
+25% level and similar to MMLU.
+To verify if the option bias exists on models, we permuted the order of the choices in the questions and
+randomly selected 5 distinct permutations of choices for each question. Then we evaluate ChatGPT,
+ChatGLM-6B and ChatGLM2-6B (THUDM, 2023b) on the 5 different permutations of C-E VAL.
+The zero-shot results in the answer-only setting are shown in table 12. We report the average accuracy
+18
+
+Subject
+Advanced Mathematics
+College Chemistry
+College Physics
+College Programming
+Computer Architecture
+Computer Network
+Discrete Mathematics
+Electrical Engineer
+High School Biology
+High School Chemistry
+High School Mathematics
+High School Physics
+Metrology Engineer
+Middle School Biology
+Middle School Chemistry
+Middle School Mathematics
+Middle School Physics
+Operating System
+Probability and Statistics
+Veterinary Medicine
+Business Administration
+College Economics
+Education Science
+High School Geography
+High School Politics
+Mao Zedong Thought
+Marxism
+Middle School Geography
+Middle School Politics
+Teacher Qualification
+Art Studies
+Chinese Language and Literature
+High School Chinese
+High School History
+Ideological and Moral Cultivation
+Law
+Legal Professional
+Logic
+Middle School History
+Modern Chinese History
+Professional Tour Guide
+Accountant
+Basic Medicine
+Civil Servant
+Clinical Medicine
+Environmental Impact Assessment Engineer
+Fire Engineer
+Physician
+Plant Protection
+Sports Science
+Tax Accountant
+Urban and Rural Planner
+
+GPT-4
+
+ChatGPT
+
+ChatGLM
+
+Claude-instant-v1.0
+
+49.7 / 53.8
+59.4 / 55.8
+50.6 / 60.2
+78.1 / 77.5
+74.6 / 75.6
+77.8 / 77.2
+66.7 / 62.7
+49.9 / 56.0
+72.6 / 70.3
+52.3 / 55.8
+38.0 / 42.8
+69.1 / 61.1
+70.3 / 71.2
+91.2 / 86.5
+81.1 / 71.4
+62.7 / 66.7
+81.5 / 78.7
+82.1 / 80.4
+53.6 / 62.0
+80.0 / 80.0
+67.1 / 65.4
+71.4 / 74.4
+68.5 / 69.3
+74.7 / 70.2
+77.8 / 69.3
+79.5 / 79.9
+81.6 / 82.7
+83.3 / 83.3
+87.1 / 85.5
+85.0 / 85.0
+65.1 / 66.1
+61.2 / 67.0
+37.6 / 39.3
+68.1 / 68.1
+77.3 / 77.3
+60.6 / 54.8
+54.4 / 48.4
+60.3 / 63.2
+84.5 / 86.5
+68.9 / 67.0
+71.8 / 70.3
+64.6 / 61.9
+80.6 / 78.3
+62.5 / 59.0
+76.0 / 73.5
+63.7 / 59.8
+50.0 / 49.6
+76.8 / 76.1
+78.9 / 80.4
+72.2 / 70.0
+58.0 / 58.2
+63.2 / 65.6
+
+48.0 / 29.5
+39.7 / 33.9
+35.8 / 35.2
+57.9 / 57.9
+68.9 / 63.7
+58.5 / 59.6
+43.1 / 30.7
+39.5 / 44.0
+53.7 / 48.0
+52.9 / 36.0
+34.3 / 37.3
+43.4 / 34.9
+63.0 / 59.8
+67.7 / 63.5
+71.4 / 60.0
+44.6 / 42.4
+66.9 / 57.9
+71.5 / 60.3
+33.7 / 42.8
+64.3 / 58.1
+52.8 / 46.8
+52.5 / 51.3
+59.6 / 54.4
+58.4 / 55.1
+52.3 / 51.1
+60.7 / 63.5
+71.5 / 70.4
+60.2 / 56.5
+74.1 / 67.4
+75.7 / 66.9
+49.7 / 52.3
+50.2 / 51.7
+36.0 / 27.5
+54.4 / 45.1
+66.9 / 68.0
+43.9 / 34.8
+44.7 / 32.6
+37.7 / 35.8
+62.8 / 63.8
+52.8 / 51.4
+61.3 / 62.0
+51.7 / 42.0
+61.1 / 60.6
+46.9 / 43.1
+55.0 / 53.0
+50.9 / 49.1
+42.6 / 37.9
+63.7 / 54.6
+65.8 / 57.8
+58.3 / 50.6
+42.0 / 35.7
+52.2 / 49.3
+
+3.5 / 23.1
+17.0 / 28.6
+14.8 / 30.1
+18.7 / 24.0
+30.1 / 27.5
+36.3 / 28.1
+17.0 / 26.1
+23.9 / 31.3
+28.0 / 26.9
+19.8 / 28.5
+4.2 / 24.1
+10.9 / 21.7
+41.1 / 48.4
+30.7 / 38.0
+36.8 / 42.2
+3.4 / 20.3
+20.2 / 41.0
+40.8 / 27.4
+27.7 / 26.5
+39.5 / 35.2
+32.6 / 34.9
+22.1 / 30.0
+37.8 / 33.0
+29.2 / 38.2
+25.0 / 29.6
+46.6 / 50.7
+40.2 / 49.2
+33.3 / 44.4
+41.5 / 40.9
+48.9 / 49.1
+34.6 / 36.9
+32.5 / 37.3
+26.4 / 19.1
+35.2 / 40.1
+48.3 / 52.3
+23.5 / 29.9
+27.0 / 26.5
+32.8 / 31.4
+48.3 / 52.7
+36.3 / 39.2
+44.0 / 51.9
+23.9 / 32.7
+31.4 / 33.7
+24.5 / 29.6
+34.5 / 32.0
+37.7 / 35.6
+28.4 / 32.3
+34.8 / 37.7
+43.2 / 36.2
+42.2 / 41.1
+16.3 / 30.9
+36.8 / 37.3
+
+39.9 / 41.6
+33.5 / 32.1
+35.8 / 31.3
+48.5 / 50.3
+52.3 / 50.8
+46.8 / 53.8
+32.7 / 33.3
+31.3 / 35.7
+44.6 / 38.9
+39.0 / 37.8
+24.1 / 32.5
+44.0 / 26.9
+50.7 / 55.3
+55.2 / 57.3
+58.4 / 59.5
+28.8 / 33.3
+52.8 / 53.4
+57.0 / 57.5
+34.9 / 31.9
+51.0 / 53.3
+44.2 / 42.9
+47.7 / 50.3
+51.1 / 51.9
+52.8 / 49.4
+38.1 / 39.8
+47.0 / 50.2
+66.5 / 63.7
+62.0 / 52.8
+60.6 / 64.3
+68.4 / 62.2
+35.6 / 38.9
+41.2 / 44.0
+30.9 / 27.0
+52.7 / 40.7
+62.8 / 63.4
+38.0 / 33.0
+39.5 / 30.2
+38.7 / 35.8
+58.5 / 52.2
+44.8 / 44.8
+43.6 / 44.0
+47.2 / 41.3
+49.7 / 45.1
+42.0 / 41.3
+36.5 / 37.5
+47.3 / 47.3
+36.5 / 36.2
+50.6 / 46.5
+56.3 / 50.3
+45.6 / 46.7
+42.7 / 31.8
+45.5 / 42.3
+
+Table 10: Five-shot accuracy per subject. We report both the answer only (AO) and chain-of-thought (COT)
+accuracy in an AO / COT format.
+
+Option
+
+C-Eval
+
+MMLU
+
+A
+B
+C
+D
+
+22.9%
+26.0%
+26.4%
+24.7%
+
+23.1%
+24.7%
+25.5%
+26.7%
+
+Table 11: The distribution of the correct answer.
+
+across 5 permutations and the variance of the overall accuracy. The results imply that the variance
+across different permutations is relatively small.
+19
+
+Model
+
+STEM
+
+Social Science
+
+Humanities
+
+Other
+
+C-Eval Hard
+
+Average
+
+Var
+
+ChatGPT
+ChatGLM-6B
+ChatGLM2-6B
+
+48.1
+33.4
+38.1
+
+58.1
+47.5
+58.3
+
+48.6
+41.9
+49.6
+
+49.9
+37.5
+45.2
+
+36.3
+28.7
+29.3
+
+50.5
+38.8
+45.9
+
+0.6
+0.7
+0.2
+
+Table 12: Zero-shot average accuracy (%) in answer-only setting. We report the average accuracy over 5
+permutation within each category and overall accuracy. “Average” column indicates the average accuracy over 5
+permutation. "Var" column indicates the variance of the overall accuracy.
+
+H
+
+Compute and Resources Used for Evaluation
+
+During our experiments to evaluate different LLMs on C-E VAL, we utilize a cluster with 8 A10080GB GPUs to run the inference for models with released weights, such resources are required due
+to deploying three large models – Bloomz-mt (176B), LLaMA-65B, and GLM-130B. In most cases
+the inference on C-E VAL is finished within one day. For models with API access, we just run the
+inference with CPUs which finishes mostly within one day as well.
+
+20
+
+

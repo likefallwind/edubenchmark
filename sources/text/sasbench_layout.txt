@@ -1,0 +1,1608 @@
+                                                 SAS-Bench: A Fine-Grained Benchmark for
+                                                 Evaluating Short Answer Scoring with Large
+                                                              Language Models
+
+
+                                             Peichao Lai1          Kexuan Zhang2      Yi Lin3       Linyihan Zhang2        Feiyang Ye2
+arXiv:2505.07247v2 [cs.CL] 15 May 2025
+
+
+
+
+                                             Jinhao Yan2           Yanwei Xu1      Conghui He4       Yilei Wang2       Wentao Zhang1
+
+                                                                                       Bin Cui1,∗
+                                                                       1
+                                                                         Peking University 2 Fuzhou University
+                                                                     3
+                                                                       Hunan University 4 Shanghai AI Laboratory
+                                                                                ∗
+                                                                                  bin.cui@pku.edu.cn
+
+
+
+                                                                                     Abstract
+
+                                                  Subjective Answer Grading (SAG) plays a crucial role in education, standardized
+                                                  testing, and automated assessment systems, particularly for evaluating short-form
+                                                  responses in Short Answer Scoring (SAS). However, existing approaches often pro-
+                                                  duce coarse-grained scores and lack detailed reasoning. Although large language
+                                                  models (LLMs) have demonstrated potential as zero-shot evaluators, they remain
+                                                  susceptible to bias, inconsistencies with human judgment, and limited transparency
+                                                  in scoring decisions. To overcome these limitations, we introduce SAS-Bench, a
+                                                  benchmark specifically designed for LLM-based SAS tasks. SAS-Bench provides
+                                                  fine-grained, step-wise scoring, expert-annotated error categories, and a diverse
+                                                  range of question types derived from real-world subject-specific exams. This
+                                                  benchmark facilitates detailed evaluation of model reasoning processes and ex-
+                                                  plainability. We also release an open-source dataset containing 1,030 questions
+                                                  and 4,109 student responses, each annotated by domain experts. Furthermore,
+                                                  we conduct comprehensive experiments with various LLMs, identifying major
+                                                  challenges in scoring science-related questions and highlighting the effectiveness
+                                                  of few-shot prompting in improving scoring accuracy. Our work offers valuable
+                                                  insights into the development of more robust, fair, and educationally meaningful
+                                                  LLM-based evaluation systems.
+
+
+                                         1   Introduction
+
+                                         The evaluation of Subjective Answer Grading (SAG) plays a vital role in education, standardized
+                                         testing, and automated assessment systems. SAG tasks are generally categorized into two types:
+                                         long-form, open-ended Automatic Essay Scoring (AES) [1, 2, 3, 4, 5] and short-form, close-ended
+                                         Short Answer Scoring (SAS) [6, 7, 8]. The SAS task is typically formulated as a pointwise evaluation
+                                         problem, where student responses are assessed against the reference answer, as is common in short-
+                                         answer or proof-based questions. Traditional approaches to SAS have primarily focused on producing
+                                         a single overall score for each response, often lacking fine-grained analysis. However, with recent
+                                         advancements in large language models (LLMs) [9, 10], novel paradigms have emerged in which
+                                         LLMs serve as judges for zero-shot subjective scoring. These methods enable more comprehensive
+                                         and nuanced assessments by incorporating multiple evaluation dimensions.
+
+
+                                         Preprint. Under review.
+Despite the advantages of using LLMs as judges in zero-shot evaluation tasks, several challenges
+remain to be addressed. First, current LLMs exhibit notable biases in evaluation tasks, especially
+when compared to human assessors. These models are often influenced by factors such as the
+positioning of key phrases within the text and the overall length of the content [11], which can lead to
+biased scoring outcomes. Besides, LLMs tend to exhibit evaluation biases depending on the type
+of scoring metric used, whether it is a binary assessment (e.g., "yes" or "no") or a numerical scale
+(e.g., a 1–5 rating) [12]. Consequently, discrepancies between model-generated scores and human
+evaluations are significantly increased, leading to situations where the performance of LLMs in this
+task is even inferior to smaller language models (SLMs). Second, existing methods lack the capability
+to provide accurate and interpretable explanations for their evaluation results [13]. For instance, these
+models fail to offer clear justifications for specific score assignments or to pinpoint the errors that
+contributed to inaccurate assessments, making manual verification more difficult. These limitations
+significantly hinder the practical deployment of LLM-based evaluation systems.
+To better understand how these challenges impact the SAS task, a
+benchmark specifically designed for generative language models                           Existing Benchmarks
+is essential. As illustrated in Figure 1, most existing benchmarks     Question                                        Full Score 10
+rely on a simple input structure consisting of the question, ref-     Let 𝐹 , 𝐹 be the left and right foci of the ellipse 𝐸: 𝑥 +
+                                                                                             𝑦2
+                                                                                                  1       2
+                                                                                                                                                                 2
+
+                                                                          = 1 (0 < 𝑏 < 1), respectively. A straight line passing
+erence answer, and student response, and evaluate model perfor-                              𝑏2
+                                                                      through 𝐹 intersects 𝐸 at points 𝐴 and 𝐵, with ∣ 𝐴𝐹 ∣, ∣
+                                                                                                              1                                                  2
+mance based on the alignment between predicted overall scores         𝐴𝐵 ∣, ∣ 𝐵𝐹 ∣ forming an arithmetic sequence.
+                                                                      (I) Find |𝐴𝐵|;
+                                                                                                              2
+
+
+and human annotations. While this approach provides a gen-            (II) If the slope of the line 𝑙 is 1, find the value of 𝑏.
+
+eral sense of scoring accuracy, it fails to capture the model’s        Reference
+                                                                      (1) By the definition of an ellipse, we have ∣ 𝐴𝐹 ∣+∣ 𝐴𝐵 ∣                             2
+reasoning process and its ability to evaluate diverse forms of stu-   +∣ 𝐵𝐹 ∣= 4. Since 2 ∣ 𝐴𝐵 ∣=∣ 𝐴𝐹 ∣+∣ 𝐵𝐹 ∣, …
+                                                                                                      2                                   2         2
+                                                                      (2) The equation of line 𝐿 is 𝑦 = 𝑥 + 𝑐, where …
+dent responses. In particular, existing benchmarks still exhibit
+                                                                       Student Response                               Manual Score 3
+the following limitations: (1) Lack of Fine-Grained Evaluation.
+                                                                      Let the foci of the ellipse be 𝐹 (−𝑐, 0) and 𝐹 (𝑐, 0), where    1                 2
+Most existing automatic scoring benchmarks focus on measuring         𝑐 = 1 − 𝑏 . We can set the equation of the line passing
+                                                                                                                  2
+
+                                                                      through 𝐹 as 𝑦 = 𝑘(𝑥 + 𝑐)…
+the overall consistency between model-generated and human-                                                1
+
+
+
+assigned scores. However, they fail to capture how different
+                                                                                           Our Benchmark
+response formats or key phrases within student answers may af-
+                                                                       Question Let 𝐹 , 𝐹 be …                        1Full Score 10
+                                                                                                                              2
+fect the model’s scoring bias. Such fine-grained evaluation is
+                                                                       Reference (1) By the definition …
+particularly important for long-form responses, especially in sci-
+ence subjects, where accurate scoring often depends on specific        Student Response                               Manual Score 3
+
+                                                                                                                                               Incomplete
+reasoning steps and domain-specific terminology. (2) Limited           Step 1.      Let the foci of ...                              0        Solution Steps
+
+
+Explainability Assessment. While automatic scoring models are          Step  2.     𝐿 is 𝑦 =  𝑥  +   𝑐,  …                           1           Correct
+
+
+bound to make occasional errors, their ability to interpret and        Step 3.      Simplifying,  we    obtain:
+                                                                                                                          2       2
+                                                                                                                                     0
+                                                                                                                                               Calculation
+                                                                                                                                                 Error
+                                                                         …          (1 + 𝑏 )𝑥 + …
+justify their predictions is essential for enabling effective human
+                                                                       Scoring Guidelines         Error Causes         Step-wise Scores
+oversight and review. Unfortunately, current benchmarks lack
+robust quantitative methods to assess the model’s explainabil-
+ity. This shortcoming significantly hinders the adoption of these Figure 1: Comparison of existing
+systems in high-stakes educational or assessment contexts.          benchmarks and our benchmark.
+
+To address these limitations, we present SAS-Bench, a new bench-
+mark specifically designed for the SAS task. Built using authentic questions from China’s National
+College Entrance Examination (Gaokao), the SAS-Bench dataset spans 9 academic subjects, com-
+prising 1,030 questions and 4,109 student responses. All responses are manually annotated by
+subject-matter experts with step-wise scores and detailed error causes to ensure the accuracy and
+reliability of evaluation results. The benchmark also incorporates rigorous evaluation protocols to
+support consistent and fair comparison across models. To support fine-grained assessment of model
+scoring performance, the dataset includes multiple template-free question types. Each student’s
+response is segmented into multiple steps based on key phrases, allowing for detailed evaluation
+of how models handle different answer structures and reasoning processes. To quantify model
+explainability, SAS-Bench incorporates a predefined set of error causes for each question type. Every
+step of each student’s response is paired with expert-annotated error labels, enabling a systematic
+comparison between model-predicted and human-identified error causes. This facilitates a robust
+assessment of the model’s ability to explain its scoring decisions. To evaluate the current capabilities
+of LLMs in SAS tasks, we conduct comprehensive experiments on sixteen widely used LLMs. Our
+results highlight that step-wise scoring and error causes inference remain particularly challenging
+in SAS tasks. Additionally, we find that providing few-shot demonstrations and scoring guidelines
+is positively correlated with improved model performance, offering valuable insights for enhancing
+LLM-as-a-Judger systems. In summary, our key contributions are as follows:
+
+
+                                                                  2
+            • New Benchmark. We present SAS-Bench, the first benchmark specifically tailored for SAS
+              with LLMs. It features step-wise scoring and a predefined taxonomy of error causes, enabling
+              more comprehensive evaluation of models’ reasoning processes and the interpretability of
+              their scoring decisions.
+            • Accessible Dataset. We construct and publicly release an open-source dataset 1 comprising
+              1,030 authentic questions with 4,109 student responses, each meticulously annotated by
+              subject-matter experts with step-wise scores and detailed error labels, ensuring accurate and
+              reliable evaluation.
+            • Comprehensive Evaluation. We conduct extensive experiments on sixteen widely adopted
+              LLMs, identifying major challenges in scoring short-answer responses and offering practical
+              insights for enhancing LLM-as-a-Judger systems.
+
+2         Related Work
+2.1        Automated Scoring Benchmarks
+
+Current automated scoring benchmarks can generally be categorized into two types: (1) Open-ended
+AES benchmarks without reference answers, such as the Kaggle ASAP-AES [14], ScAA [15],
+SciEntsBank [16], and the more recent RiceChem [17], which is tailored for evaluating LLMs. These
+datasets typically include question prompts, student essays, expert-assigned scores, and auxiliary
+metadata such as topic or user information. The recently introduced ENEM dataset [18] further
+enriches evaluation by incorporating expert commentary on dimensions such as topic relevance and
+linguistic quality. (2) Close-ended SAS benchmarks with reference answers, which typically include
+a question prompt, a student response, and a corresponding reference answer. Representative datasets
+include the Kaggle ASAP-SAS [19], which spans multiple subjects including science, mathematics,
+and language arts; the SR dataset [20], which focuses on medical-domain questions; the ASAG
+dataset [21], targeting short-answer questions in computer science; and the LE dataset [22], which
+contains short-answer responses from the field of logistics management. The recently proposed L-
+Eval benchmark [23] encompasses both open-ended and close-ended tasks, and introduces improved
+evaluation metrics for evaluating LLM grading performance on long-form responses. Despite their
+contributions, most existing datasets include only raw student responses and do not account for the
+influence of step-wise responses.
+
+2.2        LLM-as-a-Judge Systems
+
+With the rapid advancement of instruction-following capabilities in LLMs, the LLM-as-a-Judger
+paradigm has attracted growing interest. Numerous studies have explored prompting LLMs to directly
+assign assessment scores [24, 25, 26, 27]. However, as this line of research progresses, several
+limitations have been identified. Notably, LLMs exhibit high sensitivity to superficial variations in
+student responses, such as changes in the position or length of key phrases, which can significantly
+influence scoring behavior and make them vulnerable to adversarial attacks [11]. In addition, LLMs
+often produce scoring outcomes that are inconsistent with human judgments, largely due to their
+susceptibility to variations in scoring rubrics or prompt wording [12]. To mitigate these challenges,
+recent work has proposed aligning LLM scoring with human evaluation standards by incorporating
+reference answers [28, 29], detailed scoring rubrics [30, 31, 32], and multi-perspective evaluation
+frameworks [33]. These insights have informed the design of our benchmark, in which we provide
+explicit scoring guidelines and carefully curated reference answers to support a more rigorous, fair,
+and interpretable evaluation of LLM-based scoring systems.
+
+3         SAS-Bench
+The overall workflow of SAS-Bench is illustrated in Figure 2. Section 3.1 presents the underlying
+principles guiding our data design. Section 3.2 details the dataset construction pipeline along with
+key statistics. Finally, Section 3.3 introduces the evaluation methodology and defines the metrics
+used in our benchmark.
+      1
+          https://github.com/PKU-DAIR/SAS-Bench
+
+
+                                                       3
+3.1         Benchmark Design
+
+
+ Timeline
+                                                         Inference Stage                                                                                         Evaluation Stage
+
+                   Input Construction                                                   LLM Judger                                          Human Judger                            Collaborative Consistency Score
+
+    System Message                                                                   Judge Step-by-step                                    Judge Step-by-step                                 Predict Result
+    You are a {course} grading expert and
+    professionally evaluate the student's responses                                   Error Causes          Step Score                      Error Causes             Step Score      Overall Score       Step Scores
+                                                                       Step 1.                                                Step 1.
+    based on the following requirements.                                          1. Step is Correct            2                        1. Step is Correct              2
+
+    User Instructions                                                                                                                       Error Causes
+                                                                                                                                                                                              Manual Result
+                                                                                      Error Causes          Step Score                                               Step Score
+                                                                       Step 2.                                                Step 2.
+       Question          Full Score 10         Reference                          1. Calculation Error          1                        1. Step is Correct              2
+                                                                                                                                                                                     Overall Score       Step Scores
+
+      Error Causes                                                                    Error Causes          Step Score                      Error Causes             Step Score
+                                                                       Step 3.    1. Calculation Error                        Step 3.
+      1.Calculation Error
+                                                                                  2…                            0                       1. Calculation Error             1
+      2.Incomplete Solution Steps
+      3.Disorganized Problem-Solving Approach ...                                              …                                                   …                                   Errors Consistency Score
+
+      Student Response                                                                Error Causes                                          Error Causes
+                                                                                                            Step Score                                               Step Score               Predict Result
+      Step 1. Let the first term of the arithmetic sequence            Step N.    1. Incomplete Solution                      Step N.   1. Incomplete Solution
+                                                                                  Steps                         0                       Steps                            0
+      be 𝒂𝟏 and the common difference be 𝒅.
+      Step 2. 1. 𝒂𝟑 = 𝒂𝟏 + 2𝑑 = 5\n2. 𝒂𝟏𝟎 = 𝒂𝟏 + 𝟗𝒅 …                                                                                                                                Overall Score      Total Errors
+
+            Rule Bank
+                                                                           Total Error Causes                                    Total Error Causes                                           Manual Result
+              Scoring Guidelines         Output Format             1. Calculation Error                    Overall Score                                           Overall Score
+                                                                   2. Incomplete Solution Steps                  3         1. Calculation Error                          5
+              Evaluation process                                                                                           2. Incomplete Solution Steps                              Overall Score      Total Errors
+                                                                   3. Incorrect or MissingFormula Usage
+
+
+
+
+Figure 2: The workflow of our SAS-Bench. The results from the human judger are predefined during
+the dataset construction.
+
+The motivation behind our benchmark design is driven by three key questions: 1) Can the LLM
+accurately assign overall scores across varying levels of student performance? 2) Can the LLM
+reliably evaluate step-wise scores for multi-step responses? 3) Can the LLM effectively identify and
+analyze the underlying causes of errors in student responses? To address these questions, we propose
+a LLM-as-a-Judger framework, in which the model is prompted via a system message to act as a
+subject-matter teacher. During the inference stage, each input instance includes the question, the full
+score, the corresponding reference answer, the associated set of error causes, the student’s response,
+and a rule bank (containing scoring guidelines, output formats, etc.). Given this input, the model
+is tasked with generating the overall score, step-wise scores, and step-wise error causes for each
+response. In the evaluation stage, we assess the model’s performance on the SAS task by comparing
+its judgments with human annotations across these three dimensions:
+Overall Score Consistency. Overall score consistency is a core metric in the SAS task, as it reflects
+the model’s ability to provide accurate holistic evaluations of student responses. By comparing
+model-predicted scores with human-assigned scores, we can assess how well the model aligns with
+expert judgment. The reliability of this metric directly impacts the credibility and utility of the
+automated scoring system.
+Step-wise Score Consistency. While many existing SAS methods focus primarily on predicting
+overall scores, they often lack finer-grained evaluations. In practice, model-generated scores may
+not always be persuasive, particularly in complex multi-step problems. Evaluating the consistency
+between model-predicted and human-assigned step-wise scores offers a more detailed assessment of
+the model’s scoring logic. Additionally, science subjects often involve multi-step reasoning, where
+the outcome of one step may influence subsequent steps. Step-wise score consistency thus serves
+as an indirect measure of the model’s ability to capture inter-step dependencies and perform causal
+reasoning.
+Error Cause Consistency. Explainability is a critical concern in SAS and related LLM-as-a-Judge
+tasks [13, 31]. To address this, we propose explicitly predicting the underlying causes of errors in
+student responses. This not only enhances transparency in model decision-making but also allows
+us to assess the alignment between model interpretations and human judgments. Measuring the
+consistency of error cause predictions provides valuable insight into the model’s interpretability and
+its potential to offer actionable feedback.
+
+
+3.2         Dataset
+
+Following the proposed design framework, the SAS-Bench dataset is developed through a structured
+pipeline comprising data synthesis, data cleaning, error cause set construction, and manual annotation.
+This process results in a high-quality dataset that incorporates multi-dimensional evaluation metrics.
+
+
+                                                                                                                     4
+Data Synthesis. To ensure that the question sources are authoritative and that the evaluation data
+covers a broad range of mainstream subjects, we adopt the GAOKAO-Benchmark [34], a publicly
+available dataset based on China’s National College Entrance Examination (Gaokao), as our source
+of questions. To generate diverse answer data with varying score distributions and error types, we
+leverage LLMs to simulate student responses at different proficiency levels. Specifically, we first
+categorize the questions into three types: multiple-choice, gap filling, and short-answer questions.
+Although multiple-choice questions can be graded using rule-based methods, we include a small
+number in a template-free format to better assess LLMs’ comprehension. We aim to synthesize
+positive and negative samples in a 1:1 ratio. Positive samples are created by prompting LLMs to
+either rewrite the reference answers in various styles or directly answer the questions. For negative
+samples, we design different construction strategies based on the question type: 1) For template-free
+multiple-choice questions, we first analyze the structure and number of correct options, randomly
+select distractors using a rule-based algorithm, and then prompt the LLM to express the selection in a
+free-form style. 2) For gap filling and short-answer questions, we randomly select fragments from
+the reference answers according to the target score distribution and instruct the LLM to introduce
+errors at specific points. 3) Additionally, for short-answer questions, we decompose the reference
+answers into multiple logical steps, randomly remove certain steps to create incomplete templates,
+and then employ a smaller-scale LLM to fill in the gaps. This approach generates more natural and
+less contrived incorrect responses.
+Data Cleaning. For each question, we synthesize eight positive and eight negative samples. During
+the data cleaning phase, we focus on removing overly similar responses. Initially, we use GPT-4o
+to score the synthesized answers and group them based on the resulting score distribution. We then
+compute BLEU and Jaccard similarity scores between pairs of answers within each group, filtering
+out those with high redundancy. This process ensures that the final dataset preserves representative
+examples across different score levels while effectively eliminating synonymous paraphrases and
+heavily overlapping samples, thereby mitigating issues related to distribution imbalance.
+Error Causes Construction. To evaluate the explainability of LLM judges, it is essential to
+assess their ability to identify and analyze the underlying causes of errors. However, quantitatively
+measuring this explainability is challenging, largely due to the diversity of unstructured responses
+and the difficulty of converting free-form explanations into a standardized numerical format. To
+address this challenge, we propose constructing a structured list of potential error causes for each
+subject and question type. By constraining LLMs to select error causes from this predefined list
+when explaining their scoring decisions, we enable a more systematic and quantifiable evaluation of
+model explainability. Specifically, for each subject and question type, we adopt a few-shot prompting
+strategy using representative questions, reference answers, and synthesized responses as input to GPT-
+4o, prompting it to generate 50 sets of error cause descriptions. Human annotators then consolidate
+and refine these descriptions, merging similar entries and simplifying the language to produce a
+comprehensive set of error causes that captures all major categories of mistakes.
+Human Annotation. We recruited 18 subject-matter experts and divided them evenly into two
+groups: one for initial annotation and the other for verification. The first group annotated the data,
+while the second group reviewed and validated these annotations. In cases of significant discrepancies
+between the two groups’ evaluations, the annotators engaged in discussions to reach a consensus,
+followed by re-annotation if necessary. During the annotation process, annotators were instructed to:
+(1) segment each response into distinct steps, (2) assign a score to each step, (3) label the error cause
+for each step, and (4) provide an overall score for the response. After completing the annotations for
+each subject and question type, annotators compiled a corresponding scoring guideline to support
+consistency in subsequent model-based evaluations.
+Data Statistics. As shown in Table 1, the SAS-Bench dataset contains 4,109 student responses
+spanning nine subjects: Physics, History, Geography, Biology, Chinese, Mathematics, Politics,
+English, and Chemistry. The ratio of responses to questions is approximately 4:1. On average, each
+response includes six annotated error causes. Regarding the number of reasoning steps, science
+subjects tend to involve more detailed step-wise reasoning compared to humanities subjects. Notably,
+the Mathematics subject includes the response with the highest number of steps, reaching up to 25.
+Figure 3 presents the distribution of question types. The dataset is primarily composed of short
+answer and gap filling questions. In addition to multiple-choice questions in Physics, the Chinese
+subject includes 440 responses with embedded multiple-choice items within short-answer questions.
+
+
+
+                                                   5
+                                                                                                                         1400                                                       Multiple-choice
+
+Table 1: Statistics of our dataset. “Avg. Steps” and “Max Steps”                                                         1200                                                       Gap Filling
+                                                                                                                                                                                    Short Answer
+                                                                                                                         1000
+denote the average and maximum number of steps per response, re-
+
+
+
+
+                                                                                                    Number of Reponses
+                                                                                                                          800
+
+spectively. “Avg. Length” denotes the average length of per response.                                                     600
+
+                                                                                                                          400
+
+
+ Question Type   Phy.    His.    Geo.    Bio.   Chi.    Math    Pol.       Eng.    Che.    Total                          200
+
+                                                                                                                            0
+   Questions       47     128      28    116     181     412     60          49      9      1,030                               Phy.   His.   Geo.   Bio.   Chinese   Math   Pol.     Eng.    Che.
+
+  Error Causes     10      5        5      7       9       9      4          9       7        65
+   Avg. Steps     4.9     1.8     3.3     2.8    2.8     5.4     4.6        9.6     5.1     40.3
+   Max Steps       16      8       10      8      12      25     12         16       8       115    Figure 3: Distribution of ques-
+   Responses      230     640     140    576     757    1,231    240        245     50      4,109
+  Avg. Length    867.7   303.9   322.4   83.1   181.7   831.3   299.4      167.0   522.4   3578.9
+                                                                                                    tion types across different sub-
+                                                                                                    jects.
+
+
+3.3    Evaluation Protocol
+
+Most existing benchmarks [35, 36, 16] provide only manually annotated overall scores, enabling
+model evaluation solely based on final scoring outcomes. However, they fall short in assessing
+step-wise scoring accuracy and the ability to identify specific error causes within responses. To more
+comprehensively evaluate LLM performance on this task, our benchmark simultaneously considers
+the alignment between model predictions and human annotations across three dimensions: overall
+scores, step-wise scores, and error cause interpretation.
+While previous studies commonly adopt metrics such as Quadratic Weighted Kappa (QWK) [37, 1],
+Pearson correlation [13, 38], or Spearman correlation [39, 40] to assess scoring consistency, these
+metrics are primarily designed for evaluating overall scores and are not directly applicable to the
+multi-dimensional evaluation framework we propose. To overcome this limitation, we extend these
+traditional metrics and introduce two new evaluation measures tailored:
+Collaborative Consistency Score (CCS). To jointly evaluate the consistency between model pre-
+dictions and human annotations at both the overall and step-wise scoring levels, we propose the
+Collaborative Consistency Score (CCS). Formally, let ri and rj denote the holistic scores (e.g., overall
+scores) assigned by the model and human annotators, respectively, and let si,k and sj,k denote their
+corresponding step-specific scores for the k-th step (k ∈ [1, m]). Then we define an adjusted weight
+matrix W that captures both holistic and step-wise discrepancies:
+                                                           m
+                                    (ri − rj )2    1 − α X (si,k − sj,k )2
+                        Wi,j = α ·              +                           ,                        (1)
+                                    (Nr − 1)2        m         (Nsk − 1)2
+                                                                                   k=1
+where α ∈ [0, 1] controls the trade-off between holistic and step-wise differences (e.g., α = 0.5), Nr
+denotes the number of possible holistic score levels, Nsk denotes the number of possible score levels
+for step k, and m is the total number of steps. The CCS is then computed as:
+                                                 P
+                                                    i,j Oi,j · Wi,j
+                                    CCS := 1 − P                    ,                               (2)
+                                                    i,j Ei,j · Wi,j
+where O represents the observed matrix and E represents the expected matrix, both following the
+standard definitions used in the QWK metric.
+Errors Consistency Score (ECS). To evaluate an LLM’s ability to interpret error causes, we propose
+the Errors Consistency Score (ECS), which measures the consistency between model and human
+annotations in terms of error distributions. Although error causes are annotated at each step, we
+observe that both the number of steps and error types are relatively sparse, leading to instability in fine-
+grained step-wise consistency evaluation. Therefore, we aggregate error causes across all steps within
+a response, preserving both their types and frequencies. To further enhance stability, we partition
+the evaluation samples into score intervals based on their normalized overall scores and compute
+consistency scores within each interval. Specifically, let p and g denote the normalized overall scores
+predicted by the model and assigned by human annotators, respectively. Let Ep , Eg ∈ Rn×l represent
+the error frequency matrices for the model and human annotations, where n is the number of samples
+and l is the number of error types. Given m quantile thresholds {τq }m−1
+                                                                       q=1 that divide the samples into
+m score intervals, we define the interval assignment function and the corresponding accumulated
+error frequencies as follows:
+                    m−1
+                     X                              X                            X
+             ϕ(x) =      I(x ≥ τq ), Mpk [j] =              Epi,j , Mgk [j] =            Egi,j ,         (3)
+                           q=1                                    i:ϕ(pi )=k                                                      i:ϕ(gi )=k
+
+
+                                                                       6
+where I(·) is the indicator function, k ∈ {0, 1, . . . , m − 1} denotes the interval index, and j ∈ [1, l]
+indexes the error types. We then compute the Spearman rank correlation coefficient ρk between Mpk
+and Mgk within each interval, and the ECS is computed as the average correlation across all intervals:
+
+                                                             m−1
+                                                        1 X
+                                       ECS :=               ρk ,                  ρk = SpearmanR(Mpk , Mgk ).                                                             (4)
+                                                        m
+                                                              k=0
+
+
+
+
+4     Experiments
+
+4.1      Experimental Setup
+
+In the experiments, we evaluate SAS-Bench using LLMs of varying scales and types. Our analysis
+centers on three core challenges in applying LLMs to SAS tasks: (1) the consistency of overall score
+predictions across student responses of different quality levels; (2) the alignment between overall
+scores and step-wise evaluations in multi-step responses; and (3) the reliability of LLMs in predicting
+the frequency of different error causes in student responses.
+Metrics. We adopt the CCS and ECS metrics introduced in § 3.3 to evaluate, respectively, the
+consistency between overall and step-wise scores and the consistency of model predictions on the
+frequency of different error causes. Additionally, we use Quadratic Weighted Kappa (QWK) to assess
+overall scoring performance at a high level, and employ standard metrics such as the F1 score to
+support performance analysis in specific evaluation scenarios.
+Models. We conduct experiments on 16 LLMs, which are broadly classified into two categories:
+RLHF-based models and reasoning-based models. The RLHF-based models include Deepseek-
+V3 [10], GPT-4 [9], the LLaMA family [41], Qwen-2.5 [42, 43], GLM-4 [44], Mixtral [45], and
+Deepseek-Prover-V2 [46]. The reasoning-based models comprise Deepseek-R1 [47], QwQ [48],
+Qwen-3 [49], Tiny-R1 [50], and MiMo-RL [51]. Among these, LLaMA3-MetaMath [52], MiMo-RL,
+Deepseek-Prover-V2, and Tiny-R1 are proprietary models specifically optimized for mathematical
+problem solving.
+Settings. In the data synthesis process described in § 3.2, we use GPT-4o-mini and Deepseek-V3
+as large-scale LLMs to generate synthetic data. For smaller-scale models, including GLM4-9B,
+Qwen2.5-14B, and LLaMA3-8B, we use them to complete predefined incomplete templates. To
+increase the diversity of the generated content, we introduce randomness by varying the temperature
+during the generation process. For evaluation, we evaluate all models on 4× NVIDIA A800 80G,
+and set the temperature of all reasoning-based models to 0.6 to optimize their reasoning capabilities.
+For RLHF-based models, we default to a temperature of 0.0. However, if a model produces outputs
+with invalid formatting, we re-run the generation at a temperature of 0.6 to obtain valid responses.
+
+
+
+Table 2: CCS score (%) comparison across various LLMs, evaluated by subject area and question
+type. S. indicates Short Answer, M. denotes Multiple Choice, and G. refers to Gap Filling. The best
+and second-best scores in each category are highlighted in bold and underlined, respectively.
+Models                   Phy. (S.)   Phy. (M.)   His. (S.)   Geo. (S.)   Bio. (G.)   Chi. (G.)   Chi. (S.)   Math (S.)   Math (G.)   Pol. (S.)   Eng. (G.)   Che. (G.)   Avg.
+                                                                           Reasoning-based LLMs
+Deepseek-R1               38.43       95.01       80.98       67.92       79.12       95.09       69.07        57.85       83.56      71.92       73.19       72.92      73.76
+QwQ-32B                   48.53       87.23       75.43       77.06       72.52       96.00       31.77        48.66       45.51      74.48       54.79       62.17      64.51
+TinyR1-32B-Preview        38.17       84.88       75.83       71.52       73.45       92.57       52.61        48.28       74.77      70.70       57.92       41.37      65.17
+Qwen3-32B                 47.29       85.51       64.96       80.43       63.15       92.21       50.43        51.26       80.77      73.30       59.33       57.82      67.20
+Qwen3-8B                  54.33       76.17       45.54       68.89       43.22       86.01       42.02        46.33       73.33      64.25       50.55       50.52      58.43
+MiMo-7B-RL                52.77       41.01       61.33       67.10       35.93       54.72       43.09        38.09       55.79      36.78       34.69       31.05      46.03
+Deepseek-Prover-V2-7B     22.59       10.75        2.92       30.71       50.63       55.48       12.95         0.87        2.29      10.44       30.19       28.76      21.55
+DeepSeek-R1-Distill-7B    33.71       29.24       50.92       32.35       52.18       52.44       44.29        29.52       39.55      53.77       32.98       34.27      40.44
+                                                                             RLHF-based LLMs
+Deepseek-V3               53.89       85.72       69.85       76.23       76.51       93.42       69.49        58.81       80.18      76.75       73.82       74.64      74.11
+GPT 4o-mini-20240718      58.90       81.19       54.85       76.59       65.39       87.65       55.25        43.56       37.38      63.44       22.60       55.98      58.56
+Llama3.3-70B-Instruct     45.34       70.03       72.02       72.51       67.94       85.30       35.83        58.60       74.97      63.68       67.60       38.94      62.73
+Mixtral 8×7B-Instruct     30.78       42.27       33.43        4.99       44.45       29.85       24.00        26.73       70.04      43.92       33.40       42.05      35.49
+Qwen2.5-32B-Instruct      40.53       77.02       62.34       74.50       72.07       94.85       66.37        50.08       32.59      64.09       53.35       62.87      62.56
+Qwen2.5-14B-Instruct      53.76       66.12       60.96       74.30       67.50       92.81       63.08        43.28       75.62      62.03       56.34       57.53      64.44
+GLM4-9B-Chat              45.62       52.33       36.81       69.41       39.19       63.92       42.94        35.50       56.95      54.83       33.92       30.79      46.85
+Llama3-8B-Instruct        41.09       35.10       37.52       31.29       32.19       38.13       32.89        23.55       62.43      37.78       31.68       29.27      36.08
+
+
+
+
+                                                                                      7
+4.2      Scoring Consistency Results
+
+We evaluate the consistency between overall and step-wise scores using the CCS metric, with results
+across different subjects and question types presented in Table 2. To highlight the distinction between
+CCS and traditional overall score consistency metrics, we additionally report each model’s QWK
+performance in the radar charts of Figure 4. We also present the distribution of model-predicted
+overall scores in Appendix G.
+Overall, we observe a positive correlation between CCS and
+QWK scores across all models, as well as between model                                                                                   Deepseek-R1                  QwQ-32B
+                                                                                                                                         TinyR1-32B-Preview           Qwen3-32B
+size and average performance. Notably, Deepseek-V3 and                                                                                   Deepseek V3
+                                                                                                                                         Llama3.3-70B-Instruct
+                                                                                                                                                                      GPT 4o-mini-20240718
+                                                                                                                                                                      Qwen2.5-32B-Instruct
+
+Deepseek-R1 achieve the best average results in CCS and                                                                                                  Phy. (S.)
+                                                                                                                                                        100
+QWK metrics, respectively. A comparison of Table 2 and Fig-                                                                           Che. (G.)
+                                                                                                                                                         80
+                                                                                                                                                                             His. (S.)
+
+
+ure 4 shows that CCS scores are generally lower than QWK                                                                   Math (G.)
+                                                                                                                                                         60
+                                                                                                                                                                                         Phy. (M.)
+                                                                                                                                                         40
+scores, indicating that incorporating step-wise consistency in-                                                                                          20
+troduces additional challenges for scoring models. Models                                                                Eng. (G.)                         0                                Geo. (S.)
+
+tend to perform better on humanities-related questions in both
+metrics, while science-related questions remain more diffi-                                                                  Pol. (S.)                                                   Bio. (G.)
+
+cult. For larger models with over 32B parameters, such as                                                                            Math (S.)                               Chi. (G.)
+LLaMA3.3-70B-Instruct and Qwen3-32B, the CCS scores on                                                                                                    Chi. (S.)
+
+short-answer questions like His. (S.) and Chi. (S.) are notably                                                                          Qwen3-8B
+                                                                                                                                         Deepseek-Prover-V2-7B
+                                                                                                                                                                      MiMo-7B-RL
+                                                                                                                                                                      DeepSeek-R1-Distill-7B
+lower than their corresponding QWK scores. This discrepancy                                                                              Mixtral 8×7B-Instruct
+                                                                                                                                         GLM4-9B-Chat
+                                                                                                                                                                      Qwen2.5-14B-Instruct
+                                                                                                                                                                      Llama3-8B-Instruct
+
+is more pronounced in reasoning-based models than in RLHF-                                                                                               Phy. (S.)
+                                                                                                                                                        100
+based models. For instance, TinyR1-32B exhibits an 11.89%                                                                             Che. (G.)
+                                                                                                                                                         80
+                                                                                                                                                                             His. (S.)
+
+
+drop in CCS compared to QWK on Math (S.), suggesting that                                                                  Math (G.)
+                                                                                                                                                         60
+                                                                                                                                                                                         Phy. (M.)
+                                                                                                                                                         40
+many LLMs still struggle with step-wise scoring consistency.                                                                                             20
+Conversely, there are also counterexamples. MiMo-7B-RL,                                                                  Eng. (G.)                         0                                Geo. (S.)
+
+for example, achieves CCS scores on Phy. (M.), Phy. (S.),
+and Eng. (G.) that are, on average, 11.47% higher than its                                                                   Pol. (S.)                                                   Bio. (G.)
+
+QWK scores. This demonstrates that CCS provides a valuable                                                                           Math (S.)                               Chi. (G.)
+and complementary perspective for evaluating model perfor-                                                                                                Chi. (S.)
+
+mance in SAS tasks. Finally, smaller-scale models (with fewer
+than 32B parameters) exhibit noticeable weaknesses in gap- Figure 4: Comparison of QWK
+filling tasks (Eng. (G.)) and template-free multiple-choice scores across LLMs.
+questions (Phy. (M.)), suggesting limited ability to handle
+sparse semantic content.
+Building on the above experimental findings, the CCS metric offers more fine-grained insights into
+model performance on SAS tasks. By introducing step-wise consistency evaluation, CCS can guide
+future work toward enhancing step-by-step reasoning, thereby improving the practical utility of
+models in real-world scenarios.
+
+4.3      Errors Consistency Results
+
+
+Table 3: ECS score (%) comparison across various LLMs, evaluated by subject area and question
+type. S. indicates Short Answer, M. denotes Multiple Choice, and G. refers to Gap Filling. The best
+and second-best scores in each category are highlighted in bold and underlined, respectively.
+Models                   Phy. (S.)   Phy. (M.)   His. (S.)   Geo. (S.)   Bio. (G.)   Chi. (G.)   Chi. (S.)   Math (S.)    Math (G.)            Pol. (S.)         Eng. (G.)      Che. (G.)            Avg.
+                                                                            Reasoning-based LLMs
+Deepseek-R1                23.25      30.59       57.53        56.08      69.20        86.04      72.68       94.29          15.20              65.56              18.65            81.76            55.90
+QwQ-32B                     4.74      63.92       67.06        70.04      53.68        51.08      69.20       79.05          16.82              48.81             -22.53            48.94            45.90
+TinyR1-32B-Preview          3.10      63.92       65.71        77.02      56.61        64.42      74.83       82.86          23.33              40.17             -31.52           17.35             44.82
+Qwen3-32B                  -4.17      24.18       69.52       54.29       53.67       52.70       47.31       82.21          18.33               62.14            -26.99           36.27             39.12
+Qwen3-8B                   23.39      63.92       14.29        -4.96      52.21       47.75       34.01       39.20           -8.14              57.19            -27.13           59.28             29.25
+MiMo-7B-RL                 51.05      24.18       14.29        38.85      58.35        92.17      63.07       13.39          35.12              -27.10             -4.41             1.04            30.00
+Deepseek-Prover-V2-7B     -24.10      -5.20       42.86        -6.23      29.54       -80.81      23.25       46.67           -1.51             -58.64            -45.23           -21.91             -8.44
+DeepSeek-R1-Distill-7B    -45.19      24.18        0.95       -38.66      23.55       -20.36       3.87       -23.81         -13.57             -18.81            -19.59           -44.58            -14.34
+                                                                              RLHF-based LLMs
+Deepseek-V3                7.79       46.58       58.10       32.62       72.38        96.58      57.43        92.38          33.33             40.26              24.77            85.83            54.00
+GPT 4o-mini-20240718      17.91       24.18       62.14       36.68       55.20        79.01      78.00        67.62          46.90             92.31              10.04            36.39            50.53
+Llama3.3-70B-Instruct     22.56       57.35       54.29       42.11       45.09        52.70      46.25        54.29          30.00             58.81             -12.53           -15.83            36.26
+Mixtral 8×7B-Instruct     11.99       17.34       80.38       35.84       32.74        42.77      75.82        56.19          30.00              6.84             -31.16            -7.18            29.30
+Qwen2.5-32B-Instruct      11.95       17.41       53.33       59.34       62.96        46.90      75.08        62.86          30.00             46.67              -4.50            27.08            40.76
+Qwen2.5-14B-Instruct      21.50       24.18       47.92       37.43       73.36        64.97      74.32        64.94          18.21             61.97             -20.00            47.39            43.02
+GLM4-9B-Chat              35.00       24.18       32.49       34.73       62.12        20.36      77.34        63.81          46.90             82.40             -25.35            7.18             38.43
+Llama3-8B-Instruct        48.25       27.46       17.23       31.58       61.37       -14.05      41.23        57.77          21.55             -69.07            -26.50           -27.19            14.14
+
+
+
+
+                                                                                      8
+                                                                                                                                 Phy. (S.) Geo. (S.) Math (S.) Eng. (G.)
+
+
+                   CCS                             QWK                              ECS                                 CCS                              QWK                              ECS                                 CCS                              QWK                              ECS
+ 300                                                                                                    300                                                                                                   300
+
+
+ 250                                                                                                    250                                                                                                   250
+
+                   63.45                           37.83
+                              56.25      29.9                 35.57
+ 200                                                                                                    200                                                                                                   200
+        59.33
+                                                   59.72                            37.56
+                   53.08                59.04                 58.36                                                                                                                                                                                            28.17
+ 150                          50.74                                                                     150                                              41.25                                                150                                   37.67
+        51.26                                                                                                                                                       36.47
+                                                                                              79.05                       27.8                                                           67.62                                 28.22                                      20.21
+                                                                                                                                    38.05                                                                                                                      42.15
+                                                                                   84.76                      31.68                            15.8                           57.77                                 32.98                           40.85
+ 100                                               78.55                                                100                                              47.16                                                100              27.93      27.16                            33.3
+                   78.36                                      83.35     82.21                                            39.14                 26.45                41.37
+                              77.96     86.99                                                                 23.55
+        64.96                                                                                                                       31.83                                                           32.33           29.52                 16.81                47.46
+                                                                                                                                                         33.16                31.58      38.34                                  44.1                 58.5                 36.83
+                                                                                              56.08           31.29      32.49                 38.11                32.84                                                                 28.42
+ 50                                                                                                     50                          32.38                                                           28.41     50    32.35
+                                                    66.9                           68.85
+        47.29      57.01      49.64     45.38                 49.94     54.29                                                                            48.08      43.59     48.25      49.87                                                                 52.68      48.83
+                                                                                                              41.09      38.79      33.67      40.69                                                32.44           33.71      42.25      41.61     33.14                                       14.05
+                                                                                              26.88                                                                                                                                                                                            13.33
+    0                                                                    -4.17      2.17                 0                                                                               -11.56                0
+                                                                                              -19.64                                                                           -26.5                -21.96
+                                                                         -26.99                                                                                                                                                                                                                 -36.8     -32.07
+                                                                                                                                                                                                                                                                                     -45.19
+
+ -50                                                                                                    -50                                                                                                   -50                                                                              -21.39     -30.52
+        Default   Few-shot   w/o S.G.   Default   Few-shot   w/o S.G.   Default   Few-shot   w/o S.G.         Default   Few-shot   w/o S.G.   Default   Few-shot   w/o S.G.   Default   Few-shot   w/o S.G.         Default   Few-shot   w/o S.G.   Default   Few-shot   w/o S.G.   Default   Few-shot   w/o S.G.
+
+
+
+                                             Qwen3-32B                                                                                        Llama3-8B-Instruct                                                                               DeepSeek-R1-Distill-7B
+
+
+
+Figure 5: Performance changes of selected models across various subjects under settings of “few-shot”
+and scenarios without scoring guidelines (“w/o S.G.”).
+
+
+We employ the ECS metric to assess the consistency between model-predicted error cause frequencies
+and human annotations across different score levels. Specifically, we set m to 3 in Equation 4 to
+represent low, medium, and high score groups. The performance of LLMs across various subjects
+and question types is presented in Table 3. We also analyze the relationship between ECS and scoring
+consistency in Appendix E.
+We observe that Deepseek-R1 achieves the highest average ECS score, and overall performance
+generally improves with increasing model parameter size. However, the results also reveal that
+current LLMs still face significant challenges in maintaining zero-shot consistency for error causes
+inference. Additionally, model strengths vary notably across different subjects and question types.
+The lowest average ECS scores are observed on English gap-filling tasks (Eng. (G.)), likely due
+to the sparse semantics and highly variable answer formats, which make it particularly difficult for
+LLMs to accurately explain error causes. Compared to scoring tasks, error consistency prediction
+for short-answer questions in the humanities displays a more polarized pattern: large-scale LLMs
+achieve relatively high performance, while smaller-scale reasoning-based models tend to make more
+incorrect inferences. This disparity may be attributed to the lack of explicit alignment between student
+responses and reference answers in these subjects, which smaller models struggle to resolve due
+to their limited semantic understanding. Reasoning-based models with fewer than 32B parameters
+typically perform worse in ECS compared to RLHF-based models. Their more complex reasoning
+processes often lead to significantly higher inference costs. Overall, ECS effectively highlights the
+differences between models in terms of consistency in predicting error causes.
+
+4.4               Impact of Example Demonstrations and Scoring Guidelines
+
+To evaluate the impact of example samples and scoring guidelines on model performance, we selected
+underperforming models and corresponding subject datasets based on Tables 2 and 3. We then
+examined performance changes under two conditions: providing 5-shot human-scored examples as
+demonstrations, and removing the scoring guidelines. The results are illustrated in Figure 5. Overall,
+the few-shot setting leads to improvements in CCS, QWK, and ECS metrics. However, subject-
+specific analysis reveals that for some subjects like Phy. (S.) and Math (S.), few-shot prompting
+results in decreased CCS scores despite gains in QWK, suggesting that while examples improve
+overall scoring consistency, the included step-wise labels may mislead the model. Additionally,
+the absence of scoring guidelines consistently degrades performance across most metrics and tasks,
+underscoring the importance of providing clear scoring criteria for LLMs in SAS evaluations.
+
+5          Conclusion
+In this study, we introduce SAS-Bench, the first benchmark specifically designed to evaluate LLMs
+on SAS tasks. Built from real exam data, it includes 1,030 questions and 4,109 expert-annotated
+responses with step-wise scores and error causes. SAS-Bench introduces fine-grained metrics that
+assess model performance across overall and step-wise scoring consistency, as well as explainability
+based on error cause alignment. Our experiments with various LLMs reveal notable performance
+gaps among LLMs, highlighting SAS-Bench’s value in the development of robust and interpretable
+automated assessment systems.
+
+
+                                                                                                                                                        9
+References
+ [1] N. A. Khayi and V. Rus, “Automated essay scoring using discourse external knowledge,” in
+     Proceedings of the Thirty-Third International Joint Conference on Artificial Intelligence, IJCAI
+     2024, Jeju, South Korea, August 3-9, 2024. ijcai.org, 2024, pp. 7154–7160. [Online]. Available:
+     https://www.ijcai.org/proceedings/2024/791
+ [2] Z. J. Hou, A. Ciuba, and X. L. Li, “Improve llm-based automatic essay scoring with linguistic features,”
+     CoRR, vol. abs/2502.09497, 2025. [Online]. Available: https://doi.org/10.48550/arXiv.2502.09497
+ [3] D. Ramesh and S. K. Sanampudi, “An automated essay scoring systems: a systematic
+     literature review,” Artif. Intell. Rev., vol. 55, no. 3, pp. 2495–2527, 2022. [Online]. Available:
+     https://doi.org/10.1007/s10462-021-10068-2
+ [4] R. Ridley, L. He, X. Dai, S. Huang, and J. Chen, “Prompt agnostic essay scorer: A domain generalization
+     approach to cross-prompt automated essay scoring,” arXiv preprint arXiv:2008.01441, 2020.
+ [5] R. Ridley, L. He, X.-y. Dai, S. Huang, and J. Chen, “Automated cross-prompt scoring of essay traits,” in
+     Proceedings of the AAAI conference on artificial intelligence, vol. 35, no. 15, 2021, pp. 13 745–13 753.
+ [6] S.-H. Wu and C.-Y. Yeh, “A short answer grading system in chinese by cnn,” in 2019 IEEE 10th Interna-
+     tional Conference on Awareness Science and Technology (iCAST). IEEE, 2019, pp. 1–5.
+ [7] S.-H. Wu and W.-F. Shih, “A short answer grading system in chinese by support vector approach,” in
+     Proceedings of the 5th Workshop on Natural Language Processing Techniques for Educational Applications,
+     2018, pp. 125–129.
+ [8] S. Menini, S. Tonelli, G. D. Gasperis, and P. Vittorini, “Automated short answer grading: A simple solution
+     for a difficult task,” in Proceedings of the Sixth Italian Conference on Computational Linguistics, Bari,
+     Italy, November 13-15, 2019, ser. CEUR Workshop Proceedings, R. Bernardi, R. Navigli, and G. Semeraro,
+     Eds., vol. 2481. CEUR-WS.org, 2019. [Online]. Available: https://ceur-ws.org/Vol-2481/paper48.pdf
+ [9] OpenAI, “GPT-4 technical report,” CoRR, vol. abs/2303.08774, pp. 1–100, 2023. [Online]. Available:
+     https://doi.org/10.48550/arXiv.2303.08774
+[10] DeepSeek-AI, “Deepseek-v3 technical report,” 2024. [Online]. Available: https://arxiv.org/abs/2412.19437
+[11] V. Raina, A. Liusie, and M. J. F. Gales, “Is llm-as-a-judge robust? investigating universal adversarial
+     attacks on zero-shot LLM assessment,” in Proceedings of the 2024 Conference on Empirical Methods in
+     Natural Language Processing, EMNLP 2024, Miami, FL, USA, November 12-16, 2024, Y. Al-Onaizan,
+     M. Bansal, and Y. Chen, Eds. Association for Computational Linguistics, 2024, pp. 7499–7517. [Online].
+     Available: https://aclanthology.org/2024.emnlp-main.427
+[12] H. Zhuang, Z. Qin, K. Hui, J. Wu, L. Yan, X. Wang, and M. Bendersky, “Beyond yes and no:
+     Improving zero-shot LLM rankers via scoring fine-grained relevance labels,” in Proceedings of the 2024
+     Conference of the North American Chapter of the Association for Computational Linguistics: Human
+     Language Technologies: Short Papers, NAACL 2024, Mexico City, Mexico, June 16-21, 2024, K. Duh,
+     H. Gómez-Adorno, and S. Bethard, Eds. Association for Computational Linguistics, 2024, pp. 358–370.
+     [Online]. Available: https://doi.org/10.18653/v1/2024.naacl-short.31
+[13] D. Deshpande, S. S. Ravi, S. CH-Wang, B. Mielczarek, A. Kannappan, and R. Qian, “GLIDER: grading
+     LLM interactions and decisions using explainable ranking,” CoRR, vol. abs/2412.14140, 2024. [Online].
+     Available: https://doi.org/10.48550/arXiv.2412.14140
+[14] B. Hamner, J. Morgan, lynnvandev, M. Shermis, and T. V. Ark, “The hewlett foundation: Automated essay
+     scoring,” https://kaggle.com/competitions/asap-aes, 2012, kaggle.
+[15] D. Agarwal, S. Gupta, and N. Baghel, “Scaa: A dataset for automated short answer grading of children’s
+     free-text answers in hindi and marathi,” in Proceedings of the 17th International Conference on Natural
+     Language Processing, ICON 2020, Indian Institute of Technology Patna, Patna, India, December 18-21,
+     2020, P. Bhattacharyya, D. M. Sharma, and R. Sangal, Eds. NLP Association of India (NLPAI), 2020, pp.
+     430–436. [Online]. Available: https://aclanthology.org/2020.icon-main.58
+[16] M. O. Dzikovska, R. D. Nielsen, C. Brew, C. Leacock, D. Giampiccolo, L. Bentivogli, P. Clark,
+     I. Dagan, and H. T. Dang, “Semeval-2013 task 7: The joint student response analysis and 8th recognizing
+     textual entailment challenge,” in Proceedings of the 7th International Workshop on Semantic Evaluation,
+     SemEval@NAACL-HLT 2013, Atlanta, Georgia, USA, June 14-15, 2013, M. T. Diab, T. Baldwin, and
+     M. Baroni, Eds. The Association for Computer Linguistics, 2013, pp. 263–274. [Online]. Available:
+     https://aclanthology.org/S13-2045/
+[17] S. Sonkar, K. Ni, L. T. Lu, K. Kincaid, J. S. Hutchinson, and R. G. Baraniuk, “Automated long answer
+     grading with ricechem dataset,” in Artificial Intelligence in Education - 25th International Conference,
+     AIED 2024, Recife, Brazil, July 8-12, 2024, Proceedings, Part I, ser. Lecture Notes in Computer Science,
+     A. M. Olney, I. Chounta, Z. Liu, O. C. Santos, and I. I. Bittencourt, Eds., vol. 14829. Springer, 2024, pp.
+     163–176. [Online]. Available: https://doi.org/10.1007/978-3-031-64302-6_12
+
+
+                                                      10
+[18] I. C. Silveira, A. Barbosa, and D. D. Mau’a, “A new benchmark for automatic essay scoring in Portuguese,”
+     in Proceedings of the 16th International Conference on Computational Processing of Portuguese - Vol. 1,
+     P. Gamallo, D. Claro, A. Teixeira, L. Real, M. Garcia, H. G. Oliveira, and R. Amaro, Eds. Santiago de
+     Compostela, Galicia/Spain: Association for Computational Lingustics, Mar. 2024, pp. 228–237. [Online].
+     Available: https://aclanthology.org/2024.propor-1.23
+[19] Barbara, B. Hamner, J. Morgan, lynnvandev, and M. Shermis, “The hewlett foundation: Short answer
+     scoring,” https://kaggle.com/competitions/asap-sas, 2012, kaggle.
+[20] S. Menini, S. Tonelli, G. D. Gasperis, and P. Vittorini, “Automated short answer grading: A simple solution
+     for a difficult task,” in Proceedings of the Sixth Italian Conference on Computational Linguistics, Bari,
+     Italy, November 13-15, 2019, ser. CEUR Workshop Proceedings, R. Bernardi, R. Navigli, and G. Semeraro,
+     Eds., vol. 2481. CEUR-WS.org, 2019. [Online]. Available: https://ceur-ws.org/Vol-2481/paper48.pdf
+[21] M. Mohler and R. Mihalcea, “Text-to-text semantic similarity for automatic short answer grading,” in
+     EACL 2009, 12th Conference of the European Chapter of the Association for Computational Linguistics,
+     Proceedings of the Conference, Athens, Greece, March 30 - April 3, 2009, A. Lascarides, C. Gardent,
+     and J. Nivre, Eds. The Association for Computer Linguistics, 2009, pp. 567–575. [Online]. Available:
+     https://aclanthology.org/E09-1065/
+[22] P. Lai, F. Ye, Y. Fu, Z. Chen, Y. Wu, and Y. Wang, “M-sim: Multi-level semantic inference model for
+     chinese short answer scoring in low-resource scenarios,” Comput. Speech Lang., vol. 84, p. 101575, 2024.
+     [Online]. Available: https://doi.org/10.1016/j.csl.2023.101575
+[23] C. An, S. Gong, M. Zhong, X. Zhao, M. Li, J. Zhang, L. Kong, and X. Qiu, “L-eval: Instituting
+     standardized evaluation for long context language models,” in Proceedings of the 62nd Annual Meeting of
+     the Association for Computational Linguistics (Volume 1: Long Papers), ACL 2024, Bangkok, Thailand,
+     August 11-16, 2024, L. Ku, A. Martins, and V. Srikumar, Eds. Association for Computational Linguistics,
+     2024, pp. 14 388–14 411. [Online]. Available: https://doi.org/10.18653/v1/2024.acl-long.776
+[24] J. Wang, Y. Liang, F. Meng, H. Shi, Z. Li, J. Xu, J. Qu, and J. Zhou, “Is chatgpt a good
+     NLG evaluator? A preliminary study,” CoRR, vol. abs/2303.04048, 2023. [Online]. Available:
+     https://doi.org/10.48550/arXiv.2303.04048
+[25] P. Thomas, S. Spielman, N. Craswell, and B. Mitra, “Large language models can accurately predict
+     searcher preferences,” in Proceedings of the 47th International ACM SIGIR Conference on Research and
+     Development in Information Retrieval, SIGIR 2024, Washington DC, USA, July 14-18, 2024, G. H. Yang,
+     H. Wang, S. Han, C. Hauff, G. Zuccon, and Y. Zhang, Eds. ACM, 2024, pp. 1930–1940. [Online].
+     Available: https://doi.org/10.1145/3626772.3657707
+[26] G. Faggioli, L. Dietz, C. L. A. Clarke, G. Demartini, M. Hagen, C. Hauff, N. Kando, E. Kanoulas,
+     M. Potthast, B. Stein, and H. Wachsmuth, “Perspectives on large language models for relevance judgment,”
+     in Proceedings of the 2023 ACM SIGIR International Conference on Theory of Information Retrieval,
+     ICTIR 2023, Taipei, Taiwan, 23 July 2023, M. Yoshioka, J. Kiseleva, and M. Aliannejadi, Eds. ACM,
+     2023, pp. 39–50. [Online]. Available: https://doi.org/10.1145/3578337.3605136
+[27] N. Kazi and I. Kahanda, “Enhancing transfer learning of llms through fine- tuning on task - related corpora
+     for automated short-answer grading,” in International Conference on Machine Learning and Applications,
+     ICMLA 2023, Jacksonville, FL, USA, December 15-17, 2023. IEEE, 2023, pp. 1687–1691. [Online].
+     Available: https://doi.org/10.1109/ICMLA58977.2023.00255
+[28] L. Zheng, W. Chiang, Y. Sheng, S. Zhuang, Z. Wu, Y. Zhuang, Z. Lin, Z. Li, D. Li, E. P. Xing, H. Zhang,
+     J. E. Gonzalez, and I. Stoica, “Judging llm-as-a-judge with mt-bench and chatbot arena,” in Advances in
+     Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems
+     2023, NeurIPS 2023, New Orleans, LA, USA, December 10 - 16, 2023, A. Oh, T. Naumann, A. Globerson,
+     K. Saenko, M. Hardt, and S. Levine, Eds., 2023. [Online]. Available: http://papers.nips.cc/paper_files/
+     paper/2023/hash/91f18a1287b398d378ef22505bf41832-Abstract-Datasets_and_Benchmarks.html
+[29] L. Zhu, X. Wang, and X. Wang, “Judgelm: Fine-tuned large language models are scalable judges,” CoRR,
+     vol. abs/2310.17631, 2023. [Online]. Available: https://doi.org/10.48550/arXiv.2310.17631
+[30] Y. Liu, T. Yang, S. Huang, Z. Zhang, H. Huang, F. Wei, W. Deng, F. Sun, and Q. Zhang, “Calibrating
+     llm-based evaluator,” in Proceedings of the 2024 Joint International Conference on Computational
+     Linguistics, Language Resources and Evaluation, LREC/COLING 2024, 20-25 May, 2024, Torino, Italy,
+     N. Calzolari, M. Kan, V. Hoste, A. Lenci, S. Sakti, and N. Xue, Eds. ELRA and ICCL, 2024, pp.
+     2638–2656. [Online]. Available: https://aclanthology.org/2024.lrec-main.237
+[31] M. Stahl, L. Biermann, A. Nehring, and H. Wachsmuth, “Exploring LLM prompting strategies for joint
+     essay scoring and feedback generation,” in Proceedings of the 19th Workshop on Innovative Use of NLP for
+     Building Educational Applications, BEA 2024, Mexico City, Mexico, June 20, 2024, E. Kochmar, M. Bexte,
+     J. Burstein, A. Horbach, R. Laarmann-Quante, A. Tack, V. Yaneva, and Z. Yuan, Eds. Association for
+     Computational Linguistics, 2024, pp. 283–298. [Online]. Available: https://aclanthology.org/2024.bea-1.23
+
+
+                                                      11
+[32] E. Latif, L. Fang, P. Ma, and X. Zhai, “Knowledge distillation of llms for automatic scoring of science
+     assessments,” in Artificial Intelligence in Education. Posters and Late Breaking Results, Workshops
+     and Tutorials, Industry and Innovation Tracks, Practitioners, Doctoral Consortium and Blue Sky -
+     25th International Conference, AIED 2024, Recife, Brazil, July 8-12, 2024, Proceedings, Part II,
+     ser. Communications in Computer and Information Science, A. M. Olney, I. Chounta, Z. Liu, O. C.
+     Santos, and I. I. Bittencourt, Eds., vol. 2151. Springer, 2024, pp. 166–174. [Online]. Available:
+     https://doi.org/10.1007/978-3-031-64312-5_20
+[33] A. Liusie, V. Raina, Y. Fathullah, and M. J. F. Gales, “Efficient LLM comparative assessment: A product
+     of experts framework for pairwise comparisons,” in Proceedings of the 2024 Conference on Empirical
+     Methods in Natural Language Processing, EMNLP 2024, Miami, FL, USA, November 12-16, 2024,
+     Y. Al-Onaizan, M. Bansal, and Y. Chen, Eds. Association for Computational Linguistics, 2024, pp.
+     6835–6855. [Online]. Available: https://aclanthology.org/2024.emnlp-main.389
+[34] X. Zhang, C. Li, Y. Zong, Z. Ying, L. He, and X. Qiu, “Evaluating the performance of large
+     language models on GAOKAO benchmark,” CoRR, vol. abs/2305.12474, 2023. [Online]. Available:
+     https://doi.org/10.48550/arXiv.2305.12474
+[35] G. Meyer, P. Breuer, and J. Fürst, “Asag2024: A combined benchmark for short answer grading,” in
+     Proceedings of the 2024 on ACM Virtual Global Computing Education Conference V. 2, 2024, pp. 322–323.
+[36] M. Mohler, R. C. Bunescu, and R. Mihalcea, “Learning to grade short answer questions using semantic
+     similarity measures and dependency graph alignments,” in The 49th Annual Meeting of the Association
+     for Computational Linguistics: Human Language Technologies, Proceedings of the Conference, 19-24
+     June, 2011, Portland, Oregon, USA, D. Lin, Y. Matsumoto, and R. Mihalcea, Eds. The Association for
+     Computer Linguistics, 2011, pp. 752–762. [Online]. Available: https://aclanthology.org/P11-1076/
+[37] S. Yoon, “Short answer grading using one-shot prompting and text similarity scoring model,” CoRR, vol.
+     abs/2305.18638, 2023. [Online]. Available: https://doi.org/10.48550/arXiv.2305.18638
+[38] S. Bonthu, S. R. Sree, and M. H. M. K. Prasad, “Improving the performance of automatic short answer
+     grading using transfer learning and augmentation,” Eng. Appl. Artif. Intell., vol. 123, no. Part A, p. 106292,
+     2023. [Online]. Available: https://doi.org/10.1016/j.engappai.2023.106292
+[39] J. Liu, J. Liu, Q. Wang, J. Wang, W. Wu, Y. Xian, D. Zhao, K. Chen, and R. Yan, “Rankcse: Unsupervised
+     sentence representations learning via learning to rank,” in Proceedings of the 61st Annual Meeting of
+     the Association for Computational Linguistics (Volume 1: Long Papers), ACL 2023, Toronto, Canada,
+     July 9-14, 2023, A. Rogers, J. L. Boyd-Graber, and N. Okazaki, Eds. Association for Computational
+     Linguistics, 2023, pp. 13 785–13 802. [Online]. Available: https://doi.org/10.18653/v1/2023.acl-long.771
+[40] Y. Chuang, R. Dangovski, H. Luo, Y. Zhang, S. Chang, M. Soljacic, S. Li, S. Yih, Y. Kim, and J. R.
+     Glass, “Diffcse: Difference-based contrastive learning for sentence embeddings,” in Proceedings of the
+     2022 Conference of the North American Chapter of the Association for Computational Linguistics:
+     Human Language Technologies, NAACL 2022, Seattle, WA, United States, July 10-15, 2022, M. Carpuat,
+     M. de Marneffe, and I. V. M. Ruíz, Eds. Association for Computational Linguistics, 2022, pp. 4207–4218.
+     [Online]. Available: https://doi.org/10.18653/v1/2022.naacl-main.311
+[41] A. Dubey, A. Jauhri, A. Pandey, A. Kadian, A. Al-Dahle, A. Letman, A. Mathur, A. Schelten, A. Yang,
+     A. Fan, A. Goyal, A. Hartshorn, A. Yang, A. Mitra, A. Sravankumar, A. Korenev, A. Hinsvark,
+     A. Rao, A. Zhang, A. Rodriguez, A. Gregerson, A. Spataru, B. Rozière, B. Biron, B. Tang, B. Chern,
+     C. Caucheteux, C. Nayak, C. Bi, C. Marra, C. McConnell, C. Keller, C. Touret, C. Wu, C. Wong, C. C.
+     Ferrer, C. Nikolaidis, D. Allonsius, D. Song, D. Pintz, D. Livshits, D. Esiobu, D. Choudhary, D. Mahajan,
+     D. Garcia-Olano, D. Perino, D. Hupkes, E. Lakomkin, E. AlBadawy, E. Lobanova, E. Dinan, E. M.
+     Smith, F. Radenovic, F. Zhang, G. Synnaeve, G. Lee, G. L. Anderson, G. Nail, G. Mialon, G. Pang,
+     G. Cucurell, H. Nguyen, H. Korevaar, H. Xu, H. Touvron, I. Zarov, I. A. Ibarra, I. M. Kloumann,
+     I. Misra, I. Evtimov, J. Copet, J. Lee, J. Geffert, J. Vranes, J. Park, J. Mahadeokar, J. Shah, J. van der
+     Linde, J. Billock, J. Hong, J. Lee, J. Fu, J. Chi, J. Huang, J. Liu, J. Wang, J. Yu, J. Bitton, J. Spisak,
+     J. Park, J. Rocca, J. Johnstun, J. Saxe, J. Jia, K. V. Alwala, K. Upasani, K. Plawiak, K. Li, K. Heafield,
+     K. Stone, and et al., “The llama 3 herd of models,” CoRR, vol. abs/2407.21783, 2024. [Online]. Available:
+     https://doi.org/10.48550/arXiv.2407.21783
+[42] A. Yang, B. Yang, B. Hui, B. Zheng, B. Yu, C. Zhou, C. Li, C. Li, D. Liu, F. Huang, G. Dong, H. Wei,
+     H. Lin, J. Tang, J. Wang, J. Yang, J. Tu, J. Zhang, J. Ma, J. Xu, J. Zhou, J. Bai, J. He, J. Lin, K. Dang,
+     K. Lu, K. Chen, K. Yang, M. Li, M. Xue, N. Ni, P. Zhang, P. Wang, R. Peng, R. Men, R. Gao, R. Lin,
+     S. Wang, S. Bai, S. Tan, T. Zhu, T. Li, T. Liu, W. Ge, X. Deng, X. Zhou, X. Ren, X. Zhang, X. Wei, X. Ren,
+     Y. Fan, Y. Yao, Y. Zhang, Y. Wan, Y. Chu, Y. Liu, Z. Cui, Z. Zhang, and Z. Fan, “Qwen2 technical report,”
+     arXiv preprint arXiv:2407.10671, 2024.
+[43] A. Yang, B. Yang, B. Zhang, B. Hui, B. Zheng, B. Yu, C. Li, D. Liu, F. Huang, H. Wei, H. Lin, J. Yang,
+     J. Tu, J. Zhang, J. Yang, J. Yang, J. Zhou, J. Lin, K. Dang, K. Lu, K. Bao, K. Yang, L. Yu, M. Li, M. Xue,
+     P. Zhang, Q. Zhu, R. Men, R. Lin, T. Li, T. Xia, X. Ren, X. Ren, Y. Fan, Y. Su, Y. Zhang, Y. Wan, Y. Liu,
+     Z. Cui, Z. Zhang, and Z. Qiu, “Qwen2.5 technical report,” arXiv preprint arXiv:2412.15115, 2024.
+
+
+                                                       12
+[44] T. GLM, A. Zeng, B. Xu, B. Wang, C. Zhang, D. Yin, D. Rojas, G. Feng, H. Zhao, H. Lai, H. Yu, H. Wang,
+     J. Sun, J. Zhang, J. Cheng, J. Gui, J. Tang, J. Zhang, J. Li, L. Zhao, L. Wu, L. Zhong, M. Liu, M. Huang,
+     P. Zhang, Q. Zheng, R. Lu, S. Duan, S. Zhang, S. Cao, S. Yang, W. L. Tam, W. Zhao, X. Liu, X. Xia,
+     X. Zhang, X. Gu, X. Lv, X. Liu, X. Liu, X. Yang, X. Song, X. Zhang, Y. An, Y. Xu, Y. Niu, Y. Yang, Y. Li,
+     Y. Bai, Y. Dong, Z. Qi, Z. Wang, Z. Yang, Z. Du, Z. Hou, and Z. Wang, “Chatglm: A family of large
+     language models from glm-130b to glm-4 all tools,” 2024.
+[45] A. Q. Jiang, A. Sablayrolles, A. Roux, A. Mensch, B. Savary, C. Bamford, D. S. Chaplot, D. de las Casas,
+     E. B. Hanna, F. Bressand, G. Lengyel, G. Bour, G. Lample, L. R. Lavaud, L. Saulnier, M.-A. Lachaux,
+     P. Stock, S. Subramanian, S. Yang, S. Antoniak, T. L. Scao, T. Gervet, T. Lavril, T. Wang, T. Lacroix, and
+     W. E. Sayed, “Mixtral of experts,” 2024. [Online]. Available: https://arxiv.org/abs/2401.04088
+[46] Z. Z. Ren, Z. Shao, J. Song, H. Xin, H. Wang, W. Zhao, L. Zhang, Z. Fu, Q. Zhu, D. Yang, Z. F. Wu,
+     Z. Gou, S. Ma, H. Tang, Y. Liu, W. Gao, D. Guo, and C. Ruan, “Deepseek-prover-v2: Advancing formal
+     mathematical reasoning via reinforcement learning for subgoal decomposition,” 2025. [Online]. Available:
+     https://arxiv.org/abs/2504.21801
+[47] DeepSeek-AI, D. Guo, D. Yang, H. Zhang, J. Song, R. Zhang, R. Xu, Q. Zhu, S. Ma, P. Wang, X. Bi,
+     X. Zhang, X. Yu, Y. Wu, Z. F. Wu, Z. Gou, Z. Shao, Z. Li, Z. Gao, A. Liu, B. Xue, B. Wang, B. Wu,
+     B. Feng, C. Lu, C. Zhao, C. Deng, C. Zhang, C. Ruan, D. Dai, D. Chen, D. Ji, E. Li, F. Lin, F. Dai, F. Luo,
+     G. Hao, G. Chen, G. Li, H. Zhang, H. Bao, H. Xu, H. Wang, H. Ding, H. Xin, H. Gao, H. Qu, H. Li, J. Guo,
+     J. Li, J. Wang, J. Chen, J. Yuan, J. Qiu, J. Li, J. L. Cai, J. Ni, J. Liang, J. Chen, K. Dong, K. Hu, K. Gao,
+     K. Guan, K. Huang, K. Yu, L. Wang, L. Zhang, L. Zhao, L. Wang, L. Zhang, L. Xu, L. Xia, M. Zhang,
+     M. Zhang, M. Tang, M. Li, M. Wang, M. Li, N. Tian, P. Huang, P. Zhang, Q. Wang, Q. Chen, Q. Du,
+     R. Ge, R. Zhang, R. Pan, R. Wang, R. J. Chen, R. L. Jin, R. Chen, S. Lu, S. Zhou, S. Chen, S. Ye, S. Wang,
+     S. Yu, S. Zhou, S. Pan, S. S. Li, S. Zhou, S. Wu, S. Ye, T. Yun, T. Pei, T. Sun, T. Wang, W. Zeng, W. Zhao,
+     W. Liu, W. Liang, W. Gao, W. Yu, W. Zhang, W. L. Xiao, W. An, X. Liu, X. Wang, X. Chen, X. Nie,
+     X. Cheng, X. Liu, X. Xie, X. Liu, X. Yang, X. Li, X. Su, X. Lin, X. Q. Li, X. Jin, X. Shen, X. Chen,
+     X. Sun, X. Wang, X. Song, X. Zhou, X. Wang, X. Shan, Y. K. Li, Y. Q. Wang, Y. X. Wei, Y. Zhang, Y. Xu,
+     Y. Li, Y. Zhao, Y. Sun, Y. Wang, Y. Yu, Y. Zhang, Y. Shi, Y. Xiong, Y. He, Y. Piao, Y. Wang, Y. Tan, Y. Ma,
+     Y. Liu, Y. Guo, Y. Ou, Y. Wang, Y. Gong, Y. Zou, Y. He, Y. Xiong, Y. Luo, Y. You, Y. Liu, Y. Zhou, Y. X.
+     Zhu, Y. Xu, Y. Huang, Y. Li, Y. Zheng, Y. Zhu, Y. Ma, Y. Tang, Y. Zha, Y. Yan, Z. Z. Ren, Z. Ren,
+     Z. Sha, Z. Fu, Z. Xu, Z. Xie, Z. Zhang, Z. Hao, Z. Ma, Z. Yan, Z. Wu, Z. Gu, Z. Zhu, Z. Liu, Z. Li,
+     Z. Xie, Z. Song, Z. Pan, Z. Huang, Z. Xu, Z. Zhang, and Z. Zhang, “Deepseek-r1: Incentivizing reasoning
+     capability in llms via reinforcement learning,” 2025. [Online]. Available: https://arxiv.org/abs/2501.12948
+[48] Q. Team, “Qwq-32b: Embracing the power of reinforcement learning,” March 2025. [Online]. Available:
+     https://qwenlm.github.io/blog/qwq-32b/
+[49] ——, “Qwen3,” April 2025. [Online]. Available: https://qwenlm.github.io/blog/qwen3/
+[50] T. Team, “Superdistillation achieves near-r1 performance with just 5
+[51] Xiaomi LLM-Core Team, “Mimo: Unlocking the reasoning potential of language model – from pretraining
+     to posttraining,” 2025. [Online]. Available: https://github.com/XiaomiMiMo/MiMo
+[52] L. Yu, W. Jiang, H. Shi, J. YU, Z. Liu, Y. Zhang, J. Kwok, Z. Li, A. Weller, and
+     W. Liu, “Metamath: Bootstrap your own mathematical questions for large language models,”
+     in The Twelfth International Conference on Learning Representations, 2024. [Online]. Available:
+     https://openreview.net/forum?id=N8N0hgNDRt
+
+
+A    Limitations
+Ideally, constructing the SAS-bench using real student responses would produce a distribution that closely
+reflects actual application scenarios. However, the use of LLMs to simulate and generate student responses
+introduces inherent distributional differences compared to human responses, which constitutes a key limitation
+of this work. Additionally, obtaining responses across a range of scores in a controlled and balanced manner
+for each subject is challenging in real-world scenarios. The primary goal of this benchmark is to assess the
+deviations between LLM evaluations and human assessments in fine-grained response evaluation. Therefore, we
+emphasize the importance of generating diverse response data and involving professional evaluators for detailed
+annotations. In the future, we plan to release our annotation system, enabling potential researchers to easily
+contribute to or expand this work.
+
+
+B    Ethics Statement
+Our benchmark datasets utilize LLMs to generate data based on an existing open-source question bank. However,
+as certain subjects, such as politics and history, may involve content where models can exhibit inherent biases or
+
+
+                                                       13
+cognitive distortions, the generated data may reflect social biases present in the pre-training corpus. To mitigate
+the risk of propagating biased information into scoring models, we recommend that any future use of this dataset
+for training purposes undergo an additional round of manual review.
+
+
+C     Prompts and Examples
+
+  Please act as a subject matter expert in {subject} to evaluate student responses based on the following requirements:
+
+  [Evaluation Task]
+  Conduct a professional assessment of the student's step -by-step solution according to the question information,
+  reference answer, and scoring guidelines, and provide a structured evaluation result.
+
+  [Scoring Guidelines]
+  {score_guideline}
+  {few_shot_samples}
+
+  [Evaluation Materials]
+  Question content: {question}
+  Total score: {total}
+  Error types: {error_type}
+  Reference answer: {reference}
+  Analysis: {analysis}
+  Student's answer: {student_answer}
+
+  [Evaluation Process and Requirements]
+  1. Step-by-step analysis:
+            - Break down each step of the student's solution.
+            - Independently evaluate each step:
+                         * Determine correctness ('label').
+                         * If errors exist, select one or more primary causes from the error list ('errors').
+            - Single-step evaluation format: {{'step_score': step score, 'errors': [error causes]}}
+  2. Comprehensive assessment:
+            - Summarize the scores of each step to calculate the total score.
+            - Provide an overall evaluation ('label’).
+  3. Result output:
+            - Use standard JSON format:
+            {{
+            'total': total score,
+            'pred_score': evaluated total score,
+            'steps': [step-by-step evaluation results]
+            }}
+            - 'pred_score' must be within the range of 'total'.
+            - The cumulative value of 'step_score' must also be within the range of 0 to 'pred_score'.
+
+  Please complete the evaluation according to the above specifications and output the standardized assessment result
+  in JSON format.
+
+Figure 6: Prompts for model scoring and error cause prediction, where the descriptions are provided
+in Chinese.
+
+In this section, we present the prompts used for model evaluation in Figure 6 and an annotated example of a
+math short-answer response in Figure 7. Our observations indicate that current LLMs exhibit limitations in
+numerical reasoning. In particular, when step-wise scores and error causes are positioned before the overall
+score in the output format, the model tends to produce inflated or biased overall scores. In contrast, generating
+the overall score (pred_score) first helps guide and constrain the subsequent step-level scoring and error analysis.
+Based on this insight, we design the output format to require models to first generate the overall score, followed
+by the evaluation and analysis of each individual step.
+
+
+D     Analysis of Error Cause Detection Capabilities
+To assess whether models can accurately identify all relevant error causes in student responses, we evaluate their
+detection capabilities using the Micro-F1 score across different subjects and question types. For each question,
+we first merge and deduplicate the step-wise error causes predicted by the model and those annotated by human
+
+
+                                                                 14
+ {
+     "id": "Math_ShortAns_3",
+     "question": "20. (10 points) Let $F_{1}, F_{2}$ be …" ,
+     "reference": "Solution: (1) By the definition of an ellipse … (2) The equation of $L$ is $y= x+c$, where …",
+     "analysis": "(1) By the definition of an ellipse,
+ $\\left|\\mathrm{AF}_{2}\\right|+|\\mathrm{AB}|+\\left|\\mathrm{BF}_{2}\\right �4$. …",
+     "total": 10,
+     "steps": [
+         {
+             "response": "Let the foci of the ellipse be $F_{1}( -c,0)$ and $F_{2}(c,0)$, …" ,
+             "label": "0",
+             "errors": [
+                  "Calculation error"
+             ]
+         },
+         {
+             "response": "$$x^2 + \\frac{(k(x+c))^2}{b^2} = 1$$ \nExpanding this equation …",
+             "label": "0",
+             "errors": [
+                  "Confused problem-solving approach",
+                  "Calculation error"
+             ]
+         },
+         {
+             "response": "$$x^2 + \\frac{(x+c)^2}{b^2} = 1$$" ,
+             "label": "1",
+             "errors": [
+                  "Correct step"
+             ]
+         },
+         {
+             "response": "Expanding:",
+             "label": "0",
+             "errors": [
+                  "Calculation error"
+             ]
+         },
+         {
+             "response": "$$x^2 + \\frac{x^2 + 2xc + c^2}{b^2} = 1…" ,
+             "label": "0",
+             "errors": [
+                  "Confused problem-solving approach",
+                  "Calculation error",
+                  "Incorrect or missing formula usage"
+             ]
+         },
+         {
+             "response": "",
+             "label": "0",
+             "errors": [
+                  "Confused problem-solving approach",
+                  "Calculation error"
+             ]
+         },
+         {
+             "response": "Final answers:\n(I) $|AB| = 2b$; (II) $b = 1$." ,
+             "label": 0,
+             "errors": []
+         }
+     ],
+     "manual_label": 1
+ }
+
+
+
+Figure 7: Example format of a math short-answer response annotated with both the score and
+corresponding error causes.
+
+
+
+
+experts. We then compute true positives (TP), false positives (FP), and false negatives (FN) by checking the
+presence of each error cause in the predicted and reference sets. The Micro-F1 score is calculated based on the
+aggregated TP, FP, and FN across all questions. The results are summarized in Table 4.
+Deepseek-R1 still achieves the highest average F1 score. However, compared to the ECS results in Table 3,
+all models demonstrate markedly higher F1 scores and narrower performance gaps. This suggests that while
+current LLMs are generally capable of identifying the overall set of error causes in a response, they still face
+challenges in accurately reasoning through step-wise, fine-grained errors when compared to human annotations.
+The comparison between F1 and ECS further underscores the value of ECS as a metric. Unlike F1, which
+primarily reflects aggregate detection performance, ECS captures the consistency of reasoning across steps,
+offering a more nuanced and informative measure of model explainability in SAS tasks.
+
+
+                                                        15
+Table 4: Micro-F1 scores for error causes prediction (%) across various LLMs, evaluated by subject
+area and question type. S. indicates Short Answer, M. denotes Multiple Choice, and G. refers to Gap
+Filling. The best and second-best scores in each category are highlighted in bold and underlined,
+respectively.
+Models                    Phy. (S.)      Phy. (M.)       His. (S.)    Geo. (S.)     Bio. (G.)    Chi. (G.)    Chi. (S.)    Math (S.)       Math (G.)    Pol. (S.)     Eng. (G.)     Che. (G.)          Avg.
+                                                                                      Reasoning-based LLMs
+Deepseek-R1                   51.82          45.71        44.47            43.12     65.60        83.33        62.35         65.19           54.67          60.47         62.46         56.07          57.94
+QwQ-32B                       45.81          47.73        44.30            41.38     59.19        66.07        58.82         64.84           44.63          56.09         58.89         53.91          53.47
+TinyR1-32B-Preview            36.20          44.44        44.67            44.53     53.50        74.17        58.50         49.69           37.01          53.59         52.13         48.04          49.71
+Qwen3-32B                     46.72          47.13        41.66            40.29     59.06        81.18        57.34         59.53           48.98          54.57         57.61         52.21          53.86
+Qwen3-8B                      46.35          67.84        39.07            37.81     64.01        67.87        65.09         53.25           23.79          48.42         51.85         54.70          51.67
+MiMo-7B-RL                    43.42          48.45        31.49            36.79     53.09        86.21        44.81         35.45           49.59          20.51         46.11         27.96          43.66
+Deepseek-Prover-V2-7B         38.02          35.11        27.44            27.65     48.72        23.62        31.36         32.91           44.96          25.00         31.41         27.55          32.81
+DeepSeek-R1-Distill-7B        34.90          47.95        36.36            27.57     47.36        42.70        29.55         26.98           51.85          38.85         50.32         19.65          37.84
+                                                                                          RLHF-based LLMs
+Deepseek-V3                   48.58          46.93        41.79            42.52     67.79        92.24        62.36         63.05           53.59          52.30         65.60         56.68          57.79
+GPT 4o-mini-20240718          48.39          48.72        45.76            40.41     54.58        59.26        60.60         49.13           39.90          39.14         30.59         38.65          46.26
+Llama3.3-70B-Instruct         49.57          45.88        42.55            45.54     58.79        67.10        53.92         51.72           43.27          47.70         69.64         30.68          50.53
+Mixtral 8×7B-Instruct         33.67          43.39        41.58            37.86     52.41        33.72        58.86         37.57           59.28          41.66         41.53         38.58          43.34
+Qwen2.5-32B-Instruct          45.00          45.71        40.75            41.75     62.60        89.63        54.27         61.39           42.67          53.85         48.37         56.77          53.56
+Qwen2.5-14B-Instruct          43.70          45.24        39.86            36.82     61.72        88.26        65.34         48.14           49.49          49.17         54.75         50.43          52.74
+GLM4-9B-Chat                  40.00          44.32        41.10            37.14     55.79        48.31        57.48         38.76           38.73          42.35         41.50         42.42          43.99
+Llama3-8B-Instruct            42.95          37.63        34.15            32.64     56.28        50.30        53.28         47.60           68.76          24.89         47.11         46.41          45.17
+
+
+
+
+                 Deepseek-V3                                 Llama3.3-70B-Instruct                                 Mixtral 8 × 7B                                          Qwen3 32B
+
+    80                                           60                                                   50                                               60
+    70                                           50                                                                                                    50
+    60                                                                                                40
+    50                                           40                                                                                                    40
+                                                                                                      30
+    40                                           30                                                                                                    30
+    30                                                                                                20
+                                                 20                                                                                                    20
+    20
+                                                 10                                                   10                                               10
+    10
+     0                                               0                                                0                                                0
+          Low      Medium             High                 Low             Medium      High                  Low          Medium       High                         Low       Medium            High
+
+                CCS             ECS                                  CCS            ECS                             CCS              ECS                                   CCS           ECS
+
+
+                 Deepseek-V3 (in Low)                                                  Deepseek-V3 (in Medium)                                               Deepseek-V3 (in High)
+
+
+ 90                                                                  90                                                                90
+
+ 40                                                                  40                                                                40
+
+ -10                                                                 -10                                                               -10
+
+ -60                                                                 -60                                                               -60
+     Po (S.)
+
+
+
+
+                                                                       Po (S.)
+
+
+
+
+                                                                                                                                            Po (S.)
+       o. )
+
+
+
+
+                                                                         o. )
+
+
+
+
+                                                                                                                                              o. )
+     at .)
+
+
+                .)
+
+
+
+
+                                                                       at .)
+
+
+                                                                                 .)
+
+
+
+
+                                                                                                                                            at .)
+
+
+                                                                                                                                                      .)
+      y. .)
+
+
+
+
+                                                                        y. .)
+
+
+
+
+                                                                                                                                             y. .)
+        i. )
+     Ch G.)
+
+
+
+
+                                                                          i. )
+                                                                       Ch G.)
+
+
+
+
+                                                                                                                                               i. )
+                                                                                                                                            Ch G.)
+       e. )
+
+
+
+
+                                                                         e. )
+
+
+
+
+                                                                                                                                              e. )
+       g )
+
+
+
+
+                                                                         g )
+
+
+
+
+                                                                                                                                              g )
+      at .)
+
+
+
+
+                                                                        at .)
+
+
+
+
+                                                                                                                                             at .)
+     H (S.)
+
+
+
+
+                                                                       H (S.)
+
+
+
+
+                                                                                                                                            H (S.)
+      eo )
+
+
+
+
+                                                                        eo )
+
+
+
+
+                                                                                                                                             eo )
+    Bi (S.
+
+
+
+
+                                                                      Bi (S.
+
+
+
+
+                                                                                                                                           Bi (S.
+    Ch (G.
+
+
+
+
+                                                                      Ch (G.
+
+
+
+
+                                                                                                                                           Ch (G.
+    Ch (G.
+
+
+
+
+                                                                      Ch (G.
+
+
+
+
+                                                                                                                                           Ch (G.
+    En (S.
+
+
+
+
+                                                                      En (S.
+
+
+
+
+                                                                                                                                           En (S.
+    G M.
+
+
+
+
+                                                                      G M.
+
+
+
+
+                                                                                                                                           G M.
+    M . (G
+
+
+             (G
+
+
+
+
+                                                                      M . (G
+
+
+                                                                               (G
+
+
+
+
+                                                                                                                                           M . (G
+
+
+                                                                                                                                                    (G
+    Ph . (S
+
+
+
+
+                                                                      Ph . (S
+
+
+
+
+                                                                                                                                           Ph . (S
+    M . (S
+
+
+
+
+                                                                      M . (S
+
+
+
+
+                                                                                                                                           M . (S
+             (
+
+
+
+
+                                                                               (
+
+
+
+
+                                                                                                                                                    (
+           (
+
+
+
+
+                                                                             (
+
+
+
+
+                                                                                                                                                  (
+         h
+
+
+
+
+                                                                           h
+
+
+
+
+                                                                                                                                                h
+           .
+
+
+
+
+                                                                             .
+
+
+
+
+                                                                                                                                                  .
+         l.
+
+
+
+
+                                                                           l.
+
+
+
+
+                                                                                                                                                l.
+        y.
+
+
+
+
+                                                                          y.
+
+
+
+
+                                                                                                                                               y.
+        h
+
+
+
+
+                                                                          h
+
+
+
+
+                                                                                                                                               h
+       is
+
+
+
+
+                                                                         is
+
+
+
+
+                                                                                                                                              is
+         i
+
+
+
+
+                                                                           i
+
+
+
+
+                                                                                                                                                i
+ Ph
+
+
+
+
+                                                                     Ph
+
+
+
+
+                                                                                                                                       Ph
+
+
+
+
+                        CCS            ECS                                                      CCS          ECS                                                    CCS           ECS
+
+
+
+Figure 8: ECS and CCS comparison across low, medium, and high score intervals. The upper line
+chart illustrates the average ECS and CCS scores of different models across all subjects and question
+types, while the lower chart provides a detailed breakdown of Deepseek-V3’s performance across
+individual subject areas and question types.
+
+
+E        Analyzing the Relationship Between ECS and Scoring Performance
+
+To further investigate the relationship between ECS and model scoring performance, we analyze the evaluation
+results of four representative models: Deepseek-V3, LLaMA3.3-70B-Instruct, Mixtral 8×7B, and Qwen3-32B.
+Following the score-based partitioning strategy described in §4.3, we divide the evaluation samples into three
+intervals: low, medium, and high based on the overall scores assigned by human annotators. For each interval,
+we compute the average CCS and ECS across all subjects and question types. The results are presented in
+Figure 8.
+Notably, we observe an overall inverse trend between ECS and CCS: as ECS decreases, CCS tends to increase,
+and vice versa. To explore this phenomenon in more detail, we further examine Deepseek-V3’s ECS and CCS
+across different intervals for each subject and question type. This finer-grained analysis confirms the inverse
+relationship, suggesting that a model’s consistency in error cause identification may affect its overall scoring
+performance. Moreover, ECS values tend to drop more significantly in the high-score interval, indicating that
+models are more effective at identifying error causes in lower-scoring responses. One possible explanation is that
+models may over-focus on local error causes, leading to reduced leniency compared to human annotators and
+ultimately resulting in lower scoring consistency. When considered alongside the results in Table 4, which show
+that models achieve higher performance in overall error cause detection (as measured by Micro-F1) than in ECS,
+
+
+                                                                                                 16
+       Phy. (Short Answer)           His. (Short Answer)          Phy. (Multiple Choice)         Geo. (Short Answer)
+
+
+
+
+        Bio. (Gap Filling)            Chi. (Gap Filling)           Chi. (Short Answer)           Math (Short Answer)
+
+
+
+
+       Pol. (Short Answer)           Eng. (Gap Filling)            Math (Gap Filling)             Che. (Gap Filling)
+
+
+Figure 9: Normalized distributions of total human-annotated scores and the number of steps in the
+dataset.
+
+
+these findings suggest that the relatively low ECS scores are primarily attributable to the models’ challenges in
+accurately reasoning about step-wise error causes in medium- and high-scoring responses.
+
+
+F    Data Distribution Visualization
+To better understand the composition of our dataset, we visualize the distributions of human-annotated overall
+scores and the number of reasoning steps in student responses across different subject areas and question types,
+as shown in Figure 9. For clarity, both scores and step counts are normalized.
+As the figure illustrates, all subject-question types, except for Math (G.), which consists of single-step gap-filling
+questions and thus only includes full or zero scores, span a broad range of scores across low, medium, and
+high intervals. While real-world student response distributions typically approximate a normal distribution, our
+dataset contains a larger proportion of responses with either full marks or zero scores. This is largely due to the
+data selection process. However, as described in § 3.2, we applied rigorous data cleaning to ensure high semantic
+diversity within each score range. This diversity is crucial for evaluating whether models can consistently and
+accurately score varied responses that fall within the same scoring band.
+
+
+G     Analysis of Predicted Score Distributions
+We selected eight representative models of varying sizes and compared their predicted overall score distributions
+with human-annotated scores across the entire dataset, as illustrated in Figure 10.
+Overall, model predictions tend to concentrate in the mid-score range, reflecting a more conservative scoring
+pattern compared to human annotators, models are generally less inclined to assign either full or zero scores.
+Notably, we also observe considerable variation across models in their scoring tendencies within this middle
+range. Among them, LLaMA3.3-70B-Instruct shows a score distribution most closely resembling that of human
+annotations. However, when we examine the step-wise evaluation metrics presented in Table 2 and Table 3,
+LLaMA3.3-70B-Instruct still lags behind Deepseek-V3 in both CCS and ECS performance. This discrepancy
+underscores the strength of our proposed evaluation metrics, which capture deeper aspects of model performance
+in SAS tasks, beyond mere alignment with overall scores.
+
+
+
+
+                                                           17
+         Deepseek-V3          Llama3.3-70B-Instruct          Mixtral 8 × 7B         Qwen3-32B
+
+
+
+
+     Qwen2.5-14B-Instruct       GLM4-9B-Chat               Llama3-8B-Instruct       MiMo-7B-RL
+
+
+Figure 10: Normalized distributions of total human-annotated scores and the number of steps in the
+dataset.
+
+
+
+
+                                                      18
+
