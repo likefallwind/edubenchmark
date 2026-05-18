@@ -7,7 +7,7 @@ description: Use when a user describes an AI-education application, product idea
 
 ## Overview
 
-Use the local EduBenchmark evidence base to turn an AI-education application scenario into an evaluation plan. The answer must identify relevant atomic capabilities, prior benchmarks, native metrics, dataset availability, and extra risks, then present the result as an HTML report.
+Use the local EduBenchmark evidence base to turn an AI-education product scenario into an evaluation and product-readiness plan. The answer must identify relevant atomic capabilities, prior benchmarks, current public model evidence, native metrics, dataset availability, missing measurement scales, product implications, and extra risks, then present the result as an HTML report and record benchmark gaps.
 
 ## Required Sources
 
@@ -58,11 +58,44 @@ The HTML must include:
 - Primary atomic capabilities: D-codes, names, why they matter.
 - Existing benchmark evidence: benchmark names, what they test, native metrics, and whether public model results exist.
 - Dataset status: local path or access status from the acquisition manifest.
+- Current model readiness: what public benchmark results imply about what current models can likely do, and the limits of that inference.
 - Recommended evaluation plan: gate checks, primary ranking checks, diagnostic checks, and internal checks.
+- Product recommendations: what can be used directly now, what can be used only with guardrails or teacher review, and what requires product development, new data, or new benchmark design before release.
 - Extra attention points: safety, leakage/contamination, rubric reliability, multimodal grounding, teacher oversight, learning-effect gaps.
 - Coverage judgment: enough public benchmark coverage, partial coverage, or needs custom benchmark.
 
 Keep the HTML self-contained with inline CSS. Use tables for benchmark mapping and a concise summary section at the top.
+
+## Product Readiness Guidance
+
+Include a product-facing recommendation table with these categories:
+
+| Category | Meaning |
+|---|---|
+| Ready to use | Existing benchmarks and model results are strong enough for low-risk product use, with normal monitoring. |
+| Use with guardrails | Public evidence is useful but incomplete; require constraints such as teacher review, confidence thresholds, refusal rules, audit logs, or limited rollout. |
+| Needs development | The product needs new workflow logic, UI controls, human review protocols, retrieval/data integration, calibration, or monitoring before it can be reliable. |
+| Needs new benchmark/data | Public coverage is weak; define internal datasets, rubrics, red-team sets, pilots, or learning-effect studies. |
+
+Tie every product recommendation back to benchmark evidence or an explicit evidence gap. Do not say a product capability is ready just because a model performs well on a general knowledge, math, or coding benchmark.
+
+## Benchmark Todo Recording
+
+After producing the report, append benchmark gaps to `benchmark-todo.md` unless the user explicitly says not to modify files. Create the file if it does not exist.
+
+Use this compact format:
+
+```markdown
+## <scenario name> - <YYYY-MM-DD>
+
+- Gap: <missing measurement scale or benchmark need>
+  Product reason: <why this blocks or limits the application>
+  Suggested data/eval: <dataset, rubric, red-team set, pilot, or metric>
+  Related capabilities: <D-codes and scales>
+  Source report: <reports/edubenchassistant/...html>
+```
+
+Only record genuine missing benchmarks or measurement scales. Do not duplicate an existing item unless the new scenario adds a materially different product reason or evaluation design.
 
 ## Workflow
 
@@ -75,8 +108,10 @@ Keep the HTML self-contained with inline CSS. Use tables for benchmark mapping a
    - Diagnostic: useful for failure analysis.
    - Internal: required when public benchmark coverage is weak.
 5. Check data status in `dataset_acquisition_report.md` or `dataset_acquisition.jsonl`.
-6. Write the HTML report.
-7. Summarize the output path and the main coverage judgment to the user.
+6. Infer product readiness from the benchmark evidence, current model results, dataset status, and explicit gaps.
+7. Write the HTML report.
+8. Append missing benchmark/data needs to `benchmark-todo.md`.
+9. Summarize the output path, main coverage judgment, product-readiness judgment, and any new benchmark-todo entries to the user.
 
 ## Quick Benchmark Hints
 
@@ -100,3 +135,5 @@ Keep the HTML self-contained with inline CSS. Use tables for benchmark mapping a
 - Do not ignore dataset access status. Kaggle/manual/pending resources are not equivalent to local reproducible data.
 - Do not hide coverage gaps. Public benchmarks are weak for long-term learning gain, teacher adoption, and localized youth safety.
 - Do not generate only prose when the user asks for application guidance. The deliverable is an HTML evaluation report.
+- Do not stop at an evaluation plan. The user also needs product-side implications: direct-use areas, guarded-use areas, engineering/product work, and new measurement needs.
+- Do not forget `benchmark-todo.md`. Future benchmark requirements should be preserved outside the one-off HTML report.
