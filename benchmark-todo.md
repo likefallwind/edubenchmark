@@ -23,3 +23,23 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: 建立灰度发布安全监控集，统计风险命中率、误拒率、人工复核采纳率、升级响应时间、复发率和学生/教师反馈。
   Related capabilities: D24, D21; S7, S8
   Source report: reports/edubenchassistant/education-safety-benchmark-scan-evaluation.html
+
+## RE_BENCHMARK_V1 research gaps - 2026-05-20
+
+- Gap: TutorBench local download is incomplete and Pedagogy Benchmark is gated.
+  Product reason: C2 tutoring and pedagogical-knowledge conclusions cannot rely only on EduBench proxies.
+  Suggested data/eval: retry TutorBench parquet download; accept Pedagogy Benchmark HF terms; add rubric-based human review.
+  Related capabilities: D12, D13, D14; S3.
+  Source report: reports/re_benchmark_v1/RE_BENCHMARK_V1_RESEARCH_REPORT.md
+
+- Gap: EdNet/ASSISTments are protocol datasets, not native LLM prompts.
+  Product reason: personalization and knowledge tracing claims require KT metrics, not chat-model exact match.
+  Suggested data/eval: download EdNet KT1 sample and define AUC/ACC/NLL protocol separately from LLM prompt runner.
+  Related capabilities: D16, D17, D18; S5.
+  Source report: reports/re_benchmark_v1/RE_BENCHMARK_V1_RESEARCH_REPORT.md
+
+- Gap: Youth safety data for minors is incomplete locally.
+  Product reason: education products serving minors need child/youth-specific safety checks beyond generic classroom safety.
+  Suggested data/eval: acquire Safe-Child-LLM; monitor YouthSafe/YAIR, SproutBench, and CASTLE releases; build localized red-team set.
+  Related capabilities: D21, D24; S7.
+  Source report: reports/re_benchmark_v1/RE_BENCHMARK_V1_RESEARCH_REPORT.md

@@ -218,6 +218,26 @@ manifest=88
 抽题逻辑：
 
 - 每个评价标准先构造最多 80 条本地候选题。
+
+## RE_BENCHMARK_V1 可运行试点包
+
+`re_benchmark_v1.md` 是新的五大类主测组合口径。可以用下面命令生成结构化 registry、source manifest、pilot items 和 prompt export：
+
+```bash
+python scripts/build_re_benchmark_v1.py
+python scripts/run_re_benchmark_v1.py
+```
+
+输出位置：
+
+- `data/re_benchmark_v1/benchmark_registry.jsonl`
+- `data/re_benchmark_v1/source_manifest.jsonl`
+- `data/re_benchmark_v1/pilot_items.jsonl`
+- `data/re_benchmark_v1/pilot_prompts.jsonl`
+- `reports/re_benchmark_v1/pilot_report.html`
+- `reports/re_benchmark_v1/run_report.html`
+
+`source_manifest.jsonl` 会区分 `local_ready`、`manual_kaggle_required`、`metadata_model_available_dataset_not_found`、`local_ready_but_no_pilot_extractor` 等状态，便于继续补数据和补抽取器。
 - 用透明启发式打 `quality_score`：题干长度、答案/rubric 完整度、评分方式、evaluator、题源是否存在、benchmark 是否匹配、是否有程序测试/多模态/安全/rubric 信号。
 - 每个评价标准最终保留前 10 条。
 - `coverage_status` 包含 `coverage_gap` 的标准表示当前只是 proxy/resource-construction 样本，不能当作原生 benchmark 已完全覆盖。
