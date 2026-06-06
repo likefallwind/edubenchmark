@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RE_BENCHMARK_V1 今日进展与下一步</title>
+  <style>
+    :root {
+      --ink: #162033;
+      --muted: #637083;
+      --line: #d9e1ee;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --accent: #1d4ed8;
+      --good: #166534;
+      --warn: #92400e;
+      --bad: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Arial, sans-serif;
+      line-height: 1.62;
+    }
+    main { max-width: 1120px; margin: 0 auto; padding: 32px 22px 56px; }
+    header, section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: 30px; line-height: 1.2; }
+    h2 { margin: 0 0 14px; font-size: 22px; }
+    h3 { margin: 18px 0 8px; font-size: 17px; }
+    p { margin: 8px 0; }
+    .muted { color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .tile {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 86px;
+    }
+    .tile b { display: block; font-size: 25px; margin-bottom: 4px; }
+    .tile span { color: var(--muted); font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 10px 9px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; font-weight: 650; }
+    code { background: #edf2f8; padding: 2px 5px; border-radius: 4px; }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 650;
+      margin-right: 5px;
+    }
+    .ok { color: var(--good); background: #dcfce7; }
+    .warn { color: var(--warn); background: #ffedd5; }
+    .bad { color: var(--bad); background: #fee2e2; }
+    .info { color: var(--accent); background: #dbeafe; }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #eff6ff;
+      padding: 12px 14px;
+      border-radius: 6px;
+    }
+    ol, ul { padding-left: 22px; }
+    li { margin: 6px 0; }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      main { padding: 18px 12px 40px; }
+      header, section { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>RE_BENCHMARK_V1 今日进展与下一步</h1>
+    <p class="muted">日期：2026-05-20。范围：围绕 <code>re_benchmark_v1.md</code> 推进教育 benchmark 研究版，从数据核验、pilot set、MiniMax smoke test 到 prompt/评分口径修正。</p>
+    <p class="callout">一句话结论：今天已经把 RE_BENCHMARK_V1 从“研究计划”推进成了可展示、可复跑、可解释缺口的研究资产；但现在还不是排行榜，下一步应优先做小范围可信复跑和人工 rubric 复核。</p>
+  </header>
+
+  <section>
+    <h2>当前研究状态</h2>
+    <div class="grid">
+      <div class="tile"><b>25</b><span>benchmark/source manifest 条目</span></div>
+      <div class="tile"><b>139</b><span>pilot_items 模型测试项</span></div>
+      <div class="tile"><b>142</b><span>research_pilot 研究记录</span></div>
+      <div class="tile"><b>139</b><span>MiniMax 已有预测</span></div>
+    </div>
+    <p>研究资产已经落到 <code>data/re_benchmark_v1/</code> 和 <code>reports/re_benchmark_v1/</code>。其中 <code>source_manifest.jsonl</code> 记录数据可用性，<code>pilot_items.jsonl</code> 是模型输入候选，<code>pilot_prompts.jsonl</code> 是实际 prompt 导出。</p>
+  </section>
+
+  <section>
+    <h2>今天完成了什么</h2>
+    <table>
+      <thead>
+        <tr><th>模块</th><th>完成内容</th><th>产物</th><th>状态</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>数据核验</td>
+          <td>梳理 C1-C5 benchmark 是否本地可用、是否只有 metadata、是否需要外部下载或人工授权。</td>
+          <td><code>source_manifest.jsonl</code><br><code>stage1_data_status.md</code></td>
+          <td><span class="pill ok">已完成 v1 核验</span></td>
+        </tr>
+        <tr>
+          <td>Proxy 策略</td>
+          <td>明确 MMLU 只是 MMLU-Pro proxy，EduEval 只是 ASAP proxy，EdNet/KT 是 protocol，不伪装成普通 LLM prompt。</td>
+          <td><code>stage2_data_acquisition_and_proxy.md</code></td>
+          <td><span class="pill ok">边界已写清</span></td>
+        </tr>
+        <tr>
+          <td>Pilot Set</td>
+          <td>形成覆盖 C1-C5 的研究版 pilot，包括可自动评分项、开放题、protocol-only 项和 data-gap 记录。</td>
+          <td><code>pilot_items.jsonl</code><br><code>research_pilot_items.jsonl</code></td>
+          <td><span class="pill ok">可继续迭代</span></td>
+        </tr>
+        <tr>
+          <td>MiniMax Smoke Test</td>
+          <td>跑通 MiniMax-M2.7 full pilot，支持并发上限 2、空响应 retry、结果归档和 HTML 报告。</td>
+          <td><code>minimax_predictions.jsonl</code><br><code>minimax_full_pilot_report.html</code></td>
+          <td><span class="pill warn">smoke test，不是榜单</span></td>
+        </tr>
+        <tr>
+          <td>Prompt/评分修正</td>
+          <td>选择题从原始数据重建选项；protocol-only 不再自动评分；MCQ 分开记录 <code>score</code> 和 <code>format_ok</code>。</td>
+          <td><code>run_re_benchmark_v1.py</code><br><code>pilot_prompts.jsonl</code></td>
+          <td><span class="pill ok">核心问题已修</span></td>
+        </tr>
+        <tr>
+          <td>文件夹整理</td>
+          <td>把小实验归档到 experiments，补充今日 worklog、报告目录 README 和 contributor guide。</td>
+          <td><code>2026-05-20_worklog.md</code><br><code>AGENTS.md</code></td>
+          <td><span class="pill ok">方便继续科研</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>MiniMax 当前结论</h2>
+    <div class="grid">
+      <div class="tile"><b>29</b><span>自动评分题</span></div>
+      <div class="tile"><b>16/29</b><span>已有预测重算正确</span></div>
+      <div class="tile"><b>100</b><span>需要人工或 judge 复核</span></div>
+      <div class="tile"><b>10</b><span>protocol-only 项</span></div>
+    </div>
+    <p>这个结果只说明 MiniMax API 链路和研究 runner 已经打通。因为 full pilot 预测生成早于最后一版 MCQ prompt cleanup，所以它不能当作正式模型榜单。</p>
+    <p>今天的小范围 MCQ 复测显示：简单 prompt 最好，6 题中 4 题答案正确、4 题格式合规；过度压缩 <code>max_tokens</code> 或加入过强 system constraint 反而更差。因此下一步不要继续“哄模型”，而是清晰提问、如实记录格式和答案。</p>
+  </section>
+
+  <section>
+    <h2>整体研究里还缺什么</h2>
+    <table>
+      <thead>
+        <tr><th>类别</th><th>当前覆盖</th><th>主要缺口</th><th>影响</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>C1 学科认知与解题</td>
+          <td>AGIEval、MMLU proxy、MathVista metadata、代码 proxy。</td>
+          <td>MMLU-Pro、OlympiadBench full data、正式代码执行 runner。</td>
+          <td>可以做初步学科能力画像，但不能宣称完整高难推理覆盖。</td>
+        </tr>
+        <tr>
+          <td>C2 教学设计与辅导</td>
+          <td>EduBench、EduEval 教学设计、MathTutorBench proxy。</td>
+          <td>TutorBench 下载不完整，Pedagogy Benchmark gated。</td>
+          <td>教学能力结论最需要补数据和人工 rubric。</td>
+        </tr>
+        <tr>
+          <td>C3 学情建模与个性化</td>
+          <td>有个性化开放题和 KT protocol 记录。</td>
+          <td>EdNet KT1、ASSISTments、真实学习日志协议。</td>
+          <td>不能和文本 LLM prompt accuracy 合并。</td>
+        </tr>
+        <tr>
+          <td>C4 作答评价与反馈</td>
+          <td>EduEval Essay Scoring、MathTutorBench。</td>
+          <td>ASAP-AES/SAS 访问，作文/短答人工标尺校准。</td>
+          <td>需要 human rubric 或双模型 judge 才能变成可信评分。</td>
+        </tr>
+        <tr>
+          <td>C5 安全与伦理</td>
+          <td>EduGuard-Bench 可跑，Safe-Child-LLM 待补。</td>
+          <td>YouthSafe/YAIR、SproutBench、CASTLE 数据不可用或待发布。</td>
+          <td>可以做教育安全初筛，但未成年人安全覆盖仍不完整。</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>下一步应该做什么</h2>
+    <ol>
+      <li><strong>先重跑 29 道自动评分题。</strong> 使用当前 <code>pilot_prompts.jsonl</code> 的最新 MCQ prompt，只跑 C1 自动题，输出独立实验目录，报告 <code>score</code> 和 <code>format_ok</code>。</li>
+      <li><strong>做 10-20 道开放题人工复核。</strong> 从 C2/C4/C5 各抽样，手工记录成功/失败模式，先不要急着上 LLM judge。</li>
+      <li><strong>补优先级最高的数据。</strong> 先尝试 Pedagogy Benchmark、TutorBench、MMLU-Pro、OlympiadBench、EdNet KT1；拿不到就继续保留缺口说明。</li>
+      <li><strong>拆 runner 口径。</strong> 文本 MCQ、开放题 judge、代码执行、多模态、KT protocol 要分开报告，不做跨类型平均分。</li>
+      <li><strong>形成可对外讨论版本。</strong> 用研究报告 + HTML + worklog 说明价值、边界、MiniMax 初测、缺口和 v2 roadmap。</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>现在最重要的判断</h2>
+    <p class="callout">RE_BENCHMARK_V1 现在是一个成立的研究框架和初步实验包，但还不是稳定 benchmark 榜单。短期目标应该是“可信小样本 + 清楚边界 + 可复现流程”，不是追求全量跑完或给出单一总分。</p>
+    <p>建议下一轮从 <strong>29 道自动评分题重跑</strong> 开始，因为这能最快验证 prompt/评分修正是否真正稳定；之后再进入开放题人工 rubric。</p>
+  </section>
+</main>
+</body>
+</html>

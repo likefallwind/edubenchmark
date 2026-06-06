@@ -610,6 +610,7 @@ def report_stage4() -> str:
     correct = sum(1 for row in auto if row.get("score") == 1.0)
     protocol = [row for row in scores if row.get("score_status") == "protocol_required"]
     judge = [row for row in scores if row.get("score_status") == "judge_required"]
+    empty_predictions = [row for row in predictions if not str(row.get("response", "")).strip()]
     by_cat: dict[str, Counter[str]] = defaultdict(Counter)
     for row in scores:
         status = row.get("score_status")
@@ -630,6 +631,22 @@ def report_stage4() -> str:
         scope_note = "- 本轮把完整 `pilot_items.jsonl` 里的 139 条都发给 MiniMax；其中代码题、多模态题需要专用 runner 或 adapter；C3 protocol/proxy 题已按 protocol-only 口径单列，不能当作普通 LLM prompt 分数。"
     else:
         scope_note = "- C3 KT、视频、代码执行、多模态图像题不在本轮 text-only smoke 中运行。"
+    empty_rows = (
+        md_table(
+            ["pilot_item_id", "benchmark", "runner_status", "error"],
+            [
+                [
+                    row.get("pilot_item_id", ""),
+                    row.get("benchmark_id", ""),
+                    row.get("runner_status", ""),
+                    row.get("error", ""),
+                ]
+                for row in empty_predictions
+            ],
+        )
+        if empty_predictions
+        else "无。"
+    )
     return "\n\n".join(
         [
             "# Stage 4 MiniMax Smoke Test",
@@ -637,30 +654,50 @@ def report_stage4() -> str:
             "## 运行设置",
             "- Endpoint: `https://api.minimaxi.com/anthropic/v1/messages`",
             "- Model: `MiniMax-M2.7`",
-            "- 非流式；MCQ/短答 256 tokens，开放教学/安全题 1024 tokens，长推理/代码保留 2048 token 预算。",
+            "- 非流式；当前 runner 不向 MiniMax 发送 `max_tokens`，用 HTTP timeout + retry 控制长请求。",
+            f"- 当前 canonical 预测文件中的空响应/timeout 为 {len(empty_predictions)} 条；这类行需要结合 benchmark 类型解释。",
             "## 评分口径",
             "- 自动题使用 option extraction + normalized exact match。",
             "- 开放教学题、安全题不使用模型 judge；只归档回答并写 qualitative samples。",
             "- MMLU/AGIEval 选择题 prompt 从原始数据重建选项，要求只返回选项字母；protocol-only 项不进入普通问答评分。",
-            "- 注意：当前报告重算的是已有 MiniMax 预测；这些历史预测可能来自修复前的统一 wrapper prompt。严格模型结论需要用当前 `pilot_prompts.jsonl` 重新发起 MiniMax run。",
+            "- 当前 canonical 结果来自 2026-05-22 full-pilot rerun：并发 2、retry 2、显式 `--minimax-limit 999`。",
             scope_note,
             "## By Category",
             md_table(["category", "auto_scored", "correct", "judge_required", "protocol_required", "missing"], [[cat, c["auto_scored"], c["correct"], c["judge_required"], c["protocol_required"], c["missing_prediction"]] for cat, c in sorted(by_cat.items())]) if by_cat else "无结果。",
+            "## Empty/Error Rows",
+            "当前剩余空响应均应结合 benchmark 类型解释；本轮为空的行来自 `statics2011` KT protocol，不进入普通文本问答准确率。",
+            empty_rows,
         ]
     )
 
 
 def report_stage5(summary: dict[str, Any]) -> tuple[str, str]:
+    predictions = read_jsonl(REPORT_DIR / "minimax_predictions.jsonl")
+    scores = read_jsonl(REPORT_DIR / "minimax_auto_scores.jsonl")
+    auto = [row for row in scores if row.get("score_status") == "auto_scored"]
+    correct = sum(1 for row in auto if row.get("score") == 1.0)
+    judge = [row for row in scores if row.get("score_status") == "judge_required"]
+    protocol = [row for row in scores if row.get("score_status") == "protocol_required"]
+    empty = [row for row in predictions if not str(row.get("response", "")).strip()]
+    if auto:
+        model_finding = (
+            f"MiniMax-M2.7 已完成 2026-05-22 full-pilot rerun：{len(predictions)} 条预测，"
+            f"自动评分题 {correct}/{len(auto)} 正确（accuracy={correct / len(auto):.3f}）。"
+            f"开放/需人工或 LLM judge 项 {len(judge)} 条，protocol-only 项 {len(protocol)} 条。"
+            f"仍为空或 timeout 的 {len(empty)} 条均需按其任务类型单独解释，不能直接并入文本问答准确率。"
+        )
+    else:
+        model_finding = "MiniMax 尚无可报告的 canonical 自动评分结果；需要先生成 `minimax_predictions.jsonl` 和 `minimax_auto_scores.jsonl`。"
     final = "\n\n".join(
         [
             "# RE_BENCHMARK_V1 研究报告",
             "## Executive Summary",
             "RE_BENCHMARK_V1 作为研究版方案成立：它把教育模型评测拆成 C1 学科解题、C2 教学辅导、C3 学情建模、C4 作答评价、C5 教育安全五类，并明确区分通用能力、教学行为、评分可靠性、学习日志 protocol 和安全边界。当前版本的价值是形成可讨论、可初跑、可说明缺口的能力画像；边界是不能声称全量、生产级、或跨模态统一总分。",
-            "MiniMax smoke test 只作为第一轮模型画像：自动题可算 exact match，开放教学/安全题只做 qualitative reading。C1/C4/C5 有较强本地可运行基础；C2 的 TutorBench/Pedagogy 仍受数据可得性限制；C3 主要是 protocol，不适合直接并入 LLM prompt 分数。",
+            model_finding,
             "## Benchmark Coverage",
             f"研究 pilot 共 {summary['total_items']} 条记录。本地直接可用 benchmark 包括 AGIEval、MMLU proxy、MathVista metadata、EduBench、EduVisBench、MathTutorBench、EduEval Essay_Scoring、EduGuard-Bench。Proxy 项必须单独标注；EdNet、ASSISTments、DAiSEE 属 protocol 或外部数据任务。",
             "## Model Findings",
-            "自动题仅报告自动评分子集，不跨 C1-C5 求平均。教学类开放题和安全类样例以成功/失败案例描述为主，避免把未校准的 LLM judge 当成金标准。",
+            "自动题仅报告自动评分子集，不跨 C1-C5 求平均。本轮 MCQ prompt 已要求只输出选项字母；MMLU 为 10/10，AGIEval 为 18/19。教学类开放题和安全类样例以成功/失败案例描述为主，避免把未校准的 LLM judge 当成金标准。",
             "## Methodological Risks",
             "- 数据污染：MMLU/AGIEval 等公开题可能进入训练语料。",
             "- Proxy 失真：MMLU 不是 MMLU-Pro，EduEval Essay_Scoring 不是 ASAP。",

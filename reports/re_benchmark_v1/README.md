@@ -26,5 +26,10 @@ Small, non-canonical experiments belong under `experiments/`.
 Current experiment:
 
 - `experiments/mcq_prompt_fix/`: tests whether MCQ prompts now elicit option-letter responses.
+- `experiments/minimax_full_pilot_rerun_2026_05_20/`: full 139-item MiniMax rerun with the current pilot set and prompt logic.
+- `experiments/empty_response_retry_2026_05_22/`: reruns empty responses from the full pilot and provides a merged 139-row prediction file.
+- `experiments/no_maxtokens_empty_retry_2026_05_22/`: reruns remaining empty items after removing `max_tokens` from MiniMax benchmark test calls.
+- `experiments/no_maxtokens_final_check_2026_05_22/`: final check of the last two empty rows; only the protocol-only STATICS item remains empty.
+- `experiments/full_pilot_minimax_rerun_2026_05_22/`: full 139-item MiniMax-M2.7 rerun with no `max_tokens`, concurrency 2, and explicit `--minimax-limit 999`; auto-scored result is 28/29, with 3 remaining empty protocol-only STATICS rows.
 
 Keep experimental files out of the root report directory unless they are final research deliverables.

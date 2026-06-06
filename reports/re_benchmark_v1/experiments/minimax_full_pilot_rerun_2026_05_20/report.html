@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MiniMax Full Pilot Rerun - 2026-05-20</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #647086;
+      --line: #dbe2ef;
+      --panel: #ffffff;
+      --bg: #f5f7fb;
+      --accent: #1d4ed8;
+      --good: #166534;
+      --warn: #92400e;
+    }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Arial, sans-serif; line-height: 1.62; }
+    main { max-width: 1080px; margin: 0 auto; padding: 32px 22px 56px; }
+    header, section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 22px; margin-bottom: 16px; }
+    h1 { margin: 0 0 8px; font-size: 30px; line-height: 1.2; }
+    h2 { margin: 0 0 14px; font-size: 22px; }
+    .muted { color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .tile { border: 1px solid var(--line); background: #f8fafc; border-radius: 8px; padding: 14px; min-height: 82px; }
+    .tile b { display: block; font-size: 25px; margin-bottom: 4px; }
+    .tile span { color: var(--muted); font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 10px 9px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; font-weight: 650; }
+    code { background: #edf2f8; padding: 2px 5px; border-radius: 4px; }
+    .callout { border-left: 4px solid var(--accent); background: #eff6ff; padding: 12px 14px; border-radius: 6px; }
+    .warn { border-left-color: var(--warn); background: #fffbeb; }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      main { padding: 18px 12px 40px; }
+      header, section { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>MiniMax Full Pilot Rerun</h1>
+    <p class="muted">Run: 2026-05-20 20:13-20:38 Asia/Shanghai. Model: <code>MiniMax-M2.7</code>. Concurrency: 2. Retries: 2.</p>
+    <p class="callout">本轮使用当前最新 pilot set 和 prompt 逻辑完整重跑 139 条。它可以作为后续人工复核和研究分析的基线，但仍不是正式排行榜。</p>
+  </header>
+
+  <section>
+    <h2>Overall Results</h2>
+    <div class="grid">
+      <div class="tile"><b>139/139</b><span>预测完成</span></div>
+      <div class="tile"><b>15/29</b><span>自动题正确</span></div>
+      <div class="tile"><b>14/29</b><span>MCQ 格式合规</span></div>
+      <div class="tile"><b>17</b><span>空响应</span></div>
+    </div>
+    <p>Runner 层面没有 API error。139 条中 111 条一次完成，8 条第二次完成，20 条跑到第三次尝试；平均单题 latency 约 21.12 秒，最大 94.33 秒。</p>
+  </section>
+
+  <section>
+    <h2>Score Status</h2>
+    <table>
+      <thead><tr><th>Status</th><th>Count</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>auto_scored</code></td><td>29</td><td>C1 自动评分题，使用 option extraction / normalized exact match。</td></tr>
+        <tr><td><code>judge_required</code></td><td>100</td><td>开放教学、作文评分、安全、代码、多模态等，需要人工或 judge。</td></tr>
+        <tr><td><code>protocol_required</code></td><td>10</td><td>STATICS/KT 风格 protocol 项，不进入普通 LLM prompt accuracy。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Auto-Scored Breakdown</h2>
+    <table>
+      <thead><tr><th>Benchmark</th><th>Auto-scored</th><th>Correct</th><th>Accuracy</th><th>Format OK</th></tr></thead>
+      <tbody>
+        <tr><td>AGIEval</td><td>19</td><td>10</td><td>0.526</td><td>9</td></tr>
+        <tr><td>MMLU</td><td>10</td><td>5</td><td>0.500</td><td>5</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>29</strong></td><td><strong>15</strong></td><td><strong>0.517</strong></td><td><strong>14</strong></td></tr>
+      </tbody>
+    </table>
+    <p class="callout warn">注意：<code>score</code> 和 <code>format_ok</code> 是两个不同问题。模型有时能在解释里给出正确选项，但没有遵守“只返回选项字母”的格式要求。</p>
+  </section>
+
+  <section>
+    <h2>By Category</h2>
+    <table>
+      <thead><tr><th>Category</th><th>Auto-scored</th><th>Correct</th><th>Judge-required</th><th>Protocol</th></tr></thead>
+      <tbody>
+        <tr><td>C1 学科认知与问题求解</td><td>29</td><td>15</td><td>20</td><td>0</td></tr>
+        <tr><td>C2 教学设计与学习辅导</td><td>0</td><td>0</td><td>30</td><td>0</td></tr>
+        <tr><td>C3 学情建模与个性化</td><td>0</td><td>0</td><td>10</td><td>10</td></tr>
+        <tr><td>C4 作答评价与反馈</td><td>0</td><td>0</td><td>20</td><td>0</td></tr>
+        <tr><td>C5 教育安全与伦理合规</td><td>0</td><td>0</td><td>20</td><td>0</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Interpretation</h2>
+    <p>这次重跑验证了当前 pipeline 可以完整跑通：prompt 导出、MiniMax 调用、并发限制、retry、raw prediction 保存、自动评分和 protocol 分流都能工作。</p>
+    <p>最明确的量化信号仍只来自 C1 的 29 道自动评分题。C2/C4/C5 的教育开放任务、安全题、作文评分题还不能自动下结论，需要后续人工 rubric 或 judge 协议。</p>
+    <p>空响应仍是稳定性问题。17 条空响应已经在 retry 后仍为空，可以作为 endpoint/model 行为记录；是否继续单独重跑空响应，需要看研究目标是“稳定链路”还是“如实画像”。</p>
+  </section>
+
+  <section>
+    <h2>Files</h2>
+    <ul>
+      <li><code>prompts.jsonl</code>: 本轮实际 prompt。</li>
+      <li><code>predictions.jsonl</code>: MiniMax 原始输出。</li>
+      <li><code>run/scored_items.jsonl</code>: 逐题评分与状态。</li>
+      <li><code>run/run_summary.json</code>: 机器可读摘要。</li>
+      <li><code>run/run_report.html</code>: runner 自动生成报告。</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

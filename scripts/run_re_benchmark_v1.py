@@ -296,14 +296,12 @@ def export_prompts(items: list[dict[str, Any]], path: Path) -> None:
     write_jsonl(path, build_prompt_rows(items))
 
 
-def minimax_max_tokens(item: dict[str, Any]) -> int:
-    if item.get("runner_status") == "auto_exact_match_candidate":
-        return 256
-    if item.get("category_id") in {"C2", "C5"}:
-        return 1024
-    if item.get("dimension_id") in {"D05", "D08"}:
-        return 2048
-    return 1024
+def minimax_max_tokens(item: dict[str, Any]) -> int | None:
+    # MiniMax M2.7 may spend the whole requested output budget on thinking
+    # blocks before emitting a final text block. For benchmark testing, omit
+    # max_tokens entirely and let the endpoint stop at end_turn; wall-clock
+    # timeout still limits runaway calls.
+    return None
 
 
 def select_minimax_items(items: list[dict[str, Any]], limit: int, selection: str) -> list[dict[str, Any]]:
@@ -336,15 +334,16 @@ def select_minimax_items(items: list[dict[str, Any]], limit: int, selection: str
     return selected
 
 
-def call_minimax(prompt: str, model: str, max_tokens: int, timeout: int = 90, system_prompt: str | None = None) -> str:
+def call_minimax(prompt: str, model: str, max_tokens: int | None, timeout: int = 90, system_prompt: str | None = None) -> str:
     api_key = os.environ.get("MINIMAX_API_KEY")
     if not api_key:
         raise RuntimeError("MINIMAX_API_KEY is not set")
     payload = {
         "model": model,
-        "max_tokens": max_tokens,
         "messages": [{"role": "user", "content": prompt}],
     }
+    if max_tokens is not None:
+        payload["max_tokens"] = max_tokens
     if system_prompt:
         payload["system"] = system_prompt
     request = urllib.request.Request(

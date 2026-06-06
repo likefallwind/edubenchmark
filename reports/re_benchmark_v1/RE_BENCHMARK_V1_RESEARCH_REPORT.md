@@ -4,7 +4,7 @@
 
 RE_BENCHMARK_V1 作为研究版方案成立：它把教育模型评测拆成 C1 学科解题、C2 教学辅导、C3 学情建模、C4 作答评价、C5 教育安全五类，并明确区分通用能力、教学行为、评分可靠性、学习日志 protocol 和安全边界。当前版本的价值是形成可讨论、可初跑、可说明缺口的能力画像；边界是不能声称全量、生产级、或跨模态统一总分。
 
-MiniMax smoke test 只作为第一轮模型画像：自动题可算 exact match，开放教学/安全题只做 qualitative reading。C1/C4/C5 有较强本地可运行基础；C2 的 TutorBench/Pedagogy 仍受数据可得性限制；C3 主要是 protocol，不适合直接并入 LLM prompt 分数。
+MiniMax-M2.7 已完成 2026-05-22 full-pilot rerun：139 条预测，自动评分题 28/29 正确（accuracy=0.966）。开放/需人工或 LLM judge 项 100 条，protocol-only 项 10 条。仍为空或 timeout 的 3 条均需按其任务类型单独解释，不能直接并入文本问答准确率。
 
 ## Benchmark Coverage
 
@@ -12,7 +12,7 @@ MiniMax smoke test 只作为第一轮模型画像：自动题可算 exact match�
 
 ## Model Findings
 
-自动题仅报告自动评分子集，不跨 C1-C5 求平均。教学类开放题和安全类样例以成功/失败案例描述为主，避免把未校准的 LLM judge 当成金标准。
+自动题仅报告自动评分子集，不跨 C1-C5 求平均。本轮 MCQ prompt 已要求只输出选项字母；MMLU 为 10/10，AGIEval 为 18/19。教学类开放题和安全类样例以成功/失败案例描述为主，避免把未校准的 LLM judge 当成金标准。
 
 ## Methodological Risks
 
