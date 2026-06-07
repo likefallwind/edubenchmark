@@ -35,11 +35,28 @@ EN_ANSWER_TYPE = {
 }
 
 
+ANTLR_HINT = (
+    "OlympiadBench scoring uses the official sympy symbolic judge, which needs "
+    "`antlr4-python3-runtime==4.11` for sympy's parse_latex. That version conflicts "
+    "with hydra-core/omegaconf (they pin 4.9.*), so it is NOT installed globally. "
+    "Run scoring in an ephemeral uv env (no venv dir, no global change):\n"
+    "    uv run --no-project --with sympy --with 'antlr4-python3-runtime==4.11' \\\n"
+    "        python scripts/eval_benchmark.py --benchmark olympiadbench --score-only\n"
+    "Predictions/extractions are cached, so you can generate them on the main env "
+    "(optionally with --skip-extract) and re-run scoring via the uv command above. "
+    "scripts/run_eval_all.sh already does this for you."
+)
+
+
 def _load_judge():
-    spec = importlib.util.spec_from_file_location("olympiad_judge", JUDGE_FILE)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.AutoScoringJudge
+    """Load the official AutoScoringJudge; raise an actionable error if antlr is missing."""
+    try:
+        spec = importlib.util.spec_from_file_location("olympiad_judge", JUDGE_FILE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.AutoScoringJudge()  # parse_latex("\\pi") in __init__ needs antlr 4.11
+    except ImportError as exc:
+        raise RuntimeError(f"{exc}\n\n{ANTLR_HINT}") from exc
 
 
 def _single_answer_type_text(answer_type: str, is_chinese: bool) -> str:
@@ -109,7 +126,7 @@ class OlympiadBenchAdapter(BenchmarkAdapter):
     @property
     def judge(self):
         if self._judge is None:
-            self._judge = _load_judge()()
+            self._judge = _load_judge()
         return self._judge
 
     def load_items(self, limit: int | None = None, offset: int = 0) -> list[dict[str, Any]]:
@@ -203,8 +220,9 @@ class OlympiadBenchAdapter(BenchmarkAdapter):
             precision = float(meta.get("error")) if meta.get("error") not in (None, "") else 1e-8
         except (TypeError, ValueError):
             precision = 1e-8
+        judge = self.judge  # loud, actionable error if antlr 4.11 is unavailable
         try:
-            correct = bool(self.judge.judge(gold, extracted, precision))
+            correct = bool(judge.judge(gold, extracted, precision))
         except Exception:
             correct = False
         return {"correct": correct, "normalized": _last_boxed(extracted) or extracted, "gold": gold}

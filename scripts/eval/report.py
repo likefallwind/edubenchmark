@@ -103,6 +103,48 @@ def _render_item_card(
     return "".join(parts)
 
 
+def _failure_reason(row: dict[str, Any]) -> tuple[str, str]:
+    """Map an unscored row to (category, explanation) for the report."""
+    err = str(row.get("error") or "")
+    low = err.lower()
+    if "1026" in err or "sensitive" in low:
+        return "输入审核拒绝", "平台内容审核判定输入敏感，拒绝处理——非模型能力问题"
+    if "timed out" in low or "timeout" in low:
+        return "请求超时", "模型推理时间超过超时上限，未在限定时间内返回"
+    if row.get("empty_response"):
+        return "空响应", "模型返回了空内容"
+    if err:
+        return "其他错误", err[:160]
+    return "缺少预测", "该题没有生成预测（未运行或被跳过）"
+
+
+def _unscored_section_html(scored: list[dict[str, Any]]) -> str:
+    """Explain why scored < total: group no_prediction rows by failure reason."""
+    unscored = [r for r in scored if r.get("score_status") != "scored"]
+    if not unscored:
+        return ""
+    groups: dict[str, dict[str, Any]] = {}
+    for row in unscored:
+        cat, why = _failure_reason(row)
+        g = groups.setdefault(cat, {"why": why, "ids": []})
+        g["ids"].append(str(row.get("item_id")))
+    rows = "".join(
+        "<tr>"
+        f"<td><strong>{esc(cat)}</strong></td>"
+        f"<td>{esc(len(g['ids']))}</td>"
+        f"<td>{esc(g['why'])}</td>"
+        f"<td class='muted'>{esc(', '.join(g['ids']))}</td>"
+        "</tr>"
+        for cat, g in sorted(groups.items(), key=lambda kv: -len(kv[1]["ids"]))
+    )
+    return (
+        f"<section><h2>未判分原因（{len(unscored)} 题）</h2>"
+        "<p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p>"
+        "<table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead>"
+        f"<tbody>{rows}</tbody></table></section>"
+    )
+
+
 def _select_wrong(scored: list[dict[str, Any]], n: int) -> list[dict[str, Any]]:
     """Pick up to ``n`` incorrect rows, spread across tasks for variety."""
     wrong = [r for r in scored if r.get("score_status") == "scored" and not r.get("correct")]
@@ -278,6 +320,9 @@ def write_report(
         + "</section>"
     )
 
+    # --- unscored reasons (explains scored < total) ---
+    unscored_html = _unscored_section_html(scored)
+
     # --- wrong-answer gallery ---
     wrong_html = ""
     if scored and num_wrong > 0:
@@ -316,6 +361,7 @@ def write_report(
   {intro_html}
   {sample_html}
   {status_html}
+  {unscored_html}
   {wrong_html}
 </main>
 </body>

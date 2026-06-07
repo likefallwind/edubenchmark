@@ -185,6 +185,10 @@ def run_scoring(
         row: dict[str, Any] = {"item_id": item_id, "buckets": adapter.buckets(item)}
         if not pred or not str(pred.get("response") or "").strip():
             row["score_status"] = "no_prediction"
+            if pred and pred.get("error"):
+                row["error"] = pred["error"]
+            elif pred and pred.get("empty_response"):
+                row["empty_response"] = True
             scored.append(row)
             continue
         ext = extractions.get(item_id)
