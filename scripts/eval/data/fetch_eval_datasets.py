@@ -55,10 +55,13 @@ def _jsonable(value: Any) -> Any:
     return value
 
 
-def fetch_mmlu_pro() -> Path:
+def fetch_mmlu_pro(force: bool = False) -> Path:
     out_dir = ROOT / "sources" / "datasets" / "mmlu_pro"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "test.jsonl"
+    if out_path.exists() and out_path.stat().st_size > 0 and not force:
+        print(f"skip mmlu_pro: {out_path} already exists (use --force to re-download)")
+        return out_path
     print(f"reading {MMLU_PRO_URL}")
     df = pd.read_parquet(MMLU_PRO_URL)
     keep = ["question_id", "question", "options", "answer", "answer_index", "category", "src"]
@@ -70,12 +73,17 @@ def fetch_mmlu_pro() -> Path:
     return out_path
 
 
-def fetch_olympiadbench() -> Path:
+def fetch_olympiadbench(force: bool = False) -> Path:
     base = ROOT / "sources" / "datasets" / "olympiadbench"
     data_dir = base / "data"
     img_dir = base / "images"
     data_dir.mkdir(parents=True, exist_ok=True)
     img_dir.mkdir(parents=True, exist_ok=True)
+
+    have = {p.stem for p in data_dir.glob("OE_*.jsonl")}
+    if not force and all(cfg in have for cfg in OLYMPIAD_OE_CONFIGS):
+        print(f"skip olympiadbench: {len(have)} OE configs already in {data_dir} (use --force to re-download)")
+        return data_dir
 
     image_cols = [f"image_{i}" for i in range(1, 10)]
     scalar_cols = [
@@ -114,11 +122,12 @@ def fetch_olympiadbench() -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--benchmark", required=True, choices=["mmlu_pro", "olympiadbench", "all"])
+    parser.add_argument("--force", action="store_true", help="re-download even if output already exists")
     args = parser.parse_args()
     if args.benchmark in ("mmlu_pro", "all"):
-        fetch_mmlu_pro()
+        fetch_mmlu_pro(force=args.force)
     if args.benchmark in ("olympiadbench", "all"):
-        fetch_olympiadbench()
+        fetch_olympiadbench(force=args.force)
 
 
 if __name__ == "__main__":
