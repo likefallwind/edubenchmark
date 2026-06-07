@@ -7,11 +7,17 @@ Add a new benchmark by creating ``eval/benchmarks/<name>.py`` with a
 from __future__ import annotations
 
 from ..base import BenchmarkAdapter
+from .agieval import AGIEvalAdapter
 from .mathvista import MathVistaAdapter
+from .mmlu_pro import MMLUProAdapter
+from .olympiadbench import OlympiadBenchAdapter
 
 
 _REGISTRY: dict[str, type[BenchmarkAdapter]] = {
     MathVistaAdapter.name: MathVistaAdapter,
+    MMLUProAdapter.name: MMLUProAdapter,
+    AGIEvalAdapter.name: AGIEvalAdapter,
+    OlympiadBenchAdapter.name: OlympiadBenchAdapter,
 }
 
 

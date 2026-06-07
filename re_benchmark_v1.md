@@ -49,6 +49,8 @@
 
 C1 覆盖结论：这组最小主测集可以覆盖 D01-D08，并基本覆盖文科、理科、数学、科学、考试、视觉/视频和代码。`MMLU-Pro` 覆盖 14 个通用/专业领域，`OmniEduBench` 覆盖中文教育 61 个 subjects 中的知识与培养维度，二者合起来能比较好回答“是否覆盖全学科”。高度相似的部分主要是 `MMLU-Pro`、`OmniEduBench`、`AGIEval` 都含选择题，但三者分别测通用专业知识、中文教育知识、标准化/资格考试推理，不建议再加入 C-Eval、CMMLU、GaokaoBench、GSM8K、SVAMP、MATH 等相似基线，除非做消融或历史对比。
 
+> **接入状态（per-benchmark 评测框架 `scripts/eval/`）**：`MMLU-Pro`(D01)、`AGIEval`(D03)、`OlympiadBench`(D05) 与既有 `MathVista`(D06) 均已接入，可经 `python scripts/eval_benchmark.py --benchmark <name>` 运行。**`OmniEduBench` 当前无公开可得数据**（仓库标记 `manual_access_or_metadata_only`，HF/GitHub 均未找到发布），评测框架暂未接入，缺口登记见 `benchmark-todo.md`。C3 培养维度同样依赖 OmniEduBench，受同一数据缺口影响。
+
 ### C2 教学设计与学习辅导【教】
 
 

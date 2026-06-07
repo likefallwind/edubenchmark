@@ -43,3 +43,14 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: acquire Safe-Child-LLM; monitor YouthSafe/YAIR, SproutBench, and CASTLE releases; build localized red-team set.
   Related capabilities: D21, D24; S7.
   Source report: reports/re_benchmark_v1/RE_BENCHMARK_V1_RESEARCH_REPORT.md
+
+## Eval-framework adapter coverage - 2026-06-07
+
+- Gap: OmniEduBench (C1/C3, D02/D04/D15) 暂无公开可下载数据，无法接入 per-benchmark 评测框架。
+  Product reason: OmniEduBench 是 C1“是否覆盖全学科”和 C3 中文个性化培养维度的关键中文主测，缺它则中文教育知识/培养维度只能靠 EduBench 等代理。
+  Suggested data/eval: 关注 mind-lab-ecnu.github.io/OmniEduBench、arXiv 2510.26422、OpenReview IeJ9ABgf3k 的数据发布；数据可得后按 `scripts/eval/benchmarks/<name>.py` 范式新增 `omniedubench` adapter（客观题 EM、开放/论述题 LLM-judge）。
+  Related capabilities: D02, D04, D15; C1, C3.
+  Source: re_benchmark_v1.md C1/C3；data/exhaustive_2026-05-13/dataset_acquisition.jsonl (status=manual_access_or_metadata_only)
+
+- Note: 已接入 per-benchmark 框架的 C1 主测 = MathVista(D06)、MMLU-Pro(D01)、AGIEval(D03)、OlympiadBench(D05)。
+  OlympiadBench 判分依赖官方 sympy 符号判分器，需 `antlr4-python3-runtime==4.11`（与 hydra/omegaconf 的 4.9 pin 冲突，建议在独立 venv 运行）。

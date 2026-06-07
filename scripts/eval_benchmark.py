@@ -44,7 +44,7 @@ def main() -> None:
     parser.add_argument("--out-dir", type=Path, default=None)
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--sleep", type=float, default=0.2)
-    parser.add_argument("--timeout", type=int, default=120)
+    parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--retry-sleep", type=float, default=1.0)
     parser.add_argument("--max-tokens", type=int, default=None)
