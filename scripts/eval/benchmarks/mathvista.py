@@ -29,6 +29,18 @@ def _load_demo_prompt() -> str:
 
 class MathVistaAdapter(BenchmarkAdapter):
     name = "mathvista"
+    title = "MathVista：多模态数学推理基准"
+    homepage = "https://mathvista.github.io/"
+    description = (
+        "MathVista 评测视觉语境下的数学推理能力，题目把图表、几何图形、函数曲线、"
+        "自然/学术图片等视觉信息与数学问题结合，模型必须先看懂图、再完成推理与计算。"
+        "对应本仓库能力维度 D06（多模态教育理解）。\n\n"
+        "本次使用官方 testmini 划分（1000 题），题型分为选择题（multi_choice）与"
+        "自由作答（free_form），答案类型涵盖整数、浮点数、文本与列表，并按任务"
+        "（几何求解、图表问答、数学应用题、教材问答、视觉问答）分桶统计。\n\n"
+        "答案抽取与判分沿用官方 evaluation 流程：先走快速路径，再由 LLM 从模型自由"
+        "作答中抽取最终答案，最后做答案类型归一化与就近选项匹配。"
+    )
 
     def __init__(self) -> None:
         self._demo_prompt: str | None = None

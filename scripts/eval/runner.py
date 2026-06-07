@@ -262,5 +262,6 @@ def run(
     (out_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    write_report(out_dir / "report.html", summary)
+    items_by_id = {str(it["item_id"]): it for it in items}
+    write_report(out_dir / "report.html", summary, scored, items_by_id, adapter)
     return summary

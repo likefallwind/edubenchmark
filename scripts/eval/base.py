@@ -28,6 +28,13 @@ ROOT = Path(__file__).resolve().parents[2]
 class BenchmarkAdapter:
     name: str = ""
 
+    # Report metadata: shown in the HTML eval report's "benchmark intro" section.
+    # Override in subclasses. ``description`` may contain blank-line-separated
+    # paragraphs (rendered as <p>); keep it concise (2-4 short paragraphs).
+    title: str = ""
+    homepage: str = ""
+    description: str = ""
+
     def load_items(self, limit: int | None = None, offset: int = 0) -> list[dict[str, Any]]:
         raise NotImplementedError
 

@@ -1,13 +1,18 @@
 ---
 name: edubenchassistant
-description: Use when a user describes an AI-education application, product idea, classroom scenario, tutoring workflow, grading tool, learning analytics task, or education safety case and needs benchmark, metric, atomic capability, dataset, or evaluation guidance
+description: Use when a user describes an AI-education application, classroom/tutoring/grading scenario, or asks to run an evaluation on a benchmark (跑评测/评测某个 benchmark), evaluate model results, or produce an evaluation/assessment report (评估报告) — covering benchmark, metric, atomic-capability, dataset guidance AND running the eval framework + reporting its results
 ---
 
 # EduBench Assistant
 
 ## Overview
 
-Use the local EduBenchmark evidence base to turn an AI-education product scenario into an evaluation and product-readiness plan. The answer must identify relevant atomic capabilities, prior benchmarks, current public model evidence, native metrics, dataset availability, missing measurement scales, product implications, and extra risks, then present the result as an HTML report and record benchmark gaps.
+This skill operates in two modes. Pick the one the request needs:
+
+- **Advisory mode** — the user describes an AI-education product/scenario and wants an evaluation & product-readiness plan. Use the local evidence base to map to atomic capabilities, prior benchmarks, public model evidence, native metrics, dataset availability, gaps, and product implications. Deliver an HTML report and record benchmark gaps. (Sections: *Required Sources* through *Quick Benchmark Hints*.)
+- **Evaluation mode** — the user wants to actually run a benchmark through the framework against a model and/or assess the results. Launch the run as a detached background job and produce a rich HTML evaluation report. (Sections: *Running an evaluation* and *Building the evaluation report*.)
+
+A request can use both: run the eval, then interpret the results with the advisory evidence base.
 
 ## Required Sources
 
@@ -113,6 +118,49 @@ Only record genuine missing benchmarks or measurement scales. Do not duplicate a
 8. Append missing benchmark/data needs to `benchmark-todo.md`.
 9. Summarize the output path, main coverage judgment, product-readiness judgment, and any new benchmark-todo entries to the user.
 
+## Running an evaluation (framework mode)
+
+The per-benchmark eval harness lives in `scripts/eval/`; the entry point is `scripts/eval_benchmark.py --benchmark <name>`. Run available benchmarks with `python scripts/eval_benchmark.py --benchmark x --limit 1 --dry-run` to list names, or read `scripts/eval/benchmarks/__init__.py`. Pipeline: load items → call model (text [+ images]) → LLM answer extraction → score → write `reports/eval/<benchmark>/<date>/`.
+
+Before launching, confirm with the user: **which benchmark, which model, and the sample size** (`--limit 0` = full set). Vision benchmarks (e.g. mathvista) need a vision model — use `--model MiniMax-M3`, not the text-only `MiniMax-M2.7`. Requires `MINIMAX_API_KEY` in the environment. MathVista also needs images unzipped under `sources/datasets/mathvista/data/` (see CLAUDE.md).
+
+**Default to a detached background run** — full benchmarks take a long time, so the job must survive the terminal closing. Use `nohup` + `&` and record the PID and log path:
+
+```bash
+DATE=$(date +%F)
+mkdir -p reports/eval/<name>
+MINIMAX_API_KEY=$MINIMAX_API_KEY nohup python scripts/eval_benchmark.py \
+  --benchmark <name> --limit 0 --model MiniMax-M3 --concurrency 4 \
+  > reports/eval/<name>/run_${DATE}.log 2>&1 &
+echo $! > reports/eval/<name>/run.pid
+```
+
+- The run is **resumable/incremental**: `predictions.jsonl` and `extractions.jsonl` are keyed by `item_id`; rerunning the same command retries only failed/empty/missing items. A dropped connection or a closed terminal never loses completed work.
+- Monitor with `tail -n 30 reports/eval/<name>/run_*.log` (do not block on `tail -f`); check liveness with `kill -0 $(cat reports/eval/<name>/run.pid)`. Tell the user the log path and PID so they can check progress themselves.
+- Keep concurrency modest (2–4). For a quick smoke test first, use `--limit 30` foreground before committing to the full run.
+- When the run finishes, the framework writes `summary.json`, `scored.jsonl`, and a rich `report.html` automatically.
+
+## Building the evaluation report
+
+Each run auto-generates `reports/eval/<benchmark>/<date>/report.html` via `scripts/eval/report.py`. To rebuild/enrich a finished run **without re-calling the API** (e.g. an old run, or to show more wrong examples), use the standalone regenerator:
+
+```bash
+python scripts/build_eval_report.py --benchmark <name> \
+  --run-dir reports/eval/<name>/<date> --num-samples 2 --num-wrong 8
+```
+
+The report is self-contained (inline CSS, base64-inlined images for displayed questions) and includes:
+
+- **KPI header**: overall accuracy, total items, scored count, correct count.
+- **基准介绍**: a short intro to the benchmark and its homepage, taken from the adapter's `title`/`homepage`/`description`.
+- **题目示例**: one or two real questions rendered with their image(s), choices, and reference answer.
+- **作答情况**: status breakdown plus per-bucket accuracy tables with bars (e.g. by question_type / answer_type / task).
+- **错题分析**: several incorrect items spread across task types, each showing the question, image, model's extracted vs. gold answer, and the full model reasoning (collapsible).
+
+After generating the HTML, **add a short narrative interpretation** for the user (in chat or appended): which D01–D24 capabilities the accuracy profile speaks to, the failure patterns visible in the wrong examples (not just the number), and any product-readiness or safety implication — reuse the advisory evidence base for this. Never reduce the result to a single accuracy number; report the capability/bucket profile.
+
+When you add a new benchmark adapter, set its `title`, `homepage`, and `description` class attributes so the report's intro section renders — otherwise it falls back to the bare benchmark name.
+
 ## Quick Benchmark Hints
 
 | Scenario | Primary capabilities | Benchmarks to consider |
@@ -137,3 +185,7 @@ Only record genuine missing benchmarks or measurement scales. Do not duplicate a
 - Do not generate only prose when the user asks for application guidance. The deliverable is an HTML evaluation report.
 - Do not stop at an evaluation plan. The user also needs product-side implications: direct-use areas, guarded-use areas, engineering/product work, and new measurement needs.
 - Do not forget `benchmark-todo.md`. Future benchmark requirements should be preserved outside the one-off HTML report.
+- Do not run a full evaluation in the foreground. Long runs must be detached (`nohup ... &`) with the log path and PID surfaced, so a closed terminal does not kill the job.
+- Do not use a text-only model for a multimodal benchmark. MathVista needs `MiniMax-M3`; `MiniMax-M2.7` will fail on image items.
+- Do not block the session on `tail -f` to watch a background run. Poll the log with a bounded `tail -n`, and let the user check progress via the path/PID you reported.
+- Do not deliver an eval report as just an accuracy number. Include the bucket profile and a narrative reading of the wrong examples.
