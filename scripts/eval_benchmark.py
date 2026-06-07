@@ -36,7 +36,11 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=30, help="number of items (default 30; 0/negative = all)")
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--extractor-model", default=None, help="model for answer extraction (default: --model)")
+    parser.add_argument(
+        "--extractor-model",
+        default="MiniMax-M2.7",
+        help="model for answer extraction; text-only step so a cheaper text model is fine (default: MiniMax-M2.7)",
+    )
     parser.add_argument("--out-dir", type=Path, default=None)
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--sleep", type=float, default=0.2)
@@ -52,7 +56,7 @@ def main() -> None:
     adapter = get_adapter(args.benchmark)
     limit = None if args.limit is not None and args.limit <= 0 else args.limit
     out_dir = args.out_dir or (ROOT / "reports" / "eval" / args.benchmark / time.strftime("%Y-%m-%d"))
-    extractor_model = args.extractor_model or args.model
+    extractor_model = args.extractor_model
 
     client = None if args.dry_run else MiniMaxClient(model=args.model, timeout=args.timeout)
 
