@@ -10,11 +10,11 @@ to tune how many samples / wrong examples are shown.
 Examples:
     # Rebuild in place (overwrites report.html in the run dir).
     python scripts/build_eval_report.py \\
-        --benchmark mathvista --run-dir reports/eval/mathvista/2026-06-06
+        --benchmark mathvista --run-dir reports/eval/mathvista
 
     # Show more wrong examples, write to a separate file.
     python scripts/build_eval_report.py \\
-        --benchmark mathvista --run-dir reports/eval/mathvista/2026-06-06 \\
+        --benchmark mathvista --run-dir reports/eval/mathvista \\
         --num-wrong 10 --out report_full.html
 """
 
@@ -33,7 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--benchmark", required=True, help=f"one of: {', '.join(available_benchmarks())}")
-    parser.add_argument("--run-dir", type=Path, required=True, help="dated run dir, e.g. reports/eval/mathvista/2026-06-06")
+    parser.add_argument("--run-dir", type=Path, required=True, help="run dir, e.g. reports/eval/mathvista")
     parser.add_argument("--out", default="report.html", help="output filename (relative to run-dir) or absolute path")
     parser.add_argument("--num-samples", type=int, default=2, help="example questions to show (default 2)")
     parser.add_argument("--num-wrong", type=int, default=6, help="wrong-answer examples to show (default 6)")

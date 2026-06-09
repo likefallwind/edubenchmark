@@ -2,7 +2,7 @@
 """Evaluate one benchmark against an API model (MiniMax to start).
 
 Pipeline: load items -> call model (text [+ images]) -> LLM answer extraction
--> score -> write reports under reports/eval/<benchmark>/<date>/.
+-> score -> write reports under reports/eval/<benchmark>/.
 
 Examples:
     # Dry run: print the constructed messages for 3 items, no API calls.
@@ -19,7 +19,6 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import time
 from pathlib import Path
 
 from eval.benchmarks import available_benchmarks, get_adapter
@@ -41,7 +40,7 @@ def main() -> None:
         default="MiniMax-M2.7",
         help="model for answer extraction; text-only step so a cheaper text model is fine (default: MiniMax-M2.7)",
     )
-    parser.add_argument("--out-dir", type=Path, default=None)
+    parser.add_argument("--out-dir", type=Path, default=None, help="output directory (default: reports/eval/<benchmark>)")
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--sleep", type=float, default=0.2)
     parser.add_argument("--timeout", type=int, default=300)
@@ -55,7 +54,7 @@ def main() -> None:
 
     adapter = get_adapter(args.benchmark)
     limit = None if args.limit is not None and args.limit <= 0 else args.limit
-    out_dir = args.out_dir or (ROOT / "reports" / "eval" / args.benchmark / time.strftime("%Y-%m-%d"))
+    out_dir = args.out_dir or (ROOT / "reports" / "eval" / args.benchmark)
     extractor_model = args.extractor_model
 
     client = None if args.dry_run else MiniMaxClient(model=args.model, timeout=args.timeout)

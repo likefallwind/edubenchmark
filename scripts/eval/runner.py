@@ -151,7 +151,12 @@ def run_extractions(
     out_path: Path,
     extractor_model: str,
 ) -> dict[str, dict[str, Any]]:
-    existing = _index_by_item(read_jsonl(out_path))
+    # Treat errored / empty extractions as not-done so reruns retry only those.
+    existing = {
+        k: v
+        for k, v in _index_by_item(read_jsonl(out_path)).items()
+        if str(v.get("extracted") or "").strip() and not v.get("error")
+    }
     rows = list(existing.values())
     total = len(items)
     for n, item in enumerate(items, 1):
