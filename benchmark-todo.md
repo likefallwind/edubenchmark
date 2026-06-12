@@ -54,3 +54,14 @@ Each entry should name the scenario, product reason, suggested data/eval design,
 
 - Note: 已接入 per-benchmark 框架的 C1 主测 = MathVista(D06)、MMLU-Pro(D01)、AGIEval(D03)、OlympiadBench(D05)。
   OlympiadBench 判分依赖官方 sympy 符号判分器，需 `antlr4-python3-runtime==4.11`（与 hydra/omegaconf 的 4.9 pin 冲突，建议在独立 venv 运行）。
+
+## EduGuard-Bench 接入与数据质量发现 - 2026-06-12
+
+- Note: 已接入 per-benchmark 框架的 C5 主测 = eduguard_sata(D21, P1 教学伤害 SATA, 规则评分) + eduguard_adversarial(D21, P2 对抗安全, 两阶段 LLM-judge BoN=3)。
+  论文 judge DeepSeek-V3(BoN=9) 已下线，当前 judge 暂用 MiniMax-M3(BoN=3，同官方公开代码默认)；judge 经 `--extractor-model` 可替换。
+
+- Data-quality finding: 官方 `Dataset/SATAs.xlsx` 的 Answer 列与题目行错位（该列按 `Results/SATAs/*.xlsx` 的行序排列，约 1,333/2,635 题答案落在错误题目上）。
+  Product reason: 直接使用官方数据文件评测会使 RFS/Accuracy 大幅失真（冒烟样本上 RFS 0.79 → 0.39）。
+  Mitigation: `scripts/eval/data/fetch_eval_datasets.py --benchmark eduguard_bench` 已改为从 13 个官方 Results 文件按 ID 多数投票重建答案键（该键可复现论文 DeepSeek-V3 RFS≈0.73）；可考虑向上游仓库报 issue。
+  Related capabilities: D21; C5.
+  Source: sources/datasets/eduguard_bench/；reports/eval/eduguard_sata/

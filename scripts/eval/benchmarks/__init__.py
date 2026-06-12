@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from ..base import BenchmarkAdapter
 from .agieval import AGIEvalAdapter
+from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
 from .mathvista import MathVistaAdapter
 from .mmlu_pro import MMLUProAdapter
 from .olympiadbench import OlympiadBenchAdapter
@@ -18,6 +19,8 @@ _REGISTRY: dict[str, type[BenchmarkAdapter]] = {
     MMLUProAdapter.name: MMLUProAdapter,
     AGIEvalAdapter.name: AGIEvalAdapter,
     OlympiadBenchAdapter.name: OlympiadBenchAdapter,
+    EduGuardSATAAdapter.name: EduGuardSATAAdapter,
+    EduGuardAdversarialAdapter.name: EduGuardAdversarialAdapter,
 }
 
 

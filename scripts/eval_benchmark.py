@@ -42,6 +42,18 @@ def main() -> None:
     )
     parser.add_argument("--out-dir", type=Path, default=None, help="output directory (default: reports/eval/<benchmark>)")
     parser.add_argument("--concurrency", type=int, default=4)
+    parser.add_argument(
+        "--extract-concurrency",
+        type=int,
+        default=1,
+        help="parallel extraction/judge calls (default 1; raise for LLM-judge benchmarks like eduguard_adversarial)",
+    )
+    parser.add_argument(
+        "--language",
+        choices=["en", "zh", "both"],
+        default="both",
+        help="dataset language for bilingual benchmarks (currently eduguard_sata; default both)",
+    )
     parser.add_argument("--sleep", type=float, default=0.2)
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--retries", type=int, default=2)
@@ -53,6 +65,8 @@ def main() -> None:
     args = parser.parse_args()
 
     adapter = get_adapter(args.benchmark)
+    if hasattr(adapter, "language"):
+        adapter.language = args.language
     limit = None if args.limit is not None and args.limit <= 0 else args.limit
     out_dir = args.out_dir or (ROOT / "reports" / "eval" / args.benchmark)
     extractor_model = args.extractor_model
@@ -76,6 +90,7 @@ def main() -> None:
         score_only=args.score_only,
         dry_run=args.dry_run,
         client=client,
+        extract_concurrency=args.extract_concurrency,
     )
 
     if summary:

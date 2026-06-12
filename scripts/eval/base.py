@@ -56,3 +56,11 @@ class BenchmarkAdapter:
     def buckets(self, item: dict[str, Any]) -> dict[str, str]:
         """Grouping keys for the report (e.g. question_type, answer_type)."""
         return {}
+
+    def extra_summary(self, scored: list[dict[str, Any]]) -> dict[str, Any]:
+        """Benchmark-specific metrics beyond accuracy (e.g. RFS, ASR).
+
+        Receives the scored rows; the result is written into ``summary.json``
+        under ``extra_metrics``. Default: none.
+        """
+        return {}

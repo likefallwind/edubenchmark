@@ -143,6 +143,21 @@ def run_predictions(
     return _index_by_item(rows)
 
 
+def _extract_one(
+    adapter: BenchmarkAdapter,
+    item: dict[str, Any],
+    response: str,
+    client: MiniMaxClient,
+    extractor_model: str,
+) -> dict[str, Any]:
+    item_id = str(item["item_id"])
+    try:
+        extracted = adapter.extract_answer(item, response, client, extractor_model)
+        return {"item_id": item_id, "extracted": extracted, "extractor_model": extractor_model}
+    except Exception as exc:  # noqa: BLE001
+        return {"item_id": item_id, "extracted": "", "error": str(exc)}
+
+
 def run_extractions(
     adapter: BenchmarkAdapter,
     items: list[dict[str, Any]],
@@ -150,6 +165,7 @@ def run_extractions(
     client: MiniMaxClient,
     out_path: Path,
     extractor_model: str,
+    concurrency: int = 1,
 ) -> dict[str, dict[str, Any]]:
     # Treat errored / empty extractions as not-done so reruns retry only those.
     existing = {
@@ -158,22 +174,44 @@ def run_extractions(
         if str(v.get("extracted") or "").strip() and not v.get("error")
     }
     rows = list(existing.values())
-    total = len(items)
-    for n, item in enumerate(items, 1):
+    pending: list[tuple[dict[str, Any], str]] = []
+    for item in items:
         item_id = str(item["item_id"])
         if item_id in existing:
             continue
         pred = predictions.get(item_id)
         if not pred or not str(pred.get("response") or "").strip():
             continue
-        try:
-            extracted = adapter.extract_answer(item, str(pred["response"]), client, extractor_model)
-            row = {"item_id": item_id, "extracted": extracted, "extractor_model": extractor_model}
-        except Exception as exc:  # noqa: BLE001
-            row = {"item_id": item_id, "extracted": "", "error": str(exc)}
-        rows.append(row)
-        write_jsonl(out_path, rows)
-        print(f"extract {n}/{total} item={item_id} -> {str(row.get('extracted'))[:40]!r}")
+        pending.append((item, str(pred["response"])))
+    total = len(pending)
+    print(f"extractions: {len(existing)} cached, {total} to run")
+
+    concurrency = max(1, concurrency)
+    if concurrency == 1:
+        for n, (item, response) in enumerate(pending, 1):
+            row = _extract_one(adapter, item, response, client, extractor_model)
+            rows.append(row)
+            write_jsonl(out_path, rows)
+            print(f"extract {n}/{total} item={row['item_id']} -> {str(row.get('extracted'))[:40]!r}")
+    else:
+        completed = 0
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            in_flight: dict[Any, str] = {}
+            idx = 0
+            while idx < len(pending) or in_flight:
+                while idx < len(pending) and len(in_flight) < concurrency:
+                    item, response = pending[idx]
+                    future = executor.submit(_extract_one, adapter, item, response, client, extractor_model)
+                    in_flight[future] = str(item["item_id"])
+                    idx += 1
+                done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
+                for future in done:
+                    in_flight.pop(future)
+                    row = future.result()
+                    rows.append(row)
+                    write_jsonl(out_path, rows)
+                    completed += 1
+                    print(f"extract {completed}/{total} item={row['item_id']} -> {str(row.get('extracted'))[:40]!r}")
     return _index_by_item(rows)
 
 
@@ -212,6 +250,9 @@ def run_scoring(
             gold=result["gold"],
             response=pred.get("response"),
         )
+        # Carry adapter-specific score fields (e.g. rfs, outcome) into the row.
+        reserved = {"correct", "normalized", "gold"} | set(row)
+        row.update({k: v for k, v in result.items() if k not in reserved})
         scored.append(row)
     return scored
 
@@ -233,6 +274,7 @@ def run(
     score_only: bool,
     dry_run: bool,
     client: MiniMaxClient | None = None,
+    extract_concurrency: int = 1,
 ) -> dict[str, Any]:
     items = adapter.load_items(limit=limit, offset=offset)
     print(f"loaded {len(items)} items for benchmark={adapter.name}")
@@ -260,7 +302,8 @@ def run(
         extractions: dict[str, dict[str, Any]] = {}
     else:
         extractions = run_extractions(
-            adapter, items, predictions, client, extractions_path, extractor_model
+            adapter, items, predictions, client, extractions_path, extractor_model,
+            concurrency=extract_concurrency,
         )
 
     scored = run_scoring(adapter, items, predictions, extractions)
@@ -268,6 +311,10 @@ def run(
 
     bucket_keys = list(adapter.buckets(items[0]).keys()) if items else []
     summary = build_summary(adapter.name, model, scored, bucket_keys)
+    summary["extractor_model"] = extractor_model
+    extra_metrics = adapter.extra_summary(scored)
+    if extra_metrics:
+        summary["extra_metrics"] = extra_metrics
     (out_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

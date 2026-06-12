@@ -9,10 +9,13 @@ Outputs (under ``sources/datasets/``, gitignored):
   - MMLU-Pro:      ``mmlu_pro/test.jsonl``                  (TIGER-Lab/MMLU-Pro)
   - OlympiadBench: ``olympiadbench/data/<OE_config>.jsonl`` + ``olympiadbench/images/*``
                    (Hothan/OlympiadBench, OE open-ended configs only; TP proofs skipped)
+  - EduGuardBench: ``eduguard_bench/data/{satas,adversarial}.jsonl``
+                   (converted from the local repo clone's Dataset/*.xlsx; no download)
 
 Usage:
     python scripts/eval/data/fetch_eval_datasets.py --benchmark mmlu_pro
     python scripts/eval/data/fetch_eval_datasets.py --benchmark olympiadbench
+    python scripts/eval/data/fetch_eval_datasets.py --benchmark eduguard_bench
     python scripts/eval/data/fetch_eval_datasets.py --benchmark all
 """
 
@@ -119,15 +122,96 @@ def fetch_olympiadbench(force: bool = False) -> Path:
     return data_dir
 
 
+def _eduguard_sata_answer_key(base: Path) -> dict[str, str]:
+    """Rebuild the SATA gold-answer key from the official Results files.
+
+    ``Dataset/SATAs.xlsx`` ships with its Answer column misaligned: it follows
+    the row order of the ``Results/SATAs/*.xlsx`` files while the ID/question
+    rows are ordered differently, so ~half the answers sit on the wrong
+    question. The per-model result files carry a self-consistent ID->Answer
+    key (it reproduces the paper's metrics), so take a majority vote across
+    them per ID.
+    """
+    from collections import Counter, defaultdict
+
+    votes: dict[str, Counter] = defaultdict(Counter)
+    for path in sorted((base / "Results" / "SATAs").glob("*.xlsx")):
+        if path.name.startswith("~$"):
+            continue
+        df = pd.read_excel(path)
+        if "ID" not in df.columns or "Answer" not in df.columns:
+            continue
+        for qid, ans in zip(df["ID"].astype(str), df["Answer"]):
+            normalized = ",".join(sorted(a.strip().upper() for a in str(ans).split(",") if a.strip()))
+            if normalized:
+                votes[qid.strip()][normalized] += 1
+    return {qid: counter.most_common(1)[0][0] for qid, counter in votes.items()}
+
+
+def fetch_eduguard_bench(force: bool = False) -> Path:
+    """Convert the local EduGuardBench repo clone's xlsx datasets to JSONL.
+
+    No network access: expects ``sources/datasets/eduguard_bench/`` from
+    ``git clone https://github.com/YL1N/EduGuardBench``.
+    """
+    base = ROOT / "sources" / "datasets" / "eduguard_bench"
+    out_dir = base / "data"
+    satas_out = out_dir / "satas.jsonl"
+    adv_out = out_dir / "adversarial.jsonl"
+    if not force and satas_out.exists() and adv_out.exists():
+        print(f"skip eduguard_bench: outputs already in {out_dir} (use --force to rebuild)")
+        return out_dir
+
+    satas_xlsx = base / "Dataset" / "SATAs.xlsx"
+    adv_xlsx = base / "Dataset" / "adversarial_prompts.xlsx"
+    for path in (satas_xlsx, adv_xlsx):
+        if not path.exists():
+            raise SystemExit(f"missing {path}; clone https://github.com/YL1N/EduGuardBench into sources/datasets/eduguard_bench first")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    answer_key = _eduguard_sata_answer_key(base)
+    df = pd.read_excel(satas_xlsx)
+    fixed = 0
+    with satas_out.open("w", encoding="utf-8") as fh:
+        for _, row in df.iterrows():
+            qid = str(row["ID"]).strip()
+            dataset_answer = str(row["Answer"]).strip()
+            answer = answer_key.get(qid, dataset_answer)
+            if ",".join(sorted(a.strip().upper() for a in dataset_answer.split(",") if a.strip())) != answer:
+                fixed += 1
+            rec = {
+                "id": qid,
+                "question_zh": str(row["Question_Chinese"]).strip(),
+                "question_en": str(row["Question_English"]).strip(),
+                "answer": answer,
+            }
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    print(f"wrote {len(df)} rows -> {satas_out} (answer key from Results majority vote; {fixed} misaligned dataset answers corrected)")
+
+    df = pd.read_excel(adv_xlsx)
+    with adv_out.open("w", encoding="utf-8") as fh:
+        for _, row in df.iterrows():
+            rec = {
+                "id": str(row["ID"]).strip(),
+                "teacher_prompt": str(row["Teacher_Prompt_EN"]).strip(),
+                "student_statement": str(row["Student_Statement_EN"]).strip(),
+            }
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    print(f"wrote {len(df)} rows -> {adv_out}")
+    return out_dir
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--benchmark", required=True, choices=["mmlu_pro", "olympiadbench", "all"])
+    parser.add_argument("--benchmark", required=True, choices=["mmlu_pro", "olympiadbench", "eduguard_bench", "all"])
     parser.add_argument("--force", action="store_true", help="re-download even if output already exists")
     args = parser.parse_args()
     if args.benchmark in ("mmlu_pro", "all"):
         fetch_mmlu_pro(force=args.force)
     if args.benchmark in ("olympiadbench", "all"):
         fetch_olympiadbench(force=args.force)
+    if args.benchmark in ("eduguard_bench", "all"):
+        fetch_eduguard_bench(force=args.force)
 
 
 if __name__ == "__main__":

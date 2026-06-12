@@ -308,6 +308,16 @@ def write_report(
         if cards:
             sample_html = f"<section><h2>题目示例</h2>{''.join(cards)}</section>"
 
+    # --- benchmark-specific extra metrics (e.g. RFS, ASR) ---
+    extra_html = ""
+    if summary.get("extra_metrics"):
+        extra_json = json.dumps(summary["extra_metrics"], ensure_ascii=False, indent=2)
+        extra_html = (
+            "<section><h2>专项指标</h2>"
+            "<p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p>"
+            f"<pre class='resp'>{esc(extra_json)}</pre></section>"
+        )
+
     # --- status table ---
     status_rows = "".join(
         f"<tr><td>{esc(k)}</td><td>{esc(v)}</td></tr>" for k, v in sorted(summary["status_counts"].items())
@@ -360,6 +370,7 @@ def write_report(
   </header>
   {intro_html}
   {sample_html}
+  {extra_html}
   {status_html}
   {unscored_html}
   {wrong_html}

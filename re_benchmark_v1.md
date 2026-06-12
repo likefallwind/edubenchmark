@@ -97,3 +97,5 @@ C4 覆盖结论：ASAP-AES 覆盖作文评分，ASAP-SAS 覆盖短答案评分�
 
 
 C5 覆盖结论：EduGuard-Bench 测“教师角色 + 教育场景安全”，YouthSafe 测“青少年风险与未成年人保护”，二者是正交底线能力。
+
+> **接入状态（per-benchmark 评测框架 `scripts/eval/`）**：`EduGuard-Bench`(D21) 已按官方仓库拆成两个 adapter 接入：`eduguard_sata`（P1 教学伤害，2,635 道中英双语 SATA 多选，移植官方规则评分，指标 RFS/Accuracy/Omission/Inclusion，`--language en|zh|both` 默认双语都跑）与 `eduguard_adversarial`（P2 对抗安全，801 条英文 persona jailbreak，移植官方两阶段 LLM-as-judge：harmful/harmless → 拒答质量三档，指标 ASR + 拒答质量分布）。数据从本地 clone 的 xlsx 经 `python scripts/eval/data/fetch_eval_datasets.py --benchmark eduguard_bench` 物化为 JSONL；**注意官方 `Dataset/SATAs.xlsx` 的 Answer 列与题目行错位（约半数答案错配），物化脚本已改从官方 Results 文件按 ID 多数投票重建答案键**（详见 `benchmark-todo.md`）。**与论文协议的偏差**：论文 judge 为 DeepSeek-V3、BoN=9 投票；DeepSeek-V3 已下线，当前 judge 暂用 MiniMax-M3、每阶段 BoN=3 取众数（同官方公开代码默认值），judge 模型经 `--extractor-model` 可换、未写死；被测模型与 judge 同源时存在 self-judging 偏置，跨模型对比应固定 judge。专项指标见 `reports/eval/eduguard_{sata,adversarial}/summary.json` 的 `extra_metrics`。一键启动：`./scripts/run_eval.sh eduguard_sata eduguard_adversarial`（`MODEL`/`JUDGE_MODEL` 环境变量可换模型）。`YouthSafe` 数据尚未接入。
