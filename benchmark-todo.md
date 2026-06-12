@@ -60,8 +60,7 @@ Each entry should name the scenario, product reason, suggested data/eval design,
 - Note: 已接入 per-benchmark 框架的 C5 主测 = eduguard_sata(D21, P1 教学伤害 SATA, 规则评分) + eduguard_adversarial(D21, P2 对抗安全, 两阶段 LLM-judge BoN=3)。
   论文 judge DeepSeek-V3(BoN=9) 已下线，当前 judge 暂用 MiniMax-M3(BoN=3，同官方公开代码默认)；judge 经 `--extractor-model` 可替换。
 
-- Data-quality finding: 官方 `Dataset/SATAs.xlsx` 的 Answer 列与题目行错位（该列按 `Results/SATAs/*.xlsx` 的行序排列，约 1,333/2,635 题答案落在错误题目上）。
-  Product reason: 直接使用官方数据文件评测会使 RFS/Accuracy 大幅失真（冒烟样本上 RFS 0.79 → 0.39）。
-  Mitigation: `scripts/eval/data/fetch_eval_datasets.py --benchmark eduguard_bench` 已改为从 13 个官方 Results 文件按 ID 多数投票重建答案键（该键可复现论文 DeepSeek-V3 RFS≈0.73）；可考虑向上游仓库报 issue。
+- Data-quality finding（已由上游修复）: 初版（commit 67f4355, 2025-10-13）`Dataset/SATAs.xlsx` 的 Answer 列与题目行错位（该列按 `Results/SATAs/*.xlsx` 的行序排列，1,333/2,635 题答案落在错误题目上；直接使用会使 RFS 失真，冒烟样本上 0.79 → 0.39）。
+  Resolution: 上游 commit 432e8da（2026-06-08 "Fix SATAs answer labels"）已修复；本仓库独立发现该问题并从 13 个官方 Results 文件按 ID 多数投票重建答案键（`fetch_eval_datasets.py --benchmark eduguard_bench`），重建键与上游修复版 2,635/2,635 逐题一致，且可复现论文各模型 RFS（DeepSeek-V3 0.728/论文0.73、Claude3.7 0.772/论文0.77）。多数投票逻辑保留作为对官方文件的一致性校验（当前输出 "0 misaligned corrected"）。
   Related capabilities: D21; C5.
-  Source: sources/datasets/eduguard_bench/；reports/eval/eduguard_sata/
+  Source: sources/datasets/eduguard_bench/（需 git pull 至 432e8da 之后）；reports/eval/eduguard_sata/
