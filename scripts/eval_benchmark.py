@@ -19,6 +19,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 from eval.benchmarks import available_benchmarks, get_adapter
@@ -58,6 +59,24 @@ def main() -> None:
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--retry-sleep", type=float, default=1.0)
+    parser.add_argument(
+        "--rate-limit-threshold",
+        type=int,
+        default=int(os.environ.get("RATE_LIMIT_THRESHOLD", "10")),
+        help="consecutive rate-limit (429/throttle) errors before sleeping (env RATE_LIMIT_THRESHOLD; default 10)",
+    )
+    parser.add_argument(
+        "--rate-limit-sleep",
+        type=float,
+        default=float(os.environ.get("RATE_LIMIT_SLEEP", "1800")),
+        help="seconds to sleep when throttling is detected (env RATE_LIMIT_SLEEP; default 1800 = 30 min)",
+    )
+    parser.add_argument(
+        "--rate-limit-max-retries",
+        type=int,
+        default=int(os.environ.get("RATE_LIMIT_MAX_RETRIES", "3")),
+        help="max times a single rate-limited item is re-queued (env RATE_LIMIT_MAX_RETRIES; default 3)",
+    )
     parser.add_argument("--max-tokens", type=int, default=None)
     parser.add_argument("--skip-extract", action="store_true", help="only generate predictions, no extract/score")
     parser.add_argument("--score-only", action="store_true", help="reuse existing predictions; extract + score only")
@@ -91,6 +110,9 @@ def main() -> None:
         dry_run=args.dry_run,
         client=client,
         extract_concurrency=args.extract_concurrency,
+        rate_limit_threshold=args.rate_limit_threshold,
+        rate_limit_sleep=args.rate_limit_sleep,
+        rate_limit_max_retries=args.rate_limit_max_retries,
     )
 
     if summary:

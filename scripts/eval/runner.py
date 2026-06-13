@@ -24,6 +24,66 @@ def _index_by_item(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(r["item_id"]): r for r in rows if r.get("item_id") is not None}
 
 
+def _is_rate_limit_error(error: str | None) -> bool:
+    """Heuristic: does this error string look like API throttling (vs. a real bug)?
+
+    Covers HTTP 429 and the MiniMax ``base_resp`` rate-limit status codes 1002
+    (QPS/concurrency limit) and 1039 (TPM limit), plus generic phrasings.
+    """
+    if not error:
+        return False
+    low = error.lower()
+    if "http 429" in low or "too many requests" in low or "rate limit" in low or "限流" in low:
+        return True
+    return "base_resp 1002" in low or "base_resp 1039" in low
+
+
+class RateLimitGuard:
+    """Detect sustained throttling and wait it out instead of burning items.
+
+    A single 429 is transient; ``threshold`` of them in a row (with no success
+    in between) means the API is throttling us, so sleeping ``sleep_seconds``
+    (default 30 min) and retrying is far more productive than recording the
+    whole batch as errors. Any non-rate-limit result resets the streak.
+
+    Rate-limited items are re-queued for another attempt, capped at
+    ``max_retries`` per item so a mis-classified persistent error cannot loop
+    forever.
+    """
+
+    def __init__(self, threshold: int, sleep_seconds: float, max_retries: int) -> None:
+        self.threshold = max(1, threshold)
+        self.sleep_seconds = sleep_seconds
+        self.max_retries = max(0, max_retries)
+        self.streak = 0
+        self._retries: dict[str, int] = {}
+
+    def reset_streak(self) -> None:
+        """Call on any non-rate-limit result (success or other error)."""
+        self.streak = 0
+
+    def on_rate_limit(self, item_id: str) -> bool:
+        """Record a rate-limit error. Returns True if the item should be re-queued.
+
+        Sleeps once the consecutive-error streak reaches ``threshold``.
+        """
+        self.streak += 1
+        if self.streak >= self.threshold:
+            mins = self.sleep_seconds / 60
+            print(
+                f"!! {self.streak} consecutive rate-limit errors — likely throttled; "
+                f"sleeping {mins:.0f} min then retrying",
+                flush=True,
+            )
+            time.sleep(self.sleep_seconds)
+            self.streak = 0
+        seen = self._retries.get(item_id, 0)
+        if seen >= self.max_retries:
+            return False
+        self._retries[item_id] = seen + 1
+        return True
+
+
 def _truncate_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Replace base64 image payloads with a short placeholder for printing."""
     safe = []
@@ -96,6 +156,9 @@ def run_predictions(
     retries: int,
     retry_sleep: float,
     max_tokens: int | None,
+    rate_limit_threshold: int = 10,
+    rate_limit_sleep: float = 1800.0,
+    rate_limit_max_retries: int = 3,
 ) -> dict[str, dict[str, Any]]:
     # Treat errored / empty predictions as not-done so reruns retry only those.
     existing = {
@@ -107,11 +170,22 @@ def run_predictions(
     rows = list(existing.values())
     print(f"predictions: {len(existing)} cached, {len(pending)} to run")
 
+    guard = RateLimitGuard(rate_limit_threshold, rate_limit_sleep, rate_limit_max_retries)
     concurrency = max(1, concurrency)
     completed = 0
     if concurrency == 1:
-        for item in pending:
+        idx = 0
+        while idx < len(pending):
+            item = pending[idx]
+            idx += 1
             row = _predict_one(adapter, item, client, model, timeout, retries, retry_sleep, max_tokens)
+            if _is_rate_limit_error(row.get("error")):
+                if guard.on_rate_limit(str(row["item_id"])):
+                    pending.append(item)
+                    print(f"predict item={row['item_id']} rate-limited -> re-queued")
+                    continue
+            else:
+                guard.reset_streak()
             rows.append(row)
             append_jsonl(out_path, row)
             completed += 1
@@ -135,8 +209,15 @@ def run_predictions(
                         time.sleep(sleep_seconds)
                 done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
                 for future in done:
-                    in_flight.pop(future)
+                    item = in_flight.pop(future)
                     row = future.result()
+                    if _is_rate_limit_error(row.get("error")):
+                        if guard.on_rate_limit(str(row["item_id"])):
+                            pending.append(item)
+                            print(f"predict item={row['item_id']} rate-limited -> re-queued")
+                            continue
+                    else:
+                        guard.reset_streak()
                     rows.append(row)
                     append_jsonl(out_path, row)
                     completed += 1
@@ -168,6 +249,9 @@ def run_extractions(
     out_path: Path,
     extractor_model: str,
     concurrency: int = 1,
+    rate_limit_threshold: int = 10,
+    rate_limit_sleep: float = 1800.0,
+    rate_limit_max_retries: int = 3,
 ) -> dict[str, dict[str, Any]]:
     # Treat errored / empty extractions as not-done so reruns retry only those.
     existing = {
@@ -188,28 +272,46 @@ def run_extractions(
     total = len(pending)
     print(f"extractions: {len(existing)} cached, {total} to run")
 
+    guard = RateLimitGuard(rate_limit_threshold, rate_limit_sleep, rate_limit_max_retries)
     concurrency = max(1, concurrency)
     if concurrency == 1:
-        for n, (item, response) in enumerate(pending, 1):
+        n = 0
+        while n < len(pending):
+            item, response = pending[n]
+            n += 1
             row = _extract_one(adapter, item, response, client, extractor_model)
+            if _is_rate_limit_error(row.get("error")):
+                if guard.on_rate_limit(str(row["item_id"])):
+                    pending.append((item, response))
+                    print(f"extract item={row['item_id']} rate-limited -> re-queued")
+                    continue
+            else:
+                guard.reset_streak()
             rows.append(row)
             append_jsonl(out_path, row)
             print(f"extract {n}/{total} item={row['item_id']} -> {str(row.get('extracted'))[:40]!r}")
     else:
         completed = 0
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            in_flight: dict[Any, str] = {}
+            in_flight: dict[Any, tuple[dict[str, Any], str]] = {}
             idx = 0
             while idx < len(pending) or in_flight:
                 while idx < len(pending) and len(in_flight) < concurrency:
                     item, response = pending[idx]
                     future = executor.submit(_extract_one, adapter, item, response, client, extractor_model)
-                    in_flight[future] = str(item["item_id"])
+                    in_flight[future] = (item, response)
                     idx += 1
                 done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
                 for future in done:
-                    in_flight.pop(future)
+                    item, response = in_flight.pop(future)
                     row = future.result()
+                    if _is_rate_limit_error(row.get("error")):
+                        if guard.on_rate_limit(str(row["item_id"])):
+                            pending.append((item, response))
+                            print(f"extract item={row['item_id']} rate-limited -> re-queued")
+                            continue
+                    else:
+                        guard.reset_streak()
                     rows.append(row)
                     append_jsonl(out_path, row)
                     completed += 1
@@ -277,6 +379,9 @@ def run(
     dry_run: bool,
     client: MiniMaxClient | None = None,
     extract_concurrency: int = 1,
+    rate_limit_threshold: int = 10,
+    rate_limit_sleep: float = 1800.0,
+    rate_limit_max_retries: int = 3,
 ) -> dict[str, Any]:
     items = adapter.load_items(limit=limit, offset=offset)
     print(f"loaded {len(items)} items for benchmark={adapter.name}")
@@ -298,6 +403,9 @@ def run(
         predictions = run_predictions(
             adapter, items, client, predictions_path, model,
             concurrency, sleep_seconds, timeout, retries, retry_sleep, max_tokens,
+            rate_limit_threshold=rate_limit_threshold,
+            rate_limit_sleep=rate_limit_sleep,
+            rate_limit_max_retries=rate_limit_max_retries,
         )
 
     if skip_extract:
@@ -306,6 +414,9 @@ def run(
         extractions = run_extractions(
             adapter, items, predictions, client, extractions_path, extractor_model,
             concurrency=extract_concurrency,
+            rate_limit_threshold=rate_limit_threshold,
+            rate_limit_sleep=rate_limit_sleep,
+            rate_limit_max_retries=rate_limit_max_retries,
         )
 
     scored = run_scoring(adapter, items, predictions, extractions)

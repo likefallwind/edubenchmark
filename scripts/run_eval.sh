@@ -6,6 +6,15 @@
 #   LIMIT=200 ./scripts/run_eval.sh agieval    # 小样本试跑 (LIMIT=0 或不设=全量)
 #   MODEL=MiniMax-M3 JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh ...   # 换被测/judge 模型
 # 后台启动: nohup ./scripts/run_eval.sh > eval.log 2>&1 &
+#
+# 限流自愈：连续 RATE_LIMIT_THRESHOLD 个(默认10) 429/限流错误即判定被限流，自动 sleep
+#   RATE_LIMIT_SLEEP 秒(默认1800=30min) 后重试被限流的样本(每条最多重排 RATE_LIMIT_MAX_RETRIES 次,默认3)。
+#   例: RATE_LIMIT_SLEEP=1800 RATE_LIMIT_THRESHOLD=10 ./scripts/run_eval.sh
+#
+# 注意：本脚本评测「被测模型在 benchmark 上的得分」。若要评测「judge 本身判得准不准」
+# （EduGuard P2 LLM-as-judge 对 Opus 金标的校准），那是另一层实验，独立工具见
+#   scripts/experiments/eduguard_judge_eval.py
+#   reports/re_benchmark_v1/experiments/eduguard_judge_calibration/README.md
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export PYTHONUNBUFFERED=1   # 让 print 实时写入日志，方便 tail -f
