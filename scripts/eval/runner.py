@@ -1,8 +1,10 @@
 """Generic evaluation loop: predict -> extract -> score -> report.
 
 Resumable and incremental: ``predictions.jsonl`` and ``extractions.jsonl`` are
-keyed by ``item_id``; already-completed items are skipped on rerun. Each phase
-writes to disk as it goes so a crash mid-run loses nothing.
+keyed by ``item_id``; already-completed items are skipped on rerun. Each
+completed item is appended to disk immediately (never a full-file rewrite), so
+a crash mid-run loses nothing. Retried items append a fresh row; readers
+dedupe via ``_index_by_item`` where the last row per ``item_id`` wins.
 """
 
 from __future__ import annotations
@@ -15,7 +17,7 @@ from typing import Any
 
 from .base import BenchmarkAdapter
 from .minimax_client import MiniMaxClient
-from .report import build_summary, read_jsonl, write_jsonl, write_report
+from .report import append_jsonl, build_summary, read_jsonl, write_jsonl, write_report
 
 
 def _index_by_item(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -111,7 +113,7 @@ def run_predictions(
         for item in pending:
             row = _predict_one(adapter, item, client, model, timeout, retries, retry_sleep, max_tokens)
             rows.append(row)
-            write_jsonl(out_path, rows)
+            append_jsonl(out_path, row)
             completed += 1
             status = "error" if row.get("error") else ("empty" if row.get("empty_response") else "ok")
             print(f"predict {completed}/{len(pending)} item={row['item_id']} status={status}")
@@ -136,7 +138,7 @@ def run_predictions(
                     in_flight.pop(future)
                     row = future.result()
                     rows.append(row)
-                    write_jsonl(out_path, rows)
+                    append_jsonl(out_path, row)
                     completed += 1
                     status = "error" if row.get("error") else ("empty" if row.get("empty_response") else "ok")
                     print(f"predict {completed}/{len(pending)} item={row['item_id']} status={status}")
@@ -191,7 +193,7 @@ def run_extractions(
         for n, (item, response) in enumerate(pending, 1):
             row = _extract_one(adapter, item, response, client, extractor_model)
             rows.append(row)
-            write_jsonl(out_path, rows)
+            append_jsonl(out_path, row)
             print(f"extract {n}/{total} item={row['item_id']} -> {str(row.get('extracted'))[:40]!r}")
     else:
         completed = 0
@@ -209,7 +211,7 @@ def run_extractions(
                     in_flight.pop(future)
                     row = future.result()
                     rows.append(row)
-                    write_jsonl(out_path, rows)
+                    append_jsonl(out_path, row)
                     completed += 1
                     print(f"extract {completed}/{total} item={row['item_id']} -> {str(row.get('extracted'))[:40]!r}")
     return _index_by_item(rows)

@@ -388,8 +388,13 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
     with path.open(encoding="utf-8", errors="ignore") as fh:
         for line in fh:
             line = line.strip()
-            if line:
+            if not line:
+                continue
+            try:
                 rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                # Partial line left by an interrupted append; the item will rerun.
+                continue
     return rows
 
 
@@ -398,3 +403,17 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8") as fh:
         for row in rows:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def append_jsonl(path: Path, row: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(row, ensure_ascii=False) + "\n"
+    with path.open("a+b") as fh:
+        # Terminate a truncated trailing line left by an interrupted append so
+        # it can't swallow this row (reads honor seek; writes still go to EOF).
+        fh.seek(0, 2)
+        if fh.tell() > 0:
+            fh.seek(fh.tell() - 1)
+            if fh.read(1) != b"\n":
+                line = "\n" + line
+        fh.write(line.encode("utf-8"))
