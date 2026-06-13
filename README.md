@@ -1,287 +1,204 @@
-# AI-教育 Benchmark 调研仓库
+# AI-教育 Benchmark 评测仓库
 
-本仓库用于整理 AI-教育领域 benchmark、评测尺度、公开效果、可获得数据集，以及一版可追溯的“原子能力-评价标准-题目出处”benchmark 规格。当前工作重点是信息收集、统一尺度建设和题目出处索引，不是重新跑模型实验。
+本仓库做两件事:
 
-## 目标
+1. **跑评测** —— 一套可扩展的逐 benchmark 评测框架(`scripts/eval/`),针对 API 模型(默认 MiniMax-M3)在单个 benchmark 上打分:加载题目 → 调模型(支持文本+图像)→ LLM 抽取答案 → 判分 → 出 HTML 报告。这是当前最活跃的部分。
+2. **建证据库与规格** —— AI-教育领域 benchmark / 指标 / 公开结果 / 数据可获得性的调研证据库,以及一版可追溯到题目出处的「原子能力-评价标准-题目」benchmark 规格(D01–D24 / S1–S8)。
 
-对应 `todo.md`，本仓库要形成一个可复用的 AI-教育 benchmark 证据库：
+> 默认语言:报告与内容用中文,脚本与代码用英文。贡献规范见 [`AGENTS.md`](./AGENTS.md),给 AI 助手的工作约定见 [`CLAUDE.md`](./CLAUDE.md)。
 
-- 收集 AI-教育领域已有 benchmark / 数据资源。
-- 记录每个 benchmark 测什么问题、使用什么原生指标、是否有公开模型结果。
-- 下载或登记可获得的数据集，并区分自动下载、人工申请、论文待发布等状态。
-- 基于已有原子尺度，形成统一的 AI-教育应用评测框架。
-- 当给定一个新的 AI-教育应用时，可以快速判断相似领域已有评测、推荐重点指标和补充评测方式。
+---
 
-## 当前状态
+## 快速开始:评测一个 benchmark
 
-截至 2026-05-18，仓库里有两层成果：
+### 1. 准备环境
 
-1. **调研证据库**：覆盖 AI-教育相关 benchmark / 数据资源、指标、公开结果、数据下载状态。
-2. **Benchmark v1 规格**：把 8 个一级尺度、D01-D24 原子能力、84 个细粒度评价标准和 840 条本地题目/任务样本串起来。
+凭证只从环境变量读取:
 
-调研证据库状态：
+```bash
+export MINIMAX_API_KEY=...                       # 必需
+export MINIMAX_BASE_URL=https://api.minimaxi.com/v1   # 可选,默认即此
+```
 
-- 覆盖 78 个 benchmark / 数据资源。
-- 抽取 165 个指标。
-- 整理 1616 条公开模型/结果记录。
-- 覆盖 24 个原子能力。
-- 收敛为 8 个一级评测尺度。
-- 已下载 GitHub / HuggingFace 可直接获取的大部分数据集。
+无第三方依赖,标准库即可跑(OlympiadBench 判分例外,见下)。
 
-Benchmark v1 状态：
+### 2. 一键评测(推荐)
 
-- 8 个一级尺度。
-- 24 个原子能力。
-- 84 个评价标准。
-- 840 条评测题/任务样本。
-- 每条题都有 `source_file` 和 `source_row_or_key`，可追溯到本地数据源。
-- 抽题逻辑不是固定取前 10 条，而是每个评价标准先取最多 80 条候选，再按 `quality_score` 选择前 10 条。
-- 27 个评价标准标为 `coverage_gap` / proxy 样本，表示本地有可构造任务材料，但仍缺原生 benchmark 标签、授权数据、视频/图像资源或产品级日志。
+```bash
+# 跑全部 C1 主测 (mmlu_pro agieval olympiadbench)
+./scripts/run_eval.sh
 
-仍未完全补齐的部分主要是访问权限问题：
+# 只跑指定的一个/多个
+./scripts/run_eval.sh mmlu_pro
+./scripts/run_eval.sh eduguard_sata eduguard_adversarial   # C5 EduGuard-Bench
 
-- `ASAP-AES` 和 `ASAP-SAS` 需要 Kaggle 账号、API token 和竞赛条款确认。
-- 19 个资源属于 `manual_access_or_metadata_only`，需要人工申请、页面确认或机构授权。
-- `EssayJudge` 目前是论文/待发布状态，没有可批量下载的数据包。
+# 小样本试跑 (LIMIT=0 或不设 = 全量)
+LIMIT=200 ./scripts/run_eval.sh agieval
 
-## 从哪里开始
+# 换被测 / judge 模型
+MODEL=MiniMax-M3 JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh
 
-推荐阅读顺序：
+# 后台长跑(脚本已设 PYTHONUNBUFFERED=1,日志实时写入)
+nohup ./scripts/run_eval.sh > eval.log 2>&1 &
+tail -f eval.log
+```
 
-1. [AI_EDU_BENCHMARK_V1.md](./AI_EDU_BENCHMARK_V1.md)：根目录主入口，查看 8 个一级尺度、D01-D24 原子能力和评价标准。
-2. [ai_edu_benchmark_v1_questions.json](./ai_edu_benchmark_v1_questions.json)：题目索引 JSON，查每道题的来源文件和行/键位置。
-3. [AI_EDU_BENCHMARK_V1.html](./AI_EDU_BENCHMARK_V1.html)：和主 Markdown 同内容，适合浏览。
-4. [reports/2026-05-18/ai_edu_benchmark_v1_spec.md](./reports/2026-05-18/ai_edu_benchmark_v1_spec.md)：更完整的 v1 规格报告。
-5. [reports/2026-05-13/ai_edu_unified_benchmark_framework_2026-05-13.md](./reports/2026-05-13/ai_edu_unified_benchmark_framework_2026-05-13.md)：统一尺度、场景映射和评分建议。
-6. [reports/2026-05-13/ai_edu_benchmark_catalog_2026-05-13.md](./reports/2026-05-13/ai_edu_benchmark_catalog_2026-05-13.md)：benchmark 总目录。
-7. [data/exhaustive_2026-05-13/dataset_acquisition_report.md](./data/exhaustive_2026-05-13/dataset_acquisition_report.md)：数据下载 manifest。
+`run_eval.sh` 帮你处理了每个 benchmark 的特例(OlympiadBench 的判分专用 venv、EduGuard 的两阶段 LLM-as-judge 等),日常优先用它。
 
-## 主要文件说明
+### 3. 直接调底层入口(需要细控参数时)
 
-| 文件 / 目录 | 作用 |
-|---|---|
-| `AI_EDU_BENCHMARK_V1.md` | 根目录可读总览。按 S1-S8、D01-D24、评价标准组织，是当前最推荐打开的入口。 |
-| `AI_EDU_BENCHMARK_V1.html` | 根目录 HTML 版总览，方便浏览表格。 |
-| `ai_edu_benchmark_v1_questions.json` | 题目索引 JSON。每条题含 `item_id`、`dimension_id`、`criterion_id`、`question`、`answer_or_rubric`、`scoring_method`、`source_file`、`source_row_or_key`、`quality_score`。 |
-| `data/benchmark_v1_2026-05-18/items.jsonl` | v1 题目明细，每行一道题或一个任务构造样本。适合程序读取。 |
-| `data/benchmark_v1_2026-05-18/capability_criteria.jsonl` | v1 评价标准明细，每行一个标准，包含原子能力、指标族、推荐 benchmark、覆盖状态和抽样规则。 |
-| `data/benchmark_v1_2026-05-18/source_manifest.jsonl` | v1 来源 manifest，说明每个来源文件是否本地存在、访问状态、抽样说明、抽到的 row/key。 |
-| `reports/2026-05-18/ai_edu_benchmark_v1_spec.md` | v1 完整规格报告，内容比根目录总览更细。 |
-| `reports/2026-05-18/ai_edu_benchmark_v1_spec.html` | v1 完整规格 HTML 报告。 |
-| `scripts/build_benchmark_v1_2026_05_18.py` | 生成 v1 三件套和明细 JSONL 的脚本。核心逻辑是“读取 taxonomy -> 构造候选题 -> 质量排序 -> 取前 10 -> 输出 Markdown/HTML/JSON”。 |
-| `data/exhaustive_2026-05-13/` | 2026-05-13 的调研证据库：benchmark、指标、公开结果、能力映射和数据获取状态。 |
-| `reports/2026-05-13/` | 2026-05-13 的调研报告、统一框架、benchmark catalog。 |
-| `data/benchmark_metric_dimensions_2026-05-12.json` | D01-D24 原子能力定义、相关 benchmark 和覆盖说明。 |
-| `data/benchmark_metric_indicators_2026-05-12.json` | 每个原子能力下的细粒度评价指标，是 v1 评价标准的主要来源。 |
-| `sources/datasets/` | 本地下载的数据集副本。已在 `.gitignore` 中，通常不提交到 git。 |
-| `skills/edubenchassistant/SKILL.md` | 面向 Agent 的 EduBench Assistant skill。 |
+```bash
+python scripts/eval_benchmark.py --benchmark mmlu_pro --model MiniMax-M3 --concurrency 4 --limit 0
+```
 
-## 目录结构
+常用参数:
+
+| 参数 | 默认 | 说明 |
+|---|---|---|
+| `--benchmark` | (必填) | `mathvista` / `mmlu_pro` / `agieval` / `olympiadbench` / `eduguard_sata` / `eduguard_adversarial` |
+| `--model` | `MiniMax-M3` | 被测模型(须用视觉模型 M3,M2.7 仅文本) |
+| `--extractor-model` | `MiniMax-M2.7` | 答案抽取 / LLM-as-judge 模型 |
+| `--limit` | `30` | 题量,`0`/负数 = 全量 |
+| `--offset` | `0` | 起始偏移 |
+| `--concurrency` | `4` | 预测并发 |
+| `--timeout` | `300` | **流式下是"卡死间隔"超时**,见下 |
+| `--retries` | `2` | 空响应重试次数 |
+| `--max-tokens` | (不设) | 预测阶段建议不设,让推理模型自由生成 |
+| `--skip-extract` | off | 只出预测,不抽取/判分 |
+| `--score-only` | off | 复用已有预测,只做抽取+判分 |
+| `--dry-run` | off | 打印构造好的消息(base64 图省略),不调 API |
+
+各阶段**可断点续跑**:`predictions.jsonl` / `extractions.jsonl` 按 `item_id` 去重,已成功的重跑时跳过,报错/空响应的会重试。中途崩溃不丢已完成结果。
+
+### 4. 输出位置
+
+每个 benchmark 固定输出到 `reports/eval/<benchmark>/`:
+
+- `predictions.jsonl` —— 模型原始回答(真实进度看这个,别看 `eval.log`)
+- `extractions.jsonl` —— 抽取出的答案
+- `scored.jsonl` —— 逐题判分
+- `summary.json` —— 汇总(总数/正确数/准确率,按桶分组)
+- `report.html` —— 可读报告
+
+### 已支持的 benchmark
+
+| 名称 | 能力 | 题型 / 判分 |
+|---|---|---|
+| `mmlu_pro` | D01 | 10 选 MCQ;官方 `answer is (X)` 正则 + LLM 兜底,比对选项字母 |
+| `agieval` | D03 | 高考/法考 MCQ + 数学填空;选项字母解析 + 官方 `math_equivalence` 判等 |
+| `olympiadbench` | D05 | 竞赛开放题(文本+多模态);移植官方 `make_prompt` 与 sympy 符号判分 `AutoScoringJudge` |
+| `mathvista` | D06 | 视觉数学;移植官方 few-shot 抽取 + 最近选项编辑距离判分(需下载图片) |
+| `eduguard_sata` | C5 | 教育安全多选(SATA);规则判分,中英双语 |
+| `eduguard_adversarial` | C5 | 对抗安全;两阶段 LLM-as-judge(每阶段 BoN=3 投票) |
+
+新增一个 benchmark:在 `scripts/eval/benchmarks/<name>.py` 写一个 `BenchmarkAdapter` 子类(实现 `load_items` / `build_messages` / `extract_answer` / `score` / `buckets`),并在 `scripts/eval/benchmarks/__init__.py` 注册。
+
+### 流式与超时(重要)
+
+`scripts/eval/minimax_client.py` 是一个 **OpenAI 兼容客户端,默认走流式**(`stream=True`),按 SSE 逐 token 读取。这带来一个关键语义:
+
+> `--timeout` 限制的是**两个数据块之间的最大间隔(卡死检测)**,不是总生成时长。
+
+推理模型(M3、DeepSeek-R1 等)边想边吐 `reasoning_content`,连接一直有数据流动,所以它想多久都不会超时,只有连接**真卡死**才会被掐断。客户端只累加 `delta.content`(可见答案),忽略 `reasoning_content`(思维链)。
+
+> ⚠️ 历史坑:早期为非流式请求,`timeout=300` 实际变成"总生成必须在 300s 内完成",导致 M3 难题大面积 `The read operation timed out` 且每条还白白重试 3 次(~900s)。改流式后此问题消除。
+
+### 换模型 / 换 provider
+
+SSE 解析走 OpenAI 标准格式,换任意 OpenAI 兼容服务只改环境变量,**不用动代码**:
+
+```bash
+MINIMAX_BASE_URL=https://api.deepseek.com/v1 \
+MINIMAX_CHAT_PATH=/chat/completions \
+MINIMAX_API_KEY=<key> \
+python scripts/eval_benchmark.py --benchmark mmlu_pro --model deepseek-reasoner --limit 50
+```
+
+`MINIMAX_CHAT_PATH` 默认 `/text/chatcompletion_v2`(MiniMax),标准 OpenAI 服务设为 `/chat/completions`。
+
+### benchmark 专项说明
+
+- **OlympiadBench 判分**需要 `antlr4-python3-runtime==4.11`(sympy `parse_latex`),与 `hydra-core`/`omegaconf` 冲突。`run_eval.sh` 已用 `uv` 临时环境隔离判分阶段;手动跑见脚本里的两段命令。
+- **MathVista 需要图片**:`cd sources/datasets/mathvista/data && wget .../images.zip && unzip`。
+- **拉取 parquet 数据集**:`python scripts/eval/data/fetch_eval_datasets.py --benchmark mmlu_pro|olympiadbench|all`(MMLU-Pro 用**公开**的 `TIGER-Lab/MMLU-Pro`;OlympiadBench 取 OE 配置,图片解到 `olympiadbench/images/`)。AGIEval 数据随其仓库 checkout。
+- **限流自愈**:连续 `RATE_LIMIT_THRESHOLD`(默认 10)个 429/限流错误即判定被限流,自动 sleep `RATE_LIMIT_SLEEP` 秒(默认 1800)后重排被限样本(每条最多 `RATE_LIMIT_MAX_RETRIES` 次,默认 3)。
+
+---
+
+## 评测框架架构(`scripts/eval/`)
+
+故意与下面的「带日期快照的 build 脚本」和 `run_re_benchmark_v1.py`(纯文本、拒图)解耦。
 
 ```text
-.
-├── data/
-│   ├── benchmark_metric_dimensions_2026-05-12.json
-│   ├── benchmark_metric_indicators_2026-05-12.json
-│   ├── model_dimension_performance_2026-05-12.json
-│   ├── benchmark_v1_2026-05-18/
-│   │   ├── items.jsonl
-│   │   ├── capability_criteria.jsonl
-│   │   └── source_manifest.jsonl
-│   └── exhaustive_2026-05-13/
-│       ├── benchmarks.jsonl
-│       ├── metrics.jsonl
-│       ├── results.jsonl
-│       ├── dimension_mapping.jsonl
-│       ├── dataset_acquisition.jsonl
-│       ├── dataset_acquisition_report.md
-│       └── download_summary.csv
-├── reports/
-│   ├── 2026-05-12/
-│   ├── 2026-05-13/
-│   └── 2026-05-18/
-├── scripts/
-│   ├── build_exhaustive_2026_05_13.py
-│   ├── build_benchmark_v1_2026_05_18.py
-│   └── download_all_datasets.sh
-├── skills/
-│   └── edubenchassistant/
-│       └── SKILL.md
-├── sources/
-│   └── datasets/
-├── AI_EDU_BENCHMARK_V1.md
-├── AI_EDU_BENCHMARK_V1.html
-├── ai_edu_benchmark_v1_questions.json
-└── todo.md
+scripts/
+├── eval_benchmark.py        # 入口:解析参数,调 runner
+├── run_eval.sh              # 一键评测封装(处理各 benchmark 特例)
+└── eval/
+    ├── runner.py            # 通用循环:predict → extract → score → report,断点续跑 + 限流守卫
+    ├── minimax_client.py    # OpenAI 兼容流式客户端(文本+base64 图像)
+    ├── base.py              # BenchmarkAdapter 抽象基类
+    ├── scoring.py           # 复用的判分工具(无额外依赖)
+    ├── report.py            # JSONL 读写 + summary + HTML 报告
+    ├── benchmarks/          # 每个 benchmark 一个 adapter
+    └── data/                # 数据拉取脚本(fetch_eval_datasets.py)
 ```
 
-说明：
+---
 
-- `reports/` 放人可读调研报告和结论。
-- `data/` 放机器可读抽取结果、下载 manifest 和日志。
-- `scripts/` 放生成脚本和下载脚本。
-- `skills/edubenchassistant/` 放面向 Agent 的 EduBench Assistant skill。
-- `sources/` 放真实下载的数据集，已在 `.gitignore` 中，不提交到 git。
+## 三套产物 / 重新生成
 
-## EduBench Assistant Skill
+所有 `scripts/build_*.py` 都是**幂等**的:读 taxonomy/源 JSON → 构造题 → 打分 → 覆盖输出。**不要手改生成文件,改脚本再重跑。**
 
-本仓库包含一个 Agent skill：[skills/edubenchassistant/SKILL.md](./skills/edubenchassistant/SKILL.md)。
+| 产物 | 入口 / 重新生成 | 校验 |
+|---|---|---|
+| **Benchmark v1**(`*_2026_05_18`):8 尺度 / 24 能力 / 84 标准 / 840 题 | `python scripts/build_benchmark_v1_2026_05_18.py` | `--validate-only` → `criteria=84 items=840 manifest=88` |
+| **调研证据库**(`exhaustive_2026-05-13`) | `python3 scripts/build_exhaustive_2026_05_13.py` | `benchmarks=78 metrics=165 results=1616` |
+| **RE_BENCHMARK_V1**(五大类 C1–C5 + 试点包) | `python scripts/build_re_benchmark_v1.py` | 见 `re_benchmark_v1.md` |
 
-它用于在用户描述一个 AI-教育应用、产品想法或具体教学场景时，基于本仓库资料生成评测建议，并最终输出 HTML 报告。典型输出包括：
+阅读入口:
 
-- 应重点关注哪些 D01-D24 原子能力。
-- 对应哪些 S1-S8 一级尺度。
-- 过去已有 benchmark 做过哪些相似评测。
-- 原生指标、公开模型结果和数据集可用状态。
-- 需要额外关注的安全、污染、rubric、学习效果、教师监督等问题。
+- [`AI_EDU_BENCHMARK_V1.md`](./AI_EDU_BENCHMARK_V1.md) —— v1 主入口(S1–S8 / D01–D24 / 评价标准)
+- [`ai_edu_benchmark_v1_questions.json`](./ai_edu_benchmark_v1_questions.json) —— 题目索引,每题带 `source_file` + `source_row_or_key`
+- [`re_benchmark_v1.md`](./re_benchmark_v1.md) —— 五大类主测组合口径
+- [`reports/2026-05-13/`](./reports/2026-05-13/) —— 统一框架、benchmark catalog、调研报告
+- [`data/benchmark_metric_dimensions_2026-05-12.json`](./data/benchmark_metric_dimensions_2026-05-12.json) / [`indicators`](./data/benchmark_metric_indicators_2026-05-12.json) —— D01–D24 能力与指标定义(两套 build 脚本共用)
 
-本地开发安装方式：
+### 数据状态词汇(贯穿全仓库,有承重作用)
 
-```bash
-install -D skills/edubenchassistant/SKILL.md ~/.agents/skills/edubenchassistant/SKILL.md
-```
+manifest 用这些词区分每个源的可获得性:`local_ready`、`downloadable_not_local`、`manual_kaggle_required` / `manual_access_or_metadata_only`、`metadata_model_available_dataset_not_found`、`local_ready_but_no_pilot_extractor`。门控/未发布数据(Kaggle ASAP、EssayJudge、HF-gated TutorBench/Pedagogy)一律记为证据缺口,**不假设可复现**。题目上的 `coverage_status: coverage_gap` 表示该条只是 proxy / 资源构造样本,不能当作原生 benchmark 已完全覆盖。
 
-如果把本仓库发布到 GitHub，并保持 `skills/edubenchassistant/SKILL.md` 结构，可以用 Skills CLI 安装：
-
-```bash
-npx skills add <owner>/<repo>@edubenchassistant -g -y
-```
-
-示例：
-
-```bash
-npx skills add likefallwind/edubenchmark@edubenchassistant -g -y
-```
-
-常用 Skills CLI 命令：
-
-```bash
-npx skills find education benchmark
-npx skills check
-npx skills update
-```
+---
 
 ## 数据下载
 
-批量下载脚本：
-
 ```bash
+# 批量(从 dataset_acquisition_report.md 读命令,Gitee HTTPS 自动改写为 SSH)
 COMMAND_TIMEOUT=1200 ./scripts/download_all_datasets.sh
-```
 
-只重试失败项：
-
-```bash
+# 只重试失败项
 FAILED_ONLY=1 COMMAND_TIMEOUT=300 ./scripts/download_all_datasets.sh
 ```
 
-脚本会从 `data/exhaustive_2026-05-13/dataset_acquisition_report.md` 读取下载命令，并把结果写入：
+结果写入 `data/exhaustive_2026-05-13/download_summary.csv` 和 `dataset_download.log`。下载的数据集副本放 `sources/datasets/`,已 gitignore,不提交。
 
-- `data/exhaustive_2026-05-13/download_summary.csv`
-- `data/exhaustive_2026-05-13/dataset_download.log`
+---
 
-如果下载源是 Gitee HTTPS URL，脚本会自动改写为 SSH 形式，适配已有 Gitee SSH 权限。
+## EduBench Assistant Skill
 
-## 重新生成 Benchmark v1
-
-运行：
+[`skills/edubenchassistant/SKILL.md`](./skills/edubenchassistant/SKILL.md) 是一个面向 Agent 的 skill:给定一个 AI-教育应用/产品/场景,它基于本仓库证据库推荐应关注的 D01–D24 能力与 S1–S8 尺度、相似的已有 benchmark、原生指标/公开结果/数据可用性、以及安全/污染/rubric 关注点,最终输出 HTML 报告到 `reports/edubenchassistant/`。新发现的评测缺口记入 `benchmark-todo.md`。
 
 ```bash
-python scripts/build_benchmark_v1_2026_05_18.py
+# 本地安装
+install -D skills/edubenchassistant/SKILL.md ~/.agents/skills/edubenchassistant/SKILL.md
+
+# 或通过 Skills CLI(仓库已发布到 GitHub 时)
+npx skills add likefallwind/edubenchmark@edubenchassistant -g -y
 ```
 
-该脚本会更新：
+---
 
-- `AI_EDU_BENCHMARK_V1.md`
-- `AI_EDU_BENCHMARK_V1.html`
-- `ai_edu_benchmark_v1_questions.json`
-- `data/benchmark_v1_2026-05-18/items.jsonl`
-- `data/benchmark_v1_2026-05-18/capability_criteria.jsonl`
-- `data/benchmark_v1_2026-05-18/source_manifest.jsonl`
-- `reports/2026-05-18/ai_edu_benchmark_v1_spec.md`
-- `reports/2026-05-18/ai_edu_benchmark_v1_spec.html`
+## 解读须知(guardrails)
 
-只做结构校验：
-
-```bash
-python scripts/build_benchmark_v1_2026_05_18.py --validate-only
-```
-
-当前验证结果：
-
-```text
-criteria=84
-items=840
-manifest=88
-```
-
-抽题逻辑：
-
-- 每个评价标准先构造最多 80 条本地候选题。
-
-## RE_BENCHMARK_V1 可运行试点包
-
-`re_benchmark_v1.md` 是新的五大类主测组合口径。可以用下面命令生成结构化 registry、source manifest、pilot items 和 prompt export：
-
-```bash
-python scripts/build_re_benchmark_v1.py
-python scripts/run_re_benchmark_v1.py
-```
-
-输出位置：
-
-- `data/re_benchmark_v1/benchmark_registry.jsonl`
-- `data/re_benchmark_v1/source_manifest.jsonl`
-- `data/re_benchmark_v1/pilot_items.jsonl`
-- `data/re_benchmark_v1/pilot_prompts.jsonl`
-- `reports/re_benchmark_v1/pilot_report.html`
-- `reports/re_benchmark_v1/run_report.html`
-
-`source_manifest.jsonl` 会区分 `local_ready`、`manual_kaggle_required`、`metadata_model_available_dataset_not_found`、`local_ready_but_no_pilot_extractor` 等状态，便于继续补数据和补抽取器。
-- 用透明启发式打 `quality_score`：题干长度、答案/rubric 完整度、评分方式、evaluator、题源是否存在、benchmark 是否匹配、是否有程序测试/多模态/安全/rubric 信号。
-- 每个评价标准最终保留前 10 条。
-- `coverage_status` 包含 `coverage_gap` 的标准表示当前只是 proxy/resource-construction 样本，不能当作原生 benchmark 已完全覆盖。
-
-## 重新生成 2026-05-13 调研抽取结果
-
-运行：
-
-```bash
-python3 scripts/build_exhaustive_2026_05_13.py
-```
-
-该脚本会更新：
-
-- `data/exhaustive_2026-05-13/*.jsonl`
-- `data/exhaustive_2026-05-13/dataset_acquisition_report.md`
-- `reports/2026-05-13/ai_edu_benchmark_exhaustive_index_2026-05-13.md`
-- `reports/2026-05-13/ai_edu_benchmark_exhaustive_index_2026-05-13.html`
-- `reports/2026-05-13/web_verified_updates_2026-05-13.md`
-
-当前验证结果为：
-
-```text
-benchmarks.jsonl: 78
-metrics.jsonl: 165
-results.jsonl: 1616
-dimension_mapping.jsonl: 256
-covered_dimensions: 24
-dataset_acquisition.jsonl: 78
-```
-
-## 使用方式
-
-评估一个新的 AI-教育应用时，建议按以下流程：
-
-1. 在统一框架中定位应用场景，例如数学 tutor、作文批改、编程教育、教师备课、个性化学习路径或教育安全。
-2. 根据场景映射找到主 benchmark 和补充 benchmark。
-3. 回到 benchmark catalog 查看对应原子能力、原生指标、公开效果和数据状态。
-4. 对可直接下载的数据使用 `sources/datasets/` 中的本地副本。
-5. 对人工授权或未发布数据，只记录为证据缺口，不假设已经可复现。
-
-## 注意事项
-
-- 不要把不同 benchmark 的原始分数直接平均；应先映射到原子能力，再形成能力画像。
-- 通用知识类 benchmark 只能作为门槛项，不能证明模型具备教学能力。
-- 教育核心能力更依赖错因诊断、脚手架、反馈质量、个性化、多模态 grounding、安全边界和真实学习效果。
-- 公开 benchmark 对长期学习效果、教师采纳、师生机协同和中文本地教育安全覆盖仍不足。
+- **不要把不同 benchmark 的原始分数直接平均**;先映射到 D01–D24 能力,再形成能力画像。
+- 通用知识类 benchmark 只是**门槛项**,不能证明教学能力。教育核心能力在于错因诊断、脚手架、反馈质量、个性化、多模态 grounding、安全边界和真实学习效果。
+- 公开 benchmark 对长期学习效果、教师采纳、师生机协同和中文本地教育安全的覆盖仍不足。

@@ -24,6 +24,14 @@ def _index_by_item(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(r["item_id"]): r for r in rows if r.get("item_id") is not None}
 
 
+def _reason(error: str | None, limit: int = 300) -> str:
+    """Render an error string as a ` reason=...` suffix for the run log (eval.log)."""
+    if not error:
+        return ""
+    text = " ".join(str(error).split())
+    return f" reason={text[:limit]!r}"
+
+
 def _is_rate_limit_error(error: str | None) -> bool:
     """Heuristic: does this error string look like API throttling (vs. a real bug)?
 
@@ -182,7 +190,7 @@ def run_predictions(
             if _is_rate_limit_error(row.get("error")):
                 if guard.on_rate_limit(str(row["item_id"])):
                     pending.append(item)
-                    print(f"predict item={row['item_id']} rate-limited -> re-queued")
+                    print(f"predict item={row['item_id']} rate-limited -> re-queued{_reason(row.get('error'))}")
                     continue
             else:
                 guard.reset_streak()
@@ -190,7 +198,8 @@ def run_predictions(
             append_jsonl(out_path, row)
             completed += 1
             status = "error" if row.get("error") else ("empty" if row.get("empty_response") else "ok")
-            print(f"predict {completed}/{len(pending)} item={row['item_id']} status={status}")
+            detail = _reason(row.get("error")) if status == "error" else ""
+            print(f"predict {completed}/{len(pending)} item={row['item_id']} status={status}{detail}")
             if sleep_seconds:
                 time.sleep(sleep_seconds)
     else:
@@ -214,7 +223,7 @@ def run_predictions(
                     if _is_rate_limit_error(row.get("error")):
                         if guard.on_rate_limit(str(row["item_id"])):
                             pending.append(item)
-                            print(f"predict item={row['item_id']} rate-limited -> re-queued")
+                            print(f"predict item={row['item_id']} rate-limited -> re-queued{_reason(row.get('error'))}")
                             continue
                     else:
                         guard.reset_streak()
@@ -222,7 +231,8 @@ def run_predictions(
                     append_jsonl(out_path, row)
                     completed += 1
                     status = "error" if row.get("error") else ("empty" if row.get("empty_response") else "ok")
-                    print(f"predict {completed}/{len(pending)} item={row['item_id']} status={status}")
+                    detail = _reason(row.get("error")) if status == "error" else ""
+                    print(f"predict {completed}/{len(pending)} item={row['item_id']} status={status}{detail}")
     return _index_by_item(rows)
 
 
@@ -283,13 +293,14 @@ def run_extractions(
             if _is_rate_limit_error(row.get("error")):
                 if guard.on_rate_limit(str(row["item_id"])):
                     pending.append((item, response))
-                    print(f"extract item={row['item_id']} rate-limited -> re-queued")
+                    print(f"extract item={row['item_id']} rate-limited -> re-queued{_reason(row.get('error'))}")
                     continue
             else:
                 guard.reset_streak()
             rows.append(row)
             append_jsonl(out_path, row)
-            print(f"extract {n}/{total} item={row['item_id']} -> {str(row.get('extracted'))[:40]!r}")
+            detail = f"ERROR{_reason(row.get('error'))}" if row.get("error") else f"-> {str(row.get('extracted'))[:40]!r}"
+            print(f"extract {n}/{total} item={row['item_id']} {detail}")
     else:
         completed = 0
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
@@ -308,14 +319,15 @@ def run_extractions(
                     if _is_rate_limit_error(row.get("error")):
                         if guard.on_rate_limit(str(row["item_id"])):
                             pending.append((item, response))
-                            print(f"extract item={row['item_id']} rate-limited -> re-queued")
+                            print(f"extract item={row['item_id']} rate-limited -> re-queued{_reason(row.get('error'))}")
                             continue
                     else:
                         guard.reset_streak()
                     rows.append(row)
                     append_jsonl(out_path, row)
                     completed += 1
-                    print(f"extract {completed}/{total} item={row['item_id']} -> {str(row.get('extracted'))[:40]!r}")
+                    detail = f"ERROR{_reason(row.get('error'))}" if row.get("error") else f"-> {str(row.get('extracted'))[:40]!r}"
+                    print(f"extract {completed}/{total} item={row['item_id']} {detail}")
     return _index_by_item(rows)
 
 
