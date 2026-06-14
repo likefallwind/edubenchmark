@@ -23,7 +23,8 @@ import os
 from pathlib import Path
 
 from eval.benchmarks import available_benchmarks, get_adapter
-from eval.minimax_client import DEFAULT_MODEL, MiniMaxClient
+from eval.minimax_client import DEFAULT_MODEL
+from eval.providers import PROVIDERS, build_client, is_default_model, model_slug
 from eval.runner import run
 
 
@@ -41,7 +42,22 @@ def main() -> None:
         default="MiniMax-M2.7",
         help="model for answer extraction; text-only step so a cheaper text model is fine (default: MiniMax-M2.7)",
     )
-    parser.add_argument("--out-dir", type=Path, default=None, help="output directory (default: reports/eval/<benchmark>)")
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=None,
+        help="output directory (default: reports/eval/<benchmark> for the home model, "
+        "reports/eval/<benchmark>/<model> for any other model)",
+    )
+    parser.add_argument(
+        "--provider",
+        choices=sorted(PROVIDERS),
+        default=None,
+        help="force the prediction provider (default: resolved from --model; minimax/gateway)",
+    )
+    parser.add_argument("--base-url", default=None, help="override prediction provider base URL")
+    parser.add_argument("--api-key-env", default=None, help="override env var holding the prediction API key")
+    parser.add_argument("--chat-path", default=None, help="override prediction chat path (e.g. /chat/completions)")
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument(
         "--extract-concurrency",
@@ -87,10 +103,32 @@ def main() -> None:
     if hasattr(adapter, "language"):
         adapter.language = args.language
     limit = None if args.limit is not None and args.limit <= 0 else args.limit
-    out_dir = args.out_dir or (ROOT / "reports" / "eval" / args.benchmark)
+    # Home model keeps the top-level dir; every other model gets its own subdir
+    # so its artifacts never overwrite the MiniMax baseline.
+    base_dir = ROOT / "reports" / "eval" / args.benchmark
+    if args.out_dir is not None:
+        out_dir = args.out_dir
+    elif is_default_model(args.model):
+        out_dir = base_dir
+    else:
+        out_dir = base_dir / model_slug(args.model)
     extractor_model = args.extractor_model
 
-    client = None if args.dry_run else MiniMaxClient(model=args.model, timeout=args.timeout)
+    # Predictions and extraction use separate clients: the prediction model may
+    # live on the gateway while the extractor (MiniMax-M2.7) stays on MiniMax.
+    if args.dry_run:
+        client = None
+        extractor_client = None
+    else:
+        client = build_client(
+            args.model,
+            timeout=args.timeout,
+            provider=args.provider,
+            base_url=args.base_url,
+            api_key_env=args.api_key_env,
+            chat_path=args.chat_path,
+        )
+        extractor_client = build_client(extractor_model, timeout=args.timeout)
 
     summary = run(
         adapter=adapter,
@@ -109,6 +147,7 @@ def main() -> None:
         score_only=args.score_only,
         dry_run=args.dry_run,
         client=client,
+        extractor_client=extractor_client,
         extract_concurrency=args.extract_concurrency,
         rate_limit_threshold=args.rate_limit_threshold,
         rate_limit_sleep=args.rate_limit_sleep,

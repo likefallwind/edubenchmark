@@ -390,6 +390,7 @@ def run(
     score_only: bool,
     dry_run: bool,
     client: MiniMaxClient | None = None,
+    extractor_client: MiniMaxClient | None = None,
     extract_concurrency: int = 1,
     rate_limit_threshold: int = 10,
     rate_limit_sleep: float = 1800.0,
@@ -406,6 +407,10 @@ def run(
         return {}
 
     client = client or MiniMaxClient(model=model, timeout=timeout)
+    # Extraction/judge uses its own client+model (default: same as predictions)
+    # so the prediction model can live on a different endpoint than the extractor
+    # (e.g. predict via a gateway model, extract via MiniMax-M2.7 on MiniMax).
+    extractor_client = extractor_client or client
     predictions_path = out_dir / "predictions.jsonl"
     extractions_path = out_dir / "extractions.jsonl"
 
@@ -424,7 +429,7 @@ def run(
         extractions: dict[str, dict[str, Any]] = {}
     else:
         extractions = run_extractions(
-            adapter, items, predictions, client, extractions_path, extractor_model,
+            adapter, items, predictions, extractor_client, extractions_path, extractor_model,
             concurrency=extract_concurrency,
             rate_limit_threshold=rate_limit_threshold,
             rate_limit_sleep=rate_limit_sleep,
