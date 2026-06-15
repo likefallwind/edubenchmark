@@ -31,10 +31,18 @@ import base64
 import json
 import mimetypes
 import os
+import threading
 import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+
+_USAGE_FIELDS = ("prompt_tokens", "completion_tokens", "total_tokens")
+
+
+def _empty_window() -> dict[str, int]:
+    return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "calls": 0}
 
 
 DEFAULT_BASE_URL = "https://api.minimaxi.com/v1"
@@ -72,6 +80,39 @@ class MiniMaxClient:
         self.timeout = timeout
         path = chat_path or os.environ.get("MINIMAX_CHAT_PATH") or DEFAULT_CHAT_PATH
         self.chat_path = "/" + path.lstrip("/")
+        # Per-thread token-usage accumulator. A caller brackets one logical unit
+        # of work (e.g. predicting / extracting one item, including retries) with
+        # reset_usage_window() ... read_usage_window(); every chat() call in
+        # between adds its API-reported usage. Thread-local so concurrent items
+        # sharing one client never cross-count.
+        self._usage_tls = threading.local()
+
+    def reset_usage_window(self) -> None:
+        """Zero this thread's usage window before measuring a unit of work."""
+        self._usage_tls.window = _empty_window()
+
+    def read_usage_window(self) -> dict[str, int]:
+        """Return a copy of this thread's accumulated usage since the last reset."""
+        return dict(getattr(self._usage_tls, "window", None) or _empty_window())
+
+    def _record_usage(self, usage: dict[str, Any] | None) -> None:
+        """Add one API response's usage to this thread's window (calls += 1).
+
+        ``usage`` is None / empty when the provider omits it (some gateways or
+        self-hosted endpoints): we still bump ``calls`` so a window with calls>0
+        but zero tokens is distinguishable from "no call happened".
+        """
+        window = getattr(self._usage_tls, "window", None)
+        if window is None:
+            window = _empty_window()
+            self._usage_tls.window = window
+        window["calls"] += 1
+        if not isinstance(usage, dict):
+            return
+        for field in _USAGE_FIELDS:
+            value = usage.get(field)
+            if isinstance(value, (int, float)):
+                window[field] += int(value)
 
     def _require_key(self) -> str:
         if not self.api_key:
@@ -101,6 +142,10 @@ class MiniMaxClient:
             payload["max_tokens"] = max_tokens
         if stream:
             payload["stream"] = True
+            # Ask OpenAI-compatible endpoints to emit a final usage chunk. Servers
+            # that don't support it ignore the unknown field; usage is then simply
+            # absent and _record_usage(None) just counts the call.
+            payload["stream_options"] = {"include_usage": True}
         request = urllib.request.Request(
             f"{self.base_url}{self.chat_path}",
             data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
@@ -113,11 +158,14 @@ class MiniMaxClient:
         try:
             with urllib.request.urlopen(request, timeout=timeout or self.timeout) as response:
                 if stream:
-                    return read_sse_stream(response)
+                    text, usage = read_sse_stream(response)
+                    self._record_usage(usage)
+                    return text
                 data = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"MiniMax HTTP {exc.code}: {body[:500]}") from exc
+        self._record_usage(data.get("usage"))
         return extract_text(data)
 
 
@@ -144,16 +192,22 @@ def _delta_text(choice: dict[str, Any]) -> str:
     return ""
 
 
-def read_sse_stream(response: Any) -> str:
-    """Accumulate assistant text from an OpenAI-compatible SSE token stream.
+def read_sse_stream(response: Any) -> tuple[str, dict[str, Any] | None]:
+    """Accumulate assistant text + token usage from an OpenAI SSE token stream.
 
     Each event is a ``data: {json}`` line; the stream ends at ``data: [DONE]``.
     Only ``choices[].delta.content`` is concatenated (see ``_delta_text``); the
-    final usage/finish chunk carries no delta and is skipped, so MiniMax's habit
-    of repeating the full message in the last chunk does not double-count. Reading
-    line by line lets the per-read socket timeout act as a stall detector.
+    final usage/finish chunk carries no delta and is skipped for text, so
+    MiniMax's habit of repeating the full message in the last chunk does not
+    double-count. Any chunk's top-level ``usage`` object (emitted by endpoints
+    that honor ``stream_options.include_usage``) is captured, last non-empty one
+    winning; it is None when the provider doesn't send one. Reading line by line
+    lets the per-read socket timeout act as a stall detector.
+
+    Returns ``(text, usage)``.
     """
     parts: list[str] = []
+    usage: dict[str, Any] | None = None
     for raw in response:
         line = raw.decode("utf-8", errors="replace").strip() if isinstance(raw, (bytes, bytearray)) else str(raw).strip()
         if not line or not line.startswith("data:"):
@@ -169,9 +223,12 @@ def read_sse_stream(response: Any) -> str:
         status_code = base_resp.get("status_code")
         if status_code not in (None, 0):
             raise RuntimeError(f"MiniMax base_resp {status_code}: {base_resp.get('status_msg')}")
+        chunk_usage = obj.get("usage")
+        if isinstance(chunk_usage, dict) and chunk_usage:
+            usage = chunk_usage
         for choice in obj.get("choices") or []:
             parts.append(_delta_text(choice))
-    return "".join(parts).strip()
+    return "".join(parts).strip(), usage
 
 
 def extract_text(data: dict[str, Any]) -> str:

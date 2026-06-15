@@ -17,7 +17,14 @@ from typing import Any
 
 from .base import BenchmarkAdapter
 from .minimax_client import MiniMaxClient
-from .report import append_jsonl, build_summary, read_jsonl, write_jsonl, write_report
+from .report import (
+    aggregate_token_usage,
+    append_jsonl,
+    build_summary,
+    read_jsonl,
+    write_jsonl,
+    write_report,
+)
 
 
 def _index_by_item(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -123,6 +130,7 @@ def _predict_one(
 ) -> dict[str, Any]:
     messages = adapter.build_messages(item)
     started = time.time()
+    client.reset_usage_window()
     response = ""
     error: str | None = None
     attempts = 0
@@ -144,6 +152,7 @@ def _predict_one(
         "response": response,
         "latency_seconds": round(time.time() - started, 3),
         "attempts": attempts,
+        "usage": client.read_usage_window(),
     }
     if error:
         row["error"] = error
@@ -244,9 +253,15 @@ def _extract_one(
     extractor_model: str,
 ) -> dict[str, Any]:
     item_id = str(item["item_id"])
+    client.reset_usage_window()
     try:
         extracted = adapter.extract_answer(item, response, client, extractor_model)
-        return {"item_id": item_id, "extracted": extracted, "extractor_model": extractor_model}
+        return {
+            "item_id": item_id,
+            "extracted": extracted,
+            "extractor_model": extractor_model,
+            "usage": client.read_usage_window(),
+        }
     except Exception as exc:  # noqa: BLE001
         return {"item_id": item_id, "extracted": "", "error": str(exc)}
 
@@ -442,6 +457,7 @@ def run(
     bucket_keys = list(adapter.buckets(items[0]).keys()) if items else []
     summary = build_summary(adapter.name, model, scored, bucket_keys)
     summary["extractor_model"] = extractor_model
+    summary["token_usage"] = aggregate_token_usage(predictions, extractions)
     extra_metrics = adapter.extra_summary(scored)
     if extra_metrics:
         summary["extra_metrics"] = extra_metrics

@@ -60,6 +60,7 @@ from eval.benchmarks.eduguard_bench import (  # noqa: E402
     JUDGE_REFUSAL_QUALITY_PROMPT,
 )
 from eval.minimax_client import MiniMaxClient  # noqa: E402
+from eval.providers import build_client  # noqa: E402
 
 RESULTS_DIR = ROOT / "sources" / "datasets" / "eduguard_bench" / "Results" / "adversarial_safety"
 OUT_DIR = ROOT / "reports" / "re_benchmark_v1" / "experiments" / "eduguard_judge_calibration"
@@ -235,10 +236,11 @@ def cmd_judge(args: argparse.Namespace) -> None:
     sample = load_jsonl(SAMPLE_PATH)
     if not sample:
         raise SystemExit(f"no sample; run `sample` first ({SAMPLE_PATH})")
-    client = MiniMaxClient(timeout=300)
     done = {(r["judge_model"], key_of(r)) for r in load_jsonl(JUDGEMENTS_PATH) if r.get("pred_harm")}
 
     for model in args.judges:
+        # Per-judge client: MiniMax-* -> MiniMax endpoint, doubao*/glm* -> gateway.
+        client = build_client(model, timeout=300)
         pending = [r for r in sample if (model, r["key"]) not in done]
         print(f"[{model}] {len(sample) - len(pending)} cached, {len(pending)} to judge (BoN={args.bon})")
 

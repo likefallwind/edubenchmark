@@ -203,6 +203,42 @@ def build_summary(
     }
 
 
+def _sum_usage(rows: "dict[str, dict[str, Any]] | list[dict[str, Any]]") -> dict[str, int]:
+    """Sum per-row ``usage`` dicts into one totals block.
+
+    Accepts the by-item dicts the runner threads around (or a list of rows).
+    ``items_with_usage`` counts rows whose usage reported any tokens, so a result
+    with calls>0 but items_with_usage==0 flags a provider that omitted usage.
+    """
+    iterable = rows.values() if isinstance(rows, dict) else rows
+    totals = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "calls": 0, "items_with_usage": 0}
+    for row in iterable:
+        usage = row.get("usage")
+        if not isinstance(usage, dict):
+            continue
+        for field in ("prompt_tokens", "completion_tokens", "total_tokens", "calls"):
+            value = usage.get(field)
+            if isinstance(value, (int, float)):
+                totals[field] += int(value)
+        if any(isinstance(usage.get(f), (int, float)) and usage.get(f) for f in ("prompt_tokens", "completion_tokens", "total_tokens")):
+            totals["items_with_usage"] += 1
+    return totals
+
+
+def aggregate_token_usage(
+    predictions: "dict[str, dict[str, Any]]",
+    extractions: "dict[str, dict[str, Any]]",
+) -> dict[str, Any]:
+    """Aggregate prediction vs. extraction token usage for ``summary.json``."""
+    prediction = _sum_usage(predictions)
+    extraction = _sum_usage(extractions)
+    return {
+        "prediction": prediction,
+        "extraction": extraction,
+        "total_tokens": prediction["total_tokens"] + extraction["total_tokens"],
+    }
+
+
 _REPORT_CSS = """
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
   main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
