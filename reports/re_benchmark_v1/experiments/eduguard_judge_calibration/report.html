@@ -1,664 +1,150 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EduGuard-Bench P2 Judge 校准报告 — 全量 120 条</title>
-<style>
-  :root {
-    --bg: #f8f9fa;
-    --card: #ffffff;
-    --border: #e2e8f0;
-    --text: #1a202c;
-    --text-muted: #64748b;
-    --accent: #3b82f6;
-    --green: #10b981;
-    --red: #ef4444;
-    --orange: #f59e0b;
-    --purple: #8b5cf6;
-    --m3-color: #3b82f6;
-    --m27-color: #f59e0b;
-    --dsv3-color: #10b981;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
-  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
-
-  /* Header */
-  .header { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); color: white; border-radius: 12px; padding: 32px 40px; margin-bottom: 32px; }
-  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-  .header .subtitle { font-size: 14px; opacity: 0.85; }
-  .header .meta { margin-top: 16px; display: flex; gap: 24px; flex-wrap: wrap; }
-  .header .meta-item { font-size: 12px; opacity: 0.75; }
-  .header .meta-item strong { opacity: 1; font-weight: 600; display: block; font-size: 13px; }
-
-  /* Section */
-  section { margin-bottom: 32px; }
-  .section-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
-  .section-title .tag { font-size: 11px; font-weight: 600; background: var(--accent); color: white; padding: 2px 8px; border-radius: 12px; }
-
-  /* Card */
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; }
-  .card + .card { margin-top: 16px; }
-
-  /* KPI grid */
-  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; position: relative; overflow: hidden; }
-  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
-  .kpi-card.m3::before { background: var(--m3-color); }
-  .kpi-card.m27::before { background: var(--m27-color); }
-  .kpi-card.dsv3::before { background: var(--dsv3-color); }
-  .kpi-model { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; }
-  .kpi-row { display: flex; justify-content: space-around; gap: 12px; }
-  .kpi-item { flex: 1; }
-  .kpi-value { font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-  .kpi-label { font-size: 11px; color: var(--text-muted); }
-  .kpi-card.m3 .kpi-value { color: var(--m3-color); }
-  .kpi-card.m27 .kpi-value { color: var(--m27-color); }
-  .kpi-card.dsv3 .kpi-value { color: var(--dsv3-color); }
-  .kpi-divider { width: 1px; background: var(--border); }
-
-  /* Main results table */
-  .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .results-table th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 12px; color: var(--text-muted); border-bottom: 2px solid var(--border); white-space: nowrap; }
-  .results-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .results-table tr:last-child td { border-bottom: none; }
-  .results-table tr:hover td { background: #f8fafc; }
-  .model-badge { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .dot-m3 { background: var(--m3-color); }
-  .dot-m27 { background: var(--m27-color); }
-  .dot-dsv3 { background: var(--dsv3-color); }
-  .kappa-bar-wrap { display: flex; align-items: center; gap: 8px; }
-  .kappa-bar { height: 8px; border-radius: 4px; flex-shrink: 0; }
-  .kappa-num { font-weight: 700; font-size: 13px; white-space: nowrap; }
-  .acc-num { font-size: 13px; color: var(--text-muted); }
-  .badge-best { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 8px; margin-left: 4px; }
-  .badge-green { background: #d1fae5; color: #065f46; }
-  .badge-red { background: #fee2e2; color: #991b1b; }
-  .note-star { color: var(--text-muted); font-size: 11px; }
-  .paper-row td { background: #fafafa; color: var(--text-muted); font-style: italic; }
-
-  /* Confusion matrices */
-  .cm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .cm-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-  .cm-title { font-size: 12px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-  .cm-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .cm-table th { text-align: center; padding: 6px 8px; font-size: 11px; font-weight: 600; color: var(--text-muted); }
-  .cm-table td { text-align: center; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-weight: 600; }
-  .cm-table .axis-label { font-weight: 600; color: var(--text-muted); font-size: 11px; text-align: right; border: none; background: none; }
-  .cell-tp { background: #d1fae5; color: #065f46; }
-  .cell-fn { background: #fee2e2; color: #991b1b; }
-  .cell-fp { background: #fef3c7; color: #92400e; }
-  .cell-tn { background: #eff6ff; color: #1e40af; }
-  .cell-mid { background: #f1f5f9; color: #374151; }
-  .cm-axis { writing-mode: vertical-rl; text-orientation: mixed; font-size: 11px; color: var(--text-muted); font-weight: 600; text-align: center; padding: 4px; }
-
-  /* RQ confusion matrices */
-  .rq-cm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .rq-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  .rq-table th, .rq-table td { padding: 5px 6px; text-align: center; border: 1px solid var(--border); }
-  .rq-table th { background: #f1f5f9; font-weight: 600; color: var(--text-muted); font-size: 10px; }
-  .rq-table .axis-label { background: none; border: none; font-weight: 600; color: var(--text-muted); text-align: right; }
-  .rq-cell-diag { background: #d1fae5; color: #065f46; font-weight: 700; }
-  .rq-cell-err { background: #fee2e2; color: #991b1b; font-weight: 600; }
-  .rq-cell-zero { color: #94a3b8; }
-
-  /* Bar chart */
-  .bar-chart { margin-top: 8px; }
-  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .bar-row-label { width: 110px; font-size: 12px; font-weight: 600; text-align: right; flex-shrink: 0; }
-  .bar-track { flex: 1; background: #f1f5f9; border-radius: 6px; height: 20px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 11px; font-weight: 700; color: white; transition: width 0.3s; }
-  .bar-ref { width: 80px; font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
-
-  /* Findings */
-  .finding-list { list-style: none; }
-  .finding-list li { padding: 12px 16px; border-left: 3px solid var(--border); margin-bottom: 10px; background: var(--card); border-radius: 0 8px 8px 0; font-size: 13px; line-height: 1.7; }
-  .finding-list li.good { border-color: var(--green); }
-  .finding-list li.warn { border-color: var(--orange); }
-  .finding-list li.bad { border-color: var(--red); }
-  .finding-list li.info { border-color: var(--accent); }
-  .finding-icon { font-weight: 700; margin-right: 6px; }
-
-  /* Two-col */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
-  /* Alert */
-  .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
-  .alert-blue { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
-  .alert-yellow { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
-
-  table .n-small { font-size: 11px; color: var(--text-muted); }
-
-  /* Footer */
-  .footer { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduGuard-Bench P2 Judge 校准报告</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f6f7fb; color: #1f2937; margin: 0; padding: 0; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 18px 40px; }
+    h1 { margin: 0 0 10px; color: #111827; }
+    .meta { color: #6b7280; margin-bottom: 18px; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0 20px; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; }
+    .card h3 { margin: 0 0 8px; font-size: 15px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; background: #fff; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 13px; }
+    th { background: #f3f4f6; }
+    .footer { color: #6b7280; font-size: 12px; margin-top: 22px; }
+    .updated { margin-top: 6px; color: #374151; font-weight: 600; }
+    pre { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; overflow: auto; }
+  </style>
 </head>
 <body>
-<div class="container">
-
-  <!-- Header -->
-  <div class="header">
-    <h1>EduGuard-Bench P2 — LLM-as-Judge 校准报告</h1>
-    <div class="subtitle">谁判得准？MiniMax-M3 / M2.7 vs DeepSeek-V3 vs Claude Opus 4.8 金标（全量 120 条）</div>
+  <div class="container">
+    <h1>EduGuard-Bench P2 Judge 校准报告（vs Claude Opus 4.8 金标）</h1>
     <div class="meta">
-      <div class="meta-item"><strong>实验日期</strong>2026-06-13 / 14</div>
-      <div class="meta-item"><strong>金标来源</strong>Claude Opus 4.8 盲标（模型标注，非人类）</div>
-      <div class="meta-item"><strong>样本规模</strong>120 条（分层抽样，harmful/harmless 均衡）</div>
-      <div class="meta-item"><strong>评测协议</strong>官方两阶段 prompt + BoN=9 多数投票</div>
-      <div class="meta-item"><strong>报告目录</strong>reports/re_benchmark_v1/experiments/eduguard_judge_calibration/</div>
+      实验目录：<code>reports/re_benchmark_v1/experiments/eduguard_judge_calibration/</code>  ｜  
+      样本规模：120（harmful 49 / harmless 71）
     </div>
-  </div>
 
-  <!-- KPI -->
-  <section>
-    <div class="section-title">核心指标一览</div>
-    <div class="kpi-grid">
-      <div class="kpi-card m3">
-        <div class="kpi-model">MiniMax-M3</div>
-        <div class="kpi-row">
-          <div class="kpi-item">
-            <div class="kpi-value">0.764</div>
-            <div class="kpi-label">Harm κ <span style="color:#10b981;font-weight:700">↑最高</span></div>
-          </div>
-          <div class="kpi-divider"></div>
-          <div class="kpi-item">
-            <div class="kpi-value">0.771</div>
-            <div class="kpi-label">拒答质量 κ</div>
-          </div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:#64748b">n=107 (13条有效判定缺失)</div>
+    <div class="grid">
+      <div class="card">
+        <h3>金标拒答分布</h3>
+        <div>standard_refusal: 18</div>
+        <div>educational_refusal: 29</div>
+        <div>flimsy_refusal: 1</div>
       </div>
-      <div class="kpi-card m27">
-        <div class="kpi-model">MiniMax-M2.7</div>
-        <div class="kpi-row">
-          <div class="kpi-item">
-            <div class="kpi-value">0.645</div>
-            <div class="kpi-label">Harm κ</div>
-          </div>
-          <div class="kpi-divider"></div>
-          <div class="kpi-item">
-            <div class="kpi-value">0.432</div>
-            <div class="kpi-label">拒答质量 κ <span style="color:#ef4444;font-weight:700">↓最低</span></div>
-          </div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:#64748b">n=115 (5条有效判定缺失)</div>
-      </div>
-      <div class="kpi-card dsv3">
-        <div class="kpi-model">DeepSeek-V3</div>
-        <div class="kpi-row">
-          <div class="kpi-item">
-            <div class="kpi-value">0.625</div>
-            <div class="kpi-label">Harm κ</div>
-          </div>
-          <div class="kpi-divider"></div>
-          <div class="kpi-item">
-            <div class="kpi-value">0.957</div>
-            <div class="kpi-label">拒答质量 κ <span style="color:#10b981;font-weight:700">↑最高</span></div>
-          </div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:#64748b">n=120 (全量，官方 BoN=9 标签)</div>
+      <div class="card">
+        <h3>论文参考（人类标注对比）</h3>
+        <table>
+          <thead><tr><th>模型</th><th>harm κ</th><th>refusal-quality κ</th></tr></thead>
+          <tbody>
+            <tr><td>DeepSeek-V3</td><td>0.8820</td><td>0.8740</td></tr>
+<tr><td>GPT-4o</td><td>0.8680</td><td>0.8230</td></tr>
+<tr><td>DeepSeek-R1</td><td>0.8650</td><td>0.8410</td></tr>
+<tr><td>Gemini-2.5-Pro</td><td>0.8610</td><td>0.8170</td></tr>
+<tr><td>Llama-4</td><td>0.8490</td><td>0.7950</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
-  </section>
 
-  <!-- Main Table -->
-  <section>
-    <div class="section-title">完整评测结果表</div>
-    <div class="alert alert-blue">
-      金标由 <strong>Claude Opus 4.8</strong> 盲标（无法访问任何 judge 预测），遵循 EduGuard 官方 rubric。Cohen's κ 衡量 judge 与 Opus 的一致性（chance-corrected）；论文参考值为各 judge 与 <strong>人类标注</strong> 的 κ。
-    </div>
-    <div class="card" style="padding:0;overflow:hidden;">
-      <table class="results-table">
+    <div class="card" style="margin-bottom: 20px;">
+      <h3>评测结果（按 harm κ 排序）</h3>
+      <table>
         <thead>
           <tr>
-            <th style="width:180px">Judge 模型</th>
-            <th colspan="3">Harmfulness 判定</th>
-            <th colspan="3">拒答质量三档</th>
-          </tr>
-          <tr>
-            <th></th>
-            <th>准确率</th>
-            <th>Cohen κ (vs Opus)</th>
-            <th>n</th>
-            <th>准确率</th>
-            <th>Cohen κ (vs Opus)</th>
-            <th>n</th>
+            <th>judge 模型</th>
+            <th>harm 准确率</th>
+            <th>harm κ</th>
+            <th>n_harm</th>
+            <th>拒答质量准确率</th>
+            <th>拒答质量 κ</th>
+            <th>n_refusal_quality</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><span class="model-badge"><span class="dot dot-m3"></span>MiniMax-M3</span></td>
-            <td><span class="acc-num">88.79%</span></td>
-            <td>
-              <div class="kappa-bar-wrap">
-                <div class="kappa-bar" style="width:76px;background:var(--m3-color)"></div>
-                <span class="kappa-num" style="color:var(--m3-color)">0.7641</span>
-                <span class="badge-best badge-green">最高</span>
-              </div>
-            </td>
-            <td>107 <span class="note-star">*</span></td>
-            <td><span class="acc-num">88.10%</span></td>
-            <td>
-              <div class="kappa-bar-wrap">
-                <div class="kappa-bar" style="width:77px;background:var(--m3-color)"></div>
-                <span class="kappa-num" style="color:var(--m3-color)">0.7707</span>
-              </div>
-            </td>
-            <td>42 <span class="note-star">*</span></td>
-          </tr>
-          <tr>
-            <td><span class="model-badge"><span class="dot dot-m27"></span>MiniMax-M2.7</span></td>
-            <td><span class="acc-num">83.48%</span></td>
-            <td>
-              <div class="kappa-bar-wrap">
-                <div class="kappa-bar" style="width:64px;background:var(--m27-color)"></div>
-                <span class="kappa-num" style="color:var(--m27-color)">0.6445</span>
-              </div>
-            </td>
-            <td>115 <span class="note-star">†</span></td>
-            <td><span class="acc-num">63.64%</span></td>
-            <td>
-              <div class="kappa-bar-wrap">
-                <div class="kappa-bar" style="width:43px;background:var(--m27-color)"></div>
-                <span class="kappa-num" style="color:var(--m27-color)">0.4323</span>
-                <span class="badge-best badge-red">最低</span>
-              </div>
-            </td>
-            <td>44 <span class="note-star">†</span></td>
-          </tr>
-          <tr>
-            <td><span class="model-badge"><span class="dot dot-dsv3"></span>DeepSeek-V3</span></td>
-            <td><span class="acc-num">82.50%</span></td>
-            <td>
-              <div class="kappa-bar-wrap">
-                <div class="kappa-bar" style="width:62px;background:var(--dsv3-color)"></div>
-                <span class="kappa-num" style="color:var(--dsv3-color)">0.6248</span>
-              </div>
-            </td>
-            <td>120</td>
-            <td><span class="acc-num">97.92%</span></td>
-            <td>
-              <div class="kappa-bar-wrap">
-                <div class="kappa-bar" style="width:96px;background:var(--dsv3-color)"></div>
-                <span class="kappa-num" style="color:var(--dsv3-color)">0.9574</span>
-                <span class="badge-best badge-green">最高</span>
-              </div>
-            </td>
-            <td>48</td>
-          </tr>
-          <tr class="paper-row">
-            <td colspan="7" style="font-size:11px;padding:8px 14px;">
-              论文参考（DeepSeek-V3 vs 人类标注）：Harm κ = 0.882 &nbsp;|&nbsp; Refusal-quality κ = 0.874 &nbsp;|&nbsp; 其他模型：GPT-4o harm 0.868 / rq 0.823，DeepSeek-R1 harm 0.865 / rq 0.841，Gemini-2.5-Pro harm 0.861 / rq 0.817，Llama-4 harm 0.849 / rq 0.795
-            </td>
-          </tr>
+          
+      <tr>
+        <td>MiniMax-M3</td>
+        <td>88.79%</td>
+        <td>0.7641</td>
+        <td>107</td>
+        <td>88.10%</td>
+        <td>0.7707</td>
+        <td>42</td>
+      </tr>
+
+
+      <tr>
+        <td>glm-5.1</td>
+        <td>87.18%</td>
+        <td>0.7249</td>
+        <td>117</td>
+        <td>95.65%</td>
+        <td>0.9044</td>
+        <td>46</td>
+      </tr>
+
+
+      <tr>
+        <td>doubao-seed-2.0-lite</td>
+        <td>84.21%</td>
+        <td>0.6755</td>
+        <td>95</td>
+        <td>84.85%</td>
+        <td>0.6598</td>
+        <td>33</td>
+      </tr>
+
+
+      <tr>
+        <td>doubao-seed-2.0-pro</td>
+        <td>84.87%</td>
+        <td>0.6702</td>
+        <td>119</td>
+        <td>91.49%</td>
+        <td>0.8120</td>
+        <td>47</td>
+      </tr>
+
+
+      <tr>
+        <td>MiniMax-M2.7</td>
+        <td>83.48%</td>
+        <td>0.6445</td>
+        <td>115</td>
+        <td>63.64%</td>
+        <td>0.4323</td>
+        <td>44</td>
+      </tr>
+
+
+      <tr>
+        <td>DeepSeek-V3</td>
+        <td>82.50%</td>
+        <td>0.6248</td>
+        <td>120</td>
+        <td>97.92%</td>
+        <td>0.9574</td>
+        <td>48</td>
+      </tr>
+
         </tbody>
       </table>
     </div>
-    <div style="margin-top:10px;font-size:11px;color:#64748b;line-height:1.8">
-      <strong>*</strong> M3 在 107/120 条上有有效判定（13 条因速率限制 2062 错误未能完成 BoN=9 投票，投票数不足多数的已作缺失处理）。<br>
-      <strong>†</strong> M2.7 在 115/120 条上有有效判定（5 条缺失）。<br>
-      DeepSeek-V3 的预测直接取自 EduGuard 官方 Results（BoN=9 裁决），无需调 API。
-    </div>
-  </section>
 
-  <!-- Kappa bar chart -->
-  <section>
-    <div class="section-title">κ 值对比可视化</div>
-    <div class="two-col">
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:#374151">Harmfulness 判定 κ（vs Opus 金标）</div>
-        <div class="bar-chart">
-          <div class="bar-row">
-            <div class="bar-row-label" style="color:var(--m3-color)">MiniMax-M3</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:76.41%;background:var(--m3-color)">0.764</div>
-            </div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-row-label" style="color:var(--m27-color)">MiniMax-M2.7</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:64.45%;background:var(--m27-color)">0.645</div>
-            </div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-row-label" style="color:var(--dsv3-color)">DeepSeek-V3</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:62.48%;background:var(--dsv3-color)">0.625</div>
-            </div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-row-label" style="color:#94a3b8">论文 DSv3†</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:88.2%;background:#94a3b8">0.882</div>
-            </div>
-          </div>
-        </div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:8px">† 论文值为 DeepSeek-V3 vs 人类标注（不同金标）</div>
-      </div>
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:#374151">拒答质量三档 κ（vs Opus 金标）</div>
-        <div class="bar-chart">
-          <div class="bar-row">
-            <div class="bar-row-label" style="color:var(--m3-color)">MiniMax-M3</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:77.07%;background:var(--m3-color)">0.771</div>
-            </div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-row-label" style="color:var(--m27-color)">MiniMax-M2.7</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:43.23%;background:var(--m27-color)">0.432</div>
-            </div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-row-label" style="color:var(--dsv3-color)">DeepSeek-V3</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:95.74%;background:var(--dsv3-color)">0.957</div>
-            </div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-row-label" style="color:#94a3b8">论文 DSv3†</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:87.4%;background:#94a3b8">0.874</div>
-            </div>
-          </div>
-        </div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:8px">† 论文值为 DeepSeek-V3 vs 人类标注（不同金标）</div>
-      </div>
+    <div class="card">
+      <h3>输出文件</h3>
+      <div>judge_vs_gold_summary.json：/home/likefallwind/code/edubenchmark/reports/re_benchmark_v1/experiments/eduguard_judge_calibration/judge_vs_gold_summary.json</div>
+      <div>judgements.jsonl：/home/likefallwind/code/edubenchmark/reports/re_benchmark_v1/experiments/eduguard_judge_calibration/judgements.jsonl</div>
     </div>
-  </section>
 
-  <!-- Harm Confusion Matrices -->
-  <section>
-    <div class="section-title">混淆矩阵 — Harmfulness 判定 <span class="tag">行 = Opus 金标，列 = Judge 预测</span></div>
-    <div class="cm-grid">
-      <!-- M3 -->
-      <div class="cm-card">
-        <div class="cm-title"><span class="dot dot-m3"></span>MiniMax-M3（n=107）</div>
-        <table class="cm-table">
-          <tr>
-            <td></td>
-            <th colspan="2" style="text-align:center;background:#eff6ff;color:#1e40af;">→ 预测</th>
-          </tr>
-          <tr>
-            <th style="text-align:right;background:none;border:none;color:#64748b;">金标 ↓</th>
-            <th>harmful</th>
-            <th>harmless</th>
-          </tr>
-          <tr>
-            <td class="axis-label">harmful</td>
-            <td class="cell-tp">35</td>
-            <td class="cell-fn">10</td>
-          </tr>
-          <tr>
-            <td class="axis-label">harmless</td>
-            <td class="cell-fp">2</td>
-            <td class="cell-tn">60</td>
-          </tr>
-        </table>
-        <div style="margin-top:10px;font-size:11px;color:#64748b;line-height:1.6">
-          漏判率（FNR）= 10/45 = <strong>22.2%</strong><br>
-          误判率（FPR）= 2/62 = <strong>3.2%</strong><br>
-          <span style="color:#10b981;font-weight:600">严格口径，漏检少</span>
-        </div>
-      </div>
-      <!-- M2.7 -->
-      <div class="cm-card">
-        <div class="cm-title"><span class="dot dot-m27"></span>MiniMax-M2.7（n=115）</div>
-        <table class="cm-table">
-          <tr>
-            <td></td>
-            <th colspan="2" style="text-align:center;background:#fffbeb;color:#92400e;">→ 预测</th>
-          </tr>
-          <tr>
-            <th style="text-align:right;background:none;border:none;color:#64748b;">金标 ↓</th>
-            <th>harmful</th>
-            <th>harmless</th>
-          </tr>
-          <tr>
-            <td class="axis-label">harmful</td>
-            <td class="cell-tp">31</td>
-            <td class="cell-fn">17</td>
-          </tr>
-          <tr>
-            <td class="axis-label">harmless</td>
-            <td class="cell-fp">2</td>
-            <td class="cell-tn">65</td>
-          </tr>
-        </table>
-        <div style="margin-top:10px;font-size:11px;color:#64748b;line-height:1.6">
-          漏判率（FNR）= 17/48 = <strong>35.4%</strong><br>
-          误判率（FPR）= 2/67 = <strong>3.0%</strong><br>
-          <span style="color:#f59e0b;font-weight:600">漏检率偏高</span>
-        </div>
-      </div>
-      <!-- DSv3 -->
-      <div class="cm-card">
-        <div class="cm-title"><span class="dot dot-dsv3"></span>DeepSeek-V3（n=120）</div>
-        <table class="cm-table">
-          <tr>
-            <td></td>
-            <th colspan="2" style="text-align:center;background:#ecfdf5;color:#065f46;">→ 预测</th>
-          </tr>
-          <tr>
-            <th style="text-align:right;background:none;border:none;color:#64748b;">金标 ↓</th>
-            <th>harmful</th>
-            <th>harmless</th>
-          </tr>
-          <tr>
-            <td class="axis-label">harmful</td>
-            <td class="cell-tp">33</td>
-            <td class="cell-fn">16</td>
-          </tr>
-          <tr>
-            <td class="axis-label">harmless</td>
-            <td class="cell-fp">5</td>
-            <td class="cell-tn">66</td>
-          </tr>
-        </table>
-        <div style="margin-top:10px;font-size:11px;color:#64748b;line-height:1.6">
-          漏判率（FNR）= 16/49 = <strong>32.7%</strong><br>
-          误判率（FPR）= 5/71 = <strong>7.0%</strong><br>
-          <span style="color:#64748b;font-weight:600">宽松口径，漏检较多</span>
-        </div>
-      </div>
+    <div class="footer">
+      <div>更新时间（本地）：2026-06-15 09:25:41</div>
+      <div class="updated">已根据最新 `judge_vs_gold_summary.json` 重生成</div>
     </div>
-    <div style="margin-top:12px;font-size:11px;color:#64748b;">
-      <strong>FNR（漏判率）</strong>= 将 harmful 判成 harmless 的比例，高则低估 ASR（攻击成功率）。<strong>FPR（误判率）</strong>= 将 harmless 判成 harmful 的比例，高则误报无害回复。
-    </div>
-  </section>
-
-  <!-- RQ Confusion Matrices -->
-  <section>
-    <div class="section-title">混淆矩阵 — 拒答质量三档 <span class="tag">行 = Opus 金标，列 = Judge 预测</span></div>
-    <div class="rq-cm-grid">
-      <!-- M3 -->
-      <div class="cm-card">
-        <div class="cm-title"><span class="dot dot-m3"></span>MiniMax-M3（n=42）</div>
-        <table class="rq-table">
-          <tr>
-            <td></td>
-            <th>→ edu</th><th>→ std</th><th>→ flimsy</th>
-          </tr>
-          <tr>
-            <td class="axis-label">edu</td>
-            <td class="rq-cell-diag">23</td>
-            <td class="rq-cell-zero">0</td>
-            <td class="rq-cell-err">3</td>
-          </tr>
-          <tr>
-            <td class="axis-label">std</td>
-            <td class="rq-cell-err">1</td>
-            <td class="rq-cell-diag">14</td>
-            <td class="rq-cell-err">1</td>
-          </tr>
-          <tr>
-            <td class="axis-label">flimsy</td>
-            <td class="rq-cell-zero">0</td>
-            <td class="rq-cell-zero">0</td>
-            <td style="background:#f1f5f9;color:#94a3b8;font-size:11px">0 (n=1)</td>
-          </tr>
-        </table>
-        <div style="margin-top:10px;font-size:11px;color:#64748b;line-height:1.6">
-          主要误差：educational → flimsy (3条)<br>
-          κ=0.771，整体较稳定
-        </div>
-      </div>
-      <!-- M2.7 -->
-      <div class="cm-card">
-        <div class="cm-title"><span class="dot dot-m27"></span>MiniMax-M2.7（n=44）</div>
-        <table class="rq-table">
-          <tr>
-            <td></td>
-            <th>→ edu</th><th>→ std</th><th>→ flimsy</th>
-          </tr>
-          <tr>
-            <td class="axis-label">edu</td>
-            <td class="rq-cell-diag">24</td>
-            <td class="rq-cell-zero">0</td>
-            <td class="rq-cell-err">2</td>
-          </tr>
-          <tr>
-            <td class="axis-label">std</td>
-            <td class="rq-cell-zero">0</td>
-            <td class="rq-cell-diag">4</td>
-            <td style="background:#fca5a5;color:#7f1d1d;font-weight:800">14</td>
-          </tr>
-          <tr>
-            <td class="axis-label">flimsy</td>
-            <td class="rq-cell-zero">0</td>
-            <td class="rq-cell-zero">0</td>
-            <td style="background:#f1f5f9;color:#94a3b8;font-size:11px">0 (n=1)</td>
-          </tr>
-        </table>
-        <div style="margin-top:10px;font-size:11px;color:#ef4444;line-height:1.6;font-weight:600">
-          致命误差：standard → flimsy (14/18 = 78%)<br>
-          M2.7 系统性下调拒答质量等级
-        </div>
-      </div>
-      <!-- DSv3 -->
-      <div class="cm-card">
-        <div class="cm-title"><span class="dot dot-dsv3"></span>DeepSeek-V3（n=48）</div>
-        <table class="rq-table">
-          <tr>
-            <td></td>
-            <th>→ edu</th><th>→ std</th><th>→ flimsy</th>
-          </tr>
-          <tr>
-            <td class="axis-label">edu</td>
-            <td class="rq-cell-diag">29</td>
-            <td class="rq-cell-zero">0</td>
-            <td class="rq-cell-zero">0</td>
-          </tr>
-          <tr>
-            <td class="axis-label">std</td>
-            <td class="rq-cell-err">1</td>
-            <td class="rq-cell-diag">17</td>
-            <td class="rq-cell-zero">0</td>
-          </tr>
-          <tr>
-            <td class="axis-label">flimsy</td>
-            <td class="rq-cell-zero">0</td>
-            <td class="rq-cell-zero">0</td>
-            <td class="rq-cell-diag">1</td>
-          </tr>
-        </table>
-        <div style="margin-top:10px;font-size:11px;color:#10b981;line-height:1.6;font-weight:600">
-          近乎完美（1条误判）<br>
-          κ=0.957，与论文值 0.874 高度一致
-        </div>
-      </div>
-    </div>
-    <div style="margin-top:12px;font-size:11px;color:#64748b;">
-      <strong>edu</strong> = educational_refusal（教育性拒答），<strong>std</strong> = standard_refusal（标准拒答），<strong>flimsy</strong> = flimsy_refusal（敷衍拒答）。拒答质量仅统计被 Opus 判为 harmful 且模型给出拒答的条目。
-    </div>
-  </section>
-
-  <!-- Key Findings -->
-  <section>
-    <div class="section-title">关键发现</div>
-    <ul class="finding-list">
-      <li class="good">
-        <span class="finding-icon">①</span>
-        <strong>MiniMax-M3 在 Harmfulness 判定上超过 DeepSeek-V3（κ 0.764 vs 0.625）。</strong>
-        M3 更接近 Opus 的"严格口径"——漏判率仅 22.2%，而 DeepSeek-V3 达 32.7%。对"软壳硬核"类有害回复（虚构外壳下给出可操作内容）M3 更能识别。M3 是三个 judge 中 harm 判定最准的，<strong>有潜力成为 EduGuard-Bench 的首选 harm judge</strong>。
-      </li>
-      <li class="good">
-        <span class="finding-icon">②</span>
-        <strong>DeepSeek-V3 在拒答质量三档上近乎完美（κ=0.957），且与论文 0.874 高度一致。</strong>
-        48 条中仅 1 条误判（standard→educational），说明 Opus 金标与 DeepSeek-V3 在拒答分级口径上高度吻合。拒答质量评估应继续选用 DeepSeek-V3 或与其口径对齐的模型。
-      </li>
-      <li class="warn">
-        <span class="finding-icon">③</span>
-        <strong>MiniMax-M3 拒答质量 κ=0.771，合格但非最优。</strong>
-        主要误差来自将 educational_refusal 误归为 flimsy（3/26=11.5%）。若单独作为拒答质量 judge，会低估教育性拒答的质量，可通过在 prompt 中强化"教育性内容 + 拒答" = educational_refusal 的定义来改善。
-      </li>
-      <li class="bad">
-        <span class="finding-icon">④</span>
-        <strong>MiniMax-M2.7 拒答质量严重失准（κ=0.432），不建议单独用于三档分类。</strong>
-        核心缺陷：18 条 standard_refusal 中有 14 条（78%）被错判为 flimsy_refusal——M2.7 系统性地将正常拒答降级为"敷衍拒答"，会大幅虚高"拒答质量差"的比例，严重影响 ASR 评估结论。Harm κ=0.645 属于中等水平，尚可接受但不及 M3。
-      </li>
-      <li class="info">
-        <span class="finding-icon">⑤</span>
-        <strong>Harm κ 的"Opus vs 人类" gap 有合理解释，不是标注质量问题。</strong>
-        DeepSeek-V3 对 Opus 的 harm κ（0.625）低于论文 DeepSeek-V3 对人类的 κ（0.882），因为 Opus 在 harm 判定上比 DeepSeek-V3 更严格（49 vs 38 harmful），分歧系统性地集中在两类场景：①虚构/角色扮演外壳下仍给出可操作有害内容；②创意写作类（villain/宣言/美化暴力）是否算攻击成功。这是判断哲学分歧，而非标注错误。
-      </li>
-    </ul>
-  </section>
-
-  <!-- Recommendation -->
-  <section>
-    <div class="section-title">Judge 选型建议</div>
-    <div class="two-col">
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">场景：EduGuard-Bench P2 全量评测</div>
-        <table style="width:100%;font-size:12px;border-collapse:collapse">
-          <tr style="border-bottom:1px solid #e2e8f0">
-            <td style="padding:8px 4px;color:#64748b;width:100px">Harm 判定</td>
-            <td style="padding:8px 4px;font-weight:700;color:var(--m3-color)">MiniMax-M3</td>
-            <td style="padding:8px 4px;color:#64748b">κ=0.764，漏判率最低</td>
-          </tr>
-          <tr style="border-bottom:1px solid #e2e8f0">
-            <td style="padding:8px 4px;color:#64748b">拒答质量</td>
-            <td style="padding:8px 4px;font-weight:700;color:var(--dsv3-color)">DeepSeek-V3</td>
-            <td style="padding:8px 4px;color:#64748b">κ=0.957，近乎完美</td>
-          </tr>
-          <tr>
-            <td style="padding:8px 4px;color:#64748b">避免</td>
-            <td style="padding:8px 4px;font-weight:700;color:var(--m27-color)">MiniMax-M2.7</td>
-            <td style="padding:8px 4px;color:#ef4444">拒答质量严重失真</td>
-          </tr>
-        </table>
-      </div>
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">下一步</div>
-        <ul style="font-size:12px;color:#374151;line-height:2;padding-left:16px">
-          <li>补全 M3 缺失的 13 条（重跑 judge step 可自动续跑）</li>
-          <li>对 harm 边界案例做第二标注者复核，明确 Opus 严格口径是否合理</li>
-          <li>优化 M3 拒答质量 prompt 中 educational_refusal 定义，减少误归 flimsy</li>
-          <li>若要引入 M3 当全功能 judge，建议 harm + 拒答质量分两套 prompt 独立跑</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- Limitations -->
-  <section>
-    <div class="section-title">局限声明</div>
-    <div class="alert alert-yellow">
-      本实验金标由 <strong>Claude Opus 4.8 单一模型标注</strong>，非人类标注、非多标注者，存在模型自身偏见。Harm κ 的高低取决于"Opus 严格口径"与真实人类判断的距离，尚未验证。此外，M3/M2.7 各有 5–13 条因限速未能完成判定，结果基于 107/115 条而非全量 120 条。拒答质量中 flimsy 仅 1 条，三档分类对 flimsy 的分辨力本实验无法充分检验。
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <div class="footer">
-    实验目录：reports/re_benchmark_v1/experiments/eduguard_judge_calibration/ &nbsp;·&nbsp;
-    原始数据：judgements.jsonl · judge_vs_gold_summary.json &nbsp;·&nbsp;
-    生成于 2026-06-14
   </div>
-
-</div>
 </body>
 </html>
