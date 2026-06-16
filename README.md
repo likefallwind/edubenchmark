@@ -103,18 +103,28 @@ python scripts/eval_benchmark.py --benchmark mmlu_pro --model MiniMax-M3 --concu
 
 > ⚠️ 历史坑:早期为非流式请求,`timeout=300` 实际变成"总生成必须在 300s 内完成",导致 M3 难题大面积 `The read operation timed out` 且每条还白白重试 3 次(~900s)。改流式后此问题消除。
 
-### 换模型 / 换 provider
+### 支持的模型 / provider
 
-SSE 解析走 OpenAI 标准格式,换任意 OpenAI 兼容服务只改环境变量,**不用动代码**:
+`--model`(以及 `--extractor-model` / `JUDGE_MODEL`)按**模型名前缀**自动路由到对应后端,无需改代码——provider 注册表在 `scripts/eval/providers.py`。当前支持:
+
+| provider | 模型名 | 所需环境变量 | 端点 |
+|---|---|---|---|
+| **minimax** | `MiniMax-M3`(视觉,默认被测)、`MiniMax-M2.7`(纯文本,默认抽取/judge) | `MINIMAX_API_KEY` | `https://api.minimaxi.com/v1`(可经 `MINIMAX_BASE_URL` 覆盖) |
+| **gateway** | `doubao-seed-2.0-pro`、`doubao-seed-2.0-lite`、`glm-5.1`(及任意 `doubao*` / `glm*`) | `API_GATEWAY` | 本地中转 `http://127.0.0.1:8111/v1`(可经 `API_GATEWAY_BASE_URL` 覆盖) |
+| **deepseek** | `deepseek-v4-pro`、`deepseek-v4-flash`(官方只有这两档,无 `deepseek-v4-lite`) | `DEEPSEEK_API` | `https://api.deepseek.com`(可经 `DEEPSEEK_BASE_URL` 覆盖) |
+
+前缀无法匹配的模型名默认落到 gateway。注意 gateway 也单独暴露了一个同名 `deepseek-v4-pro`,与官方直连不同;要走 gateway 那份需 `--provider gateway` 显式指定。
+
+> 被测模型与抽取/judge 模型用**独立 client**,可分属不同 provider(如被测走 deepseek、judge 留在 minimax),所以跨 provider 评测时对应的多个 key 都要设。
 
 ```bash
-MINIMAX_BASE_URL=https://api.deepseek.com/v1 \
-MINIMAX_CHAT_PATH=/chat/completions \
-MINIMAX_API_KEY=<key> \
-python scripts/eval_benchmark.py --benchmark mmlu_pro --model deepseek-reasoner --limit 50
+# 例:被测 deepseek-v4-pro(DeepSeek 官方),抽取/judge 仍用 MiniMax
+DEEPSEEK_API=<key> MINIMAX_API_KEY=<key> \
+python scripts/eval_benchmark.py --benchmark mmlu_pro --model deepseek-v4-pro --limit 50
 ```
 
-`MINIMAX_CHAT_PATH` 默认 `/text/chatcompletion_v2`(MiniMax),标准 OpenAI 服务设为 `/chat/completions`。
+**接任意其它 OpenAI 兼容服务(未注册的)**:用逃生口环境变量,不用动代码——
+`MINIMAX_BASE_URL` + `MINIMAX_CHAT_PATH`(默认 `/text/chatcompletion_v2`,标准 OpenAI 服务设为 `/chat/completions`)指向目标端点即可;或新增一个 provider 时在 `providers.py` 注册一条。
 
 ### benchmark 专项说明
 

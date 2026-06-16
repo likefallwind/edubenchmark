@@ -43,14 +43,19 @@ def _is_rate_limit_error(error: str | None) -> bool:
     """Heuristic: does this error string look like API throttling (vs. a real bug)?
 
     Covers HTTP 429 and the MiniMax ``base_resp`` rate-limit status codes 1002
-    (QPS/concurrency limit) and 1039 (TPM limit), plus generic phrasings.
+    (QPS/concurrency limit), 1039 (TPM limit), and 2062 (Token Plan rate limit),
+    plus generic English/Chinese phrasings.
     """
     if not error:
         return False
     low = error.lower()
-    if "http 429" in low or "too many requests" in low or "rate limit" in low or "限流" in low:
+    if "http 429" in low or "too many requests" in low or "rate limit" in low:
         return True
-    return "base_resp 1002" in low or "base_resp 1039" in low
+    # MiniMax surfaces throttling in Chinese: "限流" (throttled) and the Token
+    # Plan quota message "已达到 Token Plan 速率限制".
+    if "限流" in error or "速率限制" in error or "token plan" in low:
+        return True
+    return "base_resp 1002" in low or "base_resp 1039" in low or "base_resp 2062" in low
 
 
 class RateLimitGuard:
