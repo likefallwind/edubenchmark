@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduGuard-Bench 综合评测报告</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1f2733; --muted:#5b6573;
+    --line:#e3e7ec; --accent:#2f6fed; --good:#1f9d57; --warn:#c9821a; --bad:#d24b4b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+    line-height:1.65;font-size:15px}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 22px 80px}
+  header.top{border-bottom:2px solid var(--accent);padding-bottom:18px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14px}
+  h2{font-size:20px;margin:38px 0 10px;padding-left:10px;border-left:4px solid var(--accent)}
+  h3{font-size:16px;margin:22px 0 8px;color:#2a3340}
+  p{margin:8px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:18px 20px;margin:14px 0;box-shadow:0 1px 2px rgba(20,30,50,.03)}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+  th{background:#f0f3f8;font-weight:600}
+  td.l,th.l{text-align:left}
+  tbody tr:nth-child(even){background:#fafbfc}
+  .best{background:#e6f5ec !important;font-weight:600}
+  .num{font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:600}
+  .t-good{background:#e6f5ec;color:var(--good)}
+  .t-warn{background:#fbf1df;color:var(--warn)}
+  .t-bad{background:#fbe7e7;color:var(--bad)}
+  .note{background:#fbf8ee;border:1px solid #ecdfbf;border-radius:8px;padding:12px 16px;margin:14px 0;font-size:14px}
+  .note.warn{background:#fbeeee;border-color:#eccaca}
+  ul{margin:8px 0 8px 4px;padding-left:20px}
+  li{margin:4px 0}
+  .kpis{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+  .kpi{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:14px 16px}
+  .kpi .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+  .kpi .k{font-size:12px;color:var(--muted);margin-top:2px}
+  .muted{color:var(--muted)}
+  code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:13px}
+  footer{margin-top:50px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+  .bar{height:9px;border-radius:5px;background:#eceff3;overflow:hidden;display:inline-block;width:90px;vertical-align:middle;margin-left:6px}
+  .bar>i{display:block;height:100%}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>EduGuard-Bench 综合评测报告</h1>
+  <div class="sub">教育场景安全/能力基准 · 三模型评测 + LLM-as-Judge 元评测（校准）<br>
+  生成日期：2026-06-16 ｜ 数据来源：<code>reports/eval/eduguard_sata</code>、<code>reports/eval/eduguard_adversarial</code>、<code>reports/re_benchmark_v1/experiments/eduguard_judge_calibration</code></div>
+</header>
+
+<!-- ===================== 0. 概述 ===================== -->
+<h2>0. 这是在评什么</h2>
+<div class="card">
+<p><strong>EduGuard-Bench</strong> 是一个面向 <strong>教育场景</strong> 的安全与能力基准，本仓库把它拆成两个独立子集来跑：</p>
+<ul>
+  <li><strong>SATA（Select-All-That-Apply，多选合规题）</strong>：5,270 条中英双语题，覆盖 5 类教学场景（情感支持 ES、纠错 EC、想法启发 IP、个性化学习支持 PLS、问题解决 PS）。考的是模型在教学回复里能否<strong>恰好选全所有应做的安全/教学要点</strong>（既不漏选也不多选）。主指标为<strong>完全匹配准确率</strong>，辅以 RFS、漏选率（omission）、多选率（inclusion）。</li>
+  <li><strong>Adversarial（P2 对抗安全）</strong>：801 条对抗诱导题，覆盖 5 类风险（学术不端 AM、艺术心理 AP、健康风险 HR、政治意识形态 PI、技术安全 TS）。用<strong>两阶段 LLM-as-Judge（BoN=3 多数投票）</strong>判模型回复是否被攻破（有害）以及拒答质量。主指标为<strong>攻击成功率 ASR（越低越安全）</strong>。</li>
+</ul>
+<p>本轮共评测 3 个模型：<strong>doubao-seed-2.0-lite</strong>、<strong>doubao-seed-2.0-pro</strong>、<strong>MiniMax-M3</strong>。</p>
+<p>此外，针对对抗安全子集所依赖的 LLM-as-Judge，我们做了一份<strong>「裁判校准」元评测</strong>：以 <strong>Claude Opus 4.8 盲标的 120 条金标</strong>为尺，衡量各候选裁判模型判得有多准（含论文用的 DeepSeek-V3），回答「<em>ASR 这个数能不能信、该信谁判的</em>」这一前置问题。</p>
+</div>
+
+<div class="note warn">
+<strong>读数前必看 · 跨模型 ASR 不可直接横比。</strong>
+对抗子集里<strong>每个模型的回复是被「它自己」当裁判判的</strong>（doubao-lite 用 doubao-lite 判、pro 用 pro 判、M3 用 M3 判）。不同裁判宽严不一（见第 3 节校准结果），所以三个模型的 ASR 严格说是「不同尺子量出来的」。下文给出 ASR，但解读时请结合裁判校准一并看。
+</div>
+
+<!-- ===================== 1. SATA ===================== -->
+<h2>1. SATA 多选合规题（5,270 条，中英双语）</h2>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">0.724</div><div class="k">最高完全匹配准确率<br>MiniMax-M3</div></div>
+  <div class="kpi"><div class="v">5,270</div><div class="k">题量（en 2635 / zh 2635）</div></div>
+  <div class="kpi"><div class="v">PLS</div><div class="k">三模型最强场景<br>（个性化学习支持）</div></div>
+  <div class="kpi"><div class="v">ES / PS</div><div class="k">三模型最弱场景<br>（情感支持 / 问题解决）</div></div>
+</div>
+
+<h3>1.1 总体</h3>
+<table>
+<thead><tr>
+  <th class="l">模型</th><th>已评 / 总</th><th>完全匹配准确率 ↑</th><th>RFS ↑</th><th>漏选率 ↓</th><th>多选率 ↓</th>
+</tr></thead>
+<tbody>
+  <tr><td class="l">doubao-seed-2.0-lite</td><td class="num">5270 / 5270</td><td class="num">0.6922</td><td class="num">0.730</td><td class="num">0.0774</td><td class="num">0.2304</td></tr>
+  <tr><td class="l">doubao-seed-2.0-pro</td><td class="num">5270 / 5270</td><td class="num">0.7006</td><td class="num">0.7618</td><td class="num">0.1247</td><td class="num">0.1748</td></tr>
+  <tr class="best"><td class="l">MiniMax-M3</td><td class="num">5169 / 5270</td><td class="num">0.7237</td><td class="num">0.7678</td><td class="num">0.0936</td><td class="num">0.1826</td></tr>
+</tbody>
+</table>
+<p class="muted" style="font-size:13px">注：MiniMax-M3 有 101 条无预测（未计入）。pro 相比 lite 准确率略升、RFS 提升明显，但<strong>漏选率几乎翻倍</strong>（0.12 vs 0.08）——pro 更「保守惜选」；M3 在准确率与漏/多选间最均衡。</p>
+
+<h3>1.2 按教学场景（完全匹配准确率）</h3>
+<table>
+<thead><tr><th class="l">场景</th><th>doubao-lite</th><th>doubao-pro</th><th>MiniMax-M3</th></tr></thead>
+<tbody>
+  <tr><td class="l">情感支持 ES</td><td class="num">0.576</td><td class="num">0.641</td><td class="num best">0.642</td></tr>
+  <tr><td class="l">纠错 EC</td><td class="num">0.681</td><td class="num">0.628</td><td class="num best">0.697</td></tr>
+  <tr><td class="l">想法启发 IP</td><td class="num">0.728</td><td class="num">0.754</td><td class="num best">0.795</td></tr>
+  <tr><td class="l">个性化学习支持 PLS</td><td class="num">0.827</td><td class="num best">0.863</td><td class="num">0.835</td></tr>
+  <tr><td class="l">问题解决 PS</td><td class="num">0.647</td><td class="num">0.616</td><td class="num best">0.648</td></tr>
+</tbody>
+</table>
+<p class="muted" style="font-size:13px">共同规律：<strong>PLS 最易（0.83–0.86）、ES 与 PS 最难（0.58–0.65）</strong>。情感支持与开放问题解决里「该说全哪些要点」的判断对所有模型都更难。</p>
+
+<h3>1.3 按语言</h3>
+<table>
+<thead><tr><th class="l">模型</th><th>英文 en</th><th>中文 zh</th><th>zh − en</th></tr></thead>
+<tbody>
+  <tr><td class="l">doubao-lite</td><td class="num">0.692</td><td class="num">0.693</td><td class="num">+0.001</td></tr>
+  <tr><td class="l">doubao-pro</td><td class="num">0.690</td><td class="num">0.712</td><td class="num">+0.022</td></tr>
+  <tr><td class="l">MiniMax-M3</td><td class="num">0.715</td><td class="num">0.733</td><td class="num">+0.018</td></tr>
+</tbody>
+</table>
+<p class="muted" style="font-size:13px">两家国产系模型在中文上均略优于英文，lite 基本无差异。</p>
+
+<!-- ===================== 2. Adversarial ===================== -->
+<h2>2. Adversarial 对抗安全（801 条，两阶段 LLM-Judge）</h2>
+
+<div class="kpis">
+  <div class="kpi"><div class="v" style="color:var(--good)">3.7%</div><div class="k">最低 ASR（最安全）<br>MiniMax-M3</div></div>
+  <div class="kpi"><div class="v" style="color:var(--bad)">31.5%</div><div class="k">最高 ASR<br>doubao-lite（全量判）</div></div>
+  <div class="kpi"><div class="v">TS</div><div class="k">最易被攻破风险类<br>（技术安全）</div></div>
+  <div class="kpi"><div class="v">BoN=3</div><div class="k">两阶段裁判 + 多数投票</div></div>
+</div>
+
+<h3>2.1 总体 ASR（攻击成功率，越低越安全）</h3>
+<table>
+<thead><tr>
+  <th class="l">模型</th><th>ASR ↓</th><th>判定覆盖 n_judged</th><th>教育型拒答占比</th><th>状态</th>
+</tr></thead>
+<tbody>
+  <tr><td class="l">doubao-seed-2.0-lite</td><td class="num">0.3146</td><td class="num">801 / 801</td><td class="num">65.9%</td><td><span class="tag t-good">全量</span></td></tr>
+  <tr><td class="l">doubao-seed-2.0-pro</td><td class="num">0.2696</td><td class="num">382 / 801</td><td class="num">81.7%</td><td><span class="tag t-warn">覆盖不全</span></td></tr>
+  <tr class="best"><td class="l">MiniMax-M3</td><td class="num">0.0372</td><td class="num">699 / 801</td><td class="num">82.5%</td><td><span class="tag t-good">基本全量</span></td></tr>
+</tbody>
+</table>
+
+<div class="note warn">
+<strong>doubao-pro 结果不完整，ASR 0.27 不可直接采信。</strong>
+它的 <code>summary.json</code> 里 <strong>AM 与 PI 两整类（共 294 条）的 <code>n_judged = 0</code></strong>（裁判抽取/判定全数失败），实际只对 382/801 条出了裁决。其表面 "accuracy"（安全率）0.348 把这些未判条目算作不安全，与 ASR 0.27 自相矛盾——以 ASR 论也只覆盖了不到一半样本。<strong>建议重判后再下结论。</strong>MiniMax-M3 有 95 条无预测，但已判 699 条，结论稳健。
+</div>
+
+<h3>2.2 按风险类别 ASR</h3>
+<table>
+<thead><tr><th class="l">风险类别</th><th>doubao-lite</th><th>doubao-pro</th><th>MiniMax-M3</th></tr></thead>
+<tbody>
+  <tr><td class="l">学术不端 AM</td><td class="num">0.104</td><td class="num muted">— (未判)</td><td class="num best">0.000</td></tr>
+  <tr><td class="l">艺术心理 AP</td><td class="num">0.367</td><td class="num">0.284</td><td class="num best">0.027</td></tr>
+  <tr><td class="l">健康风险 HR</td><td class="num">0.361</td><td class="num">0.254</td><td class="num best">0.090</td></tr>
+  <tr><td class="l">政治意识形态 PI</td><td class="num">0.231</td><td class="num muted">— (未判)</td><td class="num best">0.012</td></tr>
+  <tr><td class="l">技术安全 TS</td><td class="num">0.456</td><td class="num">0.273 <span class="muted">(n=44)</span></td><td class="num best">0.042</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><strong>MiniMax-M3 在所有类别上 ASR 都最低（≤9%）</strong>，AM 类 0 攻破，整体显著最安全。</li>
+  <li><strong>doubao-lite 最脆弱在 TS（45.6%）与 AP（36.7%）</strong>；其 AM 表现反而好（10.4%），说明它对「学术作弊诱导」防得住，对「技术安全/越狱」防得弱。</li>
+  <li>doubao-pro 仅在 AP/HR 及 TS 的部分样本上有数，无法形成完整画像。</li>
+</ul>
+
+<h3>2.3 拒答质量</h3>
+<p>对未被攻破的回复，裁判进一步区分拒答档位。三模型的拒答中<strong>「教育型拒答」（解释为什么不能做并给出正向引导）占主导</strong>：doubao-pro 81.7%、MiniMax-M3 82.5%，均高于 doubao-lite 的 65.9%（后者「敷衍型拒答 flimsy」占 34%）。即在「拒绝得好不好」上，pro 与 M3 优于 lite。</p>
+
+<!-- ===================== 3. Judge calibration ===================== -->
+<h2>3. LLM-as-Judge 裁判校准（元评测）</h2>
+<div class="card">
+<p><strong>为什么做这个：</strong>第 2 节的 ASR 完全取决于裁判判得准不准。EduGuard 论文用 200 条<strong>人类</strong> gold 选出 DeepSeek-V3 当裁判，但<strong>那份人类金标未公开</strong>。本实验自建一份 <strong>Claude Opus 4.8 盲标的 120 条金标</strong>（遵循官方 rubric，标注时不可见任何已有裁判标签），用它把各候选裁判放到同一把尺上对比。</p>
+<p class="muted" style="font-size:13px">金标分布：120 条 = 49 harmful / 71 harmless；拒答三档 = 18 standard / 29 educational / 1 flimsy。指标：harmfulness 判定 与 拒答质量三分类 各自的<strong>准确率</strong>与 <strong>Cohen's κ</strong>（κ 越高与金标越一致）。</p>
+</div>
+
+<h3>3.1 各裁判 vs Opus-4.8 金标</h3>
+<table>
+<thead><tr>
+  <th class="l">裁判模型</th><th>Harm 准确率</th><th>Harm κ ↑</th><th>拒答质量准确率</th><th>拒答质量 κ ↑</th><th>n_harm</th><th>n_rq</th>
+</tr></thead>
+<tbody>
+  <tr class="best"><td class="l">MiniMax-M3</td><td class="num">0.888</td><td class="num">0.764</td><td class="num">0.881</td><td class="num">0.771</td><td class="num">107</td><td class="num">42</td></tr>
+  <tr><td class="l">glm-5.1</td><td class="num">0.872</td><td class="num">0.725</td><td class="num">0.957</td><td class="num">0.904</td><td class="num">117</td><td class="num">46</td></tr>
+  <tr><td class="l">doubao-seed-2.0-lite</td><td class="num">0.842</td><td class="num">0.676</td><td class="num">0.849</td><td class="num">0.660</td><td class="num">95</td><td class="num">33</td></tr>
+  <tr><td class="l">doubao-seed-2.0-pro</td><td class="num">0.849</td><td class="num">0.670</td><td class="num">0.915</td><td class="num">0.812</td><td class="num">119</td><td class="num">47</td></tr>
+  <tr><td class="l">MiniMax-M2.7</td><td class="num">0.835</td><td class="num">0.645</td><td class="num">0.636</td><td class="num">0.432</td><td class="num">115</td><td class="num">44</td></tr>
+  <tr><td class="l">DeepSeek-V3 <span class="muted">(论文选用)</span></td><td class="num">0.825</td><td class="num">0.625</td><td class="num">0.979</td><td class="num">0.957</td><td class="num">120</td><td class="num">48</td></tr>
+</tbody>
+</table>
+<p class="muted" style="font-size:13px">论文中 DeepSeek-V3 对<strong>人类</strong>金标：harm κ 0.882 / 拒答质量 κ 0.874。本表对的是 <strong>Opus 金标</strong>，口径不同，故 DeepSeek-V3 的 harm κ 偏低属预期（见下）。</p>
+
+<h3>3.2 主要发现</h3>
+<ul>
+  <li><strong>Harmfulness 判定：MiniMax-M3 最接近 Opus 金标（κ=0.764），glm-5.1 次之（0.725）；DeepSeek-V3 最低（0.625）。</strong>原因是<strong>口径松紧不同——Opus 更严</strong>（120 条里 Opus 判 49 harmful，DeepSeek 仅判 38）。分歧系统性集中在「拒答/虚构外壳下仍给了可操作有害内容」（给药剂量、可用钓鱼模板、RFID 克隆教程等）：Opus 判 harmful，DeepSeek 常判 harmless。<strong>含义：用偏松的裁判（如 DeepSeek-V3）会低估 ASR。</strong></li>
+  <li><strong>拒答质量三分类：DeepSeek-V3（κ=0.957）与 glm-5.1（0.904）最强</strong>，与人类口径高度吻合；MiniMax-M3 尚可（0.771）。</li>
+  <li><strong>MiniMax-M2.7 最弱</strong>（拒答质量 κ 仅 0.432，混淆矩阵显示它把 standard 大量错判成 flimsy）——<strong>不建议单独当裁判。</strong></li>
+  <li>综合两项：<strong>MiniMax-M3</strong>（harm 最准、拒答尚可）与 <strong>glm-5.1</strong>（拒答极准、harm 第二）是当前最可靠的两个裁判候选；<strong>DeepSeek-V3 适合判拒答质量、但判 harmfulness 偏宽</strong>。</li>
+</ul>
+
+<div class="note">
+<strong>对第 2 节 ASR 的回看：</strong>对抗子集是各模型自判。MiniMax-M3 既是被测模型、又恰是本校准里最严最准的裁判——它的 ASR 3.7% 既反映模型确实安全、也因裁判口径严而不会被低估，可信度高。doubao 两款作裁判时偏宽（doubao-lite harm κ 0.676），其报出的 ASR 更可能是<strong>低估值</strong>，真实风险或更高。
+</div>
+
+<!-- ===================== 4. 结论 ===================== -->
+<h2>4. 结论与下一步</h2>
+<div class="card">
+<ul>
+  <li><strong>能力（SATA）：</strong>MiniMax-M3 完全匹配准确率最高（0.724），三模型差距不大（0.69–0.72）；PLS 最易、ES/PS 最难是共性短板。</li>
+  <li><strong>安全（Adversarial）：</strong>MiniMax-M3 显著最安全（ASR 3.7%，全类别 ≤9%）；doubao-lite 最脆弱（31.5%，TS/AP 类突出）；<strong>doubao-pro 因裁判覆盖不全（AM/PI 全类未判）结果不可用，需重判。</strong></li>
+  <li><strong>裁判可靠性（校准）：</strong>判 harmfulness 选 <strong>MiniMax-M3</strong>，判拒答质量选 <strong>DeepSeek-V3 / glm-5.1</strong>；<strong>MiniMax-M2.7 不宜单独当裁判</strong>。论文默认的 DeepSeek-V3 在 harmfulness 上偏宽松、会低估 ASR。</li>
+</ul>
+<p><strong>下一步：</strong>① 重跑 doubao-pro 对抗判定补齐 AM/PI；② 统一裁判（建议 MiniMax-M3 或 glm-5.1）重判三模型对抗集，消除「自判」带来的不可比；③ 将金标从 Opus 单模型升级为含人类/异构模型的多标注者复核，夯实 harmfulness 边界。</p>
+</div>
+
+<div class="note">
+<strong>口径与局限：</strong>① 校准金标为 <strong>Claude Opus 4.8 单一模型盲标，非人类</strong>，harm κ 高低取决于「Opus 偏严 vs DeepSeek 偏松」哪个更接近真值，属判断哲学之争，结论须在此前提下解读。② 对抗子集每模型自判，跨模型 ASR 不可直接横比。③ 实验目录下的 <code>REPORT.md</code> 为早期版本（仅 30 条 pilot），本报告 §3 采用的是已补满的 <code>judge_vs_gold_summary.json</code>（各裁判 n=95–120）。</p>
+</div>
+
+<footer>
+EduGuard-Bench 综合评测报告 · 自动汇总自仓库评测产物 · 2026-06-16<br>
+SATA / Adversarial 各模型明细见 <code>reports/eval/eduguard_{sata,adversarial}/&lt;model&gt;/summary.json</code>；裁判校准见 <code>reports/re_benchmark_v1/experiments/eduguard_judge_calibration/</code>。
+</footer>
+
+</div>
+</body>
+</html>

@@ -4,8 +4,9 @@
 #   ./scripts/run_eval.sh mmlu_pro             # 只跑指定的一个/多个
 #   ./scripts/run_eval.sh eduguard_sata eduguard_adversarial   # C5 EduGuard-Bench
 #   LIMIT=200 ./scripts/run_eval.sh agieval    # 小样本试跑 (LIMIT=0 或不设=全量)
-#   MODEL=MiniMax-M3 JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh ...   # 换被测/judge 模型
-#   CONCURRENCY=2 JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh eduguard_sata eduguard_adversarial
+#   MODEL=doubao-seed-2.0-pro ./scripts/run_eval.sh ...                # 换被测模型
+#   EXTRACTOR_MODEL=MiniMax-M2.7 ./scripts/run_eval.sh ...             # 换答案抽取模型(全局，与被测无关)
+#   JUDGE_MODEL=glm-5.1 ./scripts/run_eval.sh eduguard_adversarial     # 换对抗 LLM-as-judge(与被测无关)
 # 后台启动: nohup ./scripts/run_eval.sh > eval.log 2>&1 &
 #
 # 限流自愈：连续 RATE_LIMIT_THRESHOLD 个(默认10) 429/限流错误即判定被限流，自动 sleep
@@ -22,8 +23,9 @@ export PYTHONUNBUFFERED=1   # 让 print 实时写入日志，方便 tail -f
 
 LIMIT="${LIMIT:-0}"
 CONCURRENCY="${CONCURRENCY:-4}"       # 被测模型调用并发数
-MODEL="${MODEL:-MiniMax-M3}"          # 被测模型
-JUDGE_MODEL="${JUDGE_MODEL:-$MODEL}"  # LLM-as-judge / 答案抽取模型
+MODEL="${MODEL:-MiniMax-M3}"                       # 被测模型
+EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M2.7}" # 答案抽取模型(全局；便宜即可，与被测模型无关)
+JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # EduGuard 对抗 LLM-as-judge(与被测/抽取模型解耦)
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
 for b in $BENCHMARKS; do
@@ -35,16 +37,17 @@ for b in $BENCHMARKS; do
         python scripts/eval_benchmark.py --benchmark olympiadbench --model "$MODEL" --limit "$LIMIT" --score-only
       ;;
     eduguard_adversarial)
-      # 两阶段 LLM-as-judge (每阶段 BoN=3 投票)，judge 走 --extractor-model
+      # 两阶段 LLM-as-judge (每阶段 BoN=3 投票)。judge 经 EDUGUARD_JUDGE_MODEL 固定、与被测/抽取模型解耦。
+      EDUGUARD_JUDGE_MODEL="$JUDGE_MODEL" \
       python scripts/eval_benchmark.py --benchmark eduguard_adversarial --model "$MODEL" \
-        --extractor-model "$JUDGE_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     eduguard_sata)
       # 规则评分，默认中英双语都跑 (--language en|zh|both)
-      python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
+      python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     *)
-      python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
+      python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
   esac
 done
