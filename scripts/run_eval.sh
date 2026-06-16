@@ -7,6 +7,10 @@
 #   MODEL=doubao-seed-2.0-pro ./scripts/run_eval.sh ...                # 换被测模型
 #   EXTRACTOR_MODEL=MiniMax-M2.7 ./scripts/run_eval.sh ...             # 换答案抽取模型(全局，与被测无关)
 #   JUDGE_MODEL=glm-5.1 ./scripts/run_eval.sh eduguard_adversarial     # 换对抗 LLM-as-judge(与被测无关)
+# 语言:eduguard_sata 默认中英双语都跑(--language both)。单语言是该评测独有的刻意选项,
+#   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
+#     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0
+#   注:官方 SATA 仅有英文作答基线、答案键按英文校准,要对标论文/官方请用 en;both 仅作跨语言一致性分析。
 # 后台启动: nohup ./scripts/run_eval.sh > eval.log 2>&1 &
 #
 # 限流自愈：连续 RATE_LIMIT_THRESHOLD 个(默认10) 429/限流错误即判定被限流，自动 sleep
