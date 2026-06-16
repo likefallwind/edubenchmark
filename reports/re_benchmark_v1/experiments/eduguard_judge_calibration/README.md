@@ -43,15 +43,28 @@ python3 scripts/experiments/eduguard_judge_eval.py score
 
 打印每个 judge（DeepSeek-V3 用数据里的现成标签 + `judgements.jsonl` 里的每个模型）对 Opus 金标的 **harmfulness 准确率/Cohen κ** 与 **拒答质量准确率/κ**，写 `judge_vs_gold_summary.json`（含混淆矩阵 + 论文 Table 2 参照值）。
 
+## 可用 judge 模型
+
+`--judges` 接受任何能被 `scripts/eval/providers.py` 解析的模型名——按前缀自动选后端，无需改代码：
+
+| 模型名 | 后端（provider） | 所需环境变量 |
+|---|---|---|
+| `MiniMax-M3` / `MiniMax-M2.7` | minimax 官方端点 | `MINIMAX_API_KEY` |
+| `doubao-seed-2.0-pro` / `doubao-seed-2.0-lite` / `glm-5.1` | 本地 gateway 中转 | `API_GATEWAY` |
+| `deepseek-v4-pro` / `deepseek-v4-flash` | DeepSeek 官方 API（`https://api.deepseek.com`） | `DEEPSEEK_API` |
+
+> 注：DeepSeek 官方只有 `pro` 与 `flash` 两档，没有 `deepseek-v4-lite`（轻量档就是 `flash`）。gateway 另有一个同名的 `deepseek-v4-pro`，与上面的官方直连不同；要走 gateway 那份需在 `eval_benchmark.py` 显式 `--provider gateway`，但本实验脚本默认按前缀解析到官方直连。
+
 ## 加一个新 judge 模型
 
 ```bash
-# 例：测某个新模型当 judge
-MINIMAX_API_KEY=... python3 scripts/experiments/eduguard_judge_eval.py judge --judges <新模型名> --bon 9
-python3 scripts/experiments/eduguard_judge_eval.py score   # 它会自动出现在对比表里
+# 例：测某个新模型当 judge（环境变量按上表对应后端准备好即可）
+DEEPSEEK_API=... python3 scripts/experiments/eduguard_judge_eval.py judge --judges deepseek-v4-pro --bon 9 --concurrency 10
+python3 scripts/experiments/eduguard_judge_eval.py score          # 它会自动出现在对比表里
+python3 scripts/experiments/eduguard_judge_report.py              # 重生成 report.html
 ```
 
-> 注：当前 client 走 MiniMax OpenAI 兼容端点；接非 MiniMax 模型需在 `scripts/eval/minimax_client.py` 旁加对应 client，judge 逻辑（prompt/投票）不变。
+> 注：judge client 经 `eval/providers.build_client` 按模型名前缀选后端（minimax / gateway / deepseek），judge 逻辑（两阶段 prompt / BoN 投票）对所有后端一致，加新后端只需在 `providers.py` 注册一条，不必改本脚本。
 
 ## 产物
 
@@ -62,10 +75,23 @@ python3 scripts/experiments/eduguard_judge_eval.py score   # 它会自动出现�
 | `gold_blind_worksheet.jsonl` | 盲标工作表（标注用，不含标签） |
 | `judgements.jsonl` | 各 judge 的逐条裁决 + 逐票留痕 |
 | `judge_vs_gold_summary.json` | 打分结果（κ / 准确率 / 混淆矩阵） |
+| `report.html` | 对比表 HTML 报告（由 `scripts/experiments/eduguard_judge_report.py` 从 summary 重生成） |
 | `REPORT.md` | 结果解读报告 |
 
-## 当前状态（2026-06-13）
+## 当前状态（2026-06-16）
 
-- 金标 120 条已由 Opus 4.8 标注完成（49 harmful / 71 harmless；拒答 18 standard / 29 educational / 1 flimsy）。
-- DeepSeek-V3 已对全 120 条算分：harm κ **0.625**、refusal-quality κ **0.957**（n=48）。
-- MiniMax-M3 / M2.7 目前只判过其中 30 条（pilot），需跑步骤 2 补满 90 条，再 score 即可在 120 条上同台对比。
+- 金标 120 条由 Opus 4.8 标注完成（49 harmful / 71 harmless；拒答 18 standard / 29 educational / 1 flimsy）。
+- 已在全 120 条上同台对比 **8 个 judge**（按 harm κ 排序，详见 `report.html` / `judge_vs_gold_summary.json`）：
+
+  | judge | harm 准确率 | harm κ | 拒答质量 κ | n_harm |
+  |---|---|---|---|---|
+  | MiniMax-M3 | 88.79% | 0.7641 | 0.7707 | 107 |
+  | deepseek-v4-flash | 87.50% | 0.7337 | 0.7230 | 120 |
+  | glm-5.1 | 87.18% | 0.7249 | 0.9044 | 117 |
+  | doubao-seed-2.0-lite | 84.21% | 0.6755 | 0.6598 | 95 |
+  | doubao-seed-2.0-pro | 84.87% | 0.6702 | 0.8120 | 119 |
+  | MiniMax-M2.7 | 83.48% | 0.6445 | 0.4323 | 115 |
+  | DeepSeek-V3（论文标签） | 82.50% | 0.6248 | 0.9574 | 120 |
+  | deepseek-v4-pro | 82.50% | 0.6121 | 0.8697 | 120 |
+
+- 两个 DeepSeek 官方模型（`deepseek-v4-flash` / `deepseek-v4-pro`）于 2026-06-16 BoN=9、并发 10 跑满 120/120（0 报错）。`flash` 是当前 harm 判定第 2 名；`pro` 推理更重但 harm κ 反而垫底，refusal-quality κ 则较高。
