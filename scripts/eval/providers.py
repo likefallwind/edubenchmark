@@ -6,12 +6,15 @@ between backends — base URL, the env var holding the API key, and the chat pat
 — so a caller only has to name a model (``--model doubao-seed-2.0-pro``) and the
 right endpoint is selected automatically.
 
-Two providers ship today:
+Three providers ship today:
 
 * ``minimax``  — the original MiniMax endpoint (``MINIMAX_API_KEY``); also the
   home of the default extractor model ``MiniMax-M2.7``.
 * ``gateway``  — a local OpenAI-compatible relay (``API_GATEWAY``) that fronts
   doubao / glm and friends at ``/chat/completions``.
+* ``deepseek`` — DeepSeek's official OpenAI-compatible API
+  (``https://api.deepseek.com``, key env ``DEEPSEEK_API``) at
+  ``/chat/completions``; serves ``deepseek-v4-pro`` and ``deepseek-v4-flash``.
 
 Model names are matched by prefix (``resolve_provider``); unknown models fall
 back to the gateway, and every field can be overridden explicitly by the caller
@@ -63,13 +66,26 @@ GATEWAY = Provider(
     chat_path="/chat/completions",
 )
 
-PROVIDERS: dict[str, Provider] = {p.name: p for p in (MINIMAX, GATEWAY)}
+# DeepSeek's official API. OpenAI-compatible, so the same MiniMaxClient drives it
+# with only base URL / key env / chat path swapped. Current models:
+# ``deepseek-v4-pro`` and ``deepseek-v4-flash`` (the lighter tier; there is no
+# ``deepseek-v4-lite``). ``deepseek-v4-pro`` returns a separate reasoning chain.
+DEEPSEEK = Provider(
+    name="deepseek",
+    base_url="https://api.deepseek.com",
+    base_url_env="DEEPSEEK_BASE_URL",
+    api_key_env="DEEPSEEK_API",
+    chat_path="/chat/completions",
+)
+
+PROVIDERS: dict[str, Provider] = {p.name: p for p in (MINIMAX, GATEWAY, DEEPSEEK)}
 
 # Model-name prefixes -> provider name. Longest match wins.
 _PREFIX_PROVIDER: list[tuple[str, str]] = [
     ("minimax", "minimax"),
     ("doubao", "gateway"),
     ("glm", "gateway"),
+    ("deepseek", "deepseek"),
 ]
 
 # Provider used when no prefix matches a given model name.
