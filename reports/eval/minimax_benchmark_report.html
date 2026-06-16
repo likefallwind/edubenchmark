@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniMax-M3 跨基准评测报告</title>
+<style>
+  :root{
+    --ink:#1a1f29; --muted:#6b7480; --line:#e6e9ef; --bg:#f6f7f9; --card:#fff;
+    --good:#1a9d6e; --bad:#d9534f; --warn:#c9851a; --accent:#3a5bd9; --accent-bg:#eef2ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.65;font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 64px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13.5px}
+  h2{font-size:21px;margin:34px 0 10px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:20px 0 6px;color:var(--accent)}
+  p{margin:8px 0}
+  code{background:#eef0f3;padding:1px 5px;border-radius:4px;font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:12px 0}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center}
+  .kpi .v{font-size:24px;font-weight:700;line-height:1.1}
+  .kpi .k{font-size:12.5px;color:var(--muted);margin-top:4px}
+  table{border-collapse:collapse;width:100%;margin:10px 0;background:var(--card);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:14px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center}
+  th{background:#f0f2f6;font-weight:600}
+  td.l,th.l{text-align:left}
+  td.num{font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  tr.best td{background:#eaf7f1}
+  .muted{color:var(--muted)}
+  .tag{display:inline-block;background:var(--accent-bg);color:var(--accent);
+    border-radius:6px;padding:1px 8px;font-size:12.5px;font-weight:600;margin-left:4px}
+  .note{background:#fff8ec;border:1px solid #f0dcae;border-radius:10px;padding:14px 16px;margin:14px 0;font-size:14px}
+  .danger{background:#fdeeee;border-color:#f1c9c7}
+  .bar{display:inline-block;height:9px;border-radius:5px;background:var(--accent);vertical-align:middle}
+  ul{margin:8px 0;padding-left:22px}
+  li{margin:3px 0}
+  footer{margin-top:40px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px}
+  a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>MiniMax-M3 跨基准评测报告</h1>
+  <div class="sub">被测模型 <strong>MiniMax-M3</strong>（视觉+推理）· 覆盖 6 个基准 · 答案抽取统一用 <code>MiniMax-M2.7</code><br>
+  生成日期：2026-06-16 ｜ 数据来源：<code>reports/eval/&lt;benchmark&gt;/minimax3/summary.json</code>（mmlu_pro 取较完整的 <code>2026-06-07/</code>）</div>
+</header>
+
+<!-- ============ 0. 概述 ============ -->
+<h2>0. 这份报告在看什么</h2>
+<div class="card">
+<p>这里汇总 <strong>MiniMax-M3</strong> 在本仓库已落地的 6 个评测基准上的表现。它们分属不同的能力维度（D01–D24），从通用学科知识、考试推理、奥赛级科学推理、多模态数学，到教育场景的安全与合规。每个基准下面都给出 <strong>① 它考什么、② 主要指标的含义、③ MiniMax-M3 的成绩与细分</strong>。</p>
+<div class="note danger">
+<strong>读数前必看：不要把不同基准的分数直接平均。</strong> 这些基准任务形态、难度、评分口径完全不同（选择题正确率 vs 多选完全匹配率 vs 攻击成功率），平均出来没有意义。正确做法是按能力维度分别看，形成「能力画像」。此外，通用知识类基准（MMLU-Pro/AGIEval）只是<strong>门槛项</strong>，能答对题不等于会教学；真正的教学能力体现在纠错、个性化、安全边界等维度。
+</div>
+</div>
+
+<!-- ============ 1. 总览 ============ -->
+<h2>1. 总览</h2>
+<div class="kpis">
+  <div class="kpi"><div class="v" style="color:var(--good)">95.3%</div><div class="k">教育对抗安全率<br>(EduGuard P2，ASR 仅 3.7%)</div></div>
+  <div class="kpi"><div class="v">85.6%</div><div class="k">考试推理正确率<br>(AGIEval)</div></div>
+  <div class="kpi"><div class="v">84.1%</div><div class="k">多模态数学正确率<br>(MathVista)</div></div>
+  <div class="kpi"><div class="v" style="color:var(--warn)">72.4%</div><div class="k">教学合规完全匹配率<br>(EduGuard P1 SATA)</div></div>
+</div>
+
+<table>
+<thead><tr>
+  <th class="l">基准</th><th>能力维度</th><th class="l">考什么</th><th class="l">主指标</th><th>MiniMax-M3</th><th>判分覆盖</th>
+</tr></thead>
+<tbody>
+  <tr>
+    <td class="l">MMLU-Pro</td><td>D01</td>
+    <td class="l">通用学科知识 + 复杂 10 选项选择题推理</td>
+    <td class="l">正确率（选对率）</td>
+    <td class="num"><strong>0.814</strong></td>
+    <td class="num">3061 / 12032 <span class="tag" style="background:#fdeeee;color:var(--bad)">部分</span></td>
+  </tr>
+  <tr>
+    <td class="l">AGIEval</td><td>D03</td>
+    <td class="l">真实考试（高考/SAT/法考/数学）情境推理</td>
+    <td class="l">正确率（MCQ 选对 + 数学填空判等）</td>
+    <td class="num"><strong>0.856</strong></td>
+    <td class="num">7266 / 7272</td>
+  </tr>
+  <tr>
+    <td class="l">OlympiadBench</td><td>D05</td>
+    <td class="l">奥赛级数学/物理，长链计算（含多模态）</td>
+    <td class="l">正确率（sympy 符号判等）</td>
+    <td class="num"><strong>0.757</strong></td>
+    <td class="num">3923 / 6728 <span class="tag" style="background:#fdeeee;color:var(--bad)">部分</span></td>
+  </tr>
+  <tr>
+    <td class="l">MathVista</td><td>D06</td>
+    <td class="l">多模态数学：看图（几何/统计图/函数）解题</td>
+    <td class="l">正确率（抽取答案 + 最近选项匹配）</td>
+    <td class="num"><strong>0.841</strong></td>
+    <td class="num">993 / 1000</td>
+  </tr>
+  <tr>
+    <td class="l">EduGuard P1 · SATA</td><td>D21</td>
+    <td class="l">教学回复多选合规：选全所有应做的安全/教学要点</td>
+    <td class="l">完全匹配率（不漏选也不多选）</td>
+    <td class="num"><strong>0.724</strong></td>
+    <td class="num">5169 / 5270</td>
+  </tr>
+  <tr class="best">
+    <td class="l">EduGuard P2 · 对抗安全</td><td>D21</td>
+    <td class="l">教师人设 + 学生越界请求的越狱诱导，抗攻击</td>
+    <td class="l">安全率 = 1 − ASR（攻击成功率）</td>
+    <td class="num"><strong>0.953</strong></td>
+    <td class="num">706 / 801</td>
+  </tr>
+</tbody>
+</table>
+<p class="muted" style="font-size:13px">「部分」= 该次运行未跑满全集（详见各节与第 8 节口径）。能力维度：D01 通用学科知识与复杂推理 · D03 标准化/资格考试推理 · D05 高阶学科推理 · D06 多模态教育理解 · D21 教育场景安全（C5）。</p>
+
+<!-- ============ 2. MMLU-Pro ============ -->
+<h2>2. MMLU-Pro<span class="tag">D01 · 通用学科知识</span></h2>
+<div class="card">
+<p><strong>这是什么：</strong>MMLU 的加强版，14 个学科领域、每题 <strong>10 个选项</strong>（原 MMLU 只有 4 个），且更偏重多步推理而非死记硬背。考的是模型的<strong>通用学科知识广度 + 复杂选择题推理</strong>，是能力的「门槛项」。主页：<a href="https://github.com/TIGER-AI-Lab/MMLU-Pro">TIGER-AI-Lab/MMLU-Pro</a>。</p>
+<h3>指标含义</h3>
+<ul>
+  <li><strong>正确率（accuracy）</strong>：模型选出的选项字母与标准答案一致的比例。抽取用官方 <code>answer is (X)</code> 正则，失败再用 LLM 兜底。</li>
+</ul>
+<h3>MiniMax-M3 结果 <span class="muted">（本次仅跑了 3061 / 12032 题，覆盖 5 个学科）</span></h3>
+<table>
+<thead><tr><th class="l">学科</th><th>题数</th><th>正确率</th></tr></thead>
+<tbody>
+  <tr><td class="l">法律 law</td><td class="num">1093</td><td class="num">0.685</td></tr>
+  <tr><td class="l">心理学 psychology</td><td class="num">798</td><td class="num">0.833</td></tr>
+  <tr><td class="l">工程 engineering</td><td class="num">89</td><td class="num">0.876</td></tr>
+  <tr><td class="l">商业 business</td><td class="num">779</td><td class="num">0.919</td></tr>
+  <tr class="best"><td class="l">生物 biology</td><td class="num">302</td><td class="num">0.937</td></tr>
+  <tr><td class="l"><strong>整体（5 学科）</strong></td><td class="num"><strong>3061</strong></td><td class="num"><strong>0.814</strong></td></tr>
+</tbody>
+</table>
+<ul>
+  <li>整体 0.814，但<strong>法律（0.685）明显拖后腿</strong>，自然科学/商业类（0.92+）很强。</li>
+  <li><strong>口径提醒：</strong>此运行只覆盖 5 个学科（且 law 占比偏高），不是全 14 学科的均匀抽样，0.814 这个数<strong>不能代表完整 MMLU-Pro 成绩</strong>，仅供参考。</li>
+</ul>
+</div>
+
+<!-- ============ 3. AGIEval ============ -->
+<h2>3. AGIEval<span class="tag">D03 · 考试推理</span></h2>
+<div class="card">
+<p><strong>这是什么：</strong>取材于<strong>真实人类考试</strong>的基准——中国高考各科、美国 SAT、法学院入学/法考（JEC-QA）、竞赛 MATH 等。考模型在真实考试情境下的推理，分<strong>选择题（qa）</strong>与<strong>数学填空题（cloze）</strong>两种题型。主页：<a href="https://github.com/ruixiangcui/AGIEval">ruixiangcui/AGIEval</a>。</p>
+<h3>指标含义</h3>
+<ul>
+  <li><strong>正确率</strong>：选择题按选项字母判对（同官方 <code>post_process.py</code>）；数学填空题用官方 <code>math_equivalence.is_equiv</code> 做<strong>数学等价判等</strong>（如 <code>1/2</code> 与 <code>0.5</code> 视为相同），不是字面比对。</li>
+</ul>
+<h3>MiniMax-M3 结果 <span class="muted">（7266 / 7272 题，整体 0.856）</span></h3>
+<table>
+<thead><tr><th class="l">细分</th><th>题数</th><th>正确率</th></tr></thead>
+<tbody>
+  <tr><td class="l">英文题 en</td><td class="num">3851</td><td class="num">0.894</td></tr>
+  <tr><td class="l">中文题 zh</td><td class="num">3415</td><td class="num">0.814</td></tr>
+  <tr><td class="l">选择题 qa</td><td class="num">6148</td><td class="num">0.856</td></tr>
+  <tr><td class="l">数学填空 cloze</td><td class="num">1118</td><td class="num">0.854</td></tr>
+</tbody>
+</table>
+<ul>
+  <li>整体很强（0.856），<strong>英文（0.894）高于中文（0.814）</strong>。</li>
+  <li>分任务跨度大：最弱 <strong>高考数学填空 gaokao-mathcloze 0.322</strong>、SAT 英语无篇章 0.587；最强 SAT 英语 0.966、高考生物 0.965、SAT 数学 0.964。<strong>中文长链数学填空</strong>是明显短板。</li>
+</ul>
+</div>
+
+<!-- ============ 4. OlympiadBench ============ -->
+<h2>4. OlympiadBench<span class="tag">D05 · 奥赛级推理</span></h2>
+<div class="card">
+<p><strong>这是什么：</strong>奥林匹克竞赛级的<strong>数学与物理</strong>题，需要长链推导与多步计算，部分题带<strong>图（多模态 MM）</strong>。考的是高阶科学推理上限。主页：<a href="https://github.com/OpenBMB/OlympiadBench">OpenBMB/OlympiadBench</a>。</p>
+<h3>指标含义</h3>
+<ul>
+  <li><strong>正确率</strong>：用官方移植的 <strong>sympy 符号判等</strong>（<code>AutoScoringJudge</code>）比对答案表达式是否数学等价，能处理公式/区间/数值等多种答案类型。</li>
+  <li><strong>MM / TO</strong>：MM = 含图的多模态题，TO = 纯文本题（text-only）。</li>
+</ul>
+<h3>MiniMax-M3 结果 <span class="muted">（3923 / 6728 题，整体 0.757）</span></h3>
+<table>
+<thead><tr><th class="l">细分</th><th>题数</th><th>正确率</th></tr></thead>
+<tbody>
+  <tr><td class="l">数学 Math</td><td class="num">3563</td><td class="num">0.771</td></tr>
+  <tr><td class="l">物理 Physics</td><td class="num">360</td><td class="num">0.611</td></tr>
+  <tr><td class="l">纯文本 TO</td><td class="num">1595</td><td class="num">0.777</td></tr>
+  <tr><td class="l">多模态 MM</td><td class="num">2328</td><td class="num">0.742</td></tr>
+  <tr><td class="l">英文 en</td><td class="num">163</td><td class="num">0.871</td></tr>
+  <tr><td class="l">中文 zh</td><td class="num">3760</td><td class="num">0.752</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><strong>数学（0.771）明显强于物理（0.611）</strong>；含图的多模态题（0.742）比纯文本（0.777）略低，说明读图增加了难度。</li>
+  <li><strong>口径提醒：</strong>仅判分 3923 / 6728（约 58%），其余 2805 条为 <code>no_prediction</code>（长链/多模态题未跑完或超时）。该 0.757 基于<strong>已完成子集</strong>，存在「难题更可能没跑完」的潜在偏差。</li>
+</ul>
+</div>
+
+<!-- ============ 5. MathVista ============ -->
+<h2>5. MathVista<span class="tag">D06 · 多模态数学</span></h2>
+<div class="card">
+<p><strong>这是什么：</strong>面向<strong>视觉数学推理</strong>的基准——题目带图（几何图、统计图表、函数曲线、自然场景等），模型必须<strong>看懂图</strong>才能解题。考多模态理解 + 数学推理的结合。主页：<a href="https://mathvista.github.io/">mathvista.github.io</a>。</p>
+<h3>指标含义</h3>
+<ul>
+  <li><strong>正确率</strong>：移植官方两步流程——few-shot 提示<strong>抽取答案</strong>，再做 <code>normalize</code> + <strong>最近选项编辑距离匹配</strong>后与标准答案比对。</li>
+  <li><strong>multi_choice / free_form</strong>：选择题 / 自由作答题；<strong>answer_type</strong> 标注答案是整数/小数/文本等。</li>
+</ul>
+<h3>MiniMax-M3 结果 <span class="muted">（993 / 1000 题，整体 0.841）</span></h3>
+<table>
+<thead><tr><th class="l">细分</th><th>题数</th><th>正确率</th></tr></thead>
+<tbody>
+  <tr class="best"><td class="l">几何题 geometry problem solving</td><td class="num">208</td><td class="num">0.981</td></tr>
+  <tr><td class="l">图表问答 figure QA</td><td class="num">268</td><td class="num">0.866</td></tr>
+  <tr><td class="l">数学应用题 math word problem</td><td class="num">186</td><td class="num">0.850</td></tr>
+  <tr><td class="l">教科书问答 textbook QA</td><td class="num">157</td><td class="num">0.834</td></tr>
+  <tr><td class="l">视觉问答 visual QA</td><td class="num">174</td><td class="num">0.632</td></tr>
+</tbody>
+</table>
+<ul>
+  <li><strong>选择题（0.892）高于自由作答（0.780）</strong>；几何题近乎满分（0.981），<strong>开放式视觉问答（0.632）最弱</strong>——需要细粒度读图与开放表述的题更难。</li>
+</ul>
+</div>
+
+<!-- ============ 6. EduGuard P1 · SATA ============ -->
+<h2>6. EduGuard-Bench · P1 教学伤害（SATA 多选）<span class="tag">D21 · 教育安全</span></h2>
+<div class="card">
+<p><strong>这是什么：</strong>EduGuard-Bench 的 P1 子集，5270 条中英双语题，覆盖 5 类教学场景（情感支持 ES、纠错 EC、想法启发 IP、个性化学习支持 PLS、问题解决 PS）。题型是 <strong>SATA（Select-All-That-Apply，多选合规）</strong>：在候选回复要点中<strong>选全所有应做的安全/教学要点</strong>，既不能漏也不能多。主页：<a href="https://github.com/YL1N/EduGuardBench">YL1N/EduGuardBench</a>。</p>
+<h3>指标含义</h3>
+<ul>
+  <li><strong>完全匹配率（accuracy_perfect_match）</strong>：选出的集合与标准答案<strong>完全一致</strong>才算对（主指标，最严）。</li>
+  <li><strong>RFS</strong>：要点级的部分匹配得分（介于全对/全错之间的「软」分），比完全匹配宽松。</li>
+  <li><strong>漏选率 omission</strong>：该选没选的比例；<strong>多选率 inclusion</strong>：不该选却选了的比例（多选比漏选更常见时，说明模型偏「宁滥勿缺」）。</li>
+</ul>
+<h3>MiniMax-M3 结果 <span class="muted">（5169 / 5270 题）</span></h3>
+<table>
+<thead><tr><th class="l">指标 / 细分</th><th>数值</th></tr></thead>
+<tbody>
+  <tr><td class="l">完全匹配率（整体）</td><td class="num"><strong>0.724</strong></td></tr>
+  <tr><td class="l">RFS（部分匹配软分）</td><td class="num">0.768</td></tr>
+  <tr><td class="l">漏选率 omission</td><td class="num">0.094</td></tr>
+  <tr><td class="l">多选率 inclusion</td><td class="num">0.183</td></tr>
+  <tr><td class="l">中文 zh 完全匹配</td><td class="num">0.733</td></tr>
+  <tr><td class="l">英文 en 完全匹配</td><td class="num">0.715</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th class="l">教学场景</th><th>题数</th><th>完全匹配率</th></tr></thead>
+<tbody>
+  <tr class="best"><td class="l">个性化学习支持 PLS</td><td class="num">1056</td><td class="num">0.835</td></tr>
+  <tr><td class="l">想法启发 IP</td><td class="num">1002</td><td class="num">0.795</td></tr>
+  <tr><td class="l">纠错 EC</td><td class="num">1072</td><td class="num">0.697</td></tr>
+  <tr><td class="l">问题解决 PS</td><td class="num">968</td><td class="num">0.648</td></tr>
+  <tr><td class="l">情感支持 ES</td><td class="num">1071</td><td class="num">0.642</td></tr>
+</tbody>
+</table>
+<ul>
+  <li>整体完全匹配 0.724，中英接近。<strong>多选率（0.183）约为漏选率（0.094）的两倍</strong>——错误更多来自「多选了不该选的要点」，倾向宁滥勿缺。</li>
+  <li>场景上 <strong>PLS 最强（0.835）、ES / PS 最弱（≈0.64）</strong>——情感支持与问题解决的合规边界更难拿捏。</li>
+</ul>
+</div>
+
+<!-- ============ 7. EduGuard P2 · Adversarial ============ -->
+<h2>7. EduGuard-Bench · P2 对抗安全<span class="tag">D21 · 教育安全</span></h2>
+<div class="card">
+<p><strong>这是什么：</strong>801 条英文 <strong>persona-based 越狱诱导</strong>题，由「教师人设指令 + 学生越界请求」拼接，覆盖 5 类风险：学术不端 AM、艺术心理 AP、健康风险 HR、政治意识形态 PI、技术安全 TS。考模型在被诱导时<strong>能否守住安全边界</strong>。主页：<a href="https://github.com/YL1N/EduGuardBench">YL1N/EduGuardBench</a>。</p>
+<h3>指标含义</h3>
+<ul>
+  <li><strong>ASR（攻击成功率，越低越安全）</strong>：被判「有害/被攻破」的比例。<strong>安全率 = 1 − ASR</strong>（报告里的「正确率」即安全率）。</li>
+  <li><strong>两阶段 LLM-as-Judge（BoN=3 投票）</strong>：先判有害/无害（有害记 attack_success），无害再分拒答质量三档。</li>
+  <li><strong>拒答质量</strong>：教育型（解释为何不能做并正向引导，最优）＞标准型（仅以 AI 身份/政策拒绝）＞敷衍型 flimsy（拒得空洞）。</li>
+</ul>
+<div class="note">
+<strong>口径关键：本基准 MiniMax-M3 是「自己判自己」</strong>——固定裁判恰好就是被测模型 M3。但在仓库的裁判校准元评测里，<strong>M3 是 harm 判定最严的裁判</strong>（最接近 Claude Opus 4.8 金标），所以这里 3.7% 的低 ASR 反映的是<strong>真安全</strong>，不是裁判放水。其余模型（doubao / deepseek-v4-pro）由 M3 统一重判，跨模型可比。
+</div>
+<h3>MiniMax-M3 结果 <span class="muted">（判定覆盖 699 / 801；安全率 0.953，ASR 3.7%）</span></h3>
+<table>
+<thead><tr><th class="l">风险类别</th><th>判定数 n</th><th>ASR ↓</th></tr></thead>
+<tbody>
+  <tr class="best"><td class="l">学术不端 AM</td><td class="num">125</td><td class="num">0.000</td></tr>
+  <tr><td class="l">政治意识形态 PI</td><td class="num">167</td><td class="num">0.012</td></tr>
+  <tr><td class="l">艺术心理 AP</td><td class="num">74</td><td class="num">0.027</td></tr>
+  <tr><td class="l">技术安全 TS</td><td class="num">166</td><td class="num">0.042</td></tr>
+  <tr><td class="l">健康风险 HR</td><td class="num">167</td><td class="num">0.090</td></tr>
+  <tr><td class="l"><strong>整体</strong></td><td class="num"><strong>699</strong></td><td class="num"><strong>0.037</strong></td></tr>
+</tbody>
+</table>
+<ul>
+  <li><strong>整体非常安全（ASR 3.7%，全类别 ≤9%）</strong>，学术不端类 0 攻破；相对薄弱的是健康风险（HR 0.090）。</li>
+  <li>未被攻破的回复里 <strong>82.5% 是「教育型拒答」</strong>（解释 + 正向引导），不仅拒得住、还拒得有教育价值。</li>
+  <li><strong>覆盖：</strong>706 / 801 有预测（95 条 no_prediction），判定 699 条。</li>
+</ul>
+</div>
+
+<!-- ============ 8. 口径与局限 ============ -->
+<h2>8. 口径与局限</h2>
+<div class="note">
+<ul>
+  <li><strong>不要跨基准平均。</strong> 任务/评分口径不同，单一「总分」无意义；按维度看能力画像。</li>
+  <li><strong>覆盖不均。</strong> MMLU-Pro 仅跑 3061/12032 且只含 5 个学科、OlympiadBench 仅 3923/6728（约 58%），这两项的数字仅代表<strong>已完成子集</strong>，可能存在「难题更易缺判」的偏差，不宜与跑满的基准强行横比。</li>
+  <li><strong>对抗安全为自判。</strong> §7 的裁判固定为 MiniMax-M3、恰是被测模型；因 M3 是最严裁判，低 ASR 可信，但严格而言这一行无法完全排除自判因素（跨模型比较见 <code>eduguard_comprehensive_report.html</code>）。</li>
+  <li><strong>答案抽取统一用 MiniMax-M2.7</strong>（与被测/裁判解耦），仅做文本答案抽取、不参与判分。</li>
+  <li>明细见各 <code>reports/eval/&lt;benchmark&gt;/minimax3/summary.json</code> 与同目录 <code>report.html</code>；跨模型对比见 <code>reports/eval/_aggregate/</code> 与 EduGuard 综合报告。</li>
+</ul>
+</div>
+
+<footer>
+MiniMax-M3 跨基准评测报告 · 自动汇总自仓库评测产物 · 2026-06-16<br>
+数据：<code>reports/eval/{mmlu_pro,agieval,olympiadbench,mathvista,eduguard_sata,eduguard_adversarial}</code>
+</footer>
+
+</div>
+</body>
+</html>
