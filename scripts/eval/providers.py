@@ -30,7 +30,6 @@ from dataclasses import dataclass
 from .minimax_client import (
     DEFAULT_BASE_URL,
     DEFAULT_CHAT_PATH,
-    DEFAULT_MODEL,
     MiniMaxClient,
 )
 
@@ -135,16 +134,20 @@ def build_client(
     )
 
 
+# Directory-name aliases: keep a model's artifacts in a historical/preferred dir
+# regardless of how its raw name would slugify. ``MiniMax-M3`` predates the slug
+# convention and its baseline lives under ``minimax3/``.
+_SLUG_ALIASES = {"MiniMax-M3": "minimax3"}
+
+
 def model_slug(model: str) -> str:
     """Filesystem-safe directory name for a model.
 
-    Keeps letters, digits, dot, dash, underscore; collapses everything else to a
-    single dash. ``doubao-seed-2.0-pro`` and ``glm-5.1`` pass through unchanged.
+    Honors ``_SLUG_ALIASES`` first; otherwise keeps letters, digits, dot, dash,
+    underscore and collapses everything else to a single dash. ``doubao-seed-2.0-pro``
+    and ``glm-5.1`` pass through unchanged.
     """
+    if model in _SLUG_ALIASES:
+        return _SLUG_ALIASES[model]
     slug = re.sub(r"[^A-Za-z0-9._-]+", "-", (model or "").strip())
     return slug.strip("-") or "model"
-
-
-def is_default_model(model: str) -> bool:
-    """True for the home model (MiniMax-M3), which keeps the top-level out-dir."""
-    return model == DEFAULT_MODEL

@@ -24,7 +24,7 @@ from pathlib import Path
 
 from eval.benchmarks import available_benchmarks, get_adapter
 from eval.minimax_client import DEFAULT_MODEL
-from eval.providers import PROVIDERS, build_client, is_default_model, model_slug
+from eval.providers import PROVIDERS, build_client, model_slug
 from eval.runner import run
 
 
@@ -46,8 +46,7 @@ def main() -> None:
         "--out-dir",
         type=Path,
         default=None,
-        help="output directory (default: reports/eval/<benchmark> for the home model, "
-        "reports/eval/<benchmark>/<model> for any other model)",
+        help="output directory (default: reports/eval/<benchmark>/<model-slug>)",
     )
     parser.add_argument(
         "--provider",
@@ -103,13 +102,11 @@ def main() -> None:
     if hasattr(adapter, "language"):
         adapter.language = args.language
     limit = None if args.limit is not None and args.limit <= 0 else args.limit
-    # Home model keeps the top-level dir; every other model gets its own subdir
-    # so its artifacts never overwrite the MiniMax baseline.
+    # Every model — including the default one — gets its own subdir keyed by
+    # model slug, so models are handled uniformly and never overwrite each other.
     base_dir = ROOT / "reports" / "eval" / args.benchmark
     if args.out_dir is not None:
         out_dir = args.out_dir
-    elif is_default_model(args.model):
-        out_dir = base_dir
     else:
         out_dir = base_dir / model_slug(args.model)
     extractor_model = args.extractor_model
