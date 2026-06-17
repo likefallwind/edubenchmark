@@ -39,7 +39,7 @@ LIMIT=200 ./scripts/run_eval.sh agieval
 MODEL=MiniMax-M3 JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh
 
 # 后台长跑(脚本已设 PYTHONUNBUFFERED=1,日志实时写入)
-nohup ./scripts/run_eval.sh > eval.log 2>&1 &
+CONCURRENCY=2 MODEL=MiniMax-M3 nohup ./scripts/run_eval.sh > eval.log 2>&1 &
 tail -f eval.log
 ```
 

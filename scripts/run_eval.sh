@@ -11,7 +11,9 @@
 #   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
 #     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0
 #   注:官方 SATA 仅有英文作答基线、答案键按英文校准,要对标论文/官方请用 en;both 仅作跨语言一致性分析。
-# 后台启动: nohup ./scripts/run_eval.sh > eval.log 2>&1 &
+# 日志: 默认把运行输出写入 eval/ 文件夹下带时间戳的日志(eval/ 已 gitignore,不会提交)。
+#   自定义路径: LOG_FILE=eval/my.log ./scripts/run_eval.sh ; 关闭自动落盘: NO_LOG=1 ./scripts/run_eval.sh
+#   后台启动: nohup ./scripts/run_eval.sh >/dev/null 2>&1 &   (输出已由脚本自行 tee 到 eval/)
 #
 # 限流自愈：连续 RATE_LIMIT_THRESHOLD 个(默认10) 429/限流错误即判定被限流，自动 sleep
 #   RATE_LIMIT_SLEEP 秒(默认1800=30min) 后重试被限流的样本(每条最多重排 RATE_LIMIT_MAX_RETRIES 次,默认3)。
@@ -24,6 +26,15 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export PYTHONUNBUFFERED=1   # 让 print 实时写入日志，方便 tail -f
+
+# 默认把本次运行的全部输出同时打印到终端并落盘到 eval/ 下(NO_LOG=1 关闭)。
+LOG_DIR="${LOG_DIR:-eval}"
+if [[ -z "${NO_LOG:-}" ]]; then
+  mkdir -p "$LOG_DIR"
+  LOG_FILE="${LOG_FILE:-$LOG_DIR/eval_$(date +%Y%m%d_%H%M%S).log}"
+  exec > >(tee -a "$LOG_FILE") 2>&1
+  echo "[run_eval] 日志写入 $LOG_FILE"
+fi
 
 LIMIT="${LIMIT:-0}"
 CONCURRENCY="${CONCURRENCY:-4}"       # 被测模型调用并发数
