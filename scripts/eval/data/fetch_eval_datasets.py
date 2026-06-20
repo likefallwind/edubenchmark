@@ -201,9 +201,87 @@ def fetch_eduguard_bench(force: bool = False) -> Path:
     return out_dir
 
 
+def _ok(path: Path) -> bool:
+    return path.exists() and path.stat().st_size > 0
+
+
+def fetch_mathtutorbench(force: bool = False) -> Path:
+    """Materialize MathTutorBench task data into stdlib-readable JSONL.
+
+    Sources:
+      - ``eth-nlped/stepverify`` (HF, public): solution_correctness /
+        mistake_location / mistake_correction → ``stepverify.jsonl``.
+      - ``dmacjam/pedagogical-rewardmodel-data`` (HF, public) ``test`` split:
+        the 482 expert-labeled positive/negative teacher-response pairs used for
+        judge calibration → ``pref_test.jsonl``.
+      - GSM8K (already cloned locally as parquet under ``sources/datasets/gsm8k``):
+        problem_solving (``main``) and socratic_questioning (``socratic``) →
+        ``gsm8k_main.jsonl`` / ``gsm8k_socratic.jsonl``.
+
+    The scaffolding/pedagogy bridge files (``datasets/mathdial_bridge*.json``)
+    already ship inside the cloned repo and are read in place by the adapter.
+    """
+    base = ROOT / "sources" / "datasets" / "mathtutorbench"
+    out_dir = base / "data"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # --- HuggingFace datasets (need the `datasets` lib; isolated to this step) ---
+    sv_out = out_dir / "stepverify.jsonl"
+    pref_out = out_dir / "pref_test.jsonl"
+    hf_targets = [
+        (sv_out, "eth-nlped/stepverify", "train"),
+        (pref_out, "dmacjam/pedagogical-rewardmodel-data", "test"),
+    ]
+    if force or not all(_ok(p) for p, _, _ in hf_targets):
+        try:
+            from datasets import load_dataset
+        except ImportError as exc:  # pragma: no cover - actionable hint
+            raise SystemExit(
+                "the `datasets` library is required to fetch the HuggingFace parts "
+                "of MathTutorBench (eth-nlped/stepverify, dmacjam/pedagogical-"
+                "rewardmodel-data). Install it: pip install datasets"
+            ) from exc
+        for out_path, repo, split in hf_targets:
+            if _ok(out_path) and not force:
+                print(f"skip {out_path.name}: already exists (use --force)")
+                continue
+            print(f"loading {repo} split={split}")
+            ds = load_dataset(repo, split=split)
+            with out_path.open("w", encoding="utf-8") as fh:
+                for ex in ds:
+                    rec = {k: _jsonable(v) for k, v in dict(ex).items()}
+                    fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            print(f"  wrote {len(ds)} rows -> {out_path}")
+
+    # --- GSM8K from the local parquet clone (no download) ---
+    for cfg, fname in (("main", "gsm8k_main.jsonl"), ("socratic", "gsm8k_socratic.jsonl")):
+        out_path = out_dir / fname
+        if _ok(out_path) and not force:
+            print(f"skip {out_path.name}: already exists (use --force)")
+            continue
+        parquet = ROOT / "sources" / "datasets" / "gsm8k" / cfg / "test-00000-of-00001.parquet"
+        if not parquet.exists():
+            raise SystemExit(
+                f"missing {parquet}; expected the GSM8K parquet clone under "
+                "sources/datasets/gsm8k/{main,socratic}/"
+            )
+        df = pd.read_parquet(parquet)
+        with out_path.open("w", encoding="utf-8") as fh:
+            for _, row in df.iterrows():
+                rec = {"question": _jsonable(row["question"]), "answer": _jsonable(row["answer"])}
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        print(f"wrote {len(df)} rows -> {out_path}")
+
+    return out_dir
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--benchmark", required=True, choices=["mmlu_pro", "olympiadbench", "eduguard_bench", "all"])
+    parser.add_argument(
+        "--benchmark",
+        required=True,
+        choices=["mmlu_pro", "olympiadbench", "eduguard_bench", "mathtutorbench", "all"],
+    )
     parser.add_argument("--force", action="store_true", help="re-download even if output already exists")
     args = parser.parse_args()
     if args.benchmark in ("mmlu_pro", "all"):
@@ -212,6 +290,8 @@ def main() -> None:
         fetch_olympiadbench(force=args.force)
     if args.benchmark in ("eduguard_bench", "all"):
         fetch_eduguard_bench(force=args.force)
+    if args.benchmark in ("mathtutorbench", "all"):
+        fetch_mathtutorbench(force=args.force)
 
 
 if __name__ == "__main__":

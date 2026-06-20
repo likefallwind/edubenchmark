@@ -11,10 +11,13 @@ Three providers ship today:
 * ``minimax``  — the original MiniMax endpoint (``MINIMAX_API_KEY``); also the
   home of the default extractor model ``MiniMax-M2.7``.
 * ``gateway``  — a local OpenAI-compatible relay (``API_GATEWAY``) that fronts
-  doubao / glm and friends at ``/chat/completions``.
+  doubao / glm / deepseek and friends at ``/chat/completions``.
 * ``deepseek`` — DeepSeek's official OpenAI-compatible API
   (``https://api.deepseek.com``, key env ``DEEPSEEK_API``) at
   ``/chat/completions``; serves ``deepseek-v4-pro`` and ``deepseek-v4-flash``.
+  **Not used by default** — ``deepseek-*`` models route through the gateway (it
+  also exposes those models). Reach the official API only when explicitly asked,
+  via ``--provider deepseek``.
 
 Model names are matched by prefix (``resolve_provider``); unknown models fall
 back to the gateway, and every field can be overridden explicitly by the caller
@@ -69,6 +72,9 @@ GATEWAY = Provider(
 # with only base URL / key env / chat path swapped. Current models:
 # ``deepseek-v4-pro`` and ``deepseek-v4-flash`` (the lighter tier; there is no
 # ``deepseek-v4-lite``). ``deepseek-v4-pro`` returns a separate reasoning chain.
+# Registered but NOT the default route for ``deepseek-*`` models — those go to
+# the gateway (see ``_PREFIX_PROVIDER``). Select this explicitly with
+# ``--provider deepseek`` when the official endpoint is specifically wanted.
 DEEPSEEK = Provider(
     name="deepseek",
     base_url="https://api.deepseek.com",
@@ -80,11 +86,13 @@ DEEPSEEK = Provider(
 PROVIDERS: dict[str, Provider] = {p.name: p for p in (MINIMAX, GATEWAY, DEEPSEEK)}
 
 # Model-name prefixes -> provider name. Longest match wins.
+# ``deepseek-*`` defaults to the gateway (it serves deepseek-v4-pro/-flash too);
+# use ``--provider deepseek`` to reach the official API when specifically needed.
 _PREFIX_PROVIDER: list[tuple[str, str]] = [
     ("minimax", "minimax"),
     ("doubao", "gateway"),
     ("glm", "gateway"),
-    ("deepseek", "deepseek"),
+    ("deepseek", "gateway"),
 ]
 
 # Provider used when no prefix matches a given model name.

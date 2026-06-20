@@ -32,6 +32,16 @@ export MINIMAX_BASE_URL=https://api.minimaxi.com/v1   # 可选,默认即此
 ./scripts/run_eval.sh mmlu_pro
 ./scripts/run_eval.sh eduguard_sata eduguard_adversarial   # C5 EduGuard-Bench
 
+# C4 MathTutorBench(教学过程评分/反馈质量),先一次性物化数据
+python scripts/eval/data/fetch_eval_datasets.py --benchmark mathtutorbench
+# 闭式任务(官方判分,无 judge);socratic 需 pip install sacrebleu
+./scripts/run_eval.sh mathtutorbench_solution_correctness mathtutorbench_mistake_location mathtutorbench_mistake_correction
+# 开放式教学反馈(LLM-as-judge 成对 win-rate,裁判=JUDGE_MODEL,默认 MiniMax-M3)
+./scripts/run_eval.sh mathtutorbench_scaffolding mathtutorbench_pedagogy mathtutorbench_scaffolding_hard mathtutorbench_pedagogy_hard
+# 裁判选择先行:被测模型即候选裁判,对论文专家偏好对的一致率越高越好,选最高者作生产裁判(MATHTUTORBENCH_JUDGE_MODEL)
+MODEL=MiniMax-M3 ./scripts/run_eval.sh mathtutorbench_judge_calibration
+MODEL=glm-5.1    ./scripts/run_eval.sh mathtutorbench_judge_calibration   # 对比另一候选裁判
+
 # 小样本试跑 (LIMIT=0 或不设 = 全量)
 LIMIT=200 ./scripts/run_eval.sh agieval
 
@@ -43,7 +53,7 @@ CONCURRENCY=2 MODEL=MiniMax-M3 nohup ./scripts/run_eval.sh > eval.log 2>&1 &
 tail -f eval.log
 ```
 
-`run_eval.sh` 帮你处理了每个 benchmark 的特例(OlympiadBench 的判分专用 venv、EduGuard 的两阶段 LLM-as-judge 等),日常优先用它。
+`run_eval.sh` 帮你处理了每个 benchmark 的特例(OlympiadBench 的判分专用 venv、EduGuard 的两阶段 LLM-as-judge、MathTutorBench 教学反馈的 win-rate 裁判注入等),日常优先用它。
 
 ### 3. 直接调底层入口(需要细控参数时)
 
@@ -55,7 +65,7 @@ python scripts/eval_benchmark.py --benchmark mmlu_pro --model MiniMax-M3 --concu
 
 | 参数 | 默认 | 说明 |
 |---|---|---|
-| `--benchmark` | (必填) | `mathvista` / `mmlu_pro` / `agieval` / `olympiadbench` / `eduguard_sata` / `eduguard_adversarial` |
+| `--benchmark` | (必填) | `mathvista` / `mmlu_pro` / `agieval` / `olympiadbench` / `eduguard_sata` / `eduguard_adversarial` / `mathtutorbench_*`(见下表) |
 | `--model` | `MiniMax-M3` | 被测模型(须用视觉模型 M3,M2.7 仅文本) |
 | `--extractor-model` | `MiniMax-M2.7` | 答案抽取 / LLM-as-judge 模型 |
 | `--limit` | `30` | 题量,`0`/负数 = 全量 |
@@ -90,6 +100,16 @@ python scripts/eval_benchmark.py --benchmark mmlu_pro --model MiniMax-M3 --concu
 | `mathvista` | D06 | 视觉数学;移植官方 few-shot 抽取 + 最近选项编辑距离判分(需下载图片) |
 | `eduguard_sata` | C5 | 教育安全多选(SATA);规则判分,中英双语 |
 | `eduguard_adversarial` | C5 | 对抗安全;两阶段 LLM-as-judge(每阶段 BoN=3 投票) |
+| `mathtutorbench_problem_solving` | gate | GSM8K 解题;`Final answer` 数字精确匹配(门槛项,非教学能力) |
+| `mathtutorbench_socratic` | D13 | 苏格拉底式提问;移植官方 SacreBLEU(需 `pip install sacrebleu`) |
+| `mathtutorbench_solution_correctness` | D12 | 学生解答对错(Yes/No);accuracy + P/R/F1 |
+| `mathtutorbench_mistake_location` | D12 | 首个错误步骤号;步骤号 F1(micro/macro/weighted) |
+| `mathtutorbench_mistake_correction` | D13 | 生成正确解;数值最终答案精确匹配 |
+| `mathtutorbench_scaffolding` / `_hard` | D11/D13 | 脚手架回应;**LLM-as-judge 成对 win-rate**(对金标,位置交换去偏,替代官方 GPU 奖励模型) |
+| `mathtutorbench_pedagogy` / `_hard` | D11/D13 | 教学法遵循;同上 LLM-as-judge win-rate |
+| `mathtutorbench_judge_calibration` | — | 裁判选择(先行):被测模型即候选裁判,衡量与论文专家偏好对的一致率,选最高者作 win-rate 任务的生产裁判 |
+
+> MathTutorBench(eth-lre/mathtutorbench)首次使用前先物化数据:`python scripts/eval/data/fetch_eval_datasets.py --benchmark mathtutorbench`(stepverify/pref_test 取自 HF,gsm8k 取自本地 parquet;scaffolding/pedagogy 用克隆内 `datasets/mathdial_bridge*.json`)。win-rate 裁判经 `MATHTUTORBENCH_JUDGE_MODEL`(默认 `MiniMax-M3`)固定、与被测/抽取模型解耦。
 
 新增一个 benchmark:在 `scripts/eval/benchmarks/<name>.py` 写一个 `BenchmarkAdapter` 子类(实现 `load_items` / `build_messages` / `extract_answer` / `score` / `buckets`),并在 `scripts/eval/benchmarks/__init__.py` 注册。
 
@@ -130,7 +150,8 @@ python scripts/eval_benchmark.py --benchmark mmlu_pro --model deepseek-v4-pro --
 
 - **OlympiadBench 判分**需要 `antlr4-python3-runtime==4.11`(sympy `parse_latex`),与 `hydra-core`/`omegaconf` 冲突。`run_eval.sh` 已用 `uv` 临时环境隔离判分阶段;手动跑见脚本里的两段命令。
 - **MathVista 需要图片**:`cd sources/datasets/mathvista/data && wget .../images.zip && unzip`。
-- **拉取 parquet 数据集**:`python scripts/eval/data/fetch_eval_datasets.py --benchmark mmlu_pro|olympiadbench|all`(MMLU-Pro 用**公开**的 `TIGER-Lab/MMLU-Pro`;OlympiadBench 取 OE 配置,图片解到 `olympiadbench/images/`)。AGIEval 数据随其仓库 checkout。
+- **拉取 parquet 数据集**:`python scripts/eval/data/fetch_eval_datasets.py --benchmark mmlu_pro|olympiadbench|mathtutorbench|all`(MMLU-Pro 用**公开**的 `TIGER-Lab/MMLU-Pro`;OlympiadBench 取 OE 配置,图片解到 `olympiadbench/images/`;MathTutorBench 物化 stepverify/pref_test(HF)+ gsm8k(本地 parquet))。AGIEval 数据随其仓库 checkout。
+- **MathTutorBench 教学反馈**:`mathtutorbench_scaffolding`/`_pedagogy`(+`_hard`)用 LLM-as-judge 成对 win-rate 替代官方需 GPU 的 1.5B 偏好奖励模型,裁判经 `MATHTUTORBENCH_JUDGE_MODEL`(默认 `MiniMax-M3`)固定;`mathtutorbench_judge_calibration` 先用论文专家偏好集选裁判。`run_eval.sh` 已封装 win-rate 任务的 judge 注入,`socratic` 需 `pip install sacrebleu`。
 - **限流自愈**:连续 `RATE_LIMIT_THRESHOLD`(默认 10)个 429/限流错误即判定被限流,自动 sleep `RATE_LIMIT_SLEEP` 秒(默认 1800)后重排被限样本(每条最多 `RATE_LIMIT_MAX_RETRIES` 次,默认 3)。
 
 ---

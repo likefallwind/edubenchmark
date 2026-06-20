@@ -107,3 +107,65 @@ def safe_equal(prediction: Any, answer: Any) -> bool:
         return bool(prediction == answer)
     except Exception:
         return False
+
+
+# ---------------------------------------------------------------------------
+# Classification metrics (stdlib reimplementations of sklearn semantics).
+# Used by the MathTutorBench closed-form tasks (solution_correctness uses the
+# binary form; mistake_location uses the multiclass F1 form) so the harness
+# does not need scikit-learn. Verified to match
+# ``sklearn.metrics.{precision,recall,f1}_score`` on the relevant cases.
+# ---------------------------------------------------------------------------
+
+
+def binary_prf1(targets: list[bool], preds: list[bool]) -> dict[str, float]:
+    """Accuracy + precision/recall/F1 for a binary task (positive label = True).
+
+    Mirrors ``sklearn`` with ``pos_label=True`` and ``zero_division=0``.
+    """
+    n = len(targets)
+    if n == 0:
+        return {"accuracy": 0.0, "precision": 0.0, "recall": 0.0, "f1": 0.0}
+    tp = sum(1 for t, p in zip(targets, preds) if t and p)
+    fp = sum(1 for t, p in zip(targets, preds) if (not t) and p)
+    fn = sum(1 for t, p in zip(targets, preds) if t and (not p))
+    correct = sum(1 for t, p in zip(targets, preds) if t == p)
+    precision = tp / (tp + fp) if (tp + fp) else 0.0
+    recall = tp / (tp + fn) if (tp + fn) else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+    return {
+        "accuracy": correct / n,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+    }
+
+
+def multiclass_f1(targets: list[Any], preds: list[Any]) -> dict[str, float]:
+    """F1 with micro / macro / weighted averaging over single-label predictions.
+
+    Mirrors ``sklearn.metrics.f1_score(average=...)`` with ``zero_division=0``.
+    For single-label data micro-F1 equals accuracy.
+    """
+    n = len(targets)
+    if n == 0:
+        return {"f1_micro": 0.0, "f1_macro": 0.0, "f1_weighted": 0.0}
+    labels = sorted(set(targets) | set(preds), key=lambda x: (str(type(x)), x))
+    macro_sum = 0.0
+    weighted_sum = 0.0
+    for label in labels:
+        tp = sum(1 for t, p in zip(targets, preds) if t == label and p == label)
+        fp = sum(1 for t, p in zip(targets, preds) if t != label and p == label)
+        fn = sum(1 for t, p in zip(targets, preds) if t == label and p != label)
+        support = sum(1 for t in targets if t == label)
+        precision = tp / (tp + fp) if (tp + fp) else 0.0
+        recall = tp / (tp + fn) if (tp + fn) else 0.0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+        macro_sum += f1
+        weighted_sum += f1 * support
+    micro = sum(1 for t, p in zip(targets, preds) if t == p) / n
+    return {
+        "f1_micro": micro,
+        "f1_macro": macro_sum / len(labels) if labels else 0.0,
+        "f1_weighted": weighted_sum / n,
+    }

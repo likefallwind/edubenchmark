@@ -7,6 +7,15 @@
 #   MODEL=doubao-seed-2.0-pro ./scripts/run_eval.sh ...                # 换被测模型
 #   EXTRACTOR_MODEL=MiniMax-M2.7 ./scripts/run_eval.sh ...             # 换答案抽取模型(全局，与被测无关)
 #   JUDGE_MODEL=glm-5.1 ./scripts/run_eval.sh eduguard_adversarial     # 换对抗 LLM-as-judge(与被测无关)
+# MathTutorBench (C4 过程评分/反馈质量, eth-lre/mathtutorbench): 先物化数据(一次性)
+#     python scripts/eval/data/fetch_eval_datasets.py --benchmark mathtutorbench
+#   闭式任务(无 judge,官方判分): mathtutorbench_{problem_solving,socratic,solution_correctness,mistake_location,mistake_correction}
+#     ./scripts/run_eval.sh mathtutorbench_solution_correctness mathtutorbench_mistake_location   # (socratic 需 pip install sacrebleu)
+#   开放式教学反馈(LLM-as-judge 成对 win-rate,裁判=JUDGE_MODEL,默认 MiniMax-M3,替代官方 GPU 奖励模型):
+#     ./scripts/run_eval.sh mathtutorbench_scaffolding mathtutorbench_pedagogy mathtutorbench_scaffolding_hard mathtutorbench_pedagogy_hard
+#   裁判选择先行(被测模型即候选裁判,--model 传候选裁判,与人类偏好一致率越高越好,选一致率最高者作生产裁判):
+#     MODEL=MiniMax-M3 ./scripts/run_eval.sh mathtutorbench_judge_calibration
+#     MODEL=glm-5.1    ./scripts/run_eval.sh mathtutorbench_judge_calibration   # 对比另一候选裁判
 # 语言:eduguard_sata 默认中英双语都跑(--language both)。单语言是该评测独有的刻意选项,
 #   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
 #     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0
@@ -40,7 +49,7 @@ LIMIT="${LIMIT:-0}"
 CONCURRENCY="${CONCURRENCY:-4}"       # 被测模型调用并发数
 MODEL="${MODEL:-MiniMax-M3}"                       # 被测模型
 EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M2.7}" # 答案抽取模型(全局；便宜即可，与被测模型无关)
-JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # EduGuard 对抗 LLM-as-judge(与被测/抽取模型解耦)
+JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard 对抗 / MathTutorBench 教学反馈 win-rate;与被测/抽取模型解耦)
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
 for b in $BENCHMARKS; do
@@ -60,6 +69,13 @@ for b in $BENCHMARKS; do
     eduguard_sata)
       # 规则评分，默认中英双语都跑 (--language en|zh|both)
       python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
+      ;;
+    mathtutorbench_scaffolding|mathtutorbench_pedagogy|mathtutorbench_scaffolding_hard|mathtutorbench_pedagogy_hard)
+      # 开放式教学反馈：LLM-as-judge 成对 win-rate(对金标教师回应，位置交换去偏)。
+      # 裁判经 MATHTUTORBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦，替代官方需 GPU 的 1.5B 偏好奖励模型。
+      MATHTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
+      python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" \
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     *)
       python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"

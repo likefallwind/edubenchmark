@@ -9,19 +9,44 @@ from __future__ import annotations
 from ..base import BenchmarkAdapter
 from .agieval import AGIEvalAdapter
 from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
+from .mathtutorbench import (
+    MTBJudgeCalibration,
+    MTBMistakeCorrection,
+    MTBMistakeLocation,
+    MTBPedagogy,
+    MTBPedagogyHard,
+    MTBProblemSolving,
+    MTBScaffolding,
+    MTBScaffoldingHard,
+    MTBSocratic,
+    MTBSolutionCorrectness,
+)
 from .mathvista import MathVistaAdapter
 from .mmlu_pro import MMLUProAdapter
 from .olympiadbench import OlympiadBenchAdapter
 
 
-_REGISTRY: dict[str, type[BenchmarkAdapter]] = {
-    MathVistaAdapter.name: MathVistaAdapter,
-    MMLUProAdapter.name: MMLUProAdapter,
-    AGIEvalAdapter.name: AGIEvalAdapter,
-    OlympiadBenchAdapter.name: OlympiadBenchAdapter,
-    EduGuardSATAAdapter.name: EduGuardSATAAdapter,
-    EduGuardAdversarialAdapter.name: EduGuardAdversarialAdapter,
-}
+_ADAPTERS: list[type[BenchmarkAdapter]] = [
+    MathVistaAdapter,
+    MMLUProAdapter,
+    AGIEvalAdapter,
+    OlympiadBenchAdapter,
+    EduGuardSATAAdapter,
+    EduGuardAdversarialAdapter,
+    # MathTutorBench: judge calibration first, then the 9 tasks.
+    MTBJudgeCalibration,
+    MTBProblemSolving,
+    MTBSocratic,
+    MTBSolutionCorrectness,
+    MTBMistakeLocation,
+    MTBMistakeCorrection,
+    MTBScaffolding,
+    MTBPedagogy,
+    MTBScaffoldingHard,
+    MTBPedagogyHard,
+]
+
+_REGISTRY: dict[str, type[BenchmarkAdapter]] = {a.name: a for a in _ADAPTERS}
 
 
 def get_adapter(name: str) -> BenchmarkAdapter:

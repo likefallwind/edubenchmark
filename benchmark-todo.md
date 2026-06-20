@@ -60,6 +60,16 @@ Each entry should name the scenario, product reason, suggested data/eval design,
 - Note: 已接入 per-benchmark 框架的 C5 主测 = eduguard_sata(D21, P1 教学伤害 SATA, 规则评分) + eduguard_adversarial(D21, P2 对抗安全, 两阶段 LLM-judge BoN=3)。
   论文 judge DeepSeek-V3(BoN=9) 已下线，当前 judge 暂用 MiniMax-M3(BoN=3，同官方公开代码默认)；judge 经 `--extractor-model` 可替换。
 
+## MathTutorBench 接入（C4 过程评分/反馈质量深测）- 2026-06-20
+
+- Note: 已接入 per-benchmark 框架的 C4 主测 = MathTutorBench 全 9 任务（D11/D12/D13），来自 eth-lre/mathtutorbench (EMNLP 2025, arXiv 2502.18940) 本地克隆。
+  数据物化：`python scripts/eval/data/fetch_eval_datasets.py --benchmark mathtutorbench`（stepverify 1002 / pref_test 482 来自 HF，gsm8k_main·gsm8k_socratic 1319 来自本地 parquet；scaffolding/pedagogy 用克隆内 `datasets/mathdial_bridge*.json`）。
+  - 闭式任务（无 judge，官方判分移植到 stdlib）：`mathtutorbench_problem_solving`(GSM8K 精确匹配, gate)、`_socratic`(SacreBLEU)、`_solution_correctness`(Yes/No acc+P/R/F1)、`_mistake_location`(步骤号 F1 micro/macro/weighted)、`_mistake_correction`(数值 acc)。
+  - 开放式教学任务（LLM-as-judge 成对 win-rate，替代官方需 GPU 的 1.5B 偏好奖励模型 `eth-nlped/Qwen2.5-1.5B-pedagogical-rewardmodel`）：`_scaffolding`/`_pedagogy`(+`_hard`)。裁判用官方 reward-model 评分准则，位置交换去偏（两序）；裁判默认 MiniMax-M3，经 `MATHTUTORBENCH_JUDGE_MODEL` 可换。
+- Note: 裁判选择本身作为一项评测先行 = `mathtutorbench_judge_calibration`，被测模型即候选裁判（`--model`），用论文开源偏好集 `dmacjam/pedagogical-rewardmodel-data` 的 test(482 对专家 positive/negative) 衡量与人类偏好一致率；每对以 #ab/#ba 两序出题以暴露位置偏置，extra_metrics 给 agreement 与 position_consistency。一致率最高者作 win-rate 任务生产裁判。
+  冒烟（n 小）：MiniMax-M3 calibration agreement≈0.70 / position_consistency≈0.40；mistake_location acc≈0.90(f1_micro=acc)；scaffolding(judge=M3) win_rate≈0.20。全量校准与各候选裁判对比、全任务跑分待执行。
+- Gap: 官方 1.5B 偏好奖励模型路径（GPU + transformers + HF 权重）未接入；本仓库以 LLM-as-judge 等价替代，二者直接对比留作后续。socratic 任务需 `sacrebleu`（可选依赖）。
+
 - Data-quality finding（已由上游修复）: 初版（commit 67f4355, 2025-10-13）`Dataset/SATAs.xlsx` 的 Answer 列与题目行错位（该列按 `Results/SATAs/*.xlsx` 的行序排列，1,333/2,635 题答案落在错误题目上；直接使用会使 RFS 失真，冒烟样本上 0.79 → 0.39）。
   Resolution: 上游 commit 432e8da（2026-06-08 "Fix SATAs answer labels"）已修复；本仓库独立发现该问题并从 13 个官方 Results 文件按 ID 多数投票重建答案键（`fetch_eval_datasets.py --benchmark eduguard_bench`），重建键与上游修复版 2,635/2,635 逐题一致，且可复现论文各模型 RFS（DeepSeek-V3 0.728/论文0.73、Claude3.7 0.772/论文0.77）。多数投票逻辑保留作为对官方文件的一致性校验（当前输出 "0 misaligned corrected"）。
   Related capabilities: D21; C5.
