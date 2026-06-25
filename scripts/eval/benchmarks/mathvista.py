@@ -13,6 +13,7 @@ from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter
 from ..minimax_client import MiniMaxClient
+from ..providers import extraction_max_tokens
 from ..scoring import normalize_extracted_answer, safe_equal
 
 
@@ -104,11 +105,12 @@ class MathVistaAdapter(BenchmarkAdapter):
 
         full_prompt = f"{self.demo_prompt}\n\n{meta.get('query', item['text'])}\n\n{response}\n\nExtracted answer: "
         # Headroom for reasoning models (e.g. MiniMax-M3) that spend output budget
-        # on reasoning_content before emitting the final answer text.
+        # on reasoning_content before emitting the final answer text; models with
+        # a hidden reasoning phase (e.g. gpt-5.5) run uncapped so it never starves.
         extraction = client.chat(
             [{"role": "user", "content": full_prompt}],
             model=model,
-            max_tokens=1024,
+            max_tokens=extraction_max_tokens(model, 1024),
         )
         return extraction.strip()
 

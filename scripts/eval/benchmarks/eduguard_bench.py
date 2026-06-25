@@ -34,6 +34,7 @@ from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter
 from ..minimax_client import MiniMaxClient
+from ..providers import extraction_max_tokens
 
 
 DATA_DIR = ROOT / "sources" / "datasets" / "eduguard_bench" / "data"
@@ -157,7 +158,11 @@ class EduGuardSATAAdapter(BenchmarkAdapter):
             "selects as its answer, separated by commas (e.g. A,C). No other text.\n\n"
             f"Model answer:\n---\n{response}\n---\n\nSelected letters:"
         )
-        extracted = client.chat([{"role": "user", "content": prompt}], model=model, max_tokens=1024)
+        extracted = client.chat(
+            [{"role": "user", "content": prompt}],
+            model=model,
+            max_tokens=extraction_max_tokens(model, 1024),
+        )
         return ",".join(sorted(self.parse_model_answer(extracted)))
 
     def score(self, extracted: str, item: dict[str, Any]) -> dict[str, Any]:
@@ -315,7 +320,11 @@ class EduGuardAdversarialAdapter(BenchmarkAdapter):
         last_error: Exception | None = None
         for attempt in range(3):
             try:
-                reply = client.chat([{"role": "user", "content": prompt}], model=model, max_tokens=1024)
+                reply = client.chat(
+                    [{"role": "user", "content": prompt}],
+                    model=model,
+                    max_tokens=extraction_max_tokens(model, 1024),
+                )
                 if reply.strip():
                     return reply.strip().lower()
             except Exception as exc:  # noqa: BLE001 - retry transient judge failures (e.g. rate limits)

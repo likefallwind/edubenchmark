@@ -6,7 +6,7 @@ between backends — base URL, the env var holding the API key, and the chat pat
 — so a caller only has to name a model (``--model doubao-seed-2.0-pro``) and the
 right endpoint is selected automatically.
 
-Three providers ship today:
+Four providers ship today:
 
 * ``minimax``  — the original MiniMax endpoint (``MINIMAX_API_KEY``); also the
   home of the default extractor model ``MiniMax-M2.7``.
@@ -18,6 +18,11 @@ Three providers ship today:
   **Not used by default** — ``deepseek-*`` models route through the gateway (it
   also exposes those models). Reach the official API only when explicitly asked,
   via ``--provider deepseek``.
+* ``lighter``  — the LIGHTER API aggregator (``https://lightingtheword.com/v1``,
+  key env ``LIGHTER_API``) at ``/chat/completions``; one key fronts GPT / Claude
+  / Gemini / DeepSeek / Qwen / GLM via the OpenAI Chat Completions format. Home
+  of the ``gpt-*`` models; ``gpt-5.5`` is a reasoning model defaulting to
+  ``reasoning_effort: medium`` (see ``_MODEL_PARAMS`` / ``resolve_model_params``).
 
 Model names are matched by prefix (``resolve_provider``); unknown models fall
 back to the gateway, and every field can be overridden explicitly by the caller
@@ -83,7 +88,20 @@ DEEPSEEK = Provider(
     chat_path="/chat/completions",
 )
 
-PROVIDERS: dict[str, Provider] = {p.name: p for p in (MINIMAX, GATEWAY, DEEPSEEK)}
+# The LIGHTER API aggregator, keyed by ``LIGHTER_API``. OpenAI-compatible, so the
+# same MiniMaxClient drives it; one key fronts many vendors' models. Base URL
+# already includes ``/v1``, so the chat path is ``/chat/completions``. Home of the
+# ``gpt-*`` models (e.g. ``gpt-5.5``, which defaults to ``reasoning_effort:
+# medium`` — see ``_MODEL_PARAMS``).
+LIGHTER = Provider(
+    name="lighter",
+    base_url="https://lightingtheword.com/v1",
+    base_url_env="LIGHTER_BASE_URL",
+    api_key_env="LIGHTER_API",
+    chat_path="/chat/completions",
+)
+
+PROVIDERS: dict[str, Provider] = {p.name: p for p in (MINIMAX, GATEWAY, DEEPSEEK, LIGHTER)}
 
 # Model-name prefixes -> provider name. Longest match wins.
 # ``deepseek-*`` defaults to the gateway (it serves deepseek-v4-pro/-flash too);
@@ -93,10 +111,46 @@ _PREFIX_PROVIDER: list[tuple[str, str]] = [
     ("doubao", "gateway"),
     ("glm", "gateway"),
     ("deepseek", "gateway"),
+    ("gpt", "lighter"),
 ]
 
 # Provider used when no prefix matches a given model name.
 _DEFAULT_PROVIDER = "gateway"
+
+# Default request-body params merged into every call for a model, matched by
+# case-insensitive prefix (longest match wins). ``gpt-5.5`` is a reasoning model
+# whose thinking level defaults to ``medium``; override per call by passing a
+# different ``reasoning_effort`` (callers that build their own payload win).
+_MODEL_PARAMS: list[tuple[str, dict]] = [
+    ("gpt-5.5", {"reasoning_effort": "medium"}),
+]
+
+
+def resolve_model_params(model: str) -> dict:
+    """Return the default extra request params for ``model`` (longest prefix)."""
+    low = (model or "").lower()
+    best: dict = {}
+    best_len = -1
+    for prefix, params in _MODEL_PARAMS:
+        if low.startswith(prefix) and len(prefix) > best_len:
+            best, best_len = params, len(prefix)
+    return dict(best)
+
+
+def is_reasoning_model(model: str) -> bool:
+    """True if ``model`` ships a default ``reasoning_effort`` (e.g. ``gpt-5.5``)."""
+    return "reasoning_effort" in resolve_model_params(model)
+
+
+def extraction_max_tokens(model: str, default: int | None) -> int | None:
+    """Token cap for an extraction / judge call.
+
+    Reasoning models spend output budget on hidden reasoning before emitting the
+    answer, so a small cap (``default``) can starve the answer text and return an
+    empty string. Leave such models uncapped (``None``) and let them finish;
+    non-reasoning models keep the adapter's ``default`` as a runaway guard.
+    """
+    return None if is_reasoning_model(model) else default
 
 
 def resolve_provider(model: str) -> Provider:
@@ -116,12 +170,16 @@ def build_client(
     base_url: str | None = None,
     api_key_env: str | None = None,
     chat_path: str | None = None,
+    extra_params: dict | None = None,
 ) -> MiniMaxClient:
     """Construct a client for ``model`` against its resolved provider.
 
     Explicit ``provider`` / ``base_url`` / ``api_key_env`` / ``chat_path`` args
     override the auto-resolved provider (escape hatch for models not in the
-    prefix table). Raises a clear error if the key env var is unset.
+    prefix table). Default per-model request params (``resolve_model_params``,
+    e.g. ``gpt-5.5``'s ``reasoning_effort: medium``) are applied unless
+    ``extra_params`` is given explicitly. Raises a clear error if the key env var
+    is unset.
     """
     prov = PROVIDERS[provider] if provider else resolve_provider(model)
     url = base_url or prov.resolved_base_url()
@@ -133,12 +191,14 @@ def build_client(
             f"environment variable {key_env} is not set "
             f"(needed for model {model!r} via provider {prov.name!r})"
         )
+    params = resolve_model_params(model) if extra_params is None else extra_params
     return MiniMaxClient(
         model=model,
         base_url=url,
         api_key=api_key,
         timeout=timeout,
         chat_path=path,
+        extra_params=params,
     )
 
 

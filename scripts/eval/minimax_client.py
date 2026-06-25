@@ -73,6 +73,7 @@ class MiniMaxClient:
         api_key: str | None = None,
         timeout: int = 300,
         chat_path: str | None = None,
+        extra_params: dict[str, Any] | None = None,
     ) -> None:
         self.model = model
         self.base_url = (base_url or os.environ.get("MINIMAX_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
@@ -80,6 +81,10 @@ class MiniMaxClient:
         self.timeout = timeout
         path = chat_path or os.environ.get("MINIMAX_CHAT_PATH") or DEFAULT_CHAT_PATH
         self.chat_path = "/" + path.lstrip("/")
+        # Extra request-body fields merged into every chat() payload, e.g. a
+        # reasoning model's default ``{"reasoning_effort": "medium"}``. Per-call
+        # ``max_tokens`` / ``stream`` still take precedence over anything here.
+        self.extra_params = dict(extra_params or {})
         # Per-thread token-usage accumulator. A caller brackets one logical unit
         # of work (e.g. predicting / extracting one item, including retries) with
         # reset_usage_window() ... read_usage_window(); every chat() call in
@@ -138,6 +143,10 @@ class MiniMaxClient:
             "model": model or self.model,
             "messages": messages,
         }
+        # Client-level defaults (e.g. reasoning_effort); explicit per-call args
+        # below override any colliding key.
+        if self.extra_params:
+            payload.update(self.extra_params)
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
         if stream:

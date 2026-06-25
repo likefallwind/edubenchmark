@@ -20,6 +20,7 @@ from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter
 from ..minimax_client import MiniMaxClient
+from ..providers import extraction_max_tokens
 
 
 DATA_FILE = ROOT / "sources" / "datasets" / "mmlu_pro" / "test.jsonl"
@@ -107,7 +108,11 @@ class MMLUProAdapter(BenchmarkAdapter):
             "Reply with just one capital letter (A-J), nothing else.\n\n"
             f"Response:\n{response}\n\nAnswer letter:"
         )
-        extracted = client.chat([{"role": "user", "content": prompt}], model=model, max_tokens=1024)
+        extracted = client.chat(
+            [{"role": "user", "content": prompt}],
+            model=model,
+            max_tokens=extraction_max_tokens(model, 1024),
+        )
         return self._regex_extract(extracted.strip(), n_options) or extracted.strip()[:1].upper()
 
     def score(self, extracted: str, item: dict[str, Any]) -> dict[str, Any]:
