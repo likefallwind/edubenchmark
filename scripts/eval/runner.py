@@ -137,15 +137,18 @@ def _predict_one(
     started = time.time()
     client.reset_usage_window()
     response = ""
+    reasoning = ""
     error: str | None = None
     attempts = 0
     for attempt in range(retries + 1):
         attempts = attempt + 1
         try:
             response = client.chat(messages, model=model, max_tokens=max_tokens, timeout=timeout)
+            reasoning = client.read_last_reasoning()
             error = None
         except Exception as exc:  # noqa: BLE001 - record and retry
             response = ""
+            reasoning = ""
             error = str(exc)
         if response.strip():
             break
@@ -159,6 +162,12 @@ def _predict_one(
         "attempts": attempts,
         "usage": client.read_usage_window(),
     }
+    # Preserve the model's chain-of-thought when the provider returns it. On the
+    # streaming path (harness default) this includes gpt-5.5 via LIGHTER as well
+    # as MiniMax-M3 / DeepSeek-R1 / GLM; when no text is returned, the
+    # reasoning_tokens count in ``usage`` is still the trace of the thinking.
+    if reasoning:
+        row["reasoning"] = reasoning
     if error:
         row["error"] = error
     elif not response.strip():

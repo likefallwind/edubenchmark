@@ -42,7 +42,18 @@ _USAGE_FIELDS = ("prompt_tokens", "completion_tokens", "total_tokens")
 
 
 def _empty_window() -> dict[str, int]:
-    return {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "calls": 0}
+    # ``reasoning_tokens`` is the chain-of-thought billed by reasoning models,
+    # summed from ``usage.completion_tokens_details.reasoning_tokens`` when
+    # present. It is the only reasoning trace that survives on the non-streamed
+    # path (gpt-5.5 via LIGHTER omits the reasoning text there); on the streaming
+    # path the text itself is also captured (see ``_delta_reasoning``).
+    return {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+        "calls": 0,
+    }
 
 
 DEFAULT_BASE_URL = "https://api.minimaxi.com/v1"
@@ -91,10 +102,22 @@ class MiniMaxClient:
         # between adds its API-reported usage. Thread-local so concurrent items
         # sharing one client never cross-count.
         self._usage_tls = threading.local()
+        # Per-thread store of the most recent chat()'s reasoning text (the visible
+        # chain-of-thought some models return in ``reasoning_content``). It mirrors
+        # the kept ``response``: each chat() overwrites it, so reading it right
+        # after a chat() (or after the retry loop) gives the reasoning that
+        # accompanies the returned answer. Empty string when the provider doesn't
+        # send reasoning text (non-reasoning models, or the non-streamed path for
+        # providers that only return it while streaming).
+        self._reasoning_tls = threading.local()
 
     def reset_usage_window(self) -> None:
         """Zero this thread's usage window before measuring a unit of work."""
         self._usage_tls.window = _empty_window()
+
+    def read_last_reasoning(self) -> str:
+        """Return the reasoning text captured by this thread's most recent chat()."""
+        return getattr(self._reasoning_tls, "text", "") or ""
 
     def read_usage_window(self) -> dict[str, int]:
         """Return a copy of this thread's accumulated usage since the last reset."""
@@ -118,6 +141,13 @@ class MiniMaxClient:
             value = usage.get(field)
             if isinstance(value, (int, float)):
                 window[field] += int(value)
+        # Hidden reasoning tokens live under completion_tokens_details for
+        # OpenAI-style reasoning models (gpt-5.5, o-series, DeepSeek-R1, ...).
+        details = usage.get("completion_tokens_details")
+        if isinstance(details, dict):
+            rtok = details.get("reasoning_tokens")
+            if isinstance(rtok, (int, float)):
+                window["reasoning_tokens"] += int(rtok)
 
     def _require_key(self) -> str:
         if not self.api_key:
@@ -167,14 +197,16 @@ class MiniMaxClient:
         try:
             with urllib.request.urlopen(request, timeout=timeout or self.timeout) as response:
                 if stream:
-                    text, usage = read_sse_stream(response)
+                    text, reasoning, usage = read_sse_stream(response)
                     self._record_usage(usage)
+                    self._reasoning_tls.text = reasoning
                     return text
                 data = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"MiniMax HTTP {exc.code}: {body[:500]}") from exc
         self._record_usage(data.get("usage"))
+        self._reasoning_tls.text = extract_reasoning(data)
         return extract_text(data)
 
 
@@ -201,7 +233,22 @@ def _delta_text(choice: dict[str, Any]) -> str:
     return ""
 
 
-def read_sse_stream(response: Any) -> tuple[str, dict[str, Any] | None]:
+def _delta_reasoning(choice: dict[str, Any]) -> str:
+    """Pull incremental reasoning text from one streaming ``choices[]`` entry.
+
+    Reasoning models (MiniMax-M3, DeepSeek-R1, GLM, ...) stream their visible
+    chain-of-thought under ``delta.reasoning_content`` (a few use ``reasoning``).
+    Captured separately from the answer so the kept ``content`` stays clean while
+    the thinking is still preserved for the run record.
+    """
+    delta = (choice or {}).get("delta") or {}
+    value = delta.get("reasoning_content")
+    if value is None:
+        value = delta.get("reasoning")
+    return value if isinstance(value, str) else ""
+
+
+def read_sse_stream(response: Any) -> tuple[str, str, dict[str, Any] | None]:
     """Accumulate assistant text + token usage from an OpenAI SSE token stream.
 
     Each event is a ``data: {json}`` line; the stream ends at ``data: [DONE]``.
@@ -213,9 +260,14 @@ def read_sse_stream(response: Any) -> tuple[str, dict[str, Any] | None]:
     winning; it is None when the provider doesn't send one. Reading line by line
     lets the per-read socket timeout act as a stall detector.
 
-    Returns ``(text, usage)``.
+    ``delta.reasoning_content`` is accumulated separately (see ``_delta_reasoning``)
+    so a reasoning model's chain-of-thought is preserved without polluting the
+    answer text.
+
+    Returns ``(text, reasoning, usage)``.
     """
     parts: list[str] = []
+    reasoning_parts: list[str] = []
     usage: dict[str, Any] | None = None
     for raw in response:
         line = raw.decode("utf-8", errors="replace").strip() if isinstance(raw, (bytes, bytearray)) else str(raw).strip()
@@ -237,7 +289,26 @@ def read_sse_stream(response: Any) -> tuple[str, dict[str, Any] | None]:
             usage = chunk_usage
         for choice in obj.get("choices") or []:
             parts.append(_delta_text(choice))
-    return "".join(parts).strip(), usage
+            reasoning_parts.append(_delta_reasoning(choice))
+    return "".join(parts).strip(), "".join(reasoning_parts).strip(), usage
+
+
+def extract_reasoning(data: dict[str, Any]) -> str:
+    """Pull reasoning text from a non-streamed OpenAI-style chat completion.
+
+    Mirrors ``_delta_reasoning`` for the blob response: reads
+    ``choices[].message.reasoning_content`` (or ``reasoning``). Empty when the
+    provider hides reasoning (e.g. gpt-5.5 via LIGHTER returns only the count).
+    """
+    parts: list[str] = []
+    for choice in data.get("choices") or []:
+        message = (choice or {}).get("message") or {}
+        value = message.get("reasoning_content")
+        if value is None:
+            value = message.get("reasoning")
+        if isinstance(value, str) and value:
+            parts.append(value)
+    return "\n".join(parts).strip()
 
 
 def extract_text(data: dict[str, Any]) -> str:
