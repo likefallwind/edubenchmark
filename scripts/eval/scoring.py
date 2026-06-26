@@ -169,3 +169,27 @@ def multiclass_f1(targets: list[Any], preds: list[Any]) -> dict[str, float]:
         "f1_macro": macro_sum / len(labels) if labels else 0.0,
         "f1_weighted": weighted_sum / n,
     }
+
+
+def cohen_kappa(targets: list[Any], preds: list[Any]) -> float:
+    """Cohen's kappa for two single-label rating sequences (chance-corrected
+    agreement). Mirrors ``sklearn.metrics.cohen_kappa_score`` for nominal labels.
+
+    Used by the MRBench judge-calibration adapter to report how far an LLM
+    judge's per-dimension labels agree with the human gold beyond chance.
+    Returns 0.0 for the degenerate case where the expected agreement is 1
+    (every rating identical), matching sklearn's handling.
+    """
+    n = len(targets)
+    if n == 0:
+        return 0.0
+    labels = sorted(set(targets) | set(preds), key=lambda x: (str(type(x)), x))
+    observed = sum(1 for t, p in zip(targets, preds) if t == p) / n
+    expected = 0.0
+    for label in labels:
+        pt = sum(1 for t in targets if t == label) / n
+        pp = sum(1 for p in preds if p == label) / n
+        expected += pt * pp
+    if expected >= 1.0:
+        return 0.0
+    return (observed - expected) / (1.0 - expected)

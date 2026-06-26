@@ -24,6 +24,7 @@ from .mathtutorbench import (
 )
 from .mathvista import MathVistaAdapter
 from .mmlu_pro import MMLUProAdapter
+from .mrbench import MRBenchJudgeAdapter, MRBenchTutorAdapter
 from .olympiadbench import OlympiadBenchAdapter
 
 
@@ -46,6 +47,9 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     MTBPedagogy,
     MTBScaffoldingHard,
     MTBPedagogyHard,
+    # MRBench: Step 1 judge calibration, then Step 2 generation + judge scoring.
+    MRBenchJudgeAdapter,
+    MRBenchTutorAdapter,
 ]
 
 _REGISTRY: dict[str, type[BenchmarkAdapter]] = {a.name: a for a in _ADAPTERS}

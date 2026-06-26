@@ -205,6 +205,42 @@ def _ok(path: Path) -> bool:
     return path.exists() and path.stat().st_size > 0
 
 
+MRBENCH_URL = (
+    "https://raw.githubusercontent.com/kaushal0494/UnifyingAITutorEvaluation/"
+    "main/MRBench/MRBench_V2.json"
+)
+
+
+def fetch_mrbench(force: bool = False) -> Path:
+    """Download the MRBench annotated dataset (single public JSON, no pandas).
+
+    MRBench (NAACL 2025, *Unifying AI Tutor Evaluation*) ships one JSON list in
+    the repo: each entry is a tutor-student conversation plus several models'
+    tutor responses, each response annotated by humans on 8 pedagogical
+    dimensions. The eval adapters (``mrbench_judge`` / ``mrbench_tutor``) read
+    this file directly with the standard library.
+    """
+    import json as _json
+    import urllib.request
+
+    out_dir = ROOT / "sources" / "datasets" / "mrbench"
+    out_path = out_dir / "MRBench_V2.json"
+    if _ok(out_path) and not force:
+        print(f"skip mrbench: {out_path} already exists (use --force to re-download)")
+        return out_path
+    out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"downloading {MRBENCH_URL}")
+    with urllib.request.urlopen(MRBENCH_URL) as resp:  # noqa: S310 - trusted raw.githubusercontent.com
+        raw = resp.read()
+    # Validate it parses and is the expected list-of-entries shape before writing.
+    data = _json.loads(raw)
+    if not isinstance(data, list) or not data:
+        raise SystemExit(f"unexpected MRBench payload: expected a non-empty JSON list, got {type(data).__name__}")
+    out_path.write_bytes(raw)
+    print(f"wrote {len(data)} conversations -> {out_path}")
+    return out_path
+
+
 def fetch_mathtutorbench(force: bool = False) -> Path:
     """Materialize MathTutorBench task data into stdlib-readable JSONL.
 
@@ -347,7 +383,7 @@ def main() -> None:
     parser.add_argument(
         "--benchmark",
         required=True,
-        choices=["mmlu_pro", "olympiadbench", "eduguard_bench", "mathtutorbench", "ceval", "all"],
+        choices=["mmlu_pro", "olympiadbench", "eduguard_bench", "mathtutorbench", "ceval", "mrbench", "all"],
     )
     parser.add_argument("--force", action="store_true", help="re-download even if output already exists")
     args = parser.parse_args()
@@ -361,6 +397,8 @@ def main() -> None:
         fetch_mathtutorbench(force=args.force)
     if args.benchmark in ("ceval", "all"):
         fetch_ceval(force=args.force)
+    if args.benchmark in ("mrbench", "all"):
+        fetch_mrbench(force=args.force)
 
 
 if __name__ == "__main__":

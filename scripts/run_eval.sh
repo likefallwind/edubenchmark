@@ -16,6 +16,14 @@
 #   裁判选择先行(被测模型即候选裁判,--model 传候选裁判,与人类偏好一致率越高越好,选一致率最高者作生产裁判):
 #     MODEL=MiniMax-M3 ./scripts/run_eval.sh mathtutorbench_judge_calibration
 #     MODEL=glm-5.1    ./scripts/run_eval.sh mathtutorbench_judge_calibration   # 对比另一候选裁判
+# MRBench (C4 教学反馈质量/错误诊断, kaushal0494/UnifyingAITutorEvaluation): 先物化数据(一次性)
+#     python scripts/eval/data/fetch_eval_datasets.py --benchmark mrbench
+#   Step 1 裁判校准(被测模型即裁判,逐维度与人工标注比对,extra_metrics 给每维度 agreement/F1/kappa):
+#     MODEL=MiniMax-M3 ./scripts/run_eval.sh mrbench_judge
+#     MODEL=glm-5.1    ./scripts/run_eval.sh mrbench_judge      # 对比另一候选裁判
+#   Step 2 生成+裁判打分(被测模型生成 tutor 回复,固定裁判=JUDGE_MODEL 默认 MiniMax-M3 逐 8 维打标):
+#     ./scripts/run_eval.sh mrbench_tutor
+#     MODEL=doubao-seed-2.0-pro JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh mrbench_tutor
 # 语言:eduguard_sata 默认中英双语都跑(--language both)。单语言是该评测独有的刻意选项,
 #   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
 #     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0
@@ -75,6 +83,13 @@ for b in $BENCHMARKS; do
       # 裁判经 MATHTUTORBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦，替代官方需 GPU 的 1.5B 偏好奖励模型。
       MATHTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
       python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" \
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+      ;;
+    mrbench_tutor)
+      # Step 2 生成+裁判打分：被测模型生成 tutor 回复，固定裁判逐 8 维打标。
+      # 裁判经 MRBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦；每条 item 裁判扇出 8 个维度，故抬高抽取并发。
+      MRBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
+      python scripts/eval_benchmark.py --benchmark mrbench_tutor --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     *)

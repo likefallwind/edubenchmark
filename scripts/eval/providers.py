@@ -121,8 +121,17 @@ _DEFAULT_PROVIDER = "gateway"
 # case-insensitive prefix (longest match wins). ``gpt-5.5`` is a reasoning model
 # whose thinking level defaults to ``medium``; override per call by passing a
 # different ``reasoning_effort`` (callers that build their own payload win).
+#
+# ``deepseek-v3.2`` needs a default ``max_tokens``: through the local gateway,
+# omitting max_tokens makes the gateway inject 65536, which exceeds deepseek-v3.2's
+# hard cap of 32768 and 400s every request. Default it to the 32768 ceiling so
+# callers (e.g. the eval runner's prediction step) need not pass ``--max-tokens``;
+# an explicit per-call ``max_tokens`` still overrides this (chat() applies it after
+# the extra_params merge), and extraction/judge calls already pass their own small
+# cap. See memory ``gateway-model-thinking-behavior``.
 _MODEL_PARAMS: list[tuple[str, dict]] = [
     ("gpt-5.5", {"reasoning_effort": "medium"}),
+    ("deepseek-v3.2", {"max_tokens": 32768}),
 ]
 
 
