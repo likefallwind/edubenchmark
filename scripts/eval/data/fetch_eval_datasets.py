@@ -275,12 +275,79 @@ def fetch_mathtutorbench(force: bool = False) -> Path:
     return out_dir
 
 
+def fetch_ceval(force: bool = False) -> Path:
+    """Materialize C-Eval (ceval/ceval-exam) into stdlib-readable JSONL.
+
+    C-Eval is a Chinese multi-discipline multiple-choice exam (52 subjects,
+    4 options A/B/C/D). The HuggingFace repo exposes one config per subject,
+    each with ``dev`` (5 labeled few-shot exemplars), ``val`` (public labels),
+    and ``test`` (labels withheld for the official leaderboard).
+
+    We materialize the ``val`` split (1,346 labeled items) for local scoring
+    and ``dev`` (260 exemplars) for optional few-shot prompting. ``test`` is
+    skipped because its answers are not released. The subject->category map is
+    read from the repo clone's ``subject_mapping.json``.
+    """
+    base = ROOT / "sources" / "datasets" / "ceval"
+    out_dir = base / "data"
+    val_out = out_dir / "val.jsonl"
+    dev_out = out_dir / "dev.jsonl"
+    if not force and _ok(val_out) and _ok(dev_out):
+        print(f"skip ceval: outputs already in {out_dir} (use --force to rebuild)")
+        return out_dir
+
+    mapping_path = base / "subject_mapping.json"
+    if not mapping_path.exists():
+        raise SystemExit(
+            f"missing {mapping_path}; clone https://github.com/hkust-nlp/ceval "
+            "into sources/datasets/ceval first"
+        )
+    with mapping_path.open(encoding="utf-8") as fh:
+        subject_mapping = json.load(fh)  # key -> [english, chinese, category]
+
+    try:
+        from datasets import load_dataset
+    except ImportError as exc:  # pragma: no cover - actionable hint
+        raise SystemExit(
+            "the `datasets` library is required to fetch C-Eval "
+            "(ceval/ceval-exam). Install it: pip install datasets"
+        ) from exc
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    counts = {"val": 0, "dev": 0}
+    with val_out.open("w", encoding="utf-8") as vfh, dev_out.open("w", encoding="utf-8") as dfh:
+        for subject in sorted(subject_mapping):
+            english, chinese, category = subject_mapping[subject]
+            ds = load_dataset("ceval/ceval-exam", name=subject)
+            for split, fh in (("val", vfh), ("dev", dfh)):
+                if split not in ds:
+                    continue
+                for ex in ds[split]:
+                    rec = {
+                        "item_id": f"{subject}-{split}-{ex['id']}",
+                        "subject": subject,
+                        "subject_zh": chinese,
+                        "category": category,
+                        "question": _jsonable(ex.get("question")),
+                        "A": _jsonable(ex.get("A")),
+                        "B": _jsonable(ex.get("B")),
+                        "C": _jsonable(ex.get("C")),
+                        "D": _jsonable(ex.get("D")),
+                        "answer": _jsonable(ex.get("answer")),
+                        "explanation": _jsonable(ex.get("explanation")),
+                    }
+                    fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                    counts[split] += 1
+    print(f"wrote ceval: {counts['val']} val rows -> {val_out}, {counts['dev']} dev rows -> {dev_out}")
+    return out_dir
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         "--benchmark",
         required=True,
-        choices=["mmlu_pro", "olympiadbench", "eduguard_bench", "mathtutorbench", "all"],
+        choices=["mmlu_pro", "olympiadbench", "eduguard_bench", "mathtutorbench", "ceval", "all"],
     )
     parser.add_argument("--force", action="store_true", help="re-download even if output already exists")
     args = parser.parse_args()
@@ -292,6 +359,8 @@ def main() -> None:
         fetch_eduguard_bench(force=args.force)
     if args.benchmark in ("mathtutorbench", "all"):
         fetch_mathtutorbench(force=args.force)
+    if args.benchmark in ("ceval", "all"):
+        fetch_ceval(force=args.force)
 
 
 if __name__ == "__main__":

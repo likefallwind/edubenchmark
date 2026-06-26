@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from ..base import BenchmarkAdapter
 from .agieval import AGIEvalAdapter
+from .ceval import CEvalAdapter
 from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
 from .mathtutorbench import (
     MTBJudgeCalibration,
@@ -30,6 +31,7 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     MathVistaAdapter,
     MMLUProAdapter,
     AGIEvalAdapter,
+    CEvalAdapter,
     OlympiadBenchAdapter,
     EduGuardSATAAdapter,
     EduGuardAdversarialAdapter,
