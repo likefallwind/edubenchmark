@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRBench Judge 评测报告 · LLM-as-Judge 校准分析</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#fff; --ink:#1a2027; --muted:#5b6770;
+    --line:#e3e8ee; --accent:#2f6df0; --accent2:#7c3aed;
+    --good:#1f9d55; --warn:#d97706; --bad:#dc2626;
+    --ds:#0ea5e9; --mm:#7c3aed;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+       color:var(--ink);background:#f4f6fa;line-height:1.65;font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+  header{background:linear-gradient(135deg,#1e293b,#312e81);color:#fff;padding:48px 24px 40px;margin-bottom:32px}
+  header .inner{max-width:1080px;margin:0 auto}
+  header h1{margin:0 0 8px;font-size:30px;letter-spacing:.5px}
+  header p{margin:4px 0;opacity:.85;font-size:14px}
+  .tag{display:inline-block;background:rgba(255,255,255,.15);border-radius:20px;padding:3px 12px;font-size:12px;margin-right:8px;margin-top:10px}
+  h2{font-size:21px;margin:42px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:26px 0 10px;color:var(--ink)}
+  p{margin:10px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin:18px 0;
+        box-shadow:0 1px 3px rgba(16,24,40,.04)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:18px 0}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .kpi .val{font-size:30px;font-weight:700;margin-top:4px}
+  .kpi .sub{font-size:13px;color:var(--muted)}
+  .ds{color:var(--ds)} .mm{color:var(--mm)}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
+  th{background:#f0f3f8;font-weight:600}
+  td.dim{text-align:left;font-weight:600}
+  tr:nth-child(even) td{background:#fafbfd}
+  .bar{position:relative;height:18px;background:#eef1f6;border-radius:4px;overflow:hidden;min-width:90px}
+  .bar>span{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+  .win{font-weight:700}
+  .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .note{background:#f8fafc;border-left:4px solid var(--accent);padding:12px 18px;border-radius:0 8px 8px 0;margin:16px 0;font-size:14px}
+  .note.warn{border-color:var(--warn);background:#fffbf2}
+  .note.key{border-color:var(--accent2);background:#faf7ff}
+  ul{margin:10px 0;padding-left:22px} li{margin:6px 0}
+  .legend{font-size:13px;color:var(--muted);margin:6px 0}
+  .swatch{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:middle;margin-right:5px}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:50px;padding-top:20px;border-top:1px solid var(--line)}
+  code{background:#eef1f6;padding:1px 6px;border-radius:4px;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="inner">
+    <h1>MRBench Judge 评测报告</h1>
+    <p>LLM-as-Judge 教学维度校准 · 被测模型即评委（model-under-test is the judge）</p>
+    <p>对比两次运行：<strong>deepseek-v3.2</strong> 与 <strong>MiniMax-M3</strong></p>
+    <div>
+      <span class="tag">基准 mrbench_judge</span>
+      <span class="tag">D11 / D12 / D13 · C4 深度测</span>
+      <span class="tag">每模型 13,240 项</span>
+      <span class="tag">报告日期 2026-06-27</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<h2>1 · 这个基准在测什么</h2>
+<div class="card">
+  <p>MRBench（NAACL 2025，<code>UnifyingAITutorEvaluation</code>）包含 200 段师生数学辅导对话，每段附带最多 9 个模型生成的「老师回复」，并由人工在 <strong>8 个教学维度</strong>上打了标签。</p>
+  <p><strong>mrbench_judge（Step 1 评委校准）</strong>的逻辑是：把<strong>被测模型本身当成评委</strong>，让它对每一条（回复 × 维度）单独给出标签，再与人工金标签比对。这衡量的不是模型「会不会教」，而是模型<strong>「像不像人类教学专家那样判断教学质量」</strong>——即它作为自动评委的可信度。</p>
+  <p>每个被测模型产生 <strong>1,655 条回复 × 8 维度 = 13,240 个判断项</strong>。汇报三类指标：</p>
+  <ul>
+    <li><strong>Agreement（准确率）</strong>：判断与人工金标一致的比例。</li>
+    <li><strong>Macro-F1</strong>：跨标签类别的宏平均 F1，抵消类别不平衡。</li>
+    <li><strong>Cohen's κ</strong>：扣除「随机猜中」后的真实一致性（0.2–0.4 为「一般/fair」，0.4–0.6「中等/moderate」，0.6+「较强」）。</li>
+  </ul>
+  <p class="legend">8 维度：Mistake Identification（识别有无错误）、Mistake Location（定位错误）、Revealing of the Answer（是否直接给答案）、Providing Guidance（是否给出引导）、Actionability（可操作性）、Coherence（连贯性）、Tutor Tone（语气）、Humanlikeness（拟人度）。</p>
+</div>
+
+<h2>2 · 总体结论</h2>
+<div class="grid">
+  <div class="kpi">
+    <div class="label">总体一致率 · MiniMax-M3</div>
+    <div class="val mm">65.3%</div>
+    <div class="sub">8,643 / 13,238 正确</div>
+  </div>
+  <div class="kpi">
+    <div class="label">总体一致率 · deepseek-v3.2</div>
+    <div class="val ds">51.5%</div>
+    <div class="sub">6,817 / 13,240 正确</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Macro-F1（MM / DS）</div>
+    <div class="val">0.507 <span style="font-size:18px;color:var(--muted)">/ 0.411</span></div>
+    <div class="sub">宏平均，越高越均衡</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Cohen's κ（MM / DS）</div>
+    <div class="val">0.341 <span style="font-size:18px;color:var(--muted)">/ 0.265</span></div>
+    <div class="sub">两者均属「一般」区间</div>
+  </div>
+</div>
+
+<div class="note key">
+  <strong>一句话结论：</strong>MiniMax-M3 作为教学评委明显比 deepseek-v3.2 更接近人类判断（一致率 +13.8pp，κ +0.076），但<strong>两者的 Cohen's κ 都仅在 0.27–0.34 的「一般一致」区间</strong>——离可独立替代人工评委（通常需 κ≥0.6）还有相当距离。两模型最大的差距来自 <strong>Humanlikeness</strong> 和 <strong>Providing Guidance / Coherence</strong> 三个维度，根源是<strong>评判松紧度（leniency）与人工金标的偏态是否吻合</strong>，详见第 4 节。
+</div>
+
+<h2>3 · 逐维度对比</h2>
+<div class="card">
+  <p class="legend">
+    <span class="swatch" style="background:var(--mm)"></span>MiniMax-M3 &nbsp;&nbsp;
+    <span class="swatch" style="background:var(--ds)"></span>deepseek-v3.2 &nbsp;— 条形为 Agreement（一致率）
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th rowspan="2" style="text-align:left">维度</th>
+        <th colspan="2">Agreement 一致率</th>
+        <th colspan="2">Macro-F1</th>
+        <th colspan="2">Cohen's κ</th>
+        <th rowspan="2">差距 (MM−DS)<br>一致率</th>
+      </tr>
+      <tr><th>MM</th><th>DS</th><th>MM</th><th>DS</th><th>MM</th><th>DS</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="dim">Revealing of Answer</td>
+        <td class="win mm">90.1%</td><td>89.0%</td>
+        <td>0.678</td><td>0.629</td>
+        <td class="good">0.689</td><td class="good">0.646</td>
+        <td>+1.1</td>
+      </tr>
+      <tr>
+        <td class="dim">Mistake Identification</td>
+        <td>70.6%</td><td class="win ds">71.6%</td>
+        <td>0.537</td><td>0.502</td>
+        <td>0.378</td><td>0.354</td>
+        <td class="bad">−1.0</td>
+      </tr>
+      <tr>
+        <td class="dim">Coherence</td>
+        <td class="win mm">75.0%</td><td>42.5%</td>
+        <td>0.528</td><td>0.310</td>
+        <td>0.329</td><td>0.115</td>
+        <td class="good">+32.4</td>
+      </tr>
+      <tr>
+        <td class="dim">Humanlikeness</td>
+        <td class="win mm">73.8%</td><td>12.7%</td>
+        <td>0.500</td><td>0.131</td>
+        <td>0.218</td><td>0.021</td>
+        <td class="good">+61.1</td>
+      </tr>
+      <tr>
+        <td class="dim">Tutor Tone</td>
+        <td>63.3%</td><td class="win ds">77.5%</td>
+        <td>0.422</td><td>0.581</td>
+        <td>0.338</td><td>0.523</td>
+        <td class="bad">−14.2</td>
+      </tr>
+      <tr>
+        <td class="dim">Providing Guidance</td>
+        <td class="win mm">59.5%</td><td>35.1%</td>
+        <td>0.527</td><td>0.353</td>
+        <td>0.315</td><td>0.095</td>
+        <td class="good">+24.4</td>
+      </tr>
+      <tr>
+        <td class="dim">Mistake Location</td>
+        <td class="win mm">47.3%</td><td>43.3%</td>
+        <td>0.431</td><td>0.392</td>
+        <td>0.238</td><td>0.186</td>
+        <td>+4.0</td>
+      </tr>
+      <tr>
+        <td class="dim">Actionability</td>
+        <td class="win mm">42.8%</td><td>40.1%</td>
+        <td>0.433</td><td>0.390</td>
+        <td>0.220</td><td>0.183</td>
+        <td>+2.7</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note">
+    <strong>读法：</strong>MiniMax-M3 在 8 个维度中 6 个领先，且在 Coherence / Humanlikeness / Providing Guidance 三处大幅领先。deepseek-v3.2 仅在 <strong>Tutor Tone</strong>（+14.2pp）和 <strong>Mistake Identification</strong>（+1.0pp）上更优。所有维度均 <code>unparsed=0</code>，即两模型输出格式都规整，差距来自判断本身而非解析失败。
+  </div>
+</div>
+
+<h3>分数据集（Bridge vs MathDial）</h3>
+<div class="card">
+  <table>
+    <thead><tr><th>数据子集</th><th>样本量</th><th>MiniMax-M3 一致率</th><th>deepseek-v3.2 一致率</th></tr></thead>
+    <tbody>
+      <tr><td class="dim">MathDial</td><td>9,280</td><td class="win mm">65.6%</td><td>50.9%</td></tr>
+      <tr><td class="dim">Bridge</td><td>3,958–3,960</td><td class="win mm">64.5%</td><td>53.0%</td></tr>
+    </tbody>
+  </table>
+  <p class="legend">两数据集表现相近，说明优劣并非由某一数据来源主导，而是模型层面的系统性差异。</p>
+</div>
+
+<h2>4 · 为什么差距这么大：评判松紧度 × 金标偏态</h2>
+<div class="card">
+  <p>关键在于：<strong>人工金标在多数维度上高度偏向「正面」标签</strong>，而两个模型的「松紧度」与这种偏态吻合程度不同。下表为差距最大三个维度的标签分布（金标 vs 各模型预测）。</p>
+
+  <h3>Humanlikeness（差距 +61.1pp，最极端）</h3>
+  <table>
+    <thead><tr><th></th><th>Yes</th><th>To some extent</th><th>No</th></tr></thead>
+    <tbody>
+      <tr><td class="dim">人工金标</td><td><strong>1,461 (88%)</strong></td><td>102</td><td>91</td></tr>
+      <tr><td class="dim mm">MiniMax-M3</td><td class="good">1,214</td><td>343</td><td>97</td></tr>
+      <tr><td class="dim ds">deepseek-v3.2</td><td class="bad">99</td><td>832</td><td>724</td></tr>
+    </tbody>
+  </table>
+  <div class="note warn">
+    人工几乎一律认为辅导回复「像人类」（88% Yes）。MiniMax-M3 同样倾向 Yes，因此对上了；而 <strong>deepseek-v3.2 极度严苛</strong>，只给出 99 个 Yes，把绝大多数压到「To some extent / No」，导致一致率塌到 12.7%、κ≈0.02（与随机无异）。这暴露的是 <strong>deepseek 对「拟人度」的判断标准与人类系统性错位</strong>，而非随机噪声。
+  </div>
+
+  <h3>Coherence（+32.4pp）与 Providing Guidance（+24.4pp）</h3>
+  <table>
+    <thead><tr><th>维度 / 来源</th><th>正面(Yes)</th><th>To some extent</th><th>No</th></tr></thead>
+    <tbody>
+      <tr><td class="dim">Coherence · 金标</td><td><strong>1,346</strong></td><td>143</td><td>166</td></tr>
+      <tr><td class="dim mm">Coherence · MiniMax-M3</td><td class="good">1,228</td><td>223</td><td>204</td></tr>
+      <tr><td class="dim ds">Coherence · deepseek-v3.2</td><td class="bad">586</td><td>211</td><td>858</td></tr>
+      <tr><td colspan="4" style="background:#fff;border:none;height:6px"></td></tr>
+      <tr><td class="dim">Guidance · 金标</td><td><strong>960</strong></td><td>391</td><td>304</td></tr>
+      <tr><td class="dim mm">Guidance · MiniMax-M3</td><td class="good">880</td><td>433</td><td>342</td></tr>
+      <tr><td class="dim ds">Guidance · deepseek-v3.2</td><td class="bad">298</td><td>879</td><td>478</td></tr>
+    </tbody>
+  </table>
+  <p>同一模式重复出现：金标偏正面，<strong>deepseek 系统性偏严</strong>（大量回复被降级为「To some extent / No」），与人类脱节；MiniMax 的宽容度更贴近人工标注习惯。</p>
+
+  <div class="note warn">
+    <strong>但需警惕「正确的理由」：</strong>由于金标本身偏态严重，更「宽容」的评委会因为<strong>多押多数类</strong>而天然占便宜。这一点在 Cohen's κ 上得到印证——MiniMax 在 Humanlikeness 上一致率高达 73.8%，κ 却只有 0.218（去除随机后仅「一般」），说明<strong>它的高分有相当部分来自迎合多数类，而非真正的细粒度判别力</strong>。因此评估评委时应以 <strong>κ 和 Macro-F1 为准，而非裸一致率</strong>。
+  </div>
+</div>
+
+<h3>deepseek 反超的一例：Tutor Tone</h3>
+<div class="card">
+  <table>
+    <thead><tr><th></th><th>Neutral</th><th>Encouraging</th><th>Offensive</th></tr></thead>
+    <tbody>
+      <tr><td class="dim">人工金标</td><td><strong>1,126</strong></td><td>528</td><td>1</td></tr>
+      <tr><td class="dim ds">deepseek-v3.2</td><td class="good">968</td><td>679</td><td>8</td></tr>
+      <tr><td class="dim mm">MiniMax-M3</td><td class="bad">581</td><td>1,074</td><td>0</td></tr>
+    </tbody>
+  </table>
+  <p>这里偏态反向：人工认为多数语气是「中性」。MiniMax 倾向把语气读成「鼓励性」（1,074 个 Encouraging），过度乐观，反而偏离金标；deepseek 的分布更接近人工，于是在此维度领先 14.2pp。<strong>这说明 MiniMax 的「宽容/正向」倾向并非永远有利——一旦人工金标偏向中性/负面，它就会吃亏。</strong></p>
+</div>
+
+<h2>5 · 哪些维度本身就难</h2>
+<div class="card">
+  <p>无论哪个模型，<strong>Mistake Location、Actionability</strong> 都是低分区（一致率 40–47%，κ 0.18–0.24）。这类维度需要<strong>细粒度、上下文敏感的教学判断</strong>（错误具体定位在哪一步、回复是否真的可执行），是当前 LLM 评委的共同短板，也是人工标注本身分歧较大的维度。</p>
+  <p>相反，<strong>Revealing of the Answer</strong> 两模型都做得好（κ 0.65–0.69，唯一进入「较强」区间的维度）——因为「是否直接透露了答案」相对客观、可从文本表面判断。</p>
+</div>
+
+<h2>6 · 成本侧记</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>模型</th><th>调用数</th><th>Prompt tokens</th><th>Completion tokens</th><th>Total tokens</th></tr></thead>
+    <tbody>
+      <tr><td class="dim mm">MiniMax-M3</td><td>13,238</td><td>7.32M</td><td>3.65M</td><td><strong>10.97M</strong></td></tr>
+      <tr><td class="dim ds">deepseek-v3.2</td><td>13,240</td><td>5.11M</td><td>0.025M</td><td><strong>5.13M</strong></td></tr>
+    </tbody>
+  </table>
+  <p>MiniMax-M3 是推理模型，completion tokens 高出约 <strong>146 倍</strong>（3.65M vs 0.025M），总 token 量约为 deepseek 的 2.1 倍。换言之，MiniMax 用<strong>更长的思考（reasoning）换取了更高的评委一致性</strong>，部署时需在「评委质量」与「token 成本/延迟」之间权衡。deepseek-v3.2 输出极简（平均每项不足 2 token，基本只吐标签），成本低但判别力弱。</p>
+</div>
+
+<h2>7 · 建议</h2>
+<div class="card">
+  <ul>
+    <li><strong>选评委</strong>：若需用本仓库的模型做 MRBench 自动评委，<strong>MiniMax-M3 是两者中更优选择</strong>（κ/F1/一致率全面占优，仅 Tutor Tone 略逊）。</li>
+    <li><strong>不要把任一模型当作可独立替代人工的评委</strong>：宏 κ 仅 0.27–0.34，尤其在 Mistake Location / Actionability / Humanlikeness 上判别力弱，建议这些维度<strong>保留人工复核或多评委投票</strong>。</li>
+    <li><strong>报指标时以 κ 和 Macro-F1 为主</strong>：金标类别严重不平衡，裸一致率会奖励「迎合多数类」的宽松评委，具误导性。</li>
+    <li><strong>校准 deepseek 的松紧度</strong>：deepseek-v3.2 在 Humanlikeness/Coherence/Guidance 上系统性偏严，可通过 few-shot 锚定金标分布或调整提示语的评分标准来缓解，再复评是否能拉近与人类的差距。</li>
+    <li><strong>谨慎对待 humanlikeness 维度本身</strong>：金标 88% 为 Yes，几乎退化为常数，对评委区分度贡献有限——分析整体「评委可信度」时建议剔除或降权该维度。</li>
+  </ul>
+</div>
+
+<footer>
+  数据来源：<code>reports/eval/mrbench_judge/{deepseek-v3.2,minimax3}/summary.json + scored.jsonl</code><br>
+  基准 mrbench_judge（UnifyingAITutorEvaluation, NAACL 2025）· 被测模型即评委的 Step-1 校准协议<br>
+  生成于 2026-06-27 · edubenchmark
+</footer>
+
+</div>
+</body>
+</html>
