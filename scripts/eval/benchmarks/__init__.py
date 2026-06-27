@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from ..base import BenchmarkAdapter
 from .agieval import AGIEvalAdapter
+from .bea2025 import BEA2025JudgeAdapter, BEA2025TutorAdapter
 from .ceval import CEvalAdapter
 from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
 from .mathtutorbench import (
@@ -24,6 +25,7 @@ from .mathtutorbench import (
 )
 from .mathvista import MathVistaAdapter
 from .mmlu_pro import MMLUProAdapter
+from .mmtutorbench import MMTutorBenchAdapter, MMTutorBenchJudgeCalibrationAdapter
 from .mrbench import MRBenchJudgeAdapter, MRBenchTutorAdapter
 from .olympiadbench import OlympiadBenchAdapter
 
@@ -50,6 +52,12 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     # MRBench: Step 1 judge calibration, then Step 2 generation + judge scoring.
     MRBenchJudgeAdapter,
     MRBenchTutorAdapter,
+    # BEA 2025: four shared-task dimensions, dev labels local / test labels hidden.
+    BEA2025JudgeAdapter,
+    BEA2025TutorAdapter,
+    # MMTutorBench: multimodal tutoring generation + fixed rubric judge.
+    MMTutorBenchAdapter,
+    MMTutorBenchJudgeCalibrationAdapter,
 ]
 
 _REGISTRY: dict[str, type[BenchmarkAdapter]] = {a.name: a for a in _ADAPTERS}

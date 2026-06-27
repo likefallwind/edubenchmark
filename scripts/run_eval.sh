@@ -24,6 +24,18 @@
 #   Step 2 生成+裁判打分(被测模型生成 tutor 回复,固定裁判=JUDGE_MODEL 默认 MiniMax-M3 逐 8 维打标):
 #     ./scripts/run_eval.sh mrbench_tutor
 #     MODEL=doubao-seed-2.0-pro JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh mrbench_tutor
+# BEA 2025 shared task (4 维 pedagogical ability;dev 有人工标签,test 标签隐藏): 先物化数据(一次性)
+#     python scripts/eval/data/fetch_eval_datasets.py --benchmark bea2025
+#   Step 1 裁判校准(被测模型即候选裁判,先用 LIMIT=20 小样本对齐 human labels):
+#     LIMIT=20 MODEL=MiniMax-M3 ./scripts/run_eval.sh bea2025_judge
+#   Step 2 生成+裁判打分(固定裁判=JUDGE_MODEL/BEA2025_JUDGE_MODEL;不要默认全量):
+#     LIMIT=20 MODEL=doubao-seed-2.0-pro JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh bea2025_tutor
+# MMTutorBench (多模态数学 tutoring, Tangchiu/mmtutorbench): 先物化数据(一次性)
+#     python scripts/eval/data/fetch_eval_datasets.py --benchmark mmtutorbench
+#   小样本 smoke test(固定 rubric judge=JUDGE_MODEL,默认 MiniMax-M3; 不默认跑全量 770):
+#     LIMIT=5 MODEL=MiniMax-M3 JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh mmtutorbench
+#   若公开数据后续提供逐题 human/expert gold,再跑 judge calibration;当前公开 JSONL 无 human gold:
+#     LIMIT=20 MODEL=MiniMax-M3 ./scripts/run_eval.sh mmtutorbench_judge_calibration
 # 语言:eduguard_sata 默认中英双语都跑(--language both)。单语言是该评测独有的刻意选项,
 #   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
 #     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0
@@ -57,7 +69,7 @@ LIMIT="${LIMIT:-0}"
 CONCURRENCY="${CONCURRENCY:-4}"       # 被测模型调用并发数
 MODEL="${MODEL:-MiniMax-M3}"                       # 被测模型
 EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M2.7}" # 答案抽取模型(全局；便宜即可，与被测模型无关)
-JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard 对抗 / MathTutorBench 教学反馈 win-rate;与被测/抽取模型解耦)
+JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/MathTutorBench/MRBench/BEA2025/MMTutorBench;与被测/抽取模型解耦)
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
 for b in $BENCHMARKS; do
@@ -91,6 +103,20 @@ for b in $BENCHMARKS; do
       MRBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
       python scripts/eval_benchmark.py --benchmark mrbench_tutor --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+      ;;
+    bea2025_tutor)
+      # Step 2 生成+裁判打分：被测模型生成 tutor 回复，固定裁判逐 4 个 BEA 维度打标。
+      # 这里把 --extractor-model 设成 JUDGE_MODEL，使 judge token usage 进入 summary.json 的 extraction usage。
+      BEA2025_JUDGE_MODEL="$JUDGE_MODEL" \
+      python scripts/eval_benchmark.py --benchmark bea2025_tutor --model "$MODEL" \
+        --extractor-model "$JUDGE_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+      ;;
+    mmtutorbench)
+      # 多图输入(previous images + current image)生成 tutoring 回复；固定 rubric judge 打 6 个 0/1 维度。
+      # 这里把 --extractor-model 设成 JUDGE_MODEL，使 judge token usage 进入 summary.json 的 extraction usage。
+      MMTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
+      python scripts/eval_benchmark.py --benchmark mmtutorbench --model "$MODEL" \
+        --extractor-model "$JUDGE_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     *)
       python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
