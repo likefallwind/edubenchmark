@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_judge</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 1 LLM-as-judge 校准（与人类标注一致性）</h1>
+    <p class="muted">基准 mrbench_judge · 模型 <strong>deepseek-v4-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">70.1%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">13240</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">13240</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">9286</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>MRBench（NAACL 2025 Unifying AI Tutor Evaluation）的 LLM-as-judge 校准：被测 --model 本身充当裁判，对数据集中已有人工标注的 tutor 回复逐维度（8 个教学维度）打标，衡量裁判与人类标注的一致程度。每 (回复 × 维度) 拆成一道题，gold 为该维度的人工标签，裁判输出三分类标签后与 gold 比对。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>8 个维度：Mistake Identification / Mistake Location / Revealing of the Answer / Providing Guidance / Actionability / Coherence / Tutor Tone / Humanlikeness。Revealing 三档为 No / Yes(correct) / Yes(incorrect)，Tutor Tone 为 Encouraging/Neutral/Offensive，其余为 Yes / To some extent / No。</p><p>报告“正确率”即逐维度逐题一致率（micro accuracy）；summary.json 的 extra_metrics 按维度给 agreement(accuracy)、macro-F1 与 Cohen&#x27;s kappa，并给跨维度 macro 平均——这就是“裁判有多像人”。裁判输出无法归一的记 unparsed（占比应很低）。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c0-Gemini-Mistake_Identification</span><span class='tag'>dimension=Mistake_Identification</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+It looks like you&#x27;re on the right track, but remember that Elliott still had 2,000 steps left to take *after* his jog.
+
+Dimension — Mistake Identification: Has the tutor recognized that the student made a mistake (or that the student&#x27;s latest turn contains an error)?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans gold inline'><span class='lbl'>参考答案</span>Yes</div></div><div class='card'><div class='card-head'><span class='pid'>#c0-Gemini-Mistake_Location</span><span class='tag'>dimension=Mistake_Location</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+It looks like you&#x27;re on the right track, but remember that Elliott still had 2,000 steps left to take *after* his jog.
+
+Dimension — Mistake Location: Does the tutor&#x27;s reply point to where exactly the mistake is — the specific step, quantity, or place the student went wrong?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans gold inline'><span class='lbl'>参考答案</span>Yes</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric&quot;: &quot;per-dimension agreement with human gold (accuracy), macro-F1, Cohen&#x27;s kappa&quot;,
+  &quot;n_items&quot;: 13240,
+  &quot;macro_over_dimensions&quot;: {
+    &quot;agreement&quot;: 0.7014,
+    &quot;f1_macro&quot;: 0.5134,
+    &quot;cohen_kappa&quot;: 0.3831
+  },
+  &quot;per_dimension&quot;: {
+    &quot;Mistake_Identification&quot;: {
+      &quot;n&quot;: 1655,
+      &quot;agreement&quot;: 0.7378,
+      &quot;f1_macro&quot;: 0.4935,
+      &quot;cohen_kappa&quot;: 0.3957,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Mistake_Location&quot;: {
+      &quot;n&quot;: 1655,
+      &quot;agreement&quot;: 0.5251,
+      &quot;f1_macro&quot;: 0.4444,
+      &quot;cohen_kappa&quot;: 0.2567,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Revealing_of_the_Answer&quot;: {
+      &quot;n&quot;: 1655,
+      &quot;agreement&quot;: 0.9378,
+      &quot;f1_macro&quot;: 0.7368,
+      &quot;cohen_kappa&quot;: 0.7838,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Providing_Guidance&quot;: {
+      &quot;n&quot;: 1655,
+      &quot;agreement&quot;: 0.626,
+      &quot;f1_macro&quot;: 0.5078,
+      &quot;cohen_kappa&quot;: 0.3355,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Actionability&quot;: {
+      &quot;n&quot;: 1655,
+      &quot;agreement&quot;: 0.5728,
+      &quot;f1_macro&quot;: 0.524,
+      &quot;cohen_kappa&quot;: 0.3472,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Coherence&quot;: {
+      &quot;n&quot;: 1655,
+      &quot;agreement&quot;: 0.7553,
+      &quot;f1_macro&quot;: 0.4705,
+      &quot;cohen_kappa&quot;: 0.3078,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Tutor_Tone&quot;: {
+      &quot;n&quot;: 1655,
+      &quot;agreement&quot;: 0.7009,
+      &quot;f1_macro&quot;: 0.4859,
+      &quot;cohen_kappa&quot;: 0.4359,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;humanlikeness&quot;: {
+      &quot;n&quot;: 1655,
+      &quot;agreement&quot;: 0.7553,
+      &quot;f1_macro&quot;: 0.4442,
+      &quot;cohen_kappa&quot;: 0.2019,
+      &quot;unparsed&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>13240</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 dimension 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Actionability</td><td>1655</td><td>948</td><td>0.573</td><td><div class='bar'><i style='width:57%'></i></div></td></tr><tr><td>Coherence</td><td>1655</td><td>1250</td><td>0.755</td><td><div class='bar'><i style='width:76%'></i></div></td></tr><tr><td>Mistake_Identification</td><td>1655</td><td>1221</td><td>0.738</td><td><div class='bar'><i style='width:74%'></i></div></td></tr><tr><td>Mistake_Location</td><td>1655</td><td>869</td><td>0.525</td><td><div class='bar'><i style='width:53%'></i></div></td></tr><tr><td>Providing_Guidance</td><td>1655</td><td>1036</td><td>0.626</td><td><div class='bar'><i style='width:63%'></i></div></td></tr><tr><td>Revealing_of_the_Answer</td><td>1655</td><td>1552</td><td>0.938</td><td><div class='bar'><i style='width:94%'></i></div></td></tr><tr><td>Tutor_Tone</td><td>1655</td><td>1160</td><td>0.701</td><td><div class='bar'><i style='width:70%'></i></div></td></tr><tr><td>humanlikeness</td><td>1655</td><td>1250</td><td>0.755</td><td><div class='bar'><i style='width:76%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>3960</td><td>2770</td><td>0.699</td><td><div class='bar'><i style='width:70%'></i></div></td></tr><tr><td>MathDial</td><td>9280</td><td>6516</td><td>0.702</td><td><div class='bar'><i style='width:70%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c0-Gemini-Mistake_Location</span><span class='tag'>dimension=Mistake_Location</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+It looks like you&#x27;re on the right track, but remember that Elliott still had 2,000 steps left to take *after* his jog.
+
+Dimension — Mistake Location: Does the tutor&#x27;s reply point to where exactly the mistake is — the specific step, quantity, or place the student went wrong?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>Yes</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c0-Gemini-Actionability</span><span class='tag'>dimension=Actionability</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+It looks like you&#x27;re on the right track, but remember that Elliott still had 2,000 steps left to take *after* his jog.
+
+Dimension — Actionability: Is it clear from the tutor&#x27;s reply what the student should do next? Does it give the student a concrete next action rather than a dead end?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>Yes</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c0-Gemini-Tutor_Tone</span><span class='tag'>dimension=Tutor_Tone</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+It looks like you&#x27;re on the right track, but remember that Elliott still had 2,000 steps left to take *after* his jog.
+
+Dimension — Tutor Tone: What is the overall tone of the tutor&#x27;s reply?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Encouraging / Neutral / Offensive</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Encouraging</div><div class='ans'><span class='lbl'>归一化</span>Encouraging</div><div class='ans gold'><span class='lbl'>正确答案</span>Neutral</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Encouraging.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c0-Phi3-Actionability</span><span class='tag'>dimension=Actionability</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+Great job! To further enhance your understanding, let&#x27;s explore more examples and practice solving similar problems together.
+
+Dimension — Actionability: Is it clear from the tutor&#x27;s reply what the student should do next? Does it give the student a concrete next action rather than a dead end?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>No</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c0-Phi3-Coherence</span><span class='tag'>dimension=Coherence</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+Great job! To further enhance your understanding, let&#x27;s explore more examples and practice solving similar problems together.
+
+Dimension — Coherence: Is the tutor&#x27;s reply logically coherent with the conversation so far and internally self-consistent (not contradictory or off-topic)?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Yes</div><div class='ans'><span class='lbl'>归一化</span>Yes</div><div class='ans gold'><span class='lbl'>正确答案</span>No</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Yes.&lt;/think&gt;Yes</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c0-Phi3-humanlikeness</span><span class='tag'>dimension=humanlikeness</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+Great job! To further enhance your understanding, let&#x27;s explore more examples and practice solving similar problems together.
+
+Dimension — Humanlikeness: Does the tutor&#x27;s reply sound natural and human, as opposed to robotic, templated, or artificial?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>No</div><div class='ans'><span class='lbl'>归一化</span>No</div><div class='ans gold'><span class='lbl'>正确答案</span>Yes</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>No&lt;/s&gt;</pre></details></div></section>
+</main>
+</body>
+</html>
