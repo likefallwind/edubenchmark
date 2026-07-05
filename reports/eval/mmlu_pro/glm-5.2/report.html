@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mmlu_pro</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MMLU-Pro：通用学科知识与复杂选择题推理</h1>
+    <p class="muted">基准 mmlu_pro · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">88.3%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">12032</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">11875</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">10482</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>MMLU-Pro 是 MMLU 的增强版，覆盖 14 个学科/专业领域，把选项从 4 个扩展到最多10 个，并替换掉过易、易猜的题目，更强调多步推理而非纯记忆。对应本仓库能力维度D01（通用学科知识与复杂推理）。</p><p>本次使用官方 test 划分（12,032 题）。提示采用零样本思维链，要求模型先推理、再在最后一行给出 `The answer is (X)`。</p><p>答案抽取沿用官方正则（依次匹配 `answer is (X)`、`answer: X`、末尾独立大写字母），失败时由 LLM 兜底抽取；判分为与标准选项字母精确匹配，并按学科分桶统计。</p><p class='muted'>主页：<a href='https://github.com/TIGER-AI-Lab/MMLU-Pro'>https://github.com/TIGER-AI-Lab/MMLU-Pro</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#70</span><span class='tag'>category=business</span></div><div class='qtext'>Question: Typical advertising regulatory bodies suggest, for example that adverts must not: encourage _________, cause unnecessary ________ or _____, and must not cause _______ offence.
+Options:
+A. Safe practices, Fear, Jealousy, Trivial
+B. Unsafe practices, Distress, Joy, Trivial
+C. Safe practices, Wants, Jealousy, Trivial
+D. Safe practices, Distress, Fear, Trivial
+E. Unsafe practices, Wants, Jealousy, Serious
+F. Safe practices, Distress, Jealousy, Serious
+G. Safe practices, Wants, Fear, Serious
+H. Unsafe practices, Wants, Fear, Trivial
+I. Unsafe practices, Distress, Fear, Serious
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>I</div></div><div class='card'><div class='card-head'><span class='pid'>#71</span><span class='tag'>category=business</span></div><div class='qtext'>Question: Managers are entrusted to run the company in the best interest of ________. Specifically, they have a duty to act for the benefit of the company, as well as a duty of ________ and of _______.
+Options:
+A. Shareholders, Diligence, Self-interest
+B. Shareholders, Self-interest, Care and Skill
+C. Stakeholders, Care and skill, Self-interest
+D. Stakeholders, Diligence, Care and Skill
+E. Customers, Care and Skill, Diligence
+F. Shareholders, Care and Skill, Diligence
+G. Shareholders, Self-interest, Diligence
+H. Employees, Care and Skill, Diligence
+I. Stakeholders, Self-interest, Diligence
+J. Stakeholder, Care and Skill, Diligence
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>F</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>157</td></tr><tr><td>scored</td><td>11875</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology</td><td>717</td><td>674</td><td>0.940</td><td><div class='bar'><i style='width:94%'></i></div></td></tr><tr><td>business</td><td>789</td><td>729</td><td>0.924</td><td><div class='bar'><i style='width:92%'></i></div></td></tr><tr><td>chemistry</td><td>1127</td><td>1043</td><td>0.925</td><td><div class='bar'><i style='width:93%'></i></div></td></tr><tr><td>computer science</td><td>410</td><td>367</td><td>0.895</td><td><div class='bar'><i style='width:90%'></i></div></td></tr><tr><td>economics</td><td>843</td><td>757</td><td>0.898</td><td><div class='bar'><i style='width:90%'></i></div></td></tr><tr><td>engineering</td><td>824</td><td>748</td><td>0.908</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>health</td><td>818</td><td>677</td><td>0.828</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>history</td><td>381</td><td>296</td><td>0.777</td><td><div class='bar'><i style='width:78%'></i></div></td></tr><tr><td>law</td><td>1099</td><td>808</td><td>0.735</td><td><div class='bar'><i style='width:74%'></i></div></td></tr><tr><td>math</td><td>1349</td><td>1291</td><td>0.957</td><td><div class='bar'><i style='width:96%'></i></div></td></tr><tr><td>other</td><td>924</td><td>783</td><td>0.847</td><td><div class='bar'><i style='width:85%'></i></div></td></tr><tr><td>philosophy</td><td>498</td><td>426</td><td>0.855</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>physics</td><td>1298</td><td>1201</td><td>0.925</td><td><div class='bar'><i style='width:93%'></i></div></td></tr><tr><td>psychology</td><td>798</td><td>682</td><td>0.855</td><td><div class='bar'><i style='width:85%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（157 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>153</td><td>模型返回了空内容</td><td class='muted'>1068, 1887, 3542, 7194, 8099, 8420, 9774, 11007, 11306, 11442, 11515, 11546, 11559, 11567, 11569, 11588, 11591, 11598, 11602, 11603, 11631, 11635, 11637, 11639, 11642, 11644, 11665, 11666, 11668, 11671, 11690, 11704, 11713, 11715, 11719, 11720, 11724, 11725, 11730, 11746, 11751, 11758, 11759, 11774, 11776, 11777, 11788, 11789, 11793, 11797, 11798, 11801, 11803, 11807, 11810, 11815, 11816, 11818, 11819, 11824, 11833, 11864, 11874, 11875, 11877, 11881, 11883, 11896, 11907, 11909, 11910, 11914, 11936, 11944, 11945, 11946, 11948, 11951, 11952, 11953, 11959, 11961, 11963, 11973, 11976, 11977, 11978, 11979, 11997, 12001, 12003, 12013, 12014, 12015, 12016, 12026, 12029, 12030, 12036, 12037, 12041, 12042, 12043, 12044, 12045, 12053, 12054, 12056, 12058, 12063, 12073, 12085, 12092, 12093, 12094, 12098, 12100, 12101, 12105, 12107, 12108, 12111, 12113, 12114, 12117, 12118, 12120, 12134, 12135, 12141, 12157, 12159, 12162, 12165, 12166, 12173, 12175, 12176, 12186, 12188, 12190, 12191, 12201, 12202, 12214, 12222, 12233, 12235, 12237, 12240, 12244, 12251, 12254</td></tr><tr><td><strong>其他错误</strong></td><td>4</td><td>MiniMax HTTP 502: {&quot;error&quot;:{&quot;message&quot;:&quot;Upstream error: &quot;,&quot;type&quot;:&quot;gateway_error&quot;,&quot;code&quot;:502}}</td><td class='muted'>4384, 4409, 4412, 4413</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#81</span><span class='tag'>category=business</span></div><div class='qtext'>Question: The six dimensions usually considered to constitute the external marketing environment include all of the following except:
+Options:
+A. Political considerations.
+B. Weather conditions
+C. Personal preferences of the marketing team
+D. Economics issues.
+E. Technology trends
+F. Socio-cultural aspects.
+G. Global factors.
+H. Competitive landscape
+I. Industry regulations
+J. Environmental concerns
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>G</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To determine the correct answer, we need to identify which of the options is not a part of the external marketing environment. 
+
+The external marketing environment consists of forces and factors outside the organization&#x27;s control that affect its marketing decisions. These usually include:
+- **Political/Legal considerations** (including industry regulations)
+- **Economic issues**
+- **Technological trends**
+- **Socio-cultural aspects**
+- **Competitive landscape**
+- **Global factors**
+- **Environmental/Natural concerns** (which encompasses weather conditions and environmental concerns)
+
+Option C, &quot;Personal preferences of the marketing team,&quot; refers to an internal factor within the organization rather than an external environmental force. The preferences, biases, or personal tastes of the marketing team fall under the internal environment (company microenvironment) and do not constitute a dimension of the external marketing environment.
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#83</span><span class='tag'>category=business</span></div><div class='qtext'>Question: As what is ensuring that one individual does not carry the burden of a whole work task referred to?
+Options:
+A. Work delegation
+B. Workload balancing
+C. Work distribution
+D. Work specialisation
+E. Work rotation
+F. Work redundancy
+G. Work shift
+H. Work division
+I. Work schedule
+J. Work design
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>This refers to sharing or distributing the work so that no single person is responsible for the entire task. Among the options, this is best described as work distribution.
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#113</span><span class='tag'>category=business</span></div><div class='qtext'>Question: Dermanand Klein are the sole stockholders of the Leather Products Corporation. It is estimated that Leather Products will have a taxable income of $30,000 this year. The stock is evenly divided between Mr.Dermanand Mr. Klein, so that resulting dividends will also be equally shared. Both Mr. Dermanand Mr. Klein expect to receive from other sources a net taxable income of $12,000. All profit after taxes Leather Products makes this year will be paid out as dividends. Mr.Dermanwants to introduce a new product. Should this venture succeed, the annual income before taxes will increase by $10,000. What will be the increase in stockholders&#x27; income after taxes? Use the tables &quot;Federal Taxes Rates on 1949 Net Incomes of Corporations in the United States&quot;, and &quot;Federal Tax Rates on 1949 Incomes of Individuals in the United States.&quot;
+Options:
+A. $1,129.88
+B. $850
+C. $1,050
+D. $2,250
+E. $2,400
+F. $1,500
+G. $2,000
+H. $900
+I. $3,000
+J. $1,200
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>E</div><div class='ans'><span class='lbl'>归一化</span>E</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Using the 1949 corporate rates: the extra $10,000 is all above the $25,000 surtax threshold, so it is taxed at \(21\% + 20\% = 41\%\).
+
+Extra corporate tax:
+\[
+0.41 \times 10{,}000 = 4{,}100
+\]
+Extra after-tax profit paid as dividends:
+\[
+10{,}000 - 4{,}100 = 5{,}900
+\]
+Each stockholder gets:
+\[
+5{,}900/2 = 2{,}950
+\]
+
+Current corporate tax on $30,000:
+\[
+0.21(30{,}000)+0.20(5{,}000)=7{,}300
+\]
+Current after-tax profit:
+\[
+30{,}000-7{,}300=22{,}700
+\]
+Each stockholder’s current dividend:
+\[
+22{,}700/2=11{,}350
+\]
+So each stockholder’s taxable income before the new product:
+\[
+12{,}000+11{,}350=23{,}350
+\]
+After the increase:
+\[
+23{,}350+2{,}950=26{,}300
+\]
+
+Using 1949 individual rates: income from $22,000 to $26,000 is taxed at 59%, and income above $26,000 at 62%.
+
+Extra individual tax per stockholder:
+\[
+2{,}650(0.59)+300(0.62)=1{,}563.50+186=1{,}749.50
+\]
+Extra after-tax income per stockholder:
+\[
+2{,}950-1{,}749.50=1{,}200.50
+\]
+For both stockholders:
+\[
+2 \times 1{,}200.50 \approx 2{,}401
+\]
+Closest option: $2,400.
+
+The answer is (E)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#125</span><span class='tag'>category=business</span></div><div class='qtext'>Question:  The ________ perspective on sustainability resulted from growth models that analysed the carrying capacity of the planet, overall concluding that the finite capacity of the earth and_______, ________ and _______ by current and past generations could reduce quality of life for future generations. This contrasts with the environmental perspective with focuses on the need to maintain and preserve the natural environment.
+Options:
+A. Environmental, Overuse of resources, Underpopulation, Sustainable practices
+B. Environmental, Underuse of resources, Overpopulation, Over pollution
+C. Sociopolitical, Underuse of resources, Overpopulation, Unsustainability
+D. Economic, Balanced use of resources, Stable population, Sustainable practices
+E. Environmental, Overuse of resources, Underpopulation, Unsustainability
+F. Sociopolitical, Overuse of resources, Overpopulation, Over pollution
+G. Economic, Overuse of resources, Overpopulation, Over pollution,
+H. Economic, Overuse of resources, Stable population, Over pollution
+I. Environmental, Balanced use of resources, Overpopulation, Unsustainability
+J. Economic, Underuse of resources, Underpopulation, Unsustainability
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>G</div><div class='ans'><span class='lbl'>归一化</span>G</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The question describes a perspective based on growth models and Earth’s carrying capacity, contrasting it with the environmental perspective. This points to the **economic** perspective on sustainability. The factors that could reduce future quality of life are negative impacts: **overuse of resources**, **overpopulation**, and **over pollution**.
+
+The answer is (G)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#128</span><span class='tag'>category=business</span></div><div class='qtext'>Question: The extent to which a service envelops a product varies according to a number of factors. Which of the following is NOT one of the factors?
+Options:
+A. The CEO of the company producing the product
+B. The number of competitors in the market
+C. Variations in supply and demand.
+D. The time of year the product is sold
+E. The retail location where the product is sold
+F. The level of tangibility associated with the type of product.
+G. The age of the product designer
+H. The color of the product packaging
+I. The way in which the service is delivered.
+J. Performance-value.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>G</div><div class='ans'><span class='lbl'>归一化</span>G</div><div class='ans gold'><span class='lbl'>正确答案</span>J</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To determine which option is NOT a factor in the extent to which a service envelops a product, we can look at standard marketing and services management principles. The extent to which services wrap around or &quot;envelop&quot; a product is influenced by market conditions (like the number of competitors and supply/demand variations), situational factors (like time of year and retail location), the product&#x27;s own characteristics (like its level of tangibility), how the service is delivered, and the performance-value proposition. 
+
+Options B, C, D, E, F, I, and J are all established strategic, market, or product-related factors that dictate how a service is built around a product. While options A and H are also irrelevant, &quot;The age of the product designer&quot; is a classic absurd distractor used in this specific test bank question, as the personal demographic traits of the product&#x27;s designer (like their age) have no bearing on the structural or market-driven service envelopment strategy of a product. 
+
+The answer is (G)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#129</span><span class='tag'>category=business</span></div><div class='qtext'>Question: An important characteristic of services is that they are produced and consumed by people, simultaneously, as a single event. One of the outcomes of this unique process is that it is exceedingly difficult to standardize the delivery of services around the blueprint model. Which characteristic of service is this referred to?
+Options:
+A. Incomparability.
+B. Inconsistency.
+C. Simultaneity.
+D. Heterogeneity.
+E. Inseparability.
+F. Non-storable.
+G. Intangibility.
+H. Perishability.
+I. Variability.
+J. Non-transferability.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>E</div><div class='ans'><span class='lbl'>归一化</span>E</div><div class='ans gold'><span class='lbl'>正确答案</span>I</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Step 1: Analyze the description provided in the question. The question highlights that services are &quot;produced and consumed by people, simultaneously, as a single event.&quot; 
+Step 2: Relate the description to the standard characteristics of services. In services marketing, the fact that production and consumption happen at the same time and cannot be separated is a foundational concept. 
+Step 3: Identify the standard terminology. The widely accepted framework for service characteristics is the IHIP model: Intangibility, Heterogeneity, Inseparability, and Perishability. The characteristic describing the simultaneous production and consumption (as a single event where they cannot be separated) is formally known as **Inseparability**.
+Step 4: Evaluate the other options. While &quot;Simultaneity&quot; (C) describes the timing, &quot;Inseparability&quot; (E) is the formal academic term for the characteristic itself (i.e., production and consumption are inseparable). Options like Heterogeneity (D), Variability (I), and Inconsistency (B) refer to the *outcome* mentioned (the difficulty in standardizing), but the question asks for the characteristic referred to by the &quot;unique process&quot; itself (&quot;this&quot; points back to the simultaneous single event). 
+Step 5: Conclude that Inseparability is the correct standard characteristic being described. 
+
+The answer is (E)</pre></details></div></section>
+</main>
+</body>
+</html>

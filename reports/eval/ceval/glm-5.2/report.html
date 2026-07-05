@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ceval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · C-Eval：中文多学科考试知识（选择题，5-shot answer-only）</h1>
+    <p class="muted">基准 ceval · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">93.8%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">1346</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">1345</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">1261</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>C-Eval 是覆盖 52 个学科、四个难度层级的中文多项选择评测，分为 STEM、社会科学、人文、其他四大类。每题为四选一（A/B/C/D）。对应本仓库能力维度 D01（通用学科知识与推理），用于衡量模型的中文本土学科知识，属 sanity check。</p><p>本次使用带公开标签的 val 划分（1,346 题）；官方 test 划分不公开答案、需提交排行榜，故不在本地评测范围内。评测采用官方 **5-shot answer-only** 协议：每个学科取 dev 集的 5 个示例作为 user/assistant 多轮对话（assistant 回复即标准字母），再以相同格式（结尾为「答案：」）提问。</p><p>由于 few-shot 已把输出约束为单个字母，本适配器**不做 LLM 答案抽取**，直接读取回复首个选项字母与标准答案精确匹配（等价官方 `response[0] == answer`），并按学科大类与具体学科分桶统计。</p><p class='muted'>主页：<a href='https://github.com/hkust-nlp/ceval'>https://github.com/hkust-nlp/ceval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#accountant-val-0</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>下列关于税法基本原则的表述中，不正确的是____。
+A. 税收法定原则包括税收要件法定原则和税务合法性原则
+B. 税收公平原则源于法律上的平等性原则
+C. 税收效率原则包含经济效率和行政效率两个方面
+D. 税务机关按法定程序依法征税，可以自由做出减征、停征或免征税款的决定
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#accountant-val-1</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>甲公司是国内一家领先的新媒体、通信及移动增值服务公司，由于遭受世界金融危机，甲公司经济利润严重下滑，经营面临困境，但为了稳定职工队伍，公司并未进行裁员，而是实行高层管理人员减薪措施。甲公司此举采用的收缩战略方式是____。
+A. 转向战略
+B. 放弃战略
+C. 紧缩与集中战略
+D. 稳定战略
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>1</td></tr><tr><td>scored</td><td>1345</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Humanities</td><td>257</td><td>236</td><td>0.918</td><td><div class='bar'><i style='width:92%'></i></div></td></tr><tr><td>Other</td><td>383</td><td>365</td><td>0.953</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>STEM</td><td>430</td><td>401</td><td>0.933</td><td><div class='bar'><i style='width:93%'></i></div></td></tr><tr><td>Social Science</td><td>275</td><td>259</td><td>0.942</td><td><div class='bar'><i style='width:94%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>accountant</td><td>49</td><td>48</td><td>0.980</td><td><div class='bar'><i style='width:98%'></i></div></td></tr><tr><td>advanced_mathematics</td><td>19</td><td>18</td><td>0.947</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>art_studies</td><td>33</td><td>32</td><td>0.970</td><td><div class='bar'><i style='width:97%'></i></div></td></tr><tr><td>basic_medicine</td><td>19</td><td>18</td><td>0.947</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>business_administration</td><td>33</td><td>30</td><td>0.909</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>chinese_language_and_literature</td><td>23</td><td>20</td><td>0.870</td><td><div class='bar'><i style='width:87%'></i></div></td></tr><tr><td>civil_servant</td><td>46</td><td>42</td><td>0.913</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>clinical_medicine</td><td>22</td><td>21</td><td>0.955</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>college_chemistry</td><td>24</td><td>23</td><td>0.958</td><td><div class='bar'><i style='width:96%'></i></div></td></tr><tr><td>college_economics</td><td>55</td><td>49</td><td>0.891</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>college_physics</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>college_programming</td><td>37</td><td>33</td><td>0.892</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>computer_architecture</td><td>21</td><td>21</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>computer_network</td><td>19</td><td>17</td><td>0.895</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>discrete_mathematics</td><td>16</td><td>13</td><td>0.812</td><td><div class='bar'><i style='width:81%'></i></div></td></tr><tr><td>education_science</td><td>29</td><td>26</td><td>0.897</td><td><div class='bar'><i style='width:90%'></i></div></td></tr><tr><td>electrical_engineer</td><td>37</td><td>29</td><td>0.784</td><td><div class='bar'><i style='width:78%'></i></div></td></tr><tr><td>environmental_impact_assessment_engineer</td><td>31</td><td>29</td><td>0.935</td><td><div class='bar'><i style='width:94%'></i></div></td></tr><tr><td>fire_engineer</td><td>31</td><td>30</td><td>0.968</td><td><div class='bar'><i style='width:97%'></i></div></td></tr><tr><td>high_school_biology</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_chemistry</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_chinese</td><td>19</td><td>17</td><td>0.895</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>high_school_geography</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_history</td><td>20</td><td>19</td><td>0.950</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>high_school_mathematics</td><td>18</td><td>16</td><td>0.889</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>high_school_physics</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_politics</td><td>19</td><td>18</td><td>0.947</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>ideological_and_moral_cultivation</td><td>19</td><td>18</td><td>0.947</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>law</td><td>24</td><td>21</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>legal_professional</td><td>23</td><td>19</td><td>0.826</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>logic</td><td>22</td><td>21</td><td>0.955</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>mao_zedong_thought</td><td>24</td><td>24</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>marxism</td><td>19</td><td>18</td><td>0.947</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>metrology_engineer</td><td>24</td><td>21</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>middle_school_biology</td><td>21</td><td>19</td><td>0.905</td><td><div class='bar'><i style='width:90%'></i></div></td></tr><tr><td>middle_school_chemistry</td><td>20</td><td>20</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>middle_school_geography</td><td>12</td><td>11</td><td>0.917</td><td><div class='bar'><i style='width:92%'></i></div></td></tr><tr><td>middle_school_history</td><td>22</td><td>21</td><td>0.955</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>middle_school_mathematics</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>middle_school_physics</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>middle_school_politics</td><td>21</td><td>21</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>modern_chinese_history</td><td>23</td><td>20</td><td>0.870</td><td><div class='bar'><i style='width:87%'></i></div></td></tr><tr><td>operating_system</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>physician</td><td>49</td><td>46</td><td>0.939</td><td><div class='bar'><i style='width:94%'></i></div></td></tr><tr><td>plant_protection</td><td>22</td><td>22</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>probability_and_statistics</td><td>18</td><td>16</td><td>0.889</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>professional_tour_guide</td><td>29</td><td>28</td><td>0.966</td><td><div class='bar'><i style='width:97%'></i></div></td></tr><tr><td>sports_science</td><td>19</td><td>19</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>tax_accountant</td><td>49</td><td>49</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>teacher_qualification</td><td>44</td><td>43</td><td>0.977</td><td><div class='bar'><i style='width:98%'></i></div></td></tr><tr><td>urban_and_rural_planner</td><td>46</td><td>41</td><td>0.891</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>veterinary_medicine</td><td>23</td><td>22</td><td>0.957</td><td><div class='bar'><i style='width:96%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>1</td><td>模型返回了空内容</td><td class='muted'>civil_servant-val-38</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#accountant-val-11</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#advanced_mathematics-val-3</span><span class='tag'>category=STEM</span> <span class='tag'>subject=advanced_mathematics</span></div><div class='qtext'>设函数$f\left(x\right)$连续，且$f\left(x\right)&gt;0$，求积分：$int_0^1{\ln f\left(x+t\right)}\mathrm{d}t=$____
+A. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+B. $\int_0^1{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+C. $\int_0^2x{\ln \frac{f\left( t+1 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+D. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#art_studies-val-22</span><span class='tag'>category=Humanities</span> <span class='tag'>subject=art_studies</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#basic_medicine-val-1</span><span class='tag'>category=Other</span> <span class='tag'>subject=basic_medicine</span></div><div class='qtext'>脱羧酶的辅酶____
+A. 生物素
+B. 叶酸
+C. 磷酸吡哆醛
+D. 硫胺素
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#business_administration-val-9</span><span class='tag'>category=Social Science</span> <span class='tag'>subject=business_administration</span></div><div class='qtext'>经营战略的本质是____。
+A. 目标与目的
+B. 资源
+C. 公司远景
+D. 组织结构
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#business_administration-val-26</span><span class='tag'>category=Social Science</span> <span class='tag'>subject=business_administration</span></div><div class='qtext'>某公司2001年4月3日以448000元的价格，不准备长期持有的A公司发行在外的普通股200000股，另支付相关税费1000元。A公司已于2001年3月31日宣告发放现金股利0.2元/股，并于5月8日支付，A公司于2002年3月31日宣告发放现金股利0.3元/股，某公司于2002年4月3日将该股票转让，则某公司转让股票时成本价为____元。
+A. 408000
+B. 409000
+C. 448000
+D. 349000
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>D</pre></details></div></section>
+</main>
+</body>
+</html>
