@@ -19,7 +19,9 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
+import sys
 from pathlib import Path
 
 from eval.benchmarks import available_benchmarks, get_adapter
@@ -36,6 +38,16 @@ def main() -> None:
     parser.add_argument("--benchmark", required=True, help=f"one of: {', '.join(available_benchmarks())}")
     parser.add_argument("--limit", type=int, default=30, help="number of items (default 30; 0/negative = all)")
     parser.add_argument("--offset", type=int, default=0)
+    parser.add_argument(
+        "--item-list",
+        type=Path,
+        default=None,
+        help=(
+            "file with one native item_id per line; run exactly these items "
+            "(mutually exclusive with --limit/--offset). The list path, sha256 "
+            "and count are recorded in summary.json for sampling provenance."
+        ),
+    )
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument(
         "--extractor-model",
@@ -101,6 +113,25 @@ def main() -> None:
     adapter = get_adapter(args.benchmark)
     if hasattr(adapter, "language"):
         adapter.language = args.language
+
+    item_ids = None
+    item_list_info = None
+    if args.item_list is not None:
+        if "--limit" in sys.argv or "--offset" in sys.argv:
+            parser.error("--item-list is mutually exclusive with --limit/--offset")
+        raw = args.item_list.read_text(encoding="utf-8")
+        item_ids = [line.strip() for line in raw.splitlines() if line.strip()]
+        if not item_ids:
+            parser.error(f"--item-list {args.item_list} is empty")
+        try:
+            list_path = str(args.item_list.resolve().relative_to(ROOT))
+        except ValueError:
+            list_path = str(args.item_list)
+        item_list_info = {
+            "item_list": list_path,
+            "item_list_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(),
+            "item_list_count": len(item_ids),
+        }
     limit = None if args.limit is not None and args.limit <= 0 else args.limit
     # Every model — including the default one — gets its own subdir keyed by
     # model slug, so models are handled uniformly and never overwrite each other.
@@ -149,6 +180,8 @@ def main() -> None:
         rate_limit_threshold=args.rate_limit_threshold,
         rate_limit_sleep=args.rate_limit_sleep,
         rate_limit_max_retries=args.rate_limit_max_retries,
+        item_ids=item_ids,
+        item_list_info=item_list_info,
     )
 
     if summary:

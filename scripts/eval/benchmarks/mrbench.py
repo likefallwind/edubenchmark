@@ -35,7 +35,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from ..base import ROOT, BenchmarkAdapter
+from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient
 from ..providers import extraction_max_tokens
 from ..scoring import cohen_kappa, multiclass_f1
@@ -43,6 +43,10 @@ from ..scoring import cohen_kappa, multiclass_f1
 
 DATA = ROOT / "sources" / "datasets" / "mrbench" / "MRBench_V2.json"
 HOMEPAGE = "https://github.com/kaushal0494/UnifyingAITutorEvaluation"
+
+# Version of the per-dimension judge rubric prompt (_judge_prompt). Bump on any
+# wording change; summary.json records it plus the template hash.
+JUDGE_PROMPT_VERSION = "v1"
 
 # A judge reply longer than this is treated as verbose reasoning that the plain
 # label normalizer may mis-read, so it is routed through the extractor model
@@ -184,6 +188,14 @@ def _judge_prompt(dim: str, conversation_history: str, response: str) -> str:
     )
 
 
+def _judge_prompt_provenance() -> dict[str, Any]:
+    templates = [_judge_prompt(dim, "{conversation_history}", "{response}") for dim in DIMENSIONS]
+    return {
+        "judge_prompt_version": JUDGE_PROMPT_VERSION,
+        "judge_prompt_sha256": prompt_sha256(*templates),
+    }
+
+
 def _llm_extract(client: MiniMaxClient, model: str, instruction: str, response: str) -> str:
     prompt = f"{instruction}\n\nText:\n---\n{response}\n---\n\nAnswer:"
     return client.chat(
@@ -278,6 +290,9 @@ class MRBenchJudgeAdapter(BenchmarkAdapter):
 
     def buckets(self, item):
         return {"dimension": item["meta"]["dimension"], "data": str(item["meta"].get("data"))}
+
+    def judge_prompt_provenance(self):
+        return _judge_prompt_provenance()
 
     def extra_summary(self, scored):
         rows = [r for r in scored if r.get("score_status") == "scored"]
@@ -444,6 +459,9 @@ class MRBenchTutorAdapter(BenchmarkAdapter):
 
     def buckets(self, item):
         return {"data": str(item["meta"].get("data")), "topic": str(item["meta"].get("topic"))}
+
+    def judge_prompt_provenance(self):
+        return _judge_prompt_provenance()
 
     def extra_summary(self, scored):
         rows = [r for r in scored if r.get("score_status") == "scored"]

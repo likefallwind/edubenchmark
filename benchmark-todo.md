@@ -74,3 +74,11 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Resolution: 上游 commit 432e8da（2026-06-08 "Fix SATAs answer labels"）已修复；本仓库独立发现该问题并从 13 个官方 Results 文件按 ID 多数投票重建答案键（`fetch_eval_datasets.py --benchmark eduguard_bench`），重建键与上游修复版 2,635/2,635 逐题一致，且可复现论文各模型 RFS（DeepSeek-V3 0.728/论文0.73、Claude3.7 0.772/论文0.77）。多数投票逻辑保留作为对官方文件的一致性校验（当前输出 "0 misaligned corrected"）。
   Related capabilities: D21; C5.
   Source: sources/datasets/eduguard_bench/（需 git pull 至 432e8da 之后）；reports/eval/eduguard_sata/
+
+## Rebenchmark conclusion capability gaps - 2026-07-06
+
+- Gap: v3.2 主榜雷达对 P08、P09、P10、P15、P16、P22 仍是弱覆盖或单一证据覆盖。
+  Product reason: 当前 0701 主 benchmark 足以展示 SRG/FDR/LAD/CLM/CEG 的能力画像，但不足以支撑置信弃答、工具长程执行、多模态教学产物、学术诚信、学习者画像和安全处置的稳健主榜结论。
+  Suggested data/eval: 把 EduIllustrate/EduVisBench、学术诚信真伪集、学习历史画像集、工具使用长程任务和本地化教育安全处置集先作为 MiniMax-M3 展示证据，完成 judge 校准后升级为多模型主评测；每个 LLM-as-Judge 任务记录 judge 模型、prompt hash、校准集、kappa/CI、分歧率和人工复核策略。
+  Related capabilities: P08, P09, P10, P15, P16, P22; SRG/FDR/LAD/CLM/CEG
+  Source report: tempt/rebenchmark-conclusion-plan-0706.html

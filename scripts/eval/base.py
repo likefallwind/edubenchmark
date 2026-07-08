@@ -16,6 +16,7 @@ below. The generic runner orchestrates the rest.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,13 @@ from .minimax_client import MiniMaxClient, image_part, text_part
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def prompt_sha256(*templates: str) -> str:
+    """Fingerprint of judge-prompt template text (rendered with placeholder
+    fields, joined in a fixed order) so any rubric wording change is
+    attributable in summary.json."""
+    return hashlib.sha256("\n␞\n".join(templates).encode("utf-8")).hexdigest()
 
 
 class BenchmarkAdapter:
@@ -62,5 +70,15 @@ class BenchmarkAdapter:
 
         Receives the scored rows; the result is written into ``summary.json``
         under ``extra_metrics``. Default: none.
+        """
+        return {}
+
+    def judge_prompt_provenance(self) -> dict[str, Any]:
+        """Version + hash of the LLM-judge rubric prompt(s), if this benchmark
+        uses one. Written top-level into ``summary.json`` so rubric changes are
+        attributable across runs. Default: none (rule-scored benchmarks).
+
+        Override to return ``{"judge_prompt_version": "v1",
+        "judge_prompt_sha256": <hex or {name: hex}>}``.
         """
         return {}

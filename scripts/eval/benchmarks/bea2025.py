@@ -21,7 +21,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from ..base import ROOT, BenchmarkAdapter
+from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient
 from ..providers import extraction_max_tokens
 from ..scoring import cohen_kappa, multiclass_f1
@@ -36,6 +36,10 @@ DATA_REPO = "https://github.com/kaushal0494/UnifyingAITutorEvaluation/tree/main/
 DEFAULT_JUDGE_MODEL = "MiniMax-M3"
 JUDGE_MODEL_ENV = "BEA2025_JUDGE_MODEL"
 VERBOSE_LEN = 80
+
+# Version of the per-dimension judge rubric prompt (_judge_prompt). Bump on any
+# wording change; summary.json records it plus the template hash.
+JUDGE_PROMPT_VERSION = "v1"
 
 DIMENSIONS: dict[str, dict[str, str]] = {
     "Mistake_Identification": {
@@ -126,6 +130,14 @@ def _judge_prompt(dim: str, conversation_history: str, response: str) -> str:
         "Choose exactly one label: Yes / To some extent / No.\n"
         "Answer with the label only, no explanation."
     )
+
+
+def _judge_prompt_provenance() -> dict[str, Any]:
+    templates = [_judge_prompt(dim, "{conversation_history}", "{response}") for dim in DIMENSIONS]
+    return {
+        "judge_prompt_version": JUDGE_PROMPT_VERSION,
+        "judge_prompt_sha256": prompt_sha256(*templates),
+    }
 
 
 def _llm_extract(client: MiniMaxClient, model: str, response: str) -> str:
@@ -273,6 +285,9 @@ class BEA2025JudgeAdapter(BenchmarkAdapter):
             "tutor_id": str(item["meta"].get("tutor_id")),
         }
 
+    def judge_prompt_provenance(self):
+        return _judge_prompt_provenance()
+
     def extra_summary(self, scored):
         rows = [r for r in scored if r.get("score_status") == "scored"]
         if not rows:
@@ -399,6 +414,9 @@ class BEA2025TutorAdapter(BenchmarkAdapter):
 
     def buckets(self, item):
         return {"conversation_id": str(item["meta"].get("conversation_id"))}
+
+    def judge_prompt_provenance(self):
+        return _judge_prompt_provenance()
 
     def extra_summary(self, scored):
         rows = [r for r in scored if r.get("score_status") == "scored"]

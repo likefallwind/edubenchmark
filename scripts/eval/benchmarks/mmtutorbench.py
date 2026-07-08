@@ -21,7 +21,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-from ..base import ROOT, BenchmarkAdapter
+from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient, image_part, text_part
 from ..providers import build_client, extraction_max_tokens
 
@@ -104,6 +104,26 @@ def _parse_scores(text: str) -> dict[str, int]:
             if match:
                 scores[dim] = int(match.group(1))
     return scores
+
+
+# Version of the rubric judge prompt (_judge_prompt). Bump on any wording
+# change; summary.json records it plus the template hash (rendered with
+# placeholder fields — the per-item rubric criteria come from the dataset).
+JUDGE_PROMPT_VERSION = "v1"
+
+
+def _judge_prompt_provenance() -> dict[str, Any]:
+    placeholder_item = {
+        "meta": {
+            "rubric": {"task_description": "{task_description}", "evaluation_criteria": []},
+            "question": "{question}",
+        },
+        "gold": "{reference_answer}",
+    }
+    return {
+        "judge_prompt_version": JUDGE_PROMPT_VERSION,
+        "judge_prompt_sha256": prompt_sha256(_judge_prompt(placeholder_item, "{response}")),
+    }
 
 
 def _judge_prompt(item: dict[str, Any], model_response: str) -> str:
@@ -281,6 +301,9 @@ class MMTutorBenchAdapter(BenchmarkAdapter):
             "category": str(item["meta"].get("category")),
             "difficulty": str(item["meta"].get("difficulty_score")),
         }
+
+    def judge_prompt_provenance(self):
+        return _judge_prompt_provenance()
 
     def extra_summary(self, scored):
         rows = [r for r in scored if r.get("score_status") == "scored"]

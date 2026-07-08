@@ -1,0 +1,49 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><title>Judge jury report</title>
+<style>body{font-family:system-ui,sans-serif;max-width:1080px;margin:2rem auto;padding:0 1rem;}table{border-collapse:collapse;margin:1rem 0;}td,th{border:1px solid #ccc;padding:4px 10px;font-size:14px;}th{background:#f5f5f5;}</style></head><body>
+<h1>教育裁判陪审团 vs 单裁判（judge_meta_eval_v1 · test split）</h1>
+<li>生成脚本：`scripts/build_judge_jury_report.py`（n_boot=1000, seed=20260706）</li>
+<li>陪审团：deepseek-v4-pro / glm-5.2 / MiniMax-M3；多数投票 + dev-kappa 加权投票</li>
+<li>所有区间为 cluster bootstrap 95% CI（重采样单元 = 对话/偏好对）；主判定 = 陪审团与最佳单裁判的 macro kappa 配对差值</li>
+<h2>mrbench</h2>
+<p>test 集：3334 条判例 / 49 个对话簇；最佳单裁判（dev kappa）= **glm-5.2**</p>
+<table>
+<tr><th>系统</th><th>macro kappa</th><th>macro agreement</th><th>macro F1</th><th>unparsed/弃权</th></tr>
+<tr><td>deepseek-v4-pro</td><td>0.417 [0.378, 0.456]</td><td>0.737 [0.717, 0.755]</td><td>0.536 [0.508, 0.559]</td><td>0.0</td></tr>
+<tr><td>glm-5.2</td><td>0.438 [0.398, 0.480]</td><td>0.732 [0.711, 0.754]</td><td>0.580 [0.548, 0.608]</td><td>0.0</td></tr>
+<tr><td>MiniMax-M3</td><td>0.354 [0.319, 0.389]</td><td>0.668 [0.645, 0.689]</td><td>0.546 [0.521, 0.569]</td><td>0.0</td></tr>
+<tr><td>jury_majority</td><td>0.441 [0.401, 0.481]</td><td>0.740 [0.718, 0.760]</td><td>0.583 [0.552, 0.607]</td><td>0.0</td></tr>
+<tr><td>jury_weighted</td><td>0.437 [0.399, 0.478]</td><td>0.741 [0.720, 0.762]</td><td>0.560 [0.533, 0.594]</td><td>0.0</td></tr>
+</table>
+<li>jury_majority − glm-5.2（macro kappa 配对差值）：0.003 [-0.016, 0.019] → 无显著差异</li>
+<li>jury_weighted − glm-5.2（macro kappa 配对差值）：-0.001 [-0.022, 0.018] → 无显著差异</li>
+<li>test 集三票分歧率：0.3089（per-dimension 见 summary.json）</li>
+<h2>bea2025</h2>
+<p>test 集：2492 条判例 / 75 个对话簇；最佳单裁判（dev kappa）= **glm-5.2**</p>
+<table>
+<tr><th>系统</th><th>macro kappa</th><th>macro agreement</th><th>macro F1</th><th>unparsed/弃权</th></tr>
+<tr><td>deepseek-v4-pro</td><td>0.388 [0.341, 0.431]</td><td>0.668 [0.639, 0.696]</td><td>0.533 [0.503, 0.562]</td><td>0.0</td></tr>
+<tr><td>glm-5.2</td><td>0.406 [0.362, 0.447]</td><td>0.682 [0.656, 0.708]</td><td>0.529 [0.503, 0.552]</td><td>0.0</td></tr>
+<tr><td>MiniMax-M3</td><td>0.335 [0.292, 0.376]</td><td>0.603 [0.574, 0.633]</td><td>0.515 [0.485, 0.540]</td><td>0.0</td></tr>
+<tr><td>jury_majority</td><td>0.411 [0.365, 0.455]</td><td>0.680 [0.653, 0.707]</td><td>0.540 [0.511, 0.566]</td><td>0.0</td></tr>
+<tr><td>jury_weighted</td><td>0.408 [0.362, 0.453]</td><td>0.679 [0.651, 0.705]</td><td>0.540 [0.511, 0.566]</td><td>0.0</td></tr>
+</table>
+<li>jury_majority − glm-5.2（macro kappa 配对差值）：0.005 [-0.014, 0.023] → 无显著差异</li>
+<li>jury_weighted − glm-5.2（macro kappa 配对差值）：0.002 [-0.018, 0.020] → 无显著差异</li>
+<li>test 集三票分歧率：0.3933（per-dimension 见 summary.json）</li>
+<h2>mathtutorbench</h2>
+<p>test 集：240 条判例 / 120 个对话簇；最佳单裁判（dev kappa）= **MiniMax-M3**</p>
+<table>
+<tr><th>系统</th><th>macro kappa</th><th>macro agreement</th><th>macro F1</th><th>unparsed/弃权</th></tr>
+<tr><td>deepseek-v4-pro</td><td>0.608 [0.475, 0.733]</td><td>0.804 [0.738, 0.867]</td><td>0.804 [0.737, 0.867]</td><td>0.0</td></tr>
+<tr><td>glm-5.2</td><td>0.692 [0.567, 0.800]</td><td>0.846 [0.783, 0.900]</td><td>0.846 [0.783, 0.900]</td><td>0.0</td></tr>
+<tr><td>MiniMax-M3</td><td>0.675 [0.550, 0.792]</td><td>0.838 [0.775, 0.896]</td><td>0.838 [0.775, 0.896]</td><td>0.0</td></tr>
+<tr><td>jury_majority</td><td>0.667 [0.542, 0.783]</td><td>0.833 [0.771, 0.892]</td><td>0.833 [0.770, 0.891]</td><td>0.0</td></tr>
+<tr><td>jury_weighted</td><td>0.667 [0.542, 0.783]</td><td>0.833 [0.771, 0.892]</td><td>0.833 [0.770, 0.891]</td><td>0.0</td></tr>
+</table>
+<li>jury_majority − MiniMax-M3（macro kappa 配对差值）：-0.008 [-0.083, 0.067] → 无显著差异</li>
+<li>jury_weighted − MiniMax-M3（macro kappa 配对差值）：-0.008 [-0.083, 0.067] → 无显著差异</li>
+<li>test 集三票分歧率：0.1375（per-dimension 见 summary.json）</li>
+<h2>长度偏置（WP5）</h2>
+<p>见 summary.json 每个来源的 `length_bias`：dimension_label 线为响应长度五分位的</p>
+<p>agreement 与宽容度差 P(sys=Yes)−P(human=Yes)；pairwise 线为 P(选更长回复) 与人类专家的差值。</p>
+</body></html>

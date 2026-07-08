@@ -424,8 +424,24 @@ def run(
     rate_limit_threshold: int = 10,
     rate_limit_sleep: float = 1800.0,
     rate_limit_max_retries: int = 3,
+    item_ids: list[str] | None = None,
+    item_list_info: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    items = adapter.load_items(limit=limit, offset=offset)
+    if item_ids is not None:
+        # Fixed-list mode (--item-list): load everything, keep exactly the
+        # listed items. Every listed id must exist — a typo'd list silently
+        # shrinking the run would corrupt cross-model comparability.
+        all_items = adapter.load_items(limit=None, offset=0)
+        wanted = set(item_ids)
+        items = [it for it in all_items if str(it["item_id"]) in wanted]
+        missing = wanted - {str(it["item_id"]) for it in items}
+        if missing:
+            raise SystemExit(
+                f"--item-list: {len(missing)} ids not found in {adapter.name}, "
+                f"e.g. {sorted(missing)[:3]}"
+            )
+    else:
+        items = adapter.load_items(limit=limit, offset=offset)
     print(f"loaded {len(items)} items for benchmark={adapter.name}")
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -471,10 +487,13 @@ def run(
     bucket_keys = list(adapter.buckets(items[0]).keys()) if items else []
     summary = build_summary(adapter.name, model, scored, bucket_keys)
     summary["extractor_model"] = extractor_model
+    if item_list_info:
+        summary.update(item_list_info)
     summary["token_usage"] = aggregate_token_usage(predictions, extractions)
     extra_metrics = adapter.extra_summary(scored)
     if extra_metrics:
         summary["extra_metrics"] = extra_metrics
+    summary.update(adapter.judge_prompt_provenance())
     (out_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

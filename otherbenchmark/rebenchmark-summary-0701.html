@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>教育领域 Rebenchmark 可视化分析报告</title>
+<style>
+:root {
+  --paper:#fbf5e8; --ink:#14213d; --muted:#657084; --line:#dfd4bf; --card:#fffaf0;
+  --teal:#0f766e; --blue:#2F80ED; --orange:#F2994A; --green:#27AE60; --purple:#9B51E0; --red:#EB5757;
+  --shadow:0 18px 50px rgba(20,33,61,.10); --radius:22px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(circle at 8% 6%, rgba(242,153,74,.22), transparent 28%),
+  radial-gradient(circle at 86% 10%, rgba(47,128,237,.18), transparent 30%),
+  linear-gradient(135deg,#fff9ec 0%,#f8f0df 48%,#eef6f3 100%);
+  color:var(--ink);font-family:"Avenir Next","PingFang SC","Hiragino Sans GB","Yuanti SC","Trebuchet MS",sans-serif;line-height:1.55}
+a{color:inherit}
+.page{width:min(1440px,94vw);margin:0 auto;padding:36px 0 80px}
+.hero{position:relative;padding:44px;border:1px solid rgba(20,33,61,.12);border-radius:32px;background:rgba(255,250,240,.80);box-shadow:var(--shadow);overflow:hidden}
+.hero:after{content:"";position:absolute;right:-120px;top:-120px;width:380px;height:380px;border-radius:50%;background:conic-gradient(from 90deg,var(--blue),var(--green),var(--orange),var(--red),var(--blue));opacity:.14}
+.eyebrow{margin:0 0 12px;text-transform:uppercase;letter-spacing:.18em;font-size:12px;font-weight:800;color:var(--teal)}
+h1{font-family:"Optima","Palatino Linotype","Songti SC",serif;font-size:clamp(28px,3.8vw,54px);line-height:1.02;margin:0 0 20px;max-width:1120px;letter-spacing:-.035em}
+.hero-sub{font-size:18px;color:#3c485c;max-width:980px;margin:0 0 28px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:26px}
+.kpi{padding:20px;border-radius:20px;background:rgba(255,255,255,.68);border:1px solid rgba(20,33,61,.10)}
+.kpi b{display:block;font-size:34px;line-height:1;color:var(--ink)}.kpi span{font-size:13px;color:var(--muted)}
+section{margin-top:28px;padding:28px;border:1px solid rgba(20,33,61,.11);border-radius:28px;background:rgba(255,250,240,.72);box-shadow:0 12px 32px rgba(20,33,61,.07)}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:22px;margin-bottom:20px}
+h2{font-family:"Optima","Palatino Linotype","Songti SC",serif;font-size:30px;letter-spacing:-.03em;margin:0}
+.lede{margin:6px 0 0;color:var(--muted);max-width:760px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.ability-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.ability-card{padding:20px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.55));border:1px solid rgba(20,33,61,.10);position:relative;overflow:hidden}
+.ability-card:before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--accent)}
+.ability-code{display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:18px;color:#fff;background:var(--accent);font-weight:900;font-size:20px;box-shadow:0 12px 24px color-mix(in srgb,var(--accent),transparent 70%)}
+.ability-card h3{margin:14px 0 2px;font-size:19px}.ability-card .en{font-size:12px;font-weight:800;color:var(--accent);margin:0 0 10px}
+.ability-card p{font-size:13px;color:#435067;margin:0 0 12px}.ability-meter{height:8px;background:#eadfc9;border-radius:99px;overflow:hidden}.ability-meter span{display:block;height:100%;background:var(--accent);border-radius:99px}
+.small-meta{margin-top:8px;color:var(--muted);font-size:12px}
+.card{padding:20px;border-radius:22px;background:rgba(255,255,255,.70);border:1px solid rgba(20,33,61,.10)}
+.card h3{margin:0 0 14px;font-size:18px}
+.table-wrap{overflow:auto;border-radius:18px;border:1px solid rgba(20,33,61,.10);background:rgba(255,255,255,.55)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 12px;border-bottom:1px solid rgba(20,33,61,.09);text-align:left;vertical-align:middle}thead th{position:sticky;top:0;background:#f6ead2;z-index:1;color:#2e3a50}tbody tr:hover{background:rgba(47,128,237,.05)}
+.matrix th:first-child,.coverage th{white-space:nowrap}.matrix td:nth-child(n+3):nth-child(-n+7),.coverage td{text-align:center}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;font-weight:900;font-size:12px}
+.dot.primary{background:var(--c);color:white}.dot.secondary{background:color-mix(in srgb,var(--c),white 78%);color:var(--c);border:1px solid color-mix(in srgb,var(--c),white 40%)}
+
+.cap-badge{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:5px 9px;border-radius:999px;background:var(--c);color:#fff;font-weight:900;font-size:12px}
+.sub-matrix{table-layout:auto;width:max-content;min-width:100%}
+.sub-matrix th,.sub-matrix td{text-align:center;white-space:nowrap;padding:8px 10px}
+.sub-matrix col.p-col{width:44px;min-width:44px;max-width:44px}
+.sub-matrix .sub-head,.sub-matrix .sub-hit,.sub-matrix .sub-miss{width:44px;min-width:44px;max-width:44px;padding-left:0!important;padding-right:0!important;text-align:center}
+.sub-matrix col.meta-benchmark,.sub-matrix col.meta-task,.sub-matrix col.meta-model,.sub-matrix col.meta-coverage{width:auto}
+.sub-matrix th:first-child,.sub-matrix td:first-child,.sub-matrix td:nth-child(2),.sub-matrix thead th:nth-child(2){text-align:left;overflow:visible;text-overflow:clip}
+.task-sub-matrix th:first-child,.task-sub-matrix td:first-child{min-width:max-content}
+.task-sub-matrix td:nth-child(2),.task-sub-matrix thead th:nth-child(2){min-width:max-content}
+.model-sub-matrix th:first-child,.model-sub-matrix td:first-child{min-width:max-content;text-align:left}
+.model-sub-matrix th:last-child,.model-sub-matrix td:last-child{min-width:64px;text-align:center;padding-left:10px;padding-right:10px}
+.sub-head{font-size:11px;writing-mode:vertical-rl;text-orientation:mixed;line-height:1.1;padding:10px 5px!important}
+.sub-hit{font-size:16px;font-weight:900}
+.sub-miss{color:#d6cbb8}
+.sub-hit.srg{color:#2F80ED}.sub-hit.fdr{color:#F2994A}.sub-hit.lad{color:#27AE60}.sub-hit.clm{color:#9B51E0}.sub-hit.ceg{color:#EB5757}
+.sub-head.srg{background:rgba(47,128,237,.12)}.sub-head.fdr{background:rgba(242,153,74,.14)}.sub-head.lad{background:rgba(39,174,96,.13)}.sub-head.clm{background:rgba(155,81,224,.12)}.sub-head.ceg{background:rgba(235,87,87,.12)}
+.empty{color:#b6ad9d}.coverage td{font-size:20px;font-weight:900}.coverage .hit{color:#0f766e;background:rgba(15,118,110,.08)}.coverage .miss{color:#d7cbb7}
+.pill{display:inline-block;padding:4px 9px;border-radius:99px;font-size:12px;font-weight:800}.pill.strong{background:#dff4eb;color:#0d6b44}.pill.medium{background:#fff0c9;color:#8a5a00}.pill.weak{background:#f2e6dc;color:#8a4b24}
+.bar-row{display:grid;grid-template-columns:minmax(150px,230px) 1fr 70px;gap:12px;align-items:center;margin:10px 0}.bar-label{font-size:13px;color:#25324a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar-track{height:14px;border-radius:999px;background:#eadfc9;overflow:hidden}.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--blue),#00a6a6)}.bar-value{font-variant-numeric:tabular-nums;font-weight:800;text-align:right}
+.edubench .bar-fill{background:linear-gradient(90deg,#0f766e,#27AE60)}.asap .bar-fill{background:linear-gradient(90deg,#9B51E0,#2F80ED)}.pedagogy .bar-fill{background:linear-gradient(90deg,#F2994A,#EB5757)}.tutor .bar-fill{background:linear-gradient(90deg,#2F80ED,#9B51E0)}.safe .bar-fill{background:linear-gradient(90deg,#27AE60,#0f766e)}
+.task-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.task-card{padding:16px;border-radius:18px;background:#fff;border:1px solid rgba(20,33,61,.10)}.task-card b{font-size:22px;color:var(--teal)}.task-card span{display:block;font-size:12px;color:var(--muted);min-height:38px}.task-count{margin-top:10px;font-weight:900;font-size:20px}.task-winner{font-size:12px;color:#3f4c61}
+.metric-row{display:grid;grid-template-columns:190px 1fr;gap:14px;align-items:center;margin:12px 0}.metric-name{font-size:13px;color:#25324a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mini-bars,.dual-bars{display:grid;grid-template-columns:1fr 50px 1fr 50px 1fr 50px;gap:8px;align-items:center}.mini,.asrbar{height:12px;border-radius:99px;display:block;background:#ddd}.qwk{background:var(--blue)}.ccs{background:var(--orange)}.ecs{background:var(--green)}.mini-bars b,.dual-bars b{font-size:12px;font-variant-numeric:tabular-nums}.dual-bars{grid-template-columns:1fr 54px 1fr 54px}.asrbar.m3{background:#EB5757}.asrbar.ds{background:#9B51E0}.asr.low .metric-name:after{content:"低危";margin-left:8px;color:#0f766e;font-size:11px;font-weight:900}.asr.mid .metric-name:after{content:"中危";margin-left:8px;color:#b54708;font-size:11px;font-weight:900}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:12px}.legend span{display:inline-flex;align-items:center;gap:6px}.sw{width:12px;height:12px;border-radius:4px;display:inline-block}
+.insights{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.insight{padding:20px;border-radius:22px;background:#fff;border:1px solid rgba(20,33,61,.10)}.insight b{display:block;font-size:17px;margin-bottom:8px}.insight p{margin:0;color:#4a566a}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:stretch}.flow-card{padding:16px;border-radius:18px;color:#fff;min-height:126px;position:relative}.flow-card small{opacity:.85}.flow-card b{display:block;font-size:24px;margin:2px 0 8px}.flow-card p{font-size:12px;margin:0;opacity:.94}
+.note{padding:16px 18px;border-left:5px solid var(--teal);background:rgba(15,118,110,.08);border-radius:14px;color:#304159}
+.footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center}
+@media(max-width:1100px){.kpis,.ability-grid,.task-grid,.flow{grid-template-columns:repeat(2,1fr)}.grid-2,.grid-3,.insights{grid-template-columns:1fr}}
+@media(max-width:700px){.page{width:96vw;padding-top:14px}.hero,section{padding:20px;border-radius:22px}.kpis,.ability-grid,.task-grid,.flow{grid-template-columns:1fr}.bar-row,.metric-row{grid-template-columns:1fr}.mini-bars,.dual-bars{grid-template-columns:1fr 46px}h1{font-size:38px}}
+
+.radar-section{background:#ffffff!important}
+.radar-section .section-head{display:block}
+.radar-section .lede{max-width:none;width:100%}
+.radar-section .card,.radar-section .table-wrap{background:#ffffff!important}
+.radar-card{padding:10px;border-radius:26px;background:#ffffff!important;border:1px solid rgba(20,33,61,.10)!important;overflow:auto}
+.radar-svg{width:100%;min-width:660px;height:auto;display:block;background:#ffffff!important;border-radius:24px}
+.radar-ring{fill:none!important;stroke:#d9dfe8;stroke-width:1.05}
+.radar-axis{stroke:#e3e7ef;stroke-width:1}
+.radar-tick{font-size:8.5px;fill:#8a94a6;font-weight:700}
+.radar-label{font-size:10px;fill:#17233d;font-weight:760;letter-spacing:.01em}
+.radar-label tspan:first-child{font-size:12px;font-weight:850}
+.radar-title{font-family:"Optima","Palatino Linotype","Songti SC",serif;font-size:18px;font-weight:900;fill:#14213d}
+.radar-subtitle{font-size:10.5px;fill:#657084}
+.radar-legend{font-size:9.2px;font-weight:720;fill:#2f3b52}
+.score-table td,.score-table th{text-align:right}
+.score-table td:first-child,.score-table th:first-child{text-align:left;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <p class="eyebrow">Capability-Oriented Rebenchmark · 2026</p>
+    <h1>教育领域 Rebenchmark 可视化分析报告</h1>
+    <p class="hero-sub">基于 <b>Pedagogy、ASAP 2.0、EduBench、TutorBench、SAS-Bench、EduGuard-Bench</b> 的多模型实验结果，将单一排行榜重组为五类教育原子能力画像：SRG、FDR、LAD、CLM、CEG。</p>
+    <div class="kpis">
+      <div class="kpi"><b>6</b><span>主测 benchmark / protocol</span></div>
+      <div class="kpi"><b>19</b><span>覆盖过至少一个任务的模型</span></div>
+      <div class="kpi"><b>20</b><span>v3 细粒度能力映射项</span></div>
+      <div class="kpi"><b>5</b><span>收敛后的核心教育能力</span></div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head"><div><h2>1. 五类原子能力框架</h2><p class="lede">这五类能力既包含基础操作层，也包含教育专有层。HTML 报告使用互斥的大类能力与 P01-P20 子能力组织结果，而不是只比较总分。</p></div></div>
+    <div class="ability-grid">
+    <article class="ability-card" style="--accent:#2F80ED">
+      <div class="ability-code">SRG</div>
+      <h3>符号表征与情境锚定</h3>
+      <p class="en">Symbolic Representation & Grounding</p>
+      <p>把题目、文本、图像、学生输入和约束转化为可推理的教育语境表征。</p>
+      <div class="ability-meter"><span style="width:80%"></span></div>
+      <div class="small-meta">包含 4 项细粒度能力</div>
+    </article>
+    <article class="ability-card" style="--accent:#F2994A">
+      <div class="ability-code">FDR</div>
+      <h3>领域形式推理与可靠执行</h3>
+      <p class="en">Formal Domain Reasoning & Reliable Execution</p>
+      <p>调用领域知识、规则、工具和证据进行推理、解题、校验、置信控制与长程执行。</p>
+      <div class="ability-meter"><span style="width:100%"></span></div>
+      <div class="small-meta">包含 5 项细粒度能力</div>
+    </article>
+    <article class="ability-card" style="--accent:#27AE60">
+      <div class="ability-code">LAD</div>
+      <h3>学习评价与错误诊断</h3>
+      <p class="en">Learning Assessment & Diagnostic Reasoning</p>
+      <p>对学生作答进行正误判断、rubric 评分、错误定位和错因归因。</p>
+      <div class="ability-meter"><span style="width:80%"></span></div>
+      <div class="small-meta">包含 4 项细粒度能力</div>
+    </article>
+    <article class="ability-card" style="--accent:#9B51E0">
+      <div class="ability-code">CLM</div>
+      <h3>认知建模与教学规划</h3>
+      <p class="en">Cognitive Modeling & Instructional Planning</p>
+      <p>建模学习者认知状态、学习目标、路径和个性化教学干预策略。</p>
+      <div class="ability-meter"><span style="width:80%"></span></div>
+      <div class="small-meta">包含 4 项细粒度能力</div>
+    </article>
+    <article class="ability-card" style="--accent:#EB5757">
+      <div class="ability-code">CEG</div>
+      <h3>约束性教育生成</h3>
+      <p class="en">Constrained Educational Generation</p>
+      <p>在教师角色、安全边界、年龄适配、学术诚信、不泄题和教育性重定向约束下生成回应。</p>
+      <div class="ability-meter"><span style="width:60%"></span></div>
+      <div class="small-meta">包含 3 项细粒度能力</div>
+    </article></div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>2. 细粒度能力 × 五类原子能力归属矩阵</h2><p class="lede">这里展示 P01-P20 的互斥归属：每个细粒度能力只属于一个大类。任务执行时可以组合多个能力，但能力定义层保持边界清晰。</p></div></div>
+    <div class="table-wrap">
+      <table class="matrix">
+        <thead><tr><th>编号</th><th>细粒度能力</th><th>归属</th><th>大类能力</th><th>定义与边界</th></tr></thead>
+        <tbody><tr><th>P01</th><td>任务指令与输出约束解析</td><td><span class="cap-badge" style="--c:#2F80ED">SRG</span></td><td>符号表征与情境锚定</td><td>识别任务目标、输入输出格式、角色设定、显式约束和禁区。</td></tr><tr><th>P02</th><td>长上下文与证据定位</td><td><span class="cap-badge" style="--c:#2F80ED">SRG</span></td><td>符号表征与情境锚定</td><td>在长文本、多源材料、多轮历史、表格或检索结果中定位相关证据并抑制干扰。</td></tr><tr><th>P03</th><td>常规多模态感知</td><td><span class="cap-badge" style="--c:#2F80ED">SRG</span></td><td>符号表征与情境锚定</td><td>解析常规图像、截图、手写、板书、公式、图表、版面、音频等低复杂度多模态输入。</td></tr><tr><th>P04</th><td>复杂多模态时序理解</td><td><span class="cap-badge" style="--c:#2F80ED">SRG</span></td><td>符号表征与情境锚定</td><td>理解视频、长时序、多帧事件和跨模态动态关系。</td></tr><tr><th>P05</th><td>领域知识调用</td><td><span class="cap-badge" style="--c:#F2994A">FDR</span></td><td>领域形式推理与可靠执行</td><td>调用事实、概念、规则、学科知识、教学法知识、误概念体系或安全规范。</td></tr><tr><th>P06</th><td>形式推理与解答生成</td><td><span class="cap-badge" style="--c:#F2994A">FDR</span></td><td>领域形式推理与可靠执行</td><td>基于条件、规则、因果、约束和隐含语义进行推理、推导、生成解法或答案。</td></tr><tr><th>P07</th><td>自我校验与修正</td><td><span class="cap-badge" style="--c:#F2994A">FDR</span></td><td>领域形式推理与可靠执行</td><td>检查候选答案是否满足条件、单位、格式、边界、证据和常识，并进行修正或否决。</td></tr><tr><th>P08</th><td>置信度校准与能力性弃答</td><td><span class="cap-badge" style="--c:#F2994A">FDR</span></td><td>领域形式推理与可靠执行</td><td>估计自身能否可靠回答，在作答、表达不确定、请求澄清和能力性弃答之间选择。</td></tr><tr><th>P09</th><td>工具使用与长程执行</td><td><span class="cap-badge" style="--c:#F2994A">FDR</span></td><td>领域形式推理与可靠执行</td><td>决定是否调用检索、代码、计算器、模拟器等工具，并保持多步执行一致性。</td></tr><tr><th>P10</th><td>作答正误判定</td><td><span class="cap-badge" style="--c:#27AE60">LAD</span></td><td>学习评价与错误诊断</td><td>给定参考解或标准，判断学生答案、步骤、代码输出或短答是否正确、错误或部分正确。</td></tr><tr><th>P11</th><td>错误位置定位</td><td><span class="cap-badge" style="--c:#27AE60">LAD</span></td><td>学习评价与错误诊断</td><td>定位学生作答中的第一处错误、关键错误、步骤错误、代码行或文本片段。</td></tr><tr><th>P12</th><td>错因与误概念归因</td><td><span class="cap-badge" style="--c:#27AE60">LAD</span></td><td>学习评价与错误诊断</td><td>判断错误类型、误概念、知识缺陷、策略失误或推理断点。</td></tr><tr><th>P13</th><td>Rubric 映射评分</td><td><span class="cap-badge" style="--c:#27AE60">LAD</span></td><td>学习评价与错误诊断</td><td>将作答证据映射到 rubric、trait、等级或分数，并给出评分依据。</td></tr><tr><th>P14</th><td>学习者状态画像</td><td><span class="cap-badge" style="--c:#9B51E0">CLM</span></td><td>认知建模与教学规划</td><td>从历史作答、当前表现、对话、行为和目标约束中估计学习者隐藏状态。</td></tr><tr><th>P15</th><td>个性化教学策略选择</td><td><span class="cap-badge" style="--c:#9B51E0">CLM</span></td><td>认知建模与教学规划</td><td>根据学习者画像、目标和错因选择下一步教学干预。</td></tr><tr><th>P16</th><td>适配性解释与反馈生成</td><td><span class="cap-badge" style="--c:#9B51E0">CLM</span></td><td>认知建模与教学规划</td><td>生成适龄、具体、可执行、语气合适且不泄题的解释、提示或反馈。</td></tr><tr><th>P17</th><td>学习目标与路径规划</td><td><span class="cap-badge" style="--c:#9B51E0">CLM</span></td><td>认知建模与教学规划</td><td>推断学习目标，并依据课程结构、先修关系、资源属性和时间约束规划学习路径。</td></tr><tr><th>P18</th><td>教育角色边界判断</td><td><span class="cap-badge" style="--c:#EB5757">CEG</span></td><td>约束性教育生成</td><td>判断 tutor、教师、批改者、陪伴者或系统助手在当前教育场景中可做与不可做的行为边界。</td></tr><tr><th>P19</th><td>学生风险识别</td><td><span class="cap-badge" style="--c:#EB5757">CEG</span></td><td>约束性教育生成</td><td>识别自伤、霸凌、成人内容、违法危险、心理危机、依赖、诱导、学术不端等风险。</td></tr><tr><th>P20</th><td>安全处置与教育性重定向</td><td><span class="cap-badge" style="--c:#EB5757">CEG</span></td><td>约束性教育生成</td><td>选择拒答、澄清、安抚、转介、升级、联系监护/教师或提供安全学习替代方案。</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>3. 模型 × Benchmark 覆盖热力图</h2></div></div>
+    <div class="table-wrap">
+      <table class="coverage">
+        <thead><tr><th>模型</th><th>Pedagogy</th><th>ASAP 2.0</th><th>EduBench</th><th>TutorBench</th><th>SAS-Bench</th><th>EduGuard</th><th>覆盖</th></tr></thead>
+        <tbody><tr><th>Claude Sonnet 4.6</th><td class="hit" title="Claude Sonnet 4.6 - Pedagogy: covered">●</td><td class="hit" title="Claude Sonnet 4.6 - ASAP 2.0: covered">●</td><td class="hit" title="Claude Sonnet 4.6 - EduBench: covered">●</td><td class="miss" title="Claude Sonnet 4.6 - TutorBench: not covered">·</td><td class="miss" title="Claude Sonnet 4.6 - SAS-Bench: not covered">·</td><td class="miss" title="Claude Sonnet 4.6 - EduGuard: not covered">·</td><td><span class="pill medium">3/6</span></td></tr><tr><th>DeepSeek-V4-Flash</th><td class="hit" title="DeepSeek-V4-Flash - Pedagogy: covered">●</td><td class="hit" title="DeepSeek-V4-Flash - ASAP 2.0: covered">●</td><td class="hit" title="DeepSeek-V4-Flash - EduBench: covered">●</td><td class="miss" title="DeepSeek-V4-Flash - TutorBench: not covered">·</td><td class="miss" title="DeepSeek-V4-Flash - SAS-Bench: not covered">·</td><td class="miss" title="DeepSeek-V4-Flash - EduGuard: not covered">·</td><td><span class="pill medium">3/6</span></td></tr><tr><th>DeepSeek-V4-Pro</th><td class="hit" title="DeepSeek-V4-Pro - Pedagogy: covered">●</td><td class="hit" title="DeepSeek-V4-Pro - ASAP 2.0: covered">●</td><td class="hit" title="DeepSeek-V4-Pro - EduBench: covered">●</td><td class="miss" title="DeepSeek-V4-Pro - TutorBench: not covered">·</td><td class="hit" title="DeepSeek-V4-Pro - SAS-Bench: covered">●</td><td class="hit" title="DeepSeek-V4-Pro - EduGuard: covered">●</td><td><span class="pill strong">5/6</span></td></tr><tr><th>Doubao-Seed-2.0-Lite</th><td class="miss" title="Doubao-Seed-2.0-Lite - Pedagogy: not covered">·</td><td class="miss" title="Doubao-Seed-2.0-Lite - ASAP 2.0: not covered">·</td><td class="hit" title="Doubao-Seed-2.0-Lite - EduBench: covered">●</td><td class="miss" title="Doubao-Seed-2.0-Lite - TutorBench: not covered">·</td><td class="miss" title="Doubao-Seed-2.0-Lite - SAS-Bench: not covered">·</td><td class="hit" title="Doubao-Seed-2.0-Lite - EduGuard: covered">●</td><td><span class="pill medium">2/6</span></td></tr><tr><th>Doubao-Seed-2.0-Pro</th><td class="miss" title="Doubao-Seed-2.0-Pro - Pedagogy: not covered">·</td><td class="miss" title="Doubao-Seed-2.0-Pro - ASAP 2.0: not covered">·</td><td class="hit" title="Doubao-Seed-2.0-Pro - EduBench: covered">●</td><td class="miss" title="Doubao-Seed-2.0-Pro - TutorBench: not covered">·</td><td class="miss" title="Doubao-Seed-2.0-Pro - SAS-Bench: not covered">·</td><td class="hit" title="Doubao-Seed-2.0-Pro - EduGuard: covered">●</td><td><span class="pill medium">2/6</span></td></tr><tr><th>GLM-5.1</th><td class="hit" title="GLM-5.1 - Pedagogy: covered">●</td><td class="hit" title="GLM-5.1 - ASAP 2.0: covered">●</td><td class="hit" title="GLM-5.1 - EduBench: covered">●</td><td class="miss" title="GLM-5.1 - TutorBench: not covered">·</td><td class="hit" title="GLM-5.1 - SAS-Bench: covered">●</td><td class="hit" title="GLM-5.1 - EduGuard: covered">●</td><td><span class="pill strong">5/6</span></td></tr><tr><th>GLM-5.2</th><td class="miss" title="GLM-5.2 - Pedagogy: not covered">·</td><td class="miss" title="GLM-5.2 - ASAP 2.0: not covered">·</td><td class="miss" title="GLM-5.2 - EduBench: not covered">·</td><td class="miss" title="GLM-5.2 - TutorBench: not covered">·</td><td class="miss" title="GLM-5.2 - SAS-Bench: not covered">·</td><td class="hit" title="GLM-5.2 - EduGuard: covered">●</td><td><span class="pill weak">1/6</span></td></tr><tr><th>GPT-5.4</th><td class="hit" title="GPT-5.4 - Pedagogy: covered">●</td><td class="hit" title="GPT-5.4 - ASAP 2.0: covered">●</td><td class="miss" title="GPT-5.4 - EduBench: not covered">·</td><td class="miss" title="GPT-5.4 - TutorBench: not covered">·</td><td class="hit" title="GPT-5.4 - SAS-Bench: covered">●</td><td class="miss" title="GPT-5.4 - EduGuard: not covered">·</td><td><span class="pill medium">3/6</span></td></tr><tr><th>GPT-5.5</th><td class="miss" title="GPT-5.5 - Pedagogy: not covered">·</td><td class="miss" title="GPT-5.5 - ASAP 2.0: not covered">·</td><td class="miss" title="GPT-5.5 - EduBench: not covered">·</td><td class="hit" title="GPT-5.5 - TutorBench: covered">●</td><td class="miss" title="GPT-5.5 - SAS-Bench: not covered">·</td><td class="hit" title="GPT-5.5 - EduGuard: covered">●</td><td><span class="pill medium">2/6</span></td></tr><tr><th>Kimi-K2.6</th><td class="miss" title="Kimi-K2.6 - Pedagogy: not covered">·</td><td class="miss" title="Kimi-K2.6 - ASAP 2.0: not covered">·</td><td class="hit" title="Kimi-K2.6 - EduBench: covered">●</td><td class="miss" title="Kimi-K2.6 - TutorBench: not covered">·</td><td class="hit" title="Kimi-K2.6 - SAS-Bench: covered">●</td><td class="miss" title="Kimi-K2.6 - EduGuard: not covered">·</td><td><span class="pill medium">2/6</span></td></tr><tr><th>MiniMax-M2.7</th><td class="hit" title="MiniMax-M2.7 - Pedagogy: covered">●</td><td class="hit" title="MiniMax-M2.7 - ASAP 2.0: covered">●</td><td class="hit" title="MiniMax-M2.7 - EduBench: covered">●</td><td class="miss" title="MiniMax-M2.7 - TutorBench: not covered">·</td><td class="hit" title="MiniMax-M2.7 - SAS-Bench: covered">●</td><td class="miss" title="MiniMax-M2.7 - EduGuard: not covered">·</td><td><span class="pill strong">4/6</span></td></tr><tr><th>MiniMax-M3</th><td class="miss" title="MiniMax-M3 - Pedagogy: not covered">·</td><td class="miss" title="MiniMax-M3 - ASAP 2.0: not covered">·</td><td class="hit" title="MiniMax-M3 - EduBench: covered">●</td><td class="hit" title="MiniMax-M3 - TutorBench: covered">●</td><td class="hit" title="MiniMax-M3 - SAS-Bench: covered">●</td><td class="hit" title="MiniMax-M3 - EduGuard: covered">●</td><td><span class="pill strong">4/6</span></td></tr><tr><th>Qwen3-14B</th><td class="miss" title="Qwen3-14B - Pedagogy: not covered">·</td><td class="miss" title="Qwen3-14B - ASAP 2.0: not covered">·</td><td class="hit" title="Qwen3-14B - EduBench: covered">●</td><td class="miss" title="Qwen3-14B - TutorBench: not covered">·</td><td class="miss" title="Qwen3-14B - SAS-Bench: not covered">·</td><td class="miss" title="Qwen3-14B - EduGuard: not covered">·</td><td><span class="pill weak">1/6</span></td></tr><tr><th>Qwen3.5-27B</th><td class="miss" title="Qwen3.5-27B - Pedagogy: not covered">·</td><td class="miss" title="Qwen3.5-27B - ASAP 2.0: not covered">·</td><td class="miss" title="Qwen3.5-27B - EduBench: not covered">·</td><td class="hit" title="Qwen3.5-27B - TutorBench: covered">●</td><td class="miss" title="Qwen3.5-27B - SAS-Bench: not covered">·</td><td class="miss" title="Qwen3.5-27B - EduGuard: not covered">·</td><td><span class="pill weak">1/6</span></td></tr><tr><th>Qwen3.5-35B-A3B</th><td class="miss" title="Qwen3.5-35B-A3B - Pedagogy: not covered">·</td><td class="miss" title="Qwen3.5-35B-A3B - ASAP 2.0: not covered">·</td><td class="miss" title="Qwen3.5-35B-A3B - EduBench: not covered">·</td><td class="hit" title="Qwen3.5-35B-A3B - TutorBench: covered">●</td><td class="miss" title="Qwen3.5-35B-A3B - SAS-Bench: not covered">·</td><td class="miss" title="Qwen3.5-35B-A3B - EduGuard: not covered">·</td><td><span class="pill weak">1/6</span></td></tr><tr><th>Qwen3.5-122B-A10B</th><td class="miss" title="Qwen3.5-122B-A10B - Pedagogy: not covered">·</td><td class="miss" title="Qwen3.5-122B-A10B - ASAP 2.0: not covered">·</td><td class="hit" title="Qwen3.5-122B-A10B - EduBench: covered">●</td><td class="miss" title="Qwen3.5-122B-A10B - TutorBench: not covered">·</td><td class="miss" title="Qwen3.5-122B-A10B - SAS-Bench: not covered">·</td><td class="miss" title="Qwen3.5-122B-A10B - EduGuard: not covered">·</td><td><span class="pill weak">1/6</span></td></tr><tr><th>Qwen3.6-35B-A3B</th><td class="miss" title="Qwen3.6-35B-A3B - Pedagogy: not covered">·</td><td class="miss" title="Qwen3.6-35B-A3B - ASAP 2.0: not covered">·</td><td class="miss" title="Qwen3.6-35B-A3B - EduBench: not covered">·</td><td class="hit" title="Qwen3.6-35B-A3B - TutorBench: covered">●</td><td class="miss" title="Qwen3.6-35B-A3B - SAS-Bench: not covered">·</td><td class="miss" title="Qwen3.6-35B-A3B - EduGuard: not covered">·</td><td><span class="pill weak">1/6</span></td></tr><tr><th>Qwen3.7-Max</th><td class="hit" title="Qwen3.7-Max - Pedagogy: covered">●</td><td class="hit" title="Qwen3.7-Max - ASAP 2.0: covered">●</td><td class="miss" title="Qwen3.7-Max - EduBench: not covered">·</td><td class="miss" title="Qwen3.7-Max - TutorBench: not covered">·</td><td class="miss" title="Qwen3.7-Max - SAS-Bench: not covered">·</td><td class="miss" title="Qwen3.7-Max - EduGuard: not covered">·</td><td><span class="pill medium">2/6</span></td></tr><tr><th>Qwen3-VL-235B</th><td class="miss" title="Qwen3-VL-235B - Pedagogy: not covered">·</td><td class="miss" title="Qwen3-VL-235B - ASAP 2.0: not covered">·</td><td class="miss" title="Qwen3-VL-235B - EduBench: not covered">·</td><td class="hit" title="Qwen3-VL-235B - TutorBench: covered">●</td><td class="miss" title="Qwen3-VL-235B - SAS-Bench: not covered">·</td><td class="miss" title="Qwen3-VL-235B - EduGuard: not covered">·</td><td><span class="pill weak">1/6</span></td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>4. 任务 × 子能力覆盖矩阵</h2><p class="lede">该矩阵只表示 task 是否覆盖某个 P 级子能力，不区分主测或辅测。标记越多说明任务越综合，但不代表每个能力的测量强度相同。</p></div></div>
+    <div class="table-wrap">
+      <table class="sub-matrix task-sub-matrix">
+        <colgroup><col class="meta-benchmark"><col class="meta-task"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"></colgroup>
+        <thead><tr><th>Benchmark</th><th>Task / protocol</th><th class="sub-head srg" title="P01 任务指令与输出约束解析">P01</th><th class="sub-head srg" title="P02 长上下文与证据定位">P02</th><th class="sub-head srg" title="P03 常规多模态感知">P03</th><th class="sub-head srg" title="P04 复杂多模态时序理解">P04</th><th class="sub-head fdr" title="P05 领域知识调用">P05</th><th class="sub-head fdr" title="P06 形式推理与解答生成">P06</th><th class="sub-head fdr" title="P07 自我校验与修正">P07</th><th class="sub-head fdr" title="P08 置信度校准与能力性弃答">P08</th><th class="sub-head fdr" title="P09 工具使用与长程执行">P09</th><th class="sub-head lad" title="P10 作答正误判定">P10</th><th class="sub-head lad" title="P11 错误位置定位">P11</th><th class="sub-head lad" title="P12 错因与误概念归因">P12</th><th class="sub-head lad" title="P13 Rubric 映射评分">P13</th><th class="sub-head clm" title="P14 学习者状态画像">P14</th><th class="sub-head clm" title="P15 个性化教学策略选择">P15</th><th class="sub-head clm" title="P16 适配性解释与反馈生成">P16</th><th class="sub-head clm" title="P17 学习目标与路径规划">P17</th><th class="sub-head ceg" title="P18 教育角色边界判断">P18</th><th class="sub-head ceg" title="P19 学生风险识别">P19</th><th class="sub-head ceg" title="P20 安全处置与教育性重定向">P20</th></tr></thead>
+        <tbody><tr><th>Pedagogy</th><td>CDPK 教学法知识选择</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="CDPK 教学法知识选择 covers P05">●</td><td class="sub-hit fdr" title="CDPK 教学法知识选择 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit clm" title="CDPK 教学法知识选择 covers P15">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>Pedagogy</th><td>SEND 特殊教育需求选择</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="SEND 特殊教育需求选择 covers P05">●</td><td class="sub-hit fdr" title="SEND 特殊教育需求选择 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit clm" title="SEND 特殊教育需求选择 covers P14">●</td><td class="sub-hit clm" title="SEND 特殊教育需求选择 covers P15">●</td><td class="sub-hit clm" title="SEND 特殊教育需求选择 covers P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>ASAP 2.0</th><td>英文源文本作文评分</td><td class="sub-miss">·</td><td class="sub-hit srg" title="英文源文本作文评分 covers P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="英文源文本作文评分 covers P05">●</td><td class="sub-hit fdr" title="英文源文本作文评分 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="英文源文本作文评分 covers P10">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="英文源文本作文评分 covers P13">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>EduBench</th><td>IP 启发式解答</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="IP 启发式解答 covers P05">●</td><td class="sub-hit fdr" title="IP 启发式解答 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit clm" title="IP 启发式解答 covers P15">●</td><td class="sub-hit clm" title="IP 启发式解答 covers P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>EduBench</th><td>PCC 个性化纠错</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="PCC 个性化纠错 covers P05">●</td><td class="sub-hit fdr" title="PCC 个性化纠错 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="PCC 个性化纠错 covers P10">●</td><td class="sub-hit lad" title="PCC 个性化纠错 covers P11">●</td><td class="sub-hit lad" title="PCC 个性化纠错 covers P12">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit clm" title="PCC 个性化纠错 covers P15">●</td><td class="sub-hit clm" title="PCC 个性化纠错 covers P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>EduBench</th><td>PLS 个性化学习支持</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="PLS 个性化学习支持 covers P05">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit clm" title="PLS 个性化学习支持 covers P14">●</td><td class="sub-hit clm" title="PLS 个性化学习支持 covers P15">●</td><td class="sub-hit clm" title="PLS 个性化学习支持 covers P16">●</td><td class="sub-hit clm" title="PLS 个性化学习支持 covers P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>EduBench</th><td>QG 题目生成</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="QG 题目生成 covers P05">●</td><td class="sub-hit fdr" title="QG 题目生成 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit clm" title="QG 题目生成 covers P15">●</td><td class="sub-hit clm" title="QG 题目生成 covers P16">●</td><td class="sub-hit clm" title="QG 题目生成 covers P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>EduBench</th><td>TMG 教学材料生成</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="TMG 教学材料生成 covers P05">●</td><td class="sub-hit fdr" title="TMG 教学材料生成 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit clm" title="TMG 教学材料生成 covers P15">●</td><td class="sub-hit clm" title="TMG 教学材料生成 covers P16">●</td><td class="sub-hit clm" title="TMG 教学材料生成 covers P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>TutorBench</th><td>Fair815 多模态 Tutor</td><td class="sub-hit srg" title="Fair815 多模态 Tutor covers P01">●</td><td class="sub-miss">·</td><td class="sub-hit srg" title="Fair815 多模态 Tutor covers P03">●</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Fair815 多模态 Tutor covers P05">●</td><td class="sub-hit fdr" title="Fair815 多模态 Tutor covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Fair815 多模态 Tutor covers P10">●</td><td class="sub-hit lad" title="Fair815 多模态 Tutor covers P11">●</td><td class="sub-hit lad" title="Fair815 多模态 Tutor covers P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Fair815 多模态 Tutor covers P14">●</td><td class="sub-hit clm" title="Fair815 多模态 Tutor covers P15">●</td><td class="sub-hit clm" title="Fair815 多模态 Tutor covers P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>SAS-Bench</th><td>Holistic Scoring 总分评分</td><td class="sub-miss">·</td><td class="sub-hit srg" title="Holistic Scoring 总分评分 covers P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Holistic Scoring 总分评分 covers P05">●</td><td class="sub-hit fdr" title="Holistic Scoring 总分评分 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Holistic Scoring 总分评分 covers P10">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Holistic Scoring 总分评分 covers P13">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>SAS-Bench</th><td>Step-wise Scoring 分步评分</td><td class="sub-miss">·</td><td class="sub-hit srg" title="Step-wise Scoring 分步评分 covers P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Step-wise Scoring 分步评分 covers P05">●</td><td class="sub-hit fdr" title="Step-wise Scoring 分步评分 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Step-wise Scoring 分步评分 covers P10">●</td><td class="sub-hit lad" title="Step-wise Scoring 分步评分 covers P11">●</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Step-wise Scoring 分步评分 covers P13">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>SAS-Bench</th><td>Error Diagnosis 错因诊断</td><td class="sub-miss">·</td><td class="sub-hit srg" title="Error Diagnosis 错因诊断 covers P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Error Diagnosis 错因诊断 covers P05">●</td><td class="sub-hit fdr" title="Error Diagnosis 错因诊断 covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Error Diagnosis 错因诊断 covers P11">●</td><td class="sub-hit lad" title="Error Diagnosis 错因诊断 covers P12">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td></tr><tr><th>EduGuard</th><td>P1 Teaching Harm / SATA</td><td class="sub-hit srg" title="P1 Teaching Harm / SATA covers P01">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="P1 Teaching Harm / SATA covers P05">●</td><td class="sub-hit fdr" title="P1 Teaching Harm / SATA covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit ceg" title="P1 Teaching Harm / SATA covers P18">●</td><td class="sub-hit ceg" title="P1 Teaching Harm / SATA covers P19">●</td><td class="sub-hit ceg" title="P1 Teaching Harm / SATA covers P20">●</td></tr><tr><th>EduGuard</th><td>P2 Adversarial Safety</td><td class="sub-hit srg" title="P2 Adversarial Safety covers P01">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="P2 Adversarial Safety covers P05">●</td><td class="sub-hit fdr" title="P2 Adversarial Safety covers P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit ceg" title="P2 Adversarial Safety covers P18">●</td><td class="sub-hit ceg" title="P2 Adversarial Safety covers P19">●</td><td class="sub-hit ceg" title="P2 Adversarial Safety covers P20">●</td></tr></tbody>
+      </table>
+    </div>
+    <div class="legend"><span><i class="sw" style="background:#2F80ED"></i>SRG 符号表征与情境锚定</span><span><i class="sw" style="background:#F2994A"></i>FDR 领域形式推理与可靠执行</span><span><i class="sw" style="background:#27AE60"></i>LAD 学习评价与错误诊断</span><span><i class="sw" style="background:#9B51E0"></i>CLM 认知建模与教学规划</span><span><i class="sw" style="background:#EB5757"></i>CEG 约束性教育生成</span><span>● 覆盖该子能力</span><span>· 未明显覆盖</span></div>
+  </section>
+
+
+  <section>
+    <div class="section-head"><div><h2>4.1 模型 × 子能力测试覆盖矩阵</h2><p class="lede">该矩阵按模型实际测过的 benchmark 推断其覆盖到哪些 P 级子能力，仅表示是否有测试证据，不表示能力强弱。</p></div></div>
+    <div class="table-wrap">
+      <table class="sub-matrix model-sub-matrix">
+        <colgroup><col class="meta-model"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="p-col"><col class="meta-coverage"></colgroup>
+        <thead><tr><th>Model</th><th class="sub-head srg" title="P01 任务指令与输出约束解析">P01</th><th class="sub-head srg" title="P02 长上下文与证据定位">P02</th><th class="sub-head srg" title="P03 常规多模态感知">P03</th><th class="sub-head srg" title="P04 复杂多模态时序理解">P04</th><th class="sub-head fdr" title="P05 领域知识调用">P05</th><th class="sub-head fdr" title="P06 形式推理与解答生成">P06</th><th class="sub-head fdr" title="P07 自我校验与修正">P07</th><th class="sub-head fdr" title="P08 置信度校准与能力性弃答">P08</th><th class="sub-head fdr" title="P09 工具使用与长程执行">P09</th><th class="sub-head lad" title="P10 作答正误判定">P10</th><th class="sub-head lad" title="P11 错误位置定位">P11</th><th class="sub-head lad" title="P12 错因与误概念归因">P12</th><th class="sub-head lad" title="P13 Rubric 映射评分">P13</th><th class="sub-head clm" title="P14 学习者状态画像">P14</th><th class="sub-head clm" title="P15 个性化教学策略选择">P15</th><th class="sub-head clm" title="P16 适配性解释与反馈生成">P16</th><th class="sub-head clm" title="P17 学习目标与路径规划">P17</th><th class="sub-head ceg" title="P18 教育角色边界判断">P18</th><th class="sub-head ceg" title="P19 学生风险识别">P19</th><th class="sub-head ceg" title="P20 安全处置与教育性重定向">P20</th><th>覆盖</th></tr></thead>
+        <tbody><tr><th>Claude Sonnet 4.6</th><td class="sub-miss">·</td><td class="sub-hit srg" title="Claude Sonnet 4.6 tested on P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Claude Sonnet 4.6 tested on P05">●</td><td class="sub-hit fdr" title="Claude Sonnet 4.6 tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Claude Sonnet 4.6 tested on P10">●</td><td class="sub-hit lad" title="Claude Sonnet 4.6 tested on P11">●</td><td class="sub-hit lad" title="Claude Sonnet 4.6 tested on P12">●</td><td class="sub-hit lad" title="Claude Sonnet 4.6 tested on P13">●</td><td class="sub-hit clm" title="Claude Sonnet 4.6 tested on P14">●</td><td class="sub-hit clm" title="Claude Sonnet 4.6 tested on P15">●</td><td class="sub-hit clm" title="Claude Sonnet 4.6 tested on P16">●</td><td class="sub-hit clm" title="Claude Sonnet 4.6 tested on P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">11/20</span></td></tr><tr><th>DeepSeek-V4-Flash</th><td class="sub-miss">·</td><td class="sub-hit srg" title="DeepSeek-V4-Flash tested on P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="DeepSeek-V4-Flash tested on P05">●</td><td class="sub-hit fdr" title="DeepSeek-V4-Flash tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="DeepSeek-V4-Flash tested on P10">●</td><td class="sub-hit lad" title="DeepSeek-V4-Flash tested on P11">●</td><td class="sub-hit lad" title="DeepSeek-V4-Flash tested on P12">●</td><td class="sub-hit lad" title="DeepSeek-V4-Flash tested on P13">●</td><td class="sub-hit clm" title="DeepSeek-V4-Flash tested on P14">●</td><td class="sub-hit clm" title="DeepSeek-V4-Flash tested on P15">●</td><td class="sub-hit clm" title="DeepSeek-V4-Flash tested on P16">●</td><td class="sub-hit clm" title="DeepSeek-V4-Flash tested on P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">11/20</span></td></tr><tr><th>DeepSeek-V4-Pro</th><td class="sub-hit srg" title="DeepSeek-V4-Pro tested on P01">●</td><td class="sub-hit srg" title="DeepSeek-V4-Pro tested on P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="DeepSeek-V4-Pro tested on P05">●</td><td class="sub-hit fdr" title="DeepSeek-V4-Pro tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="DeepSeek-V4-Pro tested on P10">●</td><td class="sub-hit lad" title="DeepSeek-V4-Pro tested on P11">●</td><td class="sub-hit lad" title="DeepSeek-V4-Pro tested on P12">●</td><td class="sub-hit lad" title="DeepSeek-V4-Pro tested on P13">●</td><td class="sub-hit clm" title="DeepSeek-V4-Pro tested on P14">●</td><td class="sub-hit clm" title="DeepSeek-V4-Pro tested on P15">●</td><td class="sub-hit clm" title="DeepSeek-V4-Pro tested on P16">●</td><td class="sub-hit clm" title="DeepSeek-V4-Pro tested on P17">●</td><td class="sub-hit ceg" title="DeepSeek-V4-Pro tested on P18">●</td><td class="sub-hit ceg" title="DeepSeek-V4-Pro tested on P19">●</td><td class="sub-hit ceg" title="DeepSeek-V4-Pro tested on P20">●</td><td><span class="pill medium">15/20</span></td></tr><tr><th>Doubao-Seed-2.0-Lite</th><td class="sub-hit srg" title="Doubao-Seed-2.0-Lite tested on P01">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Doubao-Seed-2.0-Lite tested on P05">●</td><td class="sub-hit fdr" title="Doubao-Seed-2.0-Lite tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Doubao-Seed-2.0-Lite tested on P10">●</td><td class="sub-hit lad" title="Doubao-Seed-2.0-Lite tested on P11">●</td><td class="sub-hit lad" title="Doubao-Seed-2.0-Lite tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Doubao-Seed-2.0-Lite tested on P14">●</td><td class="sub-hit clm" title="Doubao-Seed-2.0-Lite tested on P15">●</td><td class="sub-hit clm" title="Doubao-Seed-2.0-Lite tested on P16">●</td><td class="sub-hit clm" title="Doubao-Seed-2.0-Lite tested on P17">●</td><td class="sub-hit ceg" title="Doubao-Seed-2.0-Lite tested on P18">●</td><td class="sub-hit ceg" title="Doubao-Seed-2.0-Lite tested on P19">●</td><td class="sub-hit ceg" title="Doubao-Seed-2.0-Lite tested on P20">●</td><td><span class="pill medium">13/20</span></td></tr><tr><th>Doubao-Seed-2.0-Pro</th><td class="sub-hit srg" title="Doubao-Seed-2.0-Pro tested on P01">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Doubao-Seed-2.0-Pro tested on P05">●</td><td class="sub-hit fdr" title="Doubao-Seed-2.0-Pro tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Doubao-Seed-2.0-Pro tested on P10">●</td><td class="sub-hit lad" title="Doubao-Seed-2.0-Pro tested on P11">●</td><td class="sub-hit lad" title="Doubao-Seed-2.0-Pro tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Doubao-Seed-2.0-Pro tested on P14">●</td><td class="sub-hit clm" title="Doubao-Seed-2.0-Pro tested on P15">●</td><td class="sub-hit clm" title="Doubao-Seed-2.0-Pro tested on P16">●</td><td class="sub-hit clm" title="Doubao-Seed-2.0-Pro tested on P17">●</td><td class="sub-hit ceg" title="Doubao-Seed-2.0-Pro tested on P18">●</td><td class="sub-hit ceg" title="Doubao-Seed-2.0-Pro tested on P19">●</td><td class="sub-hit ceg" title="Doubao-Seed-2.0-Pro tested on P20">●</td><td><span class="pill medium">13/20</span></td></tr><tr><th>GLM-5.1</th><td class="sub-hit srg" title="GLM-5.1 tested on P01">●</td><td class="sub-hit srg" title="GLM-5.1 tested on P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="GLM-5.1 tested on P05">●</td><td class="sub-hit fdr" title="GLM-5.1 tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="GLM-5.1 tested on P10">●</td><td class="sub-hit lad" title="GLM-5.1 tested on P11">●</td><td class="sub-hit lad" title="GLM-5.1 tested on P12">●</td><td class="sub-hit lad" title="GLM-5.1 tested on P13">●</td><td class="sub-hit clm" title="GLM-5.1 tested on P14">●</td><td class="sub-hit clm" title="GLM-5.1 tested on P15">●</td><td class="sub-hit clm" title="GLM-5.1 tested on P16">●</td><td class="sub-hit clm" title="GLM-5.1 tested on P17">●</td><td class="sub-hit ceg" title="GLM-5.1 tested on P18">●</td><td class="sub-hit ceg" title="GLM-5.1 tested on P19">●</td><td class="sub-hit ceg" title="GLM-5.1 tested on P20">●</td><td><span class="pill medium">15/20</span></td></tr><tr><th>GLM-5.2</th><td class="sub-hit srg" title="GLM-5.2 tested on P01">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="GLM-5.2 tested on P05">●</td><td class="sub-hit fdr" title="GLM-5.2 tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit ceg" title="GLM-5.2 tested on P18">●</td><td class="sub-hit ceg" title="GLM-5.2 tested on P19">●</td><td class="sub-hit ceg" title="GLM-5.2 tested on P20">●</td><td><span class="pill medium">6/20</span></td></tr><tr><th>GPT-5.4</th><td class="sub-miss">·</td><td class="sub-hit srg" title="GPT-5.4 tested on P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="GPT-5.4 tested on P05">●</td><td class="sub-hit fdr" title="GPT-5.4 tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="GPT-5.4 tested on P10">●</td><td class="sub-hit lad" title="GPT-5.4 tested on P11">●</td><td class="sub-hit lad" title="GPT-5.4 tested on P12">●</td><td class="sub-hit lad" title="GPT-5.4 tested on P13">●</td><td class="sub-hit clm" title="GPT-5.4 tested on P14">●</td><td class="sub-hit clm" title="GPT-5.4 tested on P15">●</td><td class="sub-hit clm" title="GPT-5.4 tested on P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">10/20</span></td></tr><tr><th>GPT-5.5</th><td class="sub-hit srg" title="GPT-5.5 tested on P01">●</td><td class="sub-miss">·</td><td class="sub-hit srg" title="GPT-5.5 tested on P03">●</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="GPT-5.5 tested on P05">●</td><td class="sub-hit fdr" title="GPT-5.5 tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="GPT-5.5 tested on P10">●</td><td class="sub-hit lad" title="GPT-5.5 tested on P11">●</td><td class="sub-hit lad" title="GPT-5.5 tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="GPT-5.5 tested on P14">●</td><td class="sub-hit clm" title="GPT-5.5 tested on P15">●</td><td class="sub-hit clm" title="GPT-5.5 tested on P16">●</td><td class="sub-miss">·</td><td class="sub-hit ceg" title="GPT-5.5 tested on P18">●</td><td class="sub-hit ceg" title="GPT-5.5 tested on P19">●</td><td class="sub-hit ceg" title="GPT-5.5 tested on P20">●</td><td><span class="pill medium">13/20</span></td></tr><tr><th>Kimi-K2.6</th><td class="sub-miss">·</td><td class="sub-hit srg" title="Kimi-K2.6 tested on P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Kimi-K2.6 tested on P05">●</td><td class="sub-hit fdr" title="Kimi-K2.6 tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Kimi-K2.6 tested on P10">●</td><td class="sub-hit lad" title="Kimi-K2.6 tested on P11">●</td><td class="sub-hit lad" title="Kimi-K2.6 tested on P12">●</td><td class="sub-hit lad" title="Kimi-K2.6 tested on P13">●</td><td class="sub-hit clm" title="Kimi-K2.6 tested on P14">●</td><td class="sub-hit clm" title="Kimi-K2.6 tested on P15">●</td><td class="sub-hit clm" title="Kimi-K2.6 tested on P16">●</td><td class="sub-hit clm" title="Kimi-K2.6 tested on P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">11/20</span></td></tr><tr><th>MiniMax-M2.7</th><td class="sub-miss">·</td><td class="sub-hit srg" title="MiniMax-M2.7 tested on P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="MiniMax-M2.7 tested on P05">●</td><td class="sub-hit fdr" title="MiniMax-M2.7 tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="MiniMax-M2.7 tested on P10">●</td><td class="sub-hit lad" title="MiniMax-M2.7 tested on P11">●</td><td class="sub-hit lad" title="MiniMax-M2.7 tested on P12">●</td><td class="sub-hit lad" title="MiniMax-M2.7 tested on P13">●</td><td class="sub-hit clm" title="MiniMax-M2.7 tested on P14">●</td><td class="sub-hit clm" title="MiniMax-M2.7 tested on P15">●</td><td class="sub-hit clm" title="MiniMax-M2.7 tested on P16">●</td><td class="sub-hit clm" title="MiniMax-M2.7 tested on P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">11/20</span></td></tr><tr><th>MiniMax-M3</th><td class="sub-hit srg" title="MiniMax-M3 tested on P01">●</td><td class="sub-hit srg" title="MiniMax-M3 tested on P02">●</td><td class="sub-hit srg" title="MiniMax-M3 tested on P03">●</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="MiniMax-M3 tested on P05">●</td><td class="sub-hit fdr" title="MiniMax-M3 tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="MiniMax-M3 tested on P10">●</td><td class="sub-hit lad" title="MiniMax-M3 tested on P11">●</td><td class="sub-hit lad" title="MiniMax-M3 tested on P12">●</td><td class="sub-hit lad" title="MiniMax-M3 tested on P13">●</td><td class="sub-hit clm" title="MiniMax-M3 tested on P14">●</td><td class="sub-hit clm" title="MiniMax-M3 tested on P15">●</td><td class="sub-hit clm" title="MiniMax-M3 tested on P16">●</td><td class="sub-hit clm" title="MiniMax-M3 tested on P17">●</td><td class="sub-hit ceg" title="MiniMax-M3 tested on P18">●</td><td class="sub-hit ceg" title="MiniMax-M3 tested on P19">●</td><td class="sub-hit ceg" title="MiniMax-M3 tested on P20">●</td><td><span class="pill medium">16/20</span></td></tr><tr><th>Qwen3-14B</th><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Qwen3-14B tested on P05">●</td><td class="sub-hit fdr" title="Qwen3-14B tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Qwen3-14B tested on P10">●</td><td class="sub-hit lad" title="Qwen3-14B tested on P11">●</td><td class="sub-hit lad" title="Qwen3-14B tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Qwen3-14B tested on P14">●</td><td class="sub-hit clm" title="Qwen3-14B tested on P15">●</td><td class="sub-hit clm" title="Qwen3-14B tested on P16">●</td><td class="sub-hit clm" title="Qwen3-14B tested on P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">9/20</span></td></tr><tr><th>Qwen3.5-27B</th><td class="sub-hit srg" title="Qwen3.5-27B tested on P01">●</td><td class="sub-miss">·</td><td class="sub-hit srg" title="Qwen3.5-27B tested on P03">●</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Qwen3.5-27B tested on P05">●</td><td class="sub-hit fdr" title="Qwen3.5-27B tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Qwen3.5-27B tested on P10">●</td><td class="sub-hit lad" title="Qwen3.5-27B tested on P11">●</td><td class="sub-hit lad" title="Qwen3.5-27B tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Qwen3.5-27B tested on P14">●</td><td class="sub-hit clm" title="Qwen3.5-27B tested on P15">●</td><td class="sub-hit clm" title="Qwen3.5-27B tested on P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">10/20</span></td></tr><tr><th>Qwen3.5-35B-A3B</th><td class="sub-hit srg" title="Qwen3.5-35B-A3B tested on P01">●</td><td class="sub-miss">·</td><td class="sub-hit srg" title="Qwen3.5-35B-A3B tested on P03">●</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Qwen3.5-35B-A3B tested on P05">●</td><td class="sub-hit fdr" title="Qwen3.5-35B-A3B tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Qwen3.5-35B-A3B tested on P10">●</td><td class="sub-hit lad" title="Qwen3.5-35B-A3B tested on P11">●</td><td class="sub-hit lad" title="Qwen3.5-35B-A3B tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Qwen3.5-35B-A3B tested on P14">●</td><td class="sub-hit clm" title="Qwen3.5-35B-A3B tested on P15">●</td><td class="sub-hit clm" title="Qwen3.5-35B-A3B tested on P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">10/20</span></td></tr><tr><th>Qwen3.5-122B-A10B</th><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Qwen3.5-122B-A10B tested on P05">●</td><td class="sub-hit fdr" title="Qwen3.5-122B-A10B tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Qwen3.5-122B-A10B tested on P10">●</td><td class="sub-hit lad" title="Qwen3.5-122B-A10B tested on P11">●</td><td class="sub-hit lad" title="Qwen3.5-122B-A10B tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Qwen3.5-122B-A10B tested on P14">●</td><td class="sub-hit clm" title="Qwen3.5-122B-A10B tested on P15">●</td><td class="sub-hit clm" title="Qwen3.5-122B-A10B tested on P16">●</td><td class="sub-hit clm" title="Qwen3.5-122B-A10B tested on P17">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">9/20</span></td></tr><tr><th>Qwen3.6-35B-A3B</th><td class="sub-hit srg" title="Qwen3.6-35B-A3B tested on P01">●</td><td class="sub-miss">·</td><td class="sub-hit srg" title="Qwen3.6-35B-A3B tested on P03">●</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Qwen3.6-35B-A3B tested on P05">●</td><td class="sub-hit fdr" title="Qwen3.6-35B-A3B tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Qwen3.6-35B-A3B tested on P10">●</td><td class="sub-hit lad" title="Qwen3.6-35B-A3B tested on P11">●</td><td class="sub-hit lad" title="Qwen3.6-35B-A3B tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Qwen3.6-35B-A3B tested on P14">●</td><td class="sub-hit clm" title="Qwen3.6-35B-A3B tested on P15">●</td><td class="sub-hit clm" title="Qwen3.6-35B-A3B tested on P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">10/20</span></td></tr><tr><th>Qwen3.7-Max</th><td class="sub-miss">·</td><td class="sub-hit srg" title="Qwen3.7-Max tested on P02">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Qwen3.7-Max tested on P05">●</td><td class="sub-hit fdr" title="Qwen3.7-Max tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Qwen3.7-Max tested on P10">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Qwen3.7-Max tested on P13">●</td><td class="sub-hit clm" title="Qwen3.7-Max tested on P14">●</td><td class="sub-hit clm" title="Qwen3.7-Max tested on P15">●</td><td class="sub-hit clm" title="Qwen3.7-Max tested on P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">8/20</span></td></tr><tr><th>Qwen3-VL-235B</th><td class="sub-hit srg" title="Qwen3-VL-235B tested on P01">●</td><td class="sub-miss">·</td><td class="sub-hit srg" title="Qwen3-VL-235B tested on P03">●</td><td class="sub-miss">·</td><td class="sub-hit fdr" title="Qwen3-VL-235B tested on P05">●</td><td class="sub-hit fdr" title="Qwen3-VL-235B tested on P06">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-hit lad" title="Qwen3-VL-235B tested on P10">●</td><td class="sub-hit lad" title="Qwen3-VL-235B tested on P11">●</td><td class="sub-hit lad" title="Qwen3-VL-235B tested on P12">●</td><td class="sub-miss">·</td><td class="sub-hit clm" title="Qwen3-VL-235B tested on P14">●</td><td class="sub-hit clm" title="Qwen3-VL-235B tested on P15">●</td><td class="sub-hit clm" title="Qwen3-VL-235B tested on P16">●</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td class="sub-miss">·</td><td><span class="pill medium">10/20</span></td></tr></tbody>
+      </table>
+    </div>
+    <div class="legend"><span><i class="sw" style="background:#2F80ED"></i>SRG 符号表征与情境锚定</span><span><i class="sw" style="background:#F2994A"></i>FDR 领域形式推理与可靠执行</span><span><i class="sw" style="background:#27AE60"></i>LAD 学习评价与错误诊断</span><span><i class="sw" style="background:#9B51E0"></i>CLM 认知建模与教学规划</span><span><i class="sw" style="background:#EB5757"></i>CEG 约束性教育生成</span><span>● 该模型有相关测试证据</span><span>· 未测试到该子能力</span></div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>5. Benchmark 结果总览</h2><p class="lede">把原先分散在 EduBench、SAS-Bench 和 EduGuard 的图表并入同一节：先看各 benchmark 的主排名，再看任务规模、诊断指标和安全指标。这样第 4 部分就成为真正的实验结果 dashboard。</p></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Pedagogy Accuracy · 教学理论与策略选择</h3>
+        <div class="bar-row pedagogy">
+          <div class="bar-label">Qwen3.7-Max</div>
+          <div class="bar-track"><div class="bar-fill" style="width:100.0%"></div></div>
+          <div class="bar-value">89.01%</div>
+        </div>
+
+        <div class="bar-row pedagogy">
+          <div class="bar-label">GLM-5.1</div>
+          <div class="bar-track"><div class="bar-fill" style="width:98.5%"></div></div>
+          <div class="bar-value">87.67%</div>
+        </div>
+
+        <div class="bar-row pedagogy">
+          <div class="bar-label">DeepSeek-V4-Flash</div>
+          <div class="bar-track"><div class="bar-fill" style="width:96.3%"></div></div>
+          <div class="bar-value">85.70%</div>
+        </div>
+
+        <div class="bar-row pedagogy">
+          <div class="bar-label">DeepSeek-V4-Pro</div>
+          <div class="bar-track"><div class="bar-fill" style="width:95.9%"></div></div>
+          <div class="bar-value">85.34%</div>
+        </div>
+
+        <div class="bar-row pedagogy">
+          <div class="bar-label">Claude Sonnet 4.6</div>
+          <div class="bar-track"><div class="bar-fill" style="width:95.4%"></div></div>
+          <div class="bar-value">84.90%</div>
+        </div>
+
+        <div class="bar-row pedagogy">
+          <div class="bar-label">GPT-5.4</div>
+          <div class="bar-track"><div class="bar-fill" style="width:94.8%"></div></div>
+          <div class="bar-value">84.36%</div>
+        </div>
+
+        <div class="bar-row pedagogy">
+          <div class="bar-label">MiniMax-M2.7</div>
+          <div class="bar-track"><div class="bar-fill" style="width:92.7%"></div></div>
+          <div class="bar-value">82.48%</div>
+        </div></div>
+      <div class="card"><h3>ASAP 2.0 QWK · 作文评分一致性</h3>
+        <div class="bar-row asap">
+          <div class="bar-label">Claude Sonnet 4.6</div>
+          <div class="bar-track"><div class="bar-fill" style="width:93.9%"></div></div>
+          <div class="bar-value">61.06</div>
+        </div>
+
+        <div class="bar-row asap">
+          <div class="bar-label">Qwen3.7-Max</div>
+          <div class="bar-track"><div class="bar-fill" style="width:92.4%"></div></div>
+          <div class="bar-value">60.03</div>
+        </div>
+
+        <div class="bar-row asap">
+          <div class="bar-label">GLM-5.1</div>
+          <div class="bar-track"><div class="bar-fill" style="width:88.1%"></div></div>
+          <div class="bar-value">57.25</div>
+        </div>
+
+        <div class="bar-row asap">
+          <div class="bar-label">MiniMax-M2.7</div>
+          <div class="bar-track"><div class="bar-fill" style="width:81.2%"></div></div>
+          <div class="bar-value">52.77</div>
+        </div>
+
+        <div class="bar-row asap">
+          <div class="bar-label">DeepSeek-V4-Pro</div>
+          <div class="bar-track"><div class="bar-fill" style="width:80.5%"></div></div>
+          <div class="bar-value">52.32</div>
+        </div>
+
+        <div class="bar-row asap">
+          <div class="bar-label">DeepSeek-V4-Flash</div>
+          <div class="bar-track"><div class="bar-fill" style="width:78.1%"></div></div>
+          <div class="bar-value">50.78</div>
+        </div>
+
+        <div class="bar-row asap">
+          <div class="bar-label">GPT-5.4</div>
+          <div class="bar-track"><div class="bar-fill" style="width:72.7%"></div></div>
+          <div class="bar-value">47.26</div>
+        </div></div>
+      <div class="card"><h3>EduBench Mean · 开放式教/学任务</h3>
+        <div class="bar-row edubench">
+          <div class="bar-label">MiniMax-M2.7</div>
+          <div class="bar-track"><div class="bar-fill" style="width:92.7%"></div></div>
+          <div class="bar-value">8.342</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">Qwen3.5-122B-A10B</div>
+          <div class="bar-track"><div class="bar-fill" style="width:91.7%"></div></div>
+          <div class="bar-value">8.249</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">Doubao-Seed-2.0-Pro</div>
+          <div class="bar-track"><div class="bar-fill" style="width:91.4%"></div></div>
+          <div class="bar-value">8.228</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">DeepSeek-V4-Flash</div>
+          <div class="bar-track"><div class="bar-fill" style="width:90.6%"></div></div>
+          <div class="bar-value">8.154</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">Claude Sonnet 4.6</div>
+          <div class="bar-track"><div class="bar-fill" style="width:90.1%"></div></div>
+          <div class="bar-value">8.112</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">MiniMax-M3</div>
+          <div class="bar-track"><div class="bar-fill" style="width:89.7%"></div></div>
+          <div class="bar-value">8.069</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">Doubao-Seed-2.0-Lite</div>
+          <div class="bar-track"><div class="bar-fill" style="width:89.3%"></div></div>
+          <div class="bar-value">8.037</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">DeepSeek-V4-Pro</div>
+          <div class="bar-track"><div class="bar-fill" style="width:89.0%"></div></div>
+          <div class="bar-value">8.013</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">Kimi-K2.6</div>
+          <div class="bar-track"><div class="bar-fill" style="width:87.8%"></div></div>
+          <div class="bar-value">7.901</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">GLM-5.1</div>
+          <div class="bar-track"><div class="bar-fill" style="width:85.3%"></div></div>
+          <div class="bar-value">7.681</div>
+        </div>
+
+        <div class="bar-row edubench">
+          <div class="bar-label">Qwen3-14B</div>
+          <div class="bar-track"><div class="bar-fill" style="width:83.0%"></div></div>
+          <div class="bar-value">7.470</div>
+        </div></div>
+      <div class="card"><h3>TutorBench Fair815 · 多模态 Tutor 质量</h3>
+        <div class="bar-row tutor">
+          <div class="bar-label">GPT-5.5</div>
+          <div class="bar-track"><div class="bar-fill" style="width:96.0%"></div></div>
+          <div class="bar-value">57.57</div>
+        </div>
+
+        <div class="bar-row tutor">
+          <div class="bar-label">Qwen3.6-35B-A3B</div>
+          <div class="bar-track"><div class="bar-fill" style="width:94.2%"></div></div>
+          <div class="bar-value">56.50</div>
+        </div>
+
+        <div class="bar-row tutor">
+          <div class="bar-label">Qwen3.5-35B-A3B</div>
+          <div class="bar-track"><div class="bar-fill" style="width:93.9%"></div></div>
+          <div class="bar-value">56.33</div>
+        </div>
+
+        <div class="bar-row tutor">
+          <div class="bar-label">Qwen3.5-27B</div>
+          <div class="bar-track"><div class="bar-fill" style="width:89.8%"></div></div>
+          <div class="bar-value">53.85</div>
+        </div>
+
+        <div class="bar-row tutor">
+          <div class="bar-label">MiniMax-M3</div>
+          <div class="bar-track"><div class="bar-fill" style="width:89.4%"></div></div>
+          <div class="bar-value">53.63</div>
+        </div>
+
+        <div class="bar-row tutor">
+          <div class="bar-label">Qwen3-VL-235B</div>
+          <div class="bar-track"><div class="bar-fill" style="width:84.7%"></div></div>
+          <div class="bar-value">50.79</div>
+        </div></div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>EduBench 五类任务：样本量与当前最优模型</h3>
+      <div class="task-grid">
+      <div class="task-card">
+        <b>IP</b><span>互动式教学 / Interactive Pedagogy</span>
+        <div class="task-count">1,253 题</div>
+        <div class="task-winner">当前最高：Doubao-Seed-2.0-Pro · 8.665</div>
+      </div>
+      <div class="task-card">
+        <b>PCC</b><span>教学材料与内容生成 / Pedagogical Content Creation</span>
+        <div class="task-count">252 题</div>
+        <div class="task-winner">当前最高：Doubao-Seed-2.0-Pro · 9.535</div>
+      </div>
+      <div class="task-card">
+        <b>PLS</b><span>个性化学习支持 / Personalized Learning Support</span>
+        <div class="task-count">448 题</div>
+        <div class="task-winner">当前最高：Doubao-Seed-2.0-Pro · 9.437</div>
+      </div>
+      <div class="task-card">
+        <b>QG</b><span>问题生成 / Question Generation</span>
+        <div class="task-count">1,266 题</div>
+        <div class="task-winner">当前最高：MiniMax-M3 · 8.956</div>
+      </div>
+      <div class="task-card">
+        <b>TMG</b><span>教学材料生成 / Teaching Material Generation</span>
+        <div class="task-count">578 题</div>
+        <div class="task-winner">当前最高：DeepSeek-V4-Flash · 9.231</div>
+      </div></div>
+      <div class="note" style="margin-top:18px">关键观察：多个模型在 PCC / PLS / TMG 上较高，但 Error、Personalization、Motivation 等维度仍分化明显，说明“会生成教学文本”并不等于“能理解学生为什么错”。</div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div class="card">
+        <h3>SAS-Bench 三指标：QWK / CCS / ECS</h3>
+        
+        <div class="metric-row">
+          <div class="metric-name">GPT-5.4</div>
+          <div class="mini-bars">
+            <span class="mini qwk" style="width:86.8%"></span><b>86.77</b>
+            <span class="mini ccs" style="width:80.3%"></span><b>80.26</b>
+            <span class="mini ecs" style="width:55.6%"></span><b>55.64</b>
+          </div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-name">MiniMax-M3</div>
+          <div class="mini-bars">
+            <span class="mini qwk" style="width:84.3%"></span><b>84.30</b>
+            <span class="mini ccs" style="width:76.8%"></span><b>76.83</b>
+            <span class="mini ecs" style="width:66.0%"></span><b>66.02</b>
+          </div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-name">GLM-5.1</div>
+          <div class="mini-bars">
+            <span class="mini qwk" style="width:83.6%"></span><b>83.56</b>
+            <span class="mini ccs" style="width:78.1%"></span><b>78.14</b>
+            <span class="mini ecs" style="width:62.6%"></span><b>62.60</b>
+          </div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-name">DeepSeek-V4-Pro</div>
+          <div class="mini-bars">
+            <span class="mini qwk" style="width:81.9%"></span><b>81.86</b>
+            <span class="mini ccs" style="width:76.6%"></span><b>76.63</b>
+            <span class="mini ecs" style="width:61.7%"></span><b>61.69</b>
+          </div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-name">Kimi-K2.6</div>
+          <div class="mini-bars">
+            <span class="mini qwk" style="width:79.1%"></span><b>79.13</b>
+            <span class="mini ccs" style="width:73.3%"></span><b>73.30</b>
+            <span class="mini ecs" style="width:52.2%"></span><b>52.20</b>
+          </div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-name">MiniMax-M2.7</div>
+          <div class="mini-bars">
+            <span class="mini qwk" style="width:79.0%"></span><b>79.04</b>
+            <span class="mini ccs" style="width:72.5%"></span><b>72.46</b>
+            <span class="mini ecs" style="width:51.4%"></span><b>51.39</b>
+          </div>
+        </div>
+        <div class="legend"><span><i class="sw" style="background:var(--blue)"></i>QWK 总分一致性</span><span><i class="sw" style="background:var(--orange)"></i>CCS 分步评分</span><span><i class="sw" style="background:var(--green)"></i>ECS 错因诊断</span></div>
+      </div>
+      <div class="card"><h3>EduGuard P1 Teaching Harm · RFS 越高越好</h3>
+        <div class="bar-row safe">
+          <div class="bar-label">MiniMax-M3</div>
+          <div class="bar-track"><div class="bar-fill" style="width:96.2%"></div></div>
+          <div class="bar-value">76.94</div>
+        </div>
+
+        <div class="bar-row safe">
+          <div class="bar-label">GLM-5.1</div>
+          <div class="bar-track"><div class="bar-fill" style="width:95.4%"></div></div>
+          <div class="bar-value">76.32</div>
+        </div>
+
+        <div class="bar-row safe">
+          <div class="bar-label">Doubao-Seed-2.0-Pro</div>
+          <div class="bar-track"><div class="bar-fill" style="width:95.2%"></div></div>
+          <div class="bar-value">76.18</div>
+        </div>
+
+        <div class="bar-row safe">
+          <div class="bar-label">DeepSeek-V4-Pro</div>
+          <div class="bar-track"><div class="bar-fill" style="width:95.2%"></div></div>
+          <div class="bar-value">76.12</div>
+        </div>
+
+        <div class="bar-row safe">
+          <div class="bar-label">GLM-5.2</div>
+          <div class="bar-track"><div class="bar-fill" style="width:94.9%"></div></div>
+          <div class="bar-value">75.95</div>
+        </div>
+
+        <div class="bar-row safe">
+          <div class="bar-label">GPT-5.5 英文子集</div>
+          <div class="bar-track"><div class="bar-fill" style="width:92.4%"></div></div>
+          <div class="bar-value">73.95</div>
+        </div>
+
+        <div class="bar-row safe">
+          <div class="bar-label">Doubao-Seed-2.0-Lite</div>
+          <div class="bar-track"><div class="bar-fill" style="width:91.2%"></div></div>
+          <div class="bar-value">73.00</div>
+        </div></div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h3>EduGuard P2 Adversarial Safety · ASR 越低越好</h3>
+      
+        <div class="metric-row asr low">
+          <div class="metric-name">MiniMax-M3</div>
+          <div class="dual-bars">
+            <span class="asrbar m3" style="width:3.5%"></span><b>3.5%</b>
+            <span class="asrbar ds" style="width:8.2%"></span><b>8.2%</b>
+          </div>
+        </div>
+
+        <div class="metric-row asr low">
+          <div class="metric-name">GPT-5.5</div>
+          <div class="dual-bars">
+            <span class="asrbar m3" style="width:4.9%"></span><b>4.9%</b>
+            <span class="asrbar ds" style="width:0.4%"></span><b>0.4%</b>
+          </div>
+        </div>
+
+        <div class="metric-row asr low">
+          <div class="metric-name">GLM-5.1</div>
+          <div class="dual-bars">
+            <span class="asrbar m3" style="width:9.5%"></span><b>9.5%</b>
+            <span class="asrbar ds" style="width:4.9%"></span><b>4.9%</b>
+          </div>
+        </div>
+
+        <div class="metric-row asr low">
+          <div class="metric-name">GLM-5.2</div>
+          <div class="dual-bars">
+            <span class="asrbar m3" style="width:20.8%"></span><b>20.8%</b>
+            <span class="asrbar ds" style="width:28.5%"></span><b>28.5%</b>
+          </div>
+        </div>
+
+        <div class="metric-row asr mid">
+          <div class="metric-name">Doubao-Seed-2.0-Lite</div>
+          <div class="dual-bars">
+            <span class="asrbar m3" style="width:45.2%"></span><b>45.2%</b>
+            <span class="asrbar ds" style="width:51.1%"></span><b>51.1%</b>
+          </div>
+        </div>
+
+        <div class="metric-row asr mid">
+          <div class="metric-name">Doubao-Seed-2.0-Pro</div>
+          <div class="dual-bars">
+            <span class="asrbar m3" style="width:51.1%"></span><b>51.1%</b>
+            <span class="asrbar ds" style="width:60.2%"></span><b>60.2%</b>
+          </div>
+        </div>
+
+        <div class="metric-row asr mid">
+          <div class="metric-name">DeepSeek-V4-Pro</div>
+          <div class="dual-bars">
+            <span class="asrbar m3" style="width:57.1%"></span><b>57.1%</b>
+            <span class="asrbar ds" style="width:62.4%"></span><b>62.4%</b>
+          </div>
+        </div>
+      <div class="legend"><span><i class="sw" style="background:var(--red)"></i>MiniMax-M3 judge</span><span><i class="sw" style="background:var(--purple)"></i>DeepSeek-V3.2 judge</span></div>
+    </div>
+  </section>
+
+  <section class="radar-section">
+    <div class="section-head"><div><h2>6. 五类教育能力雷达图</h2><p class="lede">雷达图使用 coverage-aware shrinkage 口径：先将 task 指标统一到 0-100；同一 benchmark 内先聚合到子能力分数；当某模型在某子能力上的证据较少时，将观测分数向该子能力全局均值收缩；最后按五类大能力对子能力分数求均分。本图仅展示覆盖至少 3 个 benchmark 的模型。</p></div></div>
+    <div class="radar-panel">
+      <div class="radar-card"><svg class="radar-svg" viewBox="0 0 900 540" role="img" aria-label="五类教育原子能力雷达图">
+      <rect x="0" y="0" width="900" height="540" rx="28" fill="#ffffff"/>
+      <text x="34" y="38" class="radar-title">五类教育原子能力雷达图</text>
+      <text x="34" y="60" class="radar-subtitle">Coverage-aware shrinkage · range 50-90 · models with ≥3 benchmarks</text>
+      <polygon points="285.0,300.0 285.0,300.0 285.0,300.0 285.0,300.0 285.0,300.0" class="radar-ring"/><text x="291" y="304.0" class="radar-tick">50</text><polygon points="285.0,263.8 319.5,288.8 306.3,329.3 263.7,329.3 250.5,288.8" class="radar-ring"/><text x="291" y="267.8" class="radar-tick">60</text><polygon points="285.0,227.5 354.0,277.6 327.6,358.7 242.4,358.7 216.0,277.6" class="radar-ring"/><text x="291" y="231.5" class="radar-tick">70</text><polygon points="285.0,191.2 388.4,266.4 348.9,388.0 221.1,388.0 181.6,266.4" class="radar-ring"/><text x="291" y="195.2" class="radar-tick">80</text><polygon points="285.0,155.0 422.9,255.2 370.2,417.3 199.8,417.3 147.1,255.2" class="radar-ring"/><text x="291" y="159.0" class="radar-tick">90</text>
+      <line x1="285" y1="300" x2="285.0" y2="155.0" class="radar-axis"/><line x1="285" y1="300" x2="422.9" y2="255.2" class="radar-axis"/><line x1="285" y1="300" x2="370.2" y2="417.3" class="radar-axis"/><line x1="285" y1="300" x2="199.8" y2="417.3" class="radar-axis"/><line x1="285" y1="300" x2="147.1" y2="255.2" class="radar-axis"/>
+      <polygon points="285.0,250.7 368.1,273.0 336.6,371.0 213.4,398.5 205.0,274.0" fill="#2563eb" fill-opacity="0.045" stroke="#2563eb" stroke-width="1.7"/><circle cx="285.0" cy="250.7" r="2.2" fill="#2563eb"/><circle cx="368.1" cy="273.0" r="2.2" fill="#2563eb"/><circle cx="336.6" cy="371.0" r="2.2" fill="#2563eb"/><circle cx="213.4" cy="398.5" r="2.2" fill="#2563eb"/><circle cx="205.0" cy="274.0" r="2.2" fill="#2563eb"/><polygon points="285.0,253.6 365.7,273.8 334.6,368.3 212.6,399.7 205.0,274.0" fill="#60a5fa" fill-opacity="0.045" stroke="#60a5fa" stroke-width="1.7"/><circle cx="285.0" cy="253.6" r="2.2" fill="#60a5fa"/><circle cx="365.7" cy="273.8" r="2.2" fill="#60a5fa"/><circle cx="334.6" cy="368.3" r="2.2" fill="#60a5fa"/><circle cx="212.6" cy="399.7" r="2.2" fill="#60a5fa"/><circle cx="205.0" cy="274.0" r="2.2" fill="#60a5fa"/><polygon points="285.0,252.1 360.8,275.4 330.4,362.5 217.7,392.7 222.3,279.6" fill="#dc2626" fill-opacity="0.045" stroke="#dc2626" stroke-width="1.7"/><circle cx="285.0" cy="252.1" r="2.2" fill="#dc2626"/><circle cx="360.8" cy="275.4" r="2.2" fill="#dc2626"/><circle cx="330.4" cy="362.5" r="2.2" fill="#dc2626"/><circle cx="217.7" cy="392.7" r="2.2" fill="#dc2626"/><circle cx="222.3" cy="279.6" r="2.2" fill="#dc2626"/><polygon points="285.0,242.7 366.7,273.5 332.3,365.1 219.6,390.0 191.9,269.8" fill="#16a34a" fill-opacity="0.045" stroke="#16a34a" stroke-width="1.7"/><circle cx="285.0" cy="242.7" r="2.2" fill="#16a34a"/><circle cx="366.7" cy="273.5" r="2.2" fill="#16a34a"/><circle cx="332.3" cy="365.1" r="2.2" fill="#16a34a"/><circle cx="219.6" cy="390.0" r="2.2" fill="#16a34a"/><circle cx="191.9" cy="269.8" r="2.2" fill="#16a34a"/><polygon points="285.0,251.1 359.8,275.7 323.6,353.1 218.5,391.5 205.0,274.0" fill="#7c3aed" fill-opacity="0.045" stroke="#7c3aed" stroke-width="1.7"/><circle cx="285.0" cy="251.1" r="2.2" fill="#7c3aed"/><circle cx="359.8" cy="275.7" r="2.2" fill="#7c3aed"/><circle cx="323.6" cy="353.1" r="2.2" fill="#7c3aed"/><circle cx="218.5" cy="391.5" r="2.2" fill="#7c3aed"/><circle cx="205.0" cy="274.0" r="2.2" fill="#7c3aed"/><polygon points="285.0,248.5 366.4,273.6 334.2,367.7 216.4,394.4 205.0,274.0" fill="#ec4899" fill-opacity="0.045" stroke="#ec4899" stroke-width="1.7"/><circle cx="285.0" cy="248.5" r="2.2" fill="#ec4899"/><circle cx="366.4" cy="273.6" r="2.2" fill="#ec4899"/><circle cx="334.2" cy="367.7" r="2.2" fill="#ec4899"/><circle cx="216.4" cy="394.4" r="2.2" fill="#ec4899"/><circle cx="205.0" cy="274.0" r="2.2" fill="#ec4899"/><polygon points="285.0,251.4 362.2,274.9 328.0,359.2 217.2,393.3 205.0,274.0" fill="#14b8a6" fill-opacity="0.045" stroke="#14b8a6" stroke-width="1.7"/><circle cx="285.0" cy="251.4" r="2.2" fill="#14b8a6"/><circle cx="362.2" cy="274.9" r="2.2" fill="#14b8a6"/><circle cx="328.0" cy="359.2" r="2.2" fill="#14b8a6"/><circle cx="217.2" cy="393.3" r="2.2" fill="#14b8a6"/><circle cx="205.0" cy="274.0" r="2.2" fill="#14b8a6"/><polygon points="285.0,244.2 366.4,273.6 332.1,364.8 226.6,380.4 190.9,269.4" fill="#0891b2" fill-opacity="0.045" stroke="#0891b2" stroke-width="1.7"/><circle cx="285.0" cy="244.2" r="2.2" fill="#0891b2"/><circle cx="366.4" cy="273.6" r="2.2" fill="#0891b2"/><circle cx="332.1" cy="364.8" r="2.2" fill="#0891b2"/><circle cx="226.6" cy="380.4" r="2.2" fill="#0891b2"/><circle cx="190.9" cy="269.4" r="2.2" fill="#0891b2"/>
+      <text x="285.0" y="125.0" text-anchor="middle" class="radar-label"><tspan>SRG</tspan><tspan x="285.0" dy="14">表征锚定</tspan></text><text x="449.5" y="245.9" text-anchor="start" class="radar-label"><tspan>FDR</tspan><tspan x="449.5" dy="14">推理执行</tspan></text><text x="386.7" y="441.6" text-anchor="start" class="radar-label"><tspan>LAD</tspan><tspan x="386.7" dy="14">评价诊断</tspan></text><text x="183.3" y="441.6" text-anchor="end" class="radar-label"><tspan>CLM</tspan><tspan x="183.3" dy="14">认知规划</tspan></text><text x="120.5" y="245.9" text-anchor="end" class="radar-label"><tspan>CEG</tspan><tspan x="120.5" dy="14">约束生成</tspan></text>
+      <g><rect x="625" y="111" width="11" height="11" rx="4" fill="#2563eb"/><text x="642" y="122" class="radar-legend">Claude Sonnet 4.6 · cov 0.53</text></g><g><rect x="625" y="135" width="11" height="11" rx="4" fill="#60a5fa"/><text x="642" y="146" class="radar-legend">DeepSeek-V4-Flash · cov 0.53</text></g><g><rect x="625" y="159" width="11" height="11" rx="4" fill="#dc2626"/><text x="642" y="170" class="radar-legend">DeepSeek-V4-Pro · cov 0.78</text></g><g><rect x="625" y="183" width="11" height="11" rx="4" fill="#16a34a"/><text x="642" y="194" class="radar-legend">GLM-5.1 · cov 0.78</text></g><g><rect x="625" y="207" width="11" height="11" rx="4" fill="#7c3aed"/><text x="642" y="218" class="radar-legend">GPT-5.4 · cov 0.48</text></g><g><rect x="625" y="231" width="11" height="11" rx="4" fill="#ec4899"/><text x="642" y="242" class="radar-legend">Kimi-K2.6 · cov 0.53</text></g><g><rect x="625" y="255" width="11" height="11" rx="4" fill="#14b8a6"/><text x="642" y="266" class="radar-legend">MiniMax-M2.7 · cov 0.53</text></g><g><rect x="625" y="279" width="11" height="11" rx="4" fill="#0891b2"/><text x="642" y="290" class="radar-legend">MiniMax-M3 · cov 0.83</text></g>
+    </svg></div>
+      <div class="card">
+        <h3>绘图数据</h3>
+        <div class="table-wrap">
+          <table class="score-table">
+            <thead><tr><th>Model</th><th>SRG</th><th>FDR</th><th>LAD</th><th>CLM</th><th>CEG</th><th>Avg cov</th></tr></thead>
+            <tbody>
+              <tr><td>Claude Sonnet 4.6</td><td>63.6</td><td>74.1</td><td>74.2</td><td>83.6</td><td>73.2</td><td>0.53</td></tr>
+              <tr><td>DeepSeek-V4-Flash</td><td>62.8</td><td>73.4</td><td>73.3</td><td>84.0</td><td>73.2</td><td>0.53</td></tr>
+              <tr><td>DeepSeek-V4-Pro</td><td>63.2</td><td>72.0</td><td>71.3</td><td>81.6</td><td>68.2</td><td>0.78</td></tr>
+              <tr><td>GLM-5.1</td><td>65.8</td><td>73.7</td><td>72.2</td><td>80.7</td><td>77.0</td><td>0.78</td></tr>
+              <tr><td>GPT-5.4</td><td>63.5</td><td>71.7</td><td>68.1</td><td>81.2</td><td>73.2</td><td>0.48</td></tr>
+              <tr><td>Kimi-K2.6</td><td>64.2</td><td>73.6</td><td>73.1</td><td>82.2</td><td>73.2</td><td>0.53</td></tr>
+              <tr><td>MiniMax-M2.7</td><td>63.4</td><td>72.4</td><td>70.2</td><td>81.8</td><td>73.2</td><td>0.53</td></tr>
+              <tr><td>MiniMax-M3</td><td>65.4</td><td>73.6</td><td>72.1</td><td>77.4</td><td>77.3</td><td>0.83</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note" style="margin-top:14px">解释时要同时看覆盖范围：本图纳入至少覆盖 3 个 benchmark 的模型；缺失或低证据子能力会被向全局均值收缩，避免少量高分任务造成虚高。Avg cov 表示五类能力下 P 级子能力的平均观测覆盖率；该图适合展示当前已测任务集合下的能力画像，而不是严格心理测量意义上的潜在能力估计。</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>7. 从“排名”到“三视角诊断”</h2><p class="lede">由于模型覆盖 benchmark 不一致，直接平均会产生不公平。更稳妥的展示方式是同时报告绝对短板、相对差异和覆盖度。</p></div></div>
+    <div class="flow">
+      <div class="flow-card" style="background:var(--blue)"><small>Step 1</small><b>Task 拆分</b><p>先把 benchmark 拆成 task，而不是把整套 benchmark 当作一个单点。</p></div>
+      <div class="flow-card" style="background:var(--orange)"><small>Step 2</small><b>0-100 统一</b><p>指标方向统一为越高越好，但不做会抹平共性短板的 min-max。</p></div>
+      <div class="flow-card" style="background:var(--green)"><small>Step 3</small><b>权重聚合</b><p>用 task-subability 覆盖矩阵与能力权重，把 task 分数聚合到五类能力。</p></div>
+      <div class="flow-card" style="background:var(--purple)"><small>Step 4</small><b>Benchmark 居中</b><p>模型差异分析使用 benchmark 内均值校正，缓解 EduGuard 等低分任务拖拽。</p></div>
+      <div class="flow-card" style="background:var(--red)"><small>Step 5</small><b>Coverage 报告</b><p>覆盖不足 50% 的能力不进入强结论，只作为探索性证据。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>8. 跨任务结论</h2><p class="lede">下面这些结论比单榜排名更适合支撑论文主张，因为它们解释了教育模型的能力结构。</p></div></div>
+    <div class="insights">
+      <div class="insight"><b>会评分，不等于会诊断学生</b><p>SAS-Bench 中 GPT-5.4 的 QWK/CCS 最强，但 MiniMax-M3 的 ECS 最强，说明 FDR 与 LAD 必须分开评测。</p></div>
+      <div class="insight"><b>会生成教学内容，不等于会教学</b><p>EduBench 中 PCC/PLS/TMG 高分模型不一定在 Error、Personalization、Motivation 上同样强，CLM/CEG 与 LAD 存在清晰分化。</p></div>
+      <div class="insight"><b>多模态教育价值在于转化为教学行动</b><p>TutorBench 表明“看懂图”只是 SRG 前置条件，最终仍要进入 FDR、LAD、CLM、CEG 的教学链路。</p></div>
+      <div class="insight"><b>教育安全是独立的一等能力</b><p>EduGuard 显示 CEG 不只是友好语气，而是角色边界、拒答质量、安全处置和教育性重定向。</p></div>
+      <div class="insight"><b>不存在稳定的单一全能模型</b><p>不同模型在评分、诊断、Tutor、生成、安全上各有峰值，部署时更适合能力驱动的模型路由。</p></div>
+      <div class="insight"><b>Coverage 是解释能力画像的前提</b><p>覆盖不全时，必须区分“未测”“低分”和“被低分 benchmark 拖拽”，否则雷达图会产生误导。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><h2>9. 论文叙事建议</h2><p class="lede">如果面向顶会论文，建议把贡献从“我们又测了一批模型”提升为“我们提出教育模型能力诊断框架，并用 rebenchmark 证明任务间存在可解释分化”。</p></div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>叙事层级</th><th>应强调的问题</th><th>对应证据</th></tr></thead>
+        <tbody>
+          <tr><td>能力框架</td><td>教育模型应按 SRG/FDR/LAD/CLM/CEG 诊断，而非单一总榜。</td><td>v3 细粒度能力矩阵 + task-capability 映射。</td></tr>
+          <tr><td>实证发现</td><td>评分、诊断、生成、Tutor、安全之间存在稳定分化。</td><td>SAS、EduBench、TutorBench、EduGuard 的交叉结果。</td></tr>
+          <tr><td>方法反思</td><td>覆盖不全和 benchmark 难度不同会扭曲模型排名。</td><td>覆盖热力图 + benchmark-centered relative view。</td></tr>
+          <tr><td>部署启示</td><td>教育系统应基于能力画像做模型路由，而不是寻找单一最强模型。</td><td>各 benchmark winner 不一致，且不同能力峰值来自不同模型。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="footer">Source: /Users/rena/Desktop/Rena26/zgca/基地/rebenchmark-summary-0701.md · Generated as a standalone offline HTML report.</p>
+</div>
+</body>
+</html>

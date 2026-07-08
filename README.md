@@ -252,4 +252,5 @@ npx skills add likefallwind/edubenchmark@edubenchassistant -g -y
 
 - **不要把不同 benchmark 的原始分数直接平均**;先映射到 D01–D24 能力,再形成能力画像。
 - 通用知识类 benchmark 只是**门槛项**,不能证明教学能力。教育核心能力在于错因诊断、脚手架、反馈质量、个性化、多模态 grounding、安全边界和真实学习效果。
+- **裁判与被测分离**:对外报告的模型对比中,LLM 裁判不得是被测集合的成员;无法避免时,用两个不同家族的裁判各跑一遍并同时报告两套数字。裁判的选择依据是人类金标校准(`data/judge_meta_eval_v1/` + `reports/eval/_judge_jury/`),不是名气。
 - 公开 benchmark 对长期学习效果、教师采纳、师生机协同和中文本地教育安全的覆盖仍不足。

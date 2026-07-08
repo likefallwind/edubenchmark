@@ -47,7 +47,7 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from ..base import ROOT, BenchmarkAdapter
+from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient
 from ..providers import extraction_max_tokens
 from ..scoring import binary_prf1, multiclass_f1
@@ -57,6 +57,24 @@ CLONE = ROOT / "sources" / "datasets" / "mathtutorbench"
 DATA = CLONE / "data"
 BRIDGE_DIR = CLONE / "datasets"
 HOMEPAGE = "https://github.com/eth-lre/mathtutorbench"
+
+# Version of the pairwise judge prompt (REWARD_RUBRIC + _pairwise_prompt),
+# shared by the win-rate tasks and judge calibration. Bump on any wording
+# change; summary.json records it plus the template hash.
+JUDGE_PROMPT_VERSION = "v1"
+
+
+def _pairwise_judge_provenance() -> dict[str, Any]:
+    placeholder_meta = {
+        "problem": "{problem}",
+        "reference_solution": "{reference_solution}",
+        "dialog_history": "{dialog_history}",
+    }
+    template = _WinRateBase._pairwise_prompt(placeholder_meta, "{response_a}", "{response_b}")
+    return {
+        "judge_prompt_version": JUDGE_PROMPT_VERSION,
+        "judge_prompt_sha256": prompt_sha256(template),
+    }
 
 # The official reward model's grading rubric, verbatim from
 # reward_model/compute_scaffolding_score.py:SYSTEM_PROMPT. Reused to ground both
@@ -777,6 +795,9 @@ class _WinRateBase(BenchmarkAdapter):
     def buckets(self, item):
         return {"topic": item["meta"]["topic"]}
 
+    def judge_prompt_provenance(self):
+        return _pairwise_judge_provenance()
+
     def extra_summary(self, scored):
         rows = [r for r in scored if r.get("score_status") == "scored" and r.get("win_score") is not None]
         judge_model = os.environ.get(JUDGE_MODEL_ENV) or DEFAULT_JUDGE_MODEL
@@ -926,6 +947,9 @@ class MTBJudgeCalibration(BenchmarkAdapter):
 
     def buckets(self, item):
         return {"order": item["meta"]["order"]}
+
+    def judge_prompt_provenance(self):
+        return _pairwise_judge_provenance()
 
     def extra_summary(self, scored):
         rows = [r for r in scored if r.get("score_status") == "scored"]
