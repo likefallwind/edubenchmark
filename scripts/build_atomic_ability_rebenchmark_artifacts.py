@@ -507,6 +507,7 @@ NORMALIZATION = [
     ("accuracy_or_f1", "higher_better", "prefer official f1/accuracy in extra_metrics when present; else accuracy * 10"),
     ("win_rate_or_accuracy", "higher_better", "prefer win_rate/strict_win_rate when present; else accuracy * 10"),
     ("share_0_to_1", "higher_better", "score_10 = share * 10"),
+    ("legacy_axis_0_to_100", "higher_better", "score_10 = raw / 10; context only, not used for P scoring"),
 ]
 
 
@@ -782,36 +783,36 @@ def parse_eduguard_scores(rows: list[dict[str, Any]]) -> None:
                 metric="rfs_0_to_1",
                 value=value,
             )
-    # P2 ASR tables for the two judges.
-    for judge_marker, note in [
-        ("(a) MiniMax-M3 judge", "MiniMax-M3 judge"),
-        ("(b) deepseek-v3.2 judge", "deepseek-v3.2 judge"),
-    ]:
-        start = text.find(judge_marker)
-        if start < 0:
-            continue
-        next_marker = text.find("<p class=\"small\"", start + 1)
-        section_end = next_marker if next_marker > 0 else text.find("<p class=\"legend\">", start)
-        block = text[start: section_end if section_end > 0 else len(text)]
+    # P2 total-ASR table in section 4.6. This is the only place that has the
+    # intended side-by-side MiniMax-M3 vs deepseek-v3.2 overall ASR rows.
+    start = text.find("M3 判 ASR")
+    if start >= 0:
+        end = text.find("</table>", start)
+        block = text[start: end if end > 0 else len(text)]
         for tr in re.findall(r"<tr>(.*?)</tr>", block, flags=re.S):
             cells = [strip_tags(c) for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, flags=re.S)]
-            if len(cells) >= 2 and cells[0] and cells[0] != "模型":
-                try:
-                    value = float(cells[1].rstrip("%")) / 100.0
-                except ValueError:
-                    continue
-                add_score(
-                    rows,
-                    source_path=path.relative_to(ROOT).as_posix(),
-                    benchmark_id="eduguard_adversarial",
-                    benchmark_name="EduGuard-Bench P2",
-                    subdimension="Adversarial Safety ASR",
-                    model=cells[0],
-                    metric="asr_0_to_1_lower_better",
-                    value=value,
-                    notes=note,
-                    score_role="scoring_candidate" if note == EDUGUARD_P2_PRIMARY_JUDGE else "legacy_context",
-                )
+            if len(cells) >= 4 and cells[0].isdigit():
+                model = cells[1]
+                for note, value_text in [
+                    ("MiniMax-M3 judge", cells[2]),
+                    ("deepseek-v3.2 judge", cells[3]),
+                ]:
+                    try:
+                        value = float(value_text.rstrip("%")) / 100.0
+                    except ValueError:
+                        continue
+                    add_score(
+                        rows,
+                        source_path=path.relative_to(ROOT).as_posix(),
+                        benchmark_id="eduguard_adversarial",
+                        benchmark_name="EduGuard-Bench P2",
+                        subdimension="Adversarial Safety ASR",
+                        model=model,
+                        metric="asr_0_to_1_lower_better",
+                        value=value,
+                        notes=note,
+                        score_role="scoring_candidate" if note == EDUGUARD_P2_PRIMARY_JUDGE else "legacy_context",
+                    )
 
 
 def inventory_otherbenchmark_scores() -> list[dict[str, Any]]:
@@ -863,6 +864,23 @@ def mapping_by_benchmark() -> dict[str, dict[str, Any]]:
     return {row["benchmark_id"]: row for row in MAPPINGS}
 
 
+def find_mapping(benchmark_id: str, subdimension: str | None = None, metric: str | None = None) -> dict[str, Any] | None:
+    candidates = [row for row in MAPPINGS if row["benchmark_id"] == benchmark_id]
+    if subdimension is not None:
+        for row in candidates:
+            if row["subdimension"] == subdimension:
+                return row
+    if metric is not None:
+        for row in candidates:
+            if row["metric_family"] == metric:
+                return row
+        if metric == "accuracy" and candidates:
+            for row in candidates:
+                if row["metric_family"] in {"accuracy", "accuracy_or_f1", "win_rate_or_accuracy"}:
+                    return row
+    return candidates[0] if candidates else None
+
+
 def extract_primary_metric(summary: dict[str, Any]) -> tuple[str, float | None]:
     extra = summary.get("extra_metrics") or {}
     overall = extra.get("overall") or {}
@@ -906,6 +924,12 @@ def inventory_eval_runs() -> list[dict[str, Any]]:
         if "judge_calibration" in benchmark:
             include = False
             reasons.append("judge_calibration_excluded")
+        if benchmark in EXCLUDED_SCORING_BENCHMARKS:
+            include = False
+            reasons.append("user_excluded_judge_task")
+        if benchmark == "eduguard_adversarial" and "_judge-deepseek-v3.2" not in rel:
+            include = False
+            reasons.append("eduguard_p2_non_primary_judge")
         if total and total < 100:
             include = False
             reasons.append("small_sample_under_100")
@@ -932,6 +956,327 @@ def inventory_eval_runs() -> list[dict[str, Any]]:
     return rows
 
 
+def repo_metric_for_summary(benchmark: str, data: dict[str, Any]) -> tuple[str, float | None, str]:
+    extra = data.get("extra_metrics") or {}
+    overall = extra.get("overall") or {}
+    if benchmark == "eduguard_sata":
+        return "rfs_0_to_1", overall.get("rfs"), "extra_metrics.overall.rfs"
+    if benchmark == "eduguard_adversarial":
+        return "asr_0_to_1_lower_better", overall.get("asr"), "extra_metrics.overall.asr; primary judge deepseek-v3.2"
+    if benchmark in {"bea2025_tutor", "mrbench_tutor"}:
+        return "pass_rate", extra.get("pass_rate", data.get("accuracy")), "extra_metrics.pass_rate"
+    if benchmark == "eduillustrate":
+        return "likert_0_to_5", data.get("overall_mean_judged_only"), "overall_mean_judged_only"
+    if benchmark == "mmtutorbench":
+        return "score_0_to_6", extra.get("paper_weighted_score_0_to_6"), "extra_metrics.paper_weighted_score_0_to_6"
+    if benchmark == "mathtutorbench_solution_correctness":
+        return "accuracy_or_f1", extra.get("f1", data.get("accuracy")), "extra_metrics.f1"
+    if benchmark == "mathtutorbench_mistake_location":
+        return "accuracy_or_f1", extra.get("f1_micro", data.get("accuracy")), "extra_metrics.f1_micro"
+    if benchmark in {
+        "mathtutorbench_pedagogy",
+        "mathtutorbench_pedagogy_hard",
+        "mathtutorbench_scaffolding",
+        "mathtutorbench_scaffolding_hard",
+    }:
+        return "win_rate_or_accuracy", extra.get("win_rate", data.get("accuracy")), "extra_metrics.win_rate"
+    if benchmark.startswith("mathtutorbench_"):
+        return "accuracy", data.get("accuracy"), "summary.accuracy"
+    if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "olympiadbench"}:
+        return "accuracy", data.get("accuracy"), "summary.accuracy"
+    return "unknown", None, "no scoring rule"
+
+
+def build_repo_score_candidates(eval_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    mapped_benchmarks = {row["benchmark_id"] for row in MAPPINGS}
+    rows: list[dict[str, Any]] = []
+    for inv in eval_rows:
+        benchmark = inv["benchmark"]
+        if benchmark not in mapped_benchmarks:
+            continue
+        if inv["main_inclusion"] != "include_candidate":
+            continue
+        path = ROOT / inv["path"]
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        metric, raw_value, metric_note = repo_metric_for_summary(benchmark, data)
+        if raw_value is None:
+            continue
+        mapping = find_mapping(benchmark, metric=metric)
+        if mapping is None:
+            continue
+        score_10 = normalize_score(metric, float(raw_value))
+        if score_10 is None:
+            continue
+        model = data.get("model") or inv["model"]
+        rows.append(
+            {
+                "source_type": "repo_eval",
+                "source_path": inv["path"],
+                "benchmark_id": benchmark,
+                "benchmark_name": mapping["benchmark_name"],
+                "subdimension": mapping["subdimension"],
+                "model": model,
+                "model_key": canonical_model(model),
+                "metric": metric,
+                "raw_value": float(raw_value),
+                "score_10": max(0.0, min(10.0, score_10)),
+                "score_role": "scoring_candidate",
+                "notes": metric_note,
+                "total_items": inv["total_items"],
+                "scored": inv["scored"],
+            }
+        )
+    return rows
+
+
+def build_other_score_candidates(other_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in other_rows:
+        if row.get("score_role") != "scoring_candidate":
+            continue
+        benchmark = row["benchmark_id"]
+        mapping = find_mapping(benchmark, subdimension=row["subdimension"], metric=row["metric"])
+        if mapping is None:
+            continue
+        score_10 = normalize_score(row["metric"], float(row["raw_value"]))
+        if score_10 is None:
+            continue
+        rows.append(
+            {
+                "source_type": "otherbenchmark",
+                "source_path": row["source_path"],
+                "benchmark_id": benchmark,
+                "benchmark_name": row["benchmark_name"],
+                "subdimension": row["subdimension"],
+                "model": row["model"],
+                "model_key": canonical_model(row["model"]),
+                "metric": row["metric"],
+                "raw_value": float(row["raw_value"]),
+                "score_10": max(0.0, min(10.0, score_10)),
+                "score_role": row["score_role"],
+                "notes": row.get("notes", ""),
+                "total_items": None,
+                "scored": None,
+            }
+        )
+    return rows
+
+
+def candidate_rank(row: dict[str, Any]) -> tuple[int, int, int, int, str]:
+    path = row["source_path"]
+    source_rank = 2 if row["source_type"] == "repo_eval" else 1
+    minimax_rank = 1 if "/minimax3/" in path or path.endswith("/minimax3/summary.json") else 0
+    scored = int(row.get("scored") or 0)
+    total = int(row.get("total_items") or 0)
+    return (source_rank, minimax_rank, scored, total, path)
+
+
+def dedupe_score_candidates(candidates: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    grouped: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    for row in candidates:
+        key = (row["benchmark_id"], row["subdimension"], row["model_key"], row["metric"])
+        grouped.setdefault(key, []).append(row)
+
+    selected: list[dict[str, Any]] = []
+    report: list[dict[str, Any]] = []
+    for key, group in sorted(grouped.items()):
+        ranked = sorted(group, key=candidate_rank, reverse=True)
+        chosen_row = ranked[0]
+        chosen = dict(chosen_row)
+        chosen["dedupe_status"] = "selected"
+        selected.append(chosen)
+        if len(group) > 1:
+            for row in ranked:
+                report.append(
+                    {
+                        "benchmark_id": key[0],
+                        "subdimension": key[1],
+                        "model_key": key[2],
+                        "metric": key[3],
+                        "status": "selected" if row is chosen_row else "rejected",
+                        "source_type": row["source_type"],
+                        "source_path": row["source_path"],
+                        "model": row["model"],
+                        "raw_value": row["raw_value"],
+                        "score_10": row["score_10"],
+                        "notes": row.get("notes", ""),
+                    }
+                )
+    selected.sort(key=lambda r: (r["model_key"], r["benchmark_id"], r["subdimension"], r["source_path"]))
+    return selected, report
+
+
+def minimax_conflict_report(eval_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    by_bench: dict[str, list[dict[str, Any]]] = {}
+    for row in eval_rows:
+        if canonical_model(row["model"]) == "minimax-m3":
+            by_bench.setdefault(row["benchmark"], []).append(row)
+    for benchmark, group in sorted(by_bench.items()):
+        if len(group) < 2:
+            continue
+        chosen = sorted(
+            [r for r in group if r["main_inclusion"] == "include_candidate"] or group,
+            key=lambda r: (
+                1 if "/minimax3/" in r["path"] or r["path"].endswith("/minimax3/summary.json") else 0,
+                int(r.get("scored") or 0),
+                int(r.get("total_items") or 0),
+                r["path"],
+            ),
+            reverse=True,
+        )[0]
+        for row in sorted(group, key=lambda r: r["path"]):
+            rows.append(
+                {
+                    "benchmark": benchmark,
+                    "path": row["path"],
+                    "model": row["model"],
+                    "primary_metric": row["primary_metric"],
+                    "primary_value": row["primary_value"],
+                    "scored": row["scored"],
+                    "total_items": row["total_items"],
+                    "main_inclusion": row["main_inclusion"],
+                    "reasons": row["reasons"],
+                    "canonical_status": "selected" if row["path"] == chosen["path"] else "not_selected",
+                    "canonical_reason": "prefer included minimax3/full-scored run when present",
+                }
+            )
+    return rows
+
+
+def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    evidence_rows: list[dict[str, Any]] = []
+    accum: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in selected_rows:
+        mapping = find_mapping(row["benchmark_id"], subdimension=row["subdimension"], metric=row["metric"])
+        if mapping is None:
+            continue
+        tier = mapping["evidence_tier"]
+        if tier == "excluded_judge_task":
+            continue
+        foundation_factor = FOUNDATION_GATE_FACTOR if tier == "foundation_gate" else 1.0
+        for ability in mapping["abilities"]:
+            raw_weight = mapping["default_benchmark_weight"] * ability["weight"]
+            adjusted_weight = raw_weight * foundation_factor
+            evidence = {
+                "model_key": row["model_key"],
+                "model": row["model"],
+                "p_code": ability["p_code"],
+                "p_name": ability["p_name"],
+                "group": ability["group"],
+                "benchmark_id": row["benchmark_id"],
+                "subdimension": row["subdimension"],
+                "source_type": row["source_type"],
+                "source_path": row["source_path"],
+                "metric": row["metric"],
+                "raw_value": row["raw_value"],
+                "score_10": row["score_10"],
+                "evidence_tier": tier,
+                "row_weight": mapping["default_benchmark_weight"],
+                "ability_weight": ability["weight"],
+                "raw_effective_weight": raw_weight,
+                "adjusted_effective_weight": adjusted_weight,
+            }
+            evidence_rows.append(evidence)
+            slot = accum.setdefault(
+                (row["model_key"], ability["p_code"]),
+                {
+                    "model_key": row["model_key"],
+                    "display_model": row["model"],
+                    "p_code": ability["p_code"],
+                    "p_name": ability["p_name"],
+                    "group": ability["group"],
+                    "raw_weighted_sum": 0.0,
+                    "raw_weight_sum": 0.0,
+                    "adjusted_weighted_sum": 0.0,
+                    "adjusted_weight_sum": 0.0,
+                    "evidence_count": 0,
+                    "benchmarks": set(),
+                    "foundation_rows": 0,
+                },
+            )
+            slot["raw_weighted_sum"] += row["score_10"] * raw_weight
+            slot["raw_weight_sum"] += raw_weight
+            slot["adjusted_weighted_sum"] += row["score_10"] * adjusted_weight
+            slot["adjusted_weight_sum"] += adjusted_weight
+            slot["evidence_count"] += 1
+            slot["benchmarks"].add(row["benchmark_id"])
+            if tier == "foundation_gate":
+                slot["foundation_rows"] += 1
+
+    p_rows: list[dict[str, Any]] = []
+    for slot in accum.values():
+        raw_score = slot["raw_weighted_sum"] / slot["raw_weight_sum"] if slot["raw_weight_sum"] else None
+        tier_adjusted = (
+            slot["adjusted_weighted_sum"] / slot["adjusted_weight_sum"] if slot["adjusted_weight_sum"] else None
+        )
+        coverage_adjusted = None
+        if tier_adjusted is not None:
+            coverage_adjusted = (slot["adjusted_weighted_sum"] + 5.0 * SHRINKAGE_K) / (
+                slot["adjusted_weight_sum"] + SHRINKAGE_K
+            )
+        p_rows.append(
+            {
+                "model_key": slot["model_key"],
+                "display_model": slot["display_model"],
+                "p_code": slot["p_code"],
+                "p_name": slot["p_name"],
+                "group": slot["group"],
+                "raw_score_10": round(raw_score, 4) if raw_score is not None else None,
+                "tier_adjusted_score_10": round(tier_adjusted, 4) if tier_adjusted is not None else None,
+                "coverage_adjusted_score_10": round(coverage_adjusted, 4) if coverage_adjusted is not None else None,
+                "raw_weight_sum": round(slot["raw_weight_sum"], 4),
+                "adjusted_weight_sum": round(slot["adjusted_weight_sum"], 4),
+                "evidence_count": slot["evidence_count"],
+                "benchmark_count": len(slot["benchmarks"]),
+                "benchmarks": sorted(slot["benchmarks"]),
+                "foundation_rows": slot["foundation_rows"],
+            }
+        )
+    p_rows.sort(key=lambda r: (r["model_key"], r["p_code"]))
+
+    group_accum: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in p_rows:
+        slot = group_accum.setdefault(
+            (row["model_key"], row["group"]),
+            {
+                "model_key": row["model_key"],
+                "display_model": row["display_model"],
+                "group": row["group"],
+                "raw_sum": 0.0,
+                "tier_sum": 0.0,
+                "coverage_sum": 0.0,
+                "p_count": 0,
+                "p_codes": [],
+            },
+        )
+        slot["raw_sum"] += row["raw_score_10"] or 0.0
+        slot["tier_sum"] += row["tier_adjusted_score_10"] or 0.0
+        slot["coverage_sum"] += row["coverage_adjusted_score_10"] or 0.0
+        slot["p_count"] += 1
+        slot["p_codes"].append(row["p_code"])
+    group_rows: list[dict[str, Any]] = []
+    for slot in group_accum.values():
+        group_rows.append(
+            {
+                "model_key": slot["model_key"],
+                "display_model": slot["display_model"],
+                "group": slot["group"],
+                "raw_score_10": round(slot["raw_sum"] / slot["p_count"], 4),
+                "tier_adjusted_score_10": round(slot["tier_sum"] / slot["p_count"], 4),
+                "coverage_adjusted_score_10": round(slot["coverage_sum"] / slot["p_count"], 4),
+                "p_count_with_evidence": slot["p_count"],
+                "p_codes": sorted(slot["p_codes"]),
+            }
+        )
+    group_rows.sort(key=lambda r: (r["model_key"], r["group"]))
+    evidence_rows.sort(key=lambda r: (r["model_key"], r["p_code"], r["benchmark_id"], r["source_path"]))
+    return evidence_rows, p_rows, group_rows
+
+
 def write_readme() -> None:
     text = """# Atomic Ability Rebenchmark Artifacts
 
@@ -950,7 +1295,14 @@ Files:
 - `04_eval_run_inventory.md`: compact inventory summary.
 - `05_otherbenchmark_score_inventory.jsonl`: parsed score rows from `otherbenchmark/`.
 - `05_otherbenchmark_score_inventory.md`: compact parsed-score summary.
-- `06_open_calibration_questions.md`: decisions that should be reviewed before final HTML scoring.
+- `06_open_calibration_questions.md`: remaining decisions that should be reviewed before final HTML scoring.
+- `07_run_deduplication_report.jsonl`: duplicate/canonical scoring decisions.
+- `07_run_deduplication_report.md`: human-readable duplicate/canonical scoring decisions.
+- `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
+- `09_atomic_p_scores_raw_adjusted.jsonl`: per-model P01-P22 scores before and after weighting/coverage adjustment.
+- `09_atomic_p_scores_raw_adjusted.md`: compact per-model P score table and coverage notes.
+- `10_group_scores_raw_adjusted.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
+- `10_group_scores_raw_adjusted.md`: compact group-score table.
 
 The final HTML should be generated only after the mapping and inclusion policy
 are calibrated. Small-sample runs and judge-calibration runs are excluded from
@@ -970,7 +1322,7 @@ Include a model-run only when all conditions hold:
 2. It has a concrete model name and a non-zero `total_items`.
 3. It has at least 100 total items, unless a human explicitly promotes the run after inspection.
 4. It maps to at least one `P01-P22` ability through `02_benchmark_ability_mapping.jsonl`.
-5. If multiple judge versions score the same model responses, keep them as separate evidence rows until a judge policy is chosen. Do not average judge variants silently.
+5. If multiple judge versions score the same model responses, keep only the selected primary judge in the main scoring layer and keep the others as context rows.
 
 ## Excluded by default
 
@@ -978,18 +1330,20 @@ Include a model-run only when all conditions hold:
 - Judge/rubric calibration: paths under `_judge_rubric`, `_judge_jury`, and benchmark ids containing `judge_calibration`.
 - Backup directories such as `selfjudge_backup_*`.
 - Protocol-only/data-resource rows without model scores.
+- BEA/MRBench judge tasks: `bea2025_judge` and `mrbench_judge` are excluded in this pass. Tutor-generation tasks remain eligible.
+- EduGuard P2 rows not judged by `deepseek-v3.2` are excluded from the repo scoring layer and preserved only as context.
 
 ## Foundation gate handling
 
-MMLU-Pro, C-EVAL, AGIEval, OlympiadBench problem-solving style results are not
-ignored. They map mostly to `P05` and `P06`, with smaller `P01/P03` components.
-However, they are tagged as `foundation_gate` and receive lower default weights
-in the five-axis education radar because high answer accuracy does not prove
-teaching, diagnosis, personalization, or safety capability.
+MMLU-Pro, C-EVAL, AGIEval, OlympiadBench, and MathTutorBench problem-solving
+style results are not ignored. They map mostly to `P05` and `P06`, with smaller
+`P01/P03/P07` components. However, they are tagged as `foundation_gate` and
+their effective weight is multiplied by 0.45 in adjusted scoring because high
+answer accuracy does not prove teaching, diagnosis, personalization, or safety
+capability.
 
-If later analysis shows no P ability cleanly captures a foundation result, add a
-separate report band named `LLM答题门槛能力`, but do not add it as a sixth radar
-axis unless the atomic-ability spec is revised.
+EduIllustrate full-230 runs are included when `total_items >= 100`; 5-item
+smoke/calibration runs remain excluded.
 """
     (OUT / "01_inclusion_policy.md").write_text(text, encoding="utf-8")
 
@@ -1033,16 +1387,18 @@ def write_normalization() -> None:
             "",
             "1. Normalize each benchmark subdimension score to 0-10.",
             "2. Allocate that score to P abilities using `02_benchmark_ability_mapping.jsonl` weights.",
-            "3. Within each model and P ability, compute a weighted average over evidence rows.",
-            "4. Report coverage per P ability: number of contributing rows, total effective weight, and benchmark families.",
-            "5. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available.",
-            "6. Display foundation-gate scores separately or with lower weight; do not let answer-only benchmarks dominate education-specific axes.",
+            "3. `raw_score_10`: weighted average over evidence rows using default benchmark weights.",
+            f"4. `tier_adjusted_score_10`: same weighted average after multiplying `foundation_gate` evidence by {FOUNDATION_GATE_FACTOR:.2f}.",
+            f"5. `coverage_adjusted_score_10`: shrink tier-adjusted evidence toward a neutral prior of 5.0 with K={SHRINKAGE_K:.1f}, so sparse P abilities are visible.",
+            "6. Report coverage per P ability: number of contributing rows, total effective weight, and benchmark families.",
+            "7. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available.",
             "",
-            "## Open scoring choices",
+            "## Resolved scoring choices in this pass",
             "",
-            "- Whether to use raw weighted average, coverage-aware shrinkage, or both side by side.",
-            "- Whether `foundation_gate` evidence should contribute to the radar at 0.35-0.55 weight or only appear as a separate gate band.",
-            "- Which EduGuard P2 judge variant should be primary for final scoring.",
+            "- `foundation_gate` contributes to SRG/FDR through P scores at reduced effective weight.",
+            "- EduGuard P2 uses `deepseek-v3.2` judge as the primary scoring judge.",
+            "- BEA/MRBench judge tasks are excluded; BEA/MRBench tutor tasks remain eligible.",
+            "- EduIllustrate full-230 runs are eligible; small 5-item runs are excluded.",
         ]
     )
     (OUT / "03_metric_normalization.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -1084,19 +1440,35 @@ def write_otherbenchmark_scores(rows: list[dict[str, Any]]) -> None:
     dump_jsonl(OUT / "05_otherbenchmark_score_inventory.jsonl", rows)
     by_bench: dict[str, int] = {}
     by_metric: dict[str, int] = {}
+    by_role: dict[str, int] = {}
     for row in rows:
         by_bench[row["benchmark_id"]] = by_bench.get(row["benchmark_id"], 0) + 1
         by_metric[row["metric"]] = by_metric.get(row["metric"], 0) + 1
+        role = row.get("score_role", "scoring_candidate")
+        by_role[role] = by_role.get(role, 0) + 1
     lines = [
         "# Otherbenchmark Score Inventory",
         "",
         f"Parsed score rows: {len(rows)}",
         "",
-        "## By Benchmark",
+        "## By Score Role",
         "",
-        "| Benchmark | Rows |",
+        "| Role | Rows |",
         "|---|---:|",
     ]
+    for role, n in sorted(by_role.items()):
+        lines.append(f"| `{role}` | {n} |")
+    lines.extend(
+        [
+            "",
+            "`scoring_candidate` rows are eligible for the P-score layer. `legacy_context` rows are stored for audit only.",
+            "",
+            "## By Benchmark",
+            "",
+            "| Benchmark | Rows |",
+            "|---|---:|",
+        ]
+    )
     for bench, n in sorted(by_bench.items()):
         lines.append(f"| `{bench}` | {n} |")
     lines.extend(["", "## By Metric", "", "| Metric | Rows |", "|---|---:|"])
@@ -1107,29 +1479,175 @@ def write_otherbenchmark_scores(rows: list[dict[str, Any]]) -> None:
             "",
             "## Sample Rows",
             "",
-            "| Benchmark | Subdimension | Model | Metric | Raw value | Notes |",
-            "|---|---|---|---|---:|---|",
+            "| Benchmark | Role | Subdimension | Model | Metric | Raw value | Notes |",
+            "|---|---|---|---|---|---:|---|",
         ]
     )
     for row in rows[:40]:
         lines.append(
-            f"| `{row['benchmark_id']}` | {row['subdimension']} | {row['model']} | `{row['metric']}` | {row['raw_value']} | {row['notes']} |"
+            f"| `{row['benchmark_id']}` | `{row.get('score_role', 'scoring_candidate')}` | {row['subdimension']} | {row['model']} | `{row['metric']}` | {row['raw_value']} | {row['notes']} |"
         )
     lines.append("")
     lines.append("Full parsed rows are in `05_otherbenchmark_score_inventory.jsonl`.")
     (OUT / "05_otherbenchmark_score_inventory.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_deduplication_report(dedupe_rows: list[dict[str, Any]], minimax_rows: list[dict[str, Any]]) -> None:
+    dump_jsonl(OUT / "07_run_deduplication_report.jsonl", dedupe_rows + minimax_rows)
+    lines = [
+        "# Run Deduplication Report",
+        "",
+        "Canonical scoring rules:",
+        "",
+        "1. Keep only `score_role=scoring_candidate` rows for P scoring.",
+        "2. Prefer repo `summary.json` over derived HTML/Markdown report rows when the same benchmark/model/subdimension is duplicated.",
+        "3. For MiniMax-M3 conflicts, prefer included `minimax3/` paths and fuller-scored runs.",
+        "4. EduGuard P2 keeps only `deepseek-v3.2` judge rows in main scoring.",
+        "",
+        f"Duplicate score groups recorded: {len(dedupe_rows)}",
+        f"MiniMax-M3 path-conflict rows recorded: {len(minimax_rows)}",
+        "",
+        "## Duplicate Score Rows",
+        "",
+        "| Status | Benchmark | Model key | Source | Score | Path |",
+        "|---|---|---|---|---:|---|",
+    ]
+    for row in dedupe_rows[:80]:
+        lines.append(
+            f"| {row['status']} | `{row['benchmark_id']}` | `{row['model_key']}` | {row['source_type']} | {row['score_10']:.4f} | `{row['source_path']}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## MiniMax-M3 Path Conflicts",
+            "",
+            "| Status | Benchmark | Metric | Value | Scored/Total | Inclusion | Path |",
+            "|---|---|---|---:|---:|---|---|",
+        ]
+    )
+    for row in minimax_rows[:80]:
+        lines.append(
+            f"| {row['canonical_status']} | `{row['benchmark']}` | `{row['primary_metric']}` | {row['primary_value']} | {row['scored']}/{row['total_items']} | {row['main_inclusion']} | `{row['path']}` |"
+        )
+    lines.append("")
+    lines.append("Full records are in `07_run_deduplication_report.jsonl`.")
+    (OUT / "07_run_deduplication_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_score_evidence(rows: list[dict[str, Any]]) -> None:
+    dump_jsonl(OUT / "08_selected_score_evidence.jsonl", rows)
+    by_source: dict[str, int] = {}
+    by_bench: dict[str, int] = {}
+    for row in rows:
+        by_source[row["source_type"]] = by_source.get(row["source_type"], 0) + 1
+        by_bench[row["benchmark_id"]] = by_bench.get(row["benchmark_id"], 0) + 1
+    lines = [
+        "# Selected Score Evidence",
+        "",
+        f"Canonical normalized score rows used for P scoring: {len(rows)}",
+        "",
+        "## By Source",
+        "",
+        "| Source | Rows |",
+        "|---|---:|",
+    ]
+    for source, n in sorted(by_source.items()):
+        lines.append(f"| `{source}` | {n} |")
+    lines.extend(["", "## By Benchmark", "", "| Benchmark | Rows |", "|---|---:|"])
+    for bench, n in sorted(by_bench.items()):
+        lines.append(f"| `{bench}` | {n} |")
+    lines.extend(
+        [
+            "",
+            "## Sample Rows",
+            "",
+            "| Benchmark | Model key | Metric | Raw | Score 0-10 | Source |",
+            "|---|---|---|---:|---:|---|",
+        ]
+    )
+    for row in rows[:80]:
+        lines.append(
+            f"| `{row['benchmark_id']}` | `{row['model_key']}` | `{row['metric']}` | {row['raw_value']} | {row['score_10']:.4f} | `{row['source_path']}` |"
+        )
+    lines.append("")
+    lines.append("Full selected rows are in `08_selected_score_evidence.jsonl`.")
+    (OUT / "08_selected_score_evidence.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_atomic_scores(p_rows: list[dict[str, Any]], evidence_rows: list[dict[str, Any]]) -> None:
+    dump_jsonl(OUT / "09_atomic_p_score_evidence.jsonl", evidence_rows)
+    dump_jsonl(OUT / "09_atomic_p_scores_raw_adjusted.jsonl", p_rows)
+    covered = sorted({row["p_code"] for row in p_rows})
+    missing = [code for code in P_GROUPS if code not in covered]
+    lines = [
+        "# Atomic P Scores: Raw And Adjusted",
+        "",
+        f"P-score rows: {len(p_rows)}",
+        f"Covered P codes: {', '.join(covered) if covered else 'none'}",
+        f"Missing P codes: {', '.join(missing) if missing else 'none'}",
+        "",
+        "`raw_score_10` uses default benchmark weights. `tier_adjusted_score_10` reduces foundation-gate evidence. `coverage_adjusted_score_10` additionally shrinks sparse evidence toward 5.0.",
+        "",
+        "## Sample Scores",
+        "",
+        "| Model key | P | Group | Raw | Tier adjusted | Coverage adjusted | Evidence | Weight raw/adj | Benchmarks |",
+        "|---|---|---|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in p_rows[:120]:
+        lines.append(
+            f"| `{row['model_key']}` | `{row['p_code']}` {row['p_name']} | {row['group']} | {row['raw_score_10']} | {row['tier_adjusted_score_10']} | {row['coverage_adjusted_score_10']} | {row['evidence_count']} | {row['raw_weight_sum']}/{row['adjusted_weight_sum']} | {', '.join(row['benchmarks'])} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Coverage Notes",
+            "",
+            "- `P21` and `P22` are covered through EduGuard P1/P2 safety evidence.",
+            "- `P09` has no current benchmark mapping in this pass.",
+            "- `P15` has no current benchmark mapping after BEA/MRBench judge-task exclusion.",
+            "- `P04`, `P08`, and `P19` remain sparse/absent unless proxy mappings are approved.",
+            "- The v3 atomic list is `P01-P22`; no `P0` code exists in the current spec.",
+            "",
+            "Full P rows are in `09_atomic_p_scores_raw_adjusted.jsonl`; allocated evidence rows are in `09_atomic_p_score_evidence.jsonl`.",
+        ]
+    )
+    (OUT / "09_atomic_p_scores_raw_adjusted.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_group_scores(group_rows: list[dict[str, Any]]) -> None:
+    dump_jsonl(OUT / "10_group_scores_raw_adjusted.jsonl", group_rows)
+    lines = [
+        "# Group Scores: Raw And Adjusted",
+        "",
+        "These are provisional SRG/FDR/LAD/CLM/CEG aggregates from currently covered P abilities only. Missing P abilities are not imputed here.",
+        "",
+        "| Model key | Group | Raw | Tier adjusted | Coverage adjusted | P count | P codes |",
+        "|---|---|---:|---:|---:|---:|---|",
+    ]
+    for row in group_rows:
+        lines.append(
+            f"| `{row['model_key']}` | {row['group']} | {row['raw_score_10']} | {row['tier_adjusted_score_10']} | {row['coverage_adjusted_score_10']} | {row['p_count_with_evidence']} | {', '.join(row['p_codes'])} |"
+        )
+    (OUT / "10_group_scores_raw_adjusted.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def write_open_questions() -> None:
     text = """# Open Calibration Questions
 
-1. Should `foundation_gate` results contribute to SRG/FDR radar axes at reduced weight, or appear only as a separate `LLM答题门槛能力` strip?
-2. For EduGuard P2, should the final score use MiniMax-M3 judge, deepseek-v3.2 judge, or a conservative worst-case/average of both?
-3. For duplicate MiniMax-M3 runs under dated directories and `minimax3/`, which path should be canonical when scored and displayed?
-4. Should BEA/MRBench judge tasks score the model as an education evaluator (`P14/P13/P11`) or be separated from tutor-generation tasks?
-5. Should EduIllustrate full-230 runs be included in the main radar now, or stay diagnostic until more models have full runs?
-6. How should coverage be shown for P08, P09, P15, P19, P21/P22 when evidence is sparse or mostly safety-oriented?
-7. Should final HTML include both raw P scores and shrinkage-adjusted P scores to avoid hiding low coverage?
+Resolved in this pass:
+
+- `foundation_gate` contributes to SRG/FDR through P-level scores at reduced effective weight.
+- EduGuard P2 uses `deepseek-v3.2` judge as primary.
+- BEA/MRBench judge tasks are excluded.
+- EduIllustrate full-230 runs are included; 5-item runs are excluded.
+- MiniMax-M3 canonical policy prefers included `minimax3/` or fuller-scored runs.
+
+Remaining review points:
+
+1. The v3 atomic list has `P01-P22`; there is no `P0`. If the request meant a specific ability, confirm whether it means `P01` or another P code.
+2. Current evidence may still be sparse or absent for `P04`, `P08`, `P09`, `P15`, and `P19`. Confirm whether to leave them blank/low-coverage or add proxy mappings.
+3. `P21/P22` are covered mainly by EduGuard safety evidence. Confirm whether that is sufficient, or whether to require student-risk-specific datasets.
+4. For the final HTML, decide whether the headline radar should use `tier_adjusted_score_10` or the more conservative `coverage_adjusted_score_10`.
 """
     (OUT / "06_open_calibration_questions.md").write_text(text, encoding="utf-8")
 
@@ -1138,18 +1656,29 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     eval_rows = inventory_eval_runs()
     other_rows = inventory_otherbenchmark_scores()
+    score_candidates = build_repo_score_candidates(eval_rows) + build_other_score_candidates(other_rows)
+    selected_score_rows, duplicate_rows = dedupe_score_candidates(score_candidates)
+    minimax_rows = minimax_conflict_report(eval_rows)
+    evidence_rows, p_rows, group_rows = score_atomic_p(selected_score_rows)
     write_readme()
     write_inclusion_policy()
     write_mapping_files()
     write_normalization()
     write_inventory(eval_rows)
     write_otherbenchmark_scores(other_rows)
+    write_deduplication_report(duplicate_rows, minimax_rows)
+    write_score_evidence(selected_score_rows)
+    write_atomic_scores(p_rows, evidence_rows)
+    write_group_scores(group_rows)
     write_open_questions()
     print(f"wrote artifacts to {OUT}")
     print(f"mapping rows: {len(MAPPINGS)}")
     print(f"eval summaries: {len(eval_rows)}")
     print(f"include candidates: {sum(1 for r in eval_rows if r['main_inclusion'] == 'include_candidate')}")
     print(f"otherbenchmark score rows: {len(other_rows)}")
+    print(f"score candidates: {len(score_candidates)}")
+    print(f"selected score rows: {len(selected_score_rows)}")
+    print(f"p score rows: {len(p_rows)}")
 
 
 if __name__ == "__main__":
