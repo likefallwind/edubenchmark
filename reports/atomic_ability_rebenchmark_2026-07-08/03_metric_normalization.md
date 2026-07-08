@@ -11,6 +11,7 @@ All benchmark-native metrics are first normalized to a 0-10 scale.
 | `asr_0_to_1_lower_better` | lower_better | `score_10 = (1 - asr) * 10` |
 | `score_0_to_100` | higher_better | `score_10 = raw / 10` |
 | `qwk_0_to_100` | higher_better | `score_10 = qwk / 10` |
+| `mean_0_to_10` | higher_better | `score_10 = raw` |
 | `likert_0_to_10` | higher_better | `score_10 = raw` |
 | `likert_0_to_5` | higher_better | `score_10 = raw * 2` |
 | `score_0_to_6` | higher_better | `score_10 = raw / 6 * 10` |

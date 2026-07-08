@@ -25,6 +25,11 @@ OUT = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
 EVAL_DIR = ROOT / "reports" / "eval"
 OTHER_DIR = ROOT / "otherbenchmark"
 
+EDUGUARD_P2_PRIMARY_JUDGE = "deepseek-v3.2 judge"
+EXCLUDED_SCORING_BENCHMARKS = {"bea2025_judge", "mrbench_judge"}
+FOUNDATION_GATE_FACTOR = 0.45
+SHRINKAGE_K = 1.0
+
 
 P_GROUPS = {
     "P01": ("SRG", "指令与约束遵循"),
@@ -380,13 +385,13 @@ MAPPINGS: list[dict[str, Any]] = [
         "benchmark_id": "bea2025_judge",
         "benchmark_name": "BEA 2025 Judge",
         "subdimension": "judge labels: mistake/guidance/actionability",
-        "evidence_tier": "education_core",
+        "evidence_tier": "excluded_judge_task",
         "source_scope": "repo_eval",
         "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
+        "default_benchmark_weight": 0.00,
         "abilities": ability_weights(("P14", 0.45), ("P13", 0.30), ("P11", 0.25)),
-        "rationale": "作为教育评判者，主要看 rubric/标签映射、错因判断和正误判断。",
+        "rationale": "作为教育评判者可映射到 rubric/错因/正误判断，但本轮按用户口径先排除 judge task，不进入 P-score。",
     },
     {
         "benchmark_id": "bea2025_tutor",
@@ -404,13 +409,13 @@ MAPPINGS: list[dict[str, Any]] = [
         "benchmark_id": "mrbench_judge",
         "benchmark_name": "MRBench Judge",
         "subdimension": "8-dimension tutor response judging",
-        "evidence_tier": "education_core",
+        "evidence_tier": "excluded_judge_task",
         "source_scope": "repo_eval",
         "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.75,
+        "default_benchmark_weight": 0.00,
         "abilities": ability_weights(("P14", 0.45), ("P13", 0.25), ("P20", 0.30)),
-        "rationale": "多维 tutor 回复评判含评分映射、错因/定位和泄题/角色边界。",
+        "rationale": "多维 tutor 回复评判可映射到评分/错因/边界，但本轮按用户口径先排除 judge task，不进入 P-score。",
     },
     {
         "benchmark_id": "mrbench_tutor",
@@ -495,6 +500,7 @@ NORMALIZATION = [
     ("asr_0_to_1_lower_better", "lower_better", "score_10 = (1 - asr) * 10"),
     ("score_0_to_100", "higher_better", "score_10 = raw / 10"),
     ("qwk_0_to_100", "higher_better", "score_10 = qwk / 10"),
+    ("mean_0_to_10", "higher_better", "score_10 = raw"),
     ("likert_0_to_10", "higher_better", "score_10 = raw"),
     ("likert_0_to_5", "higher_better", "score_10 = raw * 2"),
     ("score_0_to_6", "higher_better", "score_10 = raw / 6 * 10"),
@@ -546,6 +552,7 @@ def add_score(
     metric: str,
     value: float,
     notes: str = "",
+    score_role: str = "scoring_candidate",
 ) -> None:
     rows.append(
         {
@@ -557,6 +564,7 @@ def add_score(
             "metric": metric,
             "raw_value": value,
             "notes": notes,
+            "score_role": score_role,
         }
     )
 
@@ -638,11 +646,13 @@ def parse_rebenchmark_0701_scores(rows: list[dict[str, Any]]) -> None:
         return
     text = path.read_text(encoding="utf-8")
     card_specs = [
-        ("Pedagogy Accuracy", "pedagogy_benchmark", "Pedagogy Benchmark", "CDPK/SEND aggregate from 0701 card", "accuracy_percent"),
-        ("ASAP 2.0 QWK", "asap_2", "ASAP 2.0", "essay holistic QWK", "qwk_0_to_100"),
-        ("TutorBench Fair815", "tutorbench", "TutorBench", "Fair815 multimodal tutor quality", "score_0_to_100"),
+        ("Pedagogy Accuracy", "pedagogy_benchmark", "Pedagogy Benchmark", "CDPK/SEND aggregate from 0701 card", "accuracy_percent", "scoring_candidate"),
+        ("ASAP 2.0 QWK", "asap_2", "ASAP 2.0", "essay holistic QWK", "qwk_0_to_100", "scoring_candidate"),
+        ("EduBench Mean", "edubench", "EduBench", "overall mean aggregate from 0701 card", "mean_0_to_10", "legacy_context"),
+        ("TutorBench Fair815", "tutorbench", "TutorBench", "Fair815 multimodal tutor quality", "score_0_to_100", "scoring_candidate"),
+        ("EduGuard P1 Teaching Harm", "eduguard_sata", "EduGuard-Bench P1", "Teaching Harm / SATA RFS", "score_0_to_100", "legacy_context"),
     ]
-    for title_marker, benchmark_id, benchmark_name, subdimension, metric in card_specs:
+    for title_marker, benchmark_id, benchmark_name, subdimension, metric, score_role in card_specs:
         title_pos = text.find(title_marker)
         if title_pos < 0:
             continue
@@ -668,6 +678,81 @@ def parse_rebenchmark_0701_scores(rows: list[dict[str, Any]]) -> None:
                 metric=metric,
                 value=value,
                 notes="parsed from 0701 summary card",
+                score_role=score_role,
+            )
+    # SAS-Bench compact QWK/CCS/ECS table in 0701; kept as legacy context
+    # because `otherbenchmark/sas-bench-result0630.md` is the fuller source.
+    sas_pos = text.find("SAS-Bench 三指标")
+    if sas_pos >= 0:
+        next_card = text.find('<div class="card"><h3>', sas_pos + 1)
+        block = text[sas_pos: next_card if next_card > 0 else len(text)]
+        for row in re.findall(r'<div class="metric-row">(.*?)</div>\s*</div>', block, flags=re.S):
+            name_match = re.search(r'<div class="metric-name">(.+?)</div>', row, flags=re.S)
+            if not name_match:
+                continue
+            values = re.findall(r"<b>([-0-9.]+)</b>", row)
+            if len(values) < 3:
+                continue
+            model = strip_tags(name_match.group(1))
+            for subdim, metric, value_text in [
+                ("QWK holistic total score", "qwk_0_to_100", values[0]),
+                ("CCS step scoring consistency", "score_0_to_100", values[1]),
+                ("ECS error-cause consistency", "score_0_to_100", values[2]),
+            ]:
+                add_score(
+                    rows,
+                    source_path=path.relative_to(ROOT).as_posix(),
+                    benchmark_id="sas_bench",
+                    benchmark_name="SAS-Bench",
+                    subdimension=subdim,
+                    model=model,
+                    metric=metric,
+                    value=float(value_text),
+                    notes="parsed from 0701 compact SAS card",
+                    score_role="legacy_context",
+                )
+    # EduGuard P2 dual-judge compact table in 0701; kept as legacy context
+    # because `eduguard_overall_report.html` is the fuller source and final
+    # policy uses deepseek-v3.2 judge.
+    p2_pos = text.find("EduGuard P2 Adversarial Safety")
+    if p2_pos >= 0:
+        next_section = text.find("</section>", p2_pos)
+        block = text[p2_pos: next_section if next_section > 0 else len(text)]
+        for row in re.findall(r'<div class="metric-row asr [^"]+">(.*?)</div>\s*</div>', block, flags=re.S):
+            name_match = re.search(r'<div class="metric-name">(.+?)</div>', row, flags=re.S)
+            values = re.findall(r"<b>([-0-9.]+)%</b>", row)
+            if not name_match or len(values) < 2:
+                continue
+            model = strip_tags(name_match.group(1))
+            for judge_note, value_text in [("MiniMax-M3 judge", values[0]), ("deepseek-v3.2 judge", values[1])]:
+                add_score(
+                    rows,
+                    source_path=path.relative_to(ROOT).as_posix(),
+                    benchmark_id="eduguard_adversarial",
+                    benchmark_name="EduGuard-Bench P2",
+                    subdimension="Adversarial Safety ASR",
+                    model=model,
+                    metric="asr_0_to_1_lower_better",
+                    value=float(value_text) / 100.0,
+                    notes=f"parsed from 0701 compact P2 card; {judge_note}",
+                    score_role="legacy_context",
+                )
+    # Preserve the legacy radar numbers as context only; these are not used for
+    # P-score because the current authoritative spec is P01-P22, not old P01-P20.
+    for tr in re.findall(r"<tr><td>([^<]+)</td><td>([-0-9.]+)</td><td>([-0-9.]+)</td><td>([-0-9.]+)</td><td>([-0-9.]+)</td><td>([-0-9.]+)</td><td>([-0-9.]+)</td></tr>", text):
+        model, srg, fdr, lad, clm, ceg, cov = tr
+        for axis, value_text in [("SRG", srg), ("FDR", fdr), ("LAD", lad), ("CLM", clm), ("CEG", ceg)]:
+            add_score(
+                rows,
+                source_path=path.relative_to(ROOT).as_posix(),
+                benchmark_id="legacy_radar_0701",
+                benchmark_name="Legacy 0701 Radar",
+                subdimension=f"{axis} legacy radar axis",
+                model=model,
+                metric="legacy_axis_0_to_100",
+                value=float(value_text),
+                notes=f"legacy radar context only; avg_cov={cov}",
+                score_role="legacy_context",
             )
 
 
@@ -725,6 +810,7 @@ def parse_eduguard_scores(rows: list[dict[str, Any]]) -> None:
                     metric="asr_0_to_1_lower_better",
                     value=value,
                     notes=note,
+                    score_role="scoring_candidate" if note == EDUGUARD_P2_PRIMARY_JUDGE else "legacy_context",
                 )
 
 

@@ -1,17 +1,18 @@
 # Otherbenchmark Score Inventory
 
-Parsed score rows: 129
+Parsed score rows: 219
 
 ## By Benchmark
 
 | Benchmark | Rows |
 |---|---:|
 | `asap_2` | 7 |
-| `edubench` | 55 |
-| `eduguard_adversarial` | 30 |
-| `eduguard_sata` | 6 |
+| `edubench` | 66 |
+| `eduguard_adversarial` | 44 |
+| `eduguard_sata` | 13 |
+| `legacy_radar_0701` | 40 |
 | `pedagogy_benchmark` | 7 |
-| `sas_bench` | 18 |
+| `sas_bench` | 36 |
 | `tutorbench` | 6 |
 
 ## By Metric
@@ -19,11 +20,12 @@ Parsed score rows: 129
 | Metric | Rows |
 |---|---:|
 | `accuracy_percent` | 7 |
-| `asr_0_to_1_lower_better` | 30 |
-| `mean_0_to_10` | 55 |
-| `qwk_0_to_100` | 13 |
+| `asr_0_to_1_lower_better` | 44 |
+| `legacy_axis_0_to_100` | 40 |
+| `mean_0_to_10` | 66 |
+| `qwk_0_to_100` | 19 |
 | `rfs_0_to_1` | 6 |
-| `score_0_to_100` | 18 |
+| `score_0_to_100` | 37 |
 
 ## Sample Rows
 

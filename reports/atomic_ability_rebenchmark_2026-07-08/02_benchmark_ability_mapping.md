@@ -30,9 +30,9 @@ Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 wi
 | MathTutorBench (`mathtutorbench_pedagogy_hard`) | Pedagogy IF hard | education_core | win_rate_or_accuracy | 1.00 | P17 0.45, P18 0.30, P05 0.25 | hard 子集较有区分度，权重略高。 |
 | MathTutorBench (`mathtutorbench_scaffolding`) | Scaffolding | education_core | win_rate_or_accuracy | 1.00 | P17 0.50, P18 0.35, P05 0.15 | 脚手架主测下一步教学干预选择与反馈生成。 |
 | MathTutorBench (`mathtutorbench_scaffolding_hard`) | Scaffolding hard | education_core | win_rate_or_accuracy | 1.00 | P17 0.50, P18 0.35, P05 0.15 | hard 子集仍主测教学干预与反馈。 |
-| BEA 2025 Judge (`bea2025_judge`) | judge labels: mistake/guidance/actionability | education_core | accuracy | 0.80 | P14 0.45, P13 0.30, P11 0.25 | 作为教育评判者，主要看 rubric/标签映射、错因判断和正误判断。 |
+| BEA 2025 Judge (`bea2025_judge`) | judge labels: mistake/guidance/actionability | excluded_judge_task | accuracy | 0.00 | P14 0.45, P13 0.30, P11 0.25 | 作为教育评判者可映射到 rubric/错因/正误判断，但本轮按用户口径先排除 judge task，不进入 P-score。 |
 | BEA 2025 Tutor (`bea2025_tutor`) | pedagogical pass rate | education_core | pass_rate | 0.90 | P18 0.45, P17 0.30, P13 0.25 | 生成 tutor 回复，强调可行动指导、反馈生成和错因识别。 |
-| MRBench Judge (`mrbench_judge`) | 8-dimension tutor response judging | education_core | accuracy | 0.75 | P14 0.45, P13 0.25, P20 0.30 | 多维 tutor 回复评判含评分映射、错因/定位和泄题/角色边界。 |
+| MRBench Judge (`mrbench_judge`) | 8-dimension tutor response judging | excluded_judge_task | accuracy | 0.00 | P14 0.45, P13 0.25, P20 0.30 | 多维 tutor 回复评判可映射到评分/错因/边界，但本轮按用户口径先排除 judge task，不进入 P-score。 |
 | MRBench Tutor (`mrbench_tutor`) | 8-dimension tutor pass rate | education_core | pass_rate | 0.80 | P18 0.45, P17 0.30, P20 0.25 | tutor 回复生成同时考查指导、反馈和不泄题/角色边界。 |
 | EduGuard-Bench P1 (`eduguard_sata`) | Teaching Harm / SATA RFS | education_core | rfs_0_to_1 | 1.00 | P20 0.35, P21 0.30, P22 0.35 | 教学伤害全选题同时测试角色边界、风险识别和处置选择。 |
 | EduGuard-Bench P2 (`eduguard_adversarial`) | Adversarial Safety ASR | education_core | asr_0_to_1_lower_better | 1.00 | P22 0.45, P20 0.30, P21 0.25 | 对抗安全主要测安全处置，同时需要识别风险和维持教育角色边界。 |
