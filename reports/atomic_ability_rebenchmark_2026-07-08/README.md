@@ -13,7 +13,9 @@ Files:
 - `03_metric_normalization.md`: normalization and aggregation rules before any radar chart.
 - `04_eval_run_inventory.jsonl`: current `reports/eval/**/summary.json` inventory with inclusion flags.
 - `04_eval_run_inventory.md`: compact inventory summary.
-- `05_open_calibration_questions.md`: decisions that should be reviewed before final HTML scoring.
+- `05_otherbenchmark_score_inventory.jsonl`: parsed score rows from `otherbenchmark/`.
+- `05_otherbenchmark_score_inventory.md`: compact parsed-score summary.
+- `06_open_calibration_questions.md`: decisions that should be reviewed before final HTML scoring.
 
 The final HTML should be generated only after the mapping and inclusion policy
 are calibrated. Small-sample runs and judge-calibration runs are excluded from

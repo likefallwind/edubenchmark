@@ -11,6 +11,7 @@ Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 wi
 | MathVista (`mathvista`) | task/question_type/answer_type accuracy | diagnostic | accuracy | 0.70 | P03 0.35, P06 0.45, P05 0.20 | 静态图文数学题，主要测常规多模态感知、数学推理和知识调用。 |
 | Pedagogy Benchmark (`pedagogy_benchmark`) | CDPK teaching knowledge selection | education_core | accuracy | 0.80 | P05 0.45, P17 0.35, P06 0.20 | 教学法知识选择题，既有教育知识，也有教学策略选择和形式推理。 |
 | Pedagogy Benchmark (`pedagogy_benchmark`) | SEND special education needs selection | education_core | accuracy | 0.80 | P05 0.35, P16 0.35, P17 0.30 | 特殊教育需求判断更依赖学习者画像和干预策略选择。 |
+| Pedagogy Benchmark (`pedagogy_benchmark`) | CDPK/SEND aggregate from 0701 card | education_core | accuracy_percent | 0.80 | P05 0.40, P17 0.30, P16 0.30 | 0701 只有 Pedagogy 聚合卡片时使用，合并教学法知识、特殊教育需求画像和策略选择。 |
 | ASAP 2.0 (`asap_2`) | essay holistic QWK | education_core | qwk_0_to_100 | 0.80 | P14 0.65, P02 0.20, P05 0.15 | 作文评分一致性主要是 rubric 映射评分，同时需要定位文本证据与写作知识。 |
 | SAS-Bench (`sas_bench`) | QWK holistic total score | education_core | score_0_to_100 | 0.90 | P14 0.70, P02 0.15, P05 0.15 | 总分评分一致性主测 rubric 映射评分。 |
 | SAS-Bench (`sas_bench`) | CCS step scoring consistency | education_core | score_0_to_100 | 0.95 | P14 0.55, P12 0.25, P02 0.20 | 分步踩分同时涉及 rubric 映射、错误位置/步骤定位和证据定位。 |

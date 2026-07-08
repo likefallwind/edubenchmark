@@ -4,6 +4,7 @@ All benchmark-native metrics are first normalized to a 0-10 scale.
 
 | Metric family | Direction | Rule |
 |---|---|---|
+| `accuracy_percent` | higher_better | `score_10 = percent / 10` |
 | `accuracy` | higher_better | `score_10 = accuracy * 10` |
 | `pass_rate` | higher_better | `score_10 = pass_rate * 10` |
 | `rfs_0_to_1` | higher_better | `score_10 = rfs * 10` |

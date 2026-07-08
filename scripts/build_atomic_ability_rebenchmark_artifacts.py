@@ -149,6 +149,18 @@ MAPPINGS: list[dict[str, Any]] = [
         "rationale": "特殊教育需求判断更依赖学习者画像和干预策略选择。",
     },
     {
+        "benchmark_id": "pedagogy_benchmark",
+        "benchmark_name": "Pedagogy Benchmark",
+        "subdimension": "CDPK/SEND aggregate from 0701 card",
+        "evidence_tier": "education_core",
+        "source_scope": "otherbenchmark",
+        "metric_family": "accuracy_percent",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.80,
+        "abilities": ability_weights(("P05", 0.40), ("P17", 0.30), ("P16", 0.30)),
+        "rationale": "0701 只有 Pedagogy 聚合卡片时使用，合并教学法知识、特殊教育需求画像和策略选择。",
+    },
+    {
         "benchmark_id": "asap_2",
         "benchmark_name": "ASAP 2.0",
         "subdimension": "essay holistic QWK",
@@ -476,6 +488,7 @@ MAPPINGS: list[dict[str, Any]] = [
 
 
 NORMALIZATION = [
+    ("accuracy_percent", "higher_better", "score_10 = percent / 10"),
     ("accuracy", "higher_better", "score_10 = accuracy * 10"),
     ("pass_rate", "higher_better", "score_10 = pass_rate * 10"),
     ("rfs_0_to_1", "higher_better", "score_10 = rfs * 10"),
