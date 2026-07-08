@@ -824,6 +824,45 @@ def inventory_otherbenchmark_scores() -> list[dict[str, Any]]:
     return rows
 
 
+def canonical_model(model: str) -> str:
+    key = model.strip().lower()
+    key = key.replace("claude sonnet", "claude-sonnet")
+    key = key.replace(" ", "-").replace("_", "-").replace(".", "-")
+    key = re.sub(r"[^a-z0-9+-]+", "-", key)
+    key = re.sub(r"-+", "-", key).strip("-")
+    aliases = {
+        "gpt-5-4": "gpt-5.4",
+        "gpt-5-5": "gpt-5.5",
+        "claude-sonnet-4-6": "claude-sonnet-4.6",
+        "qwen3-7-max": "qwen3.7-max",
+        "glm-5-1": "glm-5.1",
+        "glm-5-2": "glm-5.2",
+        "minimax-m2-7": "minimax-m2.7",
+        "minimax-m3": "minimax-m3",
+    }
+    return aliases.get(key, key)
+
+
+def normalize_score(metric: str, value: float) -> float | None:
+    if metric in {"accuracy", "pass_rate", "rfs_0_to_1", "accuracy_or_f1", "win_rate_or_accuracy", "share_0_to_1"}:
+        return value * 10.0
+    if metric == "asr_0_to_1_lower_better":
+        return (1.0 - value) * 10.0
+    if metric in {"accuracy_percent", "score_0_to_100", "qwk_0_to_100", "legacy_axis_0_to_100"}:
+        return value / 10.0
+    if metric in {"mean_0_to_10", "likert_0_to_10"}:
+        return value
+    if metric == "likert_0_to_5":
+        return value * 2.0
+    if metric == "score_0_to_6":
+        return value / 6.0 * 10.0
+    return None
+
+
+def mapping_by_benchmark() -> dict[str, dict[str, Any]]:
+    return {row["benchmark_id"]: row for row in MAPPINGS}
+
+
 def extract_primary_metric(summary: dict[str, Any]) -> tuple[str, float | None]:
     extra = summary.get("extra_metrics") or {}
     overall = extra.get("overall") or {}
