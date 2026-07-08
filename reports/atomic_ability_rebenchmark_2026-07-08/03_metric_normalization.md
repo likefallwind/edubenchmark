@@ -18,18 +18,21 @@ All benchmark-native metrics are first normalized to a 0-10 scale.
 | `accuracy_or_f1` | higher_better | `prefer official f1/accuracy in extra_metrics when present; else accuracy * 10` |
 | `win_rate_or_accuracy` | higher_better | `prefer win_rate/strict_win_rate when present; else accuracy * 10` |
 | `share_0_to_1` | higher_better | `score_10 = share * 10` |
+| `legacy_axis_0_to_100` | higher_better | `score_10 = raw / 10; context only, not used for P scoring` |
 
 ## Aggregation order
 
 1. Normalize each benchmark subdimension score to 0-10.
 2. Allocate that score to P abilities using `02_benchmark_ability_mapping.jsonl` weights.
-3. Within each model and P ability, compute a weighted average over evidence rows.
-4. Report coverage per P ability: number of contributing rows, total effective weight, and benchmark families.
-5. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available.
-6. Display foundation-gate scores separately or with lower weight; do not let answer-only benchmarks dominate education-specific axes.
+3. `raw_score_10`: weighted average over evidence rows using default benchmark weights.
+4. `tier_adjusted_score_10`: same weighted average after multiplying `foundation_gate` evidence by 0.45.
+5. `coverage_adjusted_score_10`: shrink tier-adjusted evidence toward a neutral prior of 5.0 with K=1.0, so sparse P abilities are visible.
+6. Report coverage per P ability: number of contributing rows, total effective weight, and benchmark families.
+7. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available.
 
-## Open scoring choices
+## Resolved scoring choices in this pass
 
-- Whether to use raw weighted average, coverage-aware shrinkage, or both side by side.
-- Whether `foundation_gate` evidence should contribute to the radar at 0.35-0.55 weight or only appear as a separate gate band.
-- Which EduGuard P2 judge variant should be primary for final scoring.
+- `foundation_gate` contributes to SRG/FDR through P scores at reduced effective weight.
+- EduGuard P2 uses `deepseek-v3.2` judge as the primary scoring judge.
+- BEA/MRBench judge tasks are excluded; BEA/MRBench tutor tasks remain eligible.
+- EduIllustrate full-230 runs are eligible; small 5-item runs are excluded.

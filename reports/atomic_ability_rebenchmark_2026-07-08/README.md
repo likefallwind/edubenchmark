@@ -15,7 +15,14 @@ Files:
 - `04_eval_run_inventory.md`: compact inventory summary.
 - `05_otherbenchmark_score_inventory.jsonl`: parsed score rows from `otherbenchmark/`.
 - `05_otherbenchmark_score_inventory.md`: compact parsed-score summary.
-- `06_open_calibration_questions.md`: decisions that should be reviewed before final HTML scoring.
+- `06_open_calibration_questions.md`: remaining decisions that should be reviewed before final HTML scoring.
+- `07_run_deduplication_report.jsonl`: duplicate/canonical scoring decisions.
+- `07_run_deduplication_report.md`: human-readable duplicate/canonical scoring decisions.
+- `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
+- `09_atomic_p_scores_raw_adjusted.jsonl`: per-model P01-P22 scores before and after weighting/coverage adjustment.
+- `09_atomic_p_scores_raw_adjusted.md`: compact per-model P score table and coverage notes.
+- `10_group_scores_raw_adjusted.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
+- `10_group_scores_raw_adjusted.md`: compact group-score table.
 
 The final HTML should be generated only after the mapping and inclusion policy
 are calibrated. Small-sample runs and judge-calibration runs are excluded from

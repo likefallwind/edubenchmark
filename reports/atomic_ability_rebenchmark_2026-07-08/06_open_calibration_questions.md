@@ -1,9 +1,16 @@
 # Open Calibration Questions
 
-1. Should `foundation_gate` results contribute to SRG/FDR radar axes at reduced weight, or appear only as a separate `LLM答题门槛能力` strip?
-2. For EduGuard P2, should the final score use MiniMax-M3 judge, deepseek-v3.2 judge, or a conservative worst-case/average of both?
-3. For duplicate MiniMax-M3 runs under dated directories and `minimax3/`, which path should be canonical when scored and displayed?
-4. Should BEA/MRBench judge tasks score the model as an education evaluator (`P14/P13/P11`) or be separated from tutor-generation tasks?
-5. Should EduIllustrate full-230 runs be included in the main radar now, or stay diagnostic until more models have full runs?
-6. How should coverage be shown for P08, P09, P15, P19, P21/P22 when evidence is sparse or mostly safety-oriented?
-7. Should final HTML include both raw P scores and shrinkage-adjusted P scores to avoid hiding low coverage?
+Resolved in this pass:
+
+- `foundation_gate` contributes to SRG/FDR through P-level scores at reduced effective weight.
+- EduGuard P2 uses `deepseek-v3.2` judge as primary.
+- BEA/MRBench judge tasks are excluded.
+- EduIllustrate full-230 runs are included; 5-item runs are excluded.
+- MiniMax-M3 canonical policy prefers included `minimax3/` or fuller-scored runs.
+
+Remaining review points:
+
+1. The v3 atomic list has `P01-P22`; there is no `P0`. If the request meant a specific ability, confirm whether it means `P01` or another P code.
+2. Current evidence may still be sparse or absent for `P04`, `P08`, `P09`, `P15`, and `P19`. Confirm whether to leave them blank/low-coverage or add proxy mappings.
+3. `P21/P22` are covered mainly by EduGuard safety evidence. Confirm whether that is sufficient, or whether to require student-risk-specific datasets.
+4. For the final HTML, decide whether the headline radar should use `tier_adjusted_score_10` or the more conservative `coverage_adjusted_score_10`.

@@ -1,8 +1,8 @@
 # Eval Run Inventory
 
 Total summary files scanned: 148
-Included candidates: 110
-Excluded from main: 38
+Included candidates: 91
+Excluded from main: 57
 
 | Benchmark | Include candidates | Excluded |
 |---|---:|---:|
@@ -10,10 +10,10 @@ Excluded from main: 38
 | `_judge_rubric` | 0 | 3 |
 | `agieval` | 6 | 0 |
 | `bea2025` | 0 | 5 |
-| `bea2025_judge` | 6 | 0 |
+| `bea2025_judge` | 0 | 6 |
 | `bea2025_tutor` | 3 | 0 |
 | `ceval` | 5 | 1 |
-| `eduguard_adversarial` | 15 | 2 |
+| `eduguard_adversarial` | 7 | 10 |
 | `eduguard_sata` | 8 | 1 |
 | `eduillustrate` | 3 | 5 |
 | `mathtutorbench_judge_calibration` | 0 | 6 |
@@ -31,7 +31,7 @@ Excluded from main: 38
 | `mmtutorbench` | 0 | 1 |
 | `mmtutorbench_judge_calibration` | 0 | 1 |
 | `mrbench` | 0 | 7 |
-| `mrbench_judge` | 5 | 0 |
+| `mrbench_judge` | 0 | 5 |
 | `mrbench_tutor` | 2 | 0 |
 | `olympiadbench` | 4 | 0 |
 
