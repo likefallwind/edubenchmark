@@ -66,6 +66,22 @@ CONFIRMS: dict[str, dict[str, Any]] = {
         "conf_source": "pool_remainder",
         "exclude_example_files": ["diagnosis.json", "round3/diagnosis_used.json"],
     },
+    # glm-5.2 experiment (STAGE1_JUDGE_MODEL=glm-5.2 — OUT_BASE resolves to
+    # stage1_glm-5.2/): mrbench PG borderline near-miss at line closure. The
+    # incumbent r1p2's subsample labels are cached from rediagnosis; round-2 and
+    # round-3 diagnoses share the same subsample + incumbent, so their example
+    # sets are excluded together.
+    "glm_mrbench_pg_r3p3": {
+        "benchmark": "mrbench",
+        "dimension": "Providing_Guidance",
+        "candidate_round": 3,
+        "candidate_id": "r3p3",
+        "incumbent": "current",
+        "conf_source": "rediag_subsample",
+        "exclude_example_files": [
+            "diagnosis.json", "round2/diagnosis_used.json", "round3/diagnosis_used.json",
+        ],
+    },
 }
 
 

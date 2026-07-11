@@ -18,9 +18,10 @@ module exposes two adapters that reuse the existing eval pipeline:
   Cohen's kappa — i.e. how human-like the judge is. No extra judge infra.
 - ``mrbench_tutor`` (Step 2 — generation + judge scoring): the model under test
   *generates* the next tutor reply for each dialogue; a **fixed judge**
-  (``MRBENCH_JUDGE_MODEL``, default ``MiniMax-M3``, decoupled from
+  (``MRBENCH_JUDGE_MODEL``, default ``glm-5.2``, decoupled from
   ``--extractor-model`` like ``eduguard_adversarial``) then labels the 8
-  dimensions of that generated reply. Headline metric = pedagogical pass rate
+  dimensions of that generated reply, using the v2 rubric (Providing_Guidance
+  carries a Stage-3-validated evolved criterion; other dims == v1). Headline metric = pedagogical pass rate
   (key dimensions all "Yes"); full per-dimension label distribution lands in
   ``summary.json`` → ``extra_metrics``.
 """
@@ -196,6 +197,54 @@ def _judge_prompt_provenance() -> dict[str, Any]:
     }
 
 
+# Stage-3-validated evolved rubric addenda (doc/rubric_evolution_plan_2026-07-06.md
+# 附录 4). A dimension appears here only if its self-evolved rubric replicated on
+# the SEALED test split — Providing_Guidance: glm-5.2 test kappa 0.394 -> 0.508
+# (+0.115, sig). These addenda are applied to the FIXED PRODUCTION judge in
+# mrbench_tutor ONLY; the mrbench_judge calibration benchmark keeps the v1 prompt
+# (it measures a candidate model's judging ability against a fixed rubric, so its
+# prompt must not drift). The injection format mirrors the stage1 Renderer._extras
+# byte-for-byte, so the shipped production prompt == the prompt validated on test.
+_EVOLVED_LABEL_CRITERIA: dict[str, dict[str, str]] = {
+    "Providing_Guidance": {
+        "To some extent": (
+            "The tutor attempts to provide a relevant hint or explanation but "
+            "misdiagnoses the student's error or contains a minor flaw, failing "
+            "to fully guide the student to the correct solution."
+        ),
+    },
+}
+# Bumped because the production (tutor) judge prompt now differs from v1 for the
+# evolved dimension(s); all other dimensions remain byte-identical to v1.
+PRODUCTION_JUDGE_PROMPT_VERSION = "v2"
+
+
+def _evolved_judge_prompt(dim: str, conversation_history: str, response: str) -> str:
+    """Production judge prompt: v1 base + Stage-3-validated label criteria for the
+    evolved dimensions (byte-identical to the stage1 Renderer's evolved render)."""
+    base = _judge_prompt(dim, conversation_history, response)
+    crit = _EVOLVED_LABEL_CRITERIA.get(dim)
+    if not crit:
+        return base
+    lines = ["Label criteria:"]
+    for lab in DIMENSIONS[dim]["labels"]:
+        if lab in crit:
+            lines.append(f'- "{lab}": {crit[lab]}')
+    extras = "\n".join(lines)
+    head, tail = base.rsplit("\n\nChoose", 1)
+    return f"{head}\n\n{extras}\n\nChoose{tail}"
+
+
+def _tutor_judge_prompt_provenance() -> dict[str, Any]:
+    templates = [_evolved_judge_prompt(dim, "{conversation_history}", "{response}") for dim in DIMENSIONS]
+    return {
+        "judge_prompt_version": PRODUCTION_JUDGE_PROMPT_VERSION,
+        "judge_prompt_sha256": prompt_sha256(*templates),
+        "evolved_dimensions": sorted(_EVOLVED_LABEL_CRITERIA),
+        "evolved_rubric_source": "doc/rubric_evolution_plan_2026-07-06.md 附录 4",
+    }
+
+
 def _llm_extract(client: MiniMaxClient, model: str, instruction: str, response: str) -> str:
     prompt = f"{instruction}\n\nText:\n---\n{response}\n---\n\nAnswer:"
     return client.chat(
@@ -344,7 +393,11 @@ class MRBenchJudgeAdapter(BenchmarkAdapter):
 # Step 2: generation + fixed-judge scoring
 # ---------------------------------------------------------------------------
 
-DEFAULT_JUDGE_MODEL = "MiniMax-M3"
+# Production judge switched MiniMax-M3 -> glm-5.2 (2026-07-10, 待决项③a): glm-5.2
+# is the best single judge on the dimension-label lines (judge_research 附录 0:
+# test kappa mrbench 0.438 / bea2025 0.406, both above dsv4-pro; M3 is the weakest
+# candidate). Override per-run with MRBENCH_JUDGE_MODEL.
+DEFAULT_JUDGE_MODEL = "glm-5.2"
 JUDGE_MODEL_ENV = "MRBENCH_JUDGE_MODEL"
 
 
@@ -356,8 +409,9 @@ class MRBenchTutorAdapter(BenchmarkAdapter):
         "MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、"
         "不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。"
         "对应能力维度 D11/D12/D13（C4 深度测试）。\n\n"
-        "裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 MiniMax-M3，与 --extractor-model/被测模型"
-        "解耦，避免 self-judging 偏置），与 Step 1 共用同一套逐维度判定 prompt 与标签归一。\n\n"
+        "裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 glm-5.2，最佳单裁判；与 --extractor-model/"
+        "被测模型解耦，避免 self-judging 偏置），逐维度判定 prompt 为 v2（仅 Providing_Guidance "
+        "带 Stage-3 验证过的进化标签准则，其余维度与 v1 一致；标签归一同 Step 1）。\n\n"
         "报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / "
         "Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个"
         "维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。"
@@ -413,7 +467,7 @@ class MRBenchTutorAdapter(BenchmarkAdapter):
 
     @staticmethod
     def _judge_one(client: MiniMaxClient, model: str, dim: str, conv: str, response: str) -> str:
-        prompt = _judge_prompt(dim, conv, response)
+        prompt = _evolved_judge_prompt(dim, conv, response)
         for attempt in range(3):
             try:
                 reply = client.chat(
@@ -461,7 +515,7 @@ class MRBenchTutorAdapter(BenchmarkAdapter):
         return {"data": str(item["meta"].get("data")), "topic": str(item["meta"].get("topic"))}
 
     def judge_prompt_provenance(self):
-        return _judge_prompt_provenance()
+        return _tutor_judge_prompt_provenance()
 
     def extra_summary(self, scored):
         rows = [r for r in scored if r.get("score_status") == "scored"]

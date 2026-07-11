@@ -1,0 +1,113 @@
+{
+  "stage": "stage2 ablation baselines",
+  "plan": "doc/rubric_evolution_plan_2026-07-06.md §5",
+  "benchmark": "mrbench",
+  "dimension": "Providing_Guidance",
+  "judge_model": "glm-5.2",
+  "reflect_model": "glm-5.2",
+  "budget_calls": 3000,
+  "eval_n": 600,
+  "v1_kappa_eval": 0.32236848349103625,
+  "baselines": {
+    "manual": {
+      "baseline": "manual_j2b",
+      "description": "hand-authored structured rubric (behavioral anchors + solve-first), blind to eval diagnosis",
+      "edits": [
+        {
+          "op": "set_label_criterion",
+          "label": "Yes",
+          "text": "The reply gives correct, on-point help the student can act on — a hint, an explanation, a worked step, an example, or a focused question aimed at the specific error or next step."
+        },
+        {
+          "op": "set_label_criterion",
+          "label": "To some extent",
+          "text": "The reply makes a real attempt to guide but it is incomplete, generic, or only partly on target, so it under-specifies what the student should do next."
+        },
+        {
+          "op": "set_label_criterion",
+          "label": "No",
+          "text": "The reply provides no usable guidance — it only greets, praises, restates the problem, hands over the bare answer, or is irrelevant to the student's need."
+        },
+        {
+          "op": "add_clause",
+          "text": "First work out for yourself what correct guidance here would be, then judge the reply against that substance rather than its politeness, fluency, or length."
+        }
+      ],
+      "prompt_sha256": "c708db75627c28e1a583ba0ccead595850c73cf7545b51e8455027a66f9991fc",
+      "extra_chars": 725,
+      "result_vs_v1": {
+        "point": 0.032,
+        "ci_low": -0.0162,
+        "ci_high": 0.0808,
+        "n_boot": 1000,
+        "na_rate": 0.0,
+        "point_a": 0.3544,
+        "point_b": 0.3224,
+        "n_clusters": 71,
+        "n_items": 600,
+        "significant": false,
+        "n_paired": 600,
+        "unparsed_rate_candidate": 0.0,
+        "unparsed_rate_incumbent": 0.0
+      }
+    },
+    "genk": {
+      "baseline": "generate_k_select_best",
+      "description": "K free-text rules from one no-diagnosis call; best picked by raw eval kappa (no significance gate)",
+      "k": 5,
+      "v1_kappa_eval": 0.32236848349103625,
+      "kappa_distribution": {
+        "min": 0.21604201082727542,
+        "median": 0.3103069271563213,
+        "max": 0.32102557470335286,
+        "mean": 0.2867
+      },
+      "naive_best": {
+        "i": 2,
+        "rule": "The reply offers generic encouragement or vague advice like \"check your math\" or \"try again\" without identifying the specific error or pointing to the relevant concept the student is struggling with.",
+        "selected_on": "eval slice (optimistic / winner's-curse upper bound)",
+        "result_vs_v1": {
+          "point": -0.0013,
+          "ci_low": -0.0483,
+          "ci_high": 0.0437,
+          "n_boot": 1000,
+          "na_rate": 0.0,
+          "point_a": 0.321,
+          "point_b": 0.3224,
+          "n_clusters": 71,
+          "n_items": 600,
+          "significant": false,
+          "n_paired": 600,
+          "unparsed_rate_candidate": 0.0,
+          "unparsed_rate_incumbent": 0.0
+        }
+      }
+    },
+    "gepa": {
+      "baseline": "gepa_vanilla",
+      "description": "reflective free-text prompt evolution; wholesale rewrite, raw-error reflection, greedy accept on held-out val (no diagnosis/structure/significance gate)",
+      "n_iter_budget": 12,
+      "iters_run": 12,
+      "val_n": 200,
+      "champion_source": "iter9",
+      "champion_kappa_val": 0.5944380069524913,
+      "champion_extra_chars": 5523,
+      "champion_prompt_sha256": "2141e62506c7a31921329ab6067644ba0dc1fa12e7ce0605f1cd8f58dc850d32",
+      "result_vs_v1": {
+        "point": 0.0538,
+        "ci_low": -0.0212,
+        "ci_high": 0.134,
+        "n_boot": 1000,
+        "na_rate": 0.0,
+        "point_a": 0.3762,
+        "point_b": 0.3224,
+        "n_clusters": 71,
+        "n_items": 600,
+        "significant": false,
+        "n_paired": 600,
+        "unparsed_rate_candidate": 0.0,
+        "unparsed_rate_incumbent": 0.0
+      }
+    }
+  }
+}

@@ -118,6 +118,25 @@ for b in $BENCHMARKS; do
       python scripts/eval_benchmark.py --benchmark mmtutorbench --model "$MODEL" \
         --extractor-model "$JUDGE_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
+    p08_abstention)
+      # P08 能力性弃答：UMWP 不可答/可答混合，规则判分（无裁判、抽取不调用 LLM）。
+      # 先物化数据：python scripts/eval/data/fetch_eval_datasets.py --benchmark umwp
+      # 默认抽 500 题（分层，任意前缀均衡），LIMIT 可覆盖；不默认跑全量 5200。
+      P08_ABS_LIMIT="${LIMIT:-500}"; [[ "$P08_ABS_LIMIT" == "0" ]] && P08_ABS_LIMIT=500
+      python scripts/eval_benchmark.py --benchmark p08_abstention --model "$MODEL" \
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$P08_ABS_LIMIT"
+      ;;
+    p08_calibration)
+      # P08 置信校准：跑固定难度分层 item_list（非 --limit；先用 build_p08_item_list.py 生成）。
+      # 答案抽取主要靠各 delegate 的正则，LLM 兜底极少；抽取模型默认跟随被测模型
+      # （P08_EXTRACTOR_MODEL 覆盖），当前仅 MiniMax-M3 可用。
+      #   python scripts/eval/data/build_p08_item_list.py   # 一次性生成 item_list
+      #   MODEL=MiniMax-M3 ./scripts/run_eval.sh p08_calibration
+      ITEM_LIST="${ITEM_LIST:-data/p08_calibration/item_list_v1.txt}"
+      P08_EXTRACTOR_MODEL="${P08_EXTRACTOR_MODEL:-$MODEL}"
+      python scripts/eval_benchmark.py --benchmark p08_calibration --model "$MODEL" \
+        --extractor-model "$P08_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
+      ;;
     *)
       python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;

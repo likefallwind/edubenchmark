@@ -55,6 +55,8 @@ BEA2025_DIMENSIONS = [
     "Actionability",
 ]
 
+UMWP_URL = "https://raw.githubusercontent.com/Yuki-Asuuna/UMWP/main/data/StandardDataset.jsonl"
+
 OLYMPIAD_REPO = f"{HF}/Hothan/OlympiadBench/resolve/main/OlympiadBench"
 # Open-ended configs only (OE_*). Theorem-proving (TP_*) needs human/LLM grading
 # and is intentionally excluded from the auto-scored adapter.
@@ -477,6 +479,54 @@ def fetch_mrbench(force: bool = False) -> Path:
     return out_path
 
 
+def fetch_umwp(force: bool = False) -> Path:
+    """Download UMWP (Unanswerable Math Word Problems, LREC 2024, CC-BY-SA-4.0).
+
+    A single public JSONL of 5,200 rows: 2,600 answerable + 2,600 human-crafted
+    unanswerable twins (five ``category`` types 1-5: key-info-missing /
+    key-info-ambiguous / unrealistic-condition / irrelevant-object /
+    question-missing). Used by the ``p08_abstention`` adapter to test whether a
+    model declines the unanswerable ones without over-declining the answerable
+    controls. No pandas — the adapter reads this file with the standard library.
+    """
+    import json as _json
+    import urllib.request
+
+    out_dir = ROOT / "sources" / "datasets" / "umwp"
+    out_path = out_dir / "StandardDataset.jsonl"
+    if _ok(out_path) and not force:
+        print(f"skip umwp: {out_path} already exists (use --force to re-download)")
+        return out_path
+    out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"downloading {UMWP_URL}")
+    req = urllib.request.Request(UMWP_URL, headers={"User-Agent": "curl/8"})
+    with urllib.request.urlopen(req) as resp:  # noqa: S310 - trusted raw.githubusercontent.com
+        raw = resp.read()
+    rows = [_json.loads(line) for line in raw.decode("utf-8").splitlines() if line.strip()]
+    if not rows or "answerable" not in rows[0]:
+        raise SystemExit(f"unexpected UMWP payload: {len(rows)} rows, keys={sorted(rows[0]) if rows else '[]'}")
+    out_path.write_bytes(raw)
+    n_unans = sum(1 for r in rows if not r.get("answerable"))
+    manifest = {
+        "source": "github.com/Yuki-Asuuna/UMWP",
+        "url": UMWP_URL,
+        "license": "CC-BY-SA-4.0",
+        "citation": "Sun et al., LREC-COLING 2024, Benchmarking Hallucination in LLMs on Unanswerable Math Word Problems",
+        "total_rows": len(rows),
+        "answerable": len(rows) - n_unans,
+        "unanswerable": n_unans,
+        "unanswerable_categories": {
+            "1": "key information missing", "2": "key information ambiguous",
+            "3": "unrealistic condition", "4": "irrelevant object", "5": "question missing",
+        },
+    }
+    (out_dir / "data_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"wrote {len(rows)} rows ({len(rows) - n_unans} answerable / {n_unans} unanswerable) -> {out_path}")
+    return out_path
+
+
 def fetch_mathtutorbench(force: bool = False) -> Path:
     """Materialize MathTutorBench task data into stdlib-readable JSONL.
 
@@ -628,6 +678,7 @@ def main() -> None:
             "mrbench",
             "bea2025",
             "mmtutorbench",
+            "umwp",
             "all",
         ],
     )
@@ -649,6 +700,8 @@ def main() -> None:
         fetch_bea2025(force=args.force)
     if args.benchmark in ("mmtutorbench", "all"):
         fetch_mmtutorbench(force=args.force)
+    if args.benchmark in ("umwp", "all"):
+        fetch_umwp(force=args.force)
 
 
 if __name__ == "__main__":

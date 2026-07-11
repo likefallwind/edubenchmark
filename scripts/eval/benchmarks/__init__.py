@@ -28,6 +28,8 @@ from .mmlu_pro import MMLUProAdapter
 from .mmtutorbench import MMTutorBenchAdapter, MMTutorBenchJudgeCalibrationAdapter
 from .mrbench import MRBenchJudgeAdapter, MRBenchTutorAdapter
 from .olympiadbench import OlympiadBenchAdapter
+from .p08_abstention import P08AbstentionAdapter
+from .p08_calibration import P08CalibrationAdapter
 
 
 _ADAPTERS: list[type[BenchmarkAdapter]] = [
@@ -58,6 +60,10 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     # MMTutorBench: multimodal tutoring generation + fixed rubric judge.
     MMTutorBenchAdapter,
     MMTutorBenchJudgeCalibrationAdapter,
+    # P08 calibration: composite over exact-match delegates + verbalized confidence.
+    P08CalibrationAdapter,
+    # P08 abstention: UMWP unanswerable vs answerable, rule-scored (no judge).
+    P08AbstentionAdapter,
 ]
 
 _REGISTRY: dict[str, type[BenchmarkAdapter]] = {a.name: a for a in _ADAPTERS}

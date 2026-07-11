@@ -18,6 +18,7 @@ All benchmark-native metrics are first normalized to a 0-10 scale.
 | `accuracy_or_f1` | higher_better | `prefer official f1/accuracy in extra_metrics when present; else accuracy * 10` |
 | `win_rate_or_accuracy` | higher_better | `prefer win_rate/strict_win_rate when present; else accuracy * 10` |
 | `share_0_to_1` | higher_better | `score_10 = share * 10` |
+| `composite_0_to_10` | higher_better | `score_10 = raw (adapter already emits a 0-10 headline, e.g. P08 calibration/abstention)` |
 | `legacy_axis_0_to_100` | higher_better | `score_10 = raw / 10; context only, not used for P scoring` |
 
 ## Aggregation order
@@ -26,9 +27,8 @@ All benchmark-native metrics are first normalized to a 0-10 scale.
 2. Allocate that score to P abilities using `02_benchmark_ability_mapping.jsonl` weights.
 3. `raw_score_10`: weighted average over evidence rows using default benchmark weights.
 4. `tier_adjusted_score_10`: same weighted average after multiplying `foundation_gate` evidence by 0.45.
-5. `coverage_adjusted_score_10`: shrink tier-adjusted evidence toward a neutral prior of 5.0 with K=1.0, so sparse P abilities are visible.
-6. Report coverage per P ability: number of contributing rows, total effective weight, and benchmark families.
-7. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available.
+5. Report coverage separately per model/P ability: number of contributing rows, total effective weight, and benchmark families.
+6. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available. Missing P abilities are not imputed.
 
 ## Resolved scoring choices in this pass
 

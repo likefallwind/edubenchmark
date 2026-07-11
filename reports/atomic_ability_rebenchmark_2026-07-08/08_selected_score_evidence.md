@@ -1,13 +1,13 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 179
+Canonical normalized score rows used for P scoring: 182
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
 | `otherbenchmark` | 93 |
-| `repo_eval` | 86 |
+| `repo_eval` | 89 |
 
 ## By Benchmark
 
@@ -23,15 +23,15 @@ Canonical normalized score rows used for P scoring: 179
 | `eduillustrate` | 3 |
 | `mathtutorbench_mistake_correction` | 5 |
 | `mathtutorbench_mistake_location` | 5 |
-| `mathtutorbench_pedagogy` | 6 |
-| `mathtutorbench_pedagogy_hard` | 6 |
+| `mathtutorbench_pedagogy` | 7 |
+| `mathtutorbench_pedagogy_hard` | 7 |
 | `mathtutorbench_problem_solving` | 4 |
 | `mathtutorbench_scaffolding` | 7 |
 | `mathtutorbench_scaffolding_hard` | 7 |
 | `mathtutorbench_solution_correctness` | 5 |
 | `mathvista` | 1 |
 | `mmlu_pro` | 5 |
-| `mrbench_tutor` | 2 |
+| `mrbench_tutor` | 3 |
 | `olympiadbench` | 2 |
 | `pedagogy_benchmark` | 7 |
 | `sas_bench` | 18 |
@@ -84,7 +84,7 @@ Canonical normalized score rows used for P scoring: 179
 | `mathtutorbench_scaffolding_hard` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.4121 | 4.1210 | `reports/eval/mathtutorbench_scaffolding_hard/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_solution_correctness` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.8621 | 8.6210 | `reports/eval/mathtutorbench_solution_correctness/deepseek-v4-pro/summary.json` |
 | `mmlu_pro` | `deepseek-v4-pro` | `accuracy` | 0.8740851630073186 | 8.7409 | `reports/eval/mmlu_pro/deepseek-v4-pro/summary.json` |
-| `olympiadbench` | `deepseek-v4-pro` | `accuracy` | 0.8527538403896591 | 8.5275 | `reports/eval/olympiadbench/deepseek-v4-pro/summary.json` |
+| `olympiadbench` | `deepseek-v4-pro` | `accuracy` | 0.7361256544502618 | 7.3613 | `reports/eval/olympiadbench/deepseek-v4-pro/summary.json` |
 | `pedagogy_benchmark` | `deepseek-v4-pro` | `accuracy_percent` | 85.34 | 8.5340 | `otherbenchmark/rebenchmark-summary-0701.html` |
 | `sas_bench` | `deepseek-v4-pro` | `score_0_to_100` | 76.63 | 7.6630 | `otherbenchmark/sas-bench-result0630.md` |
 | `sas_bench` | `deepseek-v4-pro` | `score_0_to_100` | 61.69 | 6.1690 | `otherbenchmark/sas-bench-result0630.md` |

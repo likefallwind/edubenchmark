@@ -82,3 +82,11 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: 把 EduIllustrate/EduVisBench、学术诚信真伪集、学习历史画像集、工具使用长程任务和本地化教育安全处置集先作为 MiniMax-M3 展示证据，完成 judge 校准后升级为多模型主评测；每个 LLM-as-Judge 任务记录 judge 模型、prompt hash、校准集、kappa/CI、分歧率和人工复核策略。
   Related capabilities: P08, P09, P10, P15, P16, P22; SRG/FDR/LAD/CLM/CEG
   Source report: tempt/rebenchmark-conclusion-plan-0706.html
+
+## Benchmark portfolio priority triage - 2026-07-08
+
+- Gap: 当前优先继续做的 benchmark 集中在多模态 tutor、脚手架/教学干预、特殊教育需求、教育安全处置质量和分维度教学法评测；这些方向比基础答题门槛项更能区分教育核心能力。
+  Product reason: 如果继续把分析精力放在 MMLU/C-EVAL/AGIEval 等门槛项，会高估“会答题”对真实教育产品的解释力，并低估 P16/P17/P18/P22 等教育残余能力缺口。
+  Suggested data/eval: 优先补齐 MMTutorBench、MathTutorBench scaffolding/hard、EduGuard refusal-quality、Pedagogy CDPK/SEND 分项和 TutorBench/BEA tutor 的多模型主跑；基础考试类保留为低频 gate。
+  Related capabilities: P03, P05, P16, P17, P18, P20, P22; SRG/FDR/CLM/CEG
+  Source report: reports/atomic_ability_rebenchmark_2026-07-08/12_benchmark_priority_report.html

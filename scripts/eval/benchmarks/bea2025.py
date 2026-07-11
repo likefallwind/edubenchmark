@@ -33,7 +33,13 @@ TEST_PATH = DATA_DIR / "mrbench_v3_testset.json"
 HOMEPAGE = "https://sig-edu.org/sharedtask/2025"
 DATA_REPO = "https://github.com/kaushal0494/UnifyingAITutorEvaluation/tree/main/BEA_Shared_Task_2025_Datasets"
 
-DEFAULT_JUDGE_MODEL = "MiniMax-M3"
+# Production judge switched MiniMax-M3 -> glm-5.2 (2026-07-10, 待决项③a): glm-5.2
+# is the best single judge on the dimension-label lines (judge_research 附录 0).
+# Rubric stays v1: the self-evolved bea2025/Providing_Guidance rubric did NOT
+# replicate on the sealed test split (rubric_evolution_plan 附录 4: dev +0.092 sig
+# -> test -0.012 ns), so only the judge MODEL changes here, not the prompt.
+# Override per-run with BEA2025_JUDGE_MODEL.
+DEFAULT_JUDGE_MODEL = "glm-5.2"
 JUDGE_MODEL_ENV = "BEA2025_JUDGE_MODEL"
 VERBOSE_LEN = 80
 

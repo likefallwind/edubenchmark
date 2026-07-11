@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">58.7%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">323</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-7</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某企业2016年初拥有土地2万平方米，包括厂区内托儿所占地0.1万平方米，无偿提供给公安局使用土地0.3万平方米，厂区内绿化用地0.4万平方米。5月该企业购买一块土地使用权(非耕地)用于厂房扩建，占地面积为2.4万平方米，合同规定，5月支付土地价款并交付土地。该企业所在地区城镇土地使用税年税额为10元/平方米，该企业2016年应缴纳城镇土地使用税____万元。
+A. 26
+B. 36
+C. 30
+D. 44
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 550,
+  &quot;n_with_confidence&quot;: 545,
+  &quot;confidence_unparsed_rate&quot;: 0.0091,
+  &quot;accuracy&quot;: 0.5873,
+  &quot;confidence_mean&quot;: 87.04,
+  &quot;confidence_std&quot;: 12.56,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 1,
+    &quot;20-29&quot;: 1,
+    &quot;30-39&quot;: 1,
+    &quot;40-49&quot;: 4,
+    &quot;50-59&quot;: 13,
+    &quot;60-69&quot;: 16,
+    &quot;70-79&quot;: 81,
+    &quot;80-89&quot;: 103,
+    &quot;90-99&quot;: 325
+  },
+  &quot;cwr_at_90&quot;: 0.3262,
+  &quot;n_high_confidence&quot;: 325,
+  &quot;ece_10bin&quot;: 0.2893,
+  &quot;brier&quot;: 0.3138,
+  &quot;auroc&quot;: 0.6379,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.6061,
+    &quot;coverage_80&quot;: 0.617,
+    &quot;coverage_70&quot;: 0.6414
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 100,
+      &quot;accuracy&quot;: 0.58,
+      &quot;n_with_confidence&quot;: 98,
+      &quot;cwr_at_90&quot;: 0.375,
+      &quot;auroc&quot;: 0.5572
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 200,
+      &quot;accuracy&quot;: 0.56,
+      &quot;n_with_confidence&quot;: 200,
+      &quot;cwr_at_90&quot;: 0.3558,
+      &quot;auroc&quot;: 0.599
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 150,
+      &quot;accuracy&quot;: 0.5733,
+      &quot;n_with_confidence&quot;: 147,
+      &quot;cwr_at_90&quot;: 0.2838,
+      &quot;auroc&quot;: 0.6941
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 100,
+      &quot;accuracy&quot;: 0.67,
+      &quot;n_with_confidence&quot;: 100,
+      &quot;cwr_at_90&quot;: 0.2892,
+      &quot;auroc&quot;: 0.6836
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 6.559
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>550</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>100</td><td>58</td><td>0.580</td><td><div class='bar'><i style='width:58%'></i></div></td></tr><tr><td>ceval</td><td>200</td><td>112</td><td>0.560</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>mmlu_pro</td><td>150</td><td>86</td><td>0.573</td><td><div class='bar'><i style='width:57%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>100</td><td>67</td><td>0.670</td><td><div class='bar'><i style='width:67%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>294</td><td>181</td><td>0.616</td><td><div class='bar'><i style='width:62%'></i></div></td></tr><tr><td>zh</td><td>256</td><td>142</td><td>0.555</td><td><div class='bar'><i style='width:55%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 85}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C
+
+置信度: 85</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>根据COSO内部控制框架，反舞弊机制属于内部控制要素中的____。
+A. 风险评估
+B. 控制活动
+C. 监控
+D. 信息与沟通
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 75}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+
+置信度: 75</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-30</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>根据证券法律制度的规定，下列关于上市公司收购的表述，正确的是____。
+A. 采用要约方式收购上市公司股份的，其预定收购的股份比例不得低于该上市公司已发行股份的30%
+B. 要约收购期间，收购人不得撤销收购要约，也不得变更收购要约
+C. 收购人对同一种类股票的要约价格不得低于要约收购提示性公告日前12个月内收购人取得该种股票所支付的最高价格
+D. 要约收购期间，被收购公司董事不得辞职
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 75}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 答案分析
+
+**选项A**：错误。根据《上市公司收购管理办法》规定，以要约方式收购上市公司股份的，预定收购的股份比例不得低于该上市公司已发行股份的**5%**，而不是30%。（30%是触发强制要约收购的持股比例门槛）
+
+**选项B**：正确。在要约收购期间，收购人不得撤销收购要约，也不得变更收购要约。这是《上市公司收购管理办法》关于要约收购的重要规则，确保要约的严肃性，保护被收购公司股东的预期利益。
+
+**选项C**：错误。根据规定，收购人对同一种类股票的要约价格不得低于要约收购提示性公告日前**6个月内**收购人取得该种股票所支付的最高价格，而不是12个月。
+
+**选项D**：错误。《上市公司收购管理办法》并未规定要约收购期间被收购公司董事不得辞职，董事在履行忠实义务和勤勉义务的前提下，可以辞职。
+
+## 正确答案：B
+
+置信度: 75</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-34</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>2019年5月1日，人民法院受理了对甲公司提起的破产申请。根据企业破产法律制度的规定，下列有资格担任管理人的是____。
+A. 甲公司董事乙
+B. 甲公司董事会秘书的女儿丙
+C. 曾于2014年1月1日至2015年1月1日担任甲公司法律顾问的丁律师
+D. 3年前被吊销执业证书，事后重新获取执业资格的注册会计师戊
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;D&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 答案分析
+
+**正确选项：C**
+
+## 各选项分析
+
+根据《最高人民法院关于审理企业破产案件指定管理人的规定》第十条规定，具有下列情形之一的个人，不得担任管理人：
+1. 因故意犯罪受过刑事处罚
+2. 曾被吊销相关专业执业证书
+3. 因执业行为受过行政处罚或者行业惩戒未逾3年
+4. 与本案有利害关系
+5. 人民法院认为不宜担任管理人的其他情形
+
+**A选项（甲公司董事乙）**：甲公司现任董事，与本案有利害关系，明确被排除。
+
+**B选项（甲公司董事会秘书的女儿丙）**：董事会秘书属于公司高级管理人员，其女为高级管理人员的近亲属，存在利害关系，应当被排除。
+
+**C选项（曾担任甲公司法律顾问的丁律师）**：丁律师于2014-2015年担任公司法律顾问，距2019年破产申请已有4年时间，法律顾问关系早已结束，且未规定曾任法律顾问属于法定禁止情形，没有明显利害关系。**有资格担任管理人**。
+
+**D选项（注册会计师戊）**：根据规定&quot;曾被吊销相关专业执业证书&quot;的人不得担任管理人，该禁止情形无时间限制，即使重新取得执业资格，仍不得担任管理人。
+
+置信度: 90</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 75}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+
+置信度: 75</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-9</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>经营战略的本质是____。
+A. 目标与目的
+B. 资源
+C. 公司远景
+D. 组织结构
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 60}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A
+
+置信度: 60</pre></details></div></section>
+</main>
+</body>
+</html>
