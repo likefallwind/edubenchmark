@@ -532,6 +532,77 @@ def fetch_umwp(force: bool = False) -> Path:
     return out_path
 
 
+def fetch_ifeval(force: bool = False) -> Path:
+    """Download IFEval (Zhou et al. 2023, google-research; Apache-2.0).
+
+    541 prompts with verifiable instructions (``instruction_id_list`` +
+    ``kwargs``), rule-scored — no judge, no extraction LLM. Downloads both the
+    data (``input_data.jsonl``) and the official checker modules
+    (``instructions*.py``, vendored under ``instruction_following_eval/`` so
+    the adapter can import them unmodified; deps: nltk / langdetect /
+    immutabledict / absl-py, present in the miniconda interpreter). Also
+    fetches the nltk ``punkt`` sentence tokenizer the checker needs.
+    """
+    import json as _json
+    import urllib.request
+
+    out_dir = ROOT / "sources" / "datasets" / "ifeval"
+    data_path = out_dir / "data" / "input_data.jsonl"
+    pkg_dir = out_dir / "instruction_following_eval"
+    code_files = [
+        "instructions.py",
+        "instructions_registry.py",
+        "instructions_util.py",
+        "evaluation_lib.py",
+    ]
+    if _ok(data_path) and all(_ok(pkg_dir / f) for f in code_files) and not force:
+        print(f"skip ifeval: {data_path} already exists (use --force to re-download)")
+        return out_dir
+    (out_dir / "data").mkdir(parents=True, exist_ok=True)
+    pkg_dir.mkdir(parents=True, exist_ok=True)
+
+    def _get(rel: str, dest: Path) -> bytes:
+        url = IFEVAL_BASE + rel
+        print(f"downloading {url}")
+        req = urllib.request.Request(url, headers={"User-Agent": "curl/8"})
+        with urllib.request.urlopen(req) as resp:  # noqa: S310 - trusted raw.githubusercontent.com
+            raw = resp.read()
+        dest.write_bytes(raw)
+        return raw
+
+    raw = _get("data/input_data.jsonl", data_path)
+    rows = [_json.loads(line) for line in raw.decode("utf-8").splitlines() if line.strip()]
+    if not rows or "instruction_id_list" not in rows[0]:
+        raise SystemExit(
+            f"unexpected IFEval payload: {len(rows)} rows, keys={sorted(rows[0]) if rows else '[]'}"
+        )
+    for f in code_files:
+        _get(f, pkg_dir / f)
+    (pkg_dir / "__init__.py").write_text("", encoding="utf-8")
+
+    try:
+        import nltk
+
+        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
+    except ImportError:
+        print("WARNING: nltk not importable in this interpreter; the checker needs it at score time")
+
+    manifest = {
+        "source": "github.com/google-research/google-research/tree/master/instruction_following_eval",
+        "license": "Apache-2.0",
+        "citation": "Zhou et al. 2023, Instruction-Following Evaluation for Large Language Models (arXiv:2311.07911)",
+        "total_rows": len(rows),
+        "scoring": "official strict + loose rule checks; vendored official modules, no LLM judge",
+        "code_files": code_files,
+    }
+    (out_dir / "data_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"wrote {len(rows)} rows -> {data_path}; official checker -> {pkg_dir}")
+    return out_dir
+
+
 def fetch_mathtutorbench(force: bool = False) -> Path:
     """Materialize MathTutorBench task data into stdlib-readable JSONL.
 
@@ -684,6 +755,7 @@ def main() -> None:
             "bea2025",
             "mmtutorbench",
             "umwp",
+            "ifeval",
             "all",
         ],
     )
@@ -707,6 +779,8 @@ def main() -> None:
         fetch_mmtutorbench(force=args.force)
     if args.benchmark in ("umwp", "all"):
         fetch_umwp(force=args.force)
+    if args.benchmark in ("ifeval", "all"):
+        fetch_ifeval(force=args.force)
 
 
 if __name__ == "__main__":
