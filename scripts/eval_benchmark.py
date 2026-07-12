@@ -113,6 +113,10 @@ def main() -> None:
     adapter = get_adapter(args.benchmark)
     if hasattr(adapter, "language"):
         adapter.language = args.language
+    # Adapters that call the model-under-test outside the prediction phase
+    # (e.g. p07_selfcheck's round-2 revision call) need its name; the extractor
+    # client passed to extract_answer is a different model.
+    adapter.model_under_test = args.model
 
     item_ids = None
     item_list_info = None

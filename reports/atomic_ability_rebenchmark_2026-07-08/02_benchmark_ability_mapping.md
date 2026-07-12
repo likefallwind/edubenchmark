@@ -30,6 +30,7 @@ Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 wi
 | MathTutorBench (`mathtutorbench_pedagogy_hard`) | Pedagogy IF hard | education_core | win_rate_or_accuracy | 1.00 | P17 0.45, P18 0.30, P05 0.25 | hard 子集较有区分度，权重略高。 |
 | MathTutorBench (`mathtutorbench_scaffolding`) | Scaffolding | education_core | win_rate_or_accuracy | 1.00 | P17 0.50, P18 0.35, P05 0.15 | 脚手架主测下一步教学干预选择与反馈生成。 |
 | MathTutorBench (`mathtutorbench_scaffolding_hard`) | Scaffolding hard | education_core | win_rate_or_accuracy | 1.00 | P17 0.50, P18 0.35, P05 0.15 | hard 子集仍主测教学干预与反馈。 |
+| MathTutorBench (`mathtutorbench_socratic`) | Socratic Questioning | education_core | bleu_0_to_1 | 0.60 | P17 0.65, P18 0.35 | 生成引导性提问、与教师金标问题比 BLEU，是 P17a（提问式干预）的测量来源（R11 补挂，2026-07-12；按拆分准入规则提问不单列子能力）。BLEU 对合理的不同问法会误罚，权重保守。 |
 | BEA 2025 Judge (`bea2025_judge`) | judge labels: mistake/guidance/actionability | excluded_judge_task | accuracy | 0.00 | P14 0.45, P13 0.30, P11 0.25 | 作为教育评判者可映射到 rubric/错因/正误判断，但本轮按用户口径先排除 judge task，不进入 P-score。 |
 | BEA 2025 Tutor (`bea2025_tutor`) | pedagogical pass rate | education_core | pass_rate | 0.90 | P18 0.45, P17 0.30, P13 0.25 | 生成 tutor 回复，强调可行动指导、反馈生成和错因识别。 |
 | MRBench Judge (`mrbench_judge`) | 8-dimension tutor response judging | excluded_judge_task | accuracy | 0.00 | P14 0.45, P13 0.25, P20 0.30 | 多维 tutor 回复评判可映射到评分/错因/边界，但本轮按用户口径先排除 judge task，不进入 P-score。 |
@@ -39,5 +40,6 @@ Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 wi
 | EduGuard-Bench P2 (`eduguard_adversarial`) | Refusal quality distribution | diagnostic | share_0_to_1 | 0.70 | P22 0.60, P18 0.25, P20 0.15 | 教育型拒答是处置选择和教育性重定向质量。 |
 | EduIllustrate (`eduillustrate`) | 8-dim 0-5 visual explanation score | diagnostic | likert_0_to_5 | 0.85 | P10 0.45, P03 0.25, P18 0.30 | 教学图示/图文协同生成直接测多模态教学产物生成。 |
 | MMTutorBench (`mmtutorbench`) | multimodal tutor score | diagnostic | score_0_to_6 | 0.90 | P03 0.30, P18 0.40, P17 0.30 | 多模态 tutor 综合测图文感知、反馈生成和策略选择；当前小样本默认排除主图。 |
+| P07 两轮自查 (`p07_selfcheck`) | two-round self-check (fix/break rate) | diagnostic | composite_0_to_10 | 0.85 | P07 0.85, P08 0.15 | 两轮自查协议（先答题、再无提示复查），P07 的首个直接测量（2026-07-12 缺口填补）；headline=0.5×改对率+0.5×(1−改错率)，与第一轮正确率解耦。复查时对自身答案的把握与校准相通，P08 占 0.15。 |
 | P08 置信度校准 (`p08_calibration`) | calibration composite (CWR/AUROC) | diagnostic | composite_0_to_10 | 0.85 | P08 0.80, P07 0.20 | 复用 exact-match benchmark + verbalized confidence，测“自信地教错”（CWR）与“知道自己不知道”（AUROC）；自报置信度带少量自检成分故 P07 占 0.20。 |
 | P08 能力性弃答 (`p08_abstention`) | balanced abstention score | diagnostic | composite_0_to_10 | 0.85 | P08 0.85, P01 0.15 | 公开弃答数据集（UMWP/TreeCut）测对不可答题能否说“不会”；识别并按格式声明带少量指令遵循成分故 P01 占 0.15。与 p08_calibration 共同构成 P08 两半证据。 |

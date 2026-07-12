@@ -36,6 +36,12 @@ def prompt_sha256(*templates: str) -> str:
 class BenchmarkAdapter:
     name: str = ""
 
+    # Name of the model being evaluated; set by eval_benchmark.py after
+    # construction. Adapters that must call the model-under-test outside the
+    # prediction phase (e.g. p07_selfcheck's round-2 turn) read this — the
+    # ``client`` handed to extract_answer is the *extractor*, a different model.
+    model_under_test: str | None = None
+
     # Report metadata: shown in the HTML eval report's "benchmark intro" section.
     # Override in subclasses. ``description`` may contain blank-line-separated
     # paragraphs (rendered as <p>); keep it concise (2-4 short paragraphs).

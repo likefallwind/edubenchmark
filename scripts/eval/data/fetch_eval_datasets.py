@@ -57,6 +57,11 @@ BEA2025_DIMENSIONS = [
 
 UMWP_URL = "https://raw.githubusercontent.com/Yuki-Asuuna/UMWP/main/data/StandardDataset.jsonl"
 
+IFEVAL_BASE = (
+    "https://raw.githubusercontent.com/google-research/google-research/master/"
+    "instruction_following_eval/"
+)
+
 OLYMPIAD_REPO = f"{HF}/Hothan/OlympiadBench/resolve/main/OlympiadBench"
 # Open-ended configs only (OE_*). Theorem-proving (TP_*) needs human/LLM grading
 # and is intentionally excluded from the auto-scored adapter.

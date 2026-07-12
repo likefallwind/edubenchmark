@@ -552,3 +552,32 @@ test 终验能区分这两者**——本阶段兑现了这道门存在的全部�
 最后闸门，dev 显著性不足以直接上生产。负结果照样成文，且强化了"每条线独立 test 验收、
 不整批上"的工程纪律。跨判官看：唯一双判官都过 test 的维度是 mrbench/PG（引导性提问算 Yes /
 TSE 偏严病灶），是全流程最可靠的一处真实能力缺口。
+
+## 附录 5：纯 M3 自举对照实验（judge=reflector=MiniMax-M3，2026-07-12 收官）
+
+**动机**：附录 2 的"glm 4 验收 vs M3 1 验收"存在两个混淆——pilot 前两轮协议较轻
+（静态 v1 诊断 + 157 筛选片）、且 pilot 的提案由 glm-5.2 代写（混合配置），而 glm
+主实验是"自己进化自己"。本实验补 **judge=reflector=MiniMax-M3** 的完整 Stage 2 规格
+（--big-screen 250 + --rediagnose，切片与 glm 逐字节相同），与 glm 自进化完全对称。
+
+**基建**：`STAGE1_REFLECT_MODEL`（反思模型 env 覆盖）+ `STAGE1_OUT_SLUG`（状态目录
+隔离，本实验 `stage1_minimax3_self/`；另备 `stage1_minimax3_full/` = glm 反思版对照
+arm，因配额与"对称性更优"改道，脚本 `run_judge_stage1_m3_full.sh` 保留未跑完）。
+v1 标签复用 minimax3 缓存全量跑（零开销）。启动脚本 `scripts/run_judge_stage1_m3_self.sh
+[round]`，日志自写 `stage1_minimax3_self/round<N>_run.log`。2 轮 ≈17k M3 调用。
+
+**结果**（评估片配对 cluster-bootstrap CI，n_boot=1000）：
+
+| 线 | round 1 | round 2 | 终局 |
+|---|---|---|---|
+| mrbench/PG | **r1p3 验收** 0.272→0.365（+0.094 [0.026, 0.164]，add_clause 放宽 TSE→No 过严） | 重诊断后候选全负；回归消融 r1p3 −0.043 仍在赚钱；remap 叠加恒等 | r1p3 局部最优，收官 |
+| mrbench/Coherence | 最好 +0.032 ns | 最好 +0.058 [−0.011, 0.132] ns | 两轮无验收无近失，收官 |
+| bea2025/PG | 最好 +0.015 ns（筛选头名 r1p6 +0.075 全量现形） | 最好 +0.007 ns | 两轮无验收无近失，收官 |
+
+r1p3 验收后重诊断池一致率 0.597→0.665。无近失候选，无需独立确认。
+
+**结论**：① 同规格对称对比落定——glm 自进化 round 1 即 3/3 验收 vs 纯 M3 1/3，
+"强裁判进化收益大"排除协议混淆；② M3 瓶颈在判分不在写提案——同线 M3 自写提案
++0.094 > pilot glm 代写 +0.068（且两次验收的编辑针对不同混淆格）；③ winner's curse
+再添 2 例（累计 11 例家族），两段制照拦。**证据边界**：test 已在 Stage 3 开封用掉，
+本实验验收 rubric 仅有 dev 证据。报告见 judge_research_full_report §6.1。

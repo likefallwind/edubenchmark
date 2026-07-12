@@ -416,6 +416,19 @@ MAPPINGS: list[dict[str, Any]] = [
         "rationale": "hard 子集仍主测教学干预与反馈。",
     },
     {
+        "benchmark_id": "mathtutorbench_socratic",
+        "benchmark_name": "MathTutorBench",
+        "subdimension": "Socratic Questioning",
+        "evidence_tier": "education_core",
+        "source_scope": "repo_eval",
+        "metric_family": "bleu_0_to_1",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.60,
+        "abilities": ability_weights(("P17", 0.65), ("P18", 0.35)),
+        "rationale": "生成引导性提问、与教师金标问题比 BLEU，是 P17a（提问式干预）的测量来源"
+        "（R11 补挂，2026-07-12；按拆分准入规则提问不单列子能力）。BLEU 对合理的不同问法会误罚，权重保守。",
+    },
+    {
         "benchmark_id": "bea2025_judge",
         "benchmark_name": "BEA 2025 Judge",
         "subdimension": "judge labels: mistake/guidance/actionability",
@@ -524,6 +537,22 @@ MAPPINGS: list[dict[str, Any]] = [
         "rationale": "多模态 tutor 综合测图文感知、反馈生成和策略选择；当前小样本默认排除主图。",
     },
     {
+        "benchmark_id": "p07_selfcheck",
+        "benchmark_name": "P07 两轮自查",
+        "subdimension": "two-round self-check (fix/break rate)",
+        "evidence_tier": "diagnostic",
+        "source_scope": "repo_eval",
+        "metric_family": "composite_0_to_10",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.85,
+        "abilities": ability_weights(("P07", 0.85), ("P08", 0.15)),
+        "rationale": (
+            "两轮自查协议（先答题、再无提示复查），P07 的首个直接测量（2026-07-12 缺口填补）；"
+            "headline=0.5×改对率+0.5×(1−改错率)，与第一轮正确率解耦。复查时对自身答案的把握"
+            "与校准相通，P08 占 0.15。"
+        ),
+    },
+    {
         "benchmark_id": "p08_calibration",
         "benchmark_name": "P08 置信度校准",
         "subdimension": "calibration composite (CWR/AUROC)",
@@ -571,6 +600,7 @@ NORMALIZATION = [
     ("accuracy_or_f1", "higher_better", "prefer official f1/accuracy in extra_metrics when present; else accuracy * 10"),
     ("win_rate_or_accuracy", "higher_better", "prefer win_rate/strict_win_rate when present; else accuracy * 10"),
     ("share_0_to_1", "higher_better", "score_10 = share * 10"),
+    ("bleu_0_to_1", "higher_better", "score_10 = bleu * 10 (absolute level is low by construction; rank information only)"),
     ("composite_0_to_10", "higher_better", "score_10 = raw (adapter already emits a 0-10 headline, e.g. P08 calibration/abstention)"),
     ("legacy_axis_0_to_100", "higher_better", "score_10 = raw / 10; context only, not used for P scoring"),
 ]
@@ -924,6 +954,8 @@ def normalize_score(metric: str, value: float) -> float | None:
         return value / 6.0 * 10.0
     if metric == "composite_0_to_10":
         return value
+    if metric == "bleu_0_to_1":
+        return value * 10.0
     return None
 
 
@@ -1054,11 +1086,13 @@ def repo_metric_for_summary(benchmark: str, data: dict[str, Any]) -> tuple[str, 
         "mathtutorbench_scaffolding_hard",
     }:
         return "win_rate_or_accuracy", extra.get("win_rate", data.get("accuracy")), "extra_metrics.win_rate"
+    if benchmark == "mathtutorbench_socratic":
+        return "bleu_0_to_1", extra.get("avg_bleu"), "extra_metrics.avg_bleu (official headline; summary.accuracy is a coarse BLEU>=0.5 proxy)"
     if benchmark.startswith("mathtutorbench_"):
         return "accuracy", data.get("accuracy"), "summary.accuracy"
     if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "olympiadbench"}:
         return "accuracy", data.get("accuracy"), "summary.accuracy"
-    if benchmark in {"p08_calibration", "p08_abstention"}:
+    if benchmark in {"p07_selfcheck", "p08_calibration", "p08_abstention"}:
         return "composite_0_to_10", extra.get("score_10"), "extra_metrics.score_10"
     return "unknown", None, "no scoring rule"
 

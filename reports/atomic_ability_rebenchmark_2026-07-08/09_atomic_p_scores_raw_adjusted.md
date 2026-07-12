@@ -1,8 +1,8 @@
 # Atomic P Scores: Raw And Adjusted
 
-P-score rows: 163
-Covered P codes: P01, P02, P03, P05, P06, P07, P10, P11, P12, P13, P14, P16, P17, P18, P20, P21, P22
-Missing P codes: P04, P08, P09, P15, P19
+P-score rows: 164
+Covered P codes: P01, P02, P03, P05, P06, P07, P08, P10, P11, P12, P13, P14, P16, P17, P18, P20, P21, P22
+Missing P codes: P04, P09, P15, P19
 
 `raw_score_10` uses default benchmark weights. `tier_adjusted_score_10` reduces foundation-gate evidence. Coverage completeness is reported separately and is not folded back into the score.
 
@@ -40,8 +40,8 @@ Missing P codes: P04, P08, P09, P15, P19
 | `deepseek-v4-pro` | `P13` 错因归因 | LAD | 7.2805 | 7.2805 | 2 | 1.105/1.105 | mathtutorbench_mistake_correction, sas_bench |
 | `deepseek-v4-pro` | `P14` Rubric 映射评分 | LAD | 7.1042 | 7.1042 | 3 | 1.6725/1.6725 | asap_2, sas_bench |
 | `deepseek-v4-pro` | `P16` 学习者画像建模 | CLM | 8.5634 | 8.5634 | 2 | 0.495/0.495 | edubench, pedagogy_benchmark |
-| `deepseek-v4-pro` | `P17` 个性化教学策略选择 | CLM | 7.3056 | 7.3056 | 8 | 3.06/3.06 | edubench, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, pedagogy_benchmark |
-| `deepseek-v4-pro` | `P18` 适配性解释与反馈生成 | CLM | 7.5687 | 7.5687 | 10 | 3.015/3.015 | edubench, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard |
+| `deepseek-v4-pro` | `P17` 个性化教学策略选择 | CLM | 6.8006 | 6.8006 | 9 | 3.45/3.45 | edubench, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, pedagogy_benchmark |
+| `deepseek-v4-pro` | `P18` 适配性解释与反馈生成 | CLM | 7.2606 | 7.2606 | 11 | 3.225/3.225 | edubench, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic |
 | `deepseek-v4-pro` | `P20` 教育角色边界判断 | CEG | 5.8337 | 5.8337 | 2 | 0.65/0.65 | eduguard_adversarial, eduguard_sata |
 | `deepseek-v4-pro` | `P21` 学生风险识别 | CEG | 5.8606 | 5.8606 | 2 | 0.55/0.55 | eduguard_adversarial, eduguard_sata |
 | `deepseek-v4-pro` | `P22` 安全处置选择 | CEG | 5.4447 | 5.4447 | 2 | 0.8/0.8 | eduguard_adversarial, eduguard_sata |
@@ -83,8 +83,8 @@ Missing P codes: P04, P08, P09, P15, P19
 | `glm-5.2` | `P11` 作答正误判定 | LAD | 8.7827 | 8.7827 | 2 | 0.61/0.61 | mathtutorbench_mistake_location, mathtutorbench_solution_correctness |
 | `glm-5.2` | `P12` 错误位置定位 | LAD | 7.919 | 7.919 | 1 | 0.7/0.7 | mathtutorbench_mistake_location |
 | `glm-5.2` | `P13` 错因归因 | LAD | 8.0 | 8.0 | 2 | 0.63/0.63 | bea2025_tutor, mathtutorbench_mistake_correction |
-| `glm-5.2` | `P17` 个性化教学策略选择 | CLM | 6.5981 | 6.5981 | 6 | 2.3875/2.3875 | bea2025_tutor, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mrbench_tutor |
-| `glm-5.2` | `P18` 适配性解释与反馈生成 | CLM | 6.6185 | 6.6185 | 7 | 2.365/2.365 | bea2025_tutor, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mrbench_tutor |
+| `glm-5.2` | `P17` 个性化教学策略选择 | CLM | 6.0895 | 6.0895 | 7 | 2.7775/2.7775 | bea2025_tutor, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mrbench_tutor |
+| `glm-5.2` | `P18` 适配性解释与反馈生成 | CLM | 6.3214 | 6.3214 | 8 | 2.575/2.575 | bea2025_tutor, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mrbench_tutor |
 | `glm-5.2` | `P20` 教育角色边界判断 | CEG | 6.5464 | 6.5464 | 3 | 0.85/0.85 | eduguard_adversarial, eduguard_sata, mrbench_tutor |
 | `glm-5.2` | `P21` 学生风险识别 | CEG | 7.3945 | 7.3945 | 2 | 0.55/0.55 | eduguard_adversarial, eduguard_sata |
 | `glm-5.2` | `P22` 安全处置选择 | CEG | 7.3469 | 7.3469 | 2 | 0.8/0.8 | eduguard_adversarial, eduguard_sata |
@@ -124,12 +124,12 @@ Missing P codes: P04, P08, P09, P15, P19
 | `minimax-m2.7` | `P13` 错因归因 | LAD | 6.2493 | 6.2493 | 3 | 1.33/1.33 | bea2025_tutor, mathtutorbench_mistake_correction, sas_bench |
 | `minimax-m2.7` | `P14` Rubric 映射评分 | LAD | 6.8817 | 6.8817 | 3 | 1.6725/1.6725 | asap_2, sas_bench |
 | `minimax-m2.7` | `P16` 学习者画像建模 | CLM | 8.5355 | 8.5355 | 2 | 0.495/0.495 | edubench, pedagogy_benchmark |
-| `minimax-m2.7` | `P17` 个性化教学策略选择 | CLM | 5.5588 | 5.5588 | 10 | 3.57/3.57 | bea2025_tutor, edubench, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mrbench_tutor, pedagogy_benchmark |
-| `minimax-m2.7` | `P18` 适配性解释与反馈生成 | CLM | 6.0845 | 6.0845 | 12 | 3.78/3.78 | bea2025_tutor, edubench, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mrbench_tutor |
+| `minimax-m2.7` | `P17` 个性化教学策略选择 | CLM | 5.2212 | 5.2212 | 11 | 3.96/3.96 | bea2025_tutor, edubench, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mrbench_tutor, pedagogy_benchmark |
+| `minimax-m2.7` | `P18` 适配性解释与反馈生成 | CLM | 5.8764 | 5.8764 | 13 | 3.99/3.99 | bea2025_tutor, edubench, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mrbench_tutor |
 | `minimax-m2.7` | `P20` 教育角色边界判断 | CEG | 5.5216 | 5.5216 | 2 | 0.55/0.55 | eduguard_sata, mrbench_tutor |
 | `minimax-m2.7` | `P21` 学生风险识别 | CEG | 6.934 | 6.934 | 1 | 0.3/0.3 | eduguard_sata |
 | `minimax-m2.7` | `P22` 安全处置选择 | CEG | 6.934 | 6.934 | 1 | 0.35/0.35 | eduguard_sata |
-| `minimax-m3` | `P01` 指令与约束遵循 | SRG | 8.6452 | 8.6452 | 3 | 0.1675/0.0754 | agieval, ceval, mmlu_pro |
+| `minimax-m3` | `P01` 指令与约束遵循 | SRG | 8.6775 | 8.6922 | 4 | 0.295/0.2029 | agieval, ceval, mmlu_pro, p08_abstention |
 
 ## Coverage Notes
 

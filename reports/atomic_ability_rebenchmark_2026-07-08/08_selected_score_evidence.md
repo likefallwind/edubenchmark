@@ -1,13 +1,13 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 182
+Canonical normalized score rows used for P scoring: 188
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
 | `otherbenchmark` | 93 |
-| `repo_eval` | 89 |
+| `repo_eval` | 95 |
 
 ## By Benchmark
 
@@ -28,11 +28,14 @@ Canonical normalized score rows used for P scoring: 182
 | `mathtutorbench_problem_solving` | 4 |
 | `mathtutorbench_scaffolding` | 7 |
 | `mathtutorbench_scaffolding_hard` | 7 |
+| `mathtutorbench_socratic` | 4 |
 | `mathtutorbench_solution_correctness` | 5 |
 | `mathvista` | 1 |
 | `mmlu_pro` | 5 |
 | `mrbench_tutor` | 3 |
 | `olympiadbench` | 2 |
+| `p08_abstention` | 1 |
+| `p08_calibration` | 1 |
 | `pedagogy_benchmark` | 7 |
 | `sas_bench` | 18 |
 | `tutorbench` | 6 |
@@ -82,6 +85,7 @@ Canonical normalized score rows used for P scoring: 182
 | `mathtutorbench_pedagogy_hard` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.8659 | 8.6590 | `reports/eval/mathtutorbench_pedagogy_hard/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_scaffolding` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.5547 | 5.5470 | `reports/eval/mathtutorbench_scaffolding/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_scaffolding_hard` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.4121 | 4.1210 | `reports/eval/mathtutorbench_scaffolding_hard/deepseek-v4-pro/summary.json` |
+| `mathtutorbench_socratic` | `deepseek-v4-pro` | `bleu_0_to_1` | 0.2838 | 2.8380 | `reports/eval/mathtutorbench_socratic/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_solution_correctness` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.8621 | 8.6210 | `reports/eval/mathtutorbench_solution_correctness/deepseek-v4-pro/summary.json` |
 | `mmlu_pro` | `deepseek-v4-pro` | `accuracy` | 0.8740851630073186 | 8.7409 | `reports/eval/mmlu_pro/deepseek-v4-pro/summary.json` |
 | `olympiadbench` | `deepseek-v4-pro` | `accuracy` | 0.7361256544502618 | 7.3613 | `reports/eval/olympiadbench/deepseek-v4-pro/summary.json` |
@@ -120,6 +124,5 @@ Canonical normalized score rows used for P scoring: 182
 | `edubench` | `glm-5.1` | `mean_0_to_10` | 6.178 | 6.1780 | `otherbenchmark/edubench-0625.md` |
 | `eduguard_adversarial` | `glm-5.1` | `asr_0_to_1_lower_better` | 0.0492 | 9.5080 | `reports/eval/eduguard_adversarial/_judge-deepseek-v3.2/glm-5.1/summary.json` |
 | `eduguard_sata` | `glm-5.1` | `rfs_0_to_1` | 0.7632 | 7.6320 | `reports/eval/eduguard_sata/glm-5.1/summary.json` |
-| `pedagogy_benchmark` | `glm-5.1` | `accuracy_percent` | 87.67 | 8.7670 | `otherbenchmark/rebenchmark-summary-0701.html` |
 
 Full selected rows are in `08_selected_score_evidence.jsonl`.

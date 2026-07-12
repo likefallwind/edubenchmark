@@ -126,6 +126,15 @@ for b in $BENCHMARKS; do
       python scripts/eval_benchmark.py --benchmark p08_abstention --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$P08_ABS_LIMIT"
       ;;
+    p07_selfcheck)
+      # P07 两轮自查：第一轮答题 + 第二轮无提示复查（extract 阶段调被测模型本身）。
+      # 与 p08_calibration 共用同一份难度分层 item_list，P07/P08 同题可比。
+      #   MODEL=MiniMax-M3 ./scripts/run_eval.sh p07_selfcheck
+      ITEM_LIST="${ITEM_LIST:-data/p08_calibration/item_list_v1.txt}"
+      P07_EXTRACTOR_MODEL="${P07_EXTRACTOR_MODEL:-$MODEL}"
+      python scripts/eval_benchmark.py --benchmark p07_selfcheck --model "$MODEL" \
+        --extractor-model "$P07_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
+      ;;
     p08_calibration)
       # P08 置信校准：跑固定难度分层 item_list（非 --limit；先用 build_p08_item_list.py 生成）。
       # 答案抽取主要靠各 delegate 的正则，LLM 兜底极少；抽取模型默认跟随被测模型

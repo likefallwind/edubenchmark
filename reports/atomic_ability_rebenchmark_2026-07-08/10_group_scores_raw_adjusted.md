@@ -13,7 +13,7 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from currently covered P ab
 | `deepseek-v4-flash` | LAD | 7.6053 | 7.6053 | 4 | P11, P12, P13, P14 |
 | `deepseek-v4-flash` | SRG | 8.0177 | 8.0177 | 2 | P01, P02 |
 | `deepseek-v4-pro` | CEG | 5.713 | 5.713 | 3 | P20, P21, P22 |
-| `deepseek-v4-pro` | CLM | 7.8126 | 7.8126 | 3 | P16, P17, P18 |
+| `deepseek-v4-pro` | CLM | 7.5415 | 7.5415 | 3 | P16, P17, P18 |
 | `deepseek-v4-pro` | FDR | 8.1662 | 8.1002 | 3 | P05, P06, P07 |
 | `deepseek-v4-pro` | LAD | 7.6249 | 7.6249 | 4 | P11, P12, P13, P14 |
 | `deepseek-v4-pro` | SRG | 7.9516 | 7.9516 | 3 | P01, P02, P03 |
@@ -30,7 +30,7 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from currently covered P ab
 | `glm-5.1` | LAD | 7.1476 | 7.1476 | 3 | P12, P13, P14 |
 | `glm-5.1` | SRG | 7.2757 | 7.2757 | 1 | P02 |
 | `glm-5.2` | CEG | 7.0959 | 7.0959 | 3 | P20, P21, P22 |
-| `glm-5.2` | CLM | 6.6083 | 6.6083 | 2 | P17, P18 |
+| `glm-5.2` | CLM | 6.2054 | 6.2054 | 2 | P17, P18 |
 | `glm-5.2` | FDR | 8.9333 | 8.8035 | 3 | P05, P06, P07 |
 | `glm-5.2` | LAD | 8.2339 | 8.2339 | 3 | P11, P12, P13 |
 | `glm-5.2` | SRG | 8.7145 | 8.7145 | 2 | P01, P02 |
@@ -49,15 +49,15 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from currently covered P ab
 | `kimi-k2-7-code` | FDR | 7.1796 | 7.1796 | 1 | P10 |
 | `kimi-k2-7-code` | SRG | 7.1796 | 7.1796 | 1 | P03 |
 | `minimax-m2.7` | CEG | 6.4632 | 6.4632 | 3 | P20, P21, P22 |
-| `minimax-m2.7` | CLM | 6.7263 | 6.7263 | 3 | P16, P17, P18 |
+| `minimax-m2.7` | CLM | 6.5444 | 6.5444 | 3 | P16, P17, P18 |
 | `minimax-m2.7` | FDR | 8.0924 | 7.9414 | 3 | P05, P06, P07 |
 | `minimax-m2.7` | LAD | 7.2835 | 7.2835 | 4 | P11, P12, P13, P14 |
 | `minimax-m2.7` | SRG | 7.8136 | 7.8136 | 2 | P01, P02 |
 | `minimax-m3` | CEG | 8.1085 | 8.1085 | 3 | P20, P21, P22 |
-| `minimax-m3` | CLM | 7.2349 | 7.2349 | 3 | P16, P17, P18 |
-| `minimax-m3` | FDR | 7.8796 | 7.8226 | 4 | P05, P06, P07, P10 |
+| `minimax-m3` | CLM | 7.0778 | 7.0778 | 3 | P16, P17, P18 |
+| `minimax-m3` | FDR | 7.6543 | 7.6051 | 5 | P05, P06, P07, P08, P10 |
 | `minimax-m3` | LAD | 7.8836 | 7.8836 | 4 | P11, P12, P13, P14 |
-| `minimax-m3` | SRG | 7.8251 | 7.8148 | 3 | P01, P02, P03 |
+| `minimax-m3` | SRG | 7.8358 | 7.8304 | 3 | P01, P02, P03 |
 | `qwen3-14b` | CLM | 7.639 | 7.639 | 3 | P16, P17, P18 |
 | `qwen3-14b` | FDR | 7.3068 | 7.3068 | 2 | P05, P06 |
 | `qwen3-5-122b-a10b` | CLM | 8.3071 | 8.3071 | 3 | P16, P17, P18 |

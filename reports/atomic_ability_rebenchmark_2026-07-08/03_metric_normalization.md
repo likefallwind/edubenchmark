@@ -18,6 +18,7 @@ All benchmark-native metrics are first normalized to a 0-10 scale.
 | `accuracy_or_f1` | higher_better | `prefer official f1/accuracy in extra_metrics when present; else accuracy * 10` |
 | `win_rate_or_accuracy` | higher_better | `prefer win_rate/strict_win_rate when present; else accuracy * 10` |
 | `share_0_to_1` | higher_better | `score_10 = share * 10` |
+| `bleu_0_to_1` | higher_better | `score_10 = bleu * 10 (absolute level is low by construction; rank information only)` |
 | `composite_0_to_10` | higher_better | `score_10 = raw (adapter already emits a 0-10 headline, e.g. P08 calibration/abstention)` |
 | `legacy_axis_0_to_100` | higher_better | `score_10 = raw / 10; context only, not used for P scoring` |
 
