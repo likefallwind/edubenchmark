@@ -1,7 +1,9 @@
-# 映射效度体检报告（13 号）
+# 映射效度检查报告（13 号）
 
 生成脚本：`scripts/build_mapping_validation.py`（幂等）；测量模型：`data/mapping_measurement_model_v1.json`（reviewed）。
 规则见 `doc/mapping_validation_plan_2026-07-11.md` §2；ρ 一律与 n、90% CI 同格呈现，n<5 的配对只进低置信附录。
+
+覆盖缺口（无任何 benchmark 映射，不参与本报告分析）：P04 复杂多模态理解、P09 工具使用与长程智能体执行、P15 学术诚信与作答真实性判定、P19 学习路径规划。
 
 ## Phase 0：天花板/方差受限名单
 

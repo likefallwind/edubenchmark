@@ -1,186 +1,230 @@
 # 映射效度验证计划 v2（2026-07-11）
 
-状态：已评审定稿（v2 合并了"测量模型声明 + 信度/天花板体检 + 稳健性分析"三块扩展；v1 见 git 历史）
+状态：v2 定稿；**M0、M1 已于 2026-07-11 完成**（产出见 §5），M2 等 edubench 原始数据到位。
 关联：`reports/atomic_ability_rebenchmark_2026-07-08/02_benchmark_ability_mapping.jsonl`（被验证对象）、`08_selected_score_evidence.jsonl`（数据来源）、`data/mapping_measurement_model_v1.json`（测量模型声明）、`doc/atomic_ability_principle_audit_v3.md`
 
 ## 0. 背景与问题
 
-当前 benchmark → P01-P22 的映射权重（如 edubench PLS → P16 0.30 / P17 0.45 / P18 0.25）全部是专家先验，从未被数据检验。聚合层默认"映射到同一 P 的两个 benchmark 在测同一构念"，若该假设不成立，P 分就是把不相关的量平均，雷达图会给出貌似精确、实则错误的结论。
+当前 benchmark → P01-P22 的映射权重（如 edubench PLS → P16 0.30 / P17 0.45 / P18 0.25）全部来自专家判断，从未被数据检验过。聚合时默认"映射到同一 P 的两个 benchmark 在测同一个东西"，如果这个假设不成立，P 分就是把不相关的量平均，雷达图会给出看着精确、实际错误的结论。
 
-**2026-07-11 的 pilot 分析已经证明问题真实存在。** 用现有 181 行证据（20 模型 × 23 个 benchmark/subdimension）对 63 对"共享同一 P（双方权重 ≥0.2）且共同模型 ≥5"的配对计算跨模型 Spearman 秩相关，发现：
+**2026-07-11 的 pilot 分析证明问题真实存在。** 用现有 181 行证据（20 模型 × 23 个 benchmark/subdimension），对 63 对"共享同一 P（双方权重 ≥0.2）且共同模型 ≥5"的配对计算跨模型 Spearman 秩相关，发现：
 
 | 发现 | 证据 | 严重度 |
 |---|---|---|
-| eduguard_sata × eduguard_adversarial 相关 **ρ=+0.07**（n=7），却共同构成 P20/P21/P22 全部证据 | 两个安全测验测的是不相关的东西（规则判分的"知道什么有害" vs 越狱鲁棒性），CEG 组分是两个独立性质的平均 | 高 |
+| eduguard_sata × eduguard_adversarial 相关 **ρ=+0.07**（n=7），却共同构成 P20/P21/P22 的全部证据 | 两个安全测验测的是不相关的东西（规则判分的"知道什么有害" vs 越狱鲁棒性），CEG 组分是两个独立性质的平均 | 高 |
 | edubench IP × pedagogy_benchmark 聚合 **ρ=−0.90**（n=5），共享 P17/P05 | 教学知识选择题与裁判打分的教学行为**排名相反** | 高 |
-| edubench 家族内两两 ρ=+0.50~+0.97，但与所有外部 benchmark 为零或负相关（TMG × scaffolding −0.26 等） | 典型方法方差：edubench 分数里裁判风格偏好成分大；且 edubench 占证据行 55/181，系统性推动 CLM 分 | 高 |
-| agieval × ceval × mmlu_pro 相互 ρ=+0.90~+1.00 | 三个门槛完全冗余，新模型只需跑一个 | 中（省钱机会） |
-| mathtutorbench_mistake_correction 与 mmlu/agieval ρ=0.90~1.00，全模型均分 9.02 | 它实际表现为门槛题，education_core tier 存疑 | 中 |
+| edubench 家族内两两 ρ=+0.50~+0.97，但与所有外部 benchmark 是零或负相关（TMG × scaffolding −0.26 等） | 典型的方法方差：edubench 分数里裁判风格偏好成分大；且 edubench 占证据行 55/181，系统性影响 CLM 分 | 高 |
+| agieval × ceval × mmlu_pro 相互 ρ=+0.90~+1.00 | 三个基础答题测验完全冗余，新模型只需跑一个 | 中（省钱机会） |
+| mathtutorbench_mistake_correction 与 mmlu/agieval ρ=0.90~1.00，全模型平均分 9.02 | 它实际表现和基础答题题一样，education_core 定位存疑 | 中 |
 
-**注意局限**：n=5-7 时 Spearman 置信区间很宽（n=5 时 |ρ|<0.9 不显著）。上表是红旗探测结果，不是精确估计；本计划要做的就是把这个一次性 pilot 变成可重复、有统计纪律、能驱动映射修订的流水线。
+**注意局限**：n=5-7 时 Spearman 置信区间很宽（n=5 时 |ρ|<0.9 都不显著）。上表是用来发现可疑点的，不是精确估计；本计划要做的就是把这个一次性 pilot 变成可重复、有统计纪律、能驱动映射修订的流程。
 
 ### 0.1 v2 新增的两个核心认识
 
-**(a) 问题的本质是聚合结构，不只是权重数值。** v1 把问题当作"哪些 P×benchmark 格子的权重错了"；真正要回答的是"每个 P 的聚合结构本身该是什么"。这对应测量理论的经典区分：
+**(a) 问题的本质是聚合结构，不只是权重数值。** v1 把问题当成"哪些 P×benchmark 格子的权重错了"；真正要回答的是"每个 P 的聚合结构本身应该是什么"。这对应测量理论里的经典区分：
 
-- **反映型（reflective）构念**：映射到该 P 的 benchmark 是同一潜在能力的可互换指标，理应高相关。此时平均合法、剪冗余合法，低相关是红旗。
-- **形成型（formative）构念**：该 P 本身由几个不同小方向（facet）"拼"成，指标之间**本来就不必相关**。此时低相关不是问题，但简单加权平均是在构造一个没人测过的量——正确做法是把 facet 作为一等公民分开呈现，聚合只发生在展示层且权重需明说依据。
+- **反映型（reflective）**：映射到该 P 的几个 benchmark 是同一能力的可互换指标，理应高相关。这种情况下取平均是合理的，删掉冗余的也是合理的，低相关是问题信号。
+- **形成型（formative）**：该 P 本身由几个不同的小方向（facet）组合而成，指标之间**本来就不需要相关**。这种情况下低相关不是问题，但简单加权平均等于在构造一个没人测过的量——正确做法是把 facet 分开呈现，聚合只在展示层做，权重要写明依据。
 
-同一个相关系数，结论完全取决于事先声明的测量模型（eduguard 两项 ρ=0.07：若 P20-22 是反映型这是灾难，若安全本来就是"知识+鲁棒"两 facet 的形成型复合则完全正常）。**声明必须先于看数据**（预注册式），否则"看到相关低才说它是两个方向"会摧毁全部说服力。
+同一个相关系数，结论完全取决于事先声明的测量模型（eduguard 两项 ρ=0.07：如果 P20-22 是反映型，这说明映射错了；如果安全本来就是"知识 + 鲁棒"两个 facet 组成的，这个数字完全正常）。**声明必须在看数据之前写下来**，否则"看到相关低才说它们本来就是两个方向"这种事后解释会毁掉全部说服力。
 
-**(b) 天花板/信度是被 v1 低估的混杂。** 12 号报告的均分列：ceval 9.11、mathtutorbench_mistake_correction 9.02、edubench 各子维 8.2-8.8、mmlu_pro 8.60——这些格子在当前模型上方差已被压扁，秩相关在方差受限数据上基本是噪声。edubench × pedagogy 的 ρ=−0.90（n=5）很可能不是"知识≠行为"，而是两个天花板附近的量在比噪声。两个 benchmark 的可观测相关上限是 √(r₁₁·r₂₂)；不先做信度/天花板体检，很多 flagged 是冤案。
+**(b) 分数拉不开是被 v1 低估的干扰因素。** 12 号报告的平均分列：ceval 9.11、mathtutorbench_mistake_correction 9.02、edubench 各子维 8.2-8.8、mmlu_pro 8.60——这些 benchmark 上所有模型的分数挤在一起，模型排名基本是随机抖动，用这种排名算出的相关系数没有意义。edubench × pedagogy 的 ρ=−0.90（n=5）很可能不是"知识≠行为"，而是两个都接近满分的量在比噪声。两个 benchmark 之间可观测的相关上限是 √(r₁₁·r₂₂)（各自信度的几何平均）；不先做这一步检查，很多被标记的配对其实是误判。
 
 ## 1. 目标
 
-1. 建立幂等的"映射体检"构建脚本，随每次 rebenchmark 重跑自动出报告；
-2. **测量模型声明先行**：每个 P 事先声明 reflective / formative（含 facet 划分），数据只用来证伪预期，不允许事后编结构；
+1. 建立幂等的映射效度检查脚本，每次 rebenchmark 重跑时自动出报告；
+2. **测量模型声明先行**：每个 P 事先声明 reflective / formative（含 facet 划分），数据只用来检验预期，不允许看完数据再编结构；
 3. 给每个进入主计分层的 P×benchmark 格子一个**效度评级**（validated / provisional / watch / flagged / variance_restricted / insufficient_evidence），并在最终 HTML 报告中可视化；
-4. 对已发现的红旗做专项裁决实验（换裁判重判），区分"构念真不同"与"裁判偏差"与"天花板噪声"；
-5. 产出映射表 v2：从 `benchmark→P` 升级为 **`benchmark→facet→P` 两级**，有数据依据的权重修订、格子拆分、tier 调整，全部记录修订理由与前后对比；
-6. 最终报告附**权重扰动下的排名稳健性分析**，把"客观、有说服力"落到可审计证据上。
+4. 对已发现的可疑配对做专项实验（换裁判重判），区分"测的东西真不同"、"裁判偏差"和"分数拉不开导致的噪声"；
+5. 产出映射表 v2：从 `benchmark→P` 升级为 **`benchmark→facet→P` 两级**，权重修订、格子拆分、tier 调整都要有数据依据，记录修订理由和前后对比；
+6. 最终报告附**权重扰动下的排名稳定性分析**，让"客观、有说服力"有可检查的证据。
 
 ## 2. 方法设计
 
-### 2.0 Phase 0：信度与天花板体检（一切相关分析的前置过滤器）
+### 2.0 Phase 0：分数区分度与信度检查【已完成】
+
+这是所有相关性分析的前置过滤。含义：如果一个 benchmark 上所有模型的分数挤在一起，模型排名就没有信息量，它算出的相关系数一律不作数。
 
 对每个 (benchmark_id, subdimension) 格子，用现有证据零成本计算：
 
-- 跨模型 n、mean、SD、min、max（score_10 口径）；
-- **`variance_restricted` 标记**：mean ≥ 8.5 或（n ≥ 4 且 SD < 0.5）→ 该格子参与的配对 ρ 不进入裁决依据（单独列出，标注原因）；floor 同理（mean ≤ 1.5）；
-- 信度分层补充（后续增量）：规则判分 benchmark 用题目层 split-half（现有 scored.jsonl 可算）；LLM 判分 benchmark 的判一致性并入 2.5 换裁判实验。
+- 跨模型的 n、平均分、标准差、最小值、最大值（score_10，0-10 制）；
+- **`variance_restricted` 标记**：平均分 ≥ 8.5（接近满分）或（n ≥ 4 且标准差 < 0.5，分数挤在一起）→ 该格子参与的配对不进入裁决，单独列出并注明原因；平均分 ≤ 1.5 同理（接近零分）；
+- 信度补充（后续增量）：规则判分的 benchmark 可以用题目层 split-half 信度（现有 scored.jsonl 能算）；LLM 判分的 benchmark 的裁判一致性并入 2.5 的换裁判实验。
 
-### 2.1 Phase 1：测量模型声明（预注册）
+**首次运行结果（2026-07-11）**：29 个有证据的格子里 16 个被标记 variance_restricted——分数拉不开比映射错配更严重，是当前最大的问题。
 
-`data/mapping_measurement_model_v1.json`：对映射中出现的每个 P 声明——
+### 2.1 Phase 1：测量模型声明【已完成】
 
-- `model_type`: `reflective` | `formative`；
+`data/mapping_measurement_model_v1.json`：对全部 22 个 P 声明——
+
+- `model_type`: `reflective` | `formative`；无任何 benchmark 映射的 P（P04/P09/P15/P19）标 `coverage_gap`；
 - formative 的 P 给出 facet 划分，映射中每个格子归属一个 facet；
-- `rationale` 与 `status`（draft_pending_review → reviewed）。
+- `rationale` 与 `status`。
 
-该文件是**人工判断产物**（先于相关数据固化、进版本库），13 号流水线消费它来决定每对配对的预期模式：
+该文件是**人工判断的产物**，在计算配对相关之前写定并进版本库，之后数据只能用来检验预期，不能反过来改结构（改动需带修订理由）。检查脚本读它来决定每对配对的预期：
 
-- 同 P 且（reflective 或 同 facet）→ `expect_convergent`：低相关是红旗；
-- 同 P 但 formative 且跨 facet → `facet_distinct_expected`：ρ 只作信息呈现，不触发 flagged。
+- 同 P 且（reflective 或同 facet）→ `expect_convergent`：低相关是问题信号；
+- 同 P 但 formative 且跨 facet → `facet_distinct_expected`：ρ 只作参考信息，不触发 flagged。
 
-映射表 v2 相应从 `benchmark→P` 变为 `benchmark→facet→P` 两级：facet 内按反映型聚合（可平均、可剪冗余），facet→P 只做展示层复合（权重承认是价值判断并写明依据），雷达图支持下钻到 facet 层。
+映射表 v2 相应从 `benchmark→P` 变为 `benchmark→facet→P` 两级：facet 内部按反映型处理（可平均、可删冗余），facet 到 P 只做展示层组合（权重是价值判断，要写明依据），雷达图支持下钻到 facet 层。
 
-### 2.2 数据准备
+**已声明的 formative P 及其 facet**：P05（学科知识 / 教学专业知识 / 生成中的知识运用）、P06（解题推理 / 生成与归因推理）、P08（校准 / 弃答）、P16（画像知识 / 画像应用）、P17（策略知识 / 策略执行）、P18（对话式反馈 / 教学产物生成）、P20-P22（安全知识 / 对抗鲁棒）。
 
-- 输入：`08_selected_score_evidence.jsonl`（canonical 行，已去重）。
-- 构建 model_key × (benchmark_id, subdimension) 矩阵；同格多行（同模型多 run）取均值并记入 flag。
-- 配对纳入条件：双方在同一 P 上映射权重均 ≥ 0.2；共同模型数 n ≥ 5。n ∈ [3,5) 的配对单独列"低置信附录"，只呈现不参与评级。
-- 家族定义：`mathtutorbench_*` → mathtutorbench，`eduguard_*` → eduguard，`p08_*` → p08，`bea2025_*` → bea2025，`mrbench_*` → mrbench，其余 = benchmark_id；同 benchmark 不同 subdimension 视为同家族。
+### 2.2 数据准备【已完成，实现于检查脚本】
 
-### 2.3 聚合效度（convergent validity）
+- 输入：`08_selected_score_evidence.jsonl`（去重后的 canonical 行）。
+- 构建 model_key × (benchmark_id, subdimension) 矩阵；同一格子同一模型有多次运行的取平均并记录标记。
+- 配对纳入条件：双方在同一 P 上映射权重均 ≥ 0.2；共同模型数 n ≥ 5。n 在 3-4 的配对单独列"低置信附录"，只呈现不评级。
+- 家族定义：`mathtutorbench_*` 归 mathtutorbench，`eduguard_*` 归 eduguard，`p08_*`、`bea2025_*`、`mrbench_*` 同理，其余以 benchmark_id 为家族；同一 benchmark 的不同 subdimension 算同家族。
 
-同 P 配对的跨模型 Spearman ρ，按两层分别汇报：
+### 2.3 聚合效度（convergent validity）【已完成，实现于检查脚本】
 
-- **跨家族配对**（不同 benchmark 家族，如 edubench × mathtutorbench）：这是真正的聚合效度证据——不同仪器、不同判分方式对同一构念应给出一致排名；
-- **同家族配对**（如 edubench 五个子维度之间）：高相关不能证明构念效度（可能是共享裁判/格式的 halo），只作方法方差诊断用（见 2.5）。
+同 P 配对的跨模型 Spearman ρ，分两层汇报：
 
-小样本统计纪律：
+- **跨家族配对**（如 edubench × mathtutorbench）：这才是真正的效度证据——不同工具、不同判分方式对同一能力应给出一致的模型排名；
+- **同家族配对**（如 edubench 五个子维度之间）：高相关证明不了什么（可能只是共用同一个裁判、同一种格式），只用于方法方差诊断（见 2.5）。
 
-- 每对给 permutation p 值（n≤8 时精确置换，否则 Monte Carlo）与 bootstrap 90% CI；
-- 报告中 ρ 一律与 n、CI 同格呈现，禁止裸 ρ；
-- 结论以"红旗/非红旗"二值为主，不做 ρ 数值间的精细排序。
+小样本的统计纪律：
 
-### 2.4 区分效度（discriminant validity）
+- 每对给 permutation p 值（n≤8 用精确枚举，更大用 Monte Carlo）和 bootstrap 90% 置信区间；
+- 报告中 ρ 必须和 n、置信区间一起呈现，不允许只报一个 ρ；
+- 结论以"有问题/没问题"二分为主，不对 ρ 数值做精细排序。
 
-聚合效度的对照组：**不共享任何 P** 的跨家族配对的 ρ 分布作为 baseline。若 `expect_convergent` 跨家族配对的 ρ 分布不显著高于 baseline，说明映射的 P 划分对"哪些 benchmark 相关"没有预测力——整个映射层需要重审而不只是个别格子。
+### 2.4 区分效度（discriminant validity）【已完成，实现于检查脚本】
 
-已知干扰：模型综合质量是所有 benchmark 的共因子，会整体抬高 baseline。对策：对每个模型先算其全部 score_10 的均值（"综合分"），配对相关改用**控制综合分的偏秩相关**作为敏感性分析，与原始 ρ 并列呈现。两者结论一致才算稳。
+给聚合效度找对照组：**不共享任何 P** 的跨家族配对的 ρ 分布作为基线。如果"同 P 且预期收敛"的配对的 ρ 并不比基线高，说明 P 的划分对"哪些 benchmark 相关"没有预测力——那就不是改个别格子的事，整个映射层要重新审。
 
-### 2.5 方法方差（method halo）诊断
+已知干扰：模型综合实力是所有 benchmark 的共同因素，会整体抬高基线。对策：先算每个模型在全部证据上的平均分（"综合分"），再算控制综合分之后的偏秩相关，与原始 ρ 并排呈现，两者结论一致才算稳。
 
-- 指标：每个 benchmark 家族的 `家族内平均 ρ − 跨家族平均 ρ` = halo 分。halo 分高说明该家族的分数主要由共享的方法成分（同一裁判、同一题面格式、同一 likert 习惯）驱动。
-- pilot 已知 edubench 是最大嫌疑（家族内 0.5~0.97 vs 跨家族 ≤0，且证据行占比 30%）。
+**首次运行结果**：可评级的收敛配对平均 ρ=−0.03，基线平均 ρ=−0.26，差值方向对但不显著（p=0.19）——在补模型、换更难题目之前，现有证据还撑不起"P 划分有预测力"的结论，报告里已如实写明。
 
-**专项裁决实验（换裁判重判）**：这是本计划里唯一需要花 API 钱的部分。
+### 2.5 方法方差诊断与换裁判实验【halo 诊断已完成；实验等数据】
 
-1. 从 edubench 已有 predictions 中抽 50 条 response × 5 个子维度（response 已存在，**不需重新生成**，只重新判分）；
-2. 用第二裁判 **deepseek-v4-pro**（已定，见 §6）按同一 rubric 重判；预算允许再加 glm 第三票（500 次调用翻倍仍可忽略）；
-3. 计算裁判间一致性（Spearman + 加权 kappa）：
-   - 一致性高 → edubench 分数是稳定构念，跨家族负相关说明它测的东西真的不同 → 改映射（降低其 P17/P18 权重，或单列 facet）；
-   - 一致性低 → 裁判方差主导 → 进入 `doc/judge_research_plan_2026-07-06.md` 的裁判治理轨道（换裁判/多裁判 jury/降 default weight）。
-4. 同样的 50×2 协议对 eduguard_adversarial（LLM 判的那半）可选复用。
+- 指标：每个 benchmark 家族的"家族内平均 ρ − 跨家族平均 ρ"，记为 halo 分。halo 分高说明该家族的分数主要由共同的方法成分（同一裁判、同一题面格式）驱动，而不是被测能力。
+- **首次运行结果**：edubench halo=0.76、sas_bench halo=0.77，都超过 0.5 的阈值，两个家族都触发"家族内先合并为一个分数再进 P 聚合"的规则（见 2.6）。
 
-成本：50 × 5 × 2 裁判 ≈ 500 次判分调用，国内模型，可忽略。
+**换裁判重判实验**：本计划里唯一要花 API 钱的部分。
 
-### 2.6 决策规则（映射修订的触发条件）
+前提：edubench 原始跑分产物（3797 样本 × 11 模型的 responses，产出了 `otherbenchmark/edubench-0625.md`）不在本机，**由用户向跑分同事索取后放到本地**（建议放 `otherbenchmark/edubench_raw/`，格式不限，拿到后按实际格式写读取层）。
 
-评级只对**跨家族、expect_convergent、双方均非 variance_restricted、n ≥ 5** 的配对进行：
+1. 从已有 responses 中抽 50 条 × 5 个任务（IP/PCC/PLS/QG/TMG），**不重新生成**，只重新判分；
+2. 用第二裁判 **deepseek-v4-pro** 按同一 rubric 重判（预算允许加 glm 第三票）；
+3. 计算裁判间一致性（response 级 Spearman + 加权 kappa）：
+   - 一致性高 → edubench 分数是稳定的测量，跨家族低相关说明它测的东西确实不同 → 改映射（降 P17/P18 权重或单列 facet）；
+   - 一致性低 → 裁判方差主导 → 转入 `doc/judge_research_plan_2026-07-06.md` 的裁判治理路线（换裁判 / 多裁判 jury / 降权）；
+4. 同样的双裁判流程可以先在 eduguard_adversarial 上跑通（predictions 本地现成），验证代码后再上 edubench。
+
+成本：50 × 5 × 2 裁判 ≈ 500 次判分调用，国内模型，很便宜。如果数据最终拿不到，备选方案是本地小规模复跑（官方题库抽题 + 本机模型重新生成 + 双裁判，约 1750 次生成 + 3500 次判分），但优先等数据。
+
+### 2.6 决策规则（映射修订的触发条件）【已实现于检查脚本】
+
+评级只针对**跨家族、预期收敛、双方分数拉得开、n ≥ 5** 的配对：
 
 | 观测 | 动作 |
 |---|---|
-| ρ ≥ 0.5 且 CI 下界 > 0 | 该配对标 **validated** |
-| ρ < 0 且 n ≥ 6 | 标 **flagged**，触发人工裁决，四选一：改权重 / 拆 facet / 降 tier / 判定裁判问题转 2.5 |
-| 0 ≤ ρ < 0.2 且 n ≥ 8 | 标 **watch**（防 flagged 通胀的观察带） |
-| 其余（含 CI 跨 0） | 标 **provisional**，等模型数增加（与预算计划联动：每新增一个模型跑区分层，关键配对 n+1） |
-| 任一侧 variance_restricted | 标 **variance_restricted**，不进入裁决；优先动作是给该 benchmark 上难度/换切分而非改映射 |
-| 同家族 halo 分 > 0.5 | 该家族多子维度在 P 聚合前先做**家族内聚合成一票**（防止一个裁判的偏好以 5 票进入 P 分） |
+| ρ ≥ 0.5 且置信区间下界 > 0 | 标 **validated** |
+| ρ < 0 且 n ≥ 6 | 标 **flagged**，触发人工裁决，四选一：改权重 / 拆 facet / 降 tier / 判定为裁判问题转 2.5 |
+| 0 ≤ ρ < 0.2 且 n ≥ 8 | 标 **watch**（观察，防止 flagged 过多） |
+| 其余（含置信区间跨 0） | 标 **provisional**，等模型数增加后自动升降级 |
+| 任一侧 variance_restricted | 标 **variance_restricted**，不进入裁决；对这类 benchmark 该做的是换更难的题目或更细的切分，不是改映射 |
+| 家族 halo 分 > 0.5 | 该家族的多个子维度先合并为一个分数再进 P 聚合（避免同一个裁判的偏好被重复计入多次） |
 
-格子（P×benchmark）评级 = 其参与的合格配对评级的汇总（有 validated 取 validated；全 flagged 取 flagged；无合格配对 = insufficient_evidence；孤证 P = single_source）。
+格子（P×benchmark）评级 = 它参与的合格配对评级的汇总（有 validated 取 validated；全是 flagged 取 flagged；没有合格配对 = insufficient_evidence；某 P 只有一个来源 = single_source）。
 
-所有修订写入映射表 v2 时必须带 `revision_rationale` 字段：引用配对 ρ/n/CI，禁止无数据的权重微调。
+所有修订写入映射表 v2 时必须带 `revision_rationale` 字段，引用配对的 ρ/n/置信区间；不允许没有数据依据的权重微调。
 
-### 2.7 冗余剪枝与组合的裁决标准（对应"情况 1"）
+### 2.7 冗余处理标准（"几个 benchmark 高度相关时留谁"）
 
-- **规则判分的门槛类**（agieval/ceval/mmlu_pro，ρ≈1）：留 mmlu_pro 一个；**ceval 改触发式保留**——遇中文优先模型才跑（ρ≈1 只在当前 5 个模型上成立，不保证对中文特化模型成立，且中文覆盖本身是说服力的一部分）；
-- **LLM 判分的核心教学类**：即使强相关也保留两个而非一个——组合能对冲单一裁判的特异性，这是它们与门槛类的本质区别。
+- **规则判分的基础答题类**（agieval/ceval/mmlu_pro，相互 ρ≈1）：留 mmlu_pro 一个；**ceval 改为按需保留**——遇到中文优先的模型才跑（ρ≈1 只在当前 5 个模型上成立，对中文特化模型未必成立，而且中文覆盖本身对评测的公信力有价值）；
+- **LLM 判分的核心教学类**：即使高度相关也保留两个而不是一个——两个不同来源可以抵消单一裁判的个人偏好，这是它们和规则判分类的本质区别。
 
-### 2.8 排名稳健性分析（Phase 4，说服力兜底）
+### 2.8 排名稳定性分析（Phase 4）
 
-映射 v2 重聚合后，对每个 P/facet 的展示层权重做 ±50% 扰动（含随机重抽权重），报告模型排名的 Kendall τ 稳定性分布：
+映射 v2 重新聚合后，对每个 P/facet 的展示层权重做 ±50% 扰动（含随机重抽权重），报告模型排名的 Kendall τ 稳定性分布：
 
-- 结论对权重不敏感 → "权重是拍脑袋的"这一最常见质疑失效；
-- 敏感 → 精确暴露哪些格子必须补数据，反馈给预算计划。
+- 如果结论对权重不敏感 → "你的权重是拍脑袋定的"这一最常见质疑就不成立了；
+- 如果敏感 → 正好暴露哪些格子必须补数据，反馈给预算计划。
 
-## 3. 工程实现
+### 2.9 逐 P 构念核对（benchmark 原生维度对照）【已完成】
 
-新脚本 `scripts/build_mapping_validation.py`，遵循仓库"generate → emit → report"幂等惯例：
+相关分析靠数据发现"挂错了的格子"，但当前数据分不出来（天花板 + 模型少）。这一步改用定义层面的核对补位：**每个有映射的 P 一张表，逐格子对照 P 的定义和 benchmark 官方对这个分数的定义**，判断是"一致 / 部分相关 / 搭车 / 不该挂"，并检查有没有原生细维度分数可以替换复合分。不花 API，产出直接作为 M3 裁决输入。
 
-- **输入**：`08_selected_score_evidence.jsonl` + `02_benchmark_ability_mapping.jsonl` + `data/mapping_measurement_model_v1.json`（路径参数化，默认指向最新 rebenchmark 目录）；
+完整核对表见 **`doc/p_construct_review_2026-07-11.md`**（18 个有映射的 P 全覆盖）。主要发现：
+
+- **真正干净的多源 P 只有 P12 和 P08**；P13/P14 按建议修订后可达到同等程度。
+- **P01/P02/P07 是隐性覆盖缺口**：所有格子都是搭车成分，没有直接测量，但因为有分数而看起来被测过了。P11 实际只有一个计分格子，接近孤证。
+- **复合分混入无关方差**：bea2025_tutor / mrbench_tutor 的 pass rate 是多维复合，只有部分维度和挂载的 P 有关——各维度单独分数在 `extra_metrics` 里现成可换。
+- **EduBench 有 12 个原生评价指标维度**（指令遵循、事实/领域知识准确性、推理严密性、错误识别纠正、个性化适应、动机引导等），逐个和 P 对得上，比 5 个任务的均分对齐得多。按指标维度取分是映射 v2 最大的单项升级，同时能稀释 edubench 的家族 halo。
+- 具体修改建议 R1-R10（8 条数据现成可立即执行，2 条要等数据/核实）列在核对文档第二节。
+
+### 2.10 原子能力细分为子能力【已完成】
+
+§2.9 默认 P 是最小单位，但有些 P 的定义本身就并列了几件可以分开评测的事，挂在同一个 P 下的 benchmark 差异大正是因为各测了其中一件。处理方式：**不新增 P 编号**，把测量模型里的 facet 从"测量来源分组"升级成"子能力声明"——每个 facet 有自己的定义和评测路线，允许 facet 下没有格子（标记为子能力级缺口）。这样"P16 有分"就不再掩盖"P16 四个子能力里三个没测过"。
+
+**拆分准入规则（2026-07-11 修订）**：最初的标准里有"挂载的 benchmark 差异大就可拆"，已撤掉——按 benchmark 的形状划能力，得到的是评测市场的结构而不是能力的结构。修订后只认四个与 benchmark 无关的依据来源：①理论（学习科学文献里划分已确立）②失败机制（子能力能独立失败）③人类专业标准（教师标准/教资大纲/课堂观察量表）④同源数据（同一 benchmark 内部、同批模型同一裁判下指标分离；跨 benchmark 相关不算）。**至少两个来源支持才拆**；子能力定义必须一句话说清且不出现 benchmark 名；benchmark 的存在只回答覆盖问题，永远不构成拆分依据。同源数据的判读不对称：分离是强证据，高相关不构成反证（裁判 halo 会抬高相关）。
+
+细分分析在核对文档（`doc/p_construct_review_2026-07-11.md`）第三节，含全部拆分的四来源依据核对表。按规则回检后的结果：P16 拆 4 个子能力（现有分数只反映其中 1 个）、**P17 从 4 个砍到 2 个**（苏格拉底提问降级为 P17a 的测量来源——它被单列纯粹因为恰好存在 socratic 任务，是"被 benchmark 带偏"的实例；教学指令执行降级为 P01×P17a 混合标注）、P18 拆 4 个（单维度分数全部现成）；P13/P21/P19/P02 记录候选拆法；其余 P 明确不拆及理由。
+
+**同源数据依据第一例**：edubench 12 个评价指标 × 11 模型的指标间 Spearman（同一裁判，无跨 benchmark 混杂）——"错误识别与纠正"与其余指标平均 ρ=−0.15（对"高阶思维"−0.755），错误诊断与生成质量同源强分离；"动机引导"（+0.22）、"个性化适应"（+0.40）是相对独立方向，支持 P18c/P17c；"指令遵循"与知识指标 ρ≈0.96 挤在同一块，故 R13：它不作为 P01 直接测量，P01 走 IFEval。新增建议 R11、R12、R13。
+
+### 2.11 Benchmark 档案与缺口推荐【已完成】
+
+每个主计分 benchmark 一份说明文档，集中回答"这个分数到底在测什么"：出处与动机、数据规模与获取状态、判分方式与原生维度、本仓库用法、区分度实测（13 号数据）、当前映射与核对结论。**`doc/benchmark_profiles/`，17 份 + 索引**。
+
+缺口推荐在 **`doc/benchmark_gap_recommendations_2026-07-11.md`**：按显性缺口（P04/P09/P15/P19）、隐性缺口（P01/P02/P07）、子能力缺口（P16a/b/c 等）逐个给候选和接入成本，候选取自仓库已调研的 78 个 benchmark 库存。优先级前三（socratic 补挂、P07 两轮自查协议、IFEval）约两天工作量。
+
+## 3. 工程实现【已完成】
+
+脚本 `scripts/build_mapping_validation.py`，遵循仓库"generate → emit → report"的幂等惯例：
+
+- **输入**：`08_selected_score_evidence.jsonl` + `02_benchmark_ability_mapping.jsonl` + `data/mapping_measurement_model_v1.json`（路径可配，默认指向最新 rebenchmark 目录）；
 - **输出**（写入同一 rebenchmark 目录，沿用编号惯例）：
-  - `13_mapping_validation_cells.jsonl`：Phase 0 体检——每格子一行（n/mean/SD/variance 标记）；
-  - `13_mapping_validation_pairs.jsonl`：每配对一行（双方 benchmark/subdim、共享 P 及权重、预期模式、家族关系、n、ρ、偏相关 ρ、permutation p、CI、评级）；
-  - `13_mapping_validation.md`：红旗清单 + per-P 效度摘要表 + 家族 halo 表 + 区分效度 baseline 对比 + 天花板名单；
-  - `13_mapping_validation.html`：自包含交互报告——P × benchmark 矩阵热图（格子颜色=评级）、flagged/validated 配对散点图（点=模型）；
-- 纯标准库（Spearman/permutation/bootstrap 手写，pilot 已证明可行；`scripts/eval/stats.py` 的 CI 工具可复用）；
-- `--validate-only` 模式：只校验输入结构与配对数，不重算。
+  - `13_mapping_validation_cells.jsonl`：Phase 0 结果——每格子一行（n / 平均分 / 标准差 / variance 标记）；
+  - `13_mapping_validation_pairs.jsonl`：每配对一行（双方 benchmark/subdim、共享 P 及权重、预期模式、家族关系、n、ρ、偏相关 ρ、permutation p、置信区间、评级）；
+  - `13_mapping_validation.md`：问题配对清单 + 各 P 效度摘要 + 家族 halo 表 + 区分效度基线对比 + 分数拉不开的格子清单；
+  - `13_mapping_validation.html`：自包含报告——P × benchmark 评级热图、关键配对散点图（点=模型）；
+- 纯标准库（Spearman/permutation/bootstrap 手写；`scripts/eval/stats.py` 的置信区间工具可复用）；
+- `--validate-only` 模式只校验输入结构与配对数，不重算（已验证能精确复现 pilot 的 63 对，作为回归基线）。
 
-主 rebenchmark 报告（`11_*.html`）改动（M4 一并做）：雷达图每个 P 维度按其证据格子的最差评级着色/加标记（flagged 的 P 维度必须视觉可辨），并链接到 13 号报告。
+主 rebenchmark 报告（`11_*.html`）的改动放在 M4 一起做：雷达图每个 P 维度按其证据格子的最差评级着色/加标记（flagged 的 P 必须一眼能看出来），并链接到 13 号报告。
 
-## 4. 已知红旗的预定处理方案（M3 人工裁决的默认建议）
+## 4. 已发现问题的预定处理方案（M3 人工裁决时的默认选项）
 
-以下是数据已经支持的修订草案，供裁决时作默认选项，最终以 Phase 0 体检 + 补充数据后的结果为准：
+以下是目前数据支持的修订草案，最终以补充数据后的结果为准。**此外 §2.9 构念核对产出了建议 R1-R10（见 `doc/p_construct_review_2026-07-11.md` 第二节），与本节草案一起进 M3 裁决**：
 
-1. **CEG 按 formative 拆 facet（作为形成型声明的第一个范例，不是特例）**：facet A"安全知识"（SATA），facet B"对抗鲁棒"（adversarial ASR + refusal quality）；P20-22 的分数分 facet 呈现，展示层复合权重写明依据；SATA 主测 P21、adversarial 主测 P22 的权重再定。
-2. **edubench 家族内先聚合**：五个子维度按 rubric 相似度合并为 2 票（内容生成类：PCC/QG/TMG；支持类：IP/PLS）再进 P 分；同时执行 2.5 换裁判实验决定是否进一步降权。
-3. **pedagogy_benchmark 权重重定（降级为"待体检后裁决"）**：ρ=−0.90 在双侧天花板下证据力弱（edubench 均分 8.2-8.8、pedagogy 8.56），先过 Phase 0 体检与换裁判实验，若剔除天花板混杂后负相关仍在，再执行"知识≠行为"修订（P17 下调、P05 上调，定位改为"教学知识门槛"）。
-4. **mathtutorbench_mistake_correction tier 复审**：与门槛类 ρ≈1 且均分 9.02（本身 variance_restricted），建议降为 foundation_gate 或在 portfolio 里降频。
-5. **门槛冗余（可先行执行，不依赖效度裁决）**：主计分保留 mmlu_pro 一个门槛；ceval 转触发式（中文优先模型）；agieval 对新模型降为可选（与预算/跳测方案联动）。
+1. **CEG 按 formative 拆 facet（已写入测量模型声明）**：facet A"安全知识"（SATA），facet B"对抗鲁棒"（adversarial ASR + 拒答质量）；P20-22 的分数分 facet 呈现，组合权重写明依据。
+2. **edubench 家族内先合并**：五个子维度按 rubric 相似度合并为 2 个分数（内容生成类：PCC/QG/TMG；支持类：IP/PLS）再进 P 聚合（halo=0.76 已触发此规则）；同时做 2.5 的换裁判实验决定是否进一步降权。sas_bench（halo=0.77）同样触发。
+3. **pedagogy_benchmark 权重调整——先缓一缓**：ρ=−0.90 的双方都在"分数拉不开"名单里，证据不可靠；等 Phase 0 结论 + 换裁判实验之后，如果排除干扰后负相关还在，再执行"知识≠行为"的修订（P17 下调、P05 上调，定位改为"教学知识门槛"）。
+4. **mathtutorbench_mistake_correction 定位复审**：与基础答题类 ρ≈1 且平均分 9.02（本身分数拉不开），建议降为 foundation_gate 或降低跑的频率。
+5. **基础答题类冗余（可先行执行，不依赖效度结论）**：主计分保留 mmlu_pro 一个；ceval 转为中文优先模型才跑；agieval 对新模型降为可选（与预算/跳测方案联动）。
 
 ## 5. 里程碑与验收
 
-- **M0**（0.5 天，零 API 成本）：Phase 0 天花板体检 + Phase 1 测量模型声明 `data/mapping_measurement_model_v1.json` 落地进版本库。
-- **M1**（1 天）：`build_mapping_validation.py` 落地，复现 pilot 红旗（作为回归基线），产出 13 号四件套。
-- **M2**（1 天）：edubench 换裁判重判实验（50×5×2，deepseek-v4-pro），出裁判间一致性结论，决定 edubench 走"改映射"还是"裁判治理"分支。
-- **M2.5**（并行，随预算推进）：**补模型数是当前一切结论的瓶颈**——把关键配对的共同模型数补到 12-15（现成 harness 跑分），优先级高于任何更精巧的统计。
-- **M3**（0.5 天，需人工参与）：对全部 flagged 配对逐一裁决（第 4 节草案为默认项），产出 `02_benchmark_ability_mapping` v2（benchmark→facet→P 两级）+ 修订日志。
-- **M4**（1 天）：用 v2 映射重跑 rebenchmark 聚合，产出前后雷达图对比页（同一模型 v1/v2 并排）+ 排名稳健性分析（2.8），11 号报告雷达图接入评级着色。
+- **M0**【已完成 2026-07-11】：Phase 0 区分度检查 + Phase 1 测量模型声明 `data/mapping_measurement_model_v1.json`（22 个 P，9 个 formative 含 facet 划分，109 个格子全覆盖）。
+- **M1**【已完成 2026-07-11】：`scripts/build_mapping_validation.py` 完成并跑通，`--validate-only` 精确复现 pilot 的 63 对配对；13 号四个输出文件已生成。首轮结果：16/29 格子分数拉不开；可裁决的收敛配对里 0 validated / 1 flagged（edubench QG × mathtutorbench pedagogy_hard，ρ=−0.14，n=6，置信区间很宽）/ 3 provisional；edubench 与 sas_bench 触发家族内先合并规则。
+- **M1.5**【已完成 2026-07-11】：逐 P 构念核对（§2.9），产出 `doc/p_construct_review_2026-07-11.md`——18 个 P 全覆盖 + 修改建议 R1-R10。
+- **M1.6**【已完成 2026-07-11】：子能力细分（§2.10，核对文档第三节，R11/R12）+ benchmark 档案 17 份（§2.11，`doc/benchmark_profiles/`）+ 缺口推荐（`doc/benchmark_gap_recommendations_2026-07-11.md`）。
+- **M2**（1 天，前置：拿到 edubench 原始 responses 放到本地）：换裁判重判实验（50×5×2，deepseek-v4-pro），出裁判间一致性结论，决定 edubench 走"改映射"还是"裁判治理"；等数据期间可先用 eduguard_adversarial 现成 predictions 把双裁判代码跑通。
+- **M2.5**（并行，随预算推进）：**补模型数是当前所有结论的第一瓶颈**——把关键配对的共同模型数补到 12-15（现成 harness 跑分），优先级高于任何更精巧的统计。
+- **M3**（0.5 天，需人工参与）：对全部 flagged 配对和"分数拉不开"名单逐一裁决（第 4 节草案为默认选项），产出 `02_benchmark_ability_mapping` v2（benchmark→facet→P 两级）+ 修订日志。
+- **M4**（1 天）：用 v2 映射重跑 rebenchmark 聚合，产出前后雷达图对比页（同一模型 v1/v2 并排）+ 排名稳定性分析（2.8），11 号报告雷达图接入评级着色。
 - **持续**：每次新增模型跑分后重跑 13 号报告，provisional/watch 配对随 n 增长自动升降级。
 
 **验收标准**：
 
-1. 主计分层每个 P×benchmark 格子都有评级，HTML 报告可视；
-2. flagged 格子全部有带数据引用的裁决记录，零"默默改权重"；
-3. 映射 v2 重聚合后，同 P（expect_convergent）跨家族配对的平均 ρ 相对 v1 上升（这是"修订确实改善了构念一致性"的直接检验）；
-4. 排名稳健性：权重 ±50% 扰动下头部模型排序 Kendall τ 分布有报告结论；
-5. 13 号报告可在任意新的 rebenchmark 目录上无改动重跑（幂等 + 路径参数化）。
+1. 主计分层每个 P×benchmark 格子都有评级，HTML 报告可视；【M1 已达成】
+2. flagged 格子全部有带数据引用的裁决记录，不允许悄悄改权重；
+3. 映射 v2 重新聚合后，同 P（预期收敛）跨家族配对的平均 ρ 相对 v1 上升（直接检验"修订确实改善了一致性"）；
+4. 排名稳定性：权重 ±50% 扰动下头部模型排序的 Kendall τ 分布有明确结论；
+5. 13 号报告可在任何新的 rebenchmark 目录上不改代码重跑（幂等 + 路径参数化）。【M1 已达成】
 
-## 6. 决策记录（2026-07-11 已拍板）
+## 6. 决策记录（2026-07-11 已确定）
 
-1. 换裁判实验第二裁判 = **deepseek-v4-pro**（便宜、非 MiniMax 家族、判分任务表现稳）；预算允许加 glm 第三票。
-2. 第 4 节修订中**只有"门槛冗余"先行执行**（不依赖效度裁决，纯省钱）；其余（含 pedagogy_benchmark 权重）等 Phase 0 体检 + 换裁判实验结果再裁。
-3. flagged 触发线保持 **ρ<0**，另加 **watch 带（0≤ρ<0.2 且 n≥8）**，避免 flagged 通胀。
-4. CEG 接受拆成"安全知识/对抗鲁棒"两个显示维度，并升级为 formative 测量模型声明的第一个范例。
+1. 换裁判实验第二裁判 = **deepseek-v4-pro**（便宜、非 MiniMax 家族、判分任务表现稳定）；预算允许加 glm 第三票。
+2. 第 4 节修订中**只有"基础答题类冗余"先行执行**（不依赖效度结论，纯省钱）；其余（含 pedagogy_benchmark 权重）等区分度检查 + 换裁判实验的结果再定。
+3. flagged 触发线保持 **ρ<0**，另加 **watch 档（0≤ρ<0.2 且 n≥8）**，避免 flagged 过多。
+4. CEG 接受拆成"安全知识 / 对抗鲁棒"两个显示维度，并作为 formative 声明的第一个范例。
+5. edubench 原始跑分数据由用户向同事索取放到本地，M2 保持"只重判、不重新生成"的原设计。
+6. 原子能力粒度问题（同一 P 下混着差异很大的 benchmark/维度）通过 §2.9 逐 P 构念核对处理：不新增 P 编号，而是在 P 下用 facet 细分 + 用 benchmark 原生细维度分数替换复合分；核对结论进 M3 与第 4 节草案一起裁决。
+7. facet 层升级为"子能力声明"语义（§2.10）：facet 可以有定义、评测路线、依据字段和空格子（子能力级缺口标记）；P16 按 4、P17 按 2、P18 按 4 子能力声明进测量模型 v2（R12）。缺口填补按推荐文档的优先级表推进，前三项（R11 补挂、P07 两轮自查、IFEval）不等 M2/M2.5。
+8. 子能力拆分准入规则（§2.10，2026-07-11 定）：四来源（理论/失败机制/人类标准/同源数据）至少两个支持才拆，benchmark 的存在永远不构成拆分依据，子能力定义不得出现 benchmark 名；同源数据分离是强证据、高相关不构成反证。已按此规则回检全部拆分并砍掉 P17b/P17d 两个。

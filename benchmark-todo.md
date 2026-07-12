@@ -90,3 +90,23 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: 优先补齐 MMTutorBench、MathTutorBench scaffolding/hard、EduGuard refusal-quality、Pedagogy CDPK/SEND 分项和 TutorBench/BEA tutor 的多模型主跑；基础考试类保留为低频 gate。
   Related capabilities: P03, P05, P16, P17, P18, P20, P22; SRG/FDR/CLM/CEG
   Source report: reports/atomic_ability_rebenchmark_2026-07-08/12_benchmark_priority_report.html
+
+## Construct review gap sweep - 2026-07-11
+
+- Gap: P01/P02/P07 是隐性覆盖缺口——现有格子全是别的任务顺带的搭车成分，指令遵循、长材料证据定位、生成后自查修正都没有直接测量，但雷达图上有分数，容易被误读为已覆盖。
+  Product reason: 这三项是操作基座，产品方看到分数会以为可用；实际结论没有证据支撑。
+  Suggested data/eval: IFEval（P01，规则判分半天可接）；P07 用两轮自查协议复用现有题目（先答→提示检查→测翻改率）；P02 教育长材料任务需自建（课堂实录/课程多章节定位），先声明缺口。
+  Related capabilities: P01, P02, P07; SRG/FDR
+  Source report: doc/p_construct_review_2026-07-11.md, doc/benchmark_gap_recommendations_2026-07-11.md
+
+- Gap: P16 学习者画像的分数只反映"支持需求判断"一个子能力；知识状态估计、误概念识别、参与度识别三个子能力无任何覆盖。P17 的苏格拉底式引导有本地分数（mathtutorbench_socratic）但未进映射。
+  Product reason: 个性化教学产品的核心是画像，当前 P16 分数会严重高估画像能力覆盖面。
+  Suggested data/eval: FoundationalASSIST 构造"读作答历史预测下一题"任务（P16a）；Eedi 误概念映射（P16b）；IntrEx 参与度判别（P16c）；socratic 补挂映射（P17a 的提问式干预测量来源，零成本）。
+  Related capabilities: P16, P17, P19; CLM
+  Source report: doc/p_construct_review_2026-07-11.md 第三节
+
+- Gap: P21 风险识别六类风险（自伤/霸凌/成人内容/违法/心理危机/依赖诱导）被 SATA 一个无类别标签的分数覆盖；教育场景心理危机对话安全是否有专门 benchmark 未调研。
+  Product reason: 学生心理危机处置是安全合规的重点审查项，需要类别级证据。
+  Suggested data/eval: 先对 SATA 2,635 题做 LLM 类别粗标+抽检（同时解锁 P20/21/22 独立证据）；调研心理健康对话安全 benchmark。
+  Related capabilities: P20, P21, P22; CEG
+  Source report: doc/p_construct_review_2026-07-11.md, doc/benchmark_gap_recommendations_2026-07-11.md

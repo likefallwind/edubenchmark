@@ -577,11 +577,15 @@ def pair_shared_str(p):
 def write_md(path, cells, pairs, grid, halo, disc, mm, args):
     lines = []
     add = lines.append
-    add("# 映射效度体检报告（13 号）")
+    add("# 映射效度检查报告（13 号）")
     add("")
     add(f"生成脚本：`scripts/build_mapping_validation.py`（幂等）；测量模型：`{args.measurement_model}`（{mm['doc'].get('status')}）。")
     add("规则见 `doc/mapping_validation_plan_2026-07-11.md` §2；ρ 一律与 n、90% CI 同格呈现，n<5 的配对只进低置信附录。")
     add("")
+    gaps = [p for p in mm["doc"]["abilities"] if p.get("coverage_gap")]
+    if gaps:
+        add("覆盖缺口（无任何 benchmark 映射，不参与本报告分析）：" + "、".join(f"{p['p_code']} {p['p_name']}" for p in gaps) + "。")
+        add("")
 
     restricted = [c for c in cells if c["variance_restricted"]]
     add("## Phase 0：天花板/方差受限名单")
@@ -801,7 +805,7 @@ def write_html(path, cells, pairs, grid, halo, disc, matrix, mm, args):
 <html lang="zh">
 <head>
 <meta charset="utf-8">
-<title>映射效度体检报告（13 号）</title>
+<title>映射效度检查报告（13 号）</title>
 <style>
 body {{ font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; margin: 24px auto; max-width: 1200px; color: #222; line-height: 1.5; }}
 h1 {{ font-size: 22px; }} h2 {{ font-size: 17px; margin-top: 28px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }}
@@ -821,7 +825,7 @@ th {{ background: #f5f5f5; }}
 </style>
 </head>
 <body>
-<h1>映射效度体检报告（13 号）</h1>
+<h1>映射效度检查报告（13 号）</h1>
 <p>输入：<code>{EVIDENCE_NAME}</code> + <code>{MAPPING_NAME}</code> + <code>{html.escape(str(args.measurement_model))}</code>（预注册测量模型，status={html.escape(str(mm['doc'].get('status')))}）。
 规则见 <code>doc/mapping_validation_plan_2026-07-11.md</code> §2.6。明细数据：<code>{OUT_PAIRS}</code> / <code>{OUT_CELLS}</code>；文字版：<code>{OUT_MD}</code>。</p>
 <div class="note">评级只针对「跨家族 + 预期收敛 + 双方非方差受限 + n≥{args.min_n}」的配对；形成型 P 的跨 facet 配对按声明预期不收敛，不触发红旗。n=5-8 时 CI 很宽，本报告是红旗探测器，不是效应量估计。</div>

@@ -69,7 +69,10 @@ JUDGE_SLUGS = {"MiniMax-M3": "minimax3", "glm-5.2": "glm-5.2", "deepseek-v4-pro"
 # State is judge-keyed: the M3 pilot keeps its original stage1/ layout, other
 # judges (e.g. STAGE1_JUDGE_MODEL=glm-5.2) get stage1_<slug>/ — run
 # build_judge_stage1_assets.py --judge-slug <slug> first to seed diagnosis.json.
-OUT_BASE = stage1_out_base(JUDGE_SLUGS[JUDGE_MODEL])
+# STAGE1_OUT_SLUG isolates a fresh state dir (e.g. minimax3_full for the
+# full-Stage-2-spec M3 rerun) while cached v1 labels still come from the
+# judge's own slug.
+OUT_BASE = stage1_out_base(os.environ.get("STAGE1_OUT_SLUG", JUDGE_SLUGS[JUDGE_MODEL]))
 BASELINE_DIRS = {"mrbench": "mrbench_judge", "bea2025": "bea2025_judge"}
 
 OPERATOR_DOC = """Allowed edit operators (each proposal = 1-3 edits):

@@ -131,7 +131,7 @@ def make_diagnosis(
     }
 
 
-def build_target(benchmark: str, dim: str, judge_slug: str) -> dict[str, Any]:
+def build_target(benchmark: str, dim: str, judge_slug: str, out_slug: str | None = None) -> dict[str, Any]:
     items = [
         r
         for r in _read_jsonl(META_DIR / "items.jsonl")
@@ -218,7 +218,7 @@ def build_target(benchmark: str, dim: str, judge_slug: str) -> dict[str, Any]:
             "n_screen_items": len(screen_ids),
         },
     )
-    out_dir = stage1_out_base(judge_slug) / stem
+    out_dir = stage1_out_base(out_slug or judge_slug) / stem
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "diagnosis.json").write_text(
         json.dumps(diagnosis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -229,9 +229,11 @@ def build_target(benchmark: str, dim: str, judge_slug: str) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--judge-slug", default="minimax3", help="cached v1 run directory name")
+    parser.add_argument("--out-slug", default=None,
+                        help="state dir slug (default: judge-slug); use to isolate a rerun, e.g. minimax3_full")
     args = parser.parse_args()
     for benchmark, dim in TARGETS:
-        d = build_target(benchmark, dim, args.judge_slug)
+        d = build_target(benchmark, dim, args.judge_slug, args.out_slug)
         print(
             f"{benchmark}/{dim}: eval={d['n_eval_items']} items/{d['n_eval_conversations']} convs "
             f"screen={d['n_screen_items']} pool={d['n_pool_items']} "
