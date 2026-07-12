@@ -45,6 +45,7 @@
 | 重要但可降频 | `edubench` EduBench | TMG teaching material generation | 8.18 | 55.12 | 73.50 | education_core | 11 | P18 0.40, P05 0.35, P06 0.25 |
 | 不必重点看 | `edubench` EduBench | QG question generation | 8.47 | 54.38 | 72.50 | education_core | 11 | P18 0.35, P06 0.35, P05 0.30 |
 | 不必重点看 | `mathvista` MathVista | task/question_type/answer_type accuracy | 8.41 | 33.99 | 64.75 | diagnostic | 1 | P03 0.35, P06 0.45, P05 0.20 |
+| 暂不判断 | `ifeval` IFEval | prompt-level strict accuracy | NA | 16.20 | 45.00 | foundation_gate | 0 | P01 1.00 |
 | 门槛保留 | `olympiadbench` OlympiadBench | overall/subject/language/modality accuracy | 7.26 | 15.72 | 63.50 | foundation_gate | 2 | P06 0.55, P05 0.25, P03 0.20 |
 | 低频门槛 | `mathtutorbench_problem_solving` MathTutorBench | Problem Solving | 9.70 | 12.76 | 63.00 | foundation_gate | 4 | P06 0.60, P05 0.30, P07 0.10 |
 | 低频门槛 | `agieval` AGIEval | overall/task/language/question_type accuracy | 8.74 | 10.35 | 57.50 | foundation_gate | 5 | P06 0.45, P05 0.35, P01 0.20 |
@@ -82,6 +83,7 @@
 | 重要但可降频 | `edubench` EduBench | 5 | 8.48 | 66.02 | education_core | P05, P06, P16, P17, P18 |
 | 重要但可降频 | `p08_abstention` P08 能力性弃答 | 1 | 8.72 | 59.61 | diagnostic | P01, P08 |
 | 不必重点看 | `mathvista` MathVista | 1 | 8.41 | 33.99 | diagnostic | P03, P05, P06 |
+| 暂不判断 | `ifeval` IFEval | 1 | NA | 16.20 | foundation_gate | P01 |
 | 门槛保留 | `olympiadbench` OlympiadBench | 1 | 7.26 | 15.72 | foundation_gate | P03, P05, P06 |
 | 低频门槛 | `mathtutorbench_problem_solving` MathTutorBench | 1 | 9.70 | 12.76 | foundation_gate | P05, P06, P07 |
 | 低频门槛 | `agieval` AGIEval | 1 | 8.74 | 10.35 | foundation_gate | P01, P05, P06 |

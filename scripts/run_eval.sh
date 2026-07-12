@@ -73,6 +73,11 @@ JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/MathT
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
 for b in $BENCHMARKS; do
+  if [[ "$b" == longtutor_* ]]; then
+    # LongTutor uses semantic-equivalence and rubric judging; MiniMax-M3 is
+    # intentionally the test-stage model and judge unless explicitly overridden.
+    MODEL="${MODEL:-MiniMax-M3}" JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"
+  fi
   case "$b" in
     olympiadbench)
       # 主环境出预测，再用 uv 临时环境(antlr 4.11)判分
@@ -126,6 +131,11 @@ for b in $BENCHMARKS; do
       python scripts/eval_benchmark.py --benchmark p08_abstention --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$P08_ABS_LIMIT"
       ;;
+    ifeval)
+      # IFEval 规则判分（无裁判无抽取 LLM）；先物化数据: fetch_eval_datasets.py --benchmark ifeval
+      # 判分依赖 nltk/langdetect/immutabledict（miniconda python 已装）。
+      python scripts/eval_benchmark.py --benchmark ifeval --model "$MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT" --extractor-model "$EXTRACTOR_MODEL"
+      ;;
     p07_selfcheck)
       # P07 两轮自查：第一轮答题 + 第二轮无提示复查（extract 阶段调被测模型本身）。
       # 与 p08_calibration 共用同一份难度分层 item_list，P07/P08 同题可比。
@@ -145,6 +155,16 @@ for b in $BENCHMARKS; do
       P08_EXTRACTOR_MODEL="${P08_EXTRACTOR_MODEL:-$MODEL}"
       python scripts/eval_benchmark.py --benchmark p08_calibration --model "$MODEL" \
         --extractor-model "$P08_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
+      ;;
+    longtutor_evidence|longtutor_teaching)
+      python scripts/eval_benchmark.py --benchmark "$b" --limit "$LIMIT" \
+        --model "$MODEL" --extractor-model "$JUDGE_MODEL" \
+        --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" "${COMMON_ARGS[@]}"
+      ;;
+    longtutor_diagnosis)
+      python scripts/eval_benchmark.py --benchmark "$b" --limit "$LIMIT" \
+        --model "$MODEL" --extractor-model "$JUDGE_MODEL" \
+        --concurrency "$CONCURRENCY" "${COMMON_ARGS[@]}"
       ;;
     *)
       python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"

@@ -11,6 +11,7 @@ from .agieval import AGIEvalAdapter
 from .bea2025 import BEA2025JudgeAdapter, BEA2025TutorAdapter
 from .ceval import CEvalAdapter
 from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
+from .ifeval import IFEvalAdapter
 from .mathtutorbench import (
     MTBJudgeCalibration,
     MTBMistakeCorrection,
@@ -25,6 +26,7 @@ from .mathtutorbench import (
 )
 from .mathvista import MathVistaAdapter
 from .mmlu_pro import MMLUProAdapter
+from .longtutor import LongTutorDiagnosisAdapter, LongTutorEvidenceAdapter, LongTutorTeachingAdapter
 from .mmtutorbench import MMTutorBenchAdapter, MMTutorBenchJudgeCalibrationAdapter
 from .mrbench import MRBenchJudgeAdapter, MRBenchTutorAdapter
 from .olympiadbench import OlympiadBenchAdapter
@@ -39,6 +41,11 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     AGIEvalAdapter,
     CEvalAdapter,
     OlympiadBenchAdapter,
+    # IFEval: verifiable instruction following, official rule scoring (P01).
+    IFEvalAdapter,
+    LongTutorEvidenceAdapter,
+    LongTutorDiagnosisAdapter,
+    LongTutorTeachingAdapter,
     EduGuardSATAAdapter,
     EduGuardAdversarialAdapter,
     # MathTutorBench: judge calibration first, then the 9 tasks.

@@ -58,3 +58,57 @@ Commit history uses short imperative summaries such as `Add ...`, `Update ...`, 
 ## Security & Configuration Tips
 
 Use environment variables for credentials such as `MINIMAX_API_KEY`. Treat Kaggle, Hugging Face gated datasets, Google Drive links, and manual-access resources as external dependencies; document access state in manifests instead of embedding private files.
+# LongTutor integration
+
+LongTutor is integrated as an offline long-history benchmark, not as evidence of
+real longitudinal learning gain. Its upstream repository and approximately 76 MB
+of released data belong under `sources/datasets/longtutor/`, which is the shared
+location for downloaded datasets and must remain uncommitted. The upstream release
+currently has no `LICENSE` file, so do not redistribute its data without explicit
+permission.
+
+Acquire and prepare the data:
+
+```bash
+python scripts/eval/data/fetch_eval_datasets.py --benchmark longtutor
+python scripts/eval/data/prepare_longtutor.py
+```
+
+The upstream release omits `history_features_lastq_scale.jsonl`; the preparation
+script rebuilds it with the upstream feature code and verifies that its stable keys
+join to the human gold. Keep human gold and automatically generated pipeline data
+separate in reports.
+
+Current upstream reproducibility blocker (verified 2026-07-12): the released
+`human_an_updated.jsonl` has 1,000 gold rows and `pipeline_an_scale.jsonl` has
+2,437 generated rows, but both contain annotations only. Neither contains the
+history/current-question input. The released feature builder selects each learner's
+final interaction; rebuilding that view produces zero `_key` matches with the human
+gold because the paper used sampled intermediate interactions from an unreleased or
+different data snapshot. `prepare_longtutor.py` must fail on a zero-key join. Do not
+substitute the learner's complete trajectory or otherwise fabricate inputs. To
+unblock model evaluation, obtain the authors' exact
+`data/XES3G5M/history_features_lastq_scale.jsonl` (and confirm its license/data
+version), place it under `sources/datasets/longtutor/`, then rerun preparation and
+the smoke command below.
+
+Run the three native task views with MiniMax-M3:
+
+```bash
+MODEL=MiniMax-M3 JUDGE_MODEL=MiniMax-M3 LIMIT=5 ./scripts/run_eval.sh \
+  longtutor_evidence longtutor_diagnosis longtutor_teaching
+```
+
+Outputs follow the standard layout:
+
+```text
+reports/eval/longtutor_evidence/minimax3/
+reports/eval/longtutor_diagnosis/minimax3/
+reports/eval/longtutor_teaching/minimax3/
+```
+
+Do not average the three tasks into one score. Report Evidence semantic accuracy
+by query type, Diagnosis Macro-F1 plus accuracy, and Teaching's four rubric scores.
+Future work should add full/recent/relevant/shuffled/no-history ablations. A truly
+longitudinal benchmark with persistent learner state, delayed post-tests, or a
+student simulator is a separate protocol and may justify a separate repository.

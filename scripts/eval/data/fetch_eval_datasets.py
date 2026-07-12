@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -740,6 +741,25 @@ def fetch_ceval(force: bool = False) -> Path:
     return out_dir
 
 
+def fetch_longtutor(force: bool = False) -> Path:
+    """Clone the official LongTutor code/data into the unified dataset root."""
+    base = ROOT / "sources" / "datasets" / "longtutor"
+    if (base / ".git").exists() and not force:
+        print(f"skip longtutor: {base} already exists (use --force to refresh manually)")
+        return base
+    if base.exists():
+        raise SystemExit(f"refusing to replace non-git directory {base}; move it aside first")
+    subprocess.run(
+        ["git", "clone", "--depth", "1", "https://github.com/liano3/LongTutor.git", str(base)],
+        check=True,
+    )
+    print(
+        "LongTutor has no upstream LICENSE file as of integration. Keep it under "
+        "sources/datasets (gitignored) and do not redistribute without permission."
+    )
+    return base
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
@@ -756,6 +776,7 @@ def main() -> None:
             "mmtutorbench",
             "umwp",
             "ifeval",
+            "longtutor",
             "all",
         ],
     )
@@ -781,6 +802,8 @@ def main() -> None:
         fetch_umwp(force=args.force)
     if args.benchmark in ("ifeval", "all"):
         fetch_ifeval(force=args.force)
+    if args.benchmark in ("longtutor", "all"):
+        fetch_longtutor(force=args.force)
 
 
 if __name__ == "__main__":

@@ -101,10 +101,11 @@ halo 分 > 0.5 的家族：多子维度在 P 聚合前先合成一票（计划 �
 
 ## P × 格子评级汇总
 
-评级分布：flagged=2、provisional=2、variance_restricted=44、insufficient_evidence=50、single_source=1
+评级分布：flagged=2、provisional=2、variance_restricted=44、insufficient_evidence=51、single_source=1
 
 | P | 类型 | facet | Benchmark | Subdimension | 权重 | 评级 |
 |---|---|---|---|---|---:|---|
+| P01 指令与约束遵循 | reflective | core | `ifeval` | prompt-level strict accuracy | 1.0 | **insufficient_evidence** |
 | P01 指令与约束遵循 | reflective | core | `agieval` | overall/task/language/question_type accuracy | 0.2 | **variance_restricted** |
 | P02 长上下文与证据定位 | reflective | core | `asap_2` | essay holistic QWK | 0.2 | **insufficient_evidence** |
 | P02 长上下文与证据定位 | reflective | core | `mathtutorbench_mistake_location` | Mistake Location | 0.2 | **variance_restricted** |

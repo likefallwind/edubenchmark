@@ -93,13 +93,13 @@ Each entry should name the scenario, product reason, suggested data/eval design,
 
 ## Construct review gap sweep - 2026-07-11
 
-- Gap: P01/P02/P07 是隐性覆盖缺口——现有格子全是别的任务顺带的搭车成分，指令遵循、长材料证据定位、生成后自查修正都没有直接测量，但雷达图上有分数，容易被误读为已覆盖。
+- Gap: ~~P01/P07~~ P02 是隐性覆盖缺口——现有格子全是别的任务顺带的搭车成分。【更新 2026-07-12：P01 已接 IFEval（adapter `ifeval`，规则判分）、P07 已接两轮自查（adapter `p07_selfcheck`），两者已进映射与测量模型，等批量跑分；**只剩 P02** 长材料证据定位无直接测量。】
   Product reason: 这三项是操作基座，产品方看到分数会以为可用；实际结论没有证据支撑。
-  Suggested data/eval: IFEval（P01，规则判分半天可接）；P07 用两轮自查协议复用现有题目（先答→提示检查→测翻改率）；P02 教育长材料任务需自建（课堂实录/课程多章节定位），先声明缺口。
-  Related capabilities: P01, P02, P07; SRG/FDR
+  Suggested data/eval: P02 教育长材料任务需自建（课堂实录/课程多章节定位），先声明缺口。
+  Related capabilities: P02; SRG
   Source report: doc/p_construct_review_2026-07-11.md, doc/benchmark_gap_recommendations_2026-07-11.md
 
-- Gap: P16 学习者画像的分数只反映"支持需求判断"一个子能力；知识状态估计、误概念识别、参与度识别三个子能力无任何覆盖。P17 的苏格拉底式引导有本地分数（mathtutorbench_socratic）但未进映射。
+- Gap: P16 学习者画像的分数只反映"支持需求判断"一个子能力；知识状态估计、误概念识别、参与度识别三个子能力无任何覆盖。~~P17 的苏格拉底式引导有本地分数（mathtutorbench_socratic）但未进映射~~【已完成 2026-07-12：socratic 全量判分 4 模型并补挂 P17/P18】。
   Product reason: 个性化教学产品的核心是画像，当前 P16 分数会严重高估画像能力覆盖面。
   Suggested data/eval: FoundationalASSIST 构造"读作答历史预测下一题"任务（P16a）；Eedi 误概念映射（P16b）；IntrEx 参与度判别（P16c）；socratic 补挂映射（P17a 的提问式干预测量来源，零成本）。
   Related capabilities: P16, P17, P19; CLM

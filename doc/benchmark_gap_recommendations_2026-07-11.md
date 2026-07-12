@@ -72,9 +72,9 @@
 
 | 优先级 | 动作 | 填什么 | 成本 |
 |---|---|---|---|
-| 1 | mathtutorbench_socratic 补挂映射（R11） | P17a（提问式干预） | 零（改映射） |
-| 2 | 两轮自查协议 | P07 | 低（写协议，复用现有题） |
-| 3 | IFEval 接入 | P01 | 低（半天 adapter） |
+| 1 | mathtutorbench_socratic 补挂映射（R11）【已完成 2026-07-12：全量 1319 题 × 4 模型判分补齐，映射/测量模型/聚合/13 号全链路接通，官方口径 avg_bleu】 | P17a（提问式干预） | 零（改映射） |
+| 2 | 两轮自查协议【已完成 2026-07-12：adapter `p07_selfcheck`，复用 P08 delegate 与同一 item_list，headline=0.5×改对率+0.5×(1−改错率)，已冒烟；全量跑分随 M2.5 批量启动】 | P07 | 低（写协议，复用现有题） |
+| 3 | IFEval 接入【已完成 2026-07-12：`fetch_eval_datasets.py --benchmark ifeval` + adapter `ifeval`，官方 checker vendored 规则判分，映射挂 P01（foundation_gate）；全量 541 题随批量启动】 | P01 | 低（半天 adapter） |
 | 4 | K12Vista（或 CMMU）接入 | P04 + 中文多模态 | 中（adapter + 数据下载） |
 | 5 | Eedi 误概念 + IntrEx 接入 | P16b、P16c | 中 |
 | 6 | FoundationalASSIST 画像任务协议 | P16a（顺带 P19b） | 中高（要设计协议） |
@@ -82,7 +82,7 @@
 | 8 | SciVideoBench | P04 真视频 | 高（链路要支持视频） |
 | 缓 | InteractScience / 诚信自建 / 教育长上下文自建 | P09 / P15 / P02 | 高或依赖产品需求 |
 
-前 3 项加起来大约两天工作量，能把两个隐性缺口（P01/P07）变成有直接测量、并把 P17 的子能力覆盖补上一块。
+前 3 项加起来大约两天工作量，能把两个隐性缺口（P01/P07）变成有直接测量、并把 P17 的子能力覆盖补上一块。**（2026-07-12 已全部执行完毕，见上表状态；剩余隐性缺口只剩 P02。）**
 
 ## 三、维护
 

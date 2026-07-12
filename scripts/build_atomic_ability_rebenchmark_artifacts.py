@@ -537,6 +537,22 @@ MAPPINGS: list[dict[str, Any]] = [
         "rationale": "多模态 tutor 综合测图文感知、反馈生成和策略选择；当前小样本默认排除主图。",
     },
     {
+        "benchmark_id": "ifeval",
+        "benchmark_name": "IFEval",
+        "subdimension": "prompt-level strict accuracy",
+        "evidence_tier": "foundation_gate",
+        "source_scope": "repo_eval",
+        "metric_family": "accuracy",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.80,
+        "abilities": ability_weights(("P01", 1.00)),
+        "rationale": (
+            "可验证指令的规则判分（官方 checker，无裁判），P01 的首个直接测量"
+            "（2026-07-12 缺口填补，R13：edubench 裁判打的指令遵循分在模型排名上无独立信息量）。"
+            "通用指令非教育语境，作 P01 操作基座的门槛证据。"
+        ),
+    },
+    {
         "benchmark_id": "p07_selfcheck",
         "benchmark_name": "P07 两轮自查",
         "subdimension": "two-round self-check (fix/break rate)",
@@ -1090,7 +1106,7 @@ def repo_metric_for_summary(benchmark: str, data: dict[str, Any]) -> tuple[str, 
         return "bleu_0_to_1", extra.get("avg_bleu"), "extra_metrics.avg_bleu (official headline; summary.accuracy is a coarse BLEU>=0.5 proxy)"
     if benchmark.startswith("mathtutorbench_"):
         return "accuracy", data.get("accuracy"), "summary.accuracy"
-    if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "olympiadbench"}:
+    if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "olympiadbench", "ifeval"}:
         return "accuracy", data.get("accuracy"), "summary.accuracy"
     if benchmark in {"p07_selfcheck", "p08_calibration", "p08_abstention"}:
         return "composite_0_to_10", extra.get("score_10"), "extra_metrics.score_10"

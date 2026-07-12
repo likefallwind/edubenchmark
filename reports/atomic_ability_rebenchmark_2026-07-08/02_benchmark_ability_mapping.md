@@ -40,6 +40,7 @@ Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 wi
 | EduGuard-Bench P2 (`eduguard_adversarial`) | Refusal quality distribution | diagnostic | share_0_to_1 | 0.70 | P22 0.60, P18 0.25, P20 0.15 | 教育型拒答是处置选择和教育性重定向质量。 |
 | EduIllustrate (`eduillustrate`) | 8-dim 0-5 visual explanation score | diagnostic | likert_0_to_5 | 0.85 | P10 0.45, P03 0.25, P18 0.30 | 教学图示/图文协同生成直接测多模态教学产物生成。 |
 | MMTutorBench (`mmtutorbench`) | multimodal tutor score | diagnostic | score_0_to_6 | 0.90 | P03 0.30, P18 0.40, P17 0.30 | 多模态 tutor 综合测图文感知、反馈生成和策略选择；当前小样本默认排除主图。 |
+| IFEval (`ifeval`) | prompt-level strict accuracy | foundation_gate | accuracy | 0.80 | P01 1.00 | 可验证指令的规则判分（官方 checker，无裁判），P01 的首个直接测量（2026-07-12 缺口填补，R13：edubench 裁判打的指令遵循分在模型排名上无独立信息量）。通用指令非教育语境，作 P01 操作基座的门槛证据。 |
 | P07 两轮自查 (`p07_selfcheck`) | two-round self-check (fix/break rate) | diagnostic | composite_0_to_10 | 0.85 | P07 0.85, P08 0.15 | 两轮自查协议（先答题、再无提示复查），P07 的首个直接测量（2026-07-12 缺口填补）；headline=0.5×改对率+0.5×(1−改错率)，与第一轮正确率解耦。复查时对自身答案的把握与校准相通，P08 占 0.15。 |
 | P08 置信度校准 (`p08_calibration`) | calibration composite (CWR/AUROC) | diagnostic | composite_0_to_10 | 0.85 | P08 0.80, P07 0.20 | 复用 exact-match benchmark + verbalized confidence，测“自信地教错”（CWR）与“知道自己不知道”（AUROC）；自报置信度带少量自检成分故 P07 占 0.20。 |
 | P08 能力性弃答 (`p08_abstention`) | balanced abstention score | diagnostic | composite_0_to_10 | 0.85 | P08 0.85, P01 0.15 | 公开弃答数据集（UMWP/TreeCut）测对不可答题能否说“不会”；识别并按格式声明带少量指令遵循成分故 P01 占 0.15。与 p08_calibration 共同构成 P08 两半证据。 |

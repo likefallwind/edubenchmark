@@ -30,6 +30,8 @@
 | [eduguard_bench.md](eduguard_bench.md) | EduGuardBench | 教育安全：知识题+对抗攻击 | 教育核心 |
 | [eduillustrate.md](eduillustrate.md) | EduIllustrate | 生成 Manim 可视化讲解 | 诊断 |
 | [p08_selfbuilt.md](p08_selfbuilt.md) | P08 自建两件套 | 置信度校准 + 能力性弃答 | 诊断 |
+| [p07_selfcheck.md](p07_selfcheck.md) | P07 两轮自查 | 无提示复查，改对率 vs 改错率 | 诊断 |
+| [ifeval.md](ifeval.md) | IFEval | 可验证指令遵循，规则判分 | 门槛 |
 
 ## 档案模板
 
