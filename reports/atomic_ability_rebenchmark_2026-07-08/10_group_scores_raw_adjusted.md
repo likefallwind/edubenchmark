@@ -55,9 +55,9 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from currently covered P ab
 | `minimax-m2.7` | SRG | 7.8136 | 7.8136 | 2 | P01, P02 |
 | `minimax-m3` | CEG | 8.1085 | 8.1085 | 3 | P20, P21, P22 |
 | `minimax-m3` | CLM | 7.0778 | 7.0778 | 3 | P16, P17, P18 |
-| `minimax-m3` | FDR | 7.6543 | 7.6051 | 5 | P05, P06, P07, P08, P10 |
+| `minimax-m3` | FDR | 7.2775 | 7.2349 | 5 | P05, P06, P07, P08, P10 |
 | `minimax-m3` | LAD | 7.8836 | 7.8836 | 4 | P11, P12, P13, P14 |
-| `minimax-m3` | SRG | 7.8358 | 7.8304 | 3 | P01, P02, P03 |
+| `minimax-m3` | SRG | 7.8512 | 7.8408 | 3 | P01, P02, P03 |
 | `qwen3-14b` | CLM | 7.639 | 7.639 | 3 | P16, P17, P18 |
 | `qwen3-14b` | FDR | 7.3068 | 7.3068 | 2 | P05, P06 |
 | `qwen3-5-122b-a10b` | CLM | 8.3071 | 8.3071 | 3 | P16, P17, P18 |

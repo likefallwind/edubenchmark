@@ -61,11 +61,15 @@
 | M1.5/M1.6 | 逐 P 构念核对 + 子能力细分 + 档案与缺口推荐 | 已完成 7-11 |
 | M2 | 换裁判重判实验 | 已完成 7-12 |
 | 缺口前三项 | socratic 补挂 / P07 自查 / IFEval | 已完成 7-12（等全量跑分） |
-| **M2.5** | 补模型数到 12-15（所有结论的第一瓶颈） | **等你启动批量跑分** |
-| **M3** | 人工裁决 R1-R14 → 映射表 v2 | **等你，约半天** |
-| M4 | 用 v2 重新聚合，v1/v2 对比 + 排名稳定性 | 在 M3 后 |
+| 新四件全量首跑 | MiniMax-M3 × ifeval/p07_selfcheck/p08_calibration/p08_abstention | 已完成 7-12 晚（分数见下） |
+| **M2.5** | 全量补到 5 个主力模型（10+ 模型走 200 题抽样档） | **剩 4 个模型等你启动** |
+| **M3** | 人工裁决 R1-R14 → 映射表 v2 | **等你，约半天（关键路径，越早越好）** |
+| M4 | 用 v2 重新聚合，v1/v2 对比 + 排名稳定性 + 双报告 | 在 M3 后 |
+| 发布 | **7 月底**（决策记录 12 条；必做清单见 roadmap 文档文首） | 已定 7-12 |
 
 ## 需要你做的两件事
+
+> **发布目标已定：7 月底**（决策记录第 12 条）。专家盲评、污染审计等加固项全部暂缓到发布后；发布必做清单和排期见 `doc/roadmap_to_convincing_eval_2026-07-12.md` 文首。清单里新增两个接入：P04 走 K12Vista、P19 走 MOOCCube 先修推理；P09/P15 是真领域空白，报告里诚实标"暂未覆盖"。关键路径是 **M3 裁决（下面第 1 件）→ 映射 v2 → M4 双报告**，裁决越早做后面越松。
 
 **1. M3 裁决**：R1-R14 逐条过一遍（每条在构念核对文档第二节有完整理由，这里只列一句话）：
 
@@ -86,14 +90,30 @@
 | R13 | edubench"指令遵循"指标不作 P01 直接测量（P01 走 IFEval） | 已定论（数据支持） |
 | R14 | edubench"错误识别"指标不入映射（裁判噪声）；R1 收窄为支持簇三指标 | 已定论（M2 实验支持） |
 
-**2. 启动批量跑分（M2.5）**：优先级从高到低——①`p07_selfcheck` / `ifeval` / `p08_calibration` / `p08_abstention` 各跑主力模型（这四个是新直接测量，一个模型的分都还没成规模）；②olympiadbench / mathvista 补模型数（13 号里 n 最小的格子）；③mathtutorbench 系列补到 8-10 个模型。命令都在 `scripts/run_eval.sh` 的注释里。
+**2. 启动批量跑分（M2.5）**：规模上限按你定的预算——**全量最多 5 个模型**（MiniMax-M3 / MiniMax-M2.7 / deepseek-v4-pro / glm-5.2 / doubao-seed-2.0-pro，按与现有分数的重叠度选），10+ 模型的扩展以后走 200 题固定抽样档。MiniMax-M3 已跑完（2026-07-12）：
+
+| 测验 | 题数 | headline | 备注 |
+|---|---|---|---|
+| ifeval | 541 | prompt 严格准确率 0.874 | 规则判分，无裁判 |
+| p07_selfcheck | 550×2 轮（520 题两轮齐） | score_10 5.27（改对率 0.098 / 改错率 0.044） | 与文献一致：改对率低是真实测量；30 题第二轮撞配额待扫尾 |
+| p08_calibration | 550 | score_10 6.56（AUROC 0.638、90 分自信下错误率 0.33） | |
+| p08_abstention | 500 | score_10 8.72（弃答召回 0.748、几乎不误弃） | |
+
+剩 4 个模型的启动命令（注意 PATH 前缀要放在 nohup 里面，否则 ifeval 会因缺 absl/nltk 崩掉——7-12 已踩过一次）：
+
+```bash
+nohup bash -c 'for M in deepseek-v4-pro glm-5.2 doubao-seed-2.0-pro MiniMax-M2.7; do PATH=/home/likefallwind/miniconda3/bin:$PATH MODEL=$M CONCURRENCY=4 ./scripts/run_eval.sh ifeval p08_abstention p08_calibration p07_selfcheck; done' > eval/batch_4models.log 2>&1 &
+```
+
+跑完后重跑 `python scripts/build_atomic_ability_rebenchmark_artifacts.py && python scripts/build_mapping_validation.py` 让 P01/P07/P08 上图、13 号出配对。
 
 ## 文档地图（哪个文档管什么）
 
 | 文档 | 管什么 | 什么时候看 |
 |---|---|---|
 | 本文档 | 来龙去脉总览 | 回来接续工作时 |
-| `doc/mapping_validation_plan_2026-07-11.md` | 效度验证的完整方法设计 + 里程碑 + 决策记录（1-9 条） | 想核对"为什么这么设计" |
+| `doc/roadmap_to_convincing_eval_2026-07-12.md` | 五问体检：离"真正有说服力"还差什么 + 性价比排序（专家盲评是分水岭） | 规划 M4 之后的方向时 |
+| `doc/mapping_validation_plan_2026-07-11.md` | 效度验证的完整方法设计 + 里程碑 + 决策记录（1-11 条） | 想核对"为什么这么设计" |
 | `doc/p_construct_review_2026-07-11.md` | 逐 P 核对表 + R1-R14 完整理由 + 拆分准入规则 + 三例数据依据 | M3 裁决时逐条对着看 |
 | `doc/benchmark_gap_recommendations_2026-07-11.md` | 每个缺口的候选 benchmark 和接入成本，优先级表（含执行状态） | 决定下一个接什么数据 |
 | `doc/benchmark_profiles/` | 每个 benchmark 一份档案（是什么、怎么判分、局限、当前映射） | 对某个 benchmark 有疑问时 |
@@ -101,6 +121,11 @@
 | `reports/atomic_ability_rebenchmark_2026-07-08/13_mapping_validation.{md,html}` | 13 号检查的最新运行结果（格子评级） | 每次加了新跑分后重跑再看 |
 | `reports/eval/edubench/_analysis/` 与 `_judge_swap/` | edubench 逐题分析和换裁判实验的数字 | 查 R13/R14 的原始证据 |
 
-## 一个约定
+## 四个约定
 
-这条线的每一步都遵守两条纪律：**修改映射必须带数据依据**（配对 ρ/n/置信区间写进 revision_rationale），**结构声明先于数据**（测量模型、拆分规则都先写定再看数）。这是"客观、有说服力"的来源——不是分数变好看了，而是每个数字背后有能查的账。
+这条线的每一步遵守四条纪律（前两条 7-11 定，后两条 7-12 你补充定下，完整表述见计划文档决策记录 10/11 条）：
+
+1. **修改映射必须带数据依据**（配对 ρ/n/置信区间写进 revision_rationale）。
+2. **结构声明先于数据**（测量模型、拆分规则都先写定再看数）。
+3. **构念层与测量层分离**：P01-P22 清单不因"现在测不了"而修改——测不了是覆盖缺口，标出来当未来方向；只有 P 本身定义不合理才动它。之前"收敛成 7-9 个簇"的想法按此撤回，改为逐 P 测量成熟度分级（成熟/单源/代理/空白）。
+4. **研究层与用户层分离**：加权和统计检验全部留在研究层不降级；用户版报告每个 P 只给一个分数 + 三档白话可信度（已验证/参考值/暂未覆盖）+ 产品语言解释。M4 交付两份报告而不是一份。

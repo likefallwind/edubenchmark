@@ -7,7 +7,7 @@
 
 ## Phase 0：天花板/方差受限名单
 
-共 18 / 32 个有证据格子被标记 `variance_restricted`（mean≥8.5 或 n≥4 且 SD<0.5）。这些格子参与的配对**不进入裁决**；优先动作是上难度/换切分，不是改映射。
+共 19 / 34 个有证据格子被标记 `variance_restricted`（mean≥8.5 或 n≥4 且 SD<0.5）。这些格子参与的配对**不进入裁决**；优先动作是上难度/换切分，不是改映射。
 
 | Benchmark | Subdimension | n | mean | SD | 标记 |
 |---|---|---:|---:|---:|---|
@@ -16,6 +16,7 @@
 | `mathtutorbench_mistake_correction` | Mistake Correction | 5 | 9.016 | 0.33 | ceiling, low_variance |
 | `edubench` | PCC pedagogical/personalized content creation | 11 | 8.803 | 0.567 | ceiling |
 | `edubench` | PLS personalized learning support | 11 | 8.743 | 0.521 | ceiling |
+| `ifeval` | prompt-level strict accuracy | 1 | 8.741 | — | ceiling |
 | `agieval` | overall/task/language/question_type accuracy | 5 | 8.737 | 0.401 | ceiling, low_variance |
 | `p08_abstention` | balanced abstention score | 1 | 8.72 | — | ceiling |
 | `mathtutorbench_solution_correctness` | Solution Correctness | 5 | 8.683 | 0.157 | ceiling, low_variance |
@@ -36,7 +37,7 @@
 
 | A | B | 共享 P（权重A/B） | n | ρ | 偏ρ(控综合分) | perm p | 90% CI | 评级 |
 |---|---|---|---:|---:|---:|---:|---|---|
-| `edubench` QG question generation | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.3/0.25), P18(0.35/0.3 异facet) | 6 | -0.143 | -0.428 | 0.8028 | [-0.818, 0.806] | flagged |
+| `edubench` QG question generation | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.3/0.25), P18(0.35/0.3 异facet) | 6 | -0.143 | -0.326 | 0.8028 | [-0.818, 0.806] | flagged |
 
 ## 观察带（watch：0≤ρ<0.2 且 n≥8）
 
@@ -50,9 +51,9 @@
 
 | A | B | 共享 P（权重A/B） | n | ρ | 偏ρ(控综合分) | perm p | 90% CI | 评级 |
 |---|---|---|---:|---:|---:|---:|---|---|
-| `edubench` TMG teaching material generation | `sas_bench` ECS error-cause consistency | P05(0.35/0.2) | 5 | -0.2 | -0.319 | 0.7833 | [-1.0, 0.875] | provisional |
-| `edubench` TMG teaching material generation | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.35/0.25), P18(0.4/0.3 异facet) | 6 | 0.029 | -0.229 | 1.0 | [-0.818, 1.0] | provisional |
-| `edubench` QG question generation | `sas_bench` ECS error-cause consistency | P05(0.3/0.2) | 5 | 0.2 | 0.121 | 0.7833 | [-0.875, 1.0] | provisional |
+| `edubench` TMG teaching material generation | `sas_bench` ECS error-cause consistency | P05(0.35/0.2) | 5 | -0.2 | -0.212 | 0.7833 | [-1.0, 0.875] | provisional |
+| `edubench` TMG teaching material generation | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.35/0.25), P18(0.4/0.3 异facet) | 6 | 0.029 | -0.262 | 1.0 | [-0.818, 1.0] | provisional |
+| `edubench` QG question generation | `sas_bench` ECS error-cause consistency | P05(0.3/0.2) | 5 | 0.2 | 0.212 | 0.7833 | [-0.875, 1.0] | provisional |
 
 ## 因方差受限不裁决的配对
 
@@ -60,24 +61,24 @@
 
 | A | B | 共享 P（权重A/B） | n | ρ | 偏ρ(控综合分) | perm p | 90% CI | 评级 |
 |---|---|---|---:|---:|---:|---:|---|---|
-| `edubench` PCC pedagogical/personalized content creation | `mathtutorbench_scaffolding` Scaffolding | P17(0.3/0.5), P18(0.45/0.35 异facet) | 6 | -0.086 | -0.35 | 0.9194 | [-1.0, 0.939] | variance_restricted |
-| `edubench` PCC pedagogical/personalized content creation | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.3/0.5), P18(0.45/0.35 异facet) | 6 | -0.086 | -0.35 | 0.9194 | [-1.0, 1.0] | variance_restricted |
-| `edubench` PLS personalized learning support | `mathtutorbench_scaffolding` Scaffolding | P17(0.45/0.5), P18(0.25/0.35) | 6 | -0.086 | -0.35 | 0.9194 | [-1.0, 0.939] | variance_restricted |
-| `edubench` PLS personalized learning support | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.45/0.5), P18(0.25/0.35) | 6 | -0.086 | -0.35 | 0.9194 | [-1.0, 0.939] | variance_restricted |
-| `edubench` QG question generation | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.3/0.25), P18(0.35/0.3 异facet) | 6 | -0.029 | -0.217 | 1.0 | [-0.636, 0.935] | variance_restricted |
-| `edubench` IP idea provision / heuristic answer | `sas_bench` ECS error-cause consistency | P05(0.25/0.2) | 5 | 0.1 | 0.367 | 0.95 | [-1.0, 1.0] | variance_restricted |
-| `edubench` PCC pedagogical/personalized content creation | `sas_bench` ECS error-cause consistency | P05(0.25/0.2) | 5 | 0.2 | 0.121 | 0.7833 | [-0.875, 1.0] | variance_restricted |
-| `edubench` TMG teaching material generation | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.35/0.25), P18(0.4/0.3 异facet) | 6 | 0.2 | 0.083 | 0.7139 | [-0.8, 1.0] | variance_restricted |
-| `edubench` PCC pedagogical/personalized content creation | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.25/0.25), P17(0.3/0.45), P18(0.45/0.3 异facet) | 6 | 0.257 | 0.121 | 0.6583 | [-0.818, 1.0] | variance_restricted |
-| `edubench` PLS personalized learning support | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P17(0.45/0.45), P18(0.25/0.3) | 6 | 0.257 | 0.121 | 0.6583 | [-0.818, 1.0] | variance_restricted |
-| `edubench` IP idea provision / heuristic answer | `mathtutorbench_scaffolding` Scaffolding | P17(0.4/0.5), P18(0.35/0.35) | 6 | 0.314 | 0.333 | 0.5639 | [-0.6, 1.0] | variance_restricted |
-| `edubench` IP idea provision / heuristic answer | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.4/0.5), P18(0.35/0.35) | 6 | 0.314 | 0.333 | 0.5639 | [-0.6, 1.0] | variance_restricted |
-| `edubench` PCC pedagogical/personalized content creation | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.25/0.25), P17(0.3/0.45), P18(0.45/0.3 异facet) | 6 | 0.429 | 0.402 | 0.4194 | [-0.5, 1.0] | variance_restricted |
-| `edubench` PLS personalized learning support | `mathtutorbench_pedagogy` Pedagogy IF | P17(0.45/0.45), P18(0.25/0.3) | 6 | 0.429 | 0.402 | 0.4194 | [-0.636, 1.0] | variance_restricted |
-| `edubench` IP idea provision / heuristic answer | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.25/0.25), P17(0.4/0.45), P18(0.35/0.3) | 6 | 0.486 | 0.51 | 0.3556 | [-0.5, 1.0] | variance_restricted |
-| `edubench` IP idea provision / heuristic answer | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.25/0.25), P17(0.4/0.45), P18(0.35/0.3) | 6 | 0.6 | 0.618 | 0.2417 | [-0.091, 1.0] | variance_restricted |
-| `agieval` overall/task/language/question_type accuracy | `ceval` overall/category/subject accuracy | P05(0.35/0.6), P06(0.45/0.25) | 5 | 0.9 | 0.908 | 0.0833 | [0.25, 1.0] | variance_restricted |
-| `ceval` overall/category/subject accuracy | `mmlu_pro` overall/category accuracy | P05(0.6/0.6), P06(0.25/0.3) | 5 | 0.9 | 0.908 | 0.0833 | [0.25, 1.0] | variance_restricted |
+| `edubench` PCC pedagogical/personalized content creation | `mathtutorbench_scaffolding` Scaffolding | P17(0.3/0.5), P18(0.45/0.35 异facet) | 6 | -0.086 | -0.369 | 0.9194 | [-1.0, 0.939] | variance_restricted |
+| `edubench` PCC pedagogical/personalized content creation | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.3/0.5), P18(0.45/0.35 异facet) | 6 | -0.086 | -0.369 | 0.9194 | [-1.0, 1.0] | variance_restricted |
+| `edubench` PLS personalized learning support | `mathtutorbench_scaffolding` Scaffolding | P17(0.45/0.5), P18(0.25/0.35) | 6 | -0.086 | -0.369 | 0.9194 | [-1.0, 0.939] | variance_restricted |
+| `edubench` PLS personalized learning support | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.45/0.5), P18(0.25/0.35) | 6 | -0.086 | -0.369 | 0.9194 | [-1.0, 0.939] | variance_restricted |
+| `edubench` QG question generation | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.3/0.25), P18(0.35/0.3 异facet) | 6 | -0.029 | -0.138 | 1.0 | [-0.636, 0.935] | variance_restricted |
+| `edubench` IP idea provision / heuristic answer | `sas_bench` ECS error-cause consistency | P05(0.25/0.2) | 5 | 0.1 | 0.302 | 0.95 | [-1.0, 1.0] | variance_restricted |
+| `edubench` PCC pedagogical/personalized content creation | `sas_bench` ECS error-cause consistency | P05(0.25/0.2) | 5 | 0.2 | 0.212 | 0.7833 | [-0.875, 1.0] | variance_restricted |
+| `edubench` TMG teaching material generation | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.35/0.25), P18(0.4/0.3 异facet) | 6 | 0.2 | 0.059 | 0.7139 | [-0.8, 1.0] | variance_restricted |
+| `edubench` PCC pedagogical/personalized content creation | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.25/0.25), P17(0.3/0.45), P18(0.45/0.3 异facet) | 6 | 0.257 | 0.071 | 0.6583 | [-0.818, 1.0] | variance_restricted |
+| `edubench` PLS personalized learning support | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P17(0.45/0.45), P18(0.25/0.3) | 6 | 0.257 | 0.071 | 0.6583 | [-0.818, 1.0] | variance_restricted |
+| `edubench` IP idea provision / heuristic answer | `mathtutorbench_scaffolding` Scaffolding | P17(0.4/0.5), P18(0.35/0.35) | 6 | 0.314 | 0.427 | 0.5639 | [-0.6, 1.0] | variance_restricted |
+| `edubench` IP idea provision / heuristic answer | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.4/0.5), P18(0.35/0.35) | 6 | 0.314 | 0.427 | 0.5639 | [-0.6, 1.0] | variance_restricted |
+| `edubench` PCC pedagogical/personalized content creation | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.25/0.25), P17(0.3/0.45), P18(0.45/0.3 异facet) | 6 | 0.429 | 0.356 | 0.4194 | [-0.5, 1.0] | variance_restricted |
+| `edubench` PLS personalized learning support | `mathtutorbench_pedagogy` Pedagogy IF | P17(0.45/0.45), P18(0.25/0.3) | 6 | 0.429 | 0.356 | 0.4194 | [-0.636, 1.0] | variance_restricted |
+| `edubench` IP idea provision / heuristic answer | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.25/0.25), P17(0.4/0.45), P18(0.35/0.3) | 6 | 0.486 | 0.616 | 0.3556 | [-0.5, 1.0] | variance_restricted |
+| `edubench` IP idea provision / heuristic answer | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.25/0.25), P17(0.4/0.45), P18(0.35/0.3) | 6 | 0.6 | 0.688 | 0.2417 | [-0.091, 1.0] | variance_restricted |
+| `agieval` overall/task/language/question_type accuracy | `ceval` overall/category/subject accuracy | P05(0.35/0.6), P06(0.45/0.25) | 5 | 0.9 | 0.84 | 0.0833 | [0.25, 1.0] | variance_restricted |
+| `ceval` overall/category/subject accuracy | `mmlu_pro` overall/category accuracy | P05(0.6/0.6), P06(0.25/0.3) | 5 | 0.9 | 0.84 | 0.0833 | [0.25, 1.0] | variance_restricted |
 | `agieval` overall/task/language/question_type accuracy | `mmlu_pro` overall/category accuracy | P05(0.35/0.6), P06(0.45/0.3) | 5 | 1.0 | 1.0 | 0.0167 | [1.0, 1.0] | variance_restricted |
 
 ## 区分效度（同 P 收敛配对 vs 不共享 P 的 baseline）
@@ -101,12 +102,12 @@ halo 分 > 0.5 的家族：多子维度在 P 聚合前先合成一票（计划 �
 
 ## P × 格子评级汇总
 
-评级分布：flagged=2、provisional=2、variance_restricted=44、insufficient_evidence=51、single_source=1
+评级分布：flagged=2、provisional=2、variance_restricted=45、insufficient_evidence=50、single_source=1
 
 | P | 类型 | facet | Benchmark | Subdimension | 权重 | 评级 |
 |---|---|---|---|---|---:|---|
-| P01 指令与约束遵循 | reflective | core | `ifeval` | prompt-level strict accuracy | 1.0 | **insufficient_evidence** |
 | P01 指令与约束遵循 | reflective | core | `agieval` | overall/task/language/question_type accuracy | 0.2 | **variance_restricted** |
+| P01 指令与约束遵循 | reflective | core | `ifeval` | prompt-level strict accuracy | 1.0 | **variance_restricted** |
 | P02 长上下文与证据定位 | reflective | core | `asap_2` | essay holistic QWK | 0.2 | **insufficient_evidence** |
 | P02 长上下文与证据定位 | reflective | core | `mathtutorbench_mistake_location` | Mistake Location | 0.2 | **variance_restricted** |
 | P02 长上下文与证据定位 | reflective | core | `sas_bench` | CCS step scoring consistency | 0.2 | **variance_restricted** |

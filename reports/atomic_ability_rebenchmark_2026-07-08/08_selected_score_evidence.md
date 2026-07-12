@@ -1,13 +1,13 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 188
+Canonical normalized score rows used for P scoring: 190
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
 | `otherbenchmark` | 93 |
-| `repo_eval` | 95 |
+| `repo_eval` | 97 |
 
 ## By Benchmark
 
@@ -21,6 +21,7 @@ Canonical normalized score rows used for P scoring: 188
 | `eduguard_adversarial` | 7 |
 | `eduguard_sata` | 8 |
 | `eduillustrate` | 3 |
+| `ifeval` | 1 |
 | `mathtutorbench_mistake_correction` | 5 |
 | `mathtutorbench_mistake_location` | 5 |
 | `mathtutorbench_pedagogy` | 7 |
@@ -34,6 +35,7 @@ Canonical normalized score rows used for P scoring: 188
 | `mmlu_pro` | 5 |
 | `mrbench_tutor` | 3 |
 | `olympiadbench` | 2 |
+| `p07_selfcheck` | 1 |
 | `p08_abstention` | 1 |
 | `p08_calibration` | 1 |
 | `pedagogy_benchmark` | 7 |

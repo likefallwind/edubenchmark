@@ -129,7 +129,7 @@ Missing P codes: P04, P09, P15, P19
 | `minimax-m2.7` | `P20` 教育角色边界判断 | CEG | 5.5216 | 5.5216 | 2 | 0.55/0.55 | eduguard_sata, mrbench_tutor |
 | `minimax-m2.7` | `P21` 学生风险识别 | CEG | 6.934 | 6.934 | 1 | 0.3/0.3 | eduguard_sata |
 | `minimax-m2.7` | `P22` 安全处置选择 | CEG | 6.934 | 6.934 | 1 | 0.35/0.35 | eduguard_sata |
-| `minimax-m3` | `P01` 指令与约束遵循 | SRG | 8.6775 | 8.6922 | 4 | 0.295/0.2029 | agieval, ceval, mmlu_pro, p08_abstention |
+| `minimax-m3` | `P01` 指令与约束遵循 | SRG | 8.7237 | 8.7232 | 5 | 1.095/0.5629 | agieval, ceval, ifeval, mmlu_pro, p08_abstention |
 
 ## Coverage Notes
 

@@ -1,15 +1,15 @@
 # Eval Run Inventory
 
-Total summary files scanned: 203
-Included candidates: 110
-Excluded from main: 93
+Total summary files scanned: 207
+Included candidates: 112
+Excluded from main: 95
 
 | Benchmark | Include candidates | Excluded |
 |---|---:|---:|
 | `_judge_jury` | 0 | 1 |
 | `_judge_rubric` | 0 | 13 |
 | `agieval` | 6 | 0 |
-| `bea2025` | 0 | 11 |
+| `bea2025` | 0 | 13 |
 | `bea2025_judge` | 0 | 6 |
 | `bea2025_tutor` | 3 | 0 |
 | `ceval` | 5 | 1 |
@@ -17,7 +17,7 @@ Excluded from main: 93
 | `eduguard_adversarial` | 7 | 10 |
 | `eduguard_sata` | 8 | 1 |
 | `eduillustrate` | 3 | 5 |
-| `ifeval` | 0 | 1 |
+| `ifeval` | 1 | 0 |
 | `mathtutorbench_judge_calibration` | 0 | 6 |
 | `mathtutorbench_mistake_correction` | 5 | 0 |
 | `mathtutorbench_mistake_location` | 5 | 0 |
@@ -32,11 +32,11 @@ Excluded from main: 93
 | `mmlu_pro` | 6 | 4 |
 | `mmtutorbench` | 0 | 1 |
 | `mmtutorbench_judge_calibration` | 0 | 1 |
-| `mrbench` | 0 | 24 |
+| `mrbench` | 0 | 26 |
 | `mrbench_judge` | 0 | 6 |
 | `mrbench_tutor` | 3 | 0 |
 | `olympiadbench` | 3 | 1 |
-| `p07_selfcheck` | 0 | 1 |
+| `p07_selfcheck` | 1 | 0 |
 | `p08_abstention` | 1 | 0 |
 | `p08_calibration` | 1 | 0 |
 

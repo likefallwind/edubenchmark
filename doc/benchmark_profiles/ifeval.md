@@ -32,4 +32,5 @@ MODEL=MiniMax-M3 ./scripts/run_eval.sh ifeval        # 全量 541 题，无 API 
 ## 当前映射
 
 - ifeval：P01 1.00，foundation_gate，weight 0.80；测量模型 P01/core 格子 weight 1.0（此前 P01 全是搭车格子）。
-- 2026-07-12 冒烟（MiniMax-M3, LIMIT=5）：strict 5/5。全量跑分随批量启动。
+- 2026-07-12 全量（MiniMax-M3, 541 题）：prompt-strict **0.874** / prompt-loose 0.911 / instruction-strict 0.915 / instruction-loose 0.940。区间合理（该基准头部模型公开成绩约 0.8-0.9），无天花板迹象。
+- 踩坑记录：run_eval.sh 启动时 `PATH=/home/likefallwind/miniconda3/bin:$PATH` 前缀必须放在 nohup/bash -c **里面**，否则 python 解析到默认 venv、缺 absl/nltk 直接崩（7-12 首跑即此故障）。

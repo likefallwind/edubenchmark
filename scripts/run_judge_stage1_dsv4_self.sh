@@ -3,13 +3,15 @@
 # 与 glm-5.2 / 纯 M3 的自进化完全对称，裁判 n=2 → 3。走 gateway。
 # 状态目录 stage1_deepseek-v4-pro/（judge slug 默认解析，无需 OUT_SLUG）。
 #
-# 用法:  nohup ./scripts/run_judge_stage1_dsv4_self.sh [round] > /dev/null 2>&1 &
-#        round 默认 1；日志自动写到
-#        reports/eval/_judge_rubric/stage1_deepseek-v4-pro/round<N>_run.log
+# 用法:  nohup ./scripts/run_judge_stage1_dsv4_self.sh [round] [lines] > /dev/null 2>&1 &
+#        round 默认 1；lines 默认 all，可选 mrbench_pg / mrbench_coh / bea_pg
+#        （round 2 后 Coherence 与 bea 已按协议收官，round 3 只跑 mrbench_pg）。
+#        日志自动写到 reports/eval/_judge_rubric/stage1_deepseek-v4-pro/round<N>_run.log
 #
 # 断点续跑: 判分响应有条目级缓存，失败后 sleep 300s 重发同命令即续。
 set -u
 ROUND="${1:-1}"
+LINES="${2:-all}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOG_DIR="$ROOT/reports/eval/_judge_rubric/stage1_deepseek-v4-pro"
 mkdir -p "$LOG_DIR"
@@ -33,7 +35,7 @@ run_line () {
   return 1
 }
 
-run_line mrbench Providing_Guidance
-run_line mrbench Coherence
-run_line bea2025 Providing_Guidance
-echo "=== round ${ROUND} all lines done $(date) ==="
+[[ "$LINES" == "all" || "$LINES" == "mrbench_pg"  ]] && run_line mrbench Providing_Guidance
+[[ "$LINES" == "all" || "$LINES" == "mrbench_coh" ]] && run_line mrbench Coherence
+[[ "$LINES" == "all" || "$LINES" == "bea_pg"      ]] && run_line bea2025 Providing_Guidance
+echo "=== round ${ROUND} lines=${LINES} done $(date) ==="

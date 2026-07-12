@@ -571,13 +571,42 @@ v1 标签复用 minimax3 缓存全量跑（零开销）。启动脚本 `scripts/
 | 线 | round 1 | round 2 | 终局 |
 |---|---|---|---|
 | mrbench/PG | **r1p3 验收** 0.272→0.365（+0.094 [0.026, 0.164]，add_clause 放宽 TSE→No 过严） | 重诊断后候选全负；回归消融 r1p3 −0.043 仍在赚钱；remap 叠加恒等 | r1p3 局部最优，收官 |
-| mrbench/Coherence | 最好 +0.032 ns | 最好 +0.058 [−0.011, 0.132] ns | 两轮无验收无近失，收官 |
+| mrbench/Coherence | 最好 +0.032 ns | 最好 r2p3 +0.058 [−0.011, 0.132] ns | 两轮无验收；r2p3 属边缘近失（对照 glm r2p5 判例 −0.016），独立确认 `m3self_mrbench_coh_r2p3` 待跑 |
 | bea2025/PG | 最好 +0.015 ns（筛选头名 r1p6 +0.075 全量现形） | 最好 +0.007 ns | 两轮无验收无近失，收官 |
 
-r1p3 验收后重诊断池一致率 0.597→0.665。无近失候选，无需独立确认。
+r1p3 验收后重诊断池一致率 0.597→0.665。勘误（07-12 复核）：Coherence r2p3 按 glm 判例应算边缘近失，已登记独立确认；PG/bea 无近失。
 
 **结论**：① 同规格对称对比落定——glm 自进化 round 1 即 3/3 验收 vs 纯 M3 1/3，
 "强裁判进化收益大"排除协议混淆；② M3 瓶颈在判分不在写提案——同线 M3 自写提案
 +0.094 > pilot glm 代写 +0.068（且两次验收的编辑针对不同混淆格）；③ winner's curse
 再添 2 例（累计 11 例家族），两段制照拦。**证据边界**：test 已在 Stage 3 开封用掉，
 本实验验收 rubric 仅有 dev 证据。报告见 judge_research_full_report §6.1。
+
+## 附录 6：deepseek-v4-pro 自举复验（judge=reflector=deepseek-v4-pro，2026-07-12）
+
+**动机**：协议预留的第三裁判复验（裁判 n=2→3），与 glm 主实验、纯 M3 自举
+逐项对称：同三条线、250 题大筛选片、每轮自适应重诊断、相同冻结评估切片、
+相同 CI 下界验收门，唯一变量是裁判本身。
+
+**基建**：`scripts/run_judge_stage1_dsv4_self.sh [round] [lines]`
+（`STAGE1_JUDGE_MODEL=STAGE1_REFLECT_MODEL=deepseek-v4-pro`，走 gateway；
+第二参数选线 all/mrbench_pg/mrbench_coh/bea_pg，round 3 起只跑未收官线）。
+状态目录 `reports/eval/_judge_rubric/stage1_deepseek-v4-pro/`，日志
+`roundN_run.log` 同目录。前两轮约 15k 次调用。
+
+**结果**（评估片配对 cluster-bootstrap CI，n_boot=1000）：
+
+| 线 | round 1 | round 2 | 终局 |
+|---|---|---|---|
+| mrbench/PG | 唯一幸存者 r1p4 +0.028 ns，空手 | **r2p2 验收** 0.319→0.406（**+0.087 [0.034, 0.140]**，add_clause："带事实错误但仍在往具体步骤引导 → TSE 而非 No"） | 验收 → 按协议 round 3 收官轮（进行中） |
+| mrbench/Coherence | 筛选头名 r1p4 筛 +0.040 → 全量 −0.026 翻负（winner's curse 第 12 例）；最好 +0.036 ns | 重诊断后 r2p5 +0.042 [−0.006] / r2p6 +0.042 [−0.013] 均 ns | 两轮无验收；两个边缘近失，独立确认 `dsv4_mrbench_coh_r2p5`/`r2p6` 待跑 |
+| bea2025/PG | 唯一幸存者是校准参照 dpfs_cal +0.029 ns | 最好 +0.031 ns | 两轮无验收无近失，收官 |
+
+**结论**：① 三裁判梯度成形——glm 一轮 3/3（累计 +0.34）、M3 一轮 1/3（+0.094）、
+dsv4 两轮 1/3（+0.087），方法普适、节奏随裁判变化，零假验收；② 失败台账（P4）
+第一次单独救活一条线——round 1 三线空手，round 2 反思吃着 round 1 失败台账
+换打法直接命中显著验收，"一轮定生死"的协议会错判 dsv4 为"修不动"；③ dsv4 与
+glm 在 mrbench/PG 同一混淆格（人类 TSE、裁判 No，过严）独立收敛到几乎同一句
+处方，把该线"任务级 rubric 缺口"的证据加厚到第三个裁判（dsv4 份 dev-only）。
+**证据边界**：test 已封，验收 rubric 仅 dev 证据；round 3 若再验收需更新本节。
+报告见 judge_research_full_report §6.2。

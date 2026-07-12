@@ -82,6 +82,49 @@ CONFIRMS: dict[str, dict[str, Any]] = {
             "diagnosis.json", "round2/diagnosis_used.json", "round3/diagnosis_used.json",
         ],
     },
+    # Pure-M3 self-evolution arm (STAGE1_JUDGE_MODEL=MiniMax-M3,
+    # STAGE1_OUT_SLUG=minimax3_self): Coherence closed round 2 with r2p3 at
+    # +0.058 [-0.011, 0.132] — inside the near-miss band set by the glm r2p5
+    # precedent (-0.016). Incumbent is still v1 (line never accepted), so the
+    # confirmation set is the pool remainder and incumbent labels are the
+    # cached v1 full run (zero extra calls), like bea2025_pg_r3p5.
+    "m3self_mrbench_coh_r2p3": {
+        "benchmark": "mrbench",
+        "dimension": "Coherence",
+        "candidate_round": 2,
+        "candidate_id": "r2p3",
+        "incumbent": "v1",
+        "conf_source": "pool_remainder",
+        "exclude_example_files": [
+            "diagnosis.json", "round1/diagnosis_used.json", "round2/diagnosis_used.json",
+        ],
+    },
+    # deepseek-v4-pro self-evolution arm (STAGE1_JUDGE_MODEL=deepseek-v4-pro):
+    # Coherence closed round 2 with two candidates in the near-miss band,
+    # r2p5 +0.042 [-0.006, 0.096] and r2p6 +0.042 [-0.013, 0.096]. Same
+    # v1-incumbent pool-remainder setup as above.
+    "dsv4_mrbench_coh_r2p5": {
+        "benchmark": "mrbench",
+        "dimension": "Coherence",
+        "candidate_round": 2,
+        "candidate_id": "r2p5",
+        "incumbent": "v1",
+        "conf_source": "pool_remainder",
+        "exclude_example_files": [
+            "diagnosis.json", "round1/diagnosis_used.json", "round2/diagnosis_used.json",
+        ],
+    },
+    "dsv4_mrbench_coh_r2p6": {
+        "benchmark": "mrbench",
+        "dimension": "Coherence",
+        "candidate_round": 2,
+        "candidate_id": "r2p6",
+        "incumbent": "v1",
+        "conf_source": "pool_remainder",
+        "exclude_example_files": [
+            "diagnosis.json", "round1/diagnosis_used.json", "round2/diagnosis_used.json",
+        ],
+    },
 }
 
 
