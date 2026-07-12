@@ -1,6 +1,8 @@
 # 映射效度验证计划 v2（2026-07-11）
 
-状态：v2 定稿；**M0、M1 已于 2026-07-11 完成**（产出见 §5），M2 等 edubench 原始数据到位。
+> 跟不上进度先看总览：`doc/rebenchmark_workstream_overview_2026-07-12.md`（这条工作线的来龙去脉、关键结论、当前卡在哪、需要你做什么）。
+
+状态：v2 定稿；**M0、M1、M1.5、M1.6 已于 2026-07-11 完成，M2 已于 2026-07-12 完成**（产出见 §5）；当前等 M2.5（批量跑分）和 M3（人工裁决 R1-R14）。
 关联：`reports/atomic_ability_rebenchmark_2026-07-08/02_benchmark_ability_mapping.jsonl`（被验证对象）、`08_selected_score_evidence.jsonl`（数据来源）、`data/mapping_measurement_model_v1.json`（测量模型声明）、`doc/atomic_ability_principle_audit_v3.md`
 
 ## 0. 背景与问题

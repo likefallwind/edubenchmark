@@ -1,6 +1,6 @@
 # 逐 P 构念核对（2026-07-11）
 
-对应计划文档 `doc/mapping_validation_plan_2026-07-11.md` §2.9。
+对应计划文档 `doc/mapping_validation_plan_2026-07-11.md` §2.9。工作线总览（为什么做这些、进展到哪）见 `doc/rebenchmark_workstream_overview_2026-07-12.md`。
 
 ## 这份文档是干什么的
 

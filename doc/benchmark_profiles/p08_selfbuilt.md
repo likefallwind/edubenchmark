@@ -19,7 +19,9 @@
 
 ## 局限与注意
 
-- 目前只有 MiniMax-M3 可用分（待批量跑），13 号检查里尚无配对可算。
+- MiniMax-M3 全量已跑完（2026-07：calibration 550 题 score_10=6.56、AUROC=0.638；abstention 500 题 score_10=8.72、弃答召回 0.748）；其余模型待批量跑，13 号检查里尚无配对可算。
+- abstention 默认跑 UMWP 的 500 题分层子集（adapter 内按五类不可答均衡、前缀稳定，LIMIT 可覆盖），不默认全量 5,200。
+- 题目清单文档：`data/p08_calibration/README.md`（与 p07_selfcheck 共用同一份 550 题，纪律：一轮战役内不换清单）。
 - verbalized confidence 是模型"嘴上说的"置信度，与内部概率可能脱节——这本身是测量的一部分，但解释时别当真概率。
 - 题源复用门槛 benchmark → 与门槛分数天然相关，分析 P08 时要用偏相关控制总分（13 号脚本已支持）。
 
