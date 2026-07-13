@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">69.6%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">383</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-7</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某企业2016年初拥有土地2万平方米，包括厂区内托儿所占地0.1万平方米，无偿提供给公安局使用土地0.3万平方米，厂区内绿化用地0.4万平方米。5月该企业购买一块土地使用权(非耕地)用于厂房扩建，占地面积为2.4万平方米，合同规定，5月支付土地价款并交付土地。该企业所在地区城镇土地使用税年税额为10元/平方米，该企业2016年应缴纳城镇土地使用税____万元。
+A. 26
+B. 36
+C. 30
+D. 44
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 550,
+  &quot;n_with_confidence&quot;: 550,
+  &quot;confidence_unparsed_rate&quot;: 0.0,
+  &quot;accuracy&quot;: 0.6964,
+  &quot;confidence_mean&quot;: 97.59,
+  &quot;confidence_std&quot;: 4.0,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 1,
+    &quot;70-79&quot;: 1,
+    &quot;80-89&quot;: 13,
+    &quot;90-99&quot;: 535
+  },
+  &quot;cwr_at_90&quot;: 0.2991,
+  &quot;n_high_confidence&quot;: 535,
+  &quot;ece_10bin&quot;: 0.281,
+  &quot;brier&quot;: 0.2822,
+  &quot;auroc&quot;: 0.6499,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.7354,
+    &quot;coverage_80&quot;: 0.7523,
+    &quot;coverage_70&quot;: 0.7766
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 100,
+      &quot;accuracy&quot;: 0.68,
+      &quot;n_with_confidence&quot;: 100,
+      &quot;cwr_at_90&quot;: 0.3093,
+      &quot;auroc&quot;: 0.4931
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 200,
+      &quot;accuracy&quot;: 0.765,
+      &quot;n_with_confidence&quot;: 200,
+      &quot;cwr_at_90&quot;: 0.2194,
+      &quot;auroc&quot;: 0.6704
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 150,
+      &quot;accuracy&quot;: 0.6267,
+      &quot;n_with_confidence&quot;: 150,
+      &quot;cwr_at_90&quot;: 0.3873,
+      &quot;auroc&quot;: 0.6509
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 100,
+      &quot;accuracy&quot;: 0.68,
+      &quot;n_with_confidence&quot;: 100,
+      &quot;cwr_at_90&quot;: 0.32,
+      &quot;auroc&quot;: 0.696
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 6.754
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>550</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>100</td><td>68</td><td>0.680</td><td><div class='bar'><i style='width:68%'></i></div></td></tr><tr><td>ceval</td><td>200</td><td>153</td><td>0.765</td><td><div class='bar'><i style='width:76%'></i></div></td></tr><tr><td>mmlu_pro</td><td>150</td><td>94</td><td>0.627</td><td><div class='bar'><i style='width:63%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>100</td><td>68</td><td>0.680</td><td><div class='bar'><i style='width:68%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>294</td><td>195</td><td>0.663</td><td><div class='bar'><i style='width:66%'></i></div></td></tr><tr><td>zh</td><td>256</td><td>188</td><td>0.734</td><td><div class='bar'><i style='width:73%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::advanced_mathematics-val-3</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>设函数$f\left(x\right)$连续，且$f\left(x\right)&gt;0$，求积分：$int_0^1{\ln f\left(x+t\right)}\mathrm{d}t=$____
+A. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+B. $\int_0^1{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+C. $\int_0^2x{\ln \frac{f\left( t+1 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+D. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-9</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>经营战略的本质是____。
+A. 目标与目的
+B. 资源
+C. 公司远景
+D. 组织结构
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A
+经营战略是企业为实现长期生存发展而作出的总体性谋划，其本质围绕企业的核心目标与目的展开，是对目标的明确和落地规划。其余选项可排除：资源是落实经营战略的物质基础而非本质；公司远景是战略制定的方向指引，属于战略的前置性参考要素；组织结构是战略实施的制度保障，由战略适配调整。
+置信度: 90</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-26</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某公司2001年4月3日以448000元的价格，不准备长期持有的A公司发行在外的普通股200000股，另支付相关税费1000元。A公司已于2001年3月31日宣告发放现金股利0.2元/股，并于5月8日支付，A公司于2002年3月31日宣告发放现金股利0.3元/股，某公司于2002年4月3日将该股票转让，则某公司转让股票时成本价为____元。
+A. 408000
+B. 409000
+C. 448000
+D. 349000
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 85}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+置信度: 85</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::chinese_language_and_literature-val-8</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>[p][p‘][b][m]四个音素的区别主要是____。
+A. 清浊
+B. 发音方法
+C. 发音部位
+D. 送气与否
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-8</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>一天，一个农民的驴子掉到枯井里，那可怜的驴子在井里凄凉地惨叫了几个钟头，农民亦急得团团转，就是毫无办法把它救起来，最后，他断然认定：驴子已老了，这口枯井也该填起来，不值得花精力去救驴子。他请来所有邻居帮他填井。大家抓起铁锹，开始往井里填土。驴子很快意识到发生了什么事，起初，它恐慌地大哭，不一会儿，居然安静下来。人们忍不住往井里看，奇迹发生了。每一铲砸到驴子背上的土，它都作了出人意料的处理：迅速抖落一身尘土，然后狠狠地用脚踩紧。这样，没过多久，驴子竟然自己把自己升了起来，到了井口，它纵身一跳，平安地跑开了，在场的人均惊诧不已。 这段文字告诉我们的道理是____。
+A. 人生中的每一个困难都是通往成功的垫脚石
+B. 换一种思维常常能够产生意想不到的效果
+C. 冷静思考是克服困难的首要条件
+D. 求人不如求己，很多时候，自己才是自己最大的救星
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+这个寓言的核心冲突是：往枯井里填土本是为了埋葬驴子的致命行为，按照常规思维只会让驴子死亡，但驴子转换了对待落土的思路，将本会掩埋自己的土转化为垫脚上升的助力，最终产生了所有人都意想不到的脱险结果，这正对应“换一种思维常常能够产生意想不到的效果”。
+其他选项错误原因：A项“每一个困难都是通往成功的垫脚石”表述绝对，困难本身不会自动成为垫脚石，错误处理困难只会带来负面影响；C项“首要条件”无中生有，文段并未对克服困难的各类条件进行优先级比较；D项“求人不如求己”缺乏前提支撑，故事中没有驴子主动求人被拒的设定，主人直接选择了放弃救驴，核心也并非强调“依靠自己”，而是处理问题的思维转变。
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-16</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>我们以往所理解的“现代化”概念仅仅局限于物质层面，局限于表层经济现代化，这也是迟发展国家长期存在的一个普遍性问题：在物质层面上求变的欲望很强，而在制度层面和观念层面上却是文化守成主义的，这种状况对于现代化实际进程的影响自不必说，它对于学术的影响是导致知识的流俗化。不断地更换新词语，在新词语的装潢下重复古老的思想观念，结果是词语和口号不断地更换而社会精神气质则没有实质性的变化。 这段文字要表达的主要意思是____。
+A. 现代化应包括物质的、制度的、观念的三个层面
+B. 片面理解现代化是迟发展国家长期存在的一个普遍性问题
+C. 物质层面的落后现状是迟发展国家片面理解现代化的一个重要因素
+D. 片面理解现代化会导致知识的流俗化
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;D&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>D
+文段首先指出以往对现代化的理解仅局限于物质层面，这是迟发展国家的普遍性问题，并解释了该问题的具体表现；随后以“对于现代化实际进程的影响自不必说”做让步，重点强调这种片面理解现代化的状况对学术的影响是导致知识的流俗化；最后一句进一步解释了知识流俗化的具体表现。整个文段的核心是论述片面理解现代化带来的核心影响——导致知识的流俗化。
+A选项属于过度引申，文段并未直接提出“现代化应包含三个层面”的对策，只是指出了片面理解的问题，排除；B选项仅对应文段提出问题的铺垫部分，并非重点，排除；C选项无中生有，文段未提及物质层面落后是片面理解现代化的原因，排除。
+置信度: 95</pre></details></div></section>
+</main>
+</body>
+</html>

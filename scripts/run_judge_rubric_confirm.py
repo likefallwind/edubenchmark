@@ -85,16 +85,19 @@ CONFIRMS: dict[str, dict[str, Any]] = {
     # Pure-M3 self-evolution arm (STAGE1_JUDGE_MODEL=MiniMax-M3,
     # STAGE1_OUT_SLUG=minimax3_self): Coherence closed round 2 with r2p3 at
     # +0.058 [-0.011, 0.132] — inside the near-miss band set by the glm r2p5
-    # precedent (-0.016). Incumbent is still v1 (line never accepted), so the
-    # confirmation set is the pool remainder and incumbent labels are the
-    # cached v1 full run (zero extra calls), like bea2025_pg_r3p5.
+    # precedent (-0.016). Incumbent is still v1 (line never accepted), so its
+    # labels come from the cached v1 full run (zero extra calls). The mrbench
+    # pool is only ~637 items and the rediagnosis subsample takes 605 of them,
+    # so "pool_remainder" would leave <30 items (useless power) — confirm on
+    # the subsample instead, which is still fully disjoint from the eval slice
+    # that SELECTED the candidate, minus every reflection-seen example.
     "m3self_mrbench_coh_r2p3": {
         "benchmark": "mrbench",
         "dimension": "Coherence",
         "candidate_round": 2,
         "candidate_id": "r2p3",
         "incumbent": "v1",
-        "conf_source": "pool_remainder",
+        "conf_source": "rediag_subsample",
         "exclude_example_files": [
             "diagnosis.json", "round1/diagnosis_used.json", "round2/diagnosis_used.json",
         ],
@@ -102,14 +105,14 @@ CONFIRMS: dict[str, dict[str, Any]] = {
     # deepseek-v4-pro self-evolution arm (STAGE1_JUDGE_MODEL=deepseek-v4-pro):
     # Coherence closed round 2 with two candidates in the near-miss band,
     # r2p5 +0.042 [-0.006, 0.096] and r2p6 +0.042 [-0.013, 0.096]. Same
-    # v1-incumbent pool-remainder setup as above.
+    # v1-incumbent / subsample setup as above.
     "dsv4_mrbench_coh_r2p5": {
         "benchmark": "mrbench",
         "dimension": "Coherence",
         "candidate_round": 2,
         "candidate_id": "r2p5",
         "incumbent": "v1",
-        "conf_source": "pool_remainder",
+        "conf_source": "rediag_subsample",
         "exclude_example_files": [
             "diagnosis.json", "round1/diagnosis_used.json", "round2/diagnosis_used.json",
         ],
@@ -120,7 +123,7 @@ CONFIRMS: dict[str, dict[str, Any]] = {
         "candidate_round": 2,
         "candidate_id": "r2p6",
         "incumbent": "v1",
-        "conf_source": "pool_remainder",
+        "conf_source": "rediag_subsample",
         "exclude_example_files": [
             "diagnosis.json", "round1/diagnosis_used.json", "round2/diagnosis_used.json",
         ],
@@ -157,21 +160,24 @@ def main() -> None:
     sub = pool_subsample(rnd)
     sub_ids = {it["native_item_id"] for it in sub}
     client = build_client(JUDGE_MODEL)
+    if spec["conf_source"] == "pool_remainder":
+        conf_items = [
+            it for it in rnd.pool
+            if it["native_item_id"] not in sub_ids and it["native_item_id"] not in excluded
+        ]
+    else:
+        assert spec["conf_source"] == "rediag_subsample"
+        conf_items = [it for it in sub if it["native_item_id"] not in excluded]
+
     if spec["incumbent"] == "current":
         base = json.loads((state_dir / "rubric_current.json").read_text(encoding="utf-8"))
         assert spec["conf_source"] == "rediag_subsample"
-        conf_items = [it for it in sub if it["native_item_id"] not in excluded]
         inc_labels = run_candidate(
             rnd, base, conf_items, state_dir / f"pool_{base['version']}" / "responses.jsonl",
             client, args.concurrency, args.retries,
         )
     else:
         base = empty_rubric(spec["benchmark"], spec["dimension"])
-        assert spec["conf_source"] == "pool_remainder"
-        conf_items = [
-            it for it in rnd.pool
-            if it["native_item_id"] not in sub_ids and it["native_item_id"] not in excluded
-        ]
         inc_labels, _ = cached_v1_pool_data(
             spec["benchmark"], {it["native_item_id"] for it in conf_items}
         )

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">89.5%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">541</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">541</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">484</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1000</span><span class='tag'>instruction_family=detectable_format+length_constraints+punctuation</span></div><div class='qtext'>Write a 300+ word summary of the wikipedia page &quot;https://en.wikipedia.org/wiki/Raymond_III,_Count_of_Tripoli&quot;. Do not use any commas and highlight at least 3 sections that has titles in markdown format, for example *highlighted section part 1*, *highlighted section part 2*, *highlighted section part 3*.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1001</span><span class='tag'>instruction_family=punctuation</span></div><div class='qtext'>I am planning a trip to Japan, and I would like thee to write an itinerary for my journey in a Shakespearean style. You are not allowed to use any commas in your response.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.8946,
+  &quot;prompt_loose_accuracy&quot;: 0.9298,
+  &quot;instruction_strict_accuracy&quot;: 0.9317,
+  &quot;instruction_loose_accuracy&quot;: 0.9544,
+  &quot;n_prompts&quot;: 541,
+  &quot;n_instructions&quot;: 834,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>541</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>34</td><td>27</td><td>0.794</td><td><div class='bar'><i style='width:79%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>4</td><td>3</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>change_case+detectable_content+detectable_format</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_content+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_content+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_format+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>11</td><td>10</td><td>0.909</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>change_case+keywords+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>12</td><td>8</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>change_case+length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+punctuation</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>change_case+startend</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>combination</td><td>27</td><td>26</td><td>0.963</td><td><div class='bar'><i style='width:96%'></i></div></td></tr><tr><td>combination+detectable_format</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+keywords</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+punctuation</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>combination+keywords</td><td>9</td><td>6</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>combination+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+language+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+punctuation</td><td>11</td><td>11</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content</td><td>24</td><td>24</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>detectable_content+keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+language</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+length_constraints</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+punctuation</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>69</td><td>65</td><td>0.942</td><td><div class='bar'><i style='width:94%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>18</td><td>15</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>detectable_format+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+length_constraints</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>detectable_format+keywords+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>19</td><td>18</td><td>0.947</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>detectable_format+length_constraints+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>8</td><td>8</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>58</td><td>45</td><td>0.776</td><td><div class='bar'><i style='width:78%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>18</td><td>16</td><td>0.889</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>keywords+length_constraints+punctuation</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>keywords+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+punctuation</td><td>5</td><td>4</td><td>0.800</td><td><div class='bar'><i style='width:80%'></i></div></td></tr><tr><td>keywords+startend</td><td>7</td><td>7</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language</td><td>17</td><td>17</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>46</td><td>42</td><td>0.913</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>length_constraints+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+startend</td><td>9</td><td>9</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation</td><td>16</td><td>16</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation+startend</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>startend</td><td>31</td><td>31</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1040</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Write me a resume for Matthias Algiers. Use words with all capital letters to highlight key abilities, but make sure that words with all capital letters appear less than 10 times. Wrap the entire response with double quotation marks.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>&quot;
+Matthias Algiers
+Portland, Oregon | (503) 123-4567 | matthias.algiers.pm@gmail.com | linkedin.com/in/matthiasalgiers | portfolio: matthiasalgiers.com
+
+Professional Summary
+Senior Sustainable Infrastructure Project Manager with 8+ years of experience delivering public and private green build projects valued up to $18M, consistently finishing 15% ahead of schedule and 20% under budget. Specializes in centering community needs and emissions reduction targets across all project phases, with a track record of earning regional industry recognition for innovative, accessible sustainable design.
+
+Professional Experience
+Senior Project Manager | GreenSpire Infrastructure, Portland, Oregon
+January 2020 – Present
+- Lead 12+ municipal and commercial sustainable construction projects from pre-design feasibility through closeout, leveraging CROSS-STAKEHOLDER ALIGNMENT to unify city councils, local environmental nonprofits, and trade teams around shared core goals
+- Cut operational carbon emissions for completed projects by 38% on average by integrating LOW-CARBON MATERIAL INNOVATION into pre-construction sourcing requirements, earning 4 regional Green Building Leadership awards between 2021 and 2024
+- Executed rigorous BUDGET &amp; RISK MITIGATION protocols to reduce unplanned project costs by 22% across the full portfolio, avoiding $1.2M in overexpenditures in 2023 alone
+- Mentored 3 junior project coordinators in sustainable build best practices, resulting in 100% of mentees being promoted within 18 months of hire
+
+Project Coordinator | Pacific Northwest Sustainable Build Collective, Seattle, Washington
+June 2016 – December 2019
+- Supported end-to-end delivery of 8 residential and small-scale public green space projects, contributing to NET-ZERO PROJECT DELIVERY milestones that exceeded Washington state energy efficiency standards by 25%
+- Designed and rolled out COMMUNITY ENGAGEMENT STRATEGY frameworks for low-income neighborhood revitalization projects, boosting resident input participation by 60% and reducing post-construction feedback disputes by 80%
+- Coordinated permit applications and regulatory compliance checks, ensuring 100% of projects passed local environmental and building code inspections on first submission
+- Managed project documentation and weekly stakeholder check-ins, reducing communication delays by 30% across all active projects
+
+Education
+Bachelor of Science in Civil Engineering (Concentration in Sustainable Design) | University of Washington, Seattle, Washington
+Graduated June 2016 | Minor in Environmental Policy | 3.7/4.0 GPA | Dean’s List (6 semesters)
+
+Certifications &amp; Affiliations
+- Leadership in Energy and Environmental Design Accredited Professional (Building Design + Construction), 2018
+- Project Management Professional, 2021
+- Certified Sustainable Building Advisor, 2019
+- Member, Oregon Sustainable Infrastructure Association, 2020–Present
+&quot;</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>&quot;
+Matthias Algiers
+Portland, Oregon | (503) 123-4567 | matthias.algiers.pm@gmail.com | linkedin.com/in/matthiasalgiers | portfolio: matthiasalgiers.com
+
+Professional Summary
+Senior Sustainable Infrastructure Project Manager with 8+ years of experience delivering public and private green build projects valued up to $18M, consistently finishing 15% ahead of schedule and 20% under budget. Specializes in centering community needs and emissions reduction targets across all project phases, with a track record of earning regional industry recognition for innovative, accessible sustainable design.
+
+Professional Experience
+Senior Project Manager | GreenSpire Infrastructure, Portland, Oregon
+January 2020 – Present
+- Lead 12+ municipal and commercial sustainable construction projects from pre-design feasibility through closeout, leveraging CROSS-STAKEHOLDER ALIGNMENT to unify city councils, local environmental nonprofits, and trade teams around shared core goals
+- Cut operational carbon emissions for completed projects by 38% on average by integrating LOW-CARBON MATERIAL INNOVATION into pre-construction sourcing requirements, earning 4 regional Green Building Leadership awards between 2021 and 2024
+- Executed rigorous BUDGET &amp; RISK MITIGATION protocols to reduce unplanned project costs by 22% across the full portfolio, avoiding $1.2M in overexpenditures in 2023 alone
+- Mentored 3 junior project coordinators in sustainable build best practices, resulting in 100% of mentees being promoted within 18 months of hire
+
+Project Coordinator | Pacific Northwest Sustainable Build Collective, Seattle, Washington
+June 2016 – December 2019
+- Supported end-to-end delivery of 8 residential and small-scale public green space projects, contributing to NET-ZERO PROJECT DELIVERY milestones that exceeded Washington state energy efficiency standards by 25%
+- Designed and rolled out COMMUNITY ENGAGEMENT STRATEGY frameworks for low-income neighborhood revitalization projects, boosting resident input </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1130</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a logic quiz for teenagers about a chesterfield. In your entire response, the letter t should appear at most once.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span># Logic Quiz: Chesterfield Clue Challenge
+For young people 13–17, solve clues matching each friend with her item and spot on large four-cushion seating piece.
+
+## Scenario
+Four friends (Ami, Blu, Jai, Rio) each placed one unique item on seating piece in shared living space. Items placed: cozy wool scarf, vintage vinyl disc, new paperback book, hand-shaped ceramic jar. Each friend claimed one spot on seating piece for placing her item. Spots are ordered 1 through 4, with 1 nearest entryway and 4 farthest from entryway.
+
+## Clues
+1. Person who placed jar never put item in an end spot.
+2. Ami placed her item with precisely one empty spot between hers and vinyl disc’s owner’s item.
+3. Blu’s spot comes before Jai’s spot in position order.
+4. Scarf rests in spot farthest from entryway.
+5. Rio’s item occupies a lower-numbered spot, followed by paperback book, followed by jar.
+
+## Questions
+1. Which item is Rio’s?
+   A) Cozy wool scarf
+   B) Vintage vinyl disc
+   C) New paperback book
+   D) Hand-shaped ceramic jar
+
+2. Which friend placed her item in spot 2?
+   A) Ami
+   B) Blu
+   C) Jai
+   D) Rio
+
+3. Which item occupies spot 1, nearest entryway?
+   A) Vintage vinyl disc
+   B) New paperback book
+   C) Hand-shaped ceramic jar
+   D) Cozy wool scarf
+
+---
+
+## Answer Key
+1. B
+2. B
+3. A
+
+Brief explanation: Clue 5 gives order of Rio’s item, paperback book, jar, each followed by next in spot number sequence from 1 upward. Clue 4 puts scarf in spot farthest from entryway (spot 4), so first three spots hold Rio’s item, book, jar. Jar sits in spot 3 (never in end spot, matching clue 1). Vinyl disc fills spot 1 as Rio’s item. Ami has one spot between hers and vinyl, so Ami holds jar in spot 3. Blu’s spot comes before Jai’s spot, so Blu holds book in spot 2, Jai holds scarf in spot 4.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># Logic Quiz: Chesterfield Clue Challenge
+For young people 13–17, solve clues matching each friend with her item and spot on large four-cushion seating piece.
+
+## Scenario
+Four friends (Ami, Blu, Jai, Rio) each placed one unique item on seating piece in shared living space. Items placed: cozy wool scarf, vintage vinyl disc, new paperback book, hand-shaped ceramic jar. Each friend claimed one spot on seating piece for placing her item. Spots are ordered 1 through 4, with 1 nearest entryway and 4 farthest from entryway.
+
+## Clues
+1. Person who placed jar never put item in an end spot.
+2. Ami placed her item with precisely one empty spot between hers and vinyl disc’s owner’s item.
+3. Blu’s spot comes before Jai’s spot in position order.
+4. Scarf rests in spot farthest from entryway.
+5. Rio’s item occupies a lower-numbered spot, followed by paperback book, followed by jar.
+
+## Questions
+1. Which item is Rio’s?
+   A) Cozy wool scarf
+   B) Vintage vinyl disc
+   C) New paperback book
+   D) Hand-shaped ceramic jar
+
+2. Which friend placed her item in spot 2?
+   A) Ami
+   B) Blu
+   C) Jai
+   D) Rio
+
+3. Which item occupies spot 1, nearest entryway?
+   A) Vintage vinyl disc
+   B) New paperback book
+   C) Hand-shaped ceramic jar
+   D) Cozy wool scarf
+
+---
+
+## Answer Key
+1. B
+2. B
+3. A
+
+Brief explanation: Clue 5 gives order of Rio’s item, paperback book, jar, each followed by next in spot number sequence from 1 upward. Clue 4 puts scarf in spot farthest from entryway (spot 4), so first three spots hold Rio’s item, book, jar. Jar sits in spot 3 (never in end spot, matching clue 1). Vinyl disc fills spot 1 as Rio’s item. Ami has one spot between hers and vinyl, so Ami holds jar in spot 3. Blu’s spot comes before Jai’s spot, so Blu holds book in spot 2, Jai holds scarf in spot 4.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1174</span><span class='tag'>instruction_family=detectable_format+keywords+length_constraints</span></div><div class='qtext'>Write a template for a chat bot that takes a user&#x27;s location and gives them the weather forecast. Use the letter o as a keyword in the syntax of the template. The letter o should appear at least 6 times.. Your response should contain fewer than 6 sentences. Highlight at least 2 text sections, i.e. *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>*Weather Bot Core Template*: Use o as the primary syntax keyword, where o holds validated user location, o triggers the public weather API request, o populates the formatted forecast response placeholder, and o flags missing or invalid location inputs. *User-facing script*: Greet users with “Share your town or zip code, and I’ll pull your official 7-day forecast so you know if you ought to grab a rain jacket, opt for sunblock, or offset outdoor plans around incoming storms.”, and use the o error flag to send the message “Oops, I only operate with valid locations—share yours once more to get your custom forecast.”.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>*Weather Bot Core Template*: Use o as the primary syntax keyword, where o holds validated user location, o triggers the public weather API request, o populates the formatted forecast response placeholder, and o flags missing or invalid location inputs. *User-facing script*: Greet users with “Share your town or zip code, and I’ll pull your official 7-day forecast so you know if you ought to grab a rain jacket, opt for sunblock, or offset outdoor plans around incoming storms.”, and use the o error flag to send the message “Oops, I only operate with valid locations—share yours once more to get your custom forecast.”.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1300</span><span class='tag'>instruction_family=keywords+length_constraints+punctuation</span></div><div class='qtext'>Write a short proposal for a new research project that investigates how language evolves over time. I want to make it challenging, so:
+1. Do not include any commas in your response.
+2. Do not include the letter &quot;c&quot; anywhere in your response.
+3. Your response should contain at least 250 words.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Proposal for Research into Language Evolution Dynamics in Geographically Separated Speech Groups
+
+This project addresses a key gap in current understandings of how language evolves over multiple generations. Most existing work on language evolution draws from printed texts or short term speech samples that fail to track subtle gradual shifts that unfold across decades. Many studies also focus on widely spoken languages with large speaker bases that have regular exposure to mass media and cross group interaction. Those conditions mask the core internal drivers of evolution that operate when speech groups are shielded from external influence. No prior work has isolated those drivers by comparing highly similar groups that differ only in their level of interaction with outside populations.
+
+This project will fill that gap by tracking language evolution across three generations in two nearly identical speech groups that live on separate small islands in the North Atlantic. Both groups share the same ancestral language root and have nearly equal population size and proximity to equivalent material resources. The only key difference between the two groups is that one has had no regular interaction with mainland populations for 80 years while the other established regular monthly ferry links to the mainland 40 years prior to the start of the study.
+
+Over the course of five years the research team will collect 120 hours of recorded informal speech from 60 participants total split evenly across the two groups and across three age bands of 18 to 30 31 to 50 and 51 plus. The team will partner with local island leadership to secure participant agreement and ongoing community support for all data gathering activities. Each participant will complete a series of structured speaking tasks that prompt use of descriptive terms narrative structure and response to hypothetical scenarios. The team will also collect observation notes from group public events such as town meetings and seasonal festivals to document speech used in natural unprompted settings. All recorded speech will be transcribed and tagged for shifts in lexical selection syntactic structure pronunciation of vowel and speech sound patterns and use of novel phrases that emerge during the study window. The team will compare shift rates and shift types between the two groups and across generations to identify which shifts stem from external interaction and which arise from internal group dynamics independent of outside influence.
+
+This project will produce new insight into the mechanisms that drive language evolution over relatively short time frames. It will also generate a large open shared dataset of natural speech that future researchers can use to explore additional questions related to language variation and evolution. Findings from the study will inform work in fields ranging from linguistic anthropology to speech pathology to educational design for multilingual learner groups. The study will also set a framework for longer term monitoring of the two groups to track evolution across additional future generations.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Proposal for Research into Language Evolution Dynamics in Geographically Separated Speech Groups
+
+This project addresses a key gap in current understandings of how language evolves over multiple generations. Most existing work on language evolution draws from printed texts or short term speech samples that fail to track subtle gradual shifts that unfold across decades. Many studies also focus on widely spoken languages with large speaker bases that have regular exposure to mass media and cross group interaction. Those conditions mask the core internal drivers of evolution that operate when speech groups are shielded from external influence. No prior work has isolated those drivers by comparing highly similar groups that differ only in their level of interaction with outside populations.
+
+This project will fill that gap by tracking language evolution across three generations in two nearly identical speech groups that live on separate small islands in the North Atlantic. Both groups share the same ancestral language root and have nearly equal population size and proximity to equivalent material resources. The only key difference between the two groups is that one has had no regular interaction with mainland populations for 80 years while the other established regular monthly ferry links to the mainland 40 years prior to the start of the study.
+
+Over the course of five years the research team will collect 120 hours of recorded informal speech from 60 participants total split evenly across the two groups and across three age bands of 18 to 30 31 to 50 and 51 plus. The team will partner with local island leadership to secure participant agreement and ongoing community support for all data gathering activities. Each participant will complete a series of structured speaking tasks that prompt use of descriptive terms narrative structure and response to hypothetical scenarios. The team will also collect observation notes from group public events such as town meetings and sea</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1379</span><span class='tag'>instruction_family=detectable_format+keywords</span></div><div class='qtext'>Write a limerick about a woman named Sarah who lives in a town where it&#x27;s always 90°F. Highlight at least 6 sections in your answer with markdown, example: *highlighted section*. Mention the name Sarah only once.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>There once was a fan of *linen bed throws* named Sarah, who dwelled in a town
+Where *constant bright sun* kept *90°F* as its crown
+She nibbled *frosty mango slices* served over crushed ice
+And swore *shaded porch breezes* were pure paradise
+She roams after dark in *a flowery cotton gown*
+
+### Breakdown of requirements met (for clarity):
+1. Limerick structure: Follows strict AABBA rhyme scheme (town/crown/gown; ice/paradise) and classic anapestic meter
+2. Sarah is named exactly once, in the first line
+3. The town’s unchanging temperature is explicitly established via the *constant bright sun* that permanently holds *90°F* as its default
+4. 6+ highlighted markdown sections: *linen bed throws*, *constant bright sun*, *90°F*, *frosty mango slices*, *shaded porch breezes*, *a flowery cotton gown*</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>There once was a fan of *linen bed throws* named Sarah, who dwelled in a town
+Where *constant bright sun* kept *90°F* as its crown
+She nibbled *frosty mango slices* served over crushed ice
+And swore *shaded porch breezes* were pure paradise
+She roams after dark in *a flowery cotton gown*
+
+### Breakdown of requirements met (for clarity):
+1. Limerick structure: Follows strict AABBA rhyme scheme (town/crown/gown; ice/paradise) and classic anapestic meter
+2. Sarah is named exactly once, in the first line
+3. The town’s unchanging temperature is explicitly established via the *constant bright sun* that permanently holds *90°F* as its default
+4. 6+ highlighted markdown sections: *linen bed throws*, *constant bright sun*, *90°F*, *frosty mango slices*, *shaded porch breezes*, *a flowery cotton gown*</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1381</span><span class='tag'>instruction_family=length_constraints</span></div><div class='qtext'>Write me a funny song with less than 10 sentences for a proposal to build a new playground at my local elementary school.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>### Playground Proposal Fight Song (Tune: “She’ll Be Coming ’Round the Mountain” – bring kid backup singers with kazoos)
+(6 total sentences, way under 10)
+1. Our old metal slide burns butts hotter than the lunch lady’s pizza pan.
+2. The only working swing just swings sideways straight into the old oak trunk.
+3. We get splinters in our kneecaps from wood chips older than our principal.
+4. Last week a kindergartener got stuck reaching for a Cheeto in the rusty tunnel’s gunk.
+5. So vote yes for soft turf, twisty slides, and monkey bars that don’t flake rust.
+6. And for you grown-ups, that means way less splinter-pulling duty after recess, trust!
+
+(Pro tip: Hold up a blurry, parent-approved pic of the Cheeto-stuck kindergartener for maximum PTA swing votes.)</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>### Playground Proposal Fight Song (Tune: “She’ll Be Coming ’Round the Mountain” – bring kid backup singers with kazoos)
+(6 total sentences, way under 10)
+1. Our old metal slide burns butts hotter than the lunch lady’s pizza pan.
+2. The only working swing just swings sideways straight into the old oak trunk.
+3. We get splinters in our kneecaps from wood chips older than our principal.
+4. Last week a kindergartener got stuck reaching for a Cheeto in the rusty tunnel’s gunk.
+5. So vote yes for soft turf, twisty slides, and monkey bars that don’t flake rust.
+6. And for you grown-ups, that means way less splinter-pulling duty after recess, trust!
+
+(Pro tip: Hold up a blurry, parent-approved pic of the Cheeto-stuck kindergartener for maximum PTA swing votes.)</pre></details></div></section>
+</main>
+</body>
+</html>

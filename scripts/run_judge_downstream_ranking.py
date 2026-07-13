@@ -49,7 +49,7 @@ from eval.benchmarks.mrbench import (
     _judge_prompt,
     _normalize_label,
 )
-from eval.providers import build_client, extraction_max_tokens
+from eval.providers import build_client
 from eval.stats import cluster_bootstrap_diff_ci
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -94,11 +94,11 @@ def judge_call(client: Any, dim: str, version: str, conv: str, response: str) ->
     last = ""
     for attempt in range(3):
         try:
-            reply = client.chat(
-                [{"role": "user", "content": prompt}],
-                model=JUDGE_MODEL,
-                max_tokens=extraction_max_tokens(JUDGE_MODEL, 1024),
-            )
+            # No max_tokens cap: glm's inline CoT spends the budget before the
+            # label, and a cap returns empty content that scores as a fail —
+            # which hit the longer v2 rubric prompt hardest (70 vs 17 empties)
+            # and faked a v2 pass-rate drop. Stage 1's judge is uncapped too.
+            reply = client.chat([{"role": "user", "content": prompt}], model=JUDGE_MODEL)
             last = reply or ""
             label = _normalize_label(dim, last)
             if label != "unparsed":
