@@ -99,6 +99,16 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Related capabilities: P02; SRG
   Source report: doc/p_construct_review_2026-07-11.md, doc/benchmark_gap_recommendations_2026-07-11.md
 
+## LongTutor 长历史个性化辅导 - 2026-07-13
+
+- Note: 已按作者说明使用 `compute_history_stats.py` 顶部被注释的 XES3G5M concept-segmentation 逻辑，从 `sequences_long.jsonl` 和 `questions.jsonl` 重建 `history_features_lastq_scale.jsonl`；1,000 条输入与 `human_an_updated.jsonl` 的 1,000 条人工 gold 按稳定 `_key` 全量对齐。人工评测必须使用 `human_an_updated.jsonl`，不能误用自动生成的 `pipeline_an_scale.jsonl`。
+- Note: 已接入 `longtutor_evidence`、`longtutor_diagnosis`、`longtutor_teaching` 和 `run_eval.sh`。MiniMax-M3 smoke（每任务 2 条）已完成；Evidence 语义 judge 与 Teaching 四维 judge 需要通过 `extraction_max_tokens()` 为推理模型保留足够输出 token。
+- Gap: 尚未完成 MiniMax-M3 对 1,000 条人工样本的三任务全量评测，也未对 Evidence Semantic Accuracy judge 和 Teaching 四维 judge 做人工抽样校准。
+  Product reason: 小样本 smoke 只能证明数据、模型调用、解析、评分和报告链路可运行，不能形成长历史证据获取、状态诊断和个性化教学能力结论。
+  Suggested data/eval: 先扩大到分层样本，按 Information Extraction / Multi-session Reasoning / Hallucination Check 与四类 diagnosis 检查；人工复核 judge 一致性后再运行全量 1,000 条，并分别报告 Evidence accuracy、Diagnosis Macro-F1/accuracy、Teaching 四维分，不计算跨任务总平均。
+  Related capabilities: D12, D13, D15, D16, D17; S3, S5
+  Source: ACL 2026 LongTutor; `sources/datasets/longtutor/`; `reports/eval/longtutor_*/minimax3/`
+
 - Gap: P16 学习者画像的分数只反映"支持需求判断"一个子能力；知识状态估计、误概念识别、参与度识别三个子能力无任何覆盖。~~P17 的苏格拉底式引导有本地分数（mathtutorbench_socratic）但未进映射~~【已完成 2026-07-12：socratic 全量判分 4 模型并补挂 P17/P18】。
   Product reason: 个性化教学产品的核心是画像，当前 P16 分数会严重高估画像能力覆盖面。
   Suggested data/eval: FoundationalASSIST 构造"读作答历史预测下一题"任务（P16a）；Eedi 误概念映射（P16b）；IntrEx 参与度判别（P16c）；socratic 补挂映射（P17a 的提问式干预测量来源，零成本）。

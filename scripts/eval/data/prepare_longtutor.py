@@ -75,6 +75,9 @@ def _keys(path: Path) -> set[str]:
         for line in fh:
             row = json.loads(line)
             key = row.get("_key")
+            if not key and row.get("uid") is not None and row.get("question_info") is not None:
+                digest = hashlib.sha256(str(row["question_info"]).encode("utf-8")).hexdigest()
+                key = f"{row['uid']}||{digest}"
             if key:
                 found.add(str(key))
     return found
@@ -101,6 +104,27 @@ def main() -> None:
         return
 
     upstream = _load_module(script)
+
+    # The authors confirmed that the 1,000 XES3G5M human-gold samples used the
+    # hierarchy-segmenting implementation that is commented out in the released
+    # script. The active implementation is for MOOCRadar. This affects both the
+    # rendered current-question hash in _key and related-concept features.
+    def _xes3g5m_concept_segments(concepts):
+        if not concepts:
+            return []
+        seen = set()
+        segments = []
+        for concept in concepts:
+            if not concept:
+                continue
+            for part in str(concept).split("----")[1:]:
+                part = part.strip()
+                if part and part not in seen:
+                    seen.add(part)
+                    segments.append(part)
+        return segments
+
+    upstream._concept_segments = _xes3g5m_concept_segments
     questions_map = upstream.load_questions_map(questions)
     global_error = upstream.compute_global_error_rates(sequences)
     targets: dict[str, set[str]] = {}

@@ -15,6 +15,7 @@ from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient
+from ..providers import extraction_max_tokens
 from ..scoring import multiclass_f1
 
 
@@ -103,7 +104,11 @@ class LongTutorEvidenceAdapter(BenchmarkAdapter):
             "Return exactly CORRECT or INCORRECT.\n\n"
             f"Question and history:\n{item['text']}\n\nReference: {item['gold']}\nCandidate: {response}"
         )
-        return client.chat([{"role": "user", "content": prompt}], model=model, max_tokens=16).strip().upper()
+        return client.chat(
+            [{"role": "user", "content": prompt}],
+            model=model,
+            max_tokens=extraction_max_tokens(model, 1024),
+        ).strip().upper()
 
     def score(self, extracted, item):
         ok = extracted.startswith("CORRECT") and not extracted.startswith("INCORRECT")
@@ -177,7 +182,11 @@ class LongTutorTeachingAdapter(BenchmarkAdapter):
             f"Context:\n{item['text']}\nGold diagnosis: {item['meta']['diagnosis']}\n"
             f"Gold strategy: {item['meta']['strategy']}\nReference teaching: {item['gold']}\nCandidate: {response}"
         )
-        return client.chat([{"role": "user", "content": prompt}], model=model, max_tokens=300)
+        return client.chat(
+            [{"role": "user", "content": prompt}],
+            model=model,
+            max_tokens=extraction_max_tokens(model, 2048),
+        )
 
     def score(self, extracted, item):
         parsed = _json_from_text(extracted) or {}

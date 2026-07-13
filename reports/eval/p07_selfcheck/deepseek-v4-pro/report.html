@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>deepseek-v4-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">69.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">546</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">377</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-7</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某企业2016年初拥有土地2万平方米，包括厂区内托儿所占地0.1万平方米，无偿提供给公安局使用土地0.3万平方米，厂区内绿化用地0.4万平方米。5月该企业购买一块土地使用权(非耕地)用于厂房扩建，占地面积为2.4万平方米，合同规定，5月支付土地价款并交付土地。该企业所在地区城镇土地使用税年税额为10元/平方米，该企业2016年应缴纳城镇土地使用税____万元。
+A. 26
+B. 36
+C. 30
+D. 44
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 546,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.6648,
+  &quot;r2_accuracy&quot;: 0.6905,
+  &quot;net_gain&quot;: 0.0256,
+  &quot;change_rate&quot;: 0.0989,
+  &quot;n_r1_wrong&quot;: 183,
+  &quot;n_fixed_wrong_to_right&quot;: 28,
+  &quot;fix_rate&quot;: 0.153,
+  &quot;n_r1_right&quot;: 363,
+  &quot;n_broken_right_to_wrong&quot;: 14,
+  &quot;break_rate&quot;: 0.0386,
+  &quot;score_10&quot;: 5.572,
+  &quot;by_source&quot;: {
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 199,
+      &quot;r1_correct&quot;: 126,
+      &quot;r2_correct&quot;: 143,
+      &quot;fixed&quot;: 24,
+      &quot;broken&quot;: 7
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 147,
+      &quot;r1_correct&quot;: 97,
+      &quot;r2_correct&quot;: 97,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 1
+    },
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 100,
+      &quot;r1_correct&quot;: 72,
+      &quot;r2_correct&quot;: 69,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 3
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 100,
+      &quot;r1_correct&quot;: 68,
+      &quot;r2_correct&quot;: 68,
+      &quot;fixed&quot;: 3,
+      &quot;broken&quot;: 3
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>4</td></tr><tr><td>scored</td><td>546</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>100</td><td>69</td><td>0.690</td><td><div class='bar'><i style='width:69%'></i></div></td></tr><tr><td>ceval</td><td>199</td><td>143</td><td>0.719</td><td><div class='bar'><i style='width:72%'></i></div></td></tr><tr><td>mmlu_pro</td><td>147</td><td>97</td><td>0.660</td><td><div class='bar'><i style='width:66%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>100</td><td>68</td><td>0.680</td><td><div class='bar'><i style='width:68%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>291</td><td>193</td><td>0.663</td><td><div class='bar'><i style='width:66%'></i></div></td></tr><tr><td>zh</td><td>255</td><td>184</td><td>0.722</td><td><div class='bar'><i style='width:72%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（4 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>4</td><td>模型返回了空内容</td><td class='muted'>ceval::discrete_mathematics-val-0, mmlu_pro::3730, mmlu_pro::8510, mmlu_pro::11481</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;正确答案是 **C**。\n\n**解析：**\n在会计分录测试中，确定总体完整性的目标是确保从会计信息系统中提取的待测试会计分录和其他调整是完整、无遗漏的。选项A、B、D均直接与验证总体完整性相关：A通过核对总账与财务报表检查是否存在其他调整；B通过加计发生额与科目余额表核对来验证提取的总体是否完整；D直接检查结账前分录以测试完整性。而选项C是将系统生成的账户余额与明细账、总账及科目余额表核对，**测试的是计算准确性**，而非针对总体的完整性，因此在确定总体完整性时执行该程序是不恰当的。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确答案是 **C**。
+
+**解析：**
+在会计分录测试中，确定总体完整性时，注册会计师的目标是确保从会计信息系统中提取的待测试会计分录和其他调整是完整、未遗漏的。选项A、B、D均与验证总体完整性直接相关：A通过核对总账与财务报表来检查完整性；B通过加计发生额与科目余额表核对来验证完整性；D直接检查结账前分录测试完整性。而选项C是将系统生成的账户余额与明细账、总账等核对，这属于测试计算准确性的程序，并非针对总体完整性，因此不恰当。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>根据COSO内部控制框架，反舞弊机制属于内部控制要素中的____。
+A. 风险评估
+B. 控制活动
+C. 监控
+D. 信息与沟通
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;正确答案是D。根据COSO内部控制框架，反舞弊机制（如举报投诉渠道）归属于“信息与沟通”要素，该要素要求企业建立有效的沟通渠道，确保信息在内外部及时、准确传递，其中包括反舞弊机制的建立与运行。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确答案是D。根据COSO内部控制框架，反舞弊机制（如举报投诉制度）属于“信息与沟通”要素，旨在确保企业及时获取、传递和沟通与反舞弊相关的信息。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::advanced_mathematics-val-3</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>设函数$f\left(x\right)$连续，且$f\left(x\right)&gt;0$，求积分：$int_0^1{\ln f\left(x+t\right)}\mathrm{d}t=$____
+A. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+B. $\int_0^1{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+C. $\int_0^2x{\ln \frac{f\left( t+1 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+D. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;正确答案是 C。\n\n**推导过程：**\n令 \\( I(x) = \\int_0^1 \\ln f(x+t) \\, \\mathrm{d}t \\)，作变量代换 \\( u = x+t \\)，得\n\\[ I(x) = \\int_x^{x+1} \\ln f(u) \\, \\mathrm{d}u. \\]\n对 \\( x \\) 求导，利用变限积分求导公式：\n\\[ I&#x27;(x) = \\ln f(x+1) - \\ln f(x) = \\ln \\frac{f(x+1)}{f(x)}. \\]\n积分并代入初值 \\( I(0) = \\int_0^1 \\ln f(t) \\, \\mathrm{d}t \\)，得\n\\[ I(x) = \\int_0^x \\ln \\frac{f(t+1)}{f(t)} \\, \\mathrm{d}t + \\int_0^1 \\ln f(t) \\, \\mathrm{d}t. \\]\n\n对比选项，只有 C 包含被积函数 \\(\\ln \\frac{f(t+1)}{f(t)}\\)，其余选项均为 \\(\\ln \\frac{f(t+2)}{f(t)}\\)。C 中的积分上限 “\\(\\int_0^2x\\)” 应为 \\(\\int_0^x\\) 的排版笔误，根据数学推导与常见题型，正确选项为 C。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确答案应包含 \(\int_0^x \ln\frac{f(t+1)}{f(t)} \mathrm{d}t + \int_0^1 \ln f(t) \mathrm{d}t\)。推导如下：令 \(I(x) = \int_0^1 \ln f(x+t) \mathrm{d}t = \int_x^{x+1} \ln f(u) \mathrm{d}u\)，则 \(I&#x27;(x) = \ln f(x+1) - \ln f(x) = \ln\frac{f(x+1)}{f(x)}\)，积分得 \(I(x) = \int_0^x \ln\frac{f(t+1)}{f(t)} \mathrm{d}t + I(0) = \int_0^x \ln\frac{f(t+1)}{f(t)} \mathrm{d}t + \int_0^1 \ln f(t) \mathrm{d}t\)。在给定选项中，仅 C 含有 \(\frac{f(t+1)}{f(t)}\)，尽管其积分上限显示为 \(2x\)，可能是 \(x\) 的笔误，其他选项均为 \(\frac{f(t+2)}{f(t)}\) 或常数积分，均不匹配。因此选择 C。
+
+C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;根据对曹禺《北京人》的文学史定位，该剧以封建家庭走向崩溃为背景，深刻展现人物的命运悲剧和文化悲剧，被普遍认为是中国现代戏剧史上最伟大的悲剧之一。因此，正确选项为B。\n\n最终答案：B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确选项：B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-8</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>下列关于金融资产的后续计量的说法，不正确的是____。
+A. 资产负债表日，企业应以公允价值计量，且其变动计入当期损益的金融资产的公允价值变动计入当期损益
+B. 以摊余成本计量的金融资产在持有期间应当按照摊余成本和实际利率计算确认利息收入，计入投资收益
+C. 资产负债表日，以公允价值计量且其变动计入其他综合收益的金融资产应当以公允价值计量，公允价值大于取得成本的差额计入其他综合收益
+D. 资产负债表日，以公允价值计量且其变动计入其他综合收益的金融资产应当以公允价值计量，且其公允价值变动计入当期损益
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;正确答案是D。\n\n选项D错误，因为“以公允价值计量且其变动计入其他综合收益的金融资产”，其公允价值的变动应当计入其他综合收益，而非当期损益。其他选项A、B、C的说法均符合企业会计准则的相关规定，因此表述正确。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确答案是D。
+
+选项D错误，因为以公允价值计量且其变动计入其他综合收益的金融资产，其公允价值变动应计入其他综合收益，而非当期损益。其他选项A、B、C的说法均符合我国企业会计准则对金融资产后续计量的相关规定。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-9</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>经营战略的本质是____。
+A. 目标与目的
+B. 资源
+C. 公司远景
+D. 组织结构
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;经过重新检查，确认原答案无误。\n\n在工商管理理论中，经营战略是企业为适应未来环境变化，寻求长期生存和稳定发展而制定的总体性、长远性规划。其核心在于明确企业未来的发展方向和总体定位，即“公司远景”（或称企业愿景）。目标与目的、资源、组织结构都是战略的重要组成部分或支撑要素，但并非战略最本质的出发点。因此，正确选项为C。\n\n最终答案：\nC&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确答案是 C. 公司远景。
+
+经营战略本质上是企业为达成长远目标而制定的全局性规划，其核心在于明确企业未来的发展方向和定位，即“公司远景”（或称企业愿景）。其他选项中，目标与目的、资源、组织结构都是战略的重要组成部分或支撑要素，但并非战略的本质。</pre></details></div></section>
+</main>
+</body>
+</html>

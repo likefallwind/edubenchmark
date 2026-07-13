@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>MiniMax-M2.7</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">91.1%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">541</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">538</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">490</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1000</span><span class='tag'>instruction_family=detectable_format+length_constraints+punctuation</span></div><div class='qtext'>Write a 300+ word summary of the wikipedia page &quot;https://en.wikipedia.org/wiki/Raymond_III,_Count_of_Tripoli&quot;. Do not use any commas and highlight at least 3 sections that has titles in markdown format, for example *highlighted section part 1*, *highlighted section part 2*, *highlighted section part 3*.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1001</span><span class='tag'>instruction_family=punctuation</span></div><div class='qtext'>I am planning a trip to Japan, and I would like thee to write an itinerary for my journey in a Shakespearean style. You are not allowed to use any commas in your response.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.9108,
+  &quot;prompt_loose_accuracy&quot;: 0.9331,
+  &quot;instruction_strict_accuracy&quot;: 0.9385,
+  &quot;instruction_loose_accuracy&quot;: 0.9554,
+  &quot;n_prompts&quot;: 538,
+  &quot;n_instructions&quot;: 829,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>3</td></tr><tr><td>scored</td><td>538</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>34</td><td>25</td><td>0.735</td><td><div class='bar'><i style='width:74%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>change_case+detectable_content+detectable_format</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_content+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_content+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>11</td><td>10</td><td>0.909</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>change_case+keywords+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>12</td><td>9</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>change_case+length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+startend</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>combination</td><td>27</td><td>26</td><td>0.963</td><td><div class='bar'><i style='width:96%'></i></div></td></tr><tr><td>combination+detectable_format</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+keywords</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+punctuation</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>combination+keywords</td><td>9</td><td>6</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>combination+keywords+language</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>combination+language+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+length_constraints</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>combination+punctuation</td><td>11</td><td>8</td><td>0.727</td><td><div class='bar'><i style='width:73%'></i></div></td></tr><tr><td>detectable_content</td><td>24</td><td>24</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+language</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+length_constraints</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+punctuation</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>69</td><td>67</td><td>0.971</td><td><div class='bar'><i style='width:97%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>18</td><td>18</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+length_constraints</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_format+keywords+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>18</td><td>18</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>8</td><td>8</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>56</td><td>46</td><td>0.821</td><td><div class='bar'><i style='width:82%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>18</td><td>18</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+punctuation</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+startend</td><td>7</td><td>7</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language</td><td>17</td><td>17</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>46</td><td>44</td><td>0.957</td><td><div class='bar'><i style='width:96%'></i></div></td></tr><tr><td>length_constraints+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+startend</td><td>9</td><td>9</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation</td><td>16</td><td>16</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>startend</td><td>31</td><td>30</td><td>0.968</td><td><div class='bar'><i style='width:97%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（3 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>其他错误</strong></td><td>2</td><td>MiniMax base_resp 2062: 已达到 Token Plan 速率限制：请升级 Token Plan 套餐或切换为按量付费 API 使用。</td><td class='muted'>ifeval-3386, ifeval-340</td></tr><tr><td><strong>空响应</strong></td><td>1</td><td>模型返回了空内容</td><td class='muted'>ifeval-201</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1040</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Write me a resume for Matthias Algiers. Use words with all capital letters to highlight key abilities, but make sure that words with all capital letters appear less than 10 times. Wrap the entire response with double quotation marks.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>&quot;Matthias Algiers  
+Email: matthias.algiers@example.com  
+Phone: +1 (555) 123‑4567  
+Location: New York  
+LinkedIn: linkedin.com/in/matthiasalgiers  
+
+Summary  
+Results‑driven professional with 7+ years of experience in data analytics, project delivery, and team leadership. Proven ability to translate complex data into strategic recommendations and drive cross‑functional initiatives.  
+
+Professional Experience  
+Senior Analyst, Tech Solutions Inc., New York, 2020‑Present  
+- Led the design of a real‑time reporting platform that reduced manual effort by 40 %.  
+- Collaborated with product managers to define feature priorities based on customer feedback.  
+- Mentored junior analysts through weekly code reviews and knowledge‑sharing sessions.  
+
+Data Analyst, Innovate Corp., Chicago, 2016‑2020  
+- Developed predictive models using Python that improved inventory forecasting accuracy by 25 %.  
+- Automated ETL pipelines, cutting data latency from 12 hours to under 2 hours.  
+- Conducted stakeholder workshops to align data initiatives with business goals.  
+
+Education  
+Bachelor of Science in Computer Science, University of Illinois at Urbana‑Champaign, 2016  
+
+Key Skills  
+- LEADERSHIP: Guided cross‑functional teams to deliver complex projects on schedule.  
+- ANALYTICS: Leveraged data modeling to uncover actionable insights.  
+- COLLABORATION: Facilitated workshops and sprint reviews to align stakeholders.  
+- AGILITY: Championed iterative development and rapid feedback cycles.  
+- STRATEGY: Defined product roadmaps aligning with market opportunities.  
+- INNOVATION: Introduced machine‑learning pipeline that automated defect detection.  
+- MENTORING: Coached junior engineers through code reviews and career growth.  
+- CLIENT: Built lasting relationships resulting in repeat engagements.  
+
+Certifications  
+- Certified Data Management Professional (CDMP)  
+- Agile Certified Practitioner (ACP) &quot;</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>&quot;Matthias Algiers  
+Email: matthias.algiers@example.com  
+Phone: +1 (555) 123‑4567  
+Location: New York  
+LinkedIn: linkedin.com/in/matthiasalgiers  
+
+Summary  
+Results‑driven professional with 7+ years of experience in data analytics, project delivery, and team leadership. Proven ability to translate complex data into strategic recommendations and drive cross‑functional initiatives.  
+
+Professional Experience  
+Senior Analyst, Tech Solutions Inc., New York, 2020‑Present  
+- Led the design of a real‑time reporting platform that reduced manual effort by 40 %.  
+- Collaborated with product managers to define feature priorities based on customer feedback.  
+- Mentored junior analysts through weekly code reviews and knowledge‑sharing sessions.  
+
+Data Analyst, Innovate Corp., Chicago, 2016‑2020  
+- Developed predictive models using Python that improved inventory forecasting accuracy by 25 %.  
+- Automated ETL pipelines, cutting data latency from 12 hours to under 2 hours.  
+- Conducted stakeholder workshops to align data initiatives with business goals.  
+
+Education  
+Bachelor of Science in Computer Science, University of Illinois at Urbana‑Champaign, 2016  
+
+Key Skills  
+- LEADERSHIP: Guided cross‑functional teams to deliver complex projects on schedule.  
+- ANALYTICS: Leveraged data modeling to uncover actionable insights.  
+- COLLABORATION: Facilitated workshops and sprint reviews to align stakeholders.  
+- AGILITY: Championed iterative development and rapid feedback cycles.  
+- STRATEGY: Defined product roadmaps aligning with market opportunities.  
+- INNOVATION: Introduced machine‑learning pipeline that automated defect detection.  
+- MENTORING: Coached junior engineers through code reviews and career growth.  
+- CLIENT: Built lasting relationships resulting in repeat engagements.  
+
+Certifications  
+- Certified Data Management Professional (CDMP)  
+- Agile Certified Practitioner (ACP) &quot;</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1051</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>Write a letter to a friend in all lowercase letters ask them to go and vote.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>dear friend,
+
+i hope this note finds you well and smiling. i’m writing because i really think your voice matters, especially now when so many decisions are being made that affect our daily lives. this is a friendly reminder (and a little nudge) to go out and vote.
+
+voting is one of the simplest yet most powerful ways we can all make a difference. it takes just a few minutes, and it’s something you can do in person or by mail, depending on what’s available in your area. every ballot counts, and your choice helps shape the future of our community, our state, and our country.
+
+i know life gets busy, and sometimes it feels like one vote won’t change anything. but when we all come together, the numbers add up. plus, voting is a tradition we share, a right that many people before us fought for, and a chance for us to honor that by participating.
+
+if you need any help—like finding your polling place, checking registration status, or figuring out what ID you might need—just let me know. i’m happy to look it up with you or even go together if that makes it easier. we could make a small outing of it, grab a coffee, and then head to the polls.
+
+thanks for taking the time to read this, and thanks in advance for making your voice heard. i believe in you, and i believe in the power we have when we all show up.
+
+with warmth and a hopeful heart,
+
+your friend</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>dear friend,
+
+i hope this note finds you well and smiling. i’m writing because i really think your voice matters, especially now when so many decisions are being made that affect our daily lives. this is a friendly reminder (and a little nudge) to go out and vote.
+
+voting is one of the simplest yet most powerful ways we can all make a difference. it takes just a few minutes, and it’s something you can do in person or by mail, depending on what’s available in your area. every ballot counts, and your choice helps shape the future of our community, our state, and our country.
+
+i know life gets busy, and sometimes it feels like one vote won’t change anything. but when we all come together, the numbers add up. plus, voting is a tradition we share, a right that many people before us fought for, and a chance for us to honor that by participating.
+
+if you need any help—like finding your polling place, checking registration status, or figuring out what ID you might need—just let me know. i’m happy to look it up with you or even go together if that makes it easier. we could make a small outing of it, grab a coffee, and then head to the polls.
+
+thanks for taking the time to read this, and thanks in advance for making your voice heard. i believe in you, and i believe in the power we have when we all show up.
+
+with warmth and a hopeful heart,
+
+your friend</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1130</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a logic quiz for teenagers about a chesterfield. In your entire response, the letter t should appear at most once.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A chesterfield appears in a simple logic scene. Good for youths.
+
+Four pals each chose a separate beverage. Four friends each own a sofa in a unique color. Person who likes chai also likes blue sofa. Owner of red sofa drinks coffee. Alex no own green sofa. Sam drinks milk. Sofa of person who drinks soda no yellow. Goal is deduce who owns which color and beverage.
+
+Answer:
+- Alex: red sofa, coffee.
+- Sam: yellow sofa, milk.
+- Jordan: blue sofa, chai.
+- Morgan: green sofa, soda.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A chesterfield appears in a simple logic scene. Good for youths.
+
+Four pals each chose a separate beverage. Four friends each own a sofa in a unique color. Person who likes chai also likes blue sofa. Owner of red sofa drinks coffee. Alex no own green sofa. Sam drinks milk. Sofa of person who drinks soda no yellow. Goal is deduce who owns which color and beverage.
+
+Answer:
+- Alex: red sofa, coffee.
+- Sam: yellow sofa, milk.
+- Jordan: blue sofa, chai.
+- Morgan: green sofa, soda.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1174</span><span class='tag'>instruction_family=detectable_format+keywords+length_constraints</span></div><div class='qtext'>Write a template for a chat bot that takes a user&#x27;s location and gives them the weather forecast. Use the letter o as a keyword in the syntax of the template. The letter o should appear at least 6 times.. Your response should contain fewer than 6 sentences. Highlight at least 2 text sections, i.e. *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Here is a short chatbot script that asks the user for their location and replies with the weather forecast. The bot uses *o* as a keyword, so when the user says *location* the variable *o_location* is set to the city or coordinates. Finally, the bot calls the weather API with the stored *o_location* and prints a *forecast* summary to the user.
+
+```text
+# Example interaction flow
+1. Bot: *o*: Please provide your location (city or coordinates)
+2. User: &lt;city&gt;
+3. Bot: o_location = user_input   # o is the keyword for location
+4. Bot: weather_data = get_weather(o_location)
+5. Bot: *forecast*: {weather_data}
+```</div><div class='ans'><span class='lbl'>归一化</span>strict 1/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Here is a short chatbot script that asks the user for their location and replies with the weather forecast. The bot uses *o* as a keyword, so when the user says *location* the variable *o_location* is set to the city or coordinates. Finally, the bot calls the weather API with the stored *o_location* and prints a *forecast* summary to the user.
+
+```text
+# Example interaction flow
+1. Bot: *o*: Please provide your location (city or coordinates)
+2. User: &lt;city&gt;
+3. Bot: o_location = user_input   # o is the keyword for location
+4. Bot: weather_data = get_weather(o_location)
+5. Bot: *forecast*: {weather_data}
+```</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1307</span><span class='tag'>instruction_family=detectable_format</span></div><div class='qtext'>Write an outline for a paper on the history of Yemeni coffee. The outline should include the main points of the paper, and at least 15 sections should be highlighted with markdown such as *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>**Outline – “The History of Yemeni Coffee”**  
+
+Below is a hierarchical outline suitable for a research paper or a thesis.  Each major section is **highlighted in markdown** (italicized) as requested; there are **19** such sections (well over the required 15).  Sub‑points elaborate the main ideas of each section.
+
+---
+
+* I. Introduction  
+  - Importance of Yemeni coffee in global coffee history  
+  - Scope and objectives of the paper  
+  - Brief overview of the structure  
+
+* II. Geographical and Climatic Context  
+  - Location of Yemen on the Arabian Peninsula  
+  - Highland regions (Sana’a, Ibb, Hajjah) and their altitude, rainfall, and soil characteristics  
+  - How micro‑climates shape the unique flavor of Yemeni beans  
+
+* III. Early Cultivation and Indigenous Use  
+  - Evidence of wild *Coffea arabica* in the region  
+  - Initial domestication by local farmers (circa 6th–8th centuries)  
+  - Traditional methods of consumption (stimulant drinks, medicinal uses)  
+
+* IV. Emergence of Coffee as a Trade Commodity  
+  - Spread of coffeehouses (qahwa) across the Islamic world  
+  - Role of Sufi monasteries in popularizing coffee  
+  - Transition from domestic use to commercial exchange  
+
+* V. The Port of Mocha (Al‑Makha)  
+  - Strategic position on the Red Sea and its role as the world’s first coffee export hub  
+  - Trade routes: Red Sea → Ottoman Empire → Europe  
+  - The “Mocha” name and its lasting brand identity  
+
+* VI. Naming and Global Dissemination  
+  - How “Mocha” entered European vocabularies and menus  
+  - Diffusion via Dutch, French, and British traders  
+  - Early coffee‑house culture in Europe and the New World  
+
+* VII. Colonial Influences and Power Struggles  
+  - Ottoman control and taxation of coffee production  
+  - British presence in Aden and its impact on export logistics  
+  - Competition among European powers for coffee trade dominance  
+
+* VIII. Traditional Cultivation Practices  
+  - Terracing and shade‑grown systems adapted to mountainous terrain  
+  - Hand‑picking, natural sun‑drying, and “dry‑process” methods  
+  - Seasonal labor patterns and communal harvesting traditions  
+
+* IX. Heirloom Varieties and Genetic Heritage  
+  - Distinctive landraces (e.g., “Udaini”, “Dawairi”, “Rimi”)  
+  - Preservation of genetic diversity amid global homogenization  
+  - Influence of heirloom genetics on cup profile and specialty market  
+
+* X. Coffeehouses, Culture, and Society  
+  - Social hubs in cities such as Sana’a, Taiz, and Aden  
+  - Intellectual exchange, poetry, music, and political discourse  
+  - Gender dynamics and the evolution of public versus private spaces  
+
+* XI. Cultural Rituals and Ceremonial Use  
+  - Traditional Yemeni coffee ceremony (Bun or “qishr”)  
+  - Use of spices (cardamom, ginger, cinnamon) and the role of hospitality  
+  - Symbolic meanings in weddings, festivals, and religious gatherings  
+
+* XII. Economic Decline and 19th–20th Century Challenges  
+  - Shifts in global trade routes and competition from Brazilian coffee  
+  - Impact of Ottoman reforms and later British colonial policies  
+  - Early 20th‑century wars, famine, and infrastructure decay  
+
+* XIII. The “Coffee Crisis” of the Late 20th Century  
+  - Coffee leaf rust (Hemileia vastatrix) outbreaks and loss of yields  
+  - Civil war (North‑South conflict) and subsequent embargoes  
+  - Limited access to modern agricultural inputs and technology  
+
+* XIV. Revival Movements and the Specialty Coffee Renaissance  
+  - Role of NGOs, international donors, and Yemeni entrepreneurs  
+  - Introduction of wet‑processing and quality‑focused harvesting techniques  
+  - Direct‑trade relationships with specialty roasters worldwide  
+
+* XV. Contemporary Production and Export Dynamics  
+  - Key producing regions (e.g., Haraz, Bani Matar, Matari)  
+  - Annual production figures and export destinations (UAE, USA, Europe)  
+  - Ongoing challenges: water scarcity, conflict, and market volatility  
+
+* XVI. Yemeni Coffee in the Global Specialty Market  
+  - Perception of Yemeni coffee as rare, exotic, and high‑value  
+  - Pricing trends and consumer demand for single‑origin lots  
+  - Influence on third‑wave coffee culture and storytelling marketing  
+
+* XVII. Economic, Social, and Political Implications  
+  - Coffee as a primary source of income for rural households  
+  - Potential for post‑conflict reconstruction through coffee value chains  
+  - Policy considerations: subsidies, certification, and trade agreements  
+
+* XVIII. Sustainability and Future Prospects  
+  - Climate‑change impacts (temperature rise, shifting rainfall)  
+  - Sustainable farming initiatives (agro‑forestry, water‑conservation)  
+  - Opportunities for organic and fair‑trade certification  
+
+* XIX. Conclusion  
+  - Recap of Yemen’s pivotal role in coffee’s historical trajectory  
+  - Reflection on the resilience of Yemeni coffee culture amid adversity  
+  - Outlook for the future: balancing tradition, quality, and global market demands  
+
+---  
+
+**Key Takeaway:**  
+The outline showcases how Yemen’s unique geography, cultural practices, and historic trade networks helped shape the global coffee phenomenon, while also highlighting the modern challenges and revitalization efforts that continue to define Yemeni coffee today.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**Outline – “The History of Yemeni Coffee”**  
+
+Below is a hierarchical outline suitable for a research paper or a thesis.  Each major section is **highlighted in markdown** (italicized) as requested; there are **19** such sections (well over the required 15).  Sub‑points elaborate the main ideas of each section.
+
+---
+
+* I. Introduction  
+  - Importance of Yemeni coffee in global coffee history  
+  - Scope and objectives of the paper  
+  - Brief overview of the structure  
+
+* II. Geographical and Climatic Context  
+  - Location of Yemen on the Arabian Peninsula  
+  - Highland regions (Sana’a, Ibb, Hajjah) and their altitude, rainfall, and soil characteristics  
+  - How micro‑climates shape the unique flavor of Yemeni beans  
+
+* III. Early Cultivation and Indigenous Use  
+  - Evidence of wild *Coffea arabica* in the region  
+  - Initial domestication by local farmers (circa 6th–8th centuries)  
+  - Traditional methods of consumption (stimulant drinks, medicinal uses)  
+
+* IV. Emergence of Coffee as a Trade Commodity  
+  - Spread of coffeehouses (qahwa) across the Islamic world  
+  - Role of Sufi monasteries in popularizing coffee  
+  - Transition from domestic use to commercial exchange  
+
+* V. The Port of Mocha (Al‑Makha)  
+  - Strategic position on the Red Sea and its role as the world’s first coffee export hub  
+  - Trade routes: Red Sea → Ottoman Empire → Europe  
+  - The “Mocha” name and its lasting brand identity  
+
+* VI. Naming and Global Dissemination  
+  - How “Mocha” entered European vocabularies and menus  
+  - Diffusion via Dutch, French, and British traders  
+  - Early coffee‑house culture in Europe and the New World  
+
+* VII. Colonial Influences and Power Struggles  
+  - Ottoman control and taxation of coffee production  
+  - British presence in Aden and its impact on export logistics  
+  - Competition among European powers for coffee trade dominance  
+
+* VIII. Traditional Cultivation Practices  
+  - Terracing and shade‑grown systems adapted to mountain</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1342</span><span class='tag'>instruction_family=detectable_format+keywords+length_constraints</span></div><div class='qtext'>I would like to start my own business. Can you give me some general advice? Please avoid mentioning &quot;photography&quot; - I have no interest in that market. I would like you to provide your advice in exactly 5 paragraphs (separated nearby paragraphs with 3 aterisk symbols ***) and highlight at least three sections with markdown, such as *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Identify a clear problem you want to solve and validate it through *market research* before you invest time and money. Talk to potential customers, conduct surveys, and analyze competitors to ensure there is real demand for your product or service. This groundwork will help you refine your offering and avoid the common trap of building something no one wants.
+
+Develop a solid business plan that outlines your vision, target audience, revenue model, and cost structure. Include realistic *financial projections* that account for startup costs, cash‑flow timing, and break‑even analysis. A well‑crafted plan not only guides your day‑to‑day decisions but also makes it easier to attract investors or secure financing when the time comes.
+
+Choose the appropriate *legal structure* for your business—whether it’s a sole proprietorship, partnership, LLC, or corporation—and register it with the relevant authorities. Obtaining the necessary licenses, permits, and tax IDs early prevents costly legal issues later. Protecting your personal assets and ensuring compliance with local regulations should be a top priority from day one.
+
+Build a compelling *brand identity* that resonates with your target market and differentiates you from competitors. This includes designing a memorable logo, establishing a consistent visual style, and crafting a clear value proposition. Pair your brand with a cost‑effective marketing strategy that leverages both digital channels (social media, content marketing) and offline tactics (networking events, local partnerships) to attract early customers.
+
+Finally, adopt a mindset of *continuous learning* and regular performance review. Set up key performance indicators (KPIs) to track sales, customer acquisition cost, and satisfaction levels. Use these metrics to iterate quickly, scale what works, and pivot away from what doesn’t. Staying adaptable and data‑driven will help you sustain growth and navigate the inevitable challenges of entrepreneurship.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Identify a clear problem you want to solve and validate it through *market research* before you invest time and money. Talk to potential customers, conduct surveys, and analyze competitors to ensure there is real demand for your product or service. This groundwork will help you refine your offering and avoid the common trap of building something no one wants.
+
+Develop a solid business plan that outlines your vision, target audience, revenue model, and cost structure. Include realistic *financial projections* that account for startup costs, cash‑flow timing, and break‑even analysis. A well‑crafted plan not only guides your day‑to‑day decisions but also makes it easier to attract investors or secure financing when the time comes.
+
+Choose the appropriate *legal structure* for your business—whether it’s a sole proprietorship, partnership, LLC, or corporation—and register it with the relevant authorities. Obtaining the necessary licenses, permits, and tax IDs early prevents costly legal issues later. Protecting your personal assets and ensuring compliance with local regulations should be a top priority from day one.
+
+Build a compelling *brand identity* that resonates with your target market and differentiates you from competitors. This includes designing a memorable logo, establishing a consistent visual style, and crafting a clear value proposition. Pair your brand with a cost‑effective marketing strategy that leverages both digital channels (social media, content marketing) and offline tactics (networking events, local partnerships) to attract early customers.
+
+Finally, adopt a mindset of *continuous learning* and regular performance review. Set up key performance indicators (KPIs) to track sales, customer acquisition cost, and satisfaction levels. Use these metrics to iterate quickly, scale what works, and pivot away from what doesn’t. Staying adaptable and data‑driven will help you sustain growth and navigate the inevitable challenges of entrepreneurship.</pre></details></div></section>
+</main>
+</body>
+</html>

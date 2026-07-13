@@ -79,18 +79,17 @@ script rebuilds it with the upstream feature code and verifies that its stable k
 join to the human gold. Keep human gold and automatically generated pipeline data
 separate in reports.
 
-Current upstream reproducibility blocker (verified 2026-07-12): the released
+Upstream generation clarification (received 2026-07-13): the released
 `human_an_updated.jsonl` has 1,000 gold rows and `pipeline_an_scale.jsonl` has
 2,437 generated rows, but both contain annotations only. Neither contains the
-history/current-question input. The released feature builder selects each learner's
-final interaction; rebuilding that view produces zero `_key` matches with the human
-gold because the paper used sampled intermediate interactions from an unreleased or
-different data snapshot. `prepare_longtutor.py` must fail on a zero-key join. Do not
-substitute the learner's complete trajectory or otherwise fabricate inputs. To
-unblock model evaluation, obtain the authors' exact
-`data/XES3G5M/history_features_lastq_scale.jsonl` (and confirm its license/data
-version), place it under `sources/datasets/longtutor/`, then rerun preparation and
-the smoke command below.
+history/current-question input. The authors confirmed it must be regenerated from
+`sequences_long.jsonl` and `questions.jsonl` with `compute_history_stats.py`, using
+the XES3G5M concept-segmentation implementation commented out at the top of that
+script; its active implementation is for MOOCRadar. The preparation script applies
+that XES3G5M function, recovers the sampled intermediate trajectory prefixes from
+the stable `_key`, and verifies the join. For the 1,000 human evaluation samples,
+use `human_an_updated.jsonl` as gold, not `pipeline_an_scale.jsonl`. It must still
+fail rather than fabricate inputs if the stable-key join is empty.
 
 Run the three native task views with MiniMax-M3:
 

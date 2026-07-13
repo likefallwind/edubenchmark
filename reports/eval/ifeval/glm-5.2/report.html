@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">93.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">541</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">541</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">503</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1000</span><span class='tag'>instruction_family=detectable_format+length_constraints+punctuation</span></div><div class='qtext'>Write a 300+ word summary of the wikipedia page &quot;https://en.wikipedia.org/wiki/Raymond_III,_Count_of_Tripoli&quot;. Do not use any commas and highlight at least 3 sections that has titles in markdown format, for example *highlighted section part 1*, *highlighted section part 2*, *highlighted section part 3*.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1001</span><span class='tag'>instruction_family=punctuation</span></div><div class='qtext'>I am planning a trip to Japan, and I would like thee to write an itinerary for my journey in a Shakespearean style. You are not allowed to use any commas in your response.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.9298,
+  &quot;prompt_loose_accuracy&quot;: 0.9501,
+  &quot;instruction_strict_accuracy&quot;: 0.9532,
+  &quot;instruction_loose_accuracy&quot;: 0.9676,
+  &quot;n_prompts&quot;: 541,
+  &quot;n_instructions&quot;: 834,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>541</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>34</td><td>32</td><td>0.941</td><td><div class='bar'><i style='width:94%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_content+detectable_format</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_content+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_content+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format</td><td>7</td><td>5</td><td>0.714</td><td><div class='bar'><i style='width:71%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>11</td><td>9</td><td>0.818</td><td><div class='bar'><i style='width:82%'></i></div></td></tr><tr><td>change_case+keywords+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>12</td><td>9</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>change_case+length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+startend</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>combination</td><td>27</td><td>27</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+keywords</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+punctuation</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>combination+keywords</td><td>9</td><td>6</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>combination+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+language+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+punctuation</td><td>11</td><td>7</td><td>0.636</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>detectable_content</td><td>24</td><td>24</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>4</td><td>3</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>detectable_content+detectable_format+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>detectable_content+keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+language</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+length_constraints</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+punctuation</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>69</td><td>66</td><td>0.957</td><td><div class='bar'><i style='width:96%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>18</td><td>15</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>detectable_format+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+length_constraints</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>detectable_format+keywords+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>19</td><td>17</td><td>0.895</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>detectable_format+length_constraints+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>8</td><td>8</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>58</td><td>54</td><td>0.931</td><td><div class='bar'><i style='width:93%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>18</td><td>18</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints+punctuation</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>keywords+length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+punctuation</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+startend</td><td>7</td><td>7</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language</td><td>17</td><td>17</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>46</td><td>43</td><td>0.935</td><td><div class='bar'><i style='width:93%'></i></div></td></tr><tr><td>length_constraints+punctuation</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+startend</td><td>9</td><td>9</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation</td><td>16</td><td>16</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>startend</td><td>31</td><td>31</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1040</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Write me a resume for Matthias Algiers. Use words with all capital letters to highlight key abilities, but make sure that words with all capital letters appear less than 10 times. Wrap the entire response with double quotation marks.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>&quot;Matthias Algiers
+123 Professional Avenue, City, State, ZIP
+Phone: (123) 456-7890
+Email: matthias.algiers@email.com
+LinkedIn: linkedin.com/in/matthiasalgiers
+
+Professional Summary
+Detail-oriented project manager with 8+ years of experience leading cross-functional teams in the technology sector. Proven track record of delivering projects on time and under budget. Excellent communication and leadership abilities.
+
+Experience
+Senior Project Manager
+TechSolutions Inc., Seattle, WA
+June 2019 - Present
+- Led cross-functional team of 25+ members through successful product launches
+- Implemented new project management methodology, increasing efficiency by 30%
+- Managed annual budget of $5M, consistently delivering projects under budget
+
+Project Coordinator
+Innovate Systems, Portland, OR
+August 2016 - May 2019
+- Coordinated development schedules for 12 concurrent software projects
+- Streamlined communication between technical and non-technical stakeholders
+- Developed comprehensive project documentation standards adopted company-wide
+
+Junior Project Analyst
+Future Tech Partners, Denver, CO
+September 2014 - July 2016
+- Assisted in managing IT infrastructure projects for enterprise clients
+- Conducted weekly progress meetings and maintained project dashboards
+- Created detailed project reports for executive stakeholders
+
+Education
+Master of Business Administration
+University of Washington, Seattle, WA
+2014
+
+Bachelor of Science in Computer Science
+University of Oregon, Eugene, OR
+2012
+
+Skills
+- STRATEGIC PLANNING
+- Budget Management
+- Team Leadership
+- RISK ANALYSIS
+- Agile Methodologies
+- STAKEHOLDER MANAGEMENT
+- Technical Documentation
+- Process Improvement
+- NEGOTIATION
+- Conflict Resolution
+
+Certifications
+- Project Management Professional (PMP)
+- Certified Scrum Master (CSM)
+- ITIL Foundation Certification
+
+Languages
+- English (Native)
+- Spanish (Professional)
+- French (Conversational)&quot;</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>&quot;Matthias Algiers
+123 Professional Avenue, City, State, ZIP
+Phone: (123) 456-7890
+Email: matthias.algiers@email.com
+LinkedIn: linkedin.com/in/matthiasalgiers
+
+Professional Summary
+Detail-oriented project manager with 8+ years of experience leading cross-functional teams in the technology sector. Proven track record of delivering projects on time and under budget. Excellent communication and leadership abilities.
+
+Experience
+Senior Project Manager
+TechSolutions Inc., Seattle, WA
+June 2019 - Present
+- Led cross-functional team of 25+ members through successful product launches
+- Implemented new project management methodology, increasing efficiency by 30%
+- Managed annual budget of $5M, consistently delivering projects under budget
+
+Project Coordinator
+Innovate Systems, Portland, OR
+August 2016 - May 2019
+- Coordinated development schedules for 12 concurrent software projects
+- Streamlined communication between technical and non-technical stakeholders
+- Developed comprehensive project documentation standards adopted company-wide
+
+Junior Project Analyst
+Future Tech Partners, Denver, CO
+September 2014 - July 2016
+- Assisted in managing IT infrastructure projects for enterprise clients
+- Conducted weekly progress meetings and maintained project dashboards
+- Created detailed project reports for executive stakeholders
+
+Education
+Master of Business Administration
+University of Washington, Seattle, WA
+2014
+
+Bachelor of Science in Computer Science
+University of Oregon, Eugene, OR
+2012
+
+Skills
+- STRATEGIC PLANNING
+- Budget Management
+- Team Leadership
+- RISK ANALYSIS
+- Agile Methodologies
+- STAKEHOLDER MANAGEMENT
+- Technical Documentation
+- Process Improvement
+- NEGOTIATION
+- Conflict Resolution
+
+Certifications
+- Project Management Professional (PMP)
+- Certified Scrum Master (CSM)
+- ITIL Foundation Certification
+
+Languages
+- English (Native)
+- Spanish (Professional)
+- French (Conversational)&quot;</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1122</span><span class='tag'>instruction_family=change_case+keywords</span></div><div class='qtext'>make a tweet for playboy&#x27;s twitter account without using capital letters. Include at least 4 hashtags, starting with &#x27;#&#x27;</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>stepping into the weekend with nothing but confidence and a little bit of trouble. 🖤🐰 #playboy #bunnylife #weekendvibes #confidence #legacy</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>stepping into the weekend with nothing but confidence and a little bit of trouble. 🖤🐰 #playboy #bunnylife #weekendvibes #confidence #legacy</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1130</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a logic quiz for teenagers about a chesterfield. In your entire response, the letter t should appear at most once.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span># Logic Quiz: Sofa and Couch Puzzles
+
+A chesterfield is a classic couch or sofa design. Also known as a rolled-arm sofa, a luxurious model is famous for deep keys and a high back, ensuring remarkable comfort.
+
+Welcome! Solving puzzles using logic helps your brain grow. Each query is all about couches and sofas. Choose A, B, C, or D for your reply.
+
+1. A couch is in John&#x27;s home. If all people who own couches have a house, does John have a house?
+
+A) Yes
+B) No
+C) Unknown
+D) None of above
+
+2. Mark says: &quot;My couch has four legs.&quot; Sue says: &quot;No couch has exactly four legs.&quot; Who is in error?
+
+A) Mark
+B) Sue
+C) We can decide
+D) We lack means for deciding
+
+3. A luxurious couch was sold for $5000. If similar sofas usually sell for half as much, how much did a similar sofa sell for?
+
+A) $1000
+B) $2500
+C) $5000
+D) $10000
+
+4. In a room, a couch is facing a mirror. If you see yourself in a mirror by looking across a couch, which way is a couch facing?
+
+A) Away from mirror
+B) In a mirror&#x27;s way
+C) Sideways
+D) We lack knowledge
+
+5. A sofa maker claims: &quot;All my sofas are brown.&quot; If you find one of his sofas is gray, you know he is...
+
+A) Wrong
+B) Saying falseness
+C) Misjudging
+D) Colorblind
+
+6. You have a couch. A dog says all couches are red. A llama says all couches are blue. If your couch is purple, who is lying?
+
+A) Only dog
+B) Only llama
+C) Animals lack lying skill
+D) Animals are lying
+
+7. If every boy who owns a sofa has a dog, and Carl has no dog, does Carl own a sofa?
+
+A) Yes, he does
+B) No, he lacks one
+C) We lack info
+D) None of above
+
+Answers:
+1: A
+2: D
+3: B
+4: B
+5: A
+6: D
+7: B</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># Logic Quiz: Sofa and Couch Puzzles
+
+A chesterfield is a classic couch or sofa design. Also known as a rolled-arm sofa, a luxurious model is famous for deep keys and a high back, ensuring remarkable comfort.
+
+Welcome! Solving puzzles using logic helps your brain grow. Each query is all about couches and sofas. Choose A, B, C, or D for your reply.
+
+1. A couch is in John&#x27;s home. If all people who own couches have a house, does John have a house?
+
+A) Yes
+B) No
+C) Unknown
+D) None of above
+
+2. Mark says: &quot;My couch has four legs.&quot; Sue says: &quot;No couch has exactly four legs.&quot; Who is in error?
+
+A) Mark
+B) Sue
+C) We can decide
+D) We lack means for deciding
+
+3. A luxurious couch was sold for $5000. If similar sofas usually sell for half as much, how much did a similar sofa sell for?
+
+A) $1000
+B) $2500
+C) $5000
+D) $10000
+
+4. In a room, a couch is facing a mirror. If you see yourself in a mirror by looking across a couch, which way is a couch facing?
+
+A) Away from mirror
+B) In a mirror&#x27;s way
+C) Sideways
+D) We lack knowledge
+
+5. A sofa maker claims: &quot;All my sofas are brown.&quot; If you find one of his sofas is gray, you know he is...
+
+A) Wrong
+B) Saying falseness
+C) Misjudging
+D) Colorblind
+
+6. You have a couch. A dog says all couches are red. A llama says all couches are blue. If your couch is purple, who is lying?
+
+A) Only dog
+B) Only llama
+C) Animals lack lying skill
+D) Animals are lying
+
+7. If every boy who owns a sofa has a dog, and Carl has no dog, does Carl own a sofa?
+
+A) Yes, he does
+B) No, he lacks one
+C) We lack info
+D) None of above
+
+Answers:
+1: A
+2: D
+3: B
+4: B
+5: A
+6: D
+7: B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1174</span><span class='tag'>instruction_family=detectable_format+keywords+length_constraints</span></div><div class='qtext'>Write a template for a chat bot that takes a user&#x27;s location and gives them the weather forecast. Use the letter o as a keyword in the syntax of the template. The letter o should appear at least 6 times.. Your response should contain fewer than 6 sentences. Highlight at least 2 text sections, i.e. *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span># Weather Bot Template
+
+oWelcome to the Weather Bot! Please share your oLocation to get the latest forecast. When the user provides their location, store it as oLocation and pass it to the oWeatherAPI function. Format the response to display current conditions, temperature, and precipitation for *oLocation*. Return the formatted forecast as *oForecast* and ask if the user needs additional information. oGoodbye!</div><div class='ans'><span class='lbl'>归一化</span>strict 1/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># Weather Bot Template
+
+oWelcome to the Weather Bot! Please share your oLocation to get the latest forecast. When the user provides their location, store it as oLocation and pass it to the oWeatherAPI function. Format the response to display current conditions, temperature, and precipitation for *oLocation*. Return the formatted forecast as *oForecast* and ask if the user needs additional information. oGoodbye!</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1300</span><span class='tag'>instruction_family=keywords+length_constraints+punctuation</span></div><div class='qtext'>Write a short proposal for a new research project that investigates how language evolves over time. I want to make it challenging, so:
+1. Do not include any commas in your response.
+2. Do not include the letter &quot;c&quot; anywhere in your response.
+3. Your response should contain at least 250 words.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>This proposal outlines a new probing of human tongue alteration. We aim to unravel how words transform as years pass. Human idiom does not stay still. It mutates with every new generation. We will examine texts from diverse eras to map this slow shift. Our main thesis posits that vowel patterns alter faster than syntax frameworks. We also believe that outside events drive sudden jumps in word meaning. To explore this we will gather a vast body of writing. These texts will span ten eras. We will not limit our inquiry to one region. We will look at multiple tongues to see if universal rules of mutation exist.
+
+Our approach employs a novel algorithm. This algorithm skims vast written works. It looks for pattern shifts in spelling and phrasing. Traditional models fail to grasp the subtle traits of tongue evolution. Our model uses probability math to foresee future shifts. We will input texts from old English and old Norse. By doing this we avoid regional bias. We map how verbs weaken over time. We also map how nouns gain new meaning. The study will run for three years. During the first year we will build the text database. During the next year our algorithm will sift the data. The final year will entail writing the final report.
+
+What do we hope to find? We seek to prove that human idiom follows rigid laws. These laws might mirror natural evolution in biology. We want to publish our findings in top peer reviewed journals. We also plan to release a tool that lets other sages test their own theories. This tool will be free for all to use. Our work will help historians understand old texts better. It will also help translators who try to bridge different eras. Ultimately this probing will show how human thought itself adapts. Words mirror thoughts. As words shift so do the minds that form them. We ask for funding to pursue this vital inquiry. Thank you for reviewing our plan.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>This proposal outlines a new probing of human tongue alteration. We aim to unravel how words transform as years pass. Human idiom does not stay still. It mutates with every new generation. We will examine texts from diverse eras to map this slow shift. Our main thesis posits that vowel patterns alter faster than syntax frameworks. We also believe that outside events drive sudden jumps in word meaning. To explore this we will gather a vast body of writing. These texts will span ten eras. We will not limit our inquiry to one region. We will look at multiple tongues to see if universal rules of mutation exist.
+
+Our approach employs a novel algorithm. This algorithm skims vast written works. It looks for pattern shifts in spelling and phrasing. Traditional models fail to grasp the subtle traits of tongue evolution. Our model uses probability math to foresee future shifts. We will input texts from old English and old Norse. By doing this we avoid regional bias. We map how verbs weaken over time. We also map how nouns gain new meaning. The study will run for three years. During the first year we will build the text database. During the next year our algorithm will sift the data. The final year will entail writing the final report.
+
+What do we hope to find? We seek to prove that human idiom follows rigid laws. These laws might mirror natural evolution in biology. We want to publish our findings in top peer reviewed journals. We also plan to release a tool that lets other sages test their own theories. This tool will be free for all to use. Our work will help historians understand old texts better. It will also help translators who try to bridge different eras. Ultimately this probing will show how human thought itself adapts. Words mirror thoughts. As words shift so do the minds that form them. We ask for funding to pursue this vital inquiry. Thank you for reviewing our plan.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1481</span><span class='tag'>instruction_family=detectable_format</span></div><div class='qtext'>Write a casual, interesting, and weird resume for Antonia Maj who is applying for a job at a coffee company. They have experience in marketing, customer service, and sales. They are educated but not majored in anything related to coffee.
+Make sure to include at least two sections marking the beginning of each section with &#x27;SECTION X&#x27;. In your entire response make sure to use exactly two bullet points in markdown format. Please use the following bullet point format:
+* Text for bullet 1
+* Text for bullet 2</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span># ANTONIA MAJ: Coffee Enthusiast &amp; Spreadsheet Wizard
+
+## SECTION 1: Who Am I &amp; Why Do I Need Coffee?
+
+Greetings, coffee gods! I&#x27;m Antonia Maj, a caffeine-powered marketing professional with a side hustle in customer happiness and a black belt in sales techniques. I didn&#x27;t study coffee in college (though I certainly financed several local coffee shops during my university years), but my Bachelor&#x27;s in Communications and Psychology has prepared me perfectly for understanding why people *need* that third cup before noon.
+
+When I&#x27;m not working, I can be found:
+- Arguing with my houseplants about proper brewing temperatures
+- Conducting elaborate ceremonies for the opening of new coffee bean bags
+- Perfecting my &quot;coffee handwriting&quot; (it&#x27;s like regular handwriting but significantly more illegible)
+
+## SECTION 2: Professional Caffeine-Fueled Achievements
+
+**Marketing Magician at Digital Dreams Inc.**
+* Increased brand engagement by 78% by creating a social media campaign featuring &quot;What Your Coffee Order Says About Your Childhood Trauma&quot;
+* Convinced the CEO that espresso-based meetings were 43% more productive (statistic completely made up but no one checked)
+
+**Customer Happiness Specialist at Grumpy Tech Solutions**
+* Implemented the &quot;Coffee First, Complaints Second&quot; policy, resulting in a 64% decrease in Karen sightings
+* Created a &quot;Mood Forecast&quot; system based on office coffee consumption that predicted team productivity with 89% accuracy
+
+**Sales Superhero at Gizmo Galaxy**
+* Broke company sales records by ending each pitch with &quot;And yes, there&#x27;s free coffee if you sign today&quot;
+* Successfully sold ice to an Eskimo by suggesting they try iced coffee
+
+## SECTION 3: Unusual Qualifications
+
+* Have successfully identified coffee origins blindfolded with 78% accuracy based solely on the sound the beans make when poured
+* Once successfully mediated a hostage situation at a local café by explaining the difference between light and dark roasts to all parties involved
+
+## SECTION 4: Education &amp; Other Mundane Details
+
+Bachelor of Arts in Communications &amp; Psychology
+University of Somewhere Impressive, 2015-2019
+*Minor in Existential Crises and Overthinking*
+
+Certifications:
+- Certified Coffee Snob (self-appointed)
+- Advanced Diploma in Pretending to Work While Actually Thinking About Coffee
+- Black Belt in Excel Spreadsheets and Coffee Pairings
+
+I believe coffee is not just a beverage but a lifestyle, a conversation starter, and occasionally a mild form of time travel (especially before 9 AM). I&#x27;m excited to bring my marketing expertise, customer service skills, and sales acumen to your coffee company, along with my extensive collection of coffee-related puns and my ability to function without sleep (coffee optional, but preferred).</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># ANTONIA MAJ: Coffee Enthusiast &amp; Spreadsheet Wizard
+
+## SECTION 1: Who Am I &amp; Why Do I Need Coffee?
+
+Greetings, coffee gods! I&#x27;m Antonia Maj, a caffeine-powered marketing professional with a side hustle in customer happiness and a black belt in sales techniques. I didn&#x27;t study coffee in college (though I certainly financed several local coffee shops during my university years), but my Bachelor&#x27;s in Communications and Psychology has prepared me perfectly for understanding why people *need* that third cup before noon.
+
+When I&#x27;m not working, I can be found:
+- Arguing with my houseplants about proper brewing temperatures
+- Conducting elaborate ceremonies for the opening of new coffee bean bags
+- Perfecting my &quot;coffee handwriting&quot; (it&#x27;s like regular handwriting but significantly more illegible)
+
+## SECTION 2: Professional Caffeine-Fueled Achievements
+
+**Marketing Magician at Digital Dreams Inc.**
+* Increased brand engagement by 78% by creating a social media campaign featuring &quot;What Your Coffee Order Says About Your Childhood Trauma&quot;
+* Convinced the CEO that espresso-based meetings were 43% more productive (statistic completely made up but no one checked)
+
+**Customer Happiness Specialist at Grumpy Tech Solutions**
+* Implemented the &quot;Coffee First, Complaints Second&quot; policy, resulting in a 64% decrease in Karen sightings
+* Created a &quot;Mood Forecast&quot; system based on office coffee consumption that predicted team productivity with 89% accuracy
+
+**Sales Superhero at Gizmo Galaxy**
+* Broke company sales records by ending each pitch with &quot;And yes, there&#x27;s free coffee if you sign today&quot;
+* Successfully sold ice to an Eskimo by suggesting they try iced coffee
+
+## SECTION 3: Unusual Qualifications
+
+* Have successfully identified coffee origins blindfolded with 78% accuracy based solely on the sound the beans make when poured
+* Once successfully mediated a hostage situation at a local café by explaining the difference between light and dark roasts to all parties involved
+
+## SECTION</pre><div class='muted'>（回答已截断）</div></details></div></section>
+</main>
+</body>
+</html>

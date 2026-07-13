@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">66.7%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">367</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-7</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某企业2016年初拥有土地2万平方米，包括厂区内托儿所占地0.1万平方米，无偿提供给公安局使用土地0.3万平方米，厂区内绿化用地0.4万平方米。5月该企业购买一块土地使用权(非耕地)用于厂房扩建，占地面积为2.4万平方米，合同规定，5月支付土地价款并交付土地。该企业所在地区城镇土地使用税年税额为10元/平方米，该企业2016年应缴纳城镇土地使用税____万元。
+A. 26
+B. 36
+C. 30
+D. 44
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 550,
+  &quot;n_with_confidence&quot;: 550,
+  &quot;confidence_unparsed_rate&quot;: 0.0,
+  &quot;accuracy&quot;: 0.6673,
+  &quot;confidence_mean&quot;: 94.66,
+  &quot;confidence_std&quot;: 9.64,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 1,
+    &quot;10-19&quot;: 1,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 2,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 1,
+    &quot;60-69&quot;: 7,
+    &quot;70-79&quot;: 12,
+    &quot;80-89&quot;: 45,
+    &quot;90-99&quot;: 481
+  },
+  &quot;cwr_at_90&quot;: 0.3056,
+  &quot;n_high_confidence&quot;: 481,
+  &quot;ece_10bin&quot;: 0.2877,
+  &quot;brier&quot;: 0.297,
+  &quot;auroc&quot;: 0.6195,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.6909,
+    &quot;coverage_80&quot;: 0.7068,
+    &quot;coverage_70&quot;: 0.7143
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 100,
+      &quot;accuracy&quot;: 0.66,
+      &quot;n_with_confidence&quot;: 100,
+      &quot;cwr_at_90&quot;: 0.3333,
+      &quot;auroc&quot;: 0.5267
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 200,
+      &quot;accuracy&quot;: 0.665,
+      &quot;n_with_confidence&quot;: 200,
+      &quot;cwr_at_90&quot;: 0.3262,
+      &quot;auroc&quot;: 0.5803
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 150,
+      &quot;accuracy&quot;: 0.6333,
+      &quot;n_with_confidence&quot;: 150,
+      &quot;cwr_at_90&quot;: 0.2936,
+      &quot;auroc&quot;: 0.6673
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 100,
+      &quot;accuracy&quot;: 0.73,
+      &quot;n_with_confidence&quot;: 100,
+      &quot;cwr_at_90&quot;: 0.2526,
+      &quot;auroc&quot;: 0.6669
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 6.569
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>550</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>100</td><td>66</td><td>0.660</td><td><div class='bar'><i style='width:66%'></i></div></td></tr><tr><td>ceval</td><td>200</td><td>133</td><td>0.665</td><td><div class='bar'><i style='width:66%'></i></div></td></tr><tr><td>mmlu_pro</td><td>150</td><td>95</td><td>0.633</td><td><div class='bar'><i style='width:63%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>100</td><td>73</td><td>0.730</td><td><div class='bar'><i style='width:73%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>294</td><td>202</td><td>0.687</td><td><div class='bar'><i style='width:69%'></i></div></td></tr><tr><td>zh</td><td>256</td><td>165</td><td>0.645</td><td><div class='bar'><i style='width:64%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A
+
+置信度: 90</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-2</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>当所在行业处于寿命周期的成熟期时，大企业应采取的竞争战略是____。
+A. 集中化战略
+B. 成本集聚战略
+C. 稳定型战略
+D. 差异化战略
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C
+
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-9</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>经营战略的本质是____。
+A. 目标与目的
+B. 资源
+C. 公司远景
+D. 组织结构
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A
+
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-26</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某公司2001年4月3日以448000元的价格，不准备长期持有的A公司发行在外的普通股200000股，另支付相关税费1000元。A公司已于2001年3月31日宣告发放现金股利0.2元/股，并于5月8日支付，A公司于2002年3月31日宣告发放现金股利0.3元/股，某公司于2002年4月3日将该股票转让，则某公司转让股票时成本价为____元。
+A. 408000
+B. 409000
+C. 448000
+D. 349000
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 99}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+
+根据中国原企业会计准则（短期投资相关处理规定），短期投资取得时的初始投资成本，是指取得投资时实际支付的全部价款（包括税金、手续费等相关税费），但需要扣除实际支付的价款中包含的已宣告但尚未领取的现金股利。
+
+具体分析如下：
+1. **初始投资成本的确认**：
+   公司购入股票支付的总价款 = 448,000元
+   相关税费 = 1,000元
+   购买时包含的已宣告但尚未发放的股利 = 200,000股 × 0.2元/股 = 40,000元
+   因此，股票的初始投资成本 = 448,000 + 1,000 - 40,000 = 409,000元。
+
+2. **持有期间及处置时成本分析**：
+   2001年5月8日收到第一笔股利时，直接冲减前期确认的“应收股利”，不影响短期投资成本。
+   2002年3月31日A公司宣告发放现金股利时，某公司尚未实际收到，在原准则下，宣告发放股利本身不冲减短期投资的账面成本（仅在实际收到时才作为成本的收回）。由于某公司在2002年4月3日转让股票时并未实际收到该笔股利，因此该股票转让时的成本价即为初始确认的成本，即409,000元。
+
+置信度: 99</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-29</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>如果行业的买方集中度高，由少数几家企业控制，那么它们在价格谈判中会处于的地位是____。
+A. 十分不利
+B. 相对不利
+C. 相对有利
+D. 十分有利
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;D&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>D
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::chinese_language_and_literature-val-8</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>[p][p‘][b][m]四个音素的区别主要是____。
+A. 清浊
+B. 发音方法
+C. 发音部位
+D. 送气与否
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+
+置信度: 95</pre></details></div></section>
+</main>
+</body>
+</html>
