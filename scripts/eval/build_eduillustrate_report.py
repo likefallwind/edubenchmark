@@ -149,7 +149,7 @@ def build_summary(rows, args):
         "judge_model": args.judge_model,
         "judge_is_substitute": True,
         "judge_note": (
-            "判官为替代 provider(MiniMax-M3),非论文原用 Gemini 3.0 Pro;"
+            f"判官为替代 provider({args.judge_model}),非论文原用 Gemini 3.0 Pro;"
             "分数仅供内部对比,不可与论文 leaderboard 直接比较。"),
         "generation_concurrency": args.concurrency,
         "scoring": "8-dim 0-5 Likert, per-problem geometric mean; benchmark-level = arithmetic mean over problems",
@@ -252,19 +252,13 @@ def main():
     ap.add_argument("--data-path", default="/home/likefallwind/code/EduIllustrate/data/benchmark/smoke5.json")
     ap.add_argument("--model", default="MiniMax-M3")
     ap.add_argument("--judge-model", default="MiniMax-M3")
-    ap.add_argument("--concurrency", default="3 (topic), peak API ~4")
+    ap.add_argument("--concurrency", default="unspecified")
+    ap.add_argument("--run-note", action="append", dest="run_notes", default=None,
+                    help="本次运行的注记,可重复传;不传则留空。")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "..", "..",
                                                   "reports", "eval", "eduillustrate", "minimax3"))
     args = ap.parse_args()
-    args.run_notes = [
-        "Smoke 子集：benchmark.json 前 5 题（physics-g9，均为难度『难』选择题）。",
-        "生成并发 topic=3 / scene=1：全程 MiniMax 429 限流 = 0；实际 API 峰值并发摸到 4 仍不限流。",
-        "限流根因厘清：早前单题 128min 是两个生成进程意外重叠抢同一 Token Plan 配额所致，非模型慢；隔离单跑约 14min/题。",
-        "litellm 包装层改造（已提交上游 fork）：手动重试+退避封顶、超时 600→3600s、改为流式 + 空闲超时(idle timeout)并写实时心跳。",
-        "problem_1 = 渲染失败：M3 输出格式异常导致代码抽取拿到推理散文（含下标字符），自动修复 3 次仍 SyntaxError，按设计跳过 → 计 0 分。",
-        "problem_3 标记 rendering_failed=True（仅 1 张图渲染成功），判官仍给出分数，记为弱样本。",
-        "判官 JSON 偶发解析失败由 retry_limit=2 吸收；判官全程 429=0、idle_timeout=0。",
-    ]
+    args.run_notes = args.run_notes or []
 
     rows, meta = load_problems(args.source_repo, args.eval_dir, args.data_path)
     rows = add_failures(rows, meta, args.source_repo, args.gen_dir)
