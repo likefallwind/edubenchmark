@@ -12,6 +12,7 @@ from .bea2025 import BEA2025JudgeAdapter, BEA2025TutorAdapter
 from .ceval import CEvalAdapter
 from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
 from .ifeval import IFEvalAdapter
+from .k12vista import K12VistaAdapter
 from .mathtutorbench import (
     MTBJudgeCalibration,
     MTBMistakeCorrection,
@@ -43,6 +44,8 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     OlympiadBenchAdapter,
     # IFEval: verifiable instruction following, official rule scoring (P01).
     IFEvalAdapter,
+    # K12Vista: Chinese K12 multimodal subject reasoning (P04).
+    K12VistaAdapter,
     LongTutorEvidenceAdapter,
     LongTutorDiagnosisAdapter,
     LongTutorTeachingAdapter,

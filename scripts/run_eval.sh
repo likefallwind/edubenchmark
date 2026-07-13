@@ -136,6 +136,17 @@ for b in $BENCHMARKS; do
       # 判分依赖 nltk/langdetect/immutabledict（miniconda python 已装）。
       python scripts/eval_benchmark.py --benchmark ifeval --model "$MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT" --extractor-model "$EXTRACTOR_MODEL"
       ;;
+    k12vista)
+      # K12Vista 中文 K12 多模态学科推理（P04）；提示与判分照搬官方 prompt.py。
+      # 先物化数据 + 生成固定题单（一次性）：
+      #   python scripts/eval/data/fetch_eval_datasets.py --benchmark k12vista
+      #   python scripts/eval/data/build_k12vista_sample.py --size 300
+      # 判分是 LLM 裁判逐空 0/1（官方 rubric），裁判固定为 K12VISTA_JUDGE_MODEL/JUDGE_MODEL
+      # （默认跟随 EXTRACTOR_MODEL），与被测模型解耦；被测模型必须是视觉模型。
+      K12VISTA_JUDGE_MODEL="${K12VISTA_JUDGE_MODEL:-$JUDGE_MODEL}" \
+      python scripts/eval_benchmark.py --benchmark k12vista --model "$MODEL" \
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+      ;;
     p07_selfcheck)
       # P07 两轮自查：第一轮答题 + 第二轮无提示复查（extract 阶段调被测模型本身）。
       # 与 p08_calibration 共用同一份难度分层 item_list，P07/P08 同题可比。

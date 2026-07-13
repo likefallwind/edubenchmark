@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -604,6 +605,65 @@ def fetch_ifeval(force: bool = False) -> Path:
     return out_dir
 
 
+def fetch_k12vista(force: bool = False) -> Path:
+    """Download K12Vista (Li et al. 2025, arXiv:2506.01676) — Chinese K12 multimodal.
+
+    Two pieces, both public:
+      - data: ``lipku1999/K12-Vista`` → ``K12_Vista.jsonl`` (33,660 rows, ~501 MB;
+        images are base64-inlined in the ``img`` field, so there is no separate
+        image archive).
+      - code: the official repo checkout ``github.com/lichongod/K12Vista``, needed
+        for ``K12_Vista/code/prompt.py`` — the adapter loads the official infer and
+        judge prompts straight from it rather than restating them.
+
+    After this, build the pinned evaluation sample:
+        python scripts/eval/data/build_k12vista_sample.py --size 300
+    """
+    out_dir = ROOT / "sources" / "datasets" / "k12vista"
+    prompt_file = out_dir / "K12_Vista" / "code" / "prompt.py"
+    data_path = out_dir / "K12_Vista" / "data" / "K12_Vista.jsonl"
+
+    if not _ok(prompt_file) or force:
+        print(f"cloning github.com/lichongod/K12Vista -> {out_dir}")
+        out_dir.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["git", "clone", "--depth", "1", "https://github.com/lichongod/K12Vista.git", str(out_dir)],
+            check=True,
+        )
+
+    if _ok(data_path) and not force:
+        print(f"skip k12vista data: {data_path} already exists (use --force to re-download)")
+        return out_dir
+
+    from huggingface_hub import hf_hub_download
+
+    print("downloading lipku1999/K12-Vista :: K12_Vista.jsonl (~501 MB)")
+    cached = hf_hub_download("lipku1999/K12-Vista", "K12_Vista.jsonl", repo_type="dataset")
+    data_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(cached, data_path)
+
+    with data_path.open(encoding="utf-8") as fh:
+        total = sum(1 for _ in fh)
+    manifest = {
+        "source": "https://huggingface.co/datasets/lipku1999/K12-Vista",
+        "code": "https://github.com/lichongod/K12Vista",
+        "citation": "Li et al. 2025, K12Vista (arXiv:2506.01676)",
+        "total_rows": total,
+        "images": "base64-inlined in the `img` field; build_k12vista_sample.py decodes the sampled ones",
+        "scoring": "official directly_eval_prompt: LLM judge emits per-blank 0/1, item score = mean",
+        "judge_note": (
+            "official judge is Qwen2.5-VL-72B / K12-PEM served on GPU; this repo substitutes an API "
+            "judge (K12VISTA_JUDGE_MODEL) with the official rubric text, uncalibrated against humans"
+        ),
+    }
+    (out_dir / "data_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"wrote {total} rows -> {data_path}")
+    print("next: python scripts/eval/data/build_k12vista_sample.py --size 300")
+    return out_dir
+
+
 def fetch_mathtutorbench(force: bool = False) -> Path:
     """Materialize MathTutorBench task data into stdlib-readable JSONL.
 
@@ -776,6 +836,7 @@ def main() -> None:
             "mmtutorbench",
             "umwp",
             "ifeval",
+            "k12vista",
             "longtutor",
             "all",
         ],
@@ -802,6 +863,8 @@ def main() -> None:
         fetch_umwp(force=args.force)
     if args.benchmark in ("ifeval", "all"):
         fetch_ifeval(force=args.force)
+    if args.benchmark in ("k12vista", "all"):
+        fetch_k12vista(force=args.force)
     if args.benchmark in ("longtutor", "all"):
         fetch_longtutor(force=args.force)
 

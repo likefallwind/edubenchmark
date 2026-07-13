@@ -553,6 +553,24 @@ MAPPINGS: list[dict[str, Any]] = [
         ),
     },
     {
+        "benchmark_id": "k12vista",
+        "benchmark_name": "K12Vista",
+        "subdimension": "official partial-credit score (per-blank 0/1 mean)",
+        "evidence_tier": "diagnostic",
+        "source_scope": "repo_eval",
+        "metric_family": "composite_0_to_10",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.80,
+        "abilities": ability_weights(("P04", 0.55), ("P06", 0.30), ("P05", 0.15)),
+        "rationale": (
+            "中文 K12 图文学科题（五学科×三学段，固定 300 题分层抽样），P04 的首个直接测量"
+            "（2026-07-13 空白 P 填补）。题目必须先读懂学科图（几何图/电路图/实验装置/函数曲线/地图）"
+            "再做多步推理，且抽样中 79% 为难/较难，落在 P04『复杂多模态理解』而非 P03『常规多模态感知』；"
+            "解题推理占 P06 0.30、学科知识调用占 P05 0.15。判分用官方 rubric 的 LLM 裁判逐空 0/1（部分给分），"
+            "裁判非官方 GPU 模型且未经人工金标校准——权重待 M3 裁决（R15）。"
+        ),
+    },
+    {
         "benchmark_id": "p07_selfcheck",
         "benchmark_name": "P07 两轮自查",
         "subdimension": "two-round self-check (fix/break rate)",
@@ -1108,7 +1126,7 @@ def repo_metric_for_summary(benchmark: str, data: dict[str, Any]) -> tuple[str, 
         return "accuracy", data.get("accuracy"), "summary.accuracy"
     if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "olympiadbench", "ifeval"}:
         return "accuracy", data.get("accuracy"), "summary.accuracy"
-    if benchmark in {"p07_selfcheck", "p08_calibration", "p08_abstention"}:
+    if benchmark in {"p07_selfcheck", "p08_calibration", "p08_abstention", "k12vista"}:
         return "composite_0_to_10", extra.get("score_10"), "extra_metrics.score_10"
     return "unknown", None, "no scoring rule"
 

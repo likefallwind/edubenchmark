@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>MiniMax-M2.7</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">42.2%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">232</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-7</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某企业2016年初拥有土地2万平方米，包括厂区内托儿所占地0.1万平方米，无偿提供给公安局使用土地0.3万平方米，厂区内绿化用地0.4万平方米。5月该企业购买一块土地使用权(非耕地)用于厂房扩建，占地面积为2.4万平方米，合同规定，5月支付土地价款并交付土地。该企业所在地区城镇土地使用税年税额为10元/平方米，该企业2016年应缴纳城镇土地使用税____万元。
+A. 26
+B. 36
+C. 30
+D. 44
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 415,
+  &quot;n_round2_missing&quot;: 135,
+  &quot;r1_accuracy&quot;: 0.5542,
+  &quot;r2_accuracy&quot;: 0.559,
+  &quot;net_gain&quot;: 0.0048,
+  &quot;change_rate&quot;: 0.1012,
+  &quot;n_r1_wrong&quot;: 185,
+  &quot;n_fixed_wrong_to_right&quot;: 17,
+  &quot;fix_rate&quot;: 0.0919,
+  &quot;n_r1_right&quot;: 230,
+  &quot;n_broken_right_to_wrong&quot;: 15,
+  &quot;break_rate&quot;: 0.0652,
+  &quot;score_10&quot;: 5.133,
+  &quot;by_source&quot;: {
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 200,
+      &quot;r1_correct&quot;: 112,
+      &quot;r2_correct&quot;: 115,
+      &quot;fixed&quot;: 12,
+      &quot;broken&quot;: 9
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 150,
+      &quot;r1_correct&quot;: 78,
+      &quot;r2_correct&quot;: 76,
+      &quot;fixed&quot;: 2,
+      &quot;broken&quot;: 4
+    },
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 65,
+      &quot;r1_correct&quot;: 40,
+      &quot;r2_correct&quot;: 41,
+      &quot;fixed&quot;: 3,
+      &quot;broken&quot;: 2
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>550</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>100</td><td>41</td><td>0.410</td><td><div class='bar'><i style='width:41%'></i></div></td></tr><tr><td>ceval</td><td>200</td><td>115</td><td>0.575</td><td><div class='bar'><i style='width:57%'></i></div></td></tr><tr><td>mmlu_pro</td><td>150</td><td>76</td><td>0.507</td><td><div class='bar'><i style='width:51%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>100</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>294</td><td>102</td><td>0.347</td><td><div class='bar'><i style='width:35%'></i></div></td></tr><tr><td>zh</td><td>256</td><td>130</td><td>0.508</td><td><div class='bar'><i style='width:51%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;让我重新逐步分析这道题目：\n\n**题目核心**：在测试会计分录和其他调整的**完整性**时，哪个程序是**不恰当**的？\n\n**逐项分析**：\n\n**A. 导出所有分录和调整，将总账与财务报表核对**\n- 目的：检查是否存在其他调整（完整性）\n- ✓ 恰当\n\n**B. 加总导出分录的本期发生额，与科目余额表发生额核对**\n- 目的：通过发生额比对验证完整性\n- ✓ 恰当\n\n**C. 将系统生成的重要账户余额与明细账、总账及科目余额表余额核对，测试计算准确性**\n- 目的：**测试计算准确性**（准确性）\n- 问题：**余额核对属于准确性测试，而非完整性测试**\n- 完整性测试关注\&quot;是否所有分录都被记录\&quot;，而非\&quot;余额计算是否正确\&quot;\n- ✗ **不恰当**\n\n**D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整**\n- 目的：直接测试完整性\n- ✓ 恰当\n\n**结论**：选项C的程序是测试账户余额的计算准确性，这属于准确性测试范畴，而非完整性测试，因此不恰当。\n\n最终答案：**C**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>在测试会计分录和其他调整的完整性时，程序应旨在确保所有相关分录均已被记录。选项C明确指出“测试计算准确性”，这侧重于验证账户余额的计算是否正确，而非检查会计分录的完整性，因此不恰当。选项A、B和D均涉及与完整性相关的测试（如核对总账、加总发生额或检查结账前分录），而选项C直接针对准确性，故为正确答案。
+
+正确选项：C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>根据COSO内部控制框架，反舞弊机制属于内部控制要素中的____。
+A. 风险评估
+B. 控制活动
+C. 监控
+D. 信息与沟通
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;# 逐步验证分析\n\n## COSO内部控制框架五要素回顾\n\n| 要素 | 主要内容 |\n|------|----------|\n| A. 控制环境 | 组织基调、诚信与道德价值观 |\n| B. 风险评估 | 目标设定、风险识别与分析 |\n| C. 控制活动 | 政策与程序、预防性/检查性控制 |\n| D. 监控 | 持续评估、缺陷报告 |\n| E. 信息与沟通 | 信息获取、内部报告、外部沟通 |\n\n## 反舞弊机制分析\n\n反舞弊机制的核心内容包括：\n- 职责分离\n- 授权审批控制\n- 内部审计监督\n- 举报热线\n\n这些都是**具体的政策和程序**，用于预防和发现舞弊行为，属于典型的**控制活动**。\n\n## 结论\n\n确认原答案正确，反舞弊机制属于COSO内部控制要素中的**控制活动**。\n\n**最终答案：B**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-30</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>根据证券法律制度的规定，下列关于上市公司收购的表述，正确的是____。
+A. 采用要约方式收购上市公司股份的，其预定收购的股份比例不得低于该上市公司已发行股份的30%
+B. 要约收购期间，收购人不得撤销收购要约，也不得变更收购要约
+C. 收购人对同一种类股票的要约价格不得低于要约收购提示性公告日前12个月内收购人取得该种股票所支付的最高价格
+D. 要约收购期间，被收购公司董事不得辞职
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;# 逐步验证分析\n\n## 选项A验证\n**规定**：根据《证券法》第88条，投资者持有一个上市公司已发行的股份达到30%时，继续收购应采取要约方式。\n**判断**：这是触发要约收购的条件，而非对**预定收购比例**的限制。A选项表述错误。\n\n## 选项B验证\n**规定**：根据《证券法》第89条，收购人**可以**变更收购要约，但需满足：经国务院证券监督管理机构批准后公告。\n**判断**：B选项说\&quot;不得变更\&quot;，与法律规定相悖。B选项错误。\n\n## 选项C验证\n**规定**：根据《证券法》第90条第2款，要约收购应当向所有股东发出相同要约，且收购价格需满足法律规定。\n**具体要求**：收购人对同一种类股票的要约价格不得低于要约收购提示性公告日前**6个月**内收购人取得该种股票所支付的**最高价格**。\n**判断**：C选项表述与法律规定一致，体现了保护小股东利益的原则。C选项正确。\n\n## 选项D验证\n**规定**：《证券法》未禁止被收购公司董事在要约收购期间辞职。\n**判断**：D选项没有法律依据。选项错误。\n\n---\n\n## 最终答案\n\n**C**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;## 逐步验证\n\n**第一步：确认作品基本信息**\n\n- 作品：曹禺《北京人》\n- 创作年代：1940年\n- 背景：没落的封建士大夫家庭\n\n**第二步：分析作品主题**\n\n《北京人》通过曾家的衰落，揭示了：\n- 封建制度的腐朽\n- 旧家庭的崩溃\n- 社会的变革需求\n\n**第三步：确定作品类型**\n\n| 选项 | 分析 |\n|------|------|\n| A. 喜剧 | ❌ 《北京人》有深刻的悲剧色彩，不是喜剧 |\n| B. 悲剧 | △ 有悲剧元素，但不是最突出的特征 |\n| C. 社会问题剧 | ✅ 以社会问题为题材，揭示封建家庭和社会矛盾 |\n| D. 正剧 | △ 虽含正剧特点，但不是评论界的主要定位 |\n\n**第四步：验证结论**\n\n学术界和曹禺本人都认为《北京人》是一部深刻反映社会问题的作品，它不仅具有艺术价值，更承担着揭示和批判社会矛盾的功能。\n\n**结论确认**：C（社会问题剧）\n\n**最终答案：C**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>曹禺的《北京人》被研究者称为中国最伟大的社会问题剧，它深刻反映了封建家庭的衰落和社会变革，具有广泛的社会意义和艺术价值。
+
+正确选项：C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-9</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>经营战略的本质是____。
+A. 目标与目的
+B. 资源
+C. 公司远景
+D. 组织结构
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;# 逐步验证分析\n\n## 问题回顾\n经营战略的本质是____。\n\n## 各选项分析\n\n| 选项 | 内容 | 分析 |\n|------|------|------|\n| A | 目标与目的 | 战略的核心是为了实现特定目标而进行的全局性、长远性的谋划与定位 |\n| B | 资源 | 资源是战略实施的支撑条件，但不是本质 |\n| C | 公司远景 | 远景是战略规划的一部分，但不是本质 |\n| D | 组织结构 | 组织结构是战略实施的保障，但不是本质 |\n\n## 验证结论\n\n在战略管理理论中，**经营战略的本质是明确组织的发展方向和目标**，即回答“我们要成为什么”的问题。战略是围绕目标与目的展开的全局性谋划。\n\n原答案 **A** 正确。\n\n**最终答案：A**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-26</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某公司2001年4月3日以448000元的价格，不准备长期持有的A公司发行在外的普通股200000股，另支付相关税费1000元。A公司已于2001年3月31日宣告发放现金股利0.2元/股，并于5月8日支付，A公司于2002年3月31日宣告发放现金股利0.3元/股，某公司于2002年4月3日将该股票转让，则某公司转让股票时成本价为____元。
+A. 408000
+B. 409000
+C. 448000
+D. 349000
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;## 逐步验证\n\n**已知信息：**\n- 2001年4月3日购入A公司股票200,000股\n- 购买价格：448,000元\n- 相关税费：1,000元\n- 2001年3月31日宣告现金股利0.2元/股（购买日前宣告）\n- 2002年3月31日宣告现金股利0.3元/股\n\n**计算过程：**\n\n**第一步：初始购入成本**\n$$448,000 + 1,000 = 449,000 \\text{ 元}$$\n\n**第二步：调整购买前已宣告的股利**\n- 购买日（4月3日）在宣告日（3月31日）之后\n- 购买前已宣告的股利属于购买方应收但未收的股利\n- 应从投资成本中扣除\n\n$$200,000 \\times 0.2 = 40,000 \\text{ 元}$$\n\n**第三步：计算转让时的成本价**\n$$449,000 - 40,000 = 409,000 \\text{ 元}$$\n\n**第四步：关于2002年宣告股利的说明**\n- 2002年3月31日宣告的0.3元/股股利属于持有期间产生的投资收益\n- 在实际收到时确认，不影响股票转让成本\n\n**结论：**\n股票转让成本价 = **409,000元**\n\n最终答案：**B**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div></section>
+</main>
+</body>
+</html>
