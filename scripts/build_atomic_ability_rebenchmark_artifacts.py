@@ -571,6 +571,29 @@ MAPPINGS: list[dict[str, Any]] = [
         ),
     },
     {
+        "benchmark_id": "mooccube_prereq",
+        "benchmark_name": "MOOCCube 先修关系推理",
+        "subdimension": "chance-corrected composite (先修选择 + 学习顺序排序)",
+        "evidence_tier": "diagnostic",
+        "source_scope": "repo_eval",
+        "metric_family": "composite_0_to_10",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.70,
+        "abilities": ability_weights(("P19", 0.70), ("P05", 0.20), ("P06", 0.10)),
+        "rationale": (
+            "MOOCCube（ACL 2020，学堂在线）图谱里 905 条专家先修边当金标，构造 200 道先修选择 + "
+            "100 道学习顺序排序，100% 规则判分（无裁判、无抽取模型），P19 的首个直接测量"
+            "（2026-07-13 空白 P 填补）。干扰项同领域、且含 Y 的后继概念（方向反转陷阱），"
+            "score_10 做随机基线校正（随机作答=0）。"
+            "**提案权重 P19 0.70 / P05 0.20 / P06 0.10，待 M3 裁决（R16）**：争点有三——"
+            "①它只覆盖 P19 的『知识结构』一半（概念间依赖顺序），不覆盖『按学习者当前状态定制路径』"
+            "那一半，P19 权重给到 0.70 是否过高、要不要在 v2 里把 P19 拆成 P19a/P19b 两个 facet 只挂 P19a；"
+            "②先修选择题本质上有多少是学科知识记忆（P05）而非路径推理；"
+            "③题目协议是本仓库自建（MOOCCube 原文无此任务、无官方基线），benchmark weight 因此压到 0.70，"
+            "低于 K12Vista 的 0.80——自建协议是否该再降 evidence_tier。"
+        ),
+    },
+    {
         "benchmark_id": "p07_selfcheck",
         "benchmark_name": "P07 两轮自查",
         "subdimension": "two-round self-check (fix/break rate)",
@@ -1126,7 +1149,13 @@ def repo_metric_for_summary(benchmark: str, data: dict[str, Any]) -> tuple[str, 
         return "accuracy", data.get("accuracy"), "summary.accuracy"
     if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "olympiadbench", "ifeval"}:
         return "accuracy", data.get("accuracy"), "summary.accuracy"
-    if benchmark in {"p07_selfcheck", "p08_calibration", "p08_abstention", "k12vista"}:
+    if benchmark in {
+        "p07_selfcheck",
+        "p08_calibration",
+        "p08_abstention",
+        "k12vista",
+        "mooccube_prereq",
+    }:
         return "composite_0_to_10", extra.get("score_10"), "extra_metrics.score_10"
     return "unknown", None, "no scoring rule"
 

@@ -115,6 +115,12 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Related capabilities: P16, P17, P19; CLM
   Source report: doc/p_construct_review_2026-07-11.md 第三节
 
+- Gap: P19 学习路径规划只覆盖了"知识结构"一半——个性化路径（按学习者当前状态定制）仍是缺口。【更新 2026-07-13：**P19a 先修关系推理已接入** MOOCCube（adapter `mooccube_prereq`，905 条专家先修边当金标，200 道先修选择 + 100 道学习顺序排序，100% 规则判分零裁判；固定题单 `data/mooccube/item_list_v1.txt`；已进 MAPPINGS，权重待 R16 裁决）。P19 从"零覆盖"变成"部分覆盖"，**不得在报告里宣称 P19 已完整覆盖**。】
+  Product reason: 先修图谱测的是"课程设计者视角的静态知识依赖"，产品里真正要的是"这个学生现在该学什么"——两者不是一回事，混为一谈会高估个性化路径能力。
+  Suggested data/eval: P19b 下一步练习推荐——用知识追踪日志（FoundationalASSIST / Junyi / PTADisc，与 P16a 共用数据）：读学生作答历史 → 推荐下一题 → 用该生实际表现验证；P19c 整体规划生成无现成数据，需 rubric + 裁判，成本高，缓。v2 测量模型建议把 P19 拆成 P19a（有测量）/ P19b（缺口）两个 facet。
+  Related capabilities: P19, P16; CLM
+  Source: doc/benchmark_profiles/mooccube.md; doc/benchmark_gap_recommendations_2026-07-11.md 第 P19 节
+
 - Gap: P21 风险识别六类风险（自伤/霸凌/成人内容/违法/心理危机/依赖诱导）被 SATA 一个无类别标签的分数覆盖；教育场景心理危机对话安全是否有专门 benchmark 未调研。
   Product reason: 学生心理危机处置是安全合规的重点审查项，需要类别级证据。
   Suggested data/eval: 先对 SATA 2,635 题做 LLM 类别粗标+抽检（同时解锁 P20/21/22 独立证据）；调研心理健康对话安全 benchmark。

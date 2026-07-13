@@ -59,6 +59,8 @@ BEA2025_DIMENSIONS = [
 
 UMWP_URL = "https://raw.githubusercontent.com/Yuki-Asuuna/UMWP/main/data/StandardDataset.jsonl"
 
+MOOCCUBE_URL = "http://lfs.aminer.cn/misc/moocdata/data/MOOCCube.zip"
+
 IFEVAL_BASE = (
     "https://raw.githubusercontent.com/google-research/google-research/master/"
     "instruction_following_eval/"
@@ -820,6 +822,80 @@ def fetch_longtutor(force: bool = False) -> Path:
     return base
 
 
+def fetch_mooccube(force: bool = False) -> Path:
+    """Download MOOCCube (Yu et al., ACL 2020) — the XuetangX MOOC knowledge graph.
+
+    One 1.09 GB zip, no registration. What the P19 adapter needs from it:
+
+      - ``relations/prerequisite-dependency.json`` — the released **expert
+        prerequisite edges** (TSV ``<prereq_concept_id>\\t<dependent_concept_id>``,
+        1,027 lines / 905 unique edges over 425 concepts, math + CS). This is the
+        gold used by ``mooccube_prereq``.
+      - ``entities/concept.json`` — 114,563 concepts (id / name / en / explanation).
+      - ``relations/course-concept.json`` — course→concept, used to draw
+        *same-course* hard distractors.
+
+    NOT used as gold: ``additional_information/prerequisite_prediction.json``.
+    Despite the similar name it is the auxiliary *prerequisite-prediction task*
+    dump — 489,300 concept-**name** pairs carrying a model's ``predict``
+    probabilities, of which only 3,616 are human-labeled (1,605 pos / 2,011 neg),
+    and its positive set barely intersects the graph relation (28 / 1,605 shared
+    pairs). Scoring against it would mean scoring against another model's guesses
+    on an unjoinable vocabulary. See doc/benchmark_profiles/mooccube.md.
+
+    After this, build the pinned item list:
+        python scripts/eval/data/build_mooccube_item_list.py --size 300
+    """
+    import urllib.request
+    import zipfile
+
+    out_dir = ROOT / "sources" / "datasets" / "mooccube"
+    root = out_dir / "MOOCCube"
+    gold = root / "relations" / "prerequisite-dependency.json"
+    if _ok(gold) and not force:
+        print(f"skip mooccube: {gold} already exists (use --force to re-download)")
+        return out_dir
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    archive = out_dir / "MOOCCube.zip"
+    if not _ok(archive) or force:
+        print(f"downloading {MOOCCUBE_URL} (~1.09 GB)")
+        with urllib.request.urlopen(MOOCCUBE_URL) as resp:  # noqa: S310 - public dataset host
+            with archive.open("wb") as fh:
+                shutil.copyfileobj(resp, fh)
+    print(f"extracting {archive}")
+    with zipfile.ZipFile(archive) as zf:
+        zf.extractall(out_dir)
+    if not _ok(gold):
+        raise SystemExit(f"extraction did not produce {gold}; inspect {archive}")
+
+    with gold.open(encoding="utf-8") as fh:
+        pairs = {tuple(line.rstrip("\n").split("\t")) for line in fh if line.strip()}
+    manifest = {
+        "source": MOOCCUBE_URL,
+        "homepage": "http://moocdata.cn/data/MOOCCube",
+        "citation": "Yu et al. 2020, MOOCCube: A Large-scale Data Repository for NLP Applications in MOOCs (ACL 2020)",
+        "gold_relation": "relations/prerequisite-dependency.json",
+        "gold_pairs_unique": len(pairs),
+        "gold_direction": "<prerequisite_concept>\\t<dependent_concept>; verified on unambiguous pairs (加法→函数, 算术→绝对值)",
+        "not_gold": {
+            "file": "additional_information/prerequisite_prediction.json",
+            "why": (
+                "prerequisite-*prediction* task dump: 489,300 concept-name pairs with a model's "
+                "`predict` probabilities, only 3,616 human-labeled, and its positives overlap the "
+                "graph relation on just 28/1,605 pairs — a different, unjoinable annotation"
+            ),
+        },
+        "scoring": "rule-based (option letter regex + topological-constraint check); no LLM judge, no extraction LLM",
+    }
+    (out_dir / "data_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"mooccube ready: {len(pairs)} unique prerequisite edges -> {gold}")
+    print("next: python scripts/eval/data/build_mooccube_item_list.py --size 300")
+    return out_dir
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
@@ -838,6 +914,7 @@ def main() -> None:
             "ifeval",
             "k12vista",
             "longtutor",
+            "mooccube",
             "all",
         ],
     )
@@ -867,6 +944,8 @@ def main() -> None:
         fetch_k12vista(force=args.force)
     if args.benchmark in ("longtutor", "all"):
         fetch_longtutor(force=args.force)
+    if args.benchmark in ("mooccube", "all"):
+        fetch_mooccube(force=args.force)
 
 
 if __name__ == "__main__":

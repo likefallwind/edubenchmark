@@ -29,6 +29,7 @@ from .mathvista import MathVistaAdapter
 from .mmlu_pro import MMLUProAdapter
 from .longtutor import LongTutorDiagnosisAdapter, LongTutorEvidenceAdapter, LongTutorTeachingAdapter
 from .mmtutorbench import MMTutorBenchAdapter, MMTutorBenchJudgeCalibrationAdapter
+from .mooccube_prereq import MOOCCubePrereqAdapter
 from .mrbench import MRBenchJudgeAdapter, MRBenchTutorAdapter
 from .olympiadbench import OlympiadBenchAdapter
 from .p07_selfcheck import P07SelfCheckAdapter
@@ -46,6 +47,8 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     IFEvalAdapter,
     # K12Vista: Chinese K12 multimodal subject reasoning (P04).
     K12VistaAdapter,
+    # MOOCCube: prerequisite reasoning + learning-order sorting, rule-scored (P19).
+    MOOCCubePrereqAdapter,
     LongTutorEvidenceAdapter,
     LongTutorDiagnosisAdapter,
     LongTutorTeachingAdapter,
