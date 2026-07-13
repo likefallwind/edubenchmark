@@ -9,13 +9,45 @@
 
 ## 数据
 
-- `fetch_eval_datasets.py --benchmark mooccube` → 下 zip + 解压到 `sources/datasets/mooccube/MOOCCube/`。
-- 金标：`relations/prerequisite-dependency.json`。TSV，1,027 行 / **905 条去重边** / 425 个概念，方向是 `<先修概念>\t<后继概念>`（在无歧义样例上验证过：加法→函数、算术→绝对值、算法→时间复杂度）。领域只有两个：数学 525 条、计算机科学技术 502 条（35 条跨领域）。
-- 辅助：`entities/concept.json`（概念名 + 定义）、`relations/course-concept.json`（课程→概念，用来采同课程干扰项）。
-- **两个 prerequisite 文件的区别（官方 FAQ 提到、这里查清楚了）**：
-  - `relations/prerequisite-dependency.json` —— 图谱**发布的关系边**，按概念 id（`K_名称_领域`）编码，能 join 到概念定义、领域、课程。**本适配器的金标。**
-  - `additional_information/prerequisite_prediction.json` —— **先修预测任务**的产物：489,300 个按概念**名字**编码的候选对，每对带一个模型输出的 `predict` 概率，其中只有 3,616 对有人工标签（1,605 正 / 2,011 负），其余 `label: -1`。
-  - **为什么不用后者当金标**：①它的正例集和图谱关系边几乎不重合（1,605 条里只有 28 条对得上），是**另一套标注、另一套概念词表**；②它的主体是**模型的猜测**而非人工标注，拿它当金标等于拿另一个模型的输出当真值；③按名字编码，join 不回概念定义/课程，做不了同领域干扰项。它的 2,011 条人工负例本身是有价值的，但词表对不上，暂不用。
+`fetch_eval_datasets.py --benchmark mooccube` → 下 zip + 解压到 `sources/datasets/mooccube/MOOCCube/`（gitignored，1.09 GB 压缩 / 解压后约 4 GB）。
+
+### 用到的文件
+
+| 文件 | 格式 | 规模 | 干什么用 |
+|---|---|---|---|
+| `relations/prerequisite-dependency.json` | TSV，两列，**无表头、不是 JSON**（名字有误导性） | 1,027 行 → **905 条去重边** / 425 个概念 | **金标**。方向 `<先修概念>\t<后继概念>` |
+| `entities/concept.json` | JSON Lines | 114,563 概念 | 概念名 + 定义（`explanation` 字段） |
+| `relations/course-concept.json` | TSV，两列 | 167,751 行 | 课程→概念，用来采**同课程**干扰项 |
+
+概念 id 的形状是 `K_<名称>_<领域>`（例：`K_IP地址_计算机科学技术`），领域直接从 id 尾巴切出来，不需要再 join `concept-field.json`。
+
+**金标只有两个领域**：数学 525 条边、计算机科学技术 502 条（其中 35 条跨领域，出题时丢弃）。
+
+**方向是我验证过的**，不是猜的——在语义无歧义的样例上核对：`加法→函数`、`算术→绝对值`、`算法→时间复杂度`、`向量→巴拿赫空间`，左列一律是先修。
+
+### 图谱的两个坑
+
+1. **有环**。60 个概念落在环上（图谱不是 DAG）。所以：排序题只采**导出子图无环**的连通子图；选择题的干扰项合法性一律走**传递闭包**判定（干扰项不得 ∈ `anc[Y]`），环上节点被闭包自动排除。凭"这是 Y 的后继所以肯定不是先修"这种直觉写代码会错。
+2. **不完备**。905 条边远不是数学+计算机全部的先修关系（见"局限"）。
+
+### 两个 prerequisite 文件的区别（官方 FAQ 提到，这里查清楚了）
+
+| | `relations/prerequisite-dependency.json` | `additional_information/prerequisite_prediction.json` |
+|---|---|---|
+| 是什么 | 图谱**发布的关系边** | **先修预测任务**的产物 |
+| 编码 | 概念 **id**（`K_名称_领域`） | 概念**名字**（`"c1": "B树"`） |
+| 规模 | 905 条去重边 | 489,300 个候选对 |
+| 标注 | 全是专家边 | 只有 3,616 对有人工标签（1,605 正 / 2,011 负），其余 `label: -1` |
+| 还带什么 | — | 一列 `predict`：**某个模型输出的概率** |
+| 本仓库 | ✅ **金标** | ❌ 不用 |
+
+**为什么不用后者当金标**（这是本次接入最需要拿主意的地方）：
+
+1. **它和图谱边几乎是两套标注**——1,605 条正例里只有 **28 条**能和 905 条图谱边对上（1.7%）。不是同一份东西的两种存法。
+2. **它的主体是模型的猜测**。489,300 对里 98.5% 是 `label: -1`（无人工标签）+ 一个模型的 `predict` 概率。拿它当金标 = 拿另一个模型的输出当真值，正是本仓库反复要避免的事（P19 的分数不能背裁判/模型噪声）。
+3. **按名字编码，join 不回去**。没有 id 就拿不到领域、定义、课程，**做不了同领域干扰项**——而同领域干扰项恰恰是这个评测不退化成常识题的命门。
+
+它那 2,011 条**人工负例**本身是有价值的（是"已验证的非先修对"，比图谱闭包推出来的负例更硬），但词表对不上，这次没用。**后续想用**：需要先做一次 名字→id 的消歧映射（同名概念跨领域会撞），值得单独做一版。
 
 ## 任务与判分
 
@@ -37,12 +69,55 @@ D. 最大传输单元——通过一个物理网络在单个协议数据单元�
 
 四个选项全是计算机网络的词——选对必须知道**方向**，"听起来相关"没用。
 
-**② 学习顺序排序（100 题，随机基线均值 0.030）**：4-6 个有依赖关系的概念打乱给出，要求排出满足**全部**先修约束的顺序。不要求唯一拓扑序——任何满足全部依赖的顺序都算对；部分分 = 满足的约束比例。判分：正则按 `->` 切分，映射回概念名，逐条检查图谱边 `(a,b)` 是否满足 `pos[a] < pos[b]`。
+**选择题的出题算法**（`build_mcq_pool`），逐个概念 Y 走一遍：
 
-- **图谱有环**（60 个概念在环上），所以排序题只采**导出子图无环**的连通子图；选择题的干扰项合法性靠传递闭包判定（干扰项不得是 Y 的祖先），环上的节点自动被闭包排除。
-- 抽不出答案记 `unparsed`，计入 `unparsed_rate`，判 0 分。
+```
+field = Y 的领域
+parents = pred[Y] ∩ field            # 同领域的直接先修；空则跳过这个 Y
+forbidden = anc[Y] ∪ {Y}             # 传递闭包：任何能走到 Y 的都不能当干扰项
+reverse  = (desc[Y] − forbidden) ∩ field    # 方向反转陷阱（环上节点已被 forbidden 排除）
+sibling  = {同领域 ∧ 与 Y 同课程 ∧ ∉ forbidden ∧ ∉ desc[Y]}
+若 |reverse| + |sibling| < 3 → 跳过
+gold = 随机取一个 parent
+干扰项 = 最多 2 个 reverse + 补 sibling 到 3 个（sibling 不够就再拿 reverse）
+正确项位置 = 轮转（第 i 个概念放第 i mod 4 位），不是随机 shuffle
+```
 
-**指标**：headline `accuracy` = 两类题整体正确率；`extra_metrics` 给 `mcq_accuracy` / `order_exact_accuracy` / `order_constraint_satisfaction`（部分分）/ 方向陷阱题与普通题的分项正确率 / `unparsed_rate`。
+**为什么正确项位置用轮转不用 shuffle**：shuffle 出来的 gold 分布会偏（第一版实测 A=36 / C=57），"永远选 C" 就能拿 28.5%。轮转把恒定策略压回 25% 附近（实测最好的恒定策略 0.275）。
+
+**② 学习顺序排序（100 题，随机基线均值 0.030）**：4-6 个有依赖关系的概念打乱给出，要求排出满足**全部**先修约束的顺序。不要求唯一拓扑序——任何满足全部依赖的顺序都算对；部分分 = 满足的约束比例。
+
+**排序题的出题算法**（`build_order_pool`）：从随机种子概念出发，沿 `succ ∪ pred` 随机扩张成 4-6 个点的连通集 → 取导出子图 → **无环检查**（三色 DFS，有环就丢）→ **精确枚举 n! 种排列**算随机通过概率（n≤6 → ≤720 种，便宜）→ 只保留 `chance ≤ --max-order-chance`（默认 0.05）→ 概念顺序打乱后存题。
+
+一道真题（`mooccube-order-0455d1dc06`，5 个概念 / 4 条约束 / chance 0.033）：
+
+```
+- 以太网、计算科学、网络互联、动态分配、IP地址   （已打乱）
+约束（金标，不给模型看）：网络互联→以太网、以太网→IP地址、IP地址→动态分配、计算科学→动态分配
+```
+
+### 抽取与判分（全是正则，零 LLM）
+
+`extract_answer` 里**不发任何 API 请求**——这是 P19 的硬约束，分数不能背抽取模型的噪声。
+
+- **选择题**：三级正则兜底。① `答案\s*[:：]?\s*\(?\[?([A-Da-d])`（取**最后一个**匹配，避免模型在思考里先写错再改）；② `(?:answer|选项)\s*(?:is|为|是)?\s*[:：]?\s*\(?([A-Da-d])`；③ 最后一个非空行是**光秃秃一个字母**（容忍 `**B**`、`(B)`、`B.` 这些包装）。三级都抽不出 → `unparsed`。
+- **排序题**：先按分隔符切（`->` `→` `=>` `>` `＞` `,` `，` `、` 都认），剥掉 `1.` 这种序号和 `**` 引号括号，要求切出来的**恰好是全部概念名的一个排列**（集合相等且个数相同）才算数；否则退回"某一行里每个概念名恰好出现一次 → 按首次出现位置排序"的兜底。**兜底有个防御**：如果本题有概念名是另一个概念名的子串（`算术` vs `算术运算`），位置匹配会歧义，直接放弃兜底判 `unparsed`——宁可记未解析，也不能瞎判对错。
+- 判分：`pos[a] < pos[b]` 逐条查图谱边。全满足 → `correct`；满足比例 → 部分分。
+- **`unparsed` 一律判 0 分并计入 `unparsed_rate`**，不静默丢弃（丢弃会让分母变小、分数虚高）。
+
+### 产物字段（`summary.json` → `extra_metrics`）
+
+| 字段 | 含义 |
+|---|---|
+| `mcq_accuracy` / `order_exact_accuracy` | 两类题各自的正确率（排序题是**严格全对**） |
+| `mcq_accuracy_with_reverse_trap` / `..._sibling_only` | 带方向陷阱 vs 普通干扰项的分项——**看构念效度就看这两个的差** |
+| `order_constraint_satisfaction` | 排序题部分分（诊断用，**不进 headline**，随机地板 0.503） |
+| `order_random_baseline` | 本次实际跑的排序题的平均 chance（校正用的就是它，不是写死的 0.03） |
+| `unparsed_rate` / `mcq_unparsed_rate` / `order_unparsed_rate` | 未解析率，**必须一起报** |
+| `mcq_chance_corrected` / `order_chance_corrected` | 两个分量各自的基线校正值 |
+| `score_10` | headline 复合分 |
+
+分桶（报告里的分组列）：`task`（mcq/order）、`field`（数学/计算机）、`variant`（`mcq_with_reverse_trap` / `mcq_sibling_only` / `order_n4..n6`）。
 
 `score_10` **做了随机基线校正**，随机作答得 0 分而不是 2.8 分：
 
@@ -57,12 +132,38 @@ score_10   = 10 × (0.5 × mcq_norm + 0.5 × order_norm)
 ## 在本仓库怎么用
 
 ```bash
-/home/likefallwind/miniconda3/bin/python scripts/eval/data/fetch_eval_datasets.py --benchmark mooccube        # 一次性，1.09 GB
-/home/likefallwind/miniconda3/bin/python scripts/eval/data/build_mooccube_item_list.py --size 300             # 一次性，固定题单
-MODEL=deepseek-v4-pro ./scripts/run_eval.sh mooccube_prereq    # 默认跑固定 300 题题单
+# 一次性：下数据（1.09 GB）+ 生成固定题单
+/home/likefallwind/miniconda3/bin/python scripts/eval/data/fetch_eval_datasets.py --benchmark mooccube
+/home/likefallwind/miniconda3/bin/python scripts/eval/data/build_mooccube_item_list.py --size 300
+
+# 跑分：默认走固定的 300 题题单（data/mooccube/item_list_v1.txt），所有模型同题
+MODEL=deepseek-v4-pro ./scripts/run_eval.sh mooccube_prereq
+MODEL=MiniMax-M3     ./scripts/run_eval.sh mooccube_prereq
+
+# 小样本冒烟 / 看构造出来的 prompt（不调 API）
+python scripts/eval_benchmark.py --benchmark mooccube_prereq --limit 3 --dry-run
+python scripts/eval_benchmark.py --benchmark mooccube_prereq --limit 12 --model deepseek-v4-pro --concurrency 2
 ```
 
-纯文本，任何模型都能跑（不需要视觉），也不花裁判的钱——只有答题成本。
+- **纯文本**，不需要视觉模型；**不花裁判的钱**——只有答题成本，判分是本地正则。
+- `--limit N` 取的是**交错后**的前 N 题（load_items 按 2 选择 : 1 排序 交错），所以任何前缀都同时覆盖两种题型，冒烟不会只测到一半。
+- 题单是 300 题的**全集**，`--item-list` 只是完整性校验（少一题就报错，防止跨模型题目不一致）。
+
+### 题目的固定化与完整性
+
+- 提交进 git 的是 `data/mooccube/item_list_v1.txt`（300 个 item_id）+ `item_list_v1_manifest.json`（含出题参数、分层计数、随机基线、**生成题目文件的 sha256**）。
+- 题目本体 `sources/datasets/mooccube/items_v1.jsonl` **不提交**（gitignored）。它由 builder **确定性重建**（固定 seed 20260713 + 全程排序迭代），adapter 每次加载都拿 sha256 和 manifest 对，**对不上直接报错退出**——别人重新生成一份不一样的题却拿旧分数比较，这条能挡住。
+- item_id 是内容哈希（`mooccube-mcq-<sha1(target+选项)[:10]>`），不是序号：出题参数一改，id 就变，不会出现"同一个 id 指向不同题目"的静默错配。
+
+### 调难度的旋钮
+
+| 想干什么 | 怎么调 |
+|---|---|
+| 排序题更难 | `--max-order-chance 0.02`（默认 0.05），或改 `build_order_pool` 里的 `size` 候选到 6-8 |
+| 选择题更难 | 只保留带方向陷阱的题（现有 102 道），即在 `build_mcq_pool` 里要求 `reverse` 非空 |
+| 改题量/配比 | `--size 300 --mcq-share 0.667`（默认 2/3 是选择题） |
+
+**改完必须重跑弱基线自查**（下一节），并且**换一个 `item_list_v2` 的名字**——不要原地覆盖 v1，已经跑过分的模型没法回溯。
 
 ## 天花板自查（必读）
 
