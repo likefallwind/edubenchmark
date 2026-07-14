@@ -2,10 +2,12 @@
 
 说明：
 
-- 纵轴是评测任务（benchmark），横轴是模型（沿用 2026-07-10 的 12 模型口径）
-- `-/-` 表示该模型在该评测下尚无 `summary.json`，且也无 `predictions.jsonl` 产出
-- `predictions only` 表示仅有 `predictions.jsonl`，无 `summary.json`
-- 格式为 `scored/total`（来自该任务 `summary.json`）
+- 纵轴是评测任务（benchmark），横轴是模型（沿用 2026-07-10 的 12 模型口径）。
+- `-/-` 表示该模型在该评测下尚无 `summary.json`，也无 `predictions.jsonl` 产出。
+- `predictions only` 表示仅有 `predictions.jsonl`，无 `summary.json`。
+- `x/y` 表示 `summary.json` 中 `scored` 或 `judged` 与 `total_items`（或 `total`）比对。
+
+## 主表（12 模型口径）
 
 | 评测任务（纵轴） \ 模型（横轴） | deepseek-v3.2 | deepseek-v4-flash | deepseek-v4-pro | doubao-seed-2.0-pro | doubao-seed-2.0-lite | glm-5.1 | glm-5.2 | gpt-5.5 | kimi-k2.7-code | opus-4.8 | MiniMax-M2.7 | minimax3 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -13,8 +15,8 @@
 |bea2025_judge|9904/9904|9904/9904|9904/9904|-/-|-/-|-/-|9903/9904|-/-|-/-|-/-|9903/9904|9896/9904|
 |bea2025_tutor|-/-|-/-|-/-|-/-|-/-|-/-|300/300|-/-|-/-|-/-|300/300|300/300|
 |ceval|-/-|1344/1346|1346/1346|-/-|-/-|5/5|1345/1346|-/-|-/-|-/-|1346/1346|1346/1346|
-|eduguard_adversarial|-/-|-/-|801/801|801/801|801/801|772/801|801/801|797/801|801/801|-/-|801/801|801/801|
-|eduguard_sata|-/-|4/4|5266/5270|5270/5270|5270/5270|5268/5270|5270/5270|2148/2635|predictions only|-/-|5269/5270|5270/5270|
+|eduguard_adversarial|-/-|-/-|801/801|801/801|801/801|772/801|801/801|797/801|-/-|-/-|801/801|801/801|
+|eduguard_sata|-/-|4/4|5266/5270|5270/5270|5270/5270|5268/5270|5270/5270|2148/2635|-/-|-/-|5269/5270|5270/5270|
 |eduillustrate|4/5|-/-|-/-|4/5|4/5|-/-|-/-|-/-|-/-|4/5|-/-|4/5|
 |mathtutorbench_judge_calibration|964/964|964/964|964/964|-/-|-/-|-/-|964/964|-/-|-/-|-/-|964/964|964/964|
 |mathtutorbench_mistake_correction|-/-|1002/1002|1002/1002|-/-|-/-|-/-|1001/1002|-/-|-/-|-/-|1002/1002|1002/1002|
@@ -33,31 +35,7 @@
 |mrbench_judge|13240/13240|13240/13240|13240/13240|-/-|-/-|-/-|13240/13240|-/-|-/-|-/-|13240/13240|13238/13240|
 |mrbench_tutor|-/-|-/-|-/-|-/-|-/-|-/-|200/200|-/-|-/-|-/-|200/200|200/200|
 |olympiadbench|-/-|-/-|6685/6728|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|6722/6728|
-
-## 相对 2026-07-10 的变化
-
-总格数：`288`；旧版覆盖 `122`；现版覆盖 `124`；新增 `2`。
-
-| 评测 | 模型 | 2026-07-10 | 2026-07-14 |
-|---|---|---|---|
-|eduguard_adversarial|kimi-k2.7-code|-/-|801/801|
-|eduguard_sata|kimi-k2.7-code|-/-|predictions only|
-|eduillustrate|deepseek-v3.2|-/5|4/5|
-|eduillustrate|doubao-seed-2.0-pro|-/5|4/5|
-|eduillustrate|doubao-seed-2.0-lite|-/5|4/5|
-|eduillustrate|opus-4.8|-/5|4/5|
-|eduillustrate|minimax3|-/5|4/5|
-|mathtutorbench_socratic|deepseek-v4-pro|predictions only|1319/1319|
-|mathtutorbench_socratic|glm-5.2|predictions only|1319/1319|
-|mathtutorbench_socratic|MiniMax-M2.7|predictions only|1319/1319|
-|mathtutorbench_socratic|minimax3|3/3|1319/1319|
-|olympiadbench|deepseek-v4-pro|2669/6728|6685/6728|
-
-## 2026-07-10 后新增任务（按同口径矩阵）
-
-| 评测任务（纵轴） \ 模型（横轴） | deepseek-v3.2 | deepseek-v4-flash | deepseek-v4-pro | doubao-seed-2.0-pro | doubao-seed-2.0-lite | glm-5.1 | glm-5.2 | gpt-5.5 | kimi-k2.7-code | opus-4.8 | MiniMax-M2.7 | minimax3 |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-|edubench|-/-|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|-/-|-/-|3797/3797|-/-|3797/3797|-/-|
+|edubench|-/-|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|-/-|-/-|-/-|-/-|-/-|-/-|
 |ifeval|-/-|-/-|540/541|541/541|-/-|-/-|541/541|-/-|-/-|-/-|538/541|540/541|
 |longtutor_diagnosis|-/-|-/-|-/-|-/-|-/-|-/-|predictions only|-/-|-/-|-/-|-/-|2/2|
 |longtutor_evidence|-/-|-/-|predictions only|-/-|-/-|-/-|0/3003|-/-|-/-|-/-|-/-|2/2|
@@ -65,3 +43,11 @@
 |p07_selfcheck|-/-|-/-|546/550|550/550|-/-|-/-|550/550|-/-|-/-|-/-|550/550|550/550|
 |p08_abstention|-/-|-/-|500/500|500/500|-/-|-/-|500/500|-/-|-/-|-/-|500/500|500/500|
 |p08_calibration|-/-|-/-|549/550|550/550|-/-|-/-|550/550|-/-|-/-|-/-|550/550|550/550|
+
+## 新增模型口径（近期补充）
+
+| 评测任务（纵轴） \ 模型（横轴） | kimi-k2.6 | claude-sonnet-4-6 | qwen3-14b | qwen3.5-122b-a10b | minimax-m2.7 | minimax-m3 |
+|---|---|---|---|---|---|---|
+|eduguard_adversarial|801/801|-/-|-/-|-/-|-/-|-/-|
+|eduguard_sata|predictions only|-/-|-/-|-/-|-/-|-/-|
+|edubench|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|
