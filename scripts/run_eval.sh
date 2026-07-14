@@ -163,8 +163,11 @@ for b in $BENCHMARKS; do
       #   MODEL=MiniMax-M3 ./scripts/run_eval.sh p07_selfcheck
       ITEM_LIST="${ITEM_LIST:-data/p08_calibration/item_list_v1.txt}"
       P07_EXTRACTOR_MODEL="${P07_EXTRACTOR_MODEL:-$MODEL}"
+      # 第二轮复查发生在 extract 阶段，所以 --extract-concurrency 必须跟着给：
+      # 它默认是 1，漏传的话第二轮会单线程爬（550 题要跑一整天）。
       python scripts/eval_benchmark.py --benchmark p07_selfcheck --model "$MODEL" \
-        --extractor-model "$P07_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
+        --extractor-model "$P07_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" \
+        --extract-concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
       ;;
     p08_calibration)
       # P08 置信校准：跑固定难度分层 item_list（非 --limit；先用 build_p08_item_list.py 生成）。
