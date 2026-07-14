@@ -1,3 +1,70 @@
+# eduillustrate — 评测产物说明
+
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/eduillustrate.md`](../../../doc/benchmark_profiles/eduillustrate.md)
+> 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
+
+## 一、健康状况（坏消息在前）
+
+**这个 benchmark 下有 6 个 run 的分数不可用（unusable）。** 在重跑之前，不要把它们写进任何报告、聚合或映射裁决。
+
+headline 口径：overall_mean_judged_only（0-5，**有幸存者偏差**）。
+
+| 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
+| --- | --- | --- | --- | --- | --- |
+| `doubao-seed-2.0-lite__gen-full230_judge-minimax3` | 3.3885 | **unusable**（分数是假的，必须重跑） | 21.7% | 21.7% | 21.7% 的题命中失败标记：渲染失败、没送裁判（headline 有幸存者偏差）；21.7% 的题没进判分（分数建立在 180/230 的残缺样本上） |
+| `deepseek-v3.2` | 3.5301 | **unusable**（分数是假的，必须重跑） | 20.0% | 20.0% | 20.0% 的题命中失败标记：渲染失败、没送裁判（headline 有幸存者偏差）；20.0% 的题没进判分（分数建立在 4/5 的残缺样本上）；冒烟样本（n=5），只能验管道，不能当分数 |
+| `doubao-seed-2.0-lite` | 3.6220 | **unusable**（分数是假的，必须重跑） | 20.0% | 20.0% | 20.0% 的题命中失败标记：渲染失败、没送裁判（headline 有幸存者偏差）；20.0% 的题没进判分（分数建立在 4/5 的残缺样本上）；冒烟样本（n=5），只能验管道，不能当分数 |
+| `doubao-seed-2.0-pro` | 3.1258 | **unusable**（分数是假的，必须重跑） | 20.0% | 20.0% | 20.0% 的题命中失败标记：渲染失败、没送裁判（headline 有幸存者偏差）；20.0% 的题没进判分（分数建立在 4/5 的残缺样本上）；冒烟样本（n=5），只能验管道，不能当分数 |
+| `minimax3` | 3.6649 | **unusable**（分数是假的，必须重跑） | 20.0% | 20.0% | 20.0% 的题命中失败标记：渲染失败、没送裁判（headline 有幸存者偏差）；20.0% 的题没进判分（分数建立在 4/5 的残缺样本上）；冒烟样本（n=5），只能验管道，不能当分数 |
+| `opus-4.8` | 3.7144 | **unusable**（分数是假的，必须重跑） | 20.0% | 20.0% | 20.0% 的题命中失败标记：渲染失败、没送裁判（headline 有幸存者偏差）；20.0% 的题没进判分（分数建立在 4/5 的残缺样本上）；冒烟样本（n=5），只能验管道，不能当分数 |
+| `doubao-seed-2.0-pro__gen-full230_judge-MiniMax-M3` | 3.7055 | caveat（可用，但必须带着下面的保留意见一起引用） | 10.4% | 10.4% | 10.4% 的题命中失败标记：渲染失败、没送裁判（headline 有幸存者偏差）；10.4% 的题没进判分（分数建立在 206/230 的残缺样本上） |
+| `kimi-k2.7-code__gen-full230_judge-MiniMax-M3` | 3.5898 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.4% | 0.4% | — |
+| `MiniMax-M3__gen-full230_judge-MiniMax-M3` | 3.1748 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.0% | — |
+
+### 样本残缺的 run
+
+上游配额/限流打挂大批题目后，summary 仍在**幸存样本**上照常出分。这类 run 的分数没有“错”，但它测的是一个自选样本，不能跟全量 run 放在一张表里比。
+
+- `deepseek-v3.2`：只有 4 / 5 题进入判分（未判分 20.0%）。
+- `doubao-seed-2.0-lite`：只有 4 / 5 题进入判分（未判分 20.0%）。
+- `doubao-seed-2.0-lite__gen-full230_judge-minimax3`：只有 180 / 230 题进入判分（未判分 21.7%）。
+- `doubao-seed-2.0-pro`：只有 4 / 5 题进入判分（未判分 20.0%）。
+- `doubao-seed-2.0-pro__gen-full230_judge-MiniMax-M3`：只有 206 / 230 题进入判分（未判分 10.4%）。
+- `minimax3`：只有 4 / 5 题进入判分（未判分 20.0%）。
+- `opus-4.8`：只有 4 / 5 题进入判分（未判分 20.0%）。
+
+## 二、这个评测是什么
+
+**一句话**：写 Manim 代码把解题过程画出来，渲染成功后裁判按 8 维（4 文本 + 4 视觉）打 0-5 分。
+
+- **出处**：arXiv:2604.05005，本地生成器 `/home/likefallwind/code/EduIllustrate`。
+- **数据**：benchmark.json 230 题（另有 5 题冒烟集）。
+- **任务与判分**：8 维 0-5 Likert，逐题几何平均，benchmark 级算术平均。**产物不走标准 harness**（没有 predictions/extractions，schema 自成一套）。
+- **adapter**：`scripts/eval/build_eduillustrate_report.py`
+- **局限**：裁判是替代 provider（MiniMax-M3 等），不是论文原用的 Gemini 3.0 Pro，**不可与论文榜比较**；渲染失败的题不送裁判、计 0，`overall_mean_judged_only` 有幸存者偏差，跨模型比较请用 `overall_mean_all_items`。
+
+**怎么用**：
+
+```bash
+MODEL=<model> ./scripts/run_eval.sh eduillustrate
+# 或：python scripts/eval_benchmark.py --benchmark eduillustrate --model <model> --limit 0
+```
+
+## 三、当前映射（M3 裁决相关）
+
+| evidence_tier | benchmark_weight | 能力（P:权重） |
+| --- | --- | --- |
+| diagnostic | 0.85 | P10 多模态教学产物生成 (0.45)、P03 常规多模态感知 (0.25)、P18 适配性解释与反馈生成 (0.3) |
+
+**这些 P 的证据因此受污染：P03、P10、P18**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+
+---
+
+审计脚本：`python scripts/audit_eval_artifacts.py --benchmark eduillustrate --verbose`（离线、幂等、有 unusable 时退出码非 0）。
+
+<!-- 以下为人工撰写内容，build_eval_readmes.py 不会覆盖 -->
+
 # EduIllustrate 评测结果索引
 
 生成侧仓库：`/home/likefallwind/code/EduIllustrate`（本目录只存评测产物，生成产物留在该仓库的 `output/`）。

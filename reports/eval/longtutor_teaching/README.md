@@ -1,3 +1,62 @@
+# longtutor_teaching — 评测产物说明
+
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 综述档案（这个 benchmark 是什么，给人读）：（暂无档案；本文件的“这个评测是什么”一节即是权威描述，事实来源是 adapter 源码与 AGENTS.md）
+> 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
+
+## 一、健康状况（坏消息在前）
+
+**这个 benchmark 下有 1 个 run 的分数不可用（unusable）。** 在重跑之前，不要把它们写进任何报告、聚合或映射裁决。
+
+headline 口径：四维裁判分均值（1-5）。
+
+| 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
+| --- | --- | --- | --- | --- | --- |
+| `minimax3` | 0.0000 | **unusable**（分数是假的，必须重跑） | 100.0% | 3.6% | **headline 本身无效**（打分器坏了，不是模型的问题）；100.0% 的题命中失败标记：裁判分解析恒为 0（打分函数是死代码）；3.6% 的题没进判分（分数建立在 964/1001 的残缺样本上）；产物数量对不上，最大缺口 3.6% |
+
+### 已定位的 bug（根因 + 修法）
+
+**打分函数是死代码——四维分永远是 0**
+
+- 位置：`scripts/eval/benchmarks/longtutor.py` → `_json_from_text`（约 84-96 行）
+- 根因：函数体只有 `match = re.search(...)` 和 `if not match: return None`；真正的 `try: return json.loads(match.group(0))` 掉到了**下一个函数 `_normalize_answer` 的 `return` 之后**，是永远执行不到的死代码。于是匹配成功时 `_json_from_text` 直接落到函数尾部、返回 `None` → `score()` 里 `parsed = {}` → 四维全部 clamp 成 0 → `correct=False`。裁判其实返回了合法 JSON（`extracted` 字段里看得到 ```json {...}```），分数却全 0。
+- 建议修法：把 `try/json.loads/except json.JSONDecodeError` 挪回 `_json_from_text` 里；同时给 `extra_summary` 加一个 `n_unparsed_judgements`，全 0 这种事下次要能自己叫。
+
+> 本次审计**不改 adapter 代码**（那是下一步）。修完之后，受影响的 run 必须删掉 `extractions.jsonl` 里的坏行（或整个 extractions.jsonl）再重跑 —— 只跑 `--score-only` 没用，坏值已经被缓存进去了。
+
+### 样本残缺的 run
+
+上游配额/限流打挂大批题目后，summary 仍在**幸存样本**上照常出分。这类 run 的分数没有“错”，但它测的是一个自选样本，不能跟全量 run 放在一张表里比。
+
+- `minimax3`：只有 964 / 1001 题进入判分（未判分 3.6%）。
+
+## 二、这个评测是什么
+
+**一句话**：LongTutor 任务三：生成用到具体历史证据的自适应教学反馈，裁判按四维 1-5 分打分。
+
+- **出处**：LongTutor 上游发布（无 LICENSE，勿再分发数据）；见 AGENTS.md 的 LongTutor 段。
+- **数据**：1,001 条。
+- **任务与判分**：裁判（走 `--extractor-model` 客户端）返回 JSON，四维：history_utilization / strategy_alignment / coherence / appropriateness。
+- **adapter**：`scripts/eval/benchmarks/longtutor.py`
+- **局限**：**当前打分函数是坏的**（见健康状况），现有分数全 0，没有意义。
+
+**怎么用**：
+
+```bash
+MODEL=<model> ./scripts/run_eval.sh longtutor_teaching
+# 或：python scripts/eval_benchmark.py --benchmark longtutor_teaching --model <model> --limit 0
+```
+
+## 三、当前映射（M3 裁决相关）
+
+`reports/atomic_ability_rebenchmark_2026-07-08/02_benchmark_ability_mapping.jsonl` 里没有这个 benchmark 的条目——它当前**不进能力雷达**。
+
+---
+
+审计脚本：`python scripts/audit_eval_artifacts.py --benchmark longtutor_teaching --verbose`（离线、幂等、有 unusable 时退出码非 0）。
+
+<!-- 以下为人工撰写内容，build_eval_readmes.py 不会覆盖 -->
+
 # LongTutor 教学行动评测
 
 本目录保存 LongTutor 开放式教学行动任务的评测产物。结果必须分别报告以下四个评分维度：
