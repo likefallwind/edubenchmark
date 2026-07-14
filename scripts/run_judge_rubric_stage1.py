@@ -285,6 +285,44 @@ def reflection_prompt(
     )
 
 
+def reflection_prompt_nodiag(
+    rnd: Renderer, rubric: dict[str, Any], n: int, prior: str = ""
+) -> str:
+    """P5 ablation: the same proposal step with the diagnosis removed.
+
+    Everything the full method gives the reflection model is kept — the same
+    typed operators, the same length budget, the same failure ledger — EXCEPT
+    the measured confusion matrix, the label marginals and the real error
+    examples. What survives is a strong LLM writing rubric edits from the
+    dimension definition alone. Screening, the frozen eval slice and the
+    significance gate are unchanged, so acceptance counts are directly
+    comparable to the full method's.
+    """
+    return (
+        "You are improving the rubric prompt of an LLM judge that labels AI tutor replies "
+        f"on the pedagogical dimension \"{rnd.cfg['title']}\" with one of: "
+        f"{' / '.join(rnd.labels)}.\n\n"
+        f"Current dimension definition: {rubric['definition_override'] or rnd.cfg['definition']}\n"
+        f"Current rubric additions (JSON): {json.dumps({k: rubric[k] for k in ('label_criteria', 'clauses', 'anchor_block')}, ensure_ascii=False)}\n\n"
+        "The judge is scored by its agreement (Cohen's kappa) with expert human annotators. "
+        "Your edits should make the judge's labels match expert human judgement more often.\n"
+        + (
+            "\nPreviously tested proposals and their measured outcomes — do NOT repeat "
+            "failed ideas; refining a near-miss is allowed:\n" + prior
+            if prior
+            else ""
+        )
+        + "\n\n"
+        + OPERATOR_DOC
+        + f"\n\nPropose exactly {n} DISTINCT edit proposals. Each proposal must target a specific "
+        "label boundary you believe the judge gets wrong (say which in \"note\") and change how "
+        "the judge decides that boundary. Criteria and clauses must be behavioral (what the reply "
+        "does), not restatements of the label names. Keep each text under 60 words.\n\n"
+        "Output ONLY a JSON array, no markdown fences, of objects: "
+        '{"note": "<which boundary this targets and why>", "edits": [<1-3 operator objects>]}'
+    )
+
+
 def parse_proposals(text: str) -> list[dict[str, Any]]:
     start, end = text.find("["), text.rfind("]")
     if start < 0 or end <= start:
@@ -456,13 +494,23 @@ def main() -> None:
                              "rubric (v1 = free from cache) and reflect on THAT confusion; also "
                              "reports the Stage-0a remap stacked on the incumbent")
     parser.add_argument("--pool-target", type=int, default=600)
+    parser.add_argument("--no-diagnosis", action="store_true",
+                        help="P5 ablation: propose edits WITHOUT the confusion matrix / error "
+                             "examples (everything else — typed edits, screening, eval slice, "
+                             "significance gate, ledger — unchanged). Use a separate state dir "
+                             "via STAGE1_OUT_SLUG, e.g. glm-5.2_nodiag")
     args = parser.parse_args()
+    if args.no_diagnosis and args.rediagnose:
+        raise SystemExit("--no-diagnosis and --rediagnose are mutually exclusive")
 
     rnd = Renderer(args.benchmark, args.dimension, big_screen=args.big_screen)
     state_dir = OUT_BASE / f"{args.benchmark}__{args.dimension}"
     round_dir = state_dir / f"round{args.round}"
     round_dir.mkdir(parents=True, exist_ok=True)
-    diagnosis = json.loads((state_dir / "diagnosis.json").read_text(encoding="utf-8"))
+    diagnosis = (
+        {} if args.no_diagnosis
+        else json.loads((state_dir / "diagnosis.json").read_text(encoding="utf-8"))
+    )
     incumbent, inc_labels = load_incumbent(state_dir, rnd, args.benchmark)
     history = incumbent.get("history", [])
     print(
@@ -532,7 +580,11 @@ def main() -> None:
             )
             for r in _read_jsonl(state_dir / "ledger.jsonl")[-12:]
         )
-        prompt = reflection_prompt(rnd, incumbent, diagnosis, args.n_candidates, prior)
+        prompt = (
+            reflection_prompt_nodiag(rnd, incumbent, args.n_candidates, prior)
+            if args.no_diagnosis
+            else reflection_prompt(rnd, incumbent, diagnosis, args.n_candidates, prior)
+        )
         if args.dry_run:
             print("---- reflection prompt ----")
             print(prompt[:4000])
@@ -695,6 +747,7 @@ def main() -> None:
         "incumbent_version": incumbent["version"],
         "big_screen": args.big_screen,
         "rediagnose": args.rediagnose,
+        "no_diagnosis": args.no_diagnosis,
         "remap_stacked": remap_stacked,
         "regression": regression,
         "candidates": [{k: v for k, v in c.items() if k != "labels"} for c in screened],

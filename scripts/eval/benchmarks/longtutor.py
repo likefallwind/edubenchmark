@@ -11,11 +11,11 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import unicodedata
 from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient
-from ..providers import extraction_max_tokens
 from ..scoring import multiclass_f1
 
 
@@ -26,7 +26,23 @@ GOLD = DATA / "human_an_updated.jsonl"
 HOMEPAGE = "https://github.com/liano3/LongTutor"
 DIAGNOSES = {"Recall Failure", "Conceptual Gap", "Procedural Error", "Transfer Deficit"}
 MEMORY_TYPES = ["Information Extraction", "Multi-session Reasoning", "Hallucination Check"]
-JUDGE_VERSION = "v1"
+JUDGE_VERSION = "v2"
+EVIDENCE_JUDGE_TEMPLATE = """Determine whether the candidate answer is semantically equivalent to the reference answer.
+Unknown is correct only when both answers indicate that the requested fact is unsupported.
+Ignore differences in wording, punctuation, and units that do not change the answer.
+Return exactly CORRECT or INCORRECT.
+
+Question: {query}
+Reference: {gold}
+Candidate: {candidate}"""
+TEACHING_JUDGE_TEMPLATE = """You are a strict education evaluator. Score the candidate from 1 to 5 on each dimension: history_utilization, strategy_alignment, coherence, appropriateness. Consider the supplied gold diagnosis and strategy but do not require lexical overlap with the reference. Return JSON only.
+
+Context:
+{context}
+Gold diagnosis: {diagnosis}
+Gold strategy: {strategy}
+Reference teaching: {gold}
+Candidate: {candidate}"""
 
 
 def _read_jsonl(path) -> list[dict[str, Any]]:
@@ -69,6 +85,12 @@ def _json_from_text(text: str) -> Any:
     match = re.search(r"\{.*\}", text, re.S)
     if not match:
         return None
+
+
+def _normalize_answer(text: Any) -> str:
+    value = unicodedata.normalize("NFKC", str(text or "")).strip().lower()
+    value = re.sub(r"\s+", "", value)
+    return re.sub(r"[，。！？；：、,.!?;:'\"“”‘’（）()\[\]{}]", "", value)
     try:
         return json.loads(match.group(0))
     except json.JSONDecodeError:
@@ -83,6 +105,7 @@ class LongTutorEvidenceAdapter(BenchmarkAdapter):
         "基于跨度超过 7 天的学生历史，分别测量单记录信息提取、跨 session 推理和幻觉检查。"
         "主指标为语义正确率；这是离线长历史重放，不代表真实长期学习增益。"
     )
+    extraction_cache_version = "longtutor-evidence-v2"
 
     def load_items(self, limit=None, offset=0):
         items = []
@@ -93,21 +116,23 @@ class LongTutorEvidenceAdapter(BenchmarkAdapter):
                     "text": f"{_context(feature)}\n\nQuestion: {query.get('query', '')}\nAnswer concisely. If unsupported, answer Unknown.",
                     "image_paths": [],
                     "gold": str(query.get("answer", "")),
-                    "meta": {"memory_type": MEMORY_TYPES[idx] if idx < 3 else f"Q{idx + 1}"},
+                    "meta": {
+                        "memory_type": MEMORY_TYPES[idx] if idx < 3 else f"Q{idx + 1}",
+                        "query": str(query.get("query", "")),
+                    },
                 })
         return items[offset : None if limit is None else offset + limit]
 
     def extract_answer(self, item, response, client: MiniMaxClient, model):
-        prompt = (
-            "Determine whether the candidate answer is semantically equivalent to the reference answer, "
-            "using only the question and history. Unknown is correct only when the requested fact is unsupported. "
-            "Return exactly CORRECT or INCORRECT.\n\n"
-            f"Question and history:\n{item['text']}\n\nReference: {item['gold']}\nCandidate: {response}"
+        if _normalize_answer(response) == _normalize_answer(item["gold"]):
+            return "CORRECT_EXACT"
+        prompt = EVIDENCE_JUDGE_TEMPLATE.format(
+            query=item["meta"]["query"], gold=item["gold"], candidate=response
         )
         return client.chat(
             [{"role": "user", "content": prompt}],
             model=model,
-            max_tokens=extraction_max_tokens(model, 1024),
+            max_tokens=None,
         ).strip().upper()
 
     def score(self, extracted, item):
@@ -118,7 +143,7 @@ class LongTutorEvidenceAdapter(BenchmarkAdapter):
         return {"memory_type": item["meta"]["memory_type"]}
 
     def judge_prompt_provenance(self):
-        return {"judge_prompt_version": JUDGE_VERSION, "judge_prompt_sha256": prompt_sha256("semantic equivalence + Unknown grounding")}
+        return {"judge_prompt_version": JUDGE_VERSION, "judge_prompt_sha256": prompt_sha256(EVIDENCE_JUDGE_TEMPLATE)}
 
 
 class LongTutorDiagnosisAdapter(BenchmarkAdapter):
@@ -162,6 +187,7 @@ class LongTutorTeachingAdapter(BenchmarkAdapter):
         "生成利用具体历史证据的自适应教学反馈，由 MiniMax-M3 按 History Utilization、Strategy Alignment、"
         "Coherence、Appropriateness 四维 1-5 分评审。"
     )
+    extraction_cache_version = "longtutor-teaching-v2"
 
     def load_items(self, limit=None, offset=0):
         items = []
@@ -175,17 +201,17 @@ class LongTutorTeachingAdapter(BenchmarkAdapter):
         return items[offset : None if limit is None else offset + limit]
 
     def extract_answer(self, item, response, client: MiniMaxClient, model):
-        prompt = (
-            "You are a strict education evaluator. Score the candidate from 1 to 5 on each dimension: "
-            "history_utilization, strategy_alignment, coherence, appropriateness. Consider the supplied gold "
-            "diagnosis and strategy but do not require lexical overlap with the reference. Return JSON only.\n\n"
-            f"Context:\n{item['text']}\nGold diagnosis: {item['meta']['diagnosis']}\n"
-            f"Gold strategy: {item['meta']['strategy']}\nReference teaching: {item['gold']}\nCandidate: {response}"
+        prompt = TEACHING_JUDGE_TEMPLATE.format(
+            context=item["text"],
+            diagnosis=item["meta"]["diagnosis"],
+            strategy=item["meta"]["strategy"],
+            gold=item["gold"],
+            candidate=response,
         )
         return client.chat(
             [{"role": "user", "content": prompt}],
             model=model,
-            max_tokens=extraction_max_tokens(model, 2048),
+            max_tokens=None,
         )
 
     def score(self, extracted, item):
@@ -211,4 +237,4 @@ class LongTutorTeachingAdapter(BenchmarkAdapter):
         return {"judge_scores": averages, "valid_judgements": len(valid)}
 
     def judge_prompt_provenance(self):
-        return {"judge_prompt_version": JUDGE_VERSION, "judge_prompt_sha256": prompt_sha256("LongTutor four-dimensional 1-5 teaching rubric")}
+        return {"judge_prompt_version": JUDGE_VERSION, "judge_prompt_sha256": prompt_sha256(TEACHING_JUDGE_TEMPLATE)}

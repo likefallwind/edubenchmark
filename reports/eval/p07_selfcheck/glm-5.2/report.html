@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">21.5%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">118</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-7</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某企业2016年初拥有土地2万平方米，包括厂区内托儿所占地0.1万平方米，无偿提供给公安局使用土地0.3万平方米，厂区内绿化用地0.4万平方米。5月该企业购买一块土地使用权(非耕地)用于厂房扩建，占地面积为2.4万平方米，合同规定，5月支付土地价款并交付土地。该企业所在地区城镇土地使用税年税额为10元/平方米，该企业2016年应缴纳城镇土地使用税____万元。
+A. 26
+B. 36
+C. 30
+D. 44
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 180,
+  &quot;n_round2_missing&quot;: 370,
+  &quot;r1_accuracy&quot;: 0.6056,
+  &quot;r2_accuracy&quot;: 0.6556,
+  &quot;net_gain&quot;: 0.05,
+  &quot;change_rate&quot;: 0.1667,
+  &quot;n_r1_wrong&quot;: 71,
+  &quot;n_fixed_wrong_to_right&quot;: 15,
+  &quot;fix_rate&quot;: 0.2113,
+  &quot;n_r1_right&quot;: 109,
+  &quot;n_broken_right_to_wrong&quot;: 6,
+  &quot;break_rate&quot;: 0.055,
+  &quot;score_10&quot;: 5.781,
+  &quot;by_source&quot;: {
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 180,
+      &quot;r1_correct&quot;: 109,
+      &quot;r2_correct&quot;: 118,
+      &quot;fixed&quot;: 15,
+      &quot;broken&quot;: 6
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>550</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>100</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>ceval</td><td>200</td><td>118</td><td>0.590</td><td><div class='bar'><i style='width:59%'></i></div></td></tr><tr><td>mmlu_pro</td><td>150</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>100</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>294</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>zh</td><td>256</td><td>118</td><td>0.461</td><td><div class='bar'><i style='width:46%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-34</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>2019年5月1日，人民法院受理了对甲公司提起的破产申请。根据企业破产法律制度的规定，下列有资格担任管理人的是____。
+A. 甲公司董事乙
+B. 甲公司董事会秘书的女儿丙
+C. 曾于2014年1月1日至2015年1月1日担任甲公司法律顾问的丁律师
+D. 3年前被吊销执业证书，事后重新获取执业资格的注册会计师戊
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;正确选项字母：C\n\n**解析：**\n根据《企业破产法》及相关司法解释关于管理人资格的规定，逐步验证各选项的推理与计算如下：\n\n*   **选项A错误**：根据规定，曾在人民法院受理破产申请前3年内担任债务人董事的，视为有利害关系；目前正在担任债务人董事的，同样属于存在利害关系或不宜担任的情形。甲公司董事乙属于绝对禁止或存在重大利害关系不得担任管理人的情形。\n*   **选项B错误**：与债务人、债权人的控股股东、董事、监事、高级管理人员存在夫妻、直系血亲、三代以内旁系血亲或者近姻亲关系的，不得担任管理人。甲公司董事会秘书属于高级管理人员，其女儿丙属于直系血亲关系，故不能担任管理人。\n*   **选项C正确**：根据规定，在人民法院受理破产申请前3年内，曾担任债务人、债权人的财务顾问、法律顾问的，视为存在利害关系，不得担任管理人。\n    **时间计算验证**：法院受理日为2019年5月1日，向前推算3年，该期间为2016年5月1日至2019年5月1日。丁律师担任法律顾问的期间为2014年1月1日至2015年1月1日，并不在上述3年期限之内。因此，丁律师不具有利害关系，有资格担任管理人。\n*   **选项D错误**：《企业破产法》第二十四条第三款第二项规定，曾被吊销相关专业执业证书的人员，不得担任管理人。此项规定属于绝对禁止情形，不因事后重新获取执业资格而恢复资格。因此戊即使重新获取了注册会计师执业证书，也无资格担任管理人。\n\n经重新检查，原解答中的推理和计算无误。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确选项字母：C
+
+**解析：**
+根据《企业破产法》及相关司法解释关于管理人资格的规定：
+*   **选项A错误**：曾担任或者目前正在担任债务人（甲公司）的董事、监事、高级管理人员的，不得担任管理人。乙是甲公司董事，属于绝对禁止的情形。
+*   **选项B错误**：与债务人、债权人的控股股东、董事、监事、高级管理人员存在夫妻、直系血亲、三代以内旁系血亲或者近姻亲关系的，不得担任管理人。董事会秘书属于高级管理人员，其女儿丙属于存在直系血亲关系，故不能担任。
+*   **选项C正确**：在人民法院受理破产申请前3年内，曾担任债务人、债权人的财务顾问、法律顾问的，视为存在利害关系，不得担任管理人。本案破产受理日为2019年5月1日，前推3年为2016年5月1日。丁律师担任法律顾问的期间为2014年1月1日至2015年1月1日，不在受理破产申请前3年之内，因此不具有利害关系，有资格担任管理人。
+*   **选项D错误**：因故意犯罪受过刑事处罚，或是曾被吊销相关专业执业证书的人员，属于绝对禁止担任管理人的情形。戊曾被吊销执业证书，即使事后重新获取，也终身丧失担任管理人的资格。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::advanced_mathematics-val-3</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>设函数$f\left(x\right)$连续，且$f\left(x\right)&gt;0$，求积分：$int_0^1{\ln f\left(x+t\right)}\mathrm{d}t=$____
+A. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+B. $\int_0^1{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+C. $\int_0^2x{\ln \frac{f\left( t+1 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+D. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;在重新检查刚才的解答后，我发现了一个重要的逻辑漏洞：题目仅给出函数 $f(x)$ 连续，并未说明其可导。因此，我之前使用求导法则（莱布尼茨公式）的推导在数学上不够严谨。我们应当直接利用定积分的性质进行恒等变形来求解。\n\n以下是更严谨的解答过程：\n\n设 $I(x) = \\int_0^1 \\ln f(x+t) \\mathrm{d}t$。\n首先，进行换元。令 $u = x+t$，则 $\\mathrm{d}u = \\mathrm{d}t$。当 $t$ 从 $0$ 变到 $1$ 时，$u$ 从 $x$ 变到 $x+1$。因此，原积分可以写为：\n$$I(x) = \\int_x^{x+1} \\ln f(u) \\mathrm{d}u$$\n\n接下来，利用定积分的区间可加性，将积分拆分：\n$$I(x) = \\int_0^{x+1} \\ln f(u) \\mathrm{d}u - \\int_0^x \\ln f(u) \\mathrm{d}u$$\n\n对于第一项 $\\int_0^{x+1} \\ln f(u) \\mathrm{d}u$，我们将其拆分为 $[0, 1]$ 和 $[1, x+1]$ 两个区间：\n$$\\int_0^{x+1} \\ln f(u) \\mathrm{d}u = \\int_0^1 \\ln f(u) \\mathrm{d}u + \\int_1^{x+1} \\ln f(u) \\mathrm{d}u$$\n\n将其代回 $I(x)$ 中：\n$$I(x) = \\int_0^1 \\ln f(u) \\mathrm{d}u + \\int_1^{x+1} \\ln f(u) \\mathrm{d}u - \\int_0^x \\ln f(u) \\mathrm{d}u$$\n\n对于积分 $\\int_1^{x+1} \\ln f(u) \\mathrm{d}u$，再次使用换元法。令 $u = t+1$，则 $\\mathrm{d}u = \\mathrm{d}t$，当 $u$ 从 $1$ 变到 $x+1$ 时，$t$ 从 $0$ 变到 $x$。于是：\n$$\\int_1^{x+1} \\ln f(u) \\mathrm{d}u = \\int_0^x \\ln f(t+1) \\mathrm{d}t$$\n\n将其替换回原式，并合并积分区间相同的项（同时将积分变量统一写为 $t$）：\n$$I(x) = \\int_0^1 \\ln f(t) \\mathrm{d}t + \\int_0^x \\ln f(t+1) \\mathrm{d}t - \\int_0^x \\ln f(t) \\mathrm{d}t$$\n$$I(x) = \\int_0^x \\left[ \\ln f(t+1) - \\ln f(t) \\right] \\mathrm{d}t + \\int_0^1 \\ln f(t) \\mathrm{d}t$$\n$$I(x) = \\int_0^x \\ln \\frac{f(t+1)}{f(t)} \\mathrm{d}t + \\int_0^1 \\ln f(t) \\mathrm{d}t$$\n\n最后，我们观察选项：\n- A 和 D 项完全相同，且被积函数为 $\\ln \\frac{f(t+2)}{f(t)}$，与我们的推导结果 $\\ln \\frac{f(t+1)}{f(t)}$ 不符。\n- B 项的积分上限为常数 1，与 $x$ 无关，不符。\n- C 项的结构与我们的推导完全一致（包含 $\\ln \\frac{f(t+1)}{f(t)}$ 且积分上限为 $x$）。虽然 C 项中印刷的 “$\\int_0^2x$” 极大概率是选项录入或 OCR 识别时将上限 $x$ 误植为 $2x$ 产生的瑕疵，但从数学逻辑结构上，它是唯一正确的选项。\n\n**正确选项字母：C**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>要解决这个问题，我们可以通过求导和积分的方法来化简和变形积分表达式。
+
+设 $I(x) = \int_0^1 \ln f(x+t) \mathrm{d}t$。
+首先，进行换元。令 $u = x+t$，则 $\mathrm{d}u = \mathrm{d}t$。当 $t$ 从 $0$ 变到 $1$ 时，$u$ 从 $x$ 变到 $x+1$。因此，原积分可以写为：
+$$I(x) = \int_x^{x+1} \ln f(u) \mathrm{d}u$$
+
+接下来，我们考虑对 $I(x)$ 关于 $x$ 求导。根据变限积分求导法则（莱布尼茨公式），我们可以得到：
+$$I&#x27;(x) = \ln f(x+1) \cdot (x+1)&#x27; - \ln f(x) \cdot (x)&#x27; = \ln f(x+1) - \ln f(x) = \ln \frac{f(x+1)}{f(x)}$$
+
+现在我们来观察选项，每个选项都可以看作是一个变限积分加上一个常数项 $\int_0^1 \ln f(t) \mathrm{d}t$。
+如果对选项求导，那么常数项的导数为 $0$。为了使得选项求导后等于 $I&#x27;(x)$，这个变限积分必须满足导数为 $\ln \frac{f(x+1)}{f(x)}$。
+
+- 对于选项A和D，被积函数是 $\ln \frac{f(t+2)}{f(t)}$，积分上限为 $x$，求导后得到 $\ln \frac{f(x+2)}{f(x)}$，不满足要求。
+- 对于选项B，积分上限为常数 $1$，求导后为 $0$，不满足要求。
+- 对于选项C（忽略其中明显的排版识别错误“2x”，它实为上限 $x$ 的误植），被积函数是 $\ln \frac{f(t+1)}{f(t)}$，积分上限为 $x$，求导后得到 $\ln \frac{f(x+1)}{f(x)}$，与 $I&#x27;(x)$ 完全一致。
+
+最后，我们验证常数项。当 $x=0$ 时，原积分 $I(0) = \int_0^1 \ln f(t) \mathrm{d}t$。
+对于选项C，当 $x=0$ 时，前一项变限积分为 $\int_0^0 \ln \frac{f(t+1)}{f(t)} \mathrm{d}t = 0$，后一项为 $\int_0^1 \ln f(t) \mathrm{d}t$，两者相等。
+
+因此，选项C是正确的。
+
+**正确选项字母：C**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;逐步验证推理如下：\n\n1. **分析曹禺《北京人》的体裁与基调**：\n曹禺在创作《北京人》时，深受契诃夫戏剧风格的影响，打破了传统戏剧中强烈的冲突模式，呈现出一种平淡、深沉而富有诗意的基调。在学术界和曹禺本人的自述中，《北京人》并非像《雷雨》那样是一部典型的激烈悲剧，而是带有“悲喜剧”色彩，且曹禺本人曾多次明确表示“《北京人》是一出喜剧”。\n\n2. **核对学术评价与题干表述**：\n在中国现代话剧史的研究中，学者们普遍认为《北京人》通过描写封建大家庭的走向崩溃，以及新一代人的觉醒与出走，用含泪的微笑和喜剧的笔调埋葬了旧时代。因此，该剧常被研究者评价为“中国最伟大的喜剧”。《雷雨》一般被视为中国现代话剧成熟的标志性悲剧，而《北京人》则在喜剧/悲喜剧的艺术成就上达到了顶峰。\n\n3. **检查之前的解答**：\n之前给出的答案是B（悲剧），这是不准确的。我在之前的回答中将其与《雷雨》等作品混淆，忽略了曹禺本人的创作意图及学术界对该剧“喜剧/悲喜剧”属性的定论。\n\n发现错误，现予以改正。\n\n正确选项字母：A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确选项字母：B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-2</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>当所在行业处于寿命周期的成熟期时，大企业应采取的竞争战略是____。
+A. 集中化战略
+B. 成本集聚战略
+C. 稳定型战略
+D. 差异化战略
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;经过重新检查和逐步验证，我确认之前的解答在推理和逻辑上是正确的，没有错误。\n\n**验证过程如下：**\n\n1. **概念界定验证**：\n   * 题目明确询问的是“竞争战略”（业务层战略）。选项C“稳定型战略”属于公司层战略（总体战略），因此首先排除C。\n   * 选项A“集中化战略”和选项B“成本集聚战略”（即成本集中战略，属于集中化战略的一种）通常适用于资源相对有限的中小企业，帮助它们在特定的细分市场中建立优势。\n\n2. **行业周期与企业能力匹配验证**：\n   * 在行业寿命周期的**成熟期**，市场整体增速放缓，需求趋于饱和，产能过剩导致竞争尤为激烈，极易爆发价格战。\n   * **大企业**拥有规模经济、雄厚的资金、技术研发和完善的营销网络等资源优势。在这一阶段，大企业若采取成本领先战略（虽然选项未直接给出完整的成本领先选项，但大企业天然具备成本优势），可以凭借规模效应淘汰落后产能；同时，为了在成熟期维持较高的利润率并摆脱残酷的价格战，大企业更应依靠资源优势采取**差异化战略**，通过品牌、技术、服务等方面建立护城河，提升客户忠诚度。\n\n3. **结论**：\n   题目选项中，只有“差异化战略”符合大企业在成熟期为避免价格战、维持竞争优势而采取的竞争战略定位。原答案D是正确的。\n\n以下保持原格式给出最终答案：\n\n正确选项字母：D\n\n**解析：**\n在战略管理中，企业竞争战略（业务单位战略）主要分为成本领先战略、差异化战略和集中化战略。\n\n当行业处于寿命周期的成熟期时，市场增长放缓，需求趋于饱和，竞争日益激烈且往往容易陷入价格战。此时：\n1. **大企业**拥有雄厚的资金、技术、品牌和营销资源，应采取**差异化战略（D选项）**。通过提供独特的产品、服务或建立强势品牌，大企业能够建立起顾客忠诚度，从而避免陷入残酷的价格战，维持较高的利润率。\n2. 相对而言，**小企业**由于资源有限，在成熟期通常难以在整体市场与大企业全面抗衡，因此更适合采取**集中化战略（A、B选项）**，专注于某一特定的细分市场求生存和发展。\n3. **稳定型战略（C选项）**属于公司层战略（总体战略），而不是竞争战略，且多用于行业成熟期或衰退期时企业为了维持现状、不主动扩张时所采取的战略，但题目明确问的是“竞争战略”，故排除。\n\n因此，大企业在此阶段应采取的竞争战略是差异化战略。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确选项字母：D
+
+**解析：**
+在战略管理中，企业竞争战略（业务单位战略）主要分为成本领先战略、差异化战略和集中化战略。
+
+当行业处于寿命周期的成熟期时，市场增长放缓，需求趋于饱和，竞争日益激烈且往往容易陷入价格战。此时：
+1. **大企业**拥有雄厚的资金、技术、品牌和营销资源，应采取**差异化战略（D选项）**。通过提供独特的产品、服务或建立强势品牌，大企业能够建立起顾客忠诚度，从而避免陷入残酷的价格战，维持较高的利润率。
+2. 相对而言，**小企业**由于资源有限，在成熟期通常难以在整体市场与大企业全面抗衡，因此更适合采取**集中化战略（A、B选项）**，专注于某一特定的细分市场求生存和发展。
+3. **稳定型战略（C选项）**属于公司层战略（总体战略），而不是竞争战略，且多用于行业成熟期或衰退期时企业为了维持现状、不主动扩张时所采取的战略，但题目明确问的是“竞争战略”，故排除。
+
+因此，大企业在此阶段应采取的竞争战略是差异化战略。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-26</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某公司2001年4月3日以448000元的价格，不准备长期持有的A公司发行在外的普通股200000股，另支付相关税费1000元。A公司已于2001年3月31日宣告发放现金股利0.2元/股，并于5月8日支付，A公司于2002年3月31日宣告发放现金股利0.3元/股，某公司于2002年4月3日将该股票转让，则某公司转让股票时成本价为____元。
+A. 408000
+B. 409000
+C. 448000
+D. 349000
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;重新检查与验证过程如下：\n\n1. **初始投资成本的确认规则**：\n   根据中国旧的会计准则（《企业会计准则——投资》），企业购入短期投资（不准备长期持有的股票），其初始投资成本等于实际支付的全部价款（包括买价和相关税费）减去已宣告但尚未领取的现金股利。\n\n2. **计算初始成本**：\n   - 实际支付买价：448,000元\n   - 相关税费：1,000元\n   - 购买时（2001年4月3日）包含的已宣告但尚未发放的股利：200,000股 × 0.2元/股 = 40,000元\n   - 初始投资成本 = 448,000 + 1,000 - 40,000 = **409,000元**\n\n3. **持有期间及转让时成本的分析**：\n   - 2001年5月8日收到第一笔股利时，这部分股利在购入时已计入“应收股利”科目，因此收到时直接冲减应收项目，**不影响**短期投资的账面成本。\n   - 2002年3月31日A公司宣告发放第二笔股利（0.3元/股）时，某公司并未实际收到该笔现金。根据当时准则规定，短期投资持有期间收到的现金股利（除取得时已计入应收项目外），需**在实际收到时**才冲减投资成本。某公司于2002年4月3日转让股票，此时尚未实际收到该笔宣告的股利，因此不能冲减账面成本。\n   - 此外，由于股票尚未售出就已宣告股利，在转让时，受让方通常会支付包含该股利预期的对价，但转让股票本身的账面成本不会因为宣告未发放而自行减少。\n\n4. **结论**：\n   转让股票时的成本价依然为初始入账成本，即409,000元。原计算与推理准确无误。\n\n正确选项字母：B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确选项字母：B
+
+**解析与计算过程：**
+
+根据中国旧的会计准则（如2001年实施的《企业会计准则——投资》），企业购入短期投资（不准备长期持有的股票），其初始投资成本的计算公式为：
+**短期投资成本 = 实际支付的全部价款（包括买价和相关税费） - 实际支付的价款中包含的已宣告但尚未领取的现金股利**
+
+1. **计算包含的已宣告但尚未领取的现金股利：**
+   A公司于2001年3月31日宣告发放现金股利0.2元/股，某公司于4月3日购入，因此购入时价款中包含了这部分尚未发放的股利。
+   包含的股利 = 200,000股 × 0.2元/股 = 40,000元。
+
+2. **计算短期投资初始成本：**
+   购买价格 = 448,000元
+   相关税费 = 1,000元
+   初始成本 = 448,000 + 1,000 - 40,000 = 409,000元。
+
+3. **转让时成本价的确认：**
+   2002年3月31日A公司再次宣告发放现金股利（0.3元/股），根据当时的短期投资会计处理规定，短期投资持有期间收到的股利（除取得时已计入应收项目的外）应于实际收到时作为投资成本的收回，冲减短期投资账面价值。但由于某公司在2002年4月3日（即宣告日之后、实际发放日之前）就将股票转让，并未实际收到该笔股利，因此不能冲减成本。
+
+所以，某公司转让该股票时的账面成本价依然为初始购入时的成本，即 **409,000** 元。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-27</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>甲企业以融资租赁方式租入乙企业的一台机械设备，则下列对该设备计提折旧的叙述中，正确的是____。
+A. 甲企业对该设备不计提折旧
+B. 甲企业应采用与自有资产相一致的会计政策
+C. 如果能够合理确定该设备在租赁期届满时甲企业将会取得此设备的所有权，则应以该设备全新时的预计使用年限作为折旧期间
+D. 该设备的折旧方法和折旧年限应按乙企业有关资产的折旧方法和折旧年限处理
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;重新检查推理过程：\n\n1. **核对准则规定**：根据《企业会计准则第21号——租赁》的规定，承租人应当采用与自有应折旧资产相一致的折旧政策计提租赁资产折旧。因此，选项B“甲企业应采用与自有资产相一致的会计政策”表述是正确的。\n2. **分析其他选项**：\n   - A选项：融资租赁下，承租人虽然无所有权，但拥有控制权和使用权，需视同自有资产计提折旧，故A错误。\n   - C选项：准则规定，如果能够合理确定租赁期届满时取得所有权的，应当在租赁资产**使用寿命**内计提折旧。如果该设备不是全新的，其剩余使用寿命不等于“全新时的预计使用年限”，故C表述不严谨，存在错误。\n   - D选项：折旧政策应由承租人（甲企业）根据自身情况确定，而不是沿用出租人（乙企业）的政策，故D错误。\n\n确认无误，原答案正确。\n\n正确选项：B\n\n**解析：**\n根据《企业会计准则第21号--租赁》的规定，在融资租赁下，承租人将租入资产视为自有资产进行管理。因此，承租人（甲企业）应当采用与自有应折旧资产相一致的折旧政策对融资租入的设备计提折旧。\n* A选项错误，融资租入资产甲企业需视同自有资产计提折旧。\n* C选项表述错误，准则规定如果能够合理确定租赁期届满时取得所有权的，应当在租赁资产使用寿命内计提折旧（使用寿命不等于全新时的预计使用年限，若资产非全新则剩余寿命不同）。\n* D选项错误，折旧方法和折旧年限应由甲企业根据自身情况和资产性质确定，而不是按乙企业的处理。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确选项：B
+
+**解析：**
+根据《企业会计准则第21号——租赁》的规定，在融资租赁下，承租人将租入资产视为自有资产进行管理。因此，承租人（甲企业）应当采用与自有应折旧资产相一致的折旧政策对融资租入的设备计提折旧。
+* A选项错误，融资租入资产甲企业需视同自有资产计提折旧。
+* C选项表述不够准确，准则规定如果能够合理确定租赁期届满时取得所有权的，应当在租赁资产使用寿命内计提折旧（并非简单指“全新时的预计使用年限”），且B选项涵盖了折旧方法等更全面的原则。
+* D选项错误，折旧方法和折旧年限应由甲企业根据自身情况和资产性质确定，而不是按乙企业的处理。</pre></details></div></section>
+</main>
+</body>
+</html>

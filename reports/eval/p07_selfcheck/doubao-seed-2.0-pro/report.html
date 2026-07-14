@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">39.6%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">550</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">218</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-7</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某企业2016年初拥有土地2万平方米，包括厂区内托儿所占地0.1万平方米，无偿提供给公安局使用土地0.3万平方米，厂区内绿化用地0.4万平方米。5月该企业购买一块土地使用权(非耕地)用于厂房扩建，占地面积为2.4万平方米，合同规定，5月支付土地价款并交付土地。该企业所在地区城镇土地使用税年税额为10元/平方米，该企业2016年应缴纳城镇土地使用税____万元。
+A. 26
+B. 36
+C. 30
+D. 44
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::accountant-val-11</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 314,
+  &quot;n_round2_missing&quot;: 236,
+  &quot;r1_accuracy&quot;: 0.7134,
+  &quot;r2_accuracy&quot;: 0.6943,
+  &quot;net_gain&quot;: -0.0191,
+  &quot;change_rate&quot;: 0.0446,
+  &quot;n_r1_wrong&quot;: 90,
+  &quot;n_fixed_wrong_to_right&quot;: 3,
+  &quot;fix_rate&quot;: 0.0333,
+  &quot;n_r1_right&quot;: 224,
+  &quot;n_broken_right_to_wrong&quot;: 9,
+  &quot;break_rate&quot;: 0.0402,
+  &quot;score_10&quot;: 4.966,
+  &quot;by_source&quot;: {
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 200,
+      &quot;r1_correct&quot;: 153,
+      &quot;r2_correct&quot;: 147,
+      &quot;fixed&quot;: 3,
+      &quot;broken&quot;: 9
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 114,
+      &quot;r1_correct&quot;: 71,
+      &quot;r2_correct&quot;: 71,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>550</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>100</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>ceval</td><td>200</td><td>147</td><td>0.735</td><td><div class='bar'><i style='width:74%'></i></div></td></tr><tr><td>mmlu_pro</td><td>150</td><td>71</td><td>0.473</td><td><div class='bar'><i style='width:47%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>100</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>294</td><td>71</td><td>0.241</td><td><div class='bar'><i style='width:24%'></i></div></td></tr><tr><td>zh</td><td>256</td><td>147</td><td>0.574</td><td><div class='bar'><i style='width:57%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::advanced_mathematics-val-3</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>设函数$f\left(x\right)$连续，且$f\left(x\right)&gt;0$，求积分：$int_0^1{\ln f\left(x+t\right)}\mathrm{d}t=$____
+A. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+B. $\int_0^1{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+C. $\int_0^2x{\ln \frac{f\left( t+1 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+D. $\int_0^x{\ln \frac{f\left( t+2 \right)}{f\left( t \right)}}\mathrm{d}t+\int_0^1{\ln f\left( t \right)}\mathrm{d}t$
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;C\n### 重新验证过程：\n#### 步骤1：原积分换元化简\n对原积分$\\int_0^1 \\ln f(x+t) \\mathrm{d}t$做变量替换，令$u = x+t$，则$\\mathrm{d}t=\\mathrm{d}u$，积分上下限从$t\\in[0,1]$变为$u\\in[x,x+1]$，因此：\n$$\\int_0^1 \\ln f(x+t) \\mathrm{d}t = \\int_x^{x+1} \\ln f(u) \\mathrm{d}u$$\n该步推导完全正确。\n\n#### 步骤2：拆分积分区间并换元\n将积分拆分为三部分重组：\n$$\\int_x^{x+1} \\ln f(u) \\mathrm{d}u = \\int_x^0 \\ln f(u)\\mathrm{d}u + \\int_0^1 \\ln f(u)\\mathrm{d}u + \\int_1^{x+1} \\ln f(u)\\mathrm{d}u$$\n对第二项积分做换元$t=u-1$，则$u=t+1$，上下限变为$t\\in[0,x]$，因此：\n$$\\int_1^{x+1} \\ln f(u)\\mathrm{d}u = \\int_0^x \\ln f(t+1)\\mathrm{d}t$$\n同时$\\int_x^0 \\ln f(u)\\mathrm{d}u = -\\int_0^x \\ln f(u)\\mathrm{d}u$，合并后得：\n$$\n\\begin{align*}\n\\int_x^{x+1} \\ln f(u) \\mathrm{d}u &amp;= \\int_0^x \\ln f(t+1)\\mathrm{d}t - \\int_0^x \\ln f(t)\\mathrm{d}t + \\int_0^1 \\ln f(t)\\mathrm{d}t\\\\\n&amp;= \\int_0^x \\ln\\frac{f(t+1)}{f(t)} \\mathrm{d}t + \\int_0^1 \\ln f(t)\\mathrm{d}t\n\\end{align*}\n$$\n该推导无计算错误，结果正确。\n\n#### 步骤3：验证选项排除错误项\n用特殊值法验证：取$f(x)=e^x$，则$\\ln f(x)=x$，原积分结果为$\\int_0^1 (x+t)\\mathrm{d}t = x+\\frac{1}{2}$。\n- 选项A、D（二者内容一致）：$\\int_0^x \\ln\\frac{f(t+2)}{f(t)}\\mathrm{d}t + \\int_0^1\\ln f(t)\\mathrm{d}t = \\int_0^x 2\\mathrm{d}t + \\frac{1}{2}=2x+\\frac{1}{2}\\neq x+\\frac{1}{2}$，排除。\n- 选项B：结果为常数$2+\\frac{1}{2}=\\frac{5}{2}$，与原积分是关于$x$的函数矛盾，排除。\n- 选项C的被积函数$\\ln\\frac{f(t+1)}{f(t)}$与推导结果完全匹配，仅积分上限的“$2$”为输入笔误（应为$x$，属于LaTeX输入时的多打字符），是唯一符合推导结果的选项。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C
+### 解析：
+对于积分$\int_0^1 \ln f(x+t) \mathrm{d}t$，首先通过换元法处理：令$u = x+t$，则当$t=0$时$u=x$，$t=1$时$u=x+1$，且$\mathrm{d}t=\mathrm{d}u$，因此原积分可改写为：
+$$\int_x^{x+1} \ln f(u) \mathrm{d}u$$
+接下来对积分区间进行拆分：
+$$\int_x^{x+1} \ln f(u) \mathrm{d}u = \int_x^1 \ln f(u) \mathrm{d}u + \int_1^{x+1} \ln f(u) \mathrm{d}u$$
+对第二个积分再次换元，令$t = u-1$，则$u = t+1$，当$u=1$时$t=0$，$u=x+1$时$t=x$，因此：
+$$\int_1^{x+1} \ln f(u) \mathrm{d}u = \int_0^x \ln f(t+1) \mathrm{d}t$$
+再将第一个积分变形：
+$$\int_x^1 \ln f(u) \mathrm{d}u = \int_0^1 \ln f(u) \mathrm{d}u - \int_0^x \ln f(u) \mathrm{d}u$$
+将两部分合并后可得：
+$$\int_0^x \ln f(t+1) \mathrm{d}t - \int_0^x \ln f(t) \mathrm{d}t + \int_0^1 \ln f(t) \mathrm{d}t = \int_0^x \ln\frac{f(t+1)}{f(t)} \mathrm{d}t + \int_0^1 \ln f(t) \mathrm{d}t$$
+该结果与选项C的被积函数形式一致，推测选项C中积分上限的$2$为输入笔误，正确上限应为$x$，因此本题选C。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;B\n### 验证过程：\n1. **排除选项A（喜剧）**：《北京人》虽对曾家腐朽的封建成员有讽刺性喜剧元素，但整体基调是对旧家庭、旧文化走向衰亡的深沉书写，核心属性绝非喜剧。\n2. **排除选项C（社会问题剧）**：社会问题剧以揭露、探讨具体社会现实问题为核心，曹禺早期的《雷雨》《日出》更贴合社会问题剧的特征；《北京人》侧重对封建士大夫阶层的精神腐朽、传统封建文明衰败的整体性文化挖掘，不属于典型的社会问题剧。\n3. **排除选项D（正剧）**：正剧（严肃剧）介于悲喜之间，多以正向价值的落地为核心落点；《北京人》虽有愫方、瑞贞出走的光明收尾，但核心是旧制度、旧阶层走向毁灭的悲剧性表达，整体核心属性并非正剧。\n4. **确认选项B（悲剧）**：《北京人》的悲剧意蕴超越了曹禺早期的命运悲剧、社会悲剧，上升到文化悲剧的层面，以深沉内敛的笔触刻画了封建文明的没落，被研究者称为中国最伟大的悲剧，表述准确。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-26</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某公司2001年4月3日以448000元的价格，不准备长期持有的A公司发行在外的普通股200000股，另支付相关税费1000元。A公司已于2001年3月31日宣告发放现金股利0.2元/股，并于5月8日支付，A公司于2002年3月31日宣告发放现金股利0.3元/股，某公司于2002年4月3日将该股票转让，则某公司转让股票时成本价为____元。
+A. 408000
+B. 409000
+C. 448000
+D. 349000
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;### 逐步验证过程：\n1. **资产性质界定**：题目明确股票“不准备长期持有”，属于旧准则规范的**短期投资**（题目未提及公允价值变动，排除新准则下按公允价值计量的交易性金融资产）。\n2. **短期投资初始成本规则**：短期投资的初始成本为取得时实际支付的全部价款（含相关税费），扣除已宣告但尚未发放的现金股利（该部分单独计入应收股利，不计入成本）。\n3. **具体计算**：\n   - 取得时支付的总对价 = 买价448000元 + 相关税费1000元 = 449000元\n   - 取得时包含的已宣告未发放现金股利 = 200000股 × 0.2元/股 = 40000元（需从总对价中扣除，不计入成本）\n   - 初始投资成本 = 449000 - 40000 = 409000元\n4. **持有期间股利的影响**：旧准则规定，短期投资持有期间宣告但尚未实际收到的现金股利，不冲减投资成本（仅实际收到时才冲减成本）。本题中2002年3月31日宣告的股利，至4月3日转让时尚未实际收到，因此不会调整投资成本。\n\n综上，转让时的成本价为409000元，原答案正确。\n\nB&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::chinese_language_and_literature-val-8</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>[p][p‘][b][m]四个音素的区别主要是____。
+A. 清浊
+B. 发音方法
+C. 发音部位
+D. 送气与否
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;### 验证过程\n首先明确四个音素的语音特征：[p]是双唇不送气清塞音，[p‘]（即[pʰ]）是双唇送气清塞音，[b]是双唇浊塞音，[m]是双唇浊鼻音，再逐一验证选项：\n1. 验证选项C（发音部位）：四个音素的发音部位都是双唇，部位完全一致，不可能是区别依据，排除C。\n2. 验证选项A（清浊）：清浊只能区分出清辅音组([p]、[p‘])和浊辅音组([b]、[m])，无法区分同组的音（如[b]和[m]都是浊辅音，清浊维度无法区分二者），排除A。\n3. 验证选项D（送气与否）：送气对立仅适用于清塞/塞擦音内部，只能区分[p]和[p‘]，无法区分[b]、[m]与其他音，也无法区分[b]和[m]，排除D。\n4. 验证选项B（发音方法）：发音方法包含阻碍方式、清浊、送气与否三个维度：[m]是鼻音，和其余三个塞音的阻碍方式不同；清浊可以区分清塞音组和浊塞音[b]；送气与否可以区分[p]和[p‘]，四个音素的差异完全属于发音方法范畴，该选项正确。\n\nB&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-8</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>一天，一个农民的驴子掉到枯井里，那可怜的驴子在井里凄凉地惨叫了几个钟头，农民亦急得团团转，就是毫无办法把它救起来，最后，他断然认定：驴子已老了，这口枯井也该填起来，不值得花精力去救驴子。他请来所有邻居帮他填井。大家抓起铁锹，开始往井里填土。驴子很快意识到发生了什么事，起初，它恐慌地大哭，不一会儿，居然安静下来。人们忍不住往井里看，奇迹发生了。每一铲砸到驴子背上的土，它都作了出人意料的处理：迅速抖落一身尘土，然后狠狠地用脚踩紧。这样，没过多久，驴子竟然自己把自己升了起来，到了井口，它纵身一跳，平安地跑开了，在场的人均惊诧不已。 这段文字告诉我们的道理是____。
+A. 人生中的每一个困难都是通往成功的垫脚石
+B. 换一种思维常常能够产生意想不到的效果
+C. 冷静思考是克服困难的首要条件
+D. 求人不如求己，很多时候，自己才是自己最大的救星
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;B\n### 选项解析：\n#### 选项A错误\n一方面“每一个困难都是垫脚石”表述过于绝对，困境本身不会自动成为垫脚石，若驴子没有正确处理填土，填土只会成为埋葬它的陷阱；另一方面文段未提及“成功”相关表述，属于过度拔高，不符合故事核心。\n#### 选项B正确\n故事的核心转折在于驴子打破了“填土会掩埋自己”的常规思维，出人意料地将原本致命的填土抖落、踩实变成上升的垫脚石，最终成功逃生，这个结果也远超所有人的预期，完美对应“换一种思维常常能够产生意想不到的效果”的道理。\n#### 选项C错误\n文段仅提及驴子从恐慌变得安静，并未将“冷静思考”和其他克服困难的条件做对比，“首要条件”属于无中生有的强加表述，并非故事要传递的核心。\n#### 选项D错误\n“求人不如求己”的前提存在“求助他人”的行为，但故事中农民从一开始就没有打算救援驴子，反而决定填井埋驴，驴子也没有主动求助的情节，不存在“求人”与“求己”的对比，该表述脱离故事叙事逻辑。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+### 选项解析：
+#### 选项A错误
+一方面“每一个困难都是垫脚石”表述过于绝对，困境本身不会自动成为垫脚石，若驴子没有正确处理填土，填土只会成为埋葬它的陷阱；另一方面文段未提及“成功”相关表述，属于过度拔高，不符合故事核心。
+#### 选项B正确
+故事的核心转折在于驴子打破了“填土会掩埋自己”的常规思维，出人意料地将原本致命的填土抖落、踩实变成上升的垫脚石，最终成功逃生，这个结果也远超所有人的预期，完美对应“换一种思维常常能够产生意想不到的效果”的道理。
+#### 选项C错误
+文段仅提及驴子从恐慌变得安静，并未将“冷静思考”和其他克服困难的条件做对比，“首要条件”属于无中生有的强加表述，并非故事要传递的核心。
+#### 选项D错误
+“求人不如求己”的前提存在“求助他人”的行为，但故事中农民从一开始就没有能力救援驴子，反而决定填井埋驴，驴子也没有主动求助的情节，不存在“求人”与“求己”的对比，该表述脱离故事叙事逻辑。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-16</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>我们以往所理解的“现代化”概念仅仅局限于物质层面，局限于表层经济现代化，这也是迟发展国家长期存在的一个普遍性问题：在物质层面上求变的欲望很强，而在制度层面和观念层面上却是文化守成主义的，这种状况对于现代化实际进程的影响自不必说，它对于学术的影响是导致知识的流俗化。不断地更换新词语，在新词语的装潢下重复古老的思想观念，结果是词语和口号不断地更换而社会精神气质则没有实质性的变化。 这段文字要表达的主要意思是____。
+A. 现代化应包括物质的、制度的、观念的三个层面
+B. 片面理解现代化是迟发展国家长期存在的一个普遍性问题
+C. 物质层面的落后现状是迟发展国家片面理解现代化的一个重要因素
+D. 片面理解现代化会导致知识的流俗化
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;D\n### 解析：\n文段整体为“引出话题—点明核心影响—解释论证”的结构：首先引出背景，指出以往对现代化的理解仅局限于物质层面是迟发展国家的普遍问题，并解释该问题的表现；随后以“对现代化进程的影响自不必说”弱化次要信息，重点强调这种片面理解现代化的状况对学术的核心影响是导致知识的流俗化；最后一句具体阐释知识流俗化的表现，属于对核心论点的补充论证。\n- A项：文段仅指出以往对现代化的理解局限于物质层面的问题，并未明确提出“现代化应包含三个层面”的对策，属于过度引申，且偏离文段围绕“知识流俗化”展开的核心论证内容，排除；\n- B项：“片面理解现代化是迟发展国家的普遍问题”仅为文段引出核心影响的背景铺垫内容，非重点，排除；\n- C项：文段未提及“物质层面落后是片面理解现代化的诱因”，属于无中生有，排除；\n- D项：准确对应文段重点强调的片面理解现代化的核心影响，符合文意。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>D
+### 解析：
+文段首先指出以往对现代化的理解仅局限于物质层面，这是迟发展国家的普遍问题，随后说明这种片面理解的影响：对现代化进程的影响“自不必说”（非重点，略过），重点强调其对学术的核心影响是导致知识的流俗化，最后一句具体解释了知识流俗化的表现，属于对前述论点的论证。
+- A项：文段未明确提出“现代化应包含三个层面”的对策，属于过度引申，且偏离文段后半部分围绕“知识流俗化”的核心论证内容，排除；
+- B项：“片面理解现代化是迟发展国家的普遍问题”仅为文段引出话题的背景内容，非重点，排除；
+- C项：文段未提及“物质层面落后是片面理解现代化的因素”，无中生有，排除；
+- D项：准确对应文段重点强调的片面理解现代化的核心影响，符合文意。</pre></details></div></section>
+</main>
+</body>
+</html>

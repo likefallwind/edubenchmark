@@ -268,16 +268,19 @@ def _extract_one(
 ) -> dict[str, Any]:
     item_id = str(item["item_id"])
     client.reset_usage_window()
+    row: dict[str, Any] = {
+        "item_id": item_id,
+        "extractor_model": extractor_model,
+    }
+    cache_version = getattr(adapter, "extraction_cache_version", None)
+    if cache_version:
+        row["extraction_cache_version"] = str(cache_version)
     try:
         extracted = adapter.extract_answer(item, response, client, extractor_model)
-        return {
-            "item_id": item_id,
-            "extracted": extracted,
-            "extractor_model": extractor_model,
-            "usage": client.read_usage_window(),
-        }
+        row.update({"extracted": extracted, "usage": client.read_usage_window()})
     except Exception as exc:  # noqa: BLE001
-        return {"item_id": item_id, "extracted": "", "error": str(exc)}
+        row.update({"extracted": "", "error": str(exc)})
+    return row
 
 
 def run_extractions(
@@ -293,10 +296,13 @@ def run_extractions(
     rate_limit_max_retries: int = 3,
 ) -> dict[str, dict[str, Any]]:
     # Treat errored / empty extractions as not-done so reruns retry only those.
+    cache_version = getattr(adapter, "extraction_cache_version", None)
     existing = {
         k: v
         for k, v in _index_by_item(read_jsonl(out_path)).items()
         if str(v.get("extracted") or "").strip() and not v.get("error")
+        and str(v.get("extractor_model") or "") == str(extractor_model)
+        and (not cache_version or str(v.get("extraction_cache_version") or "") == str(cache_version))
     }
     rows = list(existing.values())
     pending: list[tuple[dict[str, Any], str]] = []
