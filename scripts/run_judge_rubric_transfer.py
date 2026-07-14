@@ -72,6 +72,15 @@ ARMS: dict[str, dict[str, Any]] = {
             "diagnosis.json", "round1/diagnosis_used.json", "round2/diagnosis_used.json",
         ],
     },
+    # P5 ablation arm (--no-diagnosis): its reflection model saw NO error
+    # examples at all, so it contributes no exclusions. Included here to compare
+    # the diagnosis-driven rubric against the diagnosis-free one on data that
+    # selected neither.
+    "glm_nodiag": {
+        "state_slug": "glm-5.2_nodiag",
+        "judge": "glm-5.2",
+        "diagnosis_files": [],
+    },
     "dsv4": {
         "state_slug": "deepseek-v4-pro",
         "judge": "deepseek-v4-pro",

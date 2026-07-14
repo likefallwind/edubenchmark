@@ -23,12 +23,14 @@
 | 优先继续做 | `mrbench_tutor` MRBench Tutor | 8-dimension tutor pass rate | 3.73 | 75.00 | 93.75 | education_core | 3 | P18 0.45, P17 0.30, P20 0.25 |
 | 高相关但缺跑分 | `pedagogy_benchmark` Pedagogy Benchmark | SEND special education needs selection | NA | 68.20 | 85.25 | education_core | 0 | P05 0.35, P16 0.35, P17 0.30 |
 | 优先继续做 | `asap_2` ASAP 2.0 | essay holistic QWK | 5.45 | 63.80 | 79.75 | education_core | 7 | P14 0.65, P02 0.20, P05 0.15 |
-| 值得继续做 | `p08_calibration` P08 置信度校准 | calibration composite (CWR/AUROC) | 6.56 | 61.84 | 97.00 | diagnostic | 1 | P08 0.80, P07 0.20 |
+| 优先继续做 | `p08_calibration` P08 置信度校准 | calibration composite (CWR/AUROC) | 6.44 | 61.84 | 97.00 | diagnostic | 5 | P08 0.80, P07 0.20 |
 | 高相关但缺跑分 | `mmtutorbench` MMTutorBench | multimodal tutor score | NA | 59.06 | 87.50 | diagnostic | 0 | P03 0.30, P18 0.40, P17 0.30 |
-| 值得继续做 | `eduillustrate` EduIllustrate | 8-dim 0-5 visual explanation score | 6.77 | 58.97 | 92.50 | diagnostic | 3 | P10 0.45, P03 0.25, P18 0.30 |
+| 值得继续做 | `eduillustrate` EduIllustrate | 8-dim 0-5 visual explanation score | 6.93 | 58.97 | 92.50 | diagnostic | 4 | P10 0.45, P03 0.25, P18 0.30 |
 | 优先继续做 | `mathtutorbench_socratic` MathTutorBench | Socratic Questioning | 2.73 | 57.00 | 95.00 | education_core | 4 | P17 0.65, P18 0.35 |
 | 高相关但缺跑分 | `pedagogy_benchmark` Pedagogy Benchmark | CDPK teaching knowledge selection | NA | 56.80 | 71.00 | education_core | 0 | P05 0.45, P17 0.35, P06 0.20 |
 | 高相关但缺跑分 | `eduguard_adversarial` EduGuard-Bench P2 | Refusal quality distribution | NA | 52.50 | 100.00 | diagnostic | 0 | P22 0.60, P18 0.25, P20 0.15 |
+| 高相关但缺跑分 | `k12vista` K12Vista | official partial-credit score (per-blank 0/1 mean) | NA | 49.95 | 83.25 | diagnostic | 0 | P04 0.55, P06 0.30, P05 0.15 |
+| 高相关但缺跑分 | `mooccube_prereq` MOOCCube 先修关系推理 | chance-corrected composite (先修选择 + 学习顺序排序) | NA | 47.25 | 90.00 | diagnostic | 0 | P19 0.70, P05 0.20, P06 0.10 |
 | 重要但可降频 | `mathtutorbench_pedagogy_hard` MathTutorBench | Pedagogy IF hard | 7.99 | 85.00 | 85.00 | education_core | 7 | P17 0.45, P18 0.30, P05 0.25 |
 | 重要但可降频 | `edubench` EduBench | PLS personalized learning support | 8.74 | 84.58 | 99.50 | education_core | 11 | P16 0.30, P17 0.45, P18 0.25 |
 | 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | Mistake Location | 7.75 | 84.50 | 84.50 | education_core | 5 | P12 0.70, P02 0.20, P11 0.10 |
@@ -40,12 +42,12 @@
 | 重要但可降频 | `edubench` EduBench | PCC pedagogical/personalized content creation | 8.80 | 68.00 | 85.00 | education_core | 11 | P18 0.45, P17 0.30, P05 0.25 |
 | 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | Solution Correctness | 8.68 | 67.58 | 79.50 | education_core | 5 | P11 0.60, P07 0.25, P02 0.15 |
 | 重要但可降频 | `pedagogy_benchmark` Pedagogy Benchmark | CDPK/SEND aggregate from 0701 card | 8.56 | 66.80 | 83.50 | education_core | 7 | P05 0.40, P17 0.30, P16 0.30 |
-| 重要但可降频 | `p08_abstention` P08 能力性弃答 | balanced abstention score | 8.72 | 59.61 | 93.50 | diagnostic | 1 | P08 0.85, P01 0.15 |
+| 重要但可降频 | `p08_abstention` P08 能力性弃答 | balanced abstention score | 8.90 | 59.61 | 93.50 | diagnostic | 5 | P08 0.85, P01 0.15 |
 | 重要但可降频 | `edubench` EduBench | TMG teaching material generation | 8.18 | 55.12 | 73.50 | education_core | 11 | P18 0.40, P05 0.35, P06 0.25 |
 | 不必重点看 | `edubench` EduBench | QG question generation | 8.47 | 54.38 | 72.50 | education_core | 11 | P18 0.35, P06 0.35, P05 0.30 |
-| 诊断保留 | `p07_selfcheck` P07 两轮自查 | two-round self-check (fix/break rate) | 5.27 | 53.55 | 84.00 | diagnostic | 1 | P07 0.85, P08 0.15 |
+| 诊断保留 | `p07_selfcheck` P07 两轮自查 | two-round self-check (fix/break rate) | 5.29 | 53.55 | 84.00 | diagnostic | 5 | P07 0.85, P08 0.15 |
 | 不必重点看 | `mathvista` MathVista | task/question_type/answer_type accuracy | 8.41 | 33.99 | 64.75 | diagnostic | 1 | P03 0.35, P06 0.45, P05 0.20 |
-| 低频门槛 | `ifeval` IFEval | prompt-level strict accuracy | 8.74 | 16.20 | 45.00 | foundation_gate | 1 | P01 1.00 |
+| 低频门槛 | `ifeval` IFEval | prompt-level strict accuracy | 9.06 | 16.20 | 45.00 | foundation_gate | 5 | P01 1.00 |
 | 门槛保留 | `olympiadbench` OlympiadBench | overall/subject/language/modality accuracy | 7.26 | 15.72 | 63.50 | foundation_gate | 2 | P06 0.55, P05 0.25, P03 0.20 |
 | 低频门槛 | `mathtutorbench_problem_solving` MathTutorBench | Problem Solving | 9.70 | 12.76 | 63.00 | foundation_gate | 4 | P06 0.60, P05 0.30, P07 0.10 |
 | 低频门槛 | `agieval` AGIEval | overall/task/language/question_type accuracy | 8.74 | 10.35 | 57.50 | foundation_gate | 5 | P06 0.45, P05 0.35, P01 0.20 |
@@ -69,10 +71,12 @@
 | 优先继续做 | `mrbench_tutor` MRBench Tutor | 1 | 3.73 | 75.00 | education_core | P17, P18, P20 |
 | 高相关但缺跑分 | `pedagogy_benchmark` Pedagogy Benchmark | 3 | 8.56 | 63.93 | education_core | P05, P06, P16, P17 |
 | 优先继续做 | `asap_2` ASAP 2.0 | 1 | 5.45 | 63.80 | education_core | P02, P05, P14 |
-| 值得继续做 | `p08_calibration` P08 置信度校准 | 1 | 6.56 | 61.84 | diagnostic | P07, P08 |
+| 优先继续做 | `p08_calibration` P08 置信度校准 | 1 | 6.44 | 61.84 | diagnostic | P07, P08 |
 | 高相关但缺跑分 | `mmtutorbench` MMTutorBench | 1 | NA | 59.06 | diagnostic | P03, P17, P18 |
-| 值得继续做 | `eduillustrate` EduIllustrate | 1 | 6.77 | 58.97 | diagnostic | P03, P10, P18 |
+| 值得继续做 | `eduillustrate` EduIllustrate | 1 | 6.93 | 58.97 | diagnostic | P03, P10, P18 |
 | 优先继续做 | `mathtutorbench_socratic` MathTutorBench | 1 | 2.73 | 57.00 | education_core | P17, P18 |
+| 高相关但缺跑分 | `k12vista` K12Vista | 1 | NA | 49.95 | diagnostic | P04, P05, P06 |
+| 高相关但缺跑分 | `mooccube_prereq` MOOCCube 先修关系推理 | 1 | NA | 47.25 | diagnostic | P05, P06, P19 |
 | 重要但可降频 | `mathtutorbench_pedagogy_hard` MathTutorBench | 1 | 7.99 | 85.00 | education_core | P05, P17, P18 |
 | 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | 1 | 7.75 | 84.50 | education_core | P02, P11, P12 |
 | 重要但可降频 | `mathtutorbench_pedagogy` MathTutorBench | 1 | 8.32 | 80.75 | education_core | P05, P17, P18 |
@@ -80,10 +84,10 @@
 | 重要但可降频 | `sas_bench` SAS-Bench | 3 | 7.23 | 79.22 | education_core | P02, P05, P06, P12, P13, P14 |
 | 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | 1 | 8.68 | 67.58 | education_core | P02, P07, P11 |
 | 重要但可降频 | `edubench` EduBench | 5 | 8.48 | 66.02 | education_core | P05, P06, P16, P17, P18 |
-| 重要但可降频 | `p08_abstention` P08 能力性弃答 | 1 | 8.72 | 59.61 | diagnostic | P01, P08 |
-| 诊断保留 | `p07_selfcheck` P07 两轮自查 | 1 | 5.27 | 53.55 | diagnostic | P07, P08 |
+| 重要但可降频 | `p08_abstention` P08 能力性弃答 | 1 | 8.90 | 59.61 | diagnostic | P01, P08 |
+| 诊断保留 | `p07_selfcheck` P07 两轮自查 | 1 | 5.29 | 53.55 | diagnostic | P07, P08 |
 | 不必重点看 | `mathvista` MathVista | 1 | 8.41 | 33.99 | diagnostic | P03, P05, P06 |
-| 低频门槛 | `ifeval` IFEval | 1 | 8.74 | 16.20 | foundation_gate | P01 |
+| 低频门槛 | `ifeval` IFEval | 1 | 9.06 | 16.20 | foundation_gate | P01 |
 | 门槛保留 | `olympiadbench` OlympiadBench | 1 | 7.26 | 15.72 | foundation_gate | P03, P05, P06 |
 | 低频门槛 | `mathtutorbench_problem_solving` MathTutorBench | 1 | 9.70 | 12.76 | foundation_gate | P05, P06, P07 |
 | 低频门槛 | `agieval` AGIEval | 1 | 8.74 | 10.35 | foundation_gate | P01, P05, P06 |

@@ -1,13 +1,13 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 190
+Canonical normalized score rows used for P scoring: 207
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
 | `otherbenchmark` | 93 |
-| `repo_eval` | 97 |
+| `repo_eval` | 114 |
 
 ## By Benchmark
 
@@ -20,8 +20,8 @@ Canonical normalized score rows used for P scoring: 190
 | `edubench` | 55 |
 | `eduguard_adversarial` | 7 |
 | `eduguard_sata` | 8 |
-| `eduillustrate` | 3 |
-| `ifeval` | 1 |
+| `eduillustrate` | 4 |
+| `ifeval` | 5 |
 | `mathtutorbench_mistake_correction` | 5 |
 | `mathtutorbench_mistake_location` | 5 |
 | `mathtutorbench_pedagogy` | 7 |
@@ -35,9 +35,9 @@ Canonical normalized score rows used for P scoring: 190
 | `mmlu_pro` | 5 |
 | `mrbench_tutor` | 3 |
 | `olympiadbench` | 2 |
-| `p07_selfcheck` | 1 |
-| `p08_abstention` | 1 |
-| `p08_calibration` | 1 |
+| `p07_selfcheck` | 5 |
+| `p08_abstention` | 5 |
+| `p08_calibration` | 5 |
 | `pedagogy_benchmark` | 7 |
 | `sas_bench` | 18 |
 | `tutorbench` | 6 |
@@ -81,6 +81,7 @@ Canonical normalized score rows used for P scoring: 190
 | `edubench` | `deepseek-v4-pro` | `mean_0_to_10` | 7.581 | 7.5810 | `otherbenchmark/edubench-0625.md` |
 | `eduguard_adversarial` | `deepseek-v4-pro` | `asr_0_to_1_lower_better` | 0.6241 | 3.7590 | `reports/eval/eduguard_adversarial/_judge-deepseek-v3.2/deepseek-v4-pro/summary.json` |
 | `eduguard_sata` | `deepseek-v4-pro` | `rfs_0_to_1` | 0.7612 | 7.6120 | `reports/eval/eduguard_sata/deepseek-v4-pro/summary.json` |
+| `ifeval` | `deepseek-v4-pro` | `accuracy` | 0.9222222222222223 | 9.2222 | `reports/eval/ifeval/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_mistake_correction` | `deepseek-v4-pro` | `accuracy` | 0.9201596806387226 | 9.2016 | `reports/eval/mathtutorbench_mistake_correction/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_mistake_location` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.765 | 7.6500 | `reports/eval/mathtutorbench_mistake_location/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_pedagogy` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.8522 | 8.5220 | `reports/eval/mathtutorbench_pedagogy/deepseek-v4-pro/summary.json` |
@@ -91,6 +92,9 @@ Canonical normalized score rows used for P scoring: 190
 | `mathtutorbench_solution_correctness` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.8621 | 8.6210 | `reports/eval/mathtutorbench_solution_correctness/deepseek-v4-pro/summary.json` |
 | `mmlu_pro` | `deepseek-v4-pro` | `accuracy` | 0.8740851630073186 | 8.7409 | `reports/eval/mmlu_pro/deepseek-v4-pro/summary.json` |
 | `olympiadbench` | `deepseek-v4-pro` | `accuracy` | 0.7361256544502618 | 7.3613 | `reports/eval/olympiadbench/deepseek-v4-pro/summary.json` |
+| `p07_selfcheck` | `deepseek-v4-pro` | `composite_0_to_10` | 5.572 | 5.5720 | `reports/eval/p07_selfcheck/deepseek-v4-pro/summary.json` |
+| `p08_abstention` | `deepseek-v4-pro` | `composite_0_to_10` | 9.06 | 9.0600 | `reports/eval/p08_abstention/deepseek-v4-pro/summary.json` |
+| `p08_calibration` | `deepseek-v4-pro` | `composite_0_to_10` | 6.741 | 6.7410 | `reports/eval/p08_calibration/deepseek-v4-pro/summary.json` |
 | `pedagogy_benchmark` | `deepseek-v4-pro` | `accuracy_percent` | 85.34 | 8.5340 | `otherbenchmark/rebenchmark-summary-0701.html` |
 | `sas_bench` | `deepseek-v4-pro` | `score_0_to_100` | 76.63 | 7.6630 | `otherbenchmark/sas-bench-result0630.md` |
 | `sas_bench` | `deepseek-v4-pro` | `score_0_to_100` | 61.69 | 6.1690 | `otherbenchmark/sas-bench-result0630.md` |
@@ -114,17 +118,13 @@ Canonical normalized score rows used for P scoring: 190
 | `edubench` | `doubao-seed-2-0-pro` | `mean_0_to_10` | 9.197 | 9.1970 | `otherbenchmark/edubench-0625.md` |
 | `eduguard_adversarial` | `doubao-seed-2-0-pro` | `asr_0_to_1_lower_better` | 0.6025 | 3.9750 | `reports/eval/eduguard_adversarial/_judge-deepseek-v3.2/doubao-seed-2.0-pro/summary.json` |
 | `eduguard_sata` | `doubao-seed-2-0-pro` | `rfs_0_to_1` | 0.7618 | 7.6180 | `reports/eval/eduguard_sata/doubao-seed-2.0-pro/summary.json` |
+| `eduillustrate` | `doubao-seed-2-0-pro` | `likert_0_to_5` | 3.7055 | 7.4110 | `reports/eval/eduillustrate/doubao-seed-2.0-pro__gen-full230_judge-MiniMax-M3/summary.json` |
+| `ifeval` | `doubao-seed-2-0-pro` | `accuracy` | 0.8946395563770795 | 8.9464 | `reports/eval/ifeval/doubao-seed-2.0-pro/summary.json` |
 | `mathtutorbench_pedagogy` | `doubao-seed-2-0-pro` | `win_rate_or_accuracy` | 0.8767 | 8.7670 | `reports/eval/mathtutorbench_pedagogy/doubao-seed-2.0-pro/summary.json` |
 | `mathtutorbench_pedagogy_hard` | `doubao-seed-2-0-pro` | `win_rate_or_accuracy` | 0.8688 | 8.6880 | `reports/eval/mathtutorbench_pedagogy_hard/doubao-seed-2.0-pro/summary.json` |
 | `mathtutorbench_scaffolding` | `doubao-seed-2-0-pro` | `win_rate_or_accuracy` | 0.3843 | 3.8430 | `reports/eval/mathtutorbench_scaffolding/doubao-seed-2.0-pro/summary.json` |
 | `mathtutorbench_scaffolding_hard` | `doubao-seed-2-0-pro` | `win_rate_or_accuracy` | 0.3881 | 3.8810 | `reports/eval/mathtutorbench_scaffolding_hard/doubao-seed-2.0-pro/summary.json` |
-| `asap_2` | `glm-5.1` | `qwk_0_to_100` | 57.25 | 5.7250 | `otherbenchmark/rebenchmark-summary-0701.html` |
-| `edubench` | `glm-5.1` | `mean_0_to_10` | 7.598 | 7.5980 | `otherbenchmark/edubench-0625.md` |
-| `edubench` | `glm-5.1` | `mean_0_to_10` | 8.432 | 8.4320 | `otherbenchmark/edubench-0625.md` |
-| `edubench` | `glm-5.1` | `mean_0_to_10` | 8.089 | 8.0890 | `otherbenchmark/edubench-0625.md` |
-| `edubench` | `glm-5.1` | `mean_0_to_10` | 8.137 | 8.1370 | `otherbenchmark/edubench-0625.md` |
-| `edubench` | `glm-5.1` | `mean_0_to_10` | 6.178 | 6.1780 | `otherbenchmark/edubench-0625.md` |
-| `eduguard_adversarial` | `glm-5.1` | `asr_0_to_1_lower_better` | 0.0492 | 9.5080 | `reports/eval/eduguard_adversarial/_judge-deepseek-v3.2/glm-5.1/summary.json` |
-| `eduguard_sata` | `glm-5.1` | `rfs_0_to_1` | 0.7632 | 7.6320 | `reports/eval/eduguard_sata/glm-5.1/summary.json` |
+| `p07_selfcheck` | `doubao-seed-2-0-pro` | `composite_0_to_10` | 5.019 | 5.0190 | `reports/eval/p07_selfcheck/doubao-seed-2.0-pro/summary.json` |
+| `p08_abstention` | `doubao-seed-2-0-pro` | `composite_0_to_10` | 8.98 | 8.9800 | `reports/eval/p08_abstention/doubao-seed-2.0-pro/summary.json` |
 
 Full selected rows are in `08_selected_score_evidence.jsonl`.
