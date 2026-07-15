@@ -467,7 +467,15 @@ class MRBenchTutorAdapter(BenchmarkAdapter):
 
     @staticmethod
     def _judge_one(client: MiniMaxClient, model: str, dim: str, conv: str, response: str) -> str:
+        """Return the judge's raw reply for one dimension.
+
+        The raw text is stored verbatim by ``extract_answer`` and parsed later in
+        ``score`` (like longtutor), so a parsing bug is rescore-recoverable and no
+        judge output is ever discarded. Raises on API error / empty reply so the
+        row is recorded as a retriable error rather than a fake fail.
+        """
         prompt = _evolved_judge_prompt(dim, conv, response)
+        last_error: Exception = RuntimeError(f"judge failed for dim={dim}")
         for attempt in range(3):
             try:
                 reply = client.chat(
@@ -475,13 +483,15 @@ class MRBenchTutorAdapter(BenchmarkAdapter):
                     model=model,
                     max_tokens=extraction_max_tokens(model, 1024),
                 )
-                label = _normalize_label(dim, reply)
-                if label != "unparsed":
-                    return label
-            except Exception:  # noqa: BLE001 - retry transient judge failures
-                pass
+            except Exception as exc:  # noqa: BLE001 - retry transient judge/API failures
+                last_error = exc
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            if (reply or "").strip():
+                return reply.strip()
+            last_error = RuntimeError(f"judge returned empty reply for dim={dim}")
             time.sleep(1.5 * (attempt + 1))
-        return "unparsed"
+        raise last_error
 
     def extract_answer(self, item, response, client, model):
         client, model = self._resolve_judge(client, model)
@@ -489,19 +499,28 @@ class MRBenchTutorAdapter(BenchmarkAdapter):
         generated = (response or "").strip()
         dims = list(DIMENSIONS)
         with ThreadPoolExecutor(max_workers=len(dims)) as pool:
-            labels = list(
+            raws = list(
                 pool.map(lambda d: self._judge_one(client, model, d, conv, generated), dims)
             )
-        result = {dim: lab for dim, lab in zip(dims, labels)}
+        # Store the judge's raw reply per dimension; parsing happens in score().
+        result = {dim: raw for dim, raw in zip(dims, raws)}
         result["judge_model"] = model
         return json.dumps(result, ensure_ascii=False)
 
     def score(self, extracted, item):
         try:
-            labels = json.loads(extracted)
+            raw = json.loads(extracted)
         except (json.JSONDecodeError, TypeError):
-            labels = {}
-        judge_model = labels.pop("judge_model", None) if isinstance(labels, dict) else None
+            raw = {}
+        judge_model = raw.pop("judge_model", None) if isinstance(raw, dict) else None
+        # ``raw`` holds either the judge's raw reply per dimension (current format)
+        # or already-normalized labels (legacy rows); _normalize_label is idempotent
+        # on canonical labels, so both parse correctly here.
+        labels = (
+            {d: _normalize_label(d, str(raw.get(d, ""))) for d in DIMENSIONS}
+            if isinstance(raw, dict) and raw
+            else {}
+        )
         passed = bool(labels) and all(labels.get(d) == "Yes" for d in KEY_DIMENSIONS)
         return {
             "correct": passed,
@@ -531,12 +550,21 @@ class MRBenchTutorAdapter(BenchmarkAdapter):
                 lab: {"count": c, "share": round(c / len(rows), 4)}
                 for lab, c in sorted(dist.items(), key=lambda kv: (-kv[1], kv[0]))
             }
-        passed = sum(1 for r in rows if r.get("correct"))
+        # A row whose judge reply cannot be mapped on a key dimension is genuinely
+        # unparseable (rare); keep it out of the pass-rate denominator rather than
+        # counting it as a fail, and report it separately.
+        def _key_unparseable(r):
+            labs = r.get("judge_labels") or {}
+            return any(labs.get(d) == "unparsed" for d in KEY_DIMENSIONS)
+
+        parseable = [r for r in rows if not _key_unparseable(r)]
+        passed = sum(1 for r in parseable if r.get("correct"))
         return {
             "judge_model": judge_model,
             "judge_protocol": "fixed LLM-as-judge, per-dimension single label (8 dimensions)",
             "headline_metric": f"pedagogical pass rate = all of {KEY_DIMENSIONS} == 'Yes'",
-            "n": len(rows),
-            "pass_rate": round(passed / len(rows), 4),
+            "n": len(parseable),
+            "n_unparseable_key_dim": len(rows) - len(parseable),
+            "pass_rate": round(passed / len(parseable), 4) if parseable else None,
             "per_dimension_distribution": per_dim,
         }

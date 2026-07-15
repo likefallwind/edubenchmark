@@ -85,16 +85,16 @@ def _json_from_text(text: str) -> Any:
     match = re.search(r"\{.*\}", text, re.S)
     if not match:
         return None
+    try:
+        return json.loads(match.group(0))
+    except json.JSONDecodeError:
+        return None
 
 
 def _normalize_answer(text: Any) -> str:
     value = unicodedata.normalize("NFKC", str(text or "")).strip().lower()
     value = re.sub(r"\s+", "", value)
     return re.sub(r"[，。！？；：、,.!?;:'\"“”‘’（）()\[\]{}]", "", value)
-    try:
-        return json.loads(match.group(0))
-    except json.JSONDecodeError:
-        return None
 
 
 class LongTutorEvidenceAdapter(BenchmarkAdapter):

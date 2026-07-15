@@ -206,6 +206,7 @@ def _resolve_judge_client(self: Any, extractor_client: MiniMaxClient, extractor_
 
 def _judge_one(client: MiniMaxClient, model: str, dim: str, conv: str, response: str) -> str:
     prompt = _judge_prompt(dim, conv, response)
+    last_error: Exception = RuntimeError(f"judge failed for dim={dim}")
     for attempt in range(3):
         try:
             reply = client.chat(
@@ -213,13 +214,22 @@ def _judge_one(client: MiniMaxClient, model: str, dim: str, conv: str, response:
                 model=model,
                 max_tokens=extraction_max_tokens(model, 512),
             )
-            label = _normalize_label(reply)
-            if label != "unparsed":
-                return label
-        except Exception:  # noqa: BLE001 - transient judge failures are retried
-            pass
+        except Exception as exc:  # noqa: BLE001 - retry transient judge/API failures
+            last_error = exc
+            time.sleep(1.5 * (attempt + 1))
+            continue
+        if not (reply or "").strip():
+            last_error = RuntimeError(f"judge returned empty reply for dim={dim}")
+            time.sleep(1.5 * (attempt + 1))
+            continue
+        label = _normalize_label(reply)
+        if label != "unparsed":
+            return label
+        # Non-empty but unmappable: retry, then raise rather than bake an
+        # "unparsed" sentinel that would score as a fake fail.
+        last_error = RuntimeError(f"judge reply unmappable for dim={dim}: {reply[:120]!r}")
         time.sleep(1.5 * (attempt + 1))
-    return "unparsed"
+    raise last_error
 
 
 class BEA2025JudgeAdapter(BenchmarkAdapter):
@@ -398,17 +408,26 @@ class BEA2025TutorAdapter(BenchmarkAdapter):
         generated = (response or "").strip()
         dims = list(DIMENSIONS)
         with ThreadPoolExecutor(max_workers=len(dims)) as pool:
-            labels = list(pool.map(lambda d: _judge_one(judge_client, judge_model, d, conv, generated), dims))
-        result = {dim: lab for dim, lab in zip(dims, labels)}
+            raws = list(pool.map(lambda d: _judge_one(judge_client, judge_model, d, conv, generated), dims))
+        # Store the judge's raw reply per dimension; parsing happens in score().
+        result = {dim: raw for dim, raw in zip(dims, raws)}
         result["judge_model"] = judge_model
         return json.dumps(result, ensure_ascii=False)
 
     def score(self, extracted, item):
         try:
-            labels = json.loads(extracted)
+            raw = json.loads(extracted)
         except (json.JSONDecodeError, TypeError):
-            labels = {}
-        judge_model = labels.pop("judge_model", None) if isinstance(labels, dict) else None
+            raw = {}
+        judge_model = raw.pop("judge_model", None) if isinstance(raw, dict) else None
+        # ``raw`` holds either the judge's raw reply per dimension (current format)
+        # or already-normalized labels (legacy rows); _normalize_label is idempotent
+        # on canonical labels, so both parse correctly here.
+        labels = (
+            {dim: _normalize_label(str(raw.get(dim, ""))) for dim in DIMENSIONS}
+            if isinstance(raw, dict) and raw
+            else {}
+        )
         passed = bool(labels) and all(labels.get(dim) == "Yes" for dim in KEY_DIMENSIONS)
         return {
             "correct": passed,
@@ -436,7 +455,14 @@ class BEA2025TutorAdapter(BenchmarkAdapter):
                 lab: {"count": count, "share": round(count / len(rows), 4)}
                 for lab, count in sorted(dist.items(), key=lambda kv: (-kv[1], kv[0]))
             }
-        passed = sum(1 for r in rows if r.get("correct"))
+        # Keep genuinely-unparseable key-dim rows out of the pass-rate denominator
+        # rather than counting them as fails; report them separately.
+        def _key_unparseable(r):
+            labs = r.get("judge_labels") or {}
+            return any(labs.get(dim) == "unparsed" for dim in KEY_DIMENSIONS)
+
+        parseable = [r for r in rows if not _key_unparseable(r)]
+        passed = sum(1 for r in parseable if r.get("correct"))
         return {
             "judge_model": judge_model,
             "judge_protocol": "fixed LLM-as-judge, one label per BEA dimension",
@@ -445,7 +471,8 @@ class BEA2025TutorAdapter(BenchmarkAdapter):
                 "Not an official BEA leaderboard score; public test labels are hidden "
                 "and CodaBench/official labels are required for official scoring."
             ),
-            "n": len(rows),
-            "pass_rate": round(passed / len(rows), 4),
+            "n": len(parseable),
+            "n_unparseable_key_dim": len(rows) - len(parseable),
+            "pass_rate": round(passed / len(parseable), 4) if parseable else None,
             "per_dimension_distribution": per_dim,
         }

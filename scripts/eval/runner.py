@@ -391,6 +391,16 @@ def run_scoring(
             row["response"] = pred.get("response")
             scored.append(row)
             continue
+        if ext.get("error"):
+            # An errored extraction (e.g. a judge/API call that failed) must never
+            # be scored as a wrong answer — that would penalise the model for our
+            # infrastructure failing. Mark it out of the denominator; a rerun will
+            # retry it because run_extractions treats errored rows as not-done.
+            row["score_status"] = "extraction_error"
+            row["error"] = ext["error"]
+            row["response"] = pred.get("response")
+            scored.append(row)
+            continue
         extracted = str(ext.get("extracted") or "")
         result = adapter.score(extracted, item)
         row.update(

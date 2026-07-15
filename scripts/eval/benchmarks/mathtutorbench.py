@@ -736,7 +736,16 @@ class _WinRateBase(BenchmarkAdapter):
         )
 
     @staticmethod
-    def _vote_letter(client: MiniMaxClient, model: str, prompt: str) -> str | None:
+    def _vote_reply(client: MiniMaxClient, model: str, prompt: str) -> str:
+        """Return the judge's raw reply for one pairwise vote.
+
+        The raw text is stored verbatim by ``extract_answer`` and the A/B verdict
+        is parsed later in ``score`` (so a parsing bug is rescore-recoverable and
+        no judge output is discarded). Raises on API error / empty reply so the
+        row is recorded as a retriable error rather than a null vote scored as a
+        loss.
+        """
+        last_error: Exception = RuntimeError("judge vote failed")
         for attempt in range(3):
             try:
                 reply = client.chat(
@@ -744,46 +753,59 @@ class _WinRateBase(BenchmarkAdapter):
                     model=model,
                     max_tokens=extraction_max_tokens(model, 512),
                 )
-                letters = re.findall(r"\b([AB])\b", (reply or "").upper())
-                if letters:
-                    return letters[0]
-            except Exception:  # noqa: BLE001 - retry transient judge failures
-                pass
+            except Exception as exc:  # noqa: BLE001 - retry transient judge/API failures
+                last_error = exc
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            if (reply or "").strip():
+                return reply.strip()
+            last_error = RuntimeError("judge returned empty vote reply")
             time.sleep(1.5 * (attempt + 1))
-        return None
+        raise last_error
+
+    @staticmethod
+    def _letter(reply: str) -> str | None:
+        letters = re.findall(r"\b([AB])\b", (reply or "").upper())
+        return letters[0] if letters else None
 
     def extract_answer(self, item, response, client, model):
         client, model = self._resolve_judge(client, model)
         meta = item["meta"]
         gen = (response or "").strip()
         gt = meta["ground_truth_response"]
-        votes: list[str] = []
-        gen_wins = 0.0
-        rounds = 0
-        # Order 1: A=generated, B=ground truth
-        v1 = self._vote_letter(client, model, self._pairwise_prompt(meta, gen, gt))
-        if v1 is not None:
-            votes.append(f"AgenBgt:{v1}")
-            gen_wins += 1.0 if v1 == "A" else 0.0
-            rounds += 1
+        # Store each vote's raw judge reply (both orderings); the A/B verdict and
+        # win_score are computed in score(). A failed vote raises inside
+        # _vote_reply, so the whole item becomes a retriable error rather than a
+        # partial/null win_score.
+        raw = [{"order": "AgenBgt", "reply": self._vote_reply(client, model, self._pairwise_prompt(meta, gen, gt))}]
         if self.JUDGE_SWAP:
-            # Order 2: A=ground truth, B=generated
-            v2 = self._vote_letter(client, model, self._pairwise_prompt(meta, gt, gen))
-            if v2 is not None:
-                votes.append(f"AgtBgen:{v2}")
-                gen_wins += 1.0 if v2 == "B" else 0.0
-                rounds += 1
-        win_score = (gen_wins / rounds) if rounds else None
-        return json.dumps(
-            {"win_score": win_score, "votes": votes, "judge_model": model}, ensure_ascii=False
-        )
+            raw.append({"order": "AgtBgen", "reply": self._vote_reply(client, model, self._pairwise_prompt(meta, gt, gen))})
+        return json.dumps({"votes_raw": raw, "judge_model": model}, ensure_ascii=False)
 
     def score(self, extracted, item):
         try:
             j = json.loads(extracted)
         except (json.JSONDecodeError, TypeError):
             j = {}
-        ws = j.get("win_score")
+        if not isinstance(j, dict):
+            j = {}
+        if "votes_raw" in j:
+            # Current format: parse the A/B verdict from each stored raw reply.
+            # AgenBgt -> A means generated wins; AgtBgen -> B means generated wins.
+            gen_wins = 0.0
+            rounds = 0
+            for entry in j.get("votes_raw") or []:
+                letter = self._letter(entry.get("reply"))
+                if letter is None:
+                    continue
+                if entry.get("order") == "AgenBgt":
+                    gen_wins += 1.0 if letter == "A" else 0.0
+                else:
+                    gen_wins += 1.0 if letter == "B" else 0.0
+                rounds += 1
+            ws = (gen_wins / rounds) if rounds else None
+        else:
+            ws = j.get("win_score")  # legacy rows stored the parsed win_score
         return {
             "correct": ws is not None and ws > 0.5,
             "normalized": ws if ws is not None else "judge_error",
