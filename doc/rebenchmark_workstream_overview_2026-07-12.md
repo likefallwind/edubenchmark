@@ -112,6 +112,8 @@ nohup bash -c 'for M in deepseek-v4-pro glm-5.2 doubao-seed-2.0-pro MiniMax-M2.7
 | 文档 | 管什么 | 什么时候看 |
 |---|---|---|
 | 本文档 | 来龙去脉总览 | 回来接续工作时 |
+| `doc/atomic_ability_mapping_final_2026-07-15.md` | **映射定稿**：21 个 P 的最终清单 + 逐 P 挂载明细 + benchmark 索引（无历史沿革,拿来即用） | 查"某个 P 现在挂什么"时,以此为准 |
+| `doc/benchmark_ability_mapping_v2_2026-07-15.md` | 映射 v2 **变化记录**：v1→v2 每格改了什么、依据哪条裁决 | 审查"为什么这样改"时 |
 | `doc/roadmap_to_convincing_eval_2026-07-12.md` | 五问体检：离"真正有说服力"还差什么 + 性价比排序（专家盲评是分水岭） | 规划 M4 之后的方向时 |
 | `doc/mapping_validation_plan_2026-07-11.md` | 效度验证的完整方法设计 + 里程碑 + 决策记录（1-11 条） | 想核对"为什么这么设计" |
 | `doc/p_construct_review_2026-07-11.md` | 逐 P 核对表 + R1-R14 完整理由 + 拆分准入规则 + 三例数据依据 | M3 裁决时逐条对着看 |
@@ -132,3 +134,39 @@ nohup bash -c 'for M in deepseek-v4-pro glm-5.2 doubao-seed-2.0-pro MiniMax-M2.7
 
 
 > **2026-07-14：M3 裁决单已就绪** —— `doc/m3_adjudication_sheet_2026-07-14.md`。A 组 5 条（原则已覆盖，默认执行）+ B 组 11 条（需逐条点头：R1-R8、R10 的权重与挂载，R15 K12Vista、R16 MOOCCube 的新权重）。裁完才能出映射 v2 → 双报告，是发布关键路径。
+
+## 2026-07-15：裁判静默失败的根因修复 + 数据重判（回来先看这一节）
+
+**背景**：7-14 的 `doc/eval_artifact_audit_2026-07-14.md` 审计发现 mrbench_tutor / bea2025_tutor / 4 个 mathtutorbench win-rate（scaffolding/pedagogy/±hard）的裁判缓存里，约一半的行是 "empty/unparsed" 却被当成"打了分的失败"混进分母——**这些正是 R2（bea/mrbench 逐维度分）依赖的数据**。7-15 把根因查清并修掉了：
+
+**根因（不是配额限流，是 max_tokens 把 M3 饿死）**：`is_reasoning_model('MiniMax-M3')` 误返 False（它只认 `reasoning_effort` 参数，而 M3 不吃），于是判裁调用被 `extraction_max_tokens(model, 512)` 卡在 512 token；M3 是推理模型，512 token 全被 `reasoning_content` 吃光，`content` 返空 → 记成失败。判据：真配额限流时 client 会抛 `base_resp` 错误码，而这里是"空回复无错误码"。详见 memory `eval-no-max-tokens-cap-policy`。
+
+**已修**：
+1. **max_tokens 政策：所有模型默认不设上限**（`extraction_max_tokens` 恒返 `None`，`--max-tokens` 默认 None）。唯一例外 `deepseek-v3.2→32768`（网关硬性要求）。已写进 `CLAUDE.md` / `AGENTS.md`。
+2. **裁判原文全部落盘**：mrbench_tutor / bea2025_tutor / mathtutorbench win-rate 三个适配器改为 `extract_answer` 存裁判**原文**、解析挪到 `score()`（与 longtutor 一致）——解析 bug 可 `--score-only` 白嫖重算,不再丢内容。
+3. **取消 "unparsed" 中间态**：裁判结果只有两种——救回真 label，或 error（排除出分母、可重判），绝不再有"当假不及格"的第三态。已把历史 3789 行 limbo 迁移成 error（`scripts/eval/data/migrate_unparsed_to_error.py`）。
+4. longtutor_teaching 的 4 维全 0 bug（`_json_from_text` 死代码）已修并重算，summary 现为真分。
+
+**正在跑（可能已跑完）**：对发布 5 模型（MiniMax-M3/M2.7、deepseek-v4-pro、glm-5.2、doubao-seed-2.0-pro）的 25 个 `(benchmark×模型)` 对、约 2533 行 error 断点续判（裁判固定 MiniMax-M3，只补 error 行，predictions 不动）。已验证首对 `mathtutorbench_scaffolding_hard/MiniMax-M2.7` 327/327、0 error。
+- **怎么确认跑完**：对这 6 个 benchmark 的发布模型目录，按 item_id 去重后数 `extractions.jsonl` 里带 `error` 的行（`grep -c` 会因追加重复虚高，必须去重）；全为 0 即完成。
+- **没跑完怎么续**：`JUDGE_MODEL=MiniMax-M3 CONCURRENCY=4 MODEL=<模型> ./scripts/run_eval.sh <benchmark>`，逐对重跑即可（幂等续判）。
+
+**对计划的影响**：重判跑完前，**不要采信当前 mrbench/bea/mathtutorbench 的分数**；跑完后这些是可信的逐维度数据，R2 才有干净输入。待办：①代码改动 commit（数据等重判完单独提）②重判跑完核对 error 归零 → `--score-only` 出分 ③恢复 M3 裁决（R1-R16）→ 映射 v2 → M4 双报告。
+
+## 2026-07-15（下午）：M3 裁决全部完成，关键路径解锁
+
+**M3 裁决 R1-R16 全部裁完**，最终口径见 `doc/m3_adjudication_sheet_2026-07-14.md` 文末"裁决结果"一节（多条与原提案不同，以那张表为准）。要点：
+
+- **构念层三个大动作**：P03+P04 合并为「多模态理解」（P 清单 22→21，facet 按材料类型分）；P14 重定义为「主观题 rubric 评分能力」（三 facet，含空白的"生成 rubric"）；P19 定义澄清为知识结构层路径规划（学习者状态路径 = P16×P19 组合能力，不设 P19b）。
+- **P17 策略执行不细分**（两版拆分方案议后均放弃）。
+- **取分方式**：R2 执行（bea/mrbench 逐维度分，Actionability→P18 权重减半）；R1 按 12 维全用口径执行。
+- **权重修正**：R6（mistake_correction P13 0.45→0.20）、R7 部分（仅拒答质量 P18 0.25→0.10，QG 不动）、R8（pedagogy_benchmark 移出 P06）执行。
+- **新挂载**：R15 K12Vista（学科图表 facet 0.55）、R16 MOOCCube（P19 0.70）按裁决进 v2；longtutor 三任务挂载在 v2 草案中标"待确认"。
+
+**里程碑状态更正**：M2.5 的 4 个补跑模型（ifeval/p07_selfcheck/p08_calibration/p08_abstention × M2.7/deepseek-v4-pro/glm-5.2/doubao-seed-2.0-pro）**已跑完**（上文"剩 4 个模型等你启动"已过时；M3 的结果在 `minimax3` 目录）。M3 裁决**已完成**。
+
+**当前进行中/待办**（按依赖顺序）：
+1. 裁判 error 行断点续判仍在跑（26 对进行到第 2 对，MiniMax 配额限流中会自动重试）。跑完前 mrbench/bea/mathtutorbench 分数继续不采信。
+2. 重判完成后：核对 error 归零 → `--score-only` 出分；补 longtutor_teaching glm-5.2/minimax3 各缺的 1 条裁判缓存并重算 summary（当前两者仍是全 0 旧账，deepseek-v4-pro 已是真分）。
+3. mrbench_tutor / bea2025_tutor 缺 deepseek-v4-pro、doubao-seed-2.0-pro 两个模型的**生成**（不只是重判）——R2 逐维度数据目前只有 3 个模型面，是否补跑待定。
+4. 按裁决结果产出 `mapping_measurement_model_v2.json` + 映射 v2 → 重跑聚合 + 13 号检查 → v1/v2 对比 → M4 双报告。

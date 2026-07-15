@@ -146,20 +146,45 @@ def resolve_model_params(model: str) -> dict:
     return dict(best)
 
 
+# Reasoning models that emit hidden chain-of-thought in ``reasoning_content``
+# before the visible answer in ``content``, but do NOT take a ``reasoning_effort``
+# request param (so they are invisible to ``_MODEL_PARAMS``). ``MiniMax-M3`` is
+# one: capping its extraction/judge calls at a small ``max_tokens`` starves the
+# answer (the budget is spent on reasoning) and returns empty ``content`` — which
+# surfaced as bogus "empty reply" / "unparsed" judge failures. Matched by
+# case-insensitive prefix.
+_REASONING_MODEL_PREFIXES: tuple[str, ...] = ("minimax-m3",)
+
+
 def is_reasoning_model(model: str) -> bool:
-    """True if ``model`` ships a default ``reasoning_effort`` (e.g. ``gpt-5.5``)."""
-    return "reasoning_effort" in resolve_model_params(model)
+    """True if ``model`` reasons before answering.
+
+    Covers models that ship a default ``reasoning_effort`` (e.g. ``gpt-5.5``) and
+    models that emit ``reasoning_content`` without such a param (``MiniMax-M3``).
+    """
+    if "reasoning_effort" in resolve_model_params(model):
+        return True
+    low = (model or "").lower()
+    return any(low.startswith(p) for p in _REASONING_MODEL_PREFIXES)
 
 
 def extraction_max_tokens(model: str, default: int | None) -> int | None:
-    """Token cap for an extraction / judge call.
+    """Token cap for an extraction / judge call — always ``None`` (uncapped).
 
-    Reasoning models spend output budget on hidden reasoning before emitting the
-    answer, so a small cap (``default``) can starve the answer text and return an
-    empty string. Leave such models uncapped (``None``) and let them finish;
-    non-reasoning models keep the adapter's ``default`` as a runaway guard.
+    Project policy (see CLAUDE.md / AGENTS.md): **do not cap ``max_tokens`` for
+    any model unless explicitly required.** A small cap starves reasoning models
+    (the budget is spent on hidden ``reasoning_content`` before the visible
+    answer, leaving ``content`` empty), which historically surfaced as bogus
+    "empty reply" / "unparsed" judge failures. Non-reasoning models are left
+    uncapped too, for consistency; their natural stop handles termination.
+
+    ``default`` is retained in the signature so call sites document their intended
+    ceiling, but it is intentionally ignored. The only model that still carries a
+    ``max_tokens`` is ``deepseek-v3.2`` (via ``_MODEL_PARAMS``), a hard gateway
+    requirement — not a starvation cap. To reinstate a cap, do it explicitly and
+    deliberately at the call site.
     """
-    return None if is_reasoning_model(model) else default
+    return None
 
 
 def resolve_provider(model: str) -> Provider:

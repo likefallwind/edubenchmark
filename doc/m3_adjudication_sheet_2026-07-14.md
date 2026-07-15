@@ -196,3 +196,30 @@
 2. 重跑聚合 + 13 号检查，出 **v1/v2 对比**：哪些 P 的分数变了、变了多少、模型排名稳不稳。
 3. 成熟度分级自动推导（成熟/单源/代理/空白 → 已验证/参考值/暂未覆盖）。
 4. 然后才能进 M4 双报告。
+
+---
+
+## 裁决结果（2026-07-15 全部裁完）
+
+R1/R14 于 7-14 裁决（见上文原位标注），其余于 7-15 逐条过完。多条裁决与原提案不同，以下为**最终口径**，映射 v2 以本节为准：
+
+| 编号 | 裁决 | 最终口径（与原提案的差异加粗） |
+|---|---|---|
+| R1 | ✅ 接受 | edubench 按原生指标逐维度挂 P，**12 维全用**（R14 否决后口径，不做裁判稳健性筛选） |
+| R2 | ✅ 执行 | bea2025_tutor / mrbench_tutor 改单维度分：Mistake_Identification→P13、Providing_Guidance→P17、Actionability→P18；**附带：Actionability 挂 P18 权重减半**（裁判校准 κ 仅 0.22，vs 识错 0.38），各维度裁判校准数字写入方法学局限 |
+| R3 | ✅ 执行（整合版） | **P14 重定义为「主观题 rubric 评分能力」**，拆三 facet：学业作答评分（asap_2/sas_bench）、教学回复评判（bea2025_judge/mrbench_judge，暂不计分）、**生成 rubric（空白 facet 标缺口）** |
+| R4 | ❌ 不执行 | strategy_enactment **保持单一 facet**。两版细分（按输入结构、按教学阶段）均议过后放弃——用户判断"教学策略选择不用细分，也没想到好的细分方式"。构念声明优先，不为拆而拆 |
+| R5 | ✅ 执行（合并版） | **P03+P04 合并为单一「多模态理解」**（P04 原本零挂载，合并代价小；难度不是构念维度，K12Vista 跨界即症状）。facet 按材料类型：解题图像（mathvista/olympiadbench）、学科图表（K12Vista）、教学场景图文（tutorbench/mmtutorbench）、视频音频（空白标缺口）。摘除 eduillustrate（生成≠感知）。**P 清单 22→21**，v1/v2 对比需说明 |
+| R6 | ✅ 执行 | mtb_mistake_correction 在 P13 权重 0.45→0.20，P06 的 0.20 保留；P13 核心证据改为 sas_bench ECS |
+| R7 | ⚠️ 部分执行 | **QG 不动**（P18 0.35 保持，P06 不变）；eduguard 拒答质量 P18 0.25→0.10 |
+| R8 | ✅ 执行 | pedagogy_benchmark CDPK 移出 P06 |
+| R9 | ✅ 默认执行 | P02 标 proxy_only（P01/P07 已有直接测量 IFEval / p07_selfcheck） |
+| R10 | ⏸ 标 todo | 发布前不做 SATA 类别标注；报告注明 P20/P21/P22 知识 facet 为同源分、不构成互证；发布后再拆 |
+| R11 | ✅ 已执行（7-12） | socratic 挂 P17 |
+| R12 | ✅ 默认执行 | 测量模型 v2 子能力声明；**注意 P17 按 R4 裁决保持现有两 facet（知识/执行），不再细分** |
+| R13 | ✅ 默认执行 | edubench 指令遵循不作 P01 直接测量，P01 走 IFEval |
+| R14 | ❌ 否决（7-14） | 尊重原论文裁判设定，12 维全可挂；换裁判实验结论进方法学局限一节 |
+| R15 | ✅ 按推荐（合并后口径） | K12Vista 挂**多模态理解 P 的学科图表 facet** 0.55 / P06 0.30 / P05 0.15，bw 0.80，tier diagnostic + 报告标注「裁判未校准」；仅 4 个视觉模型有分，成熟度上限「参考值」 |
+| R16 | ⚠️ 不拆 a/b | MOOCCube 挂 P19 0.70 / P05 0.20 / P06 0.10，bw 0.70。**P19 定义澄清为「知识结构层的路径规划」；学习者状态个性化路径 = P16×P19 组合能力**（写进报告），不是 P19 的缺口 |
+
+**裁决单未覆盖的遗留（映射 v2 草案中标"待确认"）**：longtutor 三任务（diagnosis/evidence/teaching）尚无挂载。草案方向：diagnosis→P12、teaching→P17 策略执行 + P18（其 strategy_alignment/history_utilization 维度）、evidence 待议。

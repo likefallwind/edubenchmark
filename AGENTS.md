@@ -40,6 +40,8 @@ python scripts/run_re_benchmark_v1.py --run-minimax-smoke --minimax-selection al
 
 Use Python 3, four-space indentation, and standard-library-first implementations. Prefer JSONL for row-oriented benchmark data and Markdown/HTML for reports. Keep dated snapshot names such as `benchmark_v1_2026-05-18` or `*_2026_05_18.py`. Report proxy data, missing data, gated access, and protocol-only items explicitly. For MCQ prompts, reconstruct options from source data when possible and ask for an option letter; track answer correctness separately from format compliance.
 
+**Model `max_tokens` policy — do not cap.** Never set a `max_tokens` ceiling for any model on any call (prediction, extraction, or LLM-as-judge) unless explicitly required. A cap starves reasoning models: `MiniMax-M3` spends the budget on hidden `reasoning_content` and returns empty `content`, which then surfaces as spurious "empty reply" / "unparsed" judge failures and silent fake-fail scores. In code, `extraction_max_tokens()` always returns `None` and `--max-tokens` defaults to `None`. The sole exception is `deepseek-v3.2` (pinned to `32768` via `_MODEL_PARAMS`), a hard gateway requirement, not a starvation cap.
+
 ## Testing Guidelines
 
 There is no dedicated test suite yet. Use script-level validation and syntax checks:

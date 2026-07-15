@@ -46,13 +46,13 @@
     <h1>评测报告 · MRBench · Step 2 生成 tutor 回复 + LLM-as-judge 打分</h1>
     <p class="muted">基准 mrbench_tutor · 模型 <strong>MiniMax-M2.7</strong></p>
     <div class="kpis">
-      <div class="kpi"><div class="v">30.5%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">68.0%</div><div class="k">正确率</div></div>
       <div class="kpi"><div class="v">200</div><div class="k">总题数</div></div>
       <div class="kpi"><div class="v">200</div><div class="k">已判分</div></div>
-      <div class="kpi"><div class="v">61</div><div class="k">答对</div></div>
+      <div class="kpi"><div class="v">136</div><div class="k">答对</div></div>
     </div>
   </header>
-  <section><h2>基准介绍</h2><p>MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 MiniMax-M3，与 --extractor-model/被测模型解耦，避免 self-judging 偏置），与 Step 1 共用同一套逐维度判定 prompt 与标签归一。</p><p>报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>基准介绍</h2><p>MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 glm-5.2，最佳单裁判；与 --extractor-model/被测模型解耦，避免 self-judging 偏置），逐维度判定 prompt 为 v2（仅 Providing_Guidance 带 Stage-3 验证过的进化标签准则，其余维度与 v1 一致；标签归一同 Step 1）。</p><p>报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
   <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c0</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
 
@@ -102,139 +102,112 @@ Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参
   &quot;judge_protocol&quot;: &quot;fixed LLM-as-judge, per-dimension single label (8 dimensions)&quot;,
   &quot;headline_metric&quot;: &quot;pedagogical pass rate = all of (&#x27;Mistake_Identification&#x27;, &#x27;Providing_Guidance&#x27;, &#x27;Actionability&#x27;) == &#x27;Yes&#x27;&quot;,
   &quot;n&quot;: 200,
-  &quot;pass_rate&quot;: 0.305,
+  &quot;n_unparseable_key_dim&quot;: 0,
+  &quot;pass_rate&quot;: 0.68,
   &quot;per_dimension_distribution&quot;: {
     &quot;Mistake_Identification&quot;: {
-      &quot;unparsed&quot;: {
-        &quot;count&quot;: 101,
-        &quot;share&quot;: 0.505
-      },
       &quot;Yes&quot;: {
-        &quot;count&quot;: 83,
-        &quot;share&quot;: 0.415
+        &quot;count&quot;: 173,
+        &quot;share&quot;: 0.865
       },
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 9,
-        &quot;share&quot;: 0.045
+        &quot;count&quot;: 17,
+        &quot;share&quot;: 0.085
       },
       &quot;No&quot;: {
-        &quot;count&quot;: 7,
-        &quot;share&quot;: 0.035
+        &quot;count&quot;: 10,
+        &quot;share&quot;: 0.05
       }
     },
     &quot;Mistake_Location&quot;: {
-      &quot;unparsed&quot;: {
-        &quot;count&quot;: 104,
-        &quot;share&quot;: 0.52
-      },
       &quot;Yes&quot;: {
-        &quot;count&quot;: 61,
-        &quot;share&quot;: 0.305
+        &quot;count&quot;: 124,
+        &quot;share&quot;: 0.62
       },
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 19,
-        &quot;share&quot;: 0.095
+        &quot;count&quot;: 53,
+        &quot;share&quot;: 0.265
       },
       &quot;No&quot;: {
-        &quot;count&quot;: 16,
-        &quot;share&quot;: 0.08
+        &quot;count&quot;: 23,
+        &quot;share&quot;: 0.115
       }
     },
     &quot;Revealing_of_the_Answer&quot;: {
-      &quot;unparsed&quot;: {
-        &quot;count&quot;: 99,
-        &quot;share&quot;: 0.495
-      },
       &quot;No&quot;: {
-        &quot;count&quot;: 93,
-        &quot;share&quot;: 0.465
+        &quot;count&quot;: 178,
+        &quot;share&quot;: 0.89
       },
       &quot;Yes (and the answer is correct)&quot;: {
-        &quot;count&quot;: 8,
-        &quot;share&quot;: 0.04
+        &quot;count&quot;: 22,
+        &quot;share&quot;: 0.11
       }
     },
     &quot;Providing_Guidance&quot;: {
-      &quot;unparsed&quot;: {
-        &quot;count&quot;: 102,
-        &quot;share&quot;: 0.51
-      },
       &quot;Yes&quot;: {
-        &quot;count&quot;: 88,
-        &quot;share&quot;: 0.44
+        &quot;count&quot;: 176,
+        &quot;share&quot;: 0.88
       },
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 7,
-        &quot;share&quot;: 0.035
+        &quot;count&quot;: 22,
+        &quot;share&quot;: 0.11
       },
       &quot;No&quot;: {
-        &quot;count&quot;: 3,
-        &quot;share&quot;: 0.015
+        &quot;count&quot;: 2,
+        &quot;share&quot;: 0.01
       }
     },
     &quot;Actionability&quot;: {
-      &quot;unparsed&quot;: {
-        &quot;count&quot;: 104,
-        &quot;share&quot;: 0.52
-      },
       &quot;Yes&quot;: {
-        &quot;count&quot;: 84,
-        &quot;share&quot;: 0.42
+        &quot;count&quot;: 172,
+        &quot;share&quot;: 0.86
       },
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 12,
-        &quot;share&quot;: 0.06
+        &quot;count&quot;: 26,
+        &quot;share&quot;: 0.13
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 2,
+        &quot;share&quot;: 0.01
       }
     },
     &quot;Coherence&quot;: {
-      &quot;unparsed&quot;: {
-        &quot;count&quot;: 109,
-        &quot;share&quot;: 0.545
-      },
       &quot;Yes&quot;: {
-        &quot;count&quot;: 82,
-        &quot;share&quot;: 0.41
+        &quot;count&quot;: 184,
+        &quot;share&quot;: 0.92
       },
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 5,
-        &quot;share&quot;: 0.025
+        &quot;count&quot;: 10,
+        &quot;share&quot;: 0.05
       },
       &quot;No&quot;: {
-        &quot;count&quot;: 4,
-        &quot;share&quot;: 0.02
+        &quot;count&quot;: 6,
+        &quot;share&quot;: 0.03
       }
     },
     &quot;Tutor_Tone&quot;: {
-      &quot;unparsed&quot;: {
-        &quot;count&quot;: 105,
-        &quot;share&quot;: 0.525
-      },
       &quot;Encouraging&quot;: {
-        &quot;count&quot;: 86,
-        &quot;share&quot;: 0.43
+        &quot;count&quot;: 186,
+        &quot;share&quot;: 0.93
       },
       &quot;Neutral&quot;: {
-        &quot;count&quot;: 9,
-        &quot;share&quot;: 0.045
+        &quot;count&quot;: 14,
+        &quot;share&quot;: 0.07
       }
     },
     &quot;humanlikeness&quot;: {
-      &quot;unparsed&quot;: {
-        &quot;count&quot;: 106,
-        &quot;share&quot;: 0.53
-      },
       &quot;Yes&quot;: {
-        &quot;count&quot;: 87,
-        &quot;share&quot;: 0.435
+        &quot;count&quot;: 192,
+        &quot;share&quot;: 0.96
       },
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 7,
-        &quot;share&quot;: 0.035
+        &quot;count&quot;: 8,
+        &quot;share&quot;: 0.04
       }
     }
   }
 }</pre></section>
-  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>200</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>55</td><td>14</td><td>0.255</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>MathDial</td><td>145</td><td>47</td><td>0.324</td><td><div class='bar'><i style='width:32%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>2.4B.Addition and Subtraction Within 100</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2.8A.2- and 3-Dimensional Shapes</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2.9A.Length Problems (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2.9A.Measuring Length</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.1G.Shapes and Area</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.2B.Multiples of Ten</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.3E.Bar Graphs</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.4A.Two-Step Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4B.Rounding Whole Numbers (Review) - 2</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.5D.Unknown Numbers in Division</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.6B.Quadrilaterals (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.1A.Converting Units of Measure (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.1G.Prime and Composite Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.2A.Place Value</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.2C.Multiplicative Comparisons</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.3E.Comparing Whole Numbers</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.3E.Dividing Using Equations</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Addition and Subtraction Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Subtracting Multi-Digit Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4G.Dividing with Remainders</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.5A.Geometric Lines</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.6D.Classifying 2D Figures</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.7A.Measuring Angles</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 2</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>5.1A.Multiplying Whole Numbers</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.2A.Place Value</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.2C.Rounding Decimal Numbers</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>5.3C.Estimate Solutions to Division Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3C.Multi-Digit Division with Two-Digit Divisors (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3L.Word Problems with Fractions (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.4A.Simple Expressions</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.4E.Simple Expression</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.4H.Volume of Composite Rectangular Prisms (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Line Plots with Fractions (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Metric Conversions and Word Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions Word Problems (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>6.4F.Applying Ratios: Speed</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>6.8B.Areas of Triangles</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>6.8D.Areas by Decomposition</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Not Available</td><td>145</td><td>47</td><td>0.324</td><td><div class='bar'><i style='width:32%'></i></div></td></tr></tbody></table></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>200</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>55</td><td>36</td><td>0.655</td><td><div class='bar'><i style='width:65%'></i></div></td></tr><tr><td>MathDial</td><td>145</td><td>100</td><td>0.690</td><td><div class='bar'><i style='width:69%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>2.4B.Addition and Subtraction Within 100</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2.8A.2- and 3-Dimensional Shapes</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>2.9A.Length Problems (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2.9A.Measuring Length</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.1G.Shapes and Area</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.2B.Multiples of Ten</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.3E.Bar Graphs</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4A.Two-Step Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4B.Rounding Whole Numbers (Review) - 2</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>3.5D.Unknown Numbers in Division</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.6B.Quadrilaterals (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.1A.Converting Units of Measure (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.1G.Prime and Composite Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.2A.Place Value</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.2C.Multiplicative Comparisons</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.3E.Comparing Whole Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.3E.Dividing Using Equations</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Addition and Subtraction Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Subtracting Multi-Digit Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4G.Dividing with Remainders</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.5A.Geometric Lines</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.6D.Classifying 2D Figures</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>4.7A.Measuring Angles</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 2</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.1A.Multiplying Whole Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.2A.Place Value</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.2C.Rounding Decimal Numbers</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>5.3C.Estimate Solutions to Division Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3C.Multi-Digit Division with Two-Digit Divisors (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3L.Word Problems with Fractions (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.4A.Simple Expressions</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.4E.Simple Expression</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>5.4H.Volume of Composite Rectangular Prisms (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Line Plots with Fractions (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Metric Conversions and Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions Word Problems (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>6.4F.Applying Ratios: Speed</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.8B.Areas of Triangles</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.8D.Areas by Decomposition</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Not Available</td><td>145</td><td>100</td><td>0.690</td><td><div class='bar'><i style='width:69%'></i></div></td></tr></tbody></table></section>
   
   <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c2</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.5A.Geometric Lines</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
@@ -330,7 +303,7 @@ Tutor: Do you understand that step?
  Tutor: What is the product of 26 and 6? 
  Student: 4
 
-Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;unparsed&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>That&#x27;s close to the ones digit, but let&#x27;s break it down: try finding 26 × 2 first (that&#x27;s 52), then double it to get 26 × 4. What do you get?</pre></details></div></section>
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;No&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>That&#x27;s close to the ones digit, but let&#x27;s break it down: try finding 26 × 2 first (that&#x27;s 52), then double it to get 26 × 4. What do you get?</pre></details></div></section>
 </main>
 </body>
 </html>
