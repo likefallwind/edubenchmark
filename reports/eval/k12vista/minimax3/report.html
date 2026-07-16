@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · k12vista</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · K12Vista：中文 K12 多模态学科理解与推理</h1>
+    <p class="muted">基准 k12vista · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">100.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">5</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">5</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">5</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>K12Vista 是目前规模最大的中文 K12 多模态学科基准：33,660 道题，覆盖数学、物理、化学、生物、地理五个学科与小学/初中/高中三个学段，题型含选择题、填空题、问答题，每题都带一张学科图（几何图、电路图、实验装置、函数曲线、地图等），必须先看懂图才能作答。对应本仓库能力 P04（复杂多模态理解），也是中文多模态的短板补位。</p><p>本次评测使用固定抽样题单（300 题，按题型×学科×难度分层，见 data/k12vista/item_list_v1.txt），所有模型跑同一份题，保证横向可比。</p><p>提示词与判分口径均照搬官方仓库：作答走官方 directly_infer_prompt（按题型分三种），判分走官方 directly_eval_prompt——裁判逐空提取参考答案与学生答案并给 0/1，题分＝各空得分均值（多空题部分给分）。表头 accuracy 是严格全对率，官方口径的部分给分均值在 extra_metrics.official_score。</p><p>注意：官方裁判是 GPU 部署的 Qwen2.5-VL-72B / K12-PEM，本地无法复现，此处改用 API 裁判（K12VISTA_JUDGE_MODEL），rubric 文本未改但裁判模型不是官方那一个，且该裁判未经人工金标校准。</p><p class='muted'>主页：<a href='https://github.com/lichongod/K12Vista'>https://github.com/lichongod/K12Vista</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#01203737ebdf6884a6aedbab9fe89d54de113f0addb017b1628595273133bd63</span><span class='tag'>type=选择题</span> <span class='tag'>subject=math-g6</span> <span class='tag'>grade=g6</span> <span class='tag'>difficulty=较难</span></div><div class='qtext'>问题:曹冲称象时，用石头代替大象来称，如果将这些石头用同样大的筐来装，刚好装满50筐。从中任意抽出5筐称一称，结果如下表：
+
+
+$\begin{array}{|c|c|c|c|c|}
+\hline
+第一筐
+ &amp; 第二筐
+ &amp; 第三筐
+ &amp; 第四筐
+ &amp; 第五筐
+ \\\hline
+58千克
+ &amp; 63千克
+ &amp; 61千克
+ &amp; 59千克
+ &amp; 61千克
+ \\\hline
+\end{array}$
+估一估，这头大象大约重（   ）。
+$\begin{description}
+\item A．300千克\item B．3000千克\item C．2吨
+\end{description}$
+
+题目类型:选择题。请你认真阅读该题,回答这个问题。你的最终答案应该是正确选项的字母,除了最终答案,不要输出其他任何内容。</div><img class="qimg" src="data:image/jpeg;base64,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" alt="01203737ebdf6884a6aedbab9fe89d54de113f0addb017b1628595273133bd63.jpg"><div class='ans gold inline'><span class='lbl'>参考答案</span>[&#x27;B&#x27;]</div></div><div class='card'><div class='card-head'><span class='pid'>#0276176101b28ee65684eaa19a648d615bc071d659c1da0134903b05c18fe6f8</span><span class='tag'>type=问答题</span> <span class='tag'>subject=math-g9</span> <span class='tag'>grade=g9</span> <span class='tag'>difficulty=较难</span></div><div class='qtext'>问题:△ABC的内切圆⊙O与BC、CA、AB分别相切于点D、E、F，且AB=9cm，BC=14cm，CA=13cm，求AF、BD、CE的长.
+
+
+
+题目类型:问答题。请阅读题目内容和问题,根据题目要求和所提供的信息来给出最恰当的答案。
+除了最终答案,不要输出其他任何内容。</div><img class="qimg" src="data:image/jpeg;base64,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" alt="0276176101b28ee65684eaa19a648d615bc071d659c1da0134903b05c18fe6f8.jpg"><div class='ans gold inline'><span class='lbl'>参考答案</span>[&#x27;4cm&#x27;, &#x27;5cm&#x27;, &#x27;9cm&#x27;]</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;official_score&quot;: 1.0,
+  &quot;score_10&quot;: 10.0,
+  &quot;n_scored&quot;: 5,
+  &quot;full_credit_rate&quot;: 1.0,
+  &quot;unparsed_rate&quot;: 0.0,
+  &quot;judge_model&quot;: &quot;MiniMax-M3&quot;,
+  &quot;by_type&quot;: {
+    &quot;填空题&quot;: {
+      &quot;n&quot;: 1,
+      &quot;score&quot;: 1.0
+    },
+    &quot;选择题&quot;: {
+      &quot;n&quot;: 2,
+      &quot;score&quot;: 1.0
+    },
+    &quot;问答题&quot;: {
+      &quot;n&quot;: 2,
+      &quot;score&quot;: 1.0
+    }
+  },
+  &quot;by_subject&quot;: {
+    &quot;biology-g12&quot;: {
+      &quot;n&quot;: 1,
+      &quot;score&quot;: 1.0
+    },
+    &quot;math-g6&quot;: {
+      &quot;n&quot;: 1,
+      &quot;score&quot;: 1.0
+    },
+    &quot;math-g9&quot;: {
+      &quot;n&quot;: 3,
+      &quot;score&quot;: 1.0
+    }
+  },
+  &quot;by_grade&quot;: {
+    &quot;g12&quot;: {
+      &quot;n&quot;: 1,
+      &quot;score&quot;: 1.0
+    },
+    &quot;g6&quot;: {
+      &quot;n&quot;: 1,
+      &quot;score&quot;: 1.0
+    },
+    &quot;g9&quot;: {
+      &quot;n&quot;: 3,
+      &quot;score&quot;: 1.0
+    }
+  },
+  &quot;by_difficulty&quot;: {
+    &quot;较易&quot;: {
+      &quot;n&quot;: 1,
+      &quot;score&quot;: 1.0
+    },
+    &quot;较难&quot;: {
+      &quot;n&quot;: 2,
+      &quot;score&quot;: 1.0
+    },
+    &quot;难&quot;: {
+      &quot;n&quot;: 2,
+      &quot;score&quot;: 1.0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>5</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>填空题</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>选择题</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>问答题</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology-g12</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>math-g6</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>math-g9</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 grade 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>g12</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>g6</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>g9</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 difficulty 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>较易</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>较难</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>难</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  
+</main>
+</body>
+</html>
