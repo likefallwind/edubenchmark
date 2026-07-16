@@ -499,6 +499,9 @@ def main() -> None:
                              "examples (everything else — typed edits, screening, eval slice, "
                              "significance gate, ledger — unchanged). Use a separate state dir "
                              "via STAGE1_OUT_SLUG, e.g. glm-5.2_nodiag")
+    parser.add_argument("--proposal-seed", default="",
+                        help="replication nonce appended only to the reflection prompt; combine "
+                             "with an isolated STAGE1_OUT_SLUG for independent proposal runs")
     args = parser.parse_args()
     if args.no_diagnosis and args.rediagnose:
         raise SystemExit("--no-diagnosis and --rediagnose are mutually exclusive")
@@ -585,6 +588,12 @@ def main() -> None:
             if args.no_diagnosis
             else reflection_prompt(rnd, incumbent, diagnosis, args.n_candidates, prior)
         )
+        if args.proposal_seed:
+            prompt += (
+                "\n\nIndependent replication nonce: " + args.proposal_seed
+                + ". Generate a fresh, diverse proposal set for this replication. "
+                  "Do not mention the nonce in the proposals."
+            )
         if args.dry_run:
             print("---- reflection prompt ----")
             print(prompt[:4000])
@@ -748,6 +757,7 @@ def main() -> None:
         "big_screen": args.big_screen,
         "rediagnose": args.rediagnose,
         "no_diagnosis": args.no_diagnosis,
+        "proposal_seed": args.proposal_seed or None,
         "remap_stacked": remap_stacked,
         "regression": regression,
         "candidates": [{k: v for k, v in c.items() if k != "labels"} for c in screened],
