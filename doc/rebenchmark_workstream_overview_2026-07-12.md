@@ -209,3 +209,19 @@ nohup bash -c 'for M in deepseek-v4-pro glm-5.2 doubao-seed-2.0-pro MiniMax-M2.7
 - 两份映射文档（定稿 + 变化记录 v3 增量节）、benchmark profiles、eval README 的 P 引用同步更新。
 
 **同日新增：原子能力大类划分**（`doc/atomic_ability_category_grouping_2026-07-16.md`）：两大类——模型基础能力（P01-P09，8 项，子类：输入理解与遵循/知识与推理/输出可靠性/工具与长程执行）、教育领域能力（11 项，子类：学业评价与诊断/学习者建模与教学规划/教学生成与表达/教育安全与边界）。P10 从 v3 审计的操作基座移到教育侧（残余内核"教学正确性与可读性"是教育专有）。展示与组织层，不进测量模型。
+
+## 2026-07-16(深夜):R18 裁决 P17 重构 + P23 测评设计与出题新设(回来先看这一节)
+
+**裁决 R18(五项议题一次裁决,用户提出)**,全文见定稿文档"裁决记录 R18":
+
+1. **P17 增设"教学目标对齐"空 facet**——原定义只锚学生状态,漏了课标/教学目标;语义核实现有格子无一测目标对齐(longtutor 的 strategy_alignment 锚的是学生状态)。P17 定义改为"对齐教学目标与学生状态,制定并执行合适的教学策略"。
+2. **P17"教学策略知识"改名"教学策略制定"**(facet_id `strategy_knowledge`→`strategy_formulation`):facet 按构念命名不按测量方式命名;格子权重不动,附 knowing-doing gap 注记。P17 两 facet→三 facet。
+3. **全部 38 个 facet 补一句含义定义**,文档表前 + JSON `facet_description` 字段。
+4. **新设 P23"测评设计与出题"**(清单 19→20;依据:测评素养独立构念/失败机制独立/教师标准"命题与作业设计"独立条目):edubench QG 格子自 P18 教学产物生成拆出,P14"生成 rubric"空 facet 迁入(P14 收窄为纯评分)。注记:QG 两指标只测表达质量,测评效度(答案唯一正确/难度定标/干扰项质量/目标对齐)零覆盖,整 P 参考值。
+5. **教师协作不进清单**——组合能力口径(P01×P17 / P22 / P16 / P20),残余机制不满足拆分准入;进"五条解释性口径"+ benchmark-todo.md。
+
+**方法学披露**:同 R17,见数后修订,论证只用构念层依据,无任何格子权重变动。
+
+**已落地**:定稿文档全量更新(清单/口径/各 P 小节含义/P17 重构/P23 新节/缺口表/R18 记录);`data/mapping_measurement_model_v4.json`(v3 保留为 R18 前快照;23 条目=20 在册 P+3 墓碑,38/38 facet 有 description);benchmark-todo.md 记三条(教师协作重审触发条件/P17 目标对齐缺口/P23 效度缺口)。
+
+**未落地(下一步管线迁移,不要直接切路径)**:聚合/13 号检查/HTML 报告三脚本仍指 v3。**直接改路径会静默丢分**——聚合按 subdimension 字符串精确匹配,P18 的 edubench 格子在 v4 里已改名"TMG/PCC × …",而 `build_edubench_metric_summaries.py` 产出的 `artifact_composite` 还是 QG/TMG/PCC 合并口径。迁移顺序:①metric summaries 脚本把 artifact 复合拆成 TMG/PCC 复合 + QG 复合两行;②聚合脚本的 `artifact_subdimension` 映射与 `BENCHMARK_META` 权重覆盖键改成两个新字符串;③三脚本切 v4 重跑,v3 口径聚合产物先快照(参照 `*_v2_snapshot_20260716/` 惯例)。

@@ -126,3 +126,23 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: 先对 SATA 2,635 题做 LLM 类别粗标+抽检（同时解锁 P20/21/22 独立证据）；调研心理健康对话安全 benchmark。
   Related capabilities: P20, P21, P22; CEG
   Source report: doc/p_construct_review_2026-07-11.md, doc/benchmark_gap_recommendations_2026-07-11.md
+
+## R18 裁决随记(P17 重构 / P23 新设 / 教师协作) - 2026-07-16
+
+- Gap: "与人类教师协作"裁决不进原子清单——多数成分现有 P 已覆盖(遵循教师方案 = P01×P17,该转交人类 = P22 的一种处置,向教师报告学情 = P16 输出侧,守住辅助定位 = P20);残余机制"教师主导工作流中理解教师意图、不越俎代庖"仅有人机协同教学(co-orchestration)一类理论依据,不满足拆分准入规则(至少两类 benchmark 无关依据)。
+  Product reason: 教师侧 copilot(备课、批改、学情分析)是主流落地场景;若将来教师标准把人机协作单列,或出现专门评测,需重审是否设独立 P。
+  Suggested data/eval: 关注 teacher-AI co-orchestration 方向评测;场景层报告用现有 P 组合出分,不在原子层虚报覆盖。
+  Related capabilities: P01, P16, P17, P20, P22; CLM/CEG
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R18
+
+- Gap: P17 新增"教学目标对齐"facet 空白——没有任何格子测"教学行为是否服务于课标/教学目标"(longtutor_teaching 的 strategy_alignment 锚的是学生状态/历史,不是目标)。
+  Product reason: 课堂/校内产品必须对齐课标,只测"对学生个性化"会漏掉"教偏了方向"这类失败。
+  Suggested data/eval: 自建协议——给定教学目标+学情,判断教学回复是否服务目标;或寻找含课标/目标标注的教案与教学对话数据。
+  Related capabilities: P17; CLM
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R18
+
+- Gap: P23 测评设计与出题(R18 新设)——现仅 edubench QG 的表达质量指标(清晰启发/情景元素),测评效度(答案唯一正确、难度定标、干扰项对应真实误概念、对齐考查目标)零覆盖;生成 rubric facet(自 P14 迁入)仍空白。
+  Product reason: 出题/组卷是教师侧高频功能;表达流畅但效度差的题(答案歧义、干扰项无效)对产品是隐性风险,当前分数完全测不出来。
+  Suggested data/eval: Eedi 干扰项-误概念数据(与 P16b 候选同源)测干扰项设计;答案正确性可自建规则协议(生成题自答一致性校验);rubric 生成需自建对专家 rubric 的一致性协议。
+  Related capabilities: P23, P14, P16; LAD
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R18
