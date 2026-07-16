@@ -246,6 +246,9 @@ class MMTutorBenchAdapter(BenchmarkAdapter):
             self._judge_client_model = judge_model
         return self._judge_client, judge_model
 
+    def resolved_judge_model(self, extractor_model: str) -> str | None:
+        return os.environ.get(JUDGE_MODEL_ENV) or DEFAULT_JUDGE_MODEL
+
     def extract_answer(self, item, response, client, model):
         judge_client, judge_model = self._resolve_judge(client, model)
         prompt = _judge_prompt(item, response or "")

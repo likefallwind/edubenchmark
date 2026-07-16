@@ -20,8 +20,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from eval.benchmarks import available_benchmarks, get_adapter
@@ -31,6 +33,55 @@ from eval.runner import run
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CANONICAL_JUDGE_MODEL = "MiniMax-M3"
+
+
+def _write_run_start_summary(
+    out_dir: Path,
+    *,
+    benchmark: str,
+    model: str,
+    extractor_model: str,
+    judge_model: str | None,
+    judge_provenance: dict,
+) -> dict:
+    """Persist run identity before clients, datasets, or predictions can fail."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / "summary.json"
+    existing: dict = {}
+    if path.exists():
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                existing = loaded
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    previous_judge = existing.get("judge_model")
+    if not previous_judge and isinstance(existing.get("extra_metrics"), dict):
+        previous_judge = existing["extra_metrics"].get("judge_model")
+    if previous_judge and judge_model and str(previous_judge) != str(judge_model):
+        raise SystemExit(
+            f"refusing to mix judge models in {out_dir}: existing={previous_judge}, requested={judge_model}; "
+            "use the automatic _judge-<model>/ directory or a different --out-dir"
+        )
+
+    started_at = datetime.now(timezone.utc).isoformat()
+    metadata = {
+        "benchmark": benchmark,
+        "model": model,
+        "extractor_model": extractor_model,
+        "judge_model": judge_model,
+        "run_status": "running",
+        "started_at": started_at,
+        **judge_provenance,
+    }
+    existing.pop("completed_at", None)
+    existing.update(metadata)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(existing, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.replace(path)
+    return {k: v for k, v in metadata.items() if k != "run_status"}
 
 
 def main() -> None:
@@ -137,14 +188,30 @@ def main() -> None:
             "item_list_count": len(item_ids),
         }
     limit = None if args.limit is not None and args.limit <= 0 else args.limit
-    # Every model — including the default one — gets its own subdir keyed by
-    # model slug, so models are handled uniformly and never overwrite each other.
+    extractor_model = args.extractor_model
+    judge_model = adapter.resolved_judge_model(extractor_model)
+
+    # Keep the established EduGuard convention: the canonical MiniMax-M3 judge
+    # uses the ordinary model directory; alternate judges get their own namespace
+    # so their scoring caches and summaries can never overwrite one another.
     base_dir = ROOT / "reports" / "eval" / args.benchmark
     if args.out_dir is not None:
         out_dir = args.out_dir
+    elif judge_model and model_slug(judge_model) != model_slug(CANONICAL_JUDGE_MODEL):
+        out_dir = base_dir / f"_judge-{model_slug(judge_model)}" / model_slug(args.model)
     else:
         out_dir = base_dir / model_slug(args.model)
-    extractor_model = args.extractor_model
+
+    run_metadata = {}
+    if not args.dry_run:
+        run_metadata = _write_run_start_summary(
+            out_dir,
+            benchmark=args.benchmark,
+            model=args.model,
+            extractor_model=extractor_model,
+            judge_model=judge_model,
+            judge_provenance=adapter.judge_prompt_provenance(),
+        )
 
     # Predictions and extraction use separate clients: the prediction model may
     # live on the gateway while the extractor (MiniMax-M2.7) stays on MiniMax.
@@ -167,6 +234,7 @@ def main() -> None:
         out_dir=out_dir,
         model=args.model,
         extractor_model=extractor_model,
+        judge_model=judge_model,
         limit=limit,
         offset=args.offset,
         concurrency=args.concurrency,
@@ -186,6 +254,7 @@ def main() -> None:
         rate_limit_max_retries=args.rate_limit_max_retries,
         item_ids=item_ids,
         item_list_info=item_list_info,
+        run_metadata=run_metadata,
     )
 
     if summary:

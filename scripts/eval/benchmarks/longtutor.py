@@ -145,6 +145,9 @@ class LongTutorEvidenceAdapter(BenchmarkAdapter):
     def judge_prompt_provenance(self):
         return {"judge_prompt_version": JUDGE_VERSION, "judge_prompt_sha256": prompt_sha256(EVIDENCE_JUDGE_TEMPLATE)}
 
+    def resolved_judge_model(self, extractor_model: str) -> str | None:
+        return extractor_model
+
 
 class LongTutorDiagnosisAdapter(BenchmarkAdapter):
     name = "longtutor_diagnosis"
@@ -238,3 +241,6 @@ class LongTutorTeachingAdapter(BenchmarkAdapter):
 
     def judge_prompt_provenance(self):
         return {"judge_prompt_version": JUDGE_VERSION, "judge_prompt_sha256": prompt_sha256(TEACHING_JUDGE_TEMPLATE)}
+
+    def resolved_judge_model(self, extractor_model: str) -> str | None:
+        return extractor_model

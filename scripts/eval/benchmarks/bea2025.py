@@ -414,6 +414,9 @@ class BEA2025TutorAdapter(BenchmarkAdapter):
         result["judge_model"] = judge_model
         return json.dumps(result, ensure_ascii=False)
 
+    def resolved_judge_model(self, extractor_model: str) -> str | None:
+        return os.environ.get(JUDGE_MODEL_ENV) or os.environ.get("JUDGE_MODEL") or DEFAULT_JUDGE_MODEL
+
     def score(self, extracted, item):
         try:
             raw = json.loads(extracted)

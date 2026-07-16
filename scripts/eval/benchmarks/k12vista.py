@@ -153,6 +153,9 @@ class K12VistaAdapter(BenchmarkAdapter):
             self._judge_client = extractor if model == extractor_model else build_client(model)
         return self._judge_client, str(self._judge_model)
 
+    def resolved_judge_model(self, extractor_model: str) -> str | None:
+        return os.environ.get(JUDGE_MODEL_ENV) or os.environ.get("JUDGE_MODEL") or extractor_model
+
     @staticmethod
     def _parse_evaluation(reply: str) -> list[Any] | None:
         """Official parse: the judge wraps a 3-element python list in <evaluation> tags."""

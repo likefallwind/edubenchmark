@@ -88,3 +88,13 @@ class BenchmarkAdapter:
         "judge_prompt_sha256": <hex or {name: hex}>}``.
         """
         return {}
+
+    def resolved_judge_model(self, extractor_model: str) -> str | None:
+        """Return the LLM-as-judge model used by this benchmark, if any.
+
+        This is deliberately separate from ``extractor_model``: ordinary answer
+        extraction can use a small/cheap model, while rubric or semantic judging
+        may use a stronger fixed model.  The runner records this value before any
+        API or dataset work starts and uses it to isolate judge-specific outputs.
+        """
+        return None

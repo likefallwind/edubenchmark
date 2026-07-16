@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import time
+from datetime import datetime, timezone
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Any
@@ -265,12 +266,14 @@ def _extract_one(
     response: str,
     client: MiniMaxClient,
     extractor_model: str,
+    judge_model: str | None,
 ) -> dict[str, Any]:
     item_id = str(item["item_id"])
     client.reset_usage_window()
     row: dict[str, Any] = {
         "item_id": item_id,
         "extractor_model": extractor_model,
+        "judge_model": judge_model,
     }
     cache_version = getattr(adapter, "extraction_cache_version", None)
     if cache_version:
@@ -290,6 +293,7 @@ def run_extractions(
     client: MiniMaxClient,
     out_path: Path,
     extractor_model: str,
+    judge_model: str | None = None,
     concurrency: int = 1,
     rate_limit_threshold: int = 10,
     rate_limit_sleep: float = 1800.0,
@@ -302,6 +306,9 @@ def run_extractions(
         for k, v in _index_by_item(read_jsonl(out_path)).items()
         if str(v.get("extracted") or "").strip() and not v.get("error")
         and str(v.get("extractor_model") or "") == str(extractor_model)
+        # Legacy rows did not have a top-level judge_model. They remain safe to
+        # resume because judge changes now select a different output directory.
+        and (v.get("judge_model") in (None, "") or str(v.get("judge_model")) == str(judge_model))
         and (not cache_version or str(v.get("extraction_cache_version") or "") == str(cache_version))
     }
     rows = list(existing.values())
@@ -324,7 +331,7 @@ def run_extractions(
         while n < len(pending):
             item, response = pending[n]
             n += 1
-            row = _extract_one(adapter, item, response, client, extractor_model)
+            row = _extract_one(adapter, item, response, client, extractor_model, judge_model)
             if _is_rate_limit_error(row.get("error")):
                 if guard.on_rate_limit(str(row["item_id"])):
                     pending.append((item, response))
@@ -344,7 +351,9 @@ def run_extractions(
             while idx < len(pending) or in_flight:
                 while idx < len(pending) and len(in_flight) < concurrency:
                     item, response = pending[idx]
-                    future = executor.submit(_extract_one, adapter, item, response, client, extractor_model)
+                    future = executor.submit(
+                        _extract_one, adapter, item, response, client, extractor_model, judge_model
+                    )
                     in_flight[future] = (item, response)
                     idx += 1
                 done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
@@ -399,6 +408,8 @@ def run_scoring(
             row["score_status"] = "extraction_error"
             row["error"] = ext["error"]
             row["response"] = pred.get("response")
+            if ext.get("judge_model"):
+                row["judge_model"] = ext["judge_model"]
             scored.append(row)
             continue
         extracted = str(ext.get("extracted") or "")
@@ -411,6 +422,8 @@ def run_scoring(
             gold=result["gold"],
             response=pred.get("response"),
         )
+        if ext.get("judge_model"):
+            row["judge_model"] = ext["judge_model"]
         # Carry adapter-specific score fields (e.g. rfs, outcome) into the row.
         reserved = {"correct", "normalized", "gold"} | set(row)
         row.update({k: v for k, v in result.items() if k not in reserved})
@@ -423,6 +436,7 @@ def run(
     out_dir: Path,
     model: str,
     extractor_model: str,
+    judge_model: str | None,
     limit: int | None,
     offset: int,
     concurrency: int,
@@ -442,6 +456,7 @@ def run(
     rate_limit_max_retries: int = 3,
     item_ids: list[str] | None = None,
     item_list_info: dict[str, Any] | None = None,
+    run_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if item_ids is not None:
         # Fixed-list mode (--item-list): load everything, keep exactly the
@@ -491,6 +506,7 @@ def run(
     else:
         extractions = run_extractions(
             adapter, items, predictions, extractor_client, extractions_path, extractor_model,
+            judge_model=judge_model,
             concurrency=extract_concurrency,
             rate_limit_threshold=rate_limit_threshold,
             rate_limit_sleep=rate_limit_sleep,
@@ -503,6 +519,7 @@ def run(
     bucket_keys = list(adapter.buckets(items[0]).keys()) if items else []
     summary = build_summary(adapter.name, model, scored, bucket_keys)
     summary["extractor_model"] = extractor_model
+    summary["judge_model"] = judge_model
     if item_list_info:
         summary.update(item_list_info)
     summary["token_usage"] = aggregate_token_usage(predictions, extractions)
@@ -510,6 +527,10 @@ def run(
     if extra_metrics:
         summary["extra_metrics"] = extra_metrics
     summary.update(adapter.judge_prompt_provenance())
+    if run_metadata:
+        summary.update(run_metadata)
+    summary["run_status"] = "complete"
+    summary["completed_at"] = datetime.now(timezone.utc).isoformat()
     (out_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

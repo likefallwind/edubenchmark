@@ -53,13 +53,19 @@ def collect(eval_dir: Path) -> dict[str, list[dict[str, Any]]]:
         home = _load_summary(bench_dir / "summary.json")
         if home:
             summaries.append(home)
-        # Per-model subdirs: accept only dirs whose name is the model's slug,
-        # which filters out dated snapshot subdirs (e.g. 2026-06-08/).
-        for sub in sorted(p for p in bench_dir.iterdir() if p.is_dir()):
+        # Per-model subdirs, including alternate-judge namespaces following the
+        # established ``_judge-<judge>/<tested-model>`` convention.
+        candidates = [p for p in bench_dir.iterdir() if p.is_dir()]
+        for judge_dir in sorted(p for p in candidates if p.name.startswith("_judge-")):
+            candidates.extend(p for p in judge_dir.iterdir() if p.is_dir())
+        for sub in sorted(candidates):
             sub_summary = _load_summary(sub / "summary.json")
             if not sub_summary:
                 continue
-            if _model_slug(sub_summary.get("model", "")) == sub.name:
+            expected_slug = _model_slug(sub_summary.get("model", ""))
+            if sub_summary.get("model") == "MiniMax-M3":
+                expected_slug = "minimax3"
+            if expected_slug == sub.name:
                 summaries.append(sub_summary)
         if summaries:
             results[bench_dir.name] = summaries
@@ -86,6 +92,10 @@ def _rows(summaries: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "scored": s.get("scored"),
             "total": s.get("total_items"),
             "extractor_model": s.get("extractor_model", ""),
+            "judge_model": (
+                s.get("judge_model")
+                or ((s.get("extra_metrics") or {}).get("judge_model") if isinstance(s.get("extra_metrics"), dict) else "")
+            ),
             "extra": _overall_metrics(s),
         }
         rows.append(row)
@@ -106,7 +116,7 @@ def render_markdown(results: dict[str, list[dict[str, Any]]]) -> str:
         extra_keys = sorted({k for r in rows for k in r["extra"]})
         lines.append(f"## {bench}")
         lines.append("")
-        header = ["Model", "Accuracy", "Scored/Total", "Extractor"] + extra_keys
+        header = ["Model", "Accuracy", "Scored/Total", "Extractor", "Judge"] + extra_keys
         lines.append("| " + " | ".join(header) + " |")
         lines.append("| " + " | ".join(["---"] * len(header)) + " |")
         for r in rows:
@@ -115,6 +125,7 @@ def render_markdown(results: dict[str, list[dict[str, Any]]]) -> str:
                 _fmt_acc(r["accuracy"]),
                 f"{r['scored']}/{r['total']}",
                 r["extractor_model"] or "—",
+                r["judge_model"] or "—",
             ]
             for k in extra_keys:
                 v = r["extra"].get(k)
@@ -150,7 +161,7 @@ def render_html(results: dict[str, list[dict[str, Any]]]) -> str:
         rows = _rows(results[bench])
         extra_keys = sorted({k for r in rows for k in r["extra"]})
         parts.append(f"<h2>{esc(bench)}</h2><table>")
-        header = ["Model", "Accuracy", "Scored/Total", "Extractor"] + extra_keys
+        header = ["Model", "Accuracy", "Scored/Total", "Extractor", "Judge"] + extra_keys
         parts.append("<tr>" + "".join(f"<th>{esc(h)}</th>" for h in header) + "</tr>")
         for i, r in enumerate(rows):
             cls = " class='best'" if i == 0 and r["accuracy"] is not None else ""
@@ -159,6 +170,7 @@ def render_html(results: dict[str, list[dict[str, Any]]]) -> str:
                 f"<td class='num'>{esc(_fmt_acc(r['accuracy']))}</td>",
                 f"<td class='num'>{esc(r['scored'])}/{esc(r['total'])}</td>",
                 f"<td>{esc(r['extractor_model'] or '—')}</td>",
+                f"<td>{esc(r['judge_model'] or '—')}</td>",
             ]
             for k in extra_keys:
                 v = r["extra"].get(k)

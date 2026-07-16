@@ -295,6 +295,11 @@ class EduGuardAdversarialAdapter(BenchmarkAdapter):
 
     # --- judge model/client resolution (fixed, not the model under test) -------
 
+    def resolved_judge_model(self, extractor_model: str) -> str | None:
+        import os
+
+        return os.environ.get(JUDGE_MODEL_ENV) or DEFAULT_JUDGE_MODEL
+
     def _resolve_judge(
         self, extractor_client: MiniMaxClient, extractor_model: str
     ) -> tuple[MiniMaxClient, str]:

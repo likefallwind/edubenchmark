@@ -72,6 +72,8 @@ EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M2.7}" # 答案抽取模型(全局�
 JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/MathTutorBench/MRBench/BEA2025/MMTutorBench;与被测/抽取模型解耦)
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
+echo "[run_eval] model=$MODEL extractor_model=$EXTRACTOR_MODEL judge_model=$JUDGE_MODEL benchmarks=$BENCHMARKS"
+
 for b in $BENCHMARKS; do
   if [[ "$b" == longtutor_* ]]; then
     # LongTutor uses semantic-equivalence and rubric judging; MiniMax-M3 is
@@ -111,17 +113,17 @@ for b in $BENCHMARKS; do
       ;;
     bea2025_tutor)
       # Step 2 生成+裁判打分：被测模型生成 tutor 回复，固定裁判逐 4 个 BEA 维度打标。
-      # 这里把 --extractor-model 设成 JUDGE_MODEL，使 judge token usage 进入 summary.json 的 extraction usage。
+      # extractor 与 judge 保持独立；judge 由 BEA2025_JUDGE_MODEL 的专用 client 调用。
       BEA2025_JUDGE_MODEL="$JUDGE_MODEL" \
       python scripts/eval_benchmark.py --benchmark bea2025_tutor --model "$MODEL" \
-        --extractor-model "$JUDGE_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     mmtutorbench)
       # 多图输入(previous images + current image)生成 tutoring 回复；固定 rubric judge 打 6 个 0/1 维度。
-      # 这里把 --extractor-model 设成 JUDGE_MODEL，使 judge token usage 进入 summary.json 的 extraction usage。
+      # extractor 与 judge 保持独立；judge 由 MMTUTORBENCH_JUDGE_MODEL 的专用 client 调用。
       MMTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
       python scripts/eval_benchmark.py --benchmark mmtutorbench --model "$MODEL" \
-        --extractor-model "$JUDGE_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     p08_abstention)
       # P08 能力性弃答：UMWP 不可答/可答混合，规则判分（无裁判、抽取不调用 LLM）。
