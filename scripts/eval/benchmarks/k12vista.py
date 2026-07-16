@@ -100,7 +100,7 @@ class K12VistaAdapter(BenchmarkAdapter):
         if not SAMPLE_JSONL.exists():
             raise SystemExit(
                 f"missing {SAMPLE_JSONL}\n"
-                "run: python scripts/eval/data/build_k12vista_sample.py --size 300"
+                "run: python scripts/eval/data/build_k12vista_sample.py --size 600"
             )
         pinned = [ln.strip() for ln in ITEM_LIST.read_text(encoding="utf-8").splitlines() if ln.strip()]
         order = {h: i for i, h in enumerate(pinned)}

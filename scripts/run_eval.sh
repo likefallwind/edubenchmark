@@ -142,7 +142,7 @@ for b in $BENCHMARKS; do
       # K12Vista 中文 K12 多模态学科推理（P04）；提示与判分照搬官方 prompt.py。
       # 先物化数据 + 生成固定题单（一次性）：
       #   python scripts/eval/data/fetch_eval_datasets.py --benchmark k12vista
-      #   python scripts/eval/data/build_k12vista_sample.py --size 300
+      #   python scripts/eval/data/build_k12vista_sample.py --size 600
       # 判分是 LLM 裁判逐空 0/1（官方 rubric），裁判固定为 K12VISTA_JUDGE_MODEL/JUDGE_MODEL
       # （默认跟随 EXTRACTOR_MODEL），与被测模型解耦；被测模型必须是视觉模型。
       K12VISTA_JUDGE_MODEL="${K12VISTA_JUDGE_MODEL:-$JUDGE_MODEL}" \
