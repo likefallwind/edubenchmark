@@ -23,7 +23,9 @@ Headline ``accuracy`` is the strict full-credit rate (every blank right); the
 official partial-credit mean is ``extra_metrics.official_score`` (with
 ``score_10`` = 10× that for the capability aggregation).
 
-Items are the pinned 300-item stratified sample (``data/k12vista/item_list_v1.txt``);
+Items are the pinned 600-item stratified sample (``data/k12vista/item_list_v2.txt``,
+stratified type × subject — the official eval axes; difficulty is a reporting
+bucket only, its label being undocumented and heavily skewed);
 see ``scripts/eval/data/build_k12vista_sample.py``.
 """
 
@@ -44,9 +46,9 @@ from ..providers import build_client, extraction_max_tokens
 
 SRC_DIR = ROOT / "sources" / "datasets" / "k12vista"
 PROMPT_FILE = SRC_DIR / "K12_Vista" / "code" / "prompt.py"
-SAMPLE_JSONL = SRC_DIR / "K12_Vista" / "data" / "sample_v1.jsonl"
+SAMPLE_JSONL = SRC_DIR / "K12_Vista" / "data" / "sample_v2.jsonl"
 IMAGE_DIR = SRC_DIR / "images"
-ITEM_LIST = ROOT / "data" / "k12vista" / "item_list_v1.txt"
+ITEM_LIST = ROOT / "data" / "k12vista" / "item_list_v2.txt"
 
 JUDGE_MODEL_ENV = "K12VISTA_JUDGE_MODEL"
 
@@ -72,8 +74,9 @@ class K12VistaAdapter(BenchmarkAdapter):
         "化学、生物、地理五个学科与小学/初中/高中三个学段，题型含选择题、填空题、问答题，"
         "每题都带一张学科图（几何图、电路图、实验装置、函数曲线、地图等），必须先看懂图才能作答。"
         "对应本仓库能力 P04（复杂多模态理解），也是中文多模态的短板补位。\n\n"
-        "本次评测使用固定抽样题单（300 题，按题型×学科×难度分层，见 "
-        "data/k12vista/item_list_v1.txt），所有模型跑同一份题，保证横向可比。\n\n"
+        "本次评测使用固定抽样题单（600 题，按题型×学科-学段分层——即官方评测的汇总轴，见 "
+        "data/k12vista/item_list_v2.txt），所有模型跑同一份题，保证横向可比。"
+        "难度只作报告分桶：该标签为数据自带、论文未说明来源，且全量分布极偏（71.7% 难）。\n\n"
         "提示词与判分口径均照搬官方仓库：作答走官方 directly_infer_prompt（按题型分三种），"
         "判分走官方 directly_eval_prompt——裁判逐空提取参考答案与学生答案并给 0/1，"
         "题分＝各空得分均值（多空题部分给分）。表头 accuracy 是严格全对率，官方口径的"
