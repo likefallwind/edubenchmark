@@ -5,7 +5,7 @@ M3 裁决(R1-R16,全部裁完)落地后的**最终映射关系**。裁决口径�
 标注约定:
 - **【裁决】** = M3 裁决直接定下的数字/结构;
 - **【草案】** = 裁决给了方向但具体权重由我起草,待首轮 v2 聚合跑出来后核对;
-- **【待确认】** = 裁决单没覆盖的新挂载提案(longtutor 三任务),等你点头;
+- **【待确认】** = 裁决单没覆盖的新挂载提案(longtutor 三任务)——**2026-07-16 已全部裁决**,结果:evidence→P02 挂(区分度待验证)、diagnosis→P16a 主 0.3 + P13 副 0.1(P12 排除)、teaching→P17 挂;详见定稿文档文末"裁决记录";
 - 无标注 = 沿用 v1,裁决未触及。
 - 权重是 facet 内的相对重要度(同 v1 约定,不归一)。
 
@@ -16,7 +16,7 @@ P04 并入 P03,编号保留作墓碑不复用;其余编号不变,避免全库改
 | P | 名称(裁决后) | 变化 | 测量成熟度 | 主要证据来源 |
 |---|---|---|---|---|
 | P01 | 指令与约束遵循 | R13:直接测量只认 IFEval | **直接测量**(单源) | ifeval + 三个门槛卷 |
-| P02 | 长上下文与证据定位 | R9:标纯代理 | 代理 → 待 longtutor_evidence【待确认】转单源 | (全部搭车分) |
+| P02 | 长上下文与证据定位 | R9:标纯代理;2026-07-16 挂 longtutor_evidence | **直接测量·区分度待验证** | longtutor_evidence + 搭车分 |
 | P03 | **多模态理解**(原 P03+P04 合并) | R5:合并,facet 按材料类型;摘除 eduillustrate | 多源(学科图表 facet 为参考值) | mathvista、olympiadbench、k12vista、tutorbench、mmtutorbench |
 | ~~P04~~ | (已并入 P03) | R5 | — | — |
 | P05 | 知识调用与掌握 | R1:edubench 改指标级取分 | 多源·成熟(知识簇天花板,门槛性质) | mmlu_pro、ceval、agieval、pedagogy_benchmark、edubench 等 |
@@ -26,7 +26,7 @@ P04 并入 P03,编号保留作墓碑不复用;其余编号不变,避免全库改
 | P09 | 工具使用与长程智能体执行 | — | **空白**(领域空白,报告诚实标注) | 无 |
 | P10 | 多模态教学产物生成 | — | 单源 | eduillustrate |
 | P11 | 作答正误判定 | — | 单源+ | mathtutorbench 两任务 |
-| P12 | 错误位置定位 | — | 单源+ → 待 longtutor_diagnosis【待确认】 | mathtutorbench_mistake_location、sas_bench CCS |
+| P12 | 错误位置定位 | 2026-07-16:longtutor_diagnosis 语义核实后**不挂**(输入无解题步骤) | 单源+ | mathtutorbench_mistake_location、sas_bench CCS |
 | P13 | 错因归因 | R6 降权;R2 换单维度分;R1 加 edubench 指标 | 多源 | sas_bench ECS(核心)、bea/mrbench、edubench |
 | P14 | **主观题 rubric 评分能力**(R3 重定义) | 三 facet,含空白"生成 rubric" | 学业作答多格,评判 facet 暂不计分 | asap_2、sas_bench、(bea/mrbench_judge) |
 | P15 | 学术诚信与作答真实性判定 | — | **空白**(领域空白) | 无 |
@@ -78,7 +78,7 @@ edubench·指令遵循不挂【裁决 R13】。
 | asap_2 · QWK | 0.2 | 代理(搭车) | 沿用,标 proxy_only |
 | sas_bench · QWK / CCS | 0.15 / 0.2 | 代理(搭车) | 同上 |
 | mathtutorbench solution_correctness / mistake_location | 0.15 / 0.2 | 代理(搭车) | 同上 |
-| **longtutor_evidence · 长对话证据抽取** | **0.7** | **直接测量候选** | **【待确认】**——任务语义正对构念,若挂载 P02 从纯代理转单源直接测量 |
+| **longtutor_evidence · 长对话证据抽取** | **0.7** | **直接测量** | **【已裁决 2026-07-16】挂**——P02 从纯代理转单源直接测量;三模型面 0.787/0.807/0.791 区分度待验证,报告按"直接测量·区分度待验证"表述 |
 
 ### P03 多模态理解(R5 合并 P03+P04;facet 按材料类型)
 
@@ -137,7 +137,7 @@ mtb_solution_correctness 0.6 / mtb_mistake_location 0.1 / bea2025_judge 0.25(exc
 |---|---|---|
 | mathtutorbench_mistake_location | 0.7 | 沿用 |
 | sas_bench · CCS | 0.25 | 沿用 |
-| **longtutor_diagnosis · 长对话错误诊断(F1)** | **0.3** | **【待确认】**——规则判分(F1),若语义核实为"定位学生问题",挂这里;若更偏"归因"则改挂 P13 |
+| ~~longtutor_diagnosis~~ | — | **【已裁决 2026-07-16】不挂 P12**——语义核实:输入是历史作答记录+当前题面,无任何解题步骤可定位;四标签是认知层失败机制,改挂 **P16a 主(0.3,参考值)+ P13 副(0.1)**,依据与方法学注记见定稿文档 P16 小节 |
 
 ### P13 错因归因
 
@@ -179,7 +179,7 @@ mtb_solution_correctness 0.6 / mtb_mistake_location 0.1 / bea2025_judge 0.25(exc
 | 教学策略执行 | bea2025_tutor · **Providing_Guidance 单维度分** | 0.3 | 【裁决 R2】替换复合 pass rate |
 | 教学策略执行 | mrbench_tutor · **Providing_Guidance 单维度分** | 0.3 | 【裁决 R2】同上 |
 | 教学策略执行 | ~~edubench IP 0.4 / PCC 0.3 / PLS 0.45~~ → **edubench·个性化适应 0.4 + edubench·情景元素融合 0.25** | — | 【裁决 R1+草案权重】 |
-| 教学策略执行 | **longtutor_teaching · strategy_alignment + history_utilization** | **0.3** | **【待确认】**——跨回合策略贴合与历史利用,正对"执行"构念;分数重算完成后挂 |
+| 教学策略执行 | **longtutor_teaching · strategy_alignment + history_utilization** | **0.3** | **【已裁决 2026-07-16】挂**——重算验证完成(三模型 valid 1001,strategy_alignment 3.68–4.13 有区分度) |
 
 ### P18 适配性解释与反馈生成(formative,两 facet)
 
@@ -216,8 +216,8 @@ mtb_solution_correctness 0.6 / mtb_mistake_location 0.1 / bea2025_judge 0.25(exc
 
 ## 四、遗留与执行清单
 
-1. **三个【待确认】格子**(longtutor_evidence→P02、longtutor_diagnosis→P12、longtutor_teaching→P17),等你点头后进 `mapping_measurement_model_v2.json`。
+1. ~~三个【待确认】格子~~ **已裁决(2026-07-16)**:evidence→P02 挂(区分度待验证)、diagnosis→P16a 主 0.3 + P13 副 0.1(P12 排除)、teaching→P17 挂。已进 `data/mapping_measurement_model_v2.json`。
 2. **【草案】权重**(主要是 edubench 指标级格子)在 v2 首轮聚合 + 13 号检查跑完后核对:凡是死格子(题级 SD<0.5)剔除,凡是与同 facet 内其他格子跨模型负相关的红旗格子回到裁决。
 3. mrbench 的 **Revealing_of_the_Answer**(不泄答案)维度现在没挂任何 P——它是脚手架质量的负向信号,备选挂 P17 执行 facet,暂不动,记录在案。
-4. 数据依赖:mrbench/bea/mathtutorbench 分数等重判批次跑完才可采信(进行中);mrbench_tutor / bea2025_tutor 缺 deepseek-v4-pro、doubao 两模型生成,补跑与否待定。
-5. 本文档定稿后:产出 `mapping_measurement_model_v2.json` → 重跑聚合 + 13 号检查 → v1/v2 对比(21 P 口径,P03 合并与 P04 墓碑在对比中说明)→ M4 双报告。
+4. ~~数据依赖~~ **已解除(2026-07-16 核对)**:裁判 error 断点续判跑完,6 个裁判依赖 benchmark × 发布 5 模型去重后 error 全 0,mrbench/bea/mathtutorbench 分数解禁;longtutor_teaching 三模型均为全量真分(valid 1001)。**补跑决定(2026-07-16):不补**——mrbench_tutor/bea2025_tutor 缺 deepseek-v4-pro、doubao-seed-2.0-pro 生成,longtutor 缺 MiniMax-M2.7、doubao-seed-2.0-pro,均维持 3 模型面并在配对检验与报告中注记。
+5. ~~产出 mapping_measurement_model_v2.json~~ **已落盘(2026-07-16)** → 剩:聚合脚本 MAPPINGS 切 v2(含 edubench 指标级取分与 bea/mrbench 单维度分的取数改造)→ 重跑聚合 + 13 号检查 → v1/v2 对比(21 P 口径,P03 合并与 P04 墓碑在对比中说明)→ M4 双报告。

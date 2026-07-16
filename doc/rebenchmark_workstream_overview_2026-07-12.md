@@ -170,3 +170,26 @@ nohup bash -c 'for M in deepseek-v4-pro glm-5.2 doubao-seed-2.0-pro MiniMax-M2.7
 2. 重判完成后：核对 error 归零 → `--score-only` 出分；补 longtutor_teaching glm-5.2/minimax3 各缺的 1 条裁判缓存并重算 summary（当前两者仍是全 0 旧账，deepseek-v4-pro 已是真分）。
 3. mrbench_tutor / bea2025_tutor 缺 deepseek-v4-pro、doubao-seed-2.0-pro 两个模型的**生成**（不只是重判）——R2 逐维度数据目前只有 3 个模型面，是否补跑待定。
 4. 按裁决结果产出 `mapping_measurement_model_v2.json` + 映射 v2 → 重跑聚合 + 13 号检查 → v1/v2 对比 → M4 双报告。
+
+## 2026-07-16：映射关系收敛完毕，v2 测量模型落盘（回来先看这一节）
+
+**上一节的 1/2/3 全部了结**：
+
+- **重判批次已跑完**：mrbench_tutor / bea2025_tutor / mathtutorbench 四个 win-rate 任务 × 发布 5 模型，extractions 按 item_id 去重后 error 全 0——**这批分数解禁，可采信**。（deepseek-v4-flash / doubao-seed-2.0-lite 还有 error 行，不在发布 5 模型内，不挡路。）
+- **longtutor_teaching 三模型全为真分**：minimax3 / glm-5.2 / deepseek-v4-pro 各 valid_judgements=1001，四维均分 4.10 / 4.03 / 3.95（minimax3 的 `--score-only` 重算 7-16 上午收尾）。
+- **补跑决定：不补**。mrbench/bea 缺 2 模型生成、longtutor 缺 2 模型，均维持 3 模型面，配对检验与报告注记。
+
+**longtutor 三个待确认挂载已裁决**（详见定稿文档文末"裁决记录"）：
+
+| 任务 | 裁决 | 关键依据 |
+|---|---|---|
+| longtutor_evidence | **挂 P02 0.7**，P02 转"直接测量·区分度待验证" | 构念正对；但三模型 0.787/0.807/0.791 挤得紧 |
+| longtutor_diagnosis | **P16a 主挂 0.3（参考值）+ P13 副挂 0.1，P12 排除** | 语义核实：输入无解题步骤；四标签是认知层失败机制（官方 schema L1-L4），归因证据源是交互历史特征——正对 P16a"知识状态估计"（原零覆盖子能力）。注记：类别不平衡（多数类基线 acc 0.506 > 三模型 0.35-0.44，headline 用 macro-F1）、金标为特征决策矩阵+人工修订 |
+| longtutor_teaching | **挂 P17 执行 facet 0.3** | 重算验证完成，strategy_alignment 3.68-4.13 有区分度 |
+
+**产物**：`data/mapping_measurement_model_v2.json`（21 P + P04 墓碑、121 格、36 benchmark，含 R1-R16 全部裁决 + 上表三项；结构与 v1 兼容，已验证可被 13 号检查脚本消费）。两份映射文档（定稿 + 变化记录）同步更新，映射关系至此**全部收敛，无待确认项**。
+
+**下一步（M4 关键路径，按序）**：
+1. **聚合脚本切 v2**：`build_atomic_ability_rebenchmark_artifacts.py` 的 MAPPINGS 仍是 v1 内联硬编码（69 行），需按 v2 重写或改读 JSON；工程要点是两处取数改造——edubench 从任务均分改指标级取分（数据在 `reports/eval/edubench/` 逐题判分 + `_analysis/` 的 snake_case 指标名）、bea/mrbench_tutor 从复合 pass rate 改单维度分（Mistake_Identification / Providing_Guidance / Actionability / Tutor_Tone）。`build_mapping_validation.py` 的 DEFAULT_MEASUREMENT_MODEL 同步指到 v2。
+2. 重跑聚合 + 13 号检查 → 剔死格子（题级 SD<0.5）、红旗格子回裁决（草案权重核对）。
+3. v1/v2 对比（21 P 口径，P03 合并与 P04 墓碑在对比中说明）+ 排名稳定性 → M4 双报告（研究版/用户版）。

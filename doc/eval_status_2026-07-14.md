@@ -1,4 +1,4 @@
-# 评测进度总览（截至 2026-07-14）
+# 评测进度总览（截至 2026-07-16）
 
 说明：
 
@@ -37,9 +37,9 @@
 |olympiadbench|-/-|-/-|6685/6728|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|6722/6728|
 |edubench|-/-|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|-/-|-/-|-/-|-/-|-/-|-/-|
 |ifeval|-/-|-/-|540/541|541/541|-/-|-/-|541/541|-/-|-/-|-/-|538/541|540/541|
-|longtutor_diagnosis|-/-|-/-|-/-|-/-|-/-|-/-|predictions only|-/-|-/-|-/-|-/-|2/2|
-|longtutor_evidence|-/-|-/-|predictions only|-/-|-/-|-/-|0/3003|-/-|-/-|-/-|-/-|2/2|
-|longtutor_teaching|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|2/2|
+|longtutor_diagnosis|-/-|-/-|1001/1001|-/-|-/-|-/-|1001/1001|-/-|-/-|-/-|-/-|1001/1001|
+|longtutor_evidence|-/-|-/-|3003/3003|-/-|-/-|-/-|3003/3003|-/-|-/-|-/-|-/-|3003/3003|
+|longtutor_teaching|-/-|-/-|1001/1001|-/-|-/-|-/-|1001/1001|-/-|-/-|-/-|-/-|1001/1001|
 |p07_selfcheck|-/-|-/-|546/550|550/550|-/-|-/-|550/550|-/-|-/-|-/-|550/550|550/550|
 |p08_abstention|-/-|-/-|500/500|500/500|-/-|-/-|500/500|-/-|-/-|-/-|500/500|500/500|
 |p08_calibration|-/-|-/-|549/550|550/550|-/-|-/-|550/550|-/-|-/-|-/-|550/550|550/550|
@@ -51,3 +51,15 @@
 |eduguard_adversarial|801/801|-/-|-/-|-/-|-/-|-/-|
 |eduguard_sata|predictions only|-/-|-/-|-/-|-/-|-/-|
 |edubench|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|
+
+## 本次主表新增已完成 `summary.json`
+
+- `reports/eval/longtutor_diagnosis/deepseek-v4-pro/summary.json`
+- `reports/eval/longtutor_diagnosis/glm-5.2/summary.json`
+- `reports/eval/longtutor_diagnosis/minimax3/summary.json`
+- `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json`
+- `reports/eval/longtutor_evidence/glm-5.2/summary.json`
+- `reports/eval/longtutor_evidence/minimax3/summary.json`
+- `reports/eval/longtutor_teaching/deepseek-v4-pro/summary.json`
+- `reports/eval/longtutor_teaching/glm-5.2/summary.json`
+- `reports/eval/longtutor_teaching/minimax3/summary.json`

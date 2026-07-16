@@ -1,15 +1,15 @@
-# 原子能力与 Benchmark 映射(定稿,2026-07-15)
+# 原子能力与 Benchmark 映射(定稿,2026-07-15;2026-07-16 三个待确认项已裁决,全部定稿)
 
-这是当前的最终结论:原子能力清单是什么、每个能力由哪些 benchmark 的哪些维度测量、权重多少。不含历史沿革(变化记录见 `doc/benchmark_ability_mapping_v2_2026-07-15.md`)。
+这是当前的最终结论:原子能力清单是什么、每个能力由哪些 benchmark 的哪些维度测量、权重多少。不含历史沿革(变化记录见 `doc/benchmark_ability_mapping_v2_2026-07-15.md`)。机器可读版:`data/mapping_measurement_model_v2.json`(与本文档同步,2026-07-16)。
 
-约定:权重是 facet 内的相对重要度,不归一。格子写法为 `benchmark · 取分维度`。带 ※ 的格子尚待确认(文末列出),其余均为定稿。
+约定:权重是 facet 内的相对重要度,不归一。格子写法为 `benchmark · 取分维度`。原三处 ※ 待确认项已于 2026-07-16 裁决完毕(文末有裁决记录),全表均为定稿。
 
 ## 原子能力清单(21 项)
 
 | P | 名称 | 一句话定义 | 测量成熟度 |
 |---|---|---|---|
 | P01 | 指令与约束遵循 | 按显式指令和格式/行为约束产出 | 直接测量(规则判分) |
-| P02 | 长上下文与证据定位 | 在长材料/长对话中定位并引用相关证据 | 代理(※待 longtutor 转直接) |
+| P02 | 长上下文与证据定位 | 在长材料/长对话中定位并引用相关证据 | 直接测量·区分度待验证(2026-07-16 挂 longtutor_evidence) |
 | P03 | 多模态理解 | 读懂教育场景中的图像/图表等非文本材料并据此推理 | 多源(学科图表 facet 为参考值) |
 | P05 | 知识调用与掌握 | 学科知识与教学专业知识的正确调用 | 多源·成熟(知识簇天花板,门槛性质) |
 | P06 | 推理与生成 | 解题推理与约束下的生成推理 | 多源·成熟 |
@@ -22,7 +22,7 @@
 | P13 | 错因归因 | 解释错误背后的原因/误概念 | 多源 |
 | P14 | 主观题 rubric 评分能力 | 依据(或构建)评分标准评判主观作答与教学回复 | 学业评分多格;评判/生成 facet 暂无分 |
 | P15 | 学术诚信与作答真实性判定 | 识别抄袭、代写等真实性问题 | **空白,暂未覆盖** |
-| P16 | 学习者画像建模 | 从交互中建模学生的水平、需求与特征 | 弱(4 个子能力仅覆盖 1 个) |
+| P16 | 学习者画像建模 | 从交互中建模学生的水平、需求与特征 | 弱(4 个子能力覆盖 2 个;P16a 2026-07-16 起有分) |
 | P17 | 个性化教学策略选择 | 针对学生选择并执行合适的教学策略 | 多源·证据最厚 |
 | P18 | 适配性解释与反馈生成 | 生成适配学生的解释、引导与反馈 | 多源·证据最厚 |
 | P19 | 学习路径规划(知识结构层) | 基于知识先修结构规划学习顺序 | 单源·参考值(自建协议) |
@@ -52,7 +52,7 @@
 
 | 格子 | 权重 | 性质 |
 |---|---|---|
-| ※ longtutor_evidence · 长对话证据抽取 | 0.7 | 直接测量候选 |
+| longtutor_evidence · 长对话证据抽取 | 0.7 | 直接测量(2026-07-16 裁决定稿;三模型面 0.787/0.807/0.791 区分度待验证,报告按此表述) |
 | asap_2 · 作文整体 QWK | 0.2 | 代理(搭车) |
 | sas_bench · QWK / CCS | 0.15 / 0.2 | 代理(搭车) |
 | mathtutorbench_solution_correctness / mistake_location | 0.15 / 0.2 | 代理(搭车) |
@@ -142,8 +142,9 @@
 | 格子 | 权重 | 性质 |
 |---|---|---|
 | mathtutorbench_mistake_location | 0.7 | education_core |
-| ※ longtutor_diagnosis · 长对话错误诊断 F1 | 0.3 | 规则判分 |
 | sas_bench · CCS | 0.25 | education_core |
+
+(2026-07-16 裁决:longtutor_diagnosis 不挂 P12——语义核实后,任务输入里没有任何解题步骤可供定位,改挂 P16a 主 + P13 副,见对应小节。)
 
 ### P13 错因归因
 
@@ -154,6 +155,7 @@
 | mrbench_tutor · Mistake_Identification | 0.25 | 同上 |
 | edubench · 错误识别与纠正 | 0.25 | 方法学局限注记:换裁判分歧大 |
 | mathtutorbench_mistake_correction | 0.2 | 只测改对与否,部分相关 |
+| longtutor_diagnosis · 四类知识状态诊断 macro-F1 | 0.1 | 副挂(2026-07-16 裁决:标签名义是错因类别,但归因证据源是交互历史特征而非作答内容,与 ECS 锚动用的能力不同,仅作相邻证据;主挂 P16a) |
 | bea2025_judge / mrbench_judge | 0.3 / 0.25 | 暂不计分(judge 任务) |
 
 ### P14 主观题 rubric 评分能力(三 facet)
@@ -166,13 +168,16 @@
 | 教学回复评判 | mrbench_judge · 八维判卷 | 0.45 | 暂不计分 |
 | 生成 rubric | (空白,暂未覆盖) | — | — |
 
-### P16 学习者画像建模(声明 4 个子能力,现覆盖 1 个)
+### P16 学习者画像建模(声明 4 个子能力,现覆盖 2 个)
 
-| facet | 格子 | 权重 |
+| facet(子能力) | 格子 | 权重 |
 |---|---|---|
-| 画像知识 | pedagogy_benchmark · SEND / 合并卡 | 0.35 / 0.3 |
-| 画像应用 | edubench · 个性化适应与学习支持(PLS 任务) | 0.3 |
-| (其余 3 个子能力) | (空白,暂未覆盖) | — |
+| P16a 知识状态估计 | longtutor_diagnosis · 四类知识状态诊断 macro-F1 | 0.3(参考值) |
+| P16d 支持需求判断·画像知识 | pedagogy_benchmark · SEND / 合并卡 | 0.35 / 0.3 |
+| P16d 支持需求判断·画像应用 | edubench · 个性化适应与学习支持 | 0.3 |
+| P16b 误概念识别 / P16c 情感与参与识别 | (空白,暂未覆盖) | — |
+
+P16a 挂载依据(2026-07-16 裁决):longtutor_diagnosis 的输入是 199 条历史作答记录(题面+知识点+时间+对错)+ 当前题面,四个标签(Recall Failure / Conceptual Gap / Procedural Error / Transfer Deficit)是认知层失败机制,归因证据源是交互历史——正对"从作答历史判断学生会什么、不会什么"这个此前零覆盖的子能力。方法学注记:①类别不平衡(Procedural 506/1000),多数类基线 accuracy 0.506 高于三模型的 0.35–0.44,headline 用 macro-F1;②金标为特征决策矩阵 + 人工修订,非独立盲标,权重保守、性质参考值;③仅 3 个模型面,不补跑。
 
 ### P17 个性化教学策略选择(两 facet)
 
@@ -187,7 +192,7 @@
 | 教学策略执行 | bea2025_tutor · Providing_Guidance | 0.3 |
 | 教学策略执行 | mrbench_tutor · Providing_Guidance | 0.3 |
 | 教学策略执行 | mmtutorbench · 六维合成 | 0.3 |
-| 教学策略执行 | ※ longtutor_teaching · strategy_alignment + history_utilization | 0.3 |
+| 教学策略执行 | longtutor_teaching · strategy_alignment + history_utilization | 0.3(2026-07-16 裁决定稿,重算验证已完成:三模型 valid 1001,strategy_alignment 3.68–4.13 有区分度) |
 | 教学策略执行 | edubench · 情景元素融合 | 0.25 |
 
 ### P18 适配性解释与反馈生成(两 facet)
@@ -262,10 +267,14 @@
 | eduguard_sata | 教学伤害多选(SATA) | 规则判分(RFS) | P20、P21、P22(同源) |
 | eduguard_adversarial | 对抗越狱 + 拒答质量 | 两阶段 LLM 裁判 | P20、P21、P22、P18 |
 | eduillustrate | 生成教学图示质量 | LLM 裁判八维 | P10、P18 |
-| longtutor 三任务 ※ | 长对话辅导(证据/诊断/教学) | F1 / LLM 裁判 | ※P02、※P12、※P17(待确认) |
+| longtutor 三任务 | 长对话辅导(证据/诊断/教学) | 语义裁判 / 规则 F1 / LLM 裁判四维 | P02(evidence)、P16a 主 + P13 副(diagnosis)、P17(teaching)——2026-07-16 裁决定稿 |
 
-## 待确认项(仅此三处,其余均为定稿)
+## 裁决记录(2026-07-16,原三处待确认项全部落定)
 
-1. ※ longtutor_evidence → P02(0.7):挂上后 P02 由纯代理转直接测量;
-2. ※ longtutor_diagnosis → P12(0.3):若语义核实更偏"归因"则改挂 P13;
-3. ※ longtutor_teaching → P17 执行 facet(0.3):等分数重算验证后挂。
+1. **longtutor_evidence → P02(0.7),挂**。P02 由纯代理转直接测量;三模型面 accuracy 0.787/0.807/0.791 挤得很紧,成熟度按"直接测量·区分度待验证"表述,等 13 号检查配对结果。
+2. **longtutor_diagnosis → P16a 主挂(0.3,参考值)+ P13 副挂(0.1),不挂 P12**。语义核实:输入无解题步骤(P12 排除);四标签是认知层失败机制、归因证据源是交互历史特征而非作答内容,构念正主是 P16a"知识状态估计"(此前零覆盖);与 sas_bench ECS 动用的能力不同,P13 仅作相邻证据副挂。附带方法学注记(类别不平衡、金标决策矩阵模板化风险)见 P16 小节。
+3. **longtutor_teaching → P17 执行 facet(0.3),挂**。前置条件(4 维全 0 bug 修复后重算验证)已满足:三个模型 valid_judgements 均 1001,strategy_alignment 3.68–4.13 有区分度。取 strategy_alignment + history_utilization 两维,coherence/appropriateness 不入分。
+
+同日决定:**longtutor 三任务与 mrbench_tutor / bea2025_tutor 的模型面缺口不补跑**(longtutor 缺 MiniMax-M2.7、doubao-seed-2.0-pro;mrbench/bea 缺 deepseek-v4-pro、doubao-seed-2.0-pro 的生成),v2 聚合与 13 号检查按 3 模型面注记。
+
+机器可读落盘:`data/mapping_measurement_model_v2.json`(2026-07-16,含全部 R1-R16 裁决 + 本页三项)。
