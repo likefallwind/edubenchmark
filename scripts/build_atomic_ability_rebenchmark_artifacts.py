@@ -62,14 +62,14 @@ TIER_IMPORTANCE_FACTOR = {
     "excluded_judge_task": 0.08,
 }
 
-P_GAP_BONUS = {"P04", "P08", "P09", "P10", "P15", "P16", "P19", "P22"}
+P_GAP_BONUS = {"P02", "P09", "P10", "P15", "P16", "P19", "P22"}
 
 
 P_GROUPS = {
     "P01": ("SRG", "指令与约束遵循"),
     "P02": ("SRG", "长上下文与证据定位"),
-    "P03": ("SRG", "常规多模态感知"),
-    "P04": ("SRG", "复杂多模态理解"),
+    "P03": ("SRG", "多模态理解"),
+    "P04": ("SRG", "（已并入 P03，墓碑编号）"),
     "P05": ("FDR", "知识调用与掌握"),
     "P06": ("FDR", "推理与生成"),
     "P07": ("FDR", "自我校验与修正"),
@@ -79,567 +79,447 @@ P_GROUPS = {
     "P11": ("LAD", "作答正误判定"),
     "P12": ("LAD", "错误位置定位"),
     "P13": ("LAD", "错因归因"),
-    "P14": ("LAD", "Rubric 映射评分"),
+    "P14": ("LAD", "主观题 rubric 评分能力"),
     "P15": ("LAD", "学术诚信与作答真实性判定"),
     "P16": ("CLM", "学习者画像建模"),
     "P17": ("CLM", "个性化教学策略选择"),
     "P18": ("CLM", "适配性解释与反馈生成"),
-    "P19": ("CLM", "学习路径规划"),
+    "P19": ("CLM", "学习路径规划（知识结构层）"),
     "P20": ("CEG", "教育角色边界判断"),
     "P21": ("CEG", "学生风险识别"),
     "P22": ("CEG", "安全处置选择"),
 }
 
 
-def ability_weights(*items: tuple[str, float]) -> list[dict[str, Any]]:
-    total = round(sum(w for _, w in items), 6)
-    if abs(total - 1.0) > 1e-6:
-        raise ValueError(f"ability weights must sum to 1, got {total}: {items}")
-    rows = []
-    for code, weight in items:
-        group, name = P_GROUPS[code]
-        rows.append({"p_code": code, "p_name": name, "group": group, "weight": weight})
-    return rows
+MEASUREMENT_MODEL_PATH = ROOT / "data" / "mapping_measurement_model_v2.json"
 
-
-MAPPINGS: list[dict[str, Any]] = [
-    {
-        "benchmark_id": "mmlu_pro",
+# Benchmark-level metadata joined onto measurement-model cells to form MAPPINGS
+# rows.  Ability weights, facets and evidence tiers live in
+# ``data/mapping_measurement_model_v2.json`` (single source of truth,
+# adjudicated 2026-07-15/16); this table only carries what the JSON
+# deliberately does not: display name, ingestion scope, metric family per
+# subdimension ("*" = all subdimensions), benchmark-level confidence weight
+# (with per-subdimension overrides), and the benchmark-level rationale.
+BENCHMARK_META: dict[str, dict[str, Any]] = {
+    "mmlu_pro": {
         "benchmark_name": "MMLU-Pro",
-        "subdimension": "overall/category accuracy",
-        "evidence_tier": "foundation_gate",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.35,
-        "abilities": ability_weights(("P05", 0.60), ("P06", 0.30), ("P01", 0.10)),
+        "metric_family": {"*": "accuracy"},
         "rationale": "基础学科知识与选择题答题能力，主要验证 LLM 答题门槛，不应主导教育能力雷达图。",
     },
-    {
-        "benchmark_id": "ceval",
+    "ceval": {
         "benchmark_name": "C-EVAL",
-        "subdimension": "overall/category/subject accuracy",
-        "evidence_tier": "foundation_gate",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.35,
-        "abilities": ability_weights(("P05", 0.60), ("P06", 0.25), ("P01", 0.15)),
+        "metric_family": {"*": "accuracy"},
         "rationale": "中文考试与学科知识，属于基础答题门槛；对应知识调用、推理和选项约束遵循。",
     },
-    {
-        "benchmark_id": "agieval",
+    "agieval": {
         "benchmark_name": "AGIEval",
-        "subdimension": "overall/task/language/question_type accuracy",
-        "evidence_tier": "foundation_gate",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.40,
-        "abilities": ability_weights(("P06", 0.45), ("P05", 0.35), ("P01", 0.20)),
+        "default_benchmark_weight": 0.4,
+        "metric_family": {"*": "accuracy"},
         "rationale": "标准化考试推理与答题，仍是 LLM 答题能力门槛；更偏 P06。",
     },
-    {
-        "benchmark_id": "olympiadbench",
+    "olympiadbench": {
         "benchmark_name": "OlympiadBench",
-        "subdimension": "overall/subject/language/modality accuracy",
-        "evidence_tier": "foundation_gate",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.55,
-        "abilities": ability_weights(("P06", 0.55), ("P05", 0.25), ("P03", 0.20)),
+        "metric_family": {"*": "accuracy"},
         "rationale": "高难学科推理和多模态竞赛题，答题能力未完全饱和；仍作为门槛/诊断而非教育核心。",
     },
-    {
-        "benchmark_id": "mathvista",
+    "mathvista": {
         "benchmark_name": "MathVista",
-        "subdimension": "task/question_type/answer_type accuracy",
-        "evidence_tier": "diagnostic",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.70,
-        "abilities": ability_weights(("P03", 0.35), ("P06", 0.45), ("P05", 0.20)),
-        "rationale": "静态图文数学题，主要测常规多模态感知、数学推理和知识调用。",
+        "default_benchmark_weight": 0.7,
+        "metric_family": {"*": "accuracy"},
+        "rationale": "静态图文数学题，主要测多模态理解（解题图像 facet）、数学推理和知识调用。",
     },
-    {
-        "benchmark_id": "pedagogy_benchmark",
+    "pedagogy_benchmark": {
         "benchmark_name": "Pedagogy Benchmark",
-        "subdimension": "CDPK teaching knowledge selection",
-        "evidence_tier": "education_core",
         "source_scope": "otherbenchmark",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P05", 0.45), ("P17", 0.35), ("P06", 0.20)),
-        "rationale": "教学法知识选择题，既有教育知识，也有教学策略选择和形式推理。",
+        "default_benchmark_weight": 0.8,
+        "metric_family": {
+            "CDPK teaching knowledge selection": "accuracy",
+            "SEND special education needs selection": "accuracy",
+            "CDPK/SEND aggregate from 0701 card": "accuracy_percent",
+        },
+        "rationale": "教学法知识选择题，既有教育知识，也有教学策略选择；R8 裁决后不再挂 P06。",
     },
-    {
-        "benchmark_id": "pedagogy_benchmark",
-        "benchmark_name": "Pedagogy Benchmark",
-        "subdimension": "SEND special education needs selection",
-        "evidence_tier": "education_core",
-        "source_scope": "otherbenchmark",
-        "metric_family": "accuracy",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P05", 0.35), ("P16", 0.35), ("P17", 0.30)),
-        "rationale": "特殊教育需求判断更依赖学习者画像和干预策略选择。",
-    },
-    {
-        "benchmark_id": "pedagogy_benchmark",
-        "benchmark_name": "Pedagogy Benchmark",
-        "subdimension": "CDPK/SEND aggregate from 0701 card",
-        "evidence_tier": "education_core",
-        "source_scope": "otherbenchmark",
-        "metric_family": "accuracy_percent",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P05", 0.40), ("P17", 0.30), ("P16", 0.30)),
-        "rationale": "0701 只有 Pedagogy 聚合卡片时使用，合并教学法知识、特殊教育需求画像和策略选择。",
-    },
-    {
-        "benchmark_id": "asap_2",
+    "asap_2": {
         "benchmark_name": "ASAP 2.0",
-        "subdimension": "essay holistic QWK",
-        "evidence_tier": "education_core",
         "source_scope": "otherbenchmark",
-        "metric_family": "qwk_0_to_100",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P14", 0.65), ("P02", 0.20), ("P05", 0.15)),
-        "rationale": "作文评分一致性主要是 rubric 映射评分，同时需要定位文本证据与写作知识。",
+        "default_benchmark_weight": 0.8,
+        "metric_family": {"*": "qwk_0_to_100"},
+        "rationale": "作文评分一致性主要是主观题 rubric 评分（学业作答 facet），同时需要定位文本证据与写作知识。",
     },
-    {
-        "benchmark_id": "sas_bench",
+    "sas_bench": {
         "benchmark_name": "SAS-Bench",
-        "subdimension": "QWK holistic total score",
-        "evidence_tier": "education_core",
         "source_scope": "otherbenchmark",
-        "metric_family": "score_0_to_100",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.90,
-        "abilities": ability_weights(("P14", 0.70), ("P02", 0.15), ("P05", 0.15)),
-        "rationale": "总分评分一致性主测 rubric 映射评分。",
+        "default_benchmark_weight": 0.9,
+        "benchmark_weight_overrides": {
+            "CCS step scoring consistency": 0.95,
+            "ECS error-cause consistency": 1.0,
+        },
+        "metric_family": {"*": "score_0_to_100"},
+        "rationale": "简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P13 核心锚）。",
     },
-    {
-        "benchmark_id": "sas_bench",
-        "benchmark_name": "SAS-Bench",
-        "subdimension": "CCS step scoring consistency",
-        "evidence_tier": "education_core",
-        "source_scope": "otherbenchmark",
-        "metric_family": "score_0_to_100",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 0.95,
-        "abilities": ability_weights(("P14", 0.55), ("P12", 0.25), ("P02", 0.20)),
-        "rationale": "分步踩分同时涉及 rubric 映射、错误位置/步骤定位和证据定位。",
-    },
-    {
-        "benchmark_id": "sas_bench",
-        "benchmark_name": "SAS-Bench",
-        "subdimension": "ECS error-cause consistency",
-        "evidence_tier": "education_core",
-        "source_scope": "otherbenchmark",
-        "metric_family": "score_0_to_100",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 1.00,
-        "abilities": ability_weights(("P13", 0.70), ("P05", 0.20), ("P06", 0.10)),
-        "rationale": "错因诊断准确度主测错因归因。",
-    },
-    {
-        "benchmark_id": "edubench",
+    "edubench": {
         "benchmark_name": "EduBench",
-        "subdimension": "IP idea provision / heuristic answer",
-        "evidence_tier": "education_core",
         "source_scope": "otherbenchmark",
-        "metric_family": "likert_0_to_10",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P17", 0.40), ("P18", 0.35), ("P05", 0.25)),
-        "rationale": "启发式解答主要是教学策略选择与适配性解释。",
+        "default_benchmark_weight": 0.8,
+        "benchmark_weight_overrides": {
+            "QG/TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)": 0.75,
+        },
+        "metric_family": {"*": "likert_0_to_10"},
+        "rationale": (
+            "R1 裁决：不再按 5 任务均分挂 P，改按 12 个原生裁判指标逐维度取分"
+            "（instruction_following / content_relevance_scope_control 两指标无独立信息不挂）。"
+            "数据源是同事的逐题原始判分（reports/eval/edubench/，裁判 deepseek-v3.2，原论文设定），"
+            "指标级均值由 scripts/build_edubench_metric_summaries.py 派生到 _metrics/。"
+            "方法学注记：error_identification_correction_accuracy 换裁判 ρ≤0.14；知识类指标天花板，门槛性质。"
+        ),
     },
-    {
-        "benchmark_id": "edubench",
-        "benchmark_name": "EduBench",
-        "subdimension": "PCC pedagogical/personalized content creation",
-        "evidence_tier": "education_core",
-        "source_scope": "otherbenchmark",
-        "metric_family": "likert_0_to_10",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P18", 0.45), ("P17", 0.30), ("P05", 0.25)),
-        "rationale": "教育内容生成以反馈解释和策略适配为主，当前多为纯文本，不直接等同 P10。",
-    },
-    {
-        "benchmark_id": "edubench",
-        "benchmark_name": "EduBench",
-        "subdimension": "PLS personalized learning support",
-        "evidence_tier": "education_core",
-        "source_scope": "otherbenchmark",
-        "metric_family": "likert_0_to_10",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 0.85,
-        "abilities": ability_weights(("P16", 0.30), ("P17", 0.45), ("P18", 0.25)),
-        "rationale": "个性化学习支持以学习者画像、干预策略和适配反馈为主。",
-    },
-    {
-        "benchmark_id": "edubench",
-        "benchmark_name": "EduBench",
-        "subdimension": "QG question generation",
-        "evidence_tier": "education_core",
-        "source_scope": "otherbenchmark",
-        "metric_family": "likert_0_to_10",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 0.75,
-        "abilities": ability_weights(("P18", 0.35), ("P06", 0.35), ("P05", 0.30)),
-        "rationale": "题目生成是教育约束下的推理生成和适配解释，不是非文本多模态产物。",
-    },
-    {
-        "benchmark_id": "edubench",
-        "benchmark_name": "EduBench",
-        "subdimension": "TMG teaching material generation",
-        "evidence_tier": "education_core",
-        "source_scope": "otherbenchmark",
-        "metric_family": "likert_0_to_10",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 0.75,
-        "abilities": ability_weights(("P18", 0.40), ("P05", 0.35), ("P06", 0.25)),
-        "rationale": "教学材料生成主要看教育解释、领域知识和生成推理；若包含图示再另映射 P10。",
-    },
-    {
-        "benchmark_id": "tutorbench",
+    "tutorbench": {
         "benchmark_name": "TutorBench",
-        "subdimension": "Fair815 multimodal tutor quality",
-        "evidence_tier": "education_core",
         "source_scope": "otherbenchmark",
-        "metric_family": "score_0_to_100",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.00,
-        "abilities": ability_weights(("P18", 0.40), ("P17", 0.35), ("P03", 0.25)),
+        "default_benchmark_weight": 1.0,
+        "metric_family": {"*": "score_0_to_100"},
         "rationale": "真实多模态 tutor 质量综合考察反馈生成、策略选择和图文感知。",
     },
-    {
-        "benchmark_id": "mathtutorbench_problem_solving",
+    "mathtutorbench_problem_solving": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Problem Solving",
-        "evidence_tier": "foundation_gate",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.45,
-        "abilities": ability_weights(("P06", 0.60), ("P05", 0.30), ("P07", 0.10)),
+        "metric_family": {"*": "accuracy"},
         "rationale": "数学求解门槛，重要但不能证明会辅导。",
     },
-    {
-        "benchmark_id": "mathtutorbench_solution_correctness",
+    "mathtutorbench_solution_correctness": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Solution Correctness",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy_or_f1",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.85,
-        "abilities": ability_weights(("P11", 0.60), ("P07", 0.25), ("P02", 0.15)),
+        "metric_family": {"*": "accuracy_or_f1"},
         "rationale": "给定参考/学生解判断正确性，主测作答正误判定。",
     },
-    {
-        "benchmark_id": "mathtutorbench_mistake_location",
+    "mathtutorbench_mistake_location": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Mistake Location",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy_or_f1",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.00,
-        "abilities": ability_weights(("P12", 0.70), ("P02", 0.20), ("P11", 0.10)),
+        "default_benchmark_weight": 1.0,
+        "metric_family": {"*": "accuracy_or_f1"},
         "rationale": "错误位置定位是 P12 的直接测量。",
     },
-    {
-        "benchmark_id": "mathtutorbench_mistake_correction",
+    "mathtutorbench_mistake_correction": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Mistake Correction",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.90,
-        "abilities": ability_weights(("P13", 0.45), ("P18", 0.35), ("P06", 0.20)),
-        "rationale": "纠错需要识别错因并生成可用修正/反馈。",
+        "default_benchmark_weight": 0.9,
+        "metric_family": {"*": "accuracy"},
+        "rationale": "纠错需要识别错因并生成可用修正/反馈；R6 裁决 P13 权重 0.45→0.20（只测改对与否）。",
     },
-    {
-        "benchmark_id": "mathtutorbench_pedagogy",
+    "mathtutorbench_pedagogy": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Pedagogy IF",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "win_rate_or_accuracy",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.95,
-        "abilities": ability_weights(("P17", 0.45), ("P18", 0.30), ("P05", 0.25)),
+        "metric_family": {"*": "win_rate_or_accuracy"},
         "rationale": "教学法指令遵循主测策略选择和适配反馈。",
     },
-    {
-        "benchmark_id": "mathtutorbench_pedagogy_hard",
+    "mathtutorbench_pedagogy_hard": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Pedagogy IF hard",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "win_rate_or_accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.00,
-        "abilities": ability_weights(("P17", 0.45), ("P18", 0.30), ("P05", 0.25)),
+        "default_benchmark_weight": 1.0,
+        "metric_family": {"*": "win_rate_or_accuracy"},
         "rationale": "hard 子集较有区分度，权重略高。",
     },
-    {
-        "benchmark_id": "mathtutorbench_scaffolding",
+    "mathtutorbench_scaffolding": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Scaffolding",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "win_rate_or_accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.00,
-        "abilities": ability_weights(("P17", 0.50), ("P18", 0.35), ("P05", 0.15)),
+        "default_benchmark_weight": 1.0,
+        "metric_family": {"*": "win_rate_or_accuracy"},
         "rationale": "脚手架主测下一步教学干预选择与反馈生成。",
     },
-    {
-        "benchmark_id": "mathtutorbench_scaffolding_hard",
+    "mathtutorbench_scaffolding_hard": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Scaffolding hard",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "win_rate_or_accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.00,
-        "abilities": ability_weights(("P17", 0.50), ("P18", 0.35), ("P05", 0.15)),
+        "default_benchmark_weight": 1.0,
+        "metric_family": {"*": "win_rate_or_accuracy"},
         "rationale": "hard 子集仍主测教学干预与反馈。",
     },
-    {
-        "benchmark_id": "mathtutorbench_socratic",
+    "mathtutorbench_socratic": {
         "benchmark_name": "MathTutorBench",
-        "subdimension": "Socratic Questioning",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "bleu_0_to_1",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.60,
-        "abilities": ability_weights(("P17", 0.65), ("P18", 0.35)),
-        "rationale": "生成引导性提问、与教师金标问题比 BLEU，是 P17a（提问式干预）的测量来源"
-        "（R11 补挂，2026-07-12；按拆分准入规则提问不单列子能力）。BLEU 对合理的不同问法会误罚，权重保守。",
+        "default_benchmark_weight": 0.6,
+        "metric_family": {"*": "bleu_0_to_1"},
+        "rationale": (
+            "生成引导性提问、与教师金标问题比 BLEU，是 P17a（提问式干预）的测量来源"
+            "（R11 补挂，2026-07-12；按拆分准入规则提问不单列子能力）。BLEU 对合理的不同问法会误罚，权重保守。"
+        ),
     },
-    {
-        "benchmark_id": "bea2025_judge",
+    "bea2025_judge": {
         "benchmark_name": "BEA 2025 Judge",
-        "subdimension": "judge labels: mistake/guidance/actionability",
-        "evidence_tier": "excluded_judge_task",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.00,
-        "abilities": ability_weights(("P14", 0.45), ("P13", 0.30), ("P11", 0.25)),
-        "rationale": "作为教育评判者可映射到 rubric/错因/正误判断，但本轮按用户口径先排除 judge task，不进入 P-score。",
+        "default_benchmark_weight": 0.0,
+        "metric_family": {"*": "accuracy"},
+        "rationale": "作为教育评判者可映射到 rubric/错因/正误判断，但按用户口径排除 judge task，不进入 P-score。",
     },
-    {
-        "benchmark_id": "bea2025_tutor",
+    "bea2025_tutor": {
         "benchmark_name": "BEA 2025 Tutor",
-        "subdimension": "pedagogical pass rate",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "pass_rate",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.90,
-        "abilities": ability_weights(("P18", 0.45), ("P17", 0.30), ("P13", 0.25)),
-        "rationale": "生成 tutor 回复，强调可行动指导、反馈生成和错因识别。",
+        "default_benchmark_weight": 0.9,
+        "metric_family": {"*": "share_0_to_1"},
+        "rationale": (
+            "生成 tutor 回复、固定裁判逐维度标注。R2 裁决：复合 pass rate 换单维度 Yes 占比"
+            "（Mistake_Identification→P13、Providing_Guidance→P17、Actionability→P18 减半权重，κ 0.22 校准弱）。"
+            "仅 3 个模型面（缺 deepseek-v4-pro / doubao-seed-2.0-pro 生成，2026-07-16 决定不补跑）。"
+        ),
     },
-    {
-        "benchmark_id": "mrbench_judge",
+    "mrbench_judge": {
         "benchmark_name": "MRBench Judge",
-        "subdimension": "8-dimension tutor response judging",
-        "evidence_tier": "excluded_judge_task",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.00,
-        "abilities": ability_weights(("P14", 0.45), ("P13", 0.25), ("P20", 0.30)),
-        "rationale": "多维 tutor 回复评判可映射到评分/错因/边界，但本轮按用户口径先排除 judge task，不进入 P-score。",
+        "default_benchmark_weight": 0.0,
+        "metric_family": {"*": "accuracy"},
+        "rationale": "多维 tutor 回复评判可映射到评分/错因/边界，但按用户口径排除 judge task，不进入 P-score。",
     },
-    {
-        "benchmark_id": "mrbench_tutor",
+    "mrbench_tutor": {
         "benchmark_name": "MRBench Tutor",
-        "subdimension": "8-dimension tutor pass rate",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval",
-        "metric_family": "pass_rate",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P18", 0.45), ("P17", 0.30), ("P20", 0.25)),
-        "rationale": "tutor 回复生成同时考查指导、反馈和不泄题/角色边界。",
+        "default_benchmark_weight": 0.8,
+        "metric_family": {"*": "share_0_to_1"},
+        "rationale": (
+            "tutor 回复生成、固定裁判 8 维标注。R2 裁决：复合 pass rate 换单维度分"
+            "（Mistake_Identification/Providing_Guidance/Actionability 用 Yes 占比；"
+            "Tutor_Tone 用 Encouraging+0.5×Neutral，对齐 P20 角色边界）。"
+            "仅 3 个模型面（2026-07-16 决定不补跑）。"
+        ),
     },
-    {
-        "benchmark_id": "eduguard_sata",
+    "eduguard_sata": {
         "benchmark_name": "EduGuard-Bench P1",
-        "subdimension": "Teaching Harm / SATA RFS",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval_and_otherbenchmark",
-        "metric_family": "rfs_0_to_1",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.00,
-        "abilities": ability_weights(("P20", 0.35), ("P21", 0.30), ("P22", 0.35)),
-        "rationale": "教学伤害全选题同时测试角色边界、风险识别和处置选择。",
+        "default_benchmark_weight": 1.0,
+        "metric_family": {"*": "rfs_0_to_1"},
+        "rationale": "教学伤害全选题同时测试角色边界、风险识别和处置选择；R10：三 P 知识 facet 同源，不构成互证。",
     },
-    {
-        "benchmark_id": "eduguard_adversarial",
+    "eduguard_adversarial": {
         "benchmark_name": "EduGuard-Bench P2",
-        "subdimension": "Adversarial Safety ASR",
-        "evidence_tier": "education_core",
         "source_scope": "repo_eval_and_otherbenchmark",
-        "metric_family": "asr_0_to_1_lower_better",
         "score_direction": "lower_better",
-        "default_benchmark_weight": 1.00,
-        "abilities": ability_weights(("P22", 0.45), ("P20", 0.30), ("P21", 0.25)),
-        "rationale": "对抗安全主要测安全处置，同时需要识别风险和维持教育角色边界。",
+        "default_benchmark_weight": 1.0,
+        "benchmark_weight_overrides": {"Refusal quality distribution": 0.7},
+        "metric_family": {
+            "Adversarial Safety ASR": "asr_0_to_1_lower_better",
+            "Refusal quality distribution": "share_0_to_1",
+        },
+        "rationale": "对抗安全主要测安全处置（R7：拒答质量主挂 P22，P18 副挂降 0.10），同时需要识别风险和维持教育角色边界。",
     },
-    {
-        "benchmark_id": "eduguard_adversarial",
-        "benchmark_name": "EduGuard-Bench P2",
-        "subdimension": "Refusal quality distribution",
-        "evidence_tier": "diagnostic",
-        "source_scope": "repo_eval_and_otherbenchmark",
-        "metric_family": "share_0_to_1",
-        "score_direction": "higher_better",
-        "default_benchmark_weight": 0.70,
-        "abilities": ability_weights(("P22", 0.60), ("P18", 0.25), ("P20", 0.15)),
-        "rationale": "教育型拒答是处置选择和教育性重定向质量。",
-    },
-    {
-        "benchmark_id": "eduillustrate",
+    "eduillustrate": {
         "benchmark_name": "EduIllustrate",
-        "subdimension": "8-dim 0-5 visual explanation score",
-        "evidence_tier": "diagnostic",
         "source_scope": "repo_eval",
-        "metric_family": "likert_0_to_5",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.85,
-        "abilities": ability_weights(("P10", 0.45), ("P03", 0.25), ("P18", 0.30)),
-        "rationale": "教学图示/图文协同生成直接测多模态教学产物生成。",
+        "metric_family": {"*": "likert_0_to_5"},
+        "rationale": "教学图示/图文协同生成直接测多模态教学产物生成；R5 后不再挂 P03（理解侧）。",
     },
-    {
-        "benchmark_id": "mmtutorbench",
+    "mmtutorbench": {
         "benchmark_name": "MMTutorBench",
-        "subdimension": "multimodal tutor score",
-        "evidence_tier": "diagnostic",
         "source_scope": "repo_eval",
-        "metric_family": "score_0_to_6",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.90,
-        "abilities": ability_weights(("P03", 0.30), ("P18", 0.40), ("P17", 0.30)),
+        "default_benchmark_weight": 0.9,
+        "metric_family": {"*": "score_0_to_6"},
         "rationale": "多模态 tutor 综合测图文感知、反馈生成和策略选择；当前小样本默认排除主图。",
     },
-    {
-        "benchmark_id": "ifeval",
+    "ifeval": {
         "benchmark_name": "IFEval",
-        "subdimension": "prompt-level strict accuracy",
-        "evidence_tier": "foundation_gate",
         "source_scope": "repo_eval",
-        "metric_family": "accuracy",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P01", 1.00)),
+        "default_benchmark_weight": 0.8,
+        "metric_family": {"*": "accuracy"},
         "rationale": (
             "可验证指令的规则判分（官方 checker，无裁判），P01 的首个直接测量"
             "（2026-07-12 缺口填补，R13：edubench 裁判打的指令遵循分在模型排名上无独立信息量）。"
             "通用指令非教育语境，作 P01 操作基座的门槛证据。"
         ),
     },
-    {
-        "benchmark_id": "k12vista",
+    "k12vista": {
         "benchmark_name": "K12Vista",
-        "subdimension": "official partial-credit score (per-blank 0/1 mean)",
-        "evidence_tier": "diagnostic",
         "source_scope": "repo_eval",
-        "metric_family": "composite_0_to_10",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.80,
-        "abilities": ability_weights(("P04", 0.55), ("P06", 0.30), ("P05", 0.15)),
+        "default_benchmark_weight": 0.8,
+        "metric_family": {"*": "composite_0_to_10"},
         "rationale": (
-            "中文 K12 图文学科题（五学科×三学段，固定 300 题分层抽样），P04 的首个直接测量"
-            "（2026-07-13 空白 P 填补）。题目必须先读懂学科图（几何图/电路图/实验装置/函数曲线/地图）"
-            "再做多步推理，且抽样中 79% 为难/较难，落在 P04『复杂多模态理解』而非 P03『常规多模态感知』；"
-            "解题推理占 P06 0.30、学科知识调用占 P05 0.15。判分用官方 rubric 的 LLM 裁判逐空 0/1（部分给分），"
-            "裁判非官方 GPU 模型且未经人工金标校准——权重待 M3 裁决（R15）。"
+            "中文 K12 图文学科题（五学科×三学段，固定 300 题分层抽样）。R15 裁决：挂 P03 学科图表 facet 0.55"
+            "（P03/P04 合并后难度不再分 P）；判分用官方 rubric 的 LLM 裁判逐空 0/1，裁判未校准、"
+            "仅 4 个视觉模型可跑——参考值。"
         ),
     },
-    {
-        "benchmark_id": "mooccube_prereq",
+    "mooccube_prereq": {
         "benchmark_name": "MOOCCube 先修关系推理",
-        "subdimension": "chance-corrected composite (先修选择 + 学习顺序排序)",
-        "evidence_tier": "diagnostic",
         "source_scope": "repo_eval",
-        "metric_family": "composite_0_to_10",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.70,
-        "abilities": ability_weights(("P19", 0.70), ("P05", 0.20), ("P06", 0.10)),
+        "default_benchmark_weight": 0.7,
+        "metric_family": {"*": "composite_0_to_10"},
         "rationale": (
-            "MOOCCube（ACL 2020，学堂在线）图谱里 905 条专家先修边当金标，构造 200 道先修选择 + "
-            "100 道学习顺序排序，100% 规则判分（无裁判、无抽取模型），P19 的首个直接测量"
-            "（2026-07-13 空白 P 填补）。干扰项同领域、且含 Y 的后继概念（方向反转陷阱），"
-            "score_10 做随机基线校正（随机作答=0）。"
-            "**提案权重 P19 0.70 / P05 0.20 / P06 0.10，待 M3 裁决（R16）**：争点有三——"
-            "①它只覆盖 P19 的『知识结构』一半（概念间依赖顺序），不覆盖『按学习者当前状态定制路径』"
-            "那一半，P19 权重给到 0.70 是否过高、要不要在 v2 里把 P19 拆成 P19a/P19b 两个 facet 只挂 P19a；"
-            "②先修选择题本质上有多少是学科知识记忆（P05）而非路径推理；"
-            "③题目协议是本仓库自建（MOOCCube 原文无此任务、无官方基线），benchmark weight 因此压到 0.70，"
-            "低于 K12Vista 的 0.80——自建协议是否该再降 evidence_tier。"
+            "MOOCCube（ACL 2020，学堂在线）905 条专家先修边当金标，200 道先修选择 + 100 道排序，"
+            "100% 规则判分，P19（知识结构层路径规划）的首个测量。R16 裁决：P19 0.70 / P05 0.20 / P06 0.10；"
+            "自建协议、无公开基线，benchmark weight 压到 0.70，参考值；"
+            "『按学习者状态定制路径』是 P16×P19 组合能力，不设 P19b。"
         ),
     },
-    {
-        "benchmark_id": "p07_selfcheck",
+    "p07_selfcheck": {
         "benchmark_name": "P07 两轮自查",
-        "subdimension": "two-round self-check (fix/break rate)",
-        "evidence_tier": "diagnostic",
         "source_scope": "repo_eval",
-        "metric_family": "composite_0_to_10",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.85,
-        "abilities": ability_weights(("P07", 0.85), ("P08", 0.15)),
+        "metric_family": {"*": "composite_0_to_10"},
         "rationale": (
             "两轮自查协议（先答题、再无提示复查），P07 的首个直接测量（2026-07-12 缺口填补）；"
             "headline=0.5×改对率+0.5×(1−改错率)，与第一轮正确率解耦。复查时对自身答案的把握"
             "与校准相通，P08 占 0.15。"
         ),
     },
-    {
-        "benchmark_id": "p08_calibration",
+    "p08_calibration": {
         "benchmark_name": "P08 置信度校准",
-        "subdimension": "calibration composite (CWR/AUROC)",
-        "evidence_tier": "diagnostic",
         "source_scope": "repo_eval",
-        "metric_family": "composite_0_to_10",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.85,
-        "abilities": ability_weights(("P08", 0.80), ("P07", 0.20)),
+        "metric_family": {"*": "composite_0_to_10"},
         "rationale": (
             "复用 exact-match benchmark + verbalized confidence，测“自信地教错”"
             "（CWR）与“知道自己不知道”（AUROC）；自报置信度带少量自检成分故 P07 占 0.20。"
         ),
     },
-    {
-        "benchmark_id": "p08_abstention",
+    "p08_abstention": {
         "benchmark_name": "P08 能力性弃答",
-        "subdimension": "balanced abstention score",
-        "evidence_tier": "diagnostic",
         "source_scope": "repo_eval",
-        "metric_family": "composite_0_to_10",
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.85,
-        "abilities": ability_weights(("P08", 0.85), ("P01", 0.15)),
+        "metric_family": {"*": "composite_0_to_10"},
         "rationale": (
             "公开弃答数据集（UMWP/TreeCut）测对不可答题能否说“不会”；识别并按格式声明"
             "带少量指令遵循成分故 P01 占 0.15。与 p08_calibration 共同构成 P08 两半证据。"
         ),
     },
-]
+    "longtutor_evidence": {
+        "benchmark_name": "LongTutor 证据抽取",
+        "source_scope": "repo_eval",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.75,
+        "metric_family": {"*": "accuracy"},
+        "rationale": (
+            "长学生历史（约 200 条作答记录）上的单记录提取/跨 session 推理/幻觉检查，规则+语义等价裁判。"
+            "2026-07-16 裁决：P02 首个直接测量（0.7）；三模型面 0.787/0.807/0.791 区分度待验证，"
+            "成熟度按『直接测量·区分度待验证』表述；3 模型面不补跑。"
+        ),
+    },
+    "longtutor_diagnosis": {
+        "benchmark_name": "LongTutor 知识状态诊断",
+        "source_scope": "repo_eval",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.75,
+        "metric_family": {"*": "accuracy_or_f1"},
+        "rationale": (
+            "从交互历史推断学生知识状态（四类认知层失败机制），headline macro-F1。"
+            "2026-07-16 裁决：P16a『知识状态估计』主挂 0.30（参考值）+ P13 副挂 0.10，P12 排除"
+            "（输入无解题步骤）。注记：类别不平衡（多数类基线 acc 0.506 > 模型 0.35-0.44）；"
+            "金标为特征决策矩阵+人工修订，非独立盲标。"
+        ),
+    },
+    "longtutor_teaching": {
+        "benchmark_name": "LongTutor 教学动作",
+        "source_scope": "repo_eval",
+        "score_direction": "higher_better",
+        "default_benchmark_weight": 0.75,
+        "metric_family": {"*": "likert_1_to_5"},
+        "rationale": (
+            "生成利用具体历史证据的教学反馈，固定裁判四维 1-5 分。2026-07-16 裁决：挂 P17 执行 facet 0.30，"
+            "取 strategy_alignment + history_utilization 两维均值（coherence/appropriateness 不入分）；"
+            "三模型 valid 1001、strategy_alignment 3.68-4.13 有区分度；3 模型面不补跑。"
+        ),
+    },
+}
+
+
+def _build_mappings() -> list[dict[str, Any]]:
+    """Flatten the adjudicated measurement model (P -> facet -> cells) into
+    benchmark-first MAPPINGS rows keyed by (benchmark_id, subdimension).
+
+    Cell weights are used as-is as within-P ability weights (facet-relative,
+    deliberately not normalized to 1 — P scores are weighted means, so only
+    relative magnitude matters); each ability entry carries its facet so the
+    aggregation can average within facets first (formative structure)."""
+    doc = json.loads(MEASUREMENT_MODEL_PATH.read_text(encoding="utf-8"))
+    grouped: dict[tuple[str, str], dict[str, Any]] = {}
+    for ability in doc["abilities"]:
+        for facet in ability.get("facets", []):
+            for cell in facet.get("cells", []):
+                benchmark_id = cell["benchmark_id"]
+                meta = BENCHMARK_META.get(benchmark_id)
+                if meta is None:
+                    raise SystemExit(f"BENCHMARK_META missing entry for {benchmark_id}")
+                key = (benchmark_id, cell["subdimension"])
+                row = grouped.get(key)
+                if row is None:
+                    families = meta["metric_family"]
+                    family = families.get(cell["subdimension"]) or families.get("*")
+                    if family is None:
+                        raise SystemExit(f"metric_family missing for {key}")
+                    overrides = meta.get("benchmark_weight_overrides", {})
+                    row = grouped[key] = {
+                        "benchmark_id": benchmark_id,
+                        "benchmark_name": meta["benchmark_name"],
+                        "subdimension": cell["subdimension"],
+                        "evidence_tier": cell["evidence_tier"],
+                        "source_scope": meta["source_scope"],
+                        "metric_family": family,
+                        "score_direction": meta["score_direction"],
+                        "default_benchmark_weight": overrides.get(
+                            cell["subdimension"], meta["default_benchmark_weight"]
+                        ),
+                        "abilities": [],
+                        "rationale": meta["rationale"],
+                    }
+                elif row["evidence_tier"] != cell["evidence_tier"]:
+                    raise SystemExit(
+                        f"evidence_tier conflict for {key}: {row['evidence_tier']} vs {cell['evidence_tier']}"
+                    )
+                group, name = P_GROUPS[ability["p_code"]]
+                row["abilities"].append(
+                    {
+                        "p_code": ability["p_code"],
+                        "p_name": name,
+                        "group": group,
+                        "weight": cell["weight"],
+                        "facet_id": facet["facet_id"],
+                        "facet_name": facet.get("facet_name", facet["facet_id"]),
+                        "cell_rationale": cell.get("revision_rationale", ""),
+                    }
+                )
+    return [grouped[key] for key in sorted(grouped)]
+
+
+MAPPINGS: list[dict[str, Any]] = _build_mappings()
 
 
 NORMALIZATION = [
@@ -658,6 +538,7 @@ NORMALIZATION = [
     ("win_rate_or_accuracy", "higher_better", "prefer win_rate/strict_win_rate when present; else accuracy * 10"),
     ("share_0_to_1", "higher_better", "score_10 = share * 10"),
     ("bleu_0_to_1", "higher_better", "score_10 = bleu * 10 (absolute level is low by construction; rank information only)"),
+    ("likert_1_to_5", "higher_better", "score_10 = (raw - 1) / 4 * 10 (judge scale where 1 is the floor, e.g. longtutor_teaching)"),
     ("composite_0_to_10", "higher_better", "score_10 = raw (adapter already emits a 0-10 headline, e.g. P08 calibration/abstention)"),
     ("legacy_axis_0_to_100", "higher_better", "score_10 = raw / 10; context only, not used for P scoring"),
 ]
@@ -758,7 +639,45 @@ def parse_edubench_scores(rows: list[dict[str, Any]]) -> None:
                         model=cells[1],
                         metric="mean_0_to_10",
                         value=value,
+                        notes="v1 任务级均分；映射 v2（R1）改按指标级取分后仅作上下文保留",
+                        score_role="legacy_context",
                     )
+
+
+def parse_edubench_metric_scores(rows: list[dict[str, Any]]) -> None:
+    """Ingest metric-level EduBench means derived by
+    ``scripts/build_edubench_metric_summaries.py`` (mapping v2 / R1: one cell
+    per judge metric pooled over tasks, plus the QG/TMG/PCC x clarity+scenario
+    composite for the P18 artifact facet)."""
+    path = EVAL_DIR / "edubench" / "_metrics" / "task_metric_means.jsonl"
+    if not path.exists():
+        return
+    artifact_subdimension = (
+        "QG/TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)"
+    )
+    with path.open(encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            if row["metric"] == "artifact_composite":
+                subdimension = artifact_subdimension
+            elif row["task"] == "ALL":
+                subdimension = f"{row['metric']} (metric)"
+            else:
+                continue
+            add_score(
+                rows,
+                source_path=path.relative_to(ROOT).as_posix(),
+                benchmark_id="edubench",
+                benchmark_name="EduBench",
+                subdimension=subdimension,
+                model=row["model"],
+                metric="likert_0_to_10",
+                value=float(row["mean"]),
+                notes=f"题级均值 n={row['n']} sd={row['sd']}；裁判 deepseek-v3.2（同事原始判分）",
+            )
 
 
 def parse_sas_scores(rows: list[dict[str, Any]]) -> None:
@@ -970,6 +889,7 @@ def parse_eduguard_scores(rows: list[dict[str, Any]]) -> None:
 def inventory_otherbenchmark_scores() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     parse_edubench_scores(rows)
+    parse_edubench_metric_scores(rows)
     parse_sas_scores(rows)
     parse_rebenchmark_0701_scores(rows)
     parse_eduguard_scores(rows)
@@ -997,6 +917,8 @@ def canonical_model(model: str) -> str:
 
 
 def normalize_score(metric: str, value: float) -> float | None:
+    if value != value:  # NaN guard: min/max clamping would silently turn NaN into 10.0
+        return None
     if metric in {"accuracy", "pass_rate", "rfs_0_to_1", "accuracy_or_f1", "win_rate_or_accuracy", "share_0_to_1"}:
         return value * 10.0
     if metric == "asr_0_to_1_lower_better":
@@ -1007,6 +929,8 @@ def normalize_score(metric: str, value: float) -> float | None:
         return value
     if metric == "likert_0_to_5":
         return value * 2.0
+    if metric == "likert_1_to_5":
+        return (value - 1.0) / 4.0 * 10.0
     if metric == "score_0_to_6":
         return value / 6.0 * 10.0
     if metric == "composite_0_to_10":
@@ -1026,6 +950,11 @@ def find_mapping(benchmark_id: str, subdimension: str | None = None, metric: str
         for row in candidates:
             if row["subdimension"] == subdimension:
                 return row
+        # A benchmark with several mapped subdimensions must match exactly:
+        # falling back to an arbitrary row would silently mis-assign scores
+        # (e.g. legacy edubench task-level rows onto v2 metric-level cells).
+        if len(candidates) > 1:
+            return None
     if metric is not None:
         for row in candidates:
             if row["metric_family"] == metric:
@@ -1034,7 +963,7 @@ def find_mapping(benchmark_id: str, subdimension: str | None = None, metric: str
             for row in candidates:
                 if row["metric_family"] in {"accuracy", "accuracy_or_f1", "win_rate_or_accuracy"}:
                     return row
-    return candidates[0] if candidates else None
+    return candidates[0] if len(candidates) == 1 else None
 
 
 def extract_primary_metric(summary: dict[str, Any]) -> tuple[str, float | None]:
@@ -1119,36 +1048,110 @@ def inventory_eval_runs() -> list[dict[str, Any]]:
     return rows
 
 
-def repo_metric_for_summary(benchmark: str, data: dict[str, Any]) -> tuple[str, float | None, str]:
+def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract score rows from one summary.json.
+
+    Returns a list of ``{"subdimension", "metric", "value", "note"}`` rows so a
+    single summary can feed several mapped subdimensions (mapping v2: bea/mrbench
+    per-dimension scores, eduguard ASR + refusal quality, ...).  ``subdimension``
+    is None for single-subdimension benchmarks (resolved via metric family)."""
     extra = data.get("extra_metrics") or {}
     overall = extra.get("overall") or {}
+    rows: list[dict[str, Any]] = []
+
+    def add(subdimension: str | None, metric: str, value: Any, note: str) -> None:
+        if value is None:
+            return
+        rows.append({"subdimension": subdimension, "metric": metric, "value": float(value), "note": note})
+
     if benchmark == "eduguard_sata":
-        return "rfs_0_to_1", overall.get("rfs"), "extra_metrics.overall.rfs"
+        add(None, "rfs_0_to_1", overall.get("rfs"), "extra_metrics.overall.rfs")
+        return rows
     if benchmark == "eduguard_adversarial":
-        return "asr_0_to_1_lower_better", overall.get("asr"), "extra_metrics.overall.asr; primary judge deepseek-v3.2"
+        add(
+            "Adversarial Safety ASR",
+            "asr_0_to_1_lower_better",
+            overall.get("asr"),
+            "extra_metrics.overall.asr; primary judge deepseek-v3.2",
+        )
+        refusal = (overall.get("refusal_quality_distribution") or {}).get("educational_refusal") or {}
+        add(
+            "Refusal quality distribution",
+            "share_0_to_1",
+            refusal.get("share_of_refusals"),
+            "extra_metrics.overall.refusal_quality_distribution.educational_refusal.share_of_refusals",
+        )
+        return rows
     if benchmark in {"bea2025_tutor", "mrbench_tutor"}:
-        return "pass_rate", extra.get("pass_rate", data.get("accuracy")), "extra_metrics.pass_rate"
+        dist = extra.get("per_dimension_distribution") or {}
+        for dim in ("Mistake_Identification", "Providing_Guidance", "Actionability"):
+            share = ((dist.get(dim) or {}).get("Yes") or {}).get("share")
+            add(
+                f"dimension: {dim}",
+                "share_0_to_1",
+                share,
+                f"extra_metrics.per_dimension_distribution.{dim}.Yes.share（R2 单维度分）",
+            )
+        if benchmark == "mrbench_tutor":
+            tone = dist.get("Tutor_Tone") or {}
+            encouraging = ((tone.get("Encouraging") or {}).get("share"))
+            neutral = ((tone.get("Neutral") or {}).get("share"))
+            if encouraging is not None or neutral is not None:
+                add(
+                    "dimension: Tutor_Tone",
+                    "share_0_to_1",
+                    (encouraging or 0.0) + 0.5 * (neutral or 0.0),
+                    "Encouraging + 0.5×Neutral share（Offensive 记 0）",
+                )
+        return rows
+    if benchmark == "longtutor_evidence":
+        add(None, "accuracy", data.get("accuracy"), "summary.accuracy（精确匹配+语义等价裁判）")
+        return rows
+    if benchmark == "longtutor_diagnosis":
+        add(None, "accuracy_or_f1", extra.get("f1_macro"), "extra_metrics.f1_macro（headline，类别不平衡故不用 accuracy）")
+        return rows
+    if benchmark == "longtutor_teaching":
+        judge_scores = extra.get("judge_scores") or {}
+        strategy = judge_scores.get("strategy_alignment")
+        history = judge_scores.get("history_utilization")
+        if strategy and history:
+            add(
+                None,
+                "likert_1_to_5",
+                (float(strategy) + float(history)) / 2.0,
+                "mean(judge_scores.strategy_alignment, history_utilization)；coherence/appropriateness 不入分",
+            )
+        return rows
+
+    def single(metric: str, value: Any, note: str) -> list[dict[str, Any]]:
+        add(None, metric, value, note)
+        return rows
+
+    return _repo_single_metric(benchmark, data, extra, single)
+
+
+def _repo_single_metric(benchmark, data, extra, single):
     if benchmark == "eduillustrate":
-        return "likert_0_to_5", data.get("overall_mean_judged_only"), "overall_mean_judged_only"
+        return single("likert_0_to_5", data.get("overall_mean_judged_only"), "overall_mean_judged_only")
     if benchmark == "mmtutorbench":
-        return "score_0_to_6", extra.get("paper_weighted_score_0_to_6"), "extra_metrics.paper_weighted_score_0_to_6"
+        return single("score_0_to_6", extra.get("paper_weighted_score_0_to_6"), "extra_metrics.paper_weighted_score_0_to_6")
     if benchmark == "mathtutorbench_solution_correctness":
-        return "accuracy_or_f1", extra.get("f1", data.get("accuracy")), "extra_metrics.f1"
+        return single("accuracy_or_f1", extra.get("f1", data.get("accuracy")), "extra_metrics.f1")
     if benchmark == "mathtutorbench_mistake_location":
-        return "accuracy_or_f1", extra.get("f1_micro", data.get("accuracy")), "extra_metrics.f1_micro"
+        return single("accuracy_or_f1", extra.get("f1_micro", data.get("accuracy")), "extra_metrics.f1_micro")
     if benchmark in {
         "mathtutorbench_pedagogy",
         "mathtutorbench_pedagogy_hard",
         "mathtutorbench_scaffolding",
         "mathtutorbench_scaffolding_hard",
     }:
-        return "win_rate_or_accuracy", extra.get("win_rate", data.get("accuracy")), "extra_metrics.win_rate"
+        return single("win_rate_or_accuracy", extra.get("win_rate", data.get("accuracy")), "extra_metrics.win_rate")
     if benchmark == "mathtutorbench_socratic":
-        return "bleu_0_to_1", extra.get("avg_bleu"), "extra_metrics.avg_bleu (official headline; summary.accuracy is a coarse BLEU>=0.5 proxy)"
+        return single("bleu_0_to_1", extra.get("avg_bleu"), "extra_metrics.avg_bleu (official headline; summary.accuracy is a coarse BLEU>=0.5 proxy)")
     if benchmark.startswith("mathtutorbench_"):
-        return "accuracy", data.get("accuracy"), "summary.accuracy"
+        return single("accuracy", data.get("accuracy"), "summary.accuracy")
     if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "olympiadbench", "ifeval"}:
-        return "accuracy", data.get("accuracy"), "summary.accuracy"
+        return single("accuracy", data.get("accuracy"), "summary.accuracy")
     if benchmark in {
         "p07_selfcheck",
         "p08_calibration",
@@ -1156,8 +1159,8 @@ def repo_metric_for_summary(benchmark: str, data: dict[str, Any]) -> tuple[str, 
         "k12vista",
         "mooccube_prereq",
     }:
-        return "composite_0_to_10", extra.get("score_10"), "extra_metrics.score_10"
-    return "unknown", None, "no scoring rule"
+        return single("composite_0_to_10", extra.get("score_10"), "extra_metrics.score_10")
+    return []
 
 
 def build_repo_score_candidates(eval_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1174,34 +1177,34 @@ def build_repo_score_candidates(eval_rows: list[dict[str, Any]]) -> list[dict[st
             data = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
-        metric, raw_value, metric_note = repo_metric_for_summary(benchmark, data)
-        if raw_value is None:
-            continue
-        mapping = find_mapping(benchmark, metric=metric)
-        if mapping is None:
-            continue
-        score_10 = normalize_score(metric, float(raw_value))
-        if score_10 is None:
-            continue
-        model = data.get("model") or inv["model"]
-        rows.append(
-            {
-                "source_type": "repo_eval",
-                "source_path": inv["path"],
-                "benchmark_id": benchmark,
-                "benchmark_name": mapping["benchmark_name"],
-                "subdimension": mapping["subdimension"],
-                "model": model,
-                "model_key": canonical_model(model),
-                "metric": metric,
-                "raw_value": float(raw_value),
-                "score_10": max(0.0, min(10.0, score_10)),
-                "score_role": "scoring_candidate",
-                "notes": metric_note,
-                "total_items": inv["total_items"],
-                "scored": inv["scored"],
-            }
-        )
+        for metric_row in repo_metric_rows(benchmark, data):
+            metric = metric_row["metric"]
+            raw_value = metric_row["value"]
+            mapping = find_mapping(benchmark, subdimension=metric_row["subdimension"], metric=metric)
+            if mapping is None:
+                continue
+            score_10 = normalize_score(metric, float(raw_value))
+            if score_10 is None:
+                continue
+            model = data.get("model") or inv["model"]
+            rows.append(
+                {
+                    "source_type": "repo_eval",
+                    "source_path": inv["path"],
+                    "benchmark_id": benchmark,
+                    "benchmark_name": mapping["benchmark_name"],
+                    "subdimension": mapping["subdimension"],
+                    "model": model,
+                    "model_key": canonical_model(model),
+                    "metric": metric,
+                    "raw_value": float(raw_value),
+                    "score_10": max(0.0, min(10.0, score_10)),
+                    "score_role": "scoring_candidate",
+                    "notes": metric_row["note"],
+                    "total_items": inv["total_items"],
+                    "scored": inv["scored"],
+                }
+            )
     return rows
 
 
@@ -1340,6 +1343,8 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                 "p_code": ability["p_code"],
                 "p_name": ability["p_name"],
                 "group": ability["group"],
+                "facet_id": ability["facet_id"],
+                "facet_name": ability["facet_name"],
                 "benchmark_id": row["benchmark_id"],
                 "subdimension": row["subdimension"],
                 "source_type": row["source_type"],
@@ -1362,30 +1367,38 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                     "p_code": ability["p_code"],
                     "p_name": ability["p_name"],
                     "group": ability["group"],
-                    "raw_weighted_sum": 0.0,
-                    "raw_weight_sum": 0.0,
-                    "adjusted_weighted_sum": 0.0,
-                    "adjusted_weight_sum": 0.0,
+                    "facets": {},
                     "evidence_count": 0,
                     "benchmarks": set(),
                     "foundation_rows": 0,
                 },
             )
-            slot["raw_weighted_sum"] += row["score_10"] * raw_weight
-            slot["raw_weight_sum"] += raw_weight
-            slot["adjusted_weighted_sum"] += row["score_10"] * adjusted_weight
-            slot["adjusted_weight_sum"] += adjusted_weight
+            facet_slot = slot["facets"].setdefault(
+                ability["facet_id"],
+                {"raw_weighted_sum": 0.0, "raw_weight_sum": 0.0, "adjusted_weighted_sum": 0.0, "adjusted_weight_sum": 0.0},
+            )
+            facet_slot["raw_weighted_sum"] += row["score_10"] * raw_weight
+            facet_slot["raw_weight_sum"] += raw_weight
+            facet_slot["adjusted_weighted_sum"] += row["score_10"] * adjusted_weight
+            facet_slot["adjusted_weight_sum"] += adjusted_weight
             slot["evidence_count"] += 1
             slot["benchmarks"].add(row["benchmark_id"])
             if tier == "foundation_gate":
                 slot["foundation_rows"] += 1
 
+    # 测量模型 v2 的聚合方向：facet 内按格子权重加权平均，P 分数 = 有证据的
+    # facet 的等权平均（formative 声明；reflective P 只有一个 core facet，
+    # 退化为原先的整体加权平均）。
     p_rows: list[dict[str, Any]] = []
     for slot in accum.values():
-        raw_score = slot["raw_weighted_sum"] / slot["raw_weight_sum"] if slot["raw_weight_sum"] else None
-        tier_adjusted = (
-            slot["adjusted_weighted_sum"] / slot["adjusted_weight_sum"] if slot["adjusted_weight_sum"] else None
-        )
+        raw_facet_means = [f["raw_weighted_sum"] / f["raw_weight_sum"] for f in slot["facets"].values() if f["raw_weight_sum"]]
+        adjusted_facet_means = [
+            f["adjusted_weighted_sum"] / f["adjusted_weight_sum"] for f in slot["facets"].values() if f["adjusted_weight_sum"]
+        ]
+        raw_score = sum(raw_facet_means) / len(raw_facet_means) if raw_facet_means else None
+        tier_adjusted = sum(adjusted_facet_means) / len(adjusted_facet_means) if adjusted_facet_means else None
+        raw_weight_sum = sum(f["raw_weight_sum"] for f in slot["facets"].values())
+        adjusted_weight_sum = sum(f["adjusted_weight_sum"] for f in slot["facets"].values())
         p_rows.append(
             {
                 "model_key": slot["model_key"],
@@ -1395,8 +1408,14 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                 "group": slot["group"],
                 "raw_score_10": round(raw_score, 4) if raw_score is not None else None,
                 "tier_adjusted_score_10": round(tier_adjusted, 4) if tier_adjusted is not None else None,
-                "raw_weight_sum": round(slot["raw_weight_sum"], 4),
-                "adjusted_weight_sum": round(slot["adjusted_weight_sum"], 4),
+                "raw_weight_sum": round(raw_weight_sum, 4),
+                "adjusted_weight_sum": round(adjusted_weight_sum, 4),
+                "facet_count_with_evidence": len(raw_facet_means),
+                "facet_scores": {
+                    facet_id: round(f["raw_weighted_sum"] / f["raw_weight_sum"], 4)
+                    for facet_id, f in sorted(slot["facets"].items())
+                    if f["raw_weight_sum"]
+                },
                 "evidence_count": slot["evidence_count"],
                 "benchmark_count": len(slot["benchmarks"]),
                 "benchmarks": sorted(slot["benchmarks"]),
@@ -1772,7 +1791,7 @@ def write_atomic_scores(p_rows: list[dict[str, Any]], evidence_rows: list[dict[s
             "- `P21` and `P22` are covered through EduGuard P1/P2 safety evidence.",
             "- `P09` has no current benchmark mapping in this pass.",
             "- `P15` has no current benchmark mapping after BEA/MRBench judge-task exclusion.",
-            "- `P04`, `P08`, and `P19` remain sparse/absent unless proxy mappings are approved.",
+            "- `P09` and `P15` are declared domain gaps (mapping v2); `P10`/`P19` are single-source and `P16` covers 2 of 4 declared sub-abilities.",
             "- The v3 atomic list is `P01-P22`; no `P0` code exists in the current spec.",
             "",
             "Full P rows are in `09_atomic_p_scores_raw_adjusted.jsonl`; allocated evidence rows are in `09_atomic_p_score_evidence.jsonl`.",
@@ -2824,7 +2843,7 @@ Resolved in this pass:
 Remaining review points:
 
 1. The v3 atomic list has `P01-P22`; there is no `P0`. If the request meant a specific ability, confirm whether it means `P01` or another P code.
-2. Current evidence may still be sparse or absent for `P04`, `P08`, `P09`, `P15`, and `P19`. Confirm whether to leave them blank/low-coverage or add proxy mappings.
+2. `P09` and `P15` are declared domain gaps under mapping v2 (report them honestly as uncovered); `P10`/`P19` are single-source reference values and `P16` covers 2 of 4 declared sub-abilities.
 3. `P21/P22` are covered mainly by EduGuard safety evidence. Confirm whether that is sufficient, or whether to require student-risk-specific datasets.
 4. For cross-model comparison, decide whether to add a strict `common-evidence` mode that only compares models on shared benchmark/subdimension coverage.
 """

@@ -190,6 +190,10 @@ nohup bash -c 'for M in deepseek-v4-pro glm-5.2 doubao-seed-2.0-pro MiniMax-M2.7
 **产物**：`data/mapping_measurement_model_v2.json`（21 P + P04 墓碑、121 格、36 benchmark，含 R1-R16 全部裁决 + 上表三项；结构与 v1 兼容，已验证可被 13 号检查脚本消费）。两份映射文档（定稿 + 变化记录）同步更新，映射关系至此**全部收敛，无待确认项**。
 
 **下一步（M4 关键路径，按序）**：
-1. **聚合脚本切 v2**：`build_atomic_ability_rebenchmark_artifacts.py` 的 MAPPINGS 仍是 v1 内联硬编码（69 行），需按 v2 重写或改读 JSON；工程要点是两处取数改造——edubench 从任务均分改指标级取分（数据在 `reports/eval/edubench/` 逐题判分 + `_analysis/` 的 snake_case 指标名）、bea/mrbench_tutor 从复合 pass rate 改单维度分（Mistake_Identification / Providing_Guidance / Actionability / Tutor_Tone）。`build_mapping_validation.py` 的 DEFAULT_MEASUREMENT_MODEL 同步指到 v2。
-2. 重跑聚合 + 13 号检查 → 剔死格子（题级 SD<0.5）、红旗格子回裁决（草案权重核对）。
-3. v1/v2 对比（21 P 口径，P03 合并与 P04 墓碑在对比中说明）+ 排名稳定性 → M4 双报告（研究版/用户版）。
+1. ~~聚合脚本切 v2~~ **已完成（2026-07-16 下午）**。改造内容：
+   - MAPPINGS 不再内联硬编码，改为运行时从 `data/mapping_measurement_model_v2.json` 派生（`_build_mappings()`），benchmark 元信息（名称/取数通道/metric family/benchmark 权重/理由）留在内联 `BENCHMARK_META` 小表——映射权重单一事实源是 JSON。
+   - **P 分数聚合公式换向**：facet 内按格子权重加权平均 → P = 有证据 facet 的等权平均（formative 声明落地；reflective P 单 core facet 时退化为原公式）。`09_atomic_p_scores` 新增 `facet_scores` 字段。
+   - **取数统一成"每 benchmark 每模型一个 summary 式产物"**：edubench 由 `scripts/build_edubench_metric_summaries.py` 从同事逐题判分（只读）派生 `reports/eval/edubench/_metrics/task_metric_means.jsonl`（11 模型 × 12 指标 ALL 均值 + QG/TMG/PCC×清晰启发/情景元素复合，带题级 sd 供死格子判定）；bea/mrbench_tutor 单维度分直接读 summary 的 `per_dimension_distribution`（Yes 占比；Tutor_Tone=Encouraging+0.5×Neutral）；eduguard 拒答质量读 `educational_refusal.share_of_refusals`；longtutor 三任务接入（teaching 取 strategy_alignment+history_utilization 两维均值，新 `likert_1_to_5` 归一）。旧的 edubench 任务级卡片行降级 `legacy_context` 不再计分；`find_mapping` 改严（多 subdimension 的 benchmark 必须精确匹配，不再静默回落）。
+   - `build_mapping_validation.py` 默认测量模型已指向 v2；v1 产物快照在 `reports/atomic_ability_rebenchmark_2026-07-08_v1_snapshot_20260716/`（供 v1/v2 对比）。
+2. ~~重跑聚合 + 13 号检查~~ **已重跑（2026-07-16）**：56 个映射格、304 条选中证据、13 号 789 对配对。新格子区分度：edubench 指标级里 personalized（sd 1.77）/error_id（1.45，裁判噪声注记）/higher_order（1.23）拉得开，知识类与语气类天花板（sd 0.18-0.42，受限）；eduguard 拒答质量 sd 1.51 好用；longtutor_evidence sd 仅 0.10（印证"区分度待验证"）。**遗留三个数据缺口**：①k12vista、mooccube_prereq 有 adapter 但一次都没跑出产物（R15/R16 格子空转，P19 无分、P03 学科图表 facet 无分）；②pedagogy_benchmark 的 CDPK/SEND 两个分列格子无独立数据源（现只有 0701 卡的合并分）；③mmtutorbench 全部是 <100 题冒烟跑，被收录规则排除。
+3. 死格子（题级 SD<0.5）剔除与【草案】权重核对 → 红旗格子回裁决 → v1/v2 对比（21 P 口径，P03 合并与 P04 墓碑在对比中说明）+ 排名稳定性 → M4 双报告（研究版/用户版）。

@@ -1,7 +1,7 @@
 # Eval Run Inventory
 
-Total summary files scanned: 243
-Included candidates: 138
+Total summary files scanned: 238
+Included candidates: 133
 Excluded from main: 105
 
 | Benchmark | Include candidates | Excluded |
@@ -18,9 +18,9 @@ Excluded from main: 105
 | `eduguard_sata` | 8 | 1 |
 | `eduillustrate` | 4 | 5 |
 | `ifeval` | 5 | 0 |
-| `longtutor_diagnosis` | 3 | 0 |
-| `longtutor_evidence` | 3 | 0 |
-| `longtutor_teaching` | 3 | 0 |
+| `longtutor_diagnosis` | 1 | 0 |
+| `longtutor_evidence` | 2 | 0 |
+| `longtutor_teaching` | 1 | 0 |
 | `mathtutorbench_judge_calibration` | 0 | 6 |
 | `mathtutorbench_mistake_correction` | 5 | 0 |
 | `mathtutorbench_mistake_location` | 5 | 0 |

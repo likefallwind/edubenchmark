@@ -243,6 +243,38 @@ P16a 挂载依据(2026-07-16 裁决):longtutor_diagnosis 的输入是 199 条历
 | 对抗鲁棒 | eduguard_adversarial · 拒答质量 | 0.6 | 主格 |
 | 对抗鲁棒 | eduguard_adversarial · ASR | 0.45 | |
 
+## 我们的创新与自建工作
+
+这套映射不是把现成 benchmark 的榜单分数搬过来加权,以下工作是本仓库自己做的。
+
+### 自建测验(4 个,均零标注成本、规则判分)
+
+| 测验 | 测什么 | 协议 | 挂载 |
+|---|---|---|---|
+| p08_calibration | 置信度校准("自信地教错") | 复用精确匹配题 + 口头置信度,CWR/AUROC 合成 | P08 主格 |
+| p08_abstention | 能力性弃答("不会时说不会") | UMWP/TreeCut 不可答题,平衡弃答分 | P08 主格 |
+| p07_selfcheck | 两轮自查 | 先答题、再无提示复查;headline=0.5×改对率+0.5×(1−改错率),与首轮正确率解耦 | P07 主格 |
+| mooccube_prereq | 知识结构层路径规划 | MOOCCube 905 条专家先修边当金标,自建 200 道先修选择 + 100 道排序,随机基线校正 | P19 首个测量 |
+
+P01/P02/P07/P08 在此前的常规做法里全是"搭车分"(别的任务顺带算出来的),这四个测验加上 IFEval 接入和 longtutor 挂载,把其中三个 P 变成了直接测量。
+
+### 接入并改造的公开 benchmark(17 个 adapter,30+ 个评测变体)
+
+统一 eval harness(`scripts/eval/`,load → call → extract → score → report,断点续跑、逐 benchmark 稳定产物目录)下自行移植:mathtutorbench 家族 9 任务(**win-rate 判分用 LLM-as-judge 替换官方 GPU 奖励模型**,并做了裁判校准实验)、EduGuard 两阶段安全测验、MRBench / BEA2025 双模式(被测模型当裁判的校准模式 + 生成后固定裁判逐维度标注模式)、LongTutor 三任务(官方仓库只有 pipeline 脚本,移植成可复现 adapter)、MMTutorBench 多模态辅导、IFEval 官方 checker、K12Vista、MathVista/MMLU-Pro/AGIEval/OlympiadBench/C-Eval(判分逻辑逐个从官方 repo 移植,非自造)。EduBench 则是导入同事的全量原始判分(11 模型 × 3,797 题 × 12 指标)后做题级重分析。
+
+### 方法学(相对"拿榜单分加权"的常规做法)
+
+1. **预注册测量模型**:每个 P 先声明 reflective/formative 与 facet 结构(`data/mapping_measurement_model_v*.json`),声明先于数据,防止看完分数再编结构。
+2. **映射效度检查**(13 号产物):每个格子算跨模型区分度、每对同 P 格子算跨模型相关,给 validated/flagged/受限评级——权重不再是拍的,错挂能被数据打回。
+3. **换裁判实验**(M2):同一批回答换两个裁判重判,把 LLM 裁判指标二分为"真测量"(个性化/动机/高阶思维,ρ 0.6-0.8)与"裁判噪声"(错误识别,ρ≤0.14)——不做这一步会把噪声当宝贝挂进映射。
+4. **题级证据**:"会答题≠会教"从口号变成数字——同一批回答内,事实准确性与个性化/动机引导的题内相关约等于零。
+5. **(任务×指标)级取分 + 死格子剔除**:LLM 裁判 benchmark 不用任务均分,按原生指标逐格挂 P;题级 SD<0.5 的死格子不进映射。
+6. **拆分准入规则**:子能力拆分需理论/失败机制/教师标准/同源数据四类 benchmark 无关依据中至少两个支持;benchmark 的存在永远不构成拆分依据(P17b 苏格拉底提问因此被砍,是反面教材)。
+7. **facet 聚合**:facet 内按格子权重加权、跨 facet 等权,formative 声明真正落进分数(P16 不会被单一 facet 淹没)。
+8. **证据分层**:education_core / diagnostic / foundation_gate(门槛,降权 0.45)/ excluded_judge_task 四档,通识题永远压不过教学核心证据。
+9. **研究层/用户层分离**:加权与统计检验留研究层;用户版每 P 一个分数 + 三档白话可信度。
+10. **裁判工程纪律**:裁判原文全部落盘(解析 bug 可零成本重算)、取消 unparsed 中间态(只有真 label 或可重判的 error)、全链路不设 max_tokens 上限(避免推理模型被饿死产生假失败)。
+
 ## 附录:Benchmark 索引(每个测验一行)
 
 | benchmark | 是什么 | 判分方式 | 喂给哪些 P |

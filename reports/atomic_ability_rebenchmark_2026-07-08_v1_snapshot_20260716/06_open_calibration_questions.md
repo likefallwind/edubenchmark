@@ -11,6 +11,6 @@ Resolved in this pass:
 Remaining review points:
 
 1. The v3 atomic list has `P01-P22`; there is no `P0`. If the request meant a specific ability, confirm whether it means `P01` or another P code.
-2. `P09` and `P15` are declared domain gaps under mapping v2 (report them honestly as uncovered); `P10`/`P19` are single-source reference values and `P16` covers 2 of 4 declared sub-abilities.
+2. Current evidence may still be sparse or absent for `P04`, `P08`, `P09`, `P15`, and `P19`. Confirm whether to leave them blank/low-coverage or add proxy mappings.
 3. `P21/P22` are covered mainly by EduGuard safety evidence. Confirm whether that is sufficient, or whether to require student-risk-specific datasets.
 4. For cross-model comparison, decide whether to add a strict `common-evidence` mode that only compares models on shared benchmark/subdimension coverage.
