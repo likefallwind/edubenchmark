@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Build the standalone HTML report for the atomic-ability benchmark (mapping v2).
+"""Build the standalone HTML report for the atomic-ability benchmark (mapping v3).
 
 Reads the aggregation/validation artifacts and the adjudicated measurement model,
 writes a self-contained Chinese HTML report to ``html_report/``.  Regenerate by
 rerunning; never hand-edit the output.
 
 Inputs:
-- data/mapping_measurement_model_v2.json
+- data/mapping_measurement_model_v3.json
 - reports/atomic_ability_rebenchmark_2026-07-08/09_atomic_p_scores_raw_adjusted.jsonl
 - reports/atomic_ability_rebenchmark_2026-07-08/13_mapping_validation_cells.jsonl
 """
@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
 OUT_DIR = ROOT / "html_report"
-OUT = OUT_DIR / "atomic_ability_benchmark_v2_report_2026-07-16.html"
+OUT = OUT_DIR / "atomic_ability_benchmark_v3_report_2026-07-16.html"
 
 RELEASE_MODELS = [
     ("minimax-m3", "MiniMax-M3"),
@@ -41,9 +41,7 @@ P_DEFINITIONS = {
     "P08": "自信程度与正确率一致;不会时主动弃答",
     "P09": "调用工具、完成多步长程任务",
     "P10": "生成图示等非文本教学产物",
-    "P11": "判断学生作答的对错",
-    "P12": "指出错误发生在作答的哪一步",
-    "P13": "解释错误背后的原因/误概念",
+    "P11": "诊断学生错误:判对错、定位错误步骤、解释错因/误概念(三 facet)",
     "P14": "依据(或构建)评分标准评判主观作答与教学回复",
     "P15": "识别抄袭、代写等真实性问题",
     "P16": "从交互中建模学生的水平、需求与特征",
@@ -66,9 +64,7 @@ P_CREDIBILITY = {
     "P08": ("可信", "直接测量(双任务)"),
     "P09": ("暂未覆盖", "领域空白,诚实标注"),
     "P10": ("参考值", "单源(eduillustrate)"),
-    "P11": ("可信", "单源+(mathtutorbench 两任务)"),
-    "P12": ("可信", "单源+"),
-    "P13": ("可信", "多源;edubench 错误识别指标带裁判噪声注记"),
+    "P11": ("可信", "R17 合并(原 P11/P12/P13);判对/定位 facet 单源+,归因 facet 多源;edubench 错误识别指标带裁判噪声注记"),
     "P14": ("参考值", "现仅学业作答评分 facet 计分;评判/生成 facet 无分"),
     "P16": ("参考值", "4 个子能力覆盖 2 个;P16a 金标有模板化风险"),
     "P15": ("暂未覆盖", "领域空白,诚实标注"),
@@ -92,7 +88,7 @@ def esc(text: object) -> str:
 
 
 def build() -> str:
-    mm = json.loads((ROOT / "data" / "mapping_measurement_model_v2.json").read_text(encoding="utf-8"))
+    mm = json.loads((ROOT / "data" / "mapping_measurement_model_v3.json").read_text(encoding="utf-8"))
     p_rows = load_jsonl(ART / "09_atomic_p_scores_raw_adjusted.jsonl")
     cells = load_jsonl(ART / "13_mapping_validation_cells.jsonl")
 
@@ -178,7 +174,7 @@ def build() -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>教育 AI 原子能力评测·映射 v2 报告（2026-07-16）</title>
+<title>教育 AI 原子能力评测·映射 v3 报告（2026-07-16）</title>
 <style>
 :root {{
   color-scheme: light;
@@ -242,11 +238,11 @@ ol li {{ margin: 4px 0; }}
 <body>
 <main>
 <p class="sub">研究层预览 · 生成于 {generated} · 生成脚本 <span class="mono">scripts/build_atomic_ability_html_report.py</span></p>
-<h1>教育 AI 原子能力评测：映射 v2 报告</h1>
-<p>用 <strong>21 项原子能力（P01–P22，P04 已并入 P03）</strong>给大模型画教育能力画像。本报告基于 2026-07-15/16 裁决定稿的映射 v2：每个能力由哪些评测的哪些维度测量、权重多少，全部带数据依据；分数按"facet 内加权、跨 facet 等权"聚合。这是研究层数据的预览——正式的双报告（研究版/用户版）在 M4 里程碑交付。</p>
+<h1>教育 AI 原子能力评测：映射 v3 报告</h1>
+<p>用 <strong>19 项原子能力（编号 P01–P22；P04 并入 P03，P12/P13 并入 P11 错误诊断）</strong>给大模型画教育能力画像。本报告基于 2026-07-15/16 裁决定稿的映射 v3（R17：错误诊断三合一，判对/定位/归因降为 facet）：每个能力由哪些评测的哪些维度测量、权重多少，全部带数据依据；分数按"facet 内加权、跨 facet 等权"聚合。这是研究层数据的预览——正式的双报告（研究版/用户版）在 M4 里程碑交付。</p>
 
 <div class="tiles">
-  <div class="tile"><div class="n">21 项</div><div class="l">原子能力（18 项有分，P09/P15 领域空白，P19 评测待跑）</div></div>
+  <div class="tile"><div class="n">19 项</div><div class="l">原子能力（16 项有分，P09/P15 领域空白，P19 评测待跑）</div></div>
   <div class="tile"><div class="n">{n_cells} 个</div><div class="l">计分格子（benchmark × 取分维度），来自 30+ 评测变体</div></div>
   <div class="tile"><div class="n">4 个</div><div class="l">自建测验（校准 / 弃答 / 自查 / 先修推理），全部规则判分</div></div>
   <div class="tile"><div class="n">5 + 6</div><div class="l">发布模型全量面 + 扩展模型部分面（edubench 面 11 模型）</div></div>
@@ -262,7 +258,7 @@ ol li {{ margin: 4px 0; }}
 
 <h2>二、核心发现</h2>
 <ol>
-  <li><strong>"会答题 ≠ 会教"是数字，不是口号。</strong>同一模型内，答题类能力（P06 推理 8.0–9.4、P11 判对错 8.4–8.8）普遍比教学核心能力（P17 策略执行 5.8–7.3、P16 画像 2.3–7.5、P07 自查 5.3–6.4）高出 1.5–3 分。题级证据更硬：同一批回答里，事实准确性与个性化/动机引导的题内相关约等于零。</li>
+  <li><strong>"会答题 ≠ 会教"是数字，不是口号。</strong>同一模型内，答题类能力（P06 推理 8.0–9.4、P11a 判对错 facet 8.6–9.0）普遍比教学核心能力（P17 策略执行 5.8–7.3、P16 画像 2.3–7.5、P07 自查 5.3–6.4）高出 1.5–3 分；P11 错误诊断内部同样呈深度梯度——判对（8.6–9.0）＞定位（7.6–7.9）＞归因（6.9–8.2）。题级证据更硬：同一批回答里，事实准确性与个性化/动机引导的题内相关约等于零。</li>
   <li><strong>教学短板集中在"看见学生"</strong>：P16 学习者画像（知识状态估计 macro-F1 仅 0.23–0.32，全体模型跑不过多数类基线的 accuracy）和 P07 自我校验（改对率约 0.10）是全场最低的两块。</li>
   <li><strong>安全能力模型间差异大</strong>：P20–P22 上 MiniMax-M3（8.2–8.5）与 DeepSeek-V4-Pro（5.7–6.0）拉开近 3 分——但注意三 P 的知识 facet 同源，不构成三份独立证据。</li>
   <li><strong>天花板依然是最大威胁</strong>：{n_restricted}/{len(scored_cells)} 个有分格子跨模型方差受限（分数挤在一起），知识类与语气类指标尤甚——这些格子只能当门槛，不能用来排名。</li>
@@ -289,7 +285,7 @@ ol li {{ margin: 4px 0; }}
 </table>
 </div>
 
-<h2>五、效度检查摘要（13 号检查，映射 v2 口径）</h2>
+<h2>五、效度检查摘要（13 号检查，映射 v3 口径）</h2>
 <p>每个格子算跨模型区分度、每对同 P 格子算跨模型相关。区分度最好与最差的格子：</p>
 <h3>拉得开（适合排名）</h3>
 <ul>{top_html}</ul>
@@ -332,7 +328,7 @@ ol li {{ margin: 4px 0; }}
 <footer>
 数据源：<span class="mono">reports/atomic_ability_rebenchmark_2026-07-08/</span>（09 分数、10 证据、13 效度）·
 映射定稿 <span class="mono">doc/atomic_ability_mapping_final_2026-07-15.md</span> ·
-测量模型 <span class="mono">data/mapping_measurement_model_v2.json</span>。
+测量模型 <span class="mono">data/mapping_measurement_model_v3.json</span>。
 分数为研究层原始口径，用户版报告（每 P 一分 + 三档可信度 + 产品语言）随 M4 交付。
 </footer>
 </main>

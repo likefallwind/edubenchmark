@@ -1,6 +1,6 @@
 # mathtutorbench_mistake_correction — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mathtutorbench.md`](../../../doc/benchmark_profiles/mathtutorbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -39,7 +39,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_mistake_correction
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| education_core | 0.9 | P13 错因归因 (0.45)、P18 适配性解释与反馈生成 (0.35)、P06 推理与生成 (0.2) |
+| education_core | 0.9 | P06 推理与生成 (0.2)、P11 错误诊断 (0.2)、P18 适配性解释与反馈生成 (0.35) |
 
 ---
 

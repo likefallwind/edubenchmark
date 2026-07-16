@@ -1,6 +1,6 @@
 # edubench — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/edubench.md`](../../../doc/benchmark_profiles/edubench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -45,11 +45,17 @@ MODEL=<model> ./scripts/run_eval.sh edubench
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| education_core | 0.8 | P17 个性化教学策略选择 (0.4)、P18 适配性解释与反馈生成 (0.35)、P05 知识调用与掌握 (0.25) |
-| education_core | 0.8 | P18 适配性解释与反馈生成 (0.45)、P17 个性化教学策略选择 (0.3)、P05 知识调用与掌握 (0.25) |
-| education_core | 0.85 | P16 学习者画像建模 (0.3)、P17 个性化教学策略选择 (0.45)、P18 适配性解释与反馈生成 (0.25) |
-| education_core | 0.75 | P18 适配性解释与反馈生成 (0.35)、P06 推理与生成 (0.35)、P05 知识调用与掌握 (0.3) |
-| education_core | 0.75 | P18 适配性解释与反馈生成 (0.4)、P05 知识调用与掌握 (0.35)、P06 推理与生成 (0.25) |
+| education_core | 0.75 | P18 适配性解释与反馈生成 (0.4) |
+| education_core | 0.8 | P05 知识调用与掌握 (0.3) |
+| education_core | 0.8 | P18 适配性解释与反馈生成 (0.3) |
+| education_core | 0.8 | P05 知识调用与掌握 (0.35) |
+| education_core | 0.8 | P11 错误诊断 (0.25) |
+| education_core | 0.8 | P06 推理与生成 (0.2)、P18 适配性解释与反馈生成 (0.25) |
+| education_core | 0.8 | P18 适配性解释与反馈生成 (0.35) |
+| education_core | 0.8 | P16 学习者画像建模 (0.3)、P17 个性化教学策略选择 (0.4) |
+| education_core | 0.8 | P06 推理与生成 (0.35) |
+| education_core | 0.8 | P17 个性化教学策略选择 (0.25) |
+| education_core | 0.8 | P18 适配性解释与反馈生成 (0.1) |
 
 ---
 

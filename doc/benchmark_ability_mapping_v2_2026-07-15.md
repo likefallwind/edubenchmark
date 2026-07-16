@@ -221,3 +221,9 @@ mtb_solution_correctness 0.6 / mtb_mistake_location 0.1 / bea2025_judge 0.25(exc
 3. mrbench 的 **Revealing_of_the_Answer**(不泄答案)维度现在没挂任何 P——它是脚手架质量的负向信号,备选挂 P17 执行 facet,暂不动,记录在案。
 4. ~~数据依赖~~ **已解除(2026-07-16 核对)**:裁判 error 断点续判跑完,6 个裁判依赖 benchmark × 发布 5 模型去重后 error 全 0,mrbench/bea/mathtutorbench 分数解禁;longtutor_teaching 三模型均为全量真分(valid 1001)。**补跑决定(2026-07-16):不补**——mrbench_tutor/bea2025_tutor 缺 deepseek-v4-pro、doubao-seed-2.0-pro 生成,longtutor 缺 MiniMax-M2.7、doubao-seed-2.0-pro,均维持 3 模型面并在配对检验与报告中注记。
 5. ~~产出 mapping_measurement_model_v2.json~~ **已落盘(2026-07-16)** → 剩:聚合脚本 MAPPINGS 切 v2(含 edubench 指标级取分与 bea/mrbench 单维度分的取数改造)→ 重跑聚合 + 13 号检查 → v1/v2 对比(21 P 口径,P03 合并与 P04 墓碑在对比中说明)→ M4 双报告。
+
+## 五、v3 增量(2026-07-16,裁决 R17:P11/P12/P13 合并)
+
+- **原 P11 作答正误判定 / P12 错误位置定位 / P13 错因归因合并为 P11「错误诊断」**,三项降为 facet(P11a 判定 / P11b 定位 / P11c 归因),P12/P13 墓碑保留,清单 21→19。依据全部 benchmark 无关(P11/P12 拆分不满足准入规则;P13 可拆但不必拆,口径与 P03/P04 合并一致);详细论证与方法学披露(见数后修订)见 `doc/atomic_ability_mapping_final_2026-07-15.md` 裁决记录 R17。
+- **格子迁移**:原 P12 两格→P11b、原 P13 八格→P11c,权重/evidence_tier/注记原样;原 P11 内删除两个同源重复格(mathtutorbench_mistake_location 0.1、bea2025_judge 0.25 占位),121→119 格。
+- **落盘与重跑**:`data/mapping_measurement_model_v3.json`(v2 保留为 R17 前快照);聚合与 13 号检查已切 v3 重跑,v2 口径产物快照在 `reports/atomic_ability_rebenchmark_2026-07-08_v2_snapshot_20260716/`;HTML 报告改出 `html_report/atomic_ability_benchmark_v3_report_2026-07-16.html`(v2 版保留)。

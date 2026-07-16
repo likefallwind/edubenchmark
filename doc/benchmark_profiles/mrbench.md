@@ -24,9 +24,9 @@
 - **区分度（13 号实测）**：mrbench_tutor n=3，均分 3.73，sd 0.65——分数拉得开但模型太少。
 - 只有 200 段对话，样本量小，维度级估计噪声大。
 - tutor 侧结果依赖固定裁判的标注质量；judge 侧 excluded 不计分。
-- pass rate 复合问题同 BEA（构念核对 R2：Mistake_Identification→P13、Guidance/Actionability→P17/P18、Revealing_Answer/Tutor_Tone→P20，单维分现成）。
+- pass rate 复合问题同 BEA（构念核对 R2：Mistake_Identification→P11c 错因归因、Guidance/Actionability→P17/P18、Revealing_Answer/Tutor_Tone→P20，单维分现成）。
 
 ## 当前映射
 
-- mrbench_tutor：P18 0.45 / P17 0.30 / P20 0.25，education_core；mrbench_judge：P14/P13/P20，excluded_judge_task。
+- mrbench_tutor：P18 0.45 / P17 0.30 / P20 0.25，education_core；mrbench_judge：P14/P11c/P20，excluded_judge_task。（R17 后原 P13 = P11c 错因归因 facet）
 - 构念核对：R2、R3；P20 的"不泄题/语气"证据应指向单维度而非整体 pass rate。

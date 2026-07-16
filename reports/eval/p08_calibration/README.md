@@ -1,6 +1,6 @@
 # p08_calibration — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/p08_selfbuilt.md`](../../../doc/benchmark_profiles/p08_selfbuilt.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -39,7 +39,7 @@ MODEL=<model> ./scripts/run_eval.sh p08_calibration
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| diagnostic | 0.85 | P08 置信度校准与弃答 (0.8)、P07 自我校验与修正 (0.2) |
+| diagnostic | 0.85 | P07 自我校验与修正 (0.2)、P08 置信度校准与弃答 (0.8) |
 
 ---
 

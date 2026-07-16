@@ -1,24 +1,24 @@
 # mathtutorbench_pedagogy — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mathtutorbench.md`](../../../doc/benchmark_profiles/mathtutorbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-**这个 benchmark 下有 1 个 run 的分数不可用（unusable）。** 在重跑之前，不要把它们写进任何报告、聚合或映射裁决。
+没有不可用的 run，但有 2 个带保留意见（caveat），引用时必须一并写出。
 
 headline 口径：胜率（对金标 tutor 回复）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `glm-5.2` | 0.5539 | **unusable**（分数是假的，必须重跑） | 33.9% | 0.0% | 33.9% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `doubao-seed-2.0-lite` | 0.7522 | caveat（可用，但必须带着下面的保留意见一起引用） | 8.8% | 0.0% | 8.8% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `doubao-seed-2.0-pro` | 0.7713 | caveat（可用，但必须带着下面的保留意见一起引用） | 8.3% | 0.0% | 8.3% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `MiniMax-M2.7` | 0.6617 | caveat（可用，但必须带着下面的保留意见一起引用） | 6.0% | 0.0% | 6.0% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `deepseek-v4-pro` | 0.7722 | caveat（可用，但必须带着下面的保留意见一起引用） | 5.6% | 0.0% | 5.6% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `minimax3` | 0.7581 | caveat（可用，但必须带着下面的保留意见一起引用） | 5.6% | 0.1% | 5.6% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `deepseek-v4-flash` | 0.7096 | caveat（可用，但必须带着下面的保留意见一起引用） | 3.6% | 0.0% | 3.6% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
+| `doubao-seed-2.0-lite` | 0.7522 | caveat（可用，但必须带着下面的保留意见一起引用） | 8.8% | 0.0% | 8.8% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输；8.8% 的抽取/判分行带 error；summary.json 比产物旧：盘上的分数跟盘上的数据对不上 |
+| `deepseek-v4-flash` | 0.7096 | caveat（可用，但必须带着下面的保留意见一起引用） | 3.6% | 0.0% | 3.6% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输；3.6% 的抽取/判分行带 error；summary.json 比产物旧：盘上的分数跟盘上的数据对不上 |
+| `MiniMax-M2.7` | 0.6904 | clean | 0.0% | 0.0% | — |
+| `deepseek-v4-pro` | 0.7983 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.8252 | clean | 0.0% | 0.0% | — |
+| `glm-5.2` | 0.8139 | clean | 0.0% | 0.0% | — |
+| `minimax3` | 0.7930 | clean | 0.0% | 0.0% | — |
 
 ### 已定位的 bug（根因 + 修法）
 
@@ -51,9 +51,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_pedagogy
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| education_core | 0.95 | P17 个性化教学策略选择 (0.45)、P18 适配性解释与反馈生成 (0.3)、P05 知识调用与掌握 (0.25) |
-
-**这些 P 的证据因此受污染：P05、P17、P18**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+| education_core | 0.95 | P05 知识调用与掌握 (0.25)、P17 个性化教学策略选择 (0.45)、P18 适配性解释与反馈生成 (0.3) |
 
 ---
 

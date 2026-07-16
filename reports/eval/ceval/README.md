@@ -1,6 +1,6 @@
 # ceval — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/ceval.md`](../../../doc/benchmark_profiles/ceval.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -40,7 +40,7 @@ MODEL=<model> ./scripts/run_eval.sh ceval
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| foundation_gate | 0.35 | P05 知识调用与掌握 (0.6)、P06 推理与生成 (0.25)、P01 指令与约束遵循 (0.15) |
+| foundation_gate | 0.35 | P01 指令与约束遵循 (0.15)、P05 知识调用与掌握 (0.6)、P06 推理与生成 (0.25) |
 
 ---
 

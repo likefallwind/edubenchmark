@@ -1,18 +1,20 @@
 # longtutor_teaching — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：（暂无档案；本文件的“这个评测是什么”一节即是权威描述，事实来源是 adapter 源码与 AGENTS.md）
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-**这个 benchmark 下有 1 个 run 的分数不可用（unusable）。** 在重跑之前，不要把它们写进任何报告、聚合或映射裁决。
+全部 run 干净。
 
 headline 口径：四维裁判分均值（1-5）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `minimax3` | 0.0000 | **unusable**（分数是假的，必须重跑） | 100.0% | 3.6% | **headline 本身无效**（打分器坏了，不是模型的问题）；100.0% 的题命中失败标记：裁判分解析恒为 0（打分函数是死代码）；3.6% 的题没进判分（分数建立在 964/1001 的残缺样本上）；产物数量对不上，最大缺口 3.6% |
+| `glm-5.2` | 4.0310 | clean | 0.7% | 0.0% | 0.7% 的题命中失败标记：裁判分解析恒为 0（打分函数是死代码） |
+| `deepseek-v4-pro` | 3.9540 | clean | 0.4% | 0.0% | — |
+| `minimax3` | 4.1000 | clean | 0.4% | 0.0% | — |
 
 ### 已定位的 bug（根因 + 修法）
 
@@ -23,12 +25,6 @@ headline 口径：四维裁判分均值（1-5）。
 - 建议修法：把 `try/json.loads/except json.JSONDecodeError` 挪回 `_json_from_text` 里；同时给 `extra_summary` 加一个 `n_unparsed_judgements`，全 0 这种事下次要能自己叫。
 
 > 本次审计**不改 adapter 代码**（那是下一步）。修完之后，受影响的 run 必须删掉 `extractions.jsonl` 里的坏行（或整个 extractions.jsonl）再重跑 —— 只跑 `--score-only` 没用，坏值已经被缓存进去了。
-
-### 样本残缺的 run
-
-上游配额/限流打挂大批题目后，summary 仍在**幸存样本**上照常出分。这类 run 的分数没有“错”，但它测的是一个自选样本，不能跟全量 run 放在一张表里比。
-
-- `minimax3`：只有 964 / 1001 题进入判分（未判分 3.6%）。
 
 ## 二、这个评测是什么
 
@@ -49,7 +45,9 @@ MODEL=<model> ./scripts/run_eval.sh longtutor_teaching
 
 ## 三、当前映射（M3 裁决相关）
 
-`reports/atomic_ability_rebenchmark_2026-07-08/02_benchmark_ability_mapping.jsonl` 里没有这个 benchmark 的条目——它当前**不进能力雷达**。
+| evidence_tier | benchmark_weight | 能力（P:权重） |
+| --- | --- | --- |
+| diagnostic | 0.75 | P17 个性化教学策略选择 (0.3) |
 
 ---
 

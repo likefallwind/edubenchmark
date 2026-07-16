@@ -1,0 +1,1186 @@
+{
+ "version": "v3",
+ "date": "2026-07-16",
+ "status": "adjudicated",
+ "provenance": "M3 裁决 R1-R16（doc/m3_adjudication_sheet_2026-07-14.md 文末裁决结果）+ 2026-07-16 longtutor 三挂载裁决；展开见 doc/atomic_ability_mapping_final_2026-07-15.md（定稿）与 doc/benchmark_ability_mapping_v2_2026-07-15.md（变化记录）。声明先于 v2 聚合数据固化，修改需带 revision_rationale。 v3 增量：2026-07-16 裁决 R17（P11/P12/P13 合并），除此之外与 v2 逐格一致。",
+ "notes": [
+  "reflective: 同 P 各格子是同一构念的可互换指标，跨家族低相关是红旗。",
+  "formative: P 由不同 facet 复合而成，跨 facet 配对预期模式为 facet_distinct_expected，不触发 flagged。",
+  "v2 结构变化：P03+P04 合并为『多模态理解』（P04 编号墓碑保留不复用，清单 22→21）；P14 重定义为『主观题 rubric 评分能力』三 facet；P16 facet 升级为 4 个子能力声明（R12，允许空 facet 标 coverage_gap）；P19 定义澄清为知识结构层（学习者状态路径 = P16×P19 组合能力）。",
+  "v2 取分变化：edubench 由 5 任务均分改为 12 原生裁判指标逐维度取分（R1；instruction_following 与 content_relevance_scope_control 两指标不挂，模型排名级与知识指标 ρ≥0.92 无独立信息）；bea2025_tutor / mrbench_tutor 由复合 pass rate 改为单维度分（R2）。",
+  "edubench 指标 subdimension 使用 reports/eval/edubench/_analysis/ 的 snake_case slug；细挂到（任务×指标）格子层，题级 SD<0.5 的死格子在 v2 首轮聚合后剔除（待办，见变化记录文档遗留清单第 2 条）。",
+  "P09/P15 为领域空白（coverage_gap），P16b/P16c/P16a 以外的画像子能力、P03 视频/音频 facet、P14 生成 rubric facet 为子能力级空白；测不了≠不存在，清单不随测量可行性伸缩。",
+  "longtutor 三任务仅 3 个模型面（minimax3 / glm-5.2 / deepseek-v4-pro，缺 MiniMax-M2.7 / doubao-seed-2.0-pro）；mrbench_tutor / bea2025_tutor 仅 3 个模型面（缺 deepseek-v4-pro / doubao-seed-2.0-pro）。2026-07-16 裁决：不补跑，配对检验与报告按 3 模型面注记。",
+  "evidence_tier=excluded_judge_task 的格子（bea2025_judge / mrbench_judge）声明保留但暂不计分。",
+  "v3 结构变化（唯一变化）：P11/P12/P13 合并为 P11『错误诊断』（formative，三 facet：P11a 作答正误判定 / P11b 错误位置定位 / P11c 错因归因），P12/P13 编号墓碑保留不复用，清单 21→19。除 P11a 删除两个同源重复格（mathtutorbench_mistake_location 0.1 搭车格、bea2025_judge 0.25 暂不计分占位格，均已由 P11b/P11c 持有）外，所有格子、权重、evidence_tier 原样迁移。本次为见数后的构念层修订（裁决 R17），依据全部 benchmark 无关，见 P11 rationale 与 doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录。"
+ ],
+ "abilities": [
+  {
+   "p_code": "P01",
+   "p_name": "指令与约束遵循",
+   "group": "SRG",
+   "model_type": "reflective",
+   "rationale": "IFEval 规则判分为直接测量主格；选择题格式遵循与弃答约束是'按指令输出'的门槛/诊断辅证（R13：edubench 指令遵循指标不作直接测量）。",
+   "facets": [
+    {
+     "facet_id": "core",
+     "facet_name": "指令与约束遵循",
+     "cells": [
+      {
+       "benchmark_id": "ifeval",
+       "subdimension": "prompt-level strict accuracy",
+       "weight": 1.0,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "agieval",
+       "subdimension": "overall/task/language/question_type accuracy",
+       "weight": 0.2,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "ceval",
+       "subdimension": "overall/category/subject accuracy",
+       "weight": 0.15,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "mmlu_pro",
+       "subdimension": "overall/category accuracy",
+       "weight": 0.1,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "p08_abstention",
+       "subdimension": "balanced abstention score",
+       "weight": 0.15,
+       "evidence_tier": "diagnostic"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P02",
+   "p_name": "长上下文与证据定位",
+   "group": "SRG",
+   "model_type": "reflective",
+   "rationale": "longtutor_evidence（长对话证据抽取）为首个直接测量；作文/步骤评分与错误定位仍为搭车代理。成熟度标注『直接测量·区分度待验证』。",
+   "facets": [
+    {
+     "facet_id": "core",
+     "facet_name": "长上下文与证据定位",
+     "cells": [
+      {
+       "benchmark_id": "longtutor_evidence",
+       "subdimension": "semantic evidence accuracy (3 memory types)",
+       "weight": 0.7,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "2026-07-16 裁决：挂载定稿，P02 由纯代理转直接测量（199 条历史记录中的单记录提取/跨 session 推理/幻觉检查，规则+语义等价裁判）。三模型面 accuracy 0.787/0.807/0.791 挤得很紧——区分度待验证，成熟度按『直接测量·区分度待验证』表述；3 模型面不补跑（2026-07-16 决定）。"
+      },
+      {
+       "benchmark_id": "asap_2",
+       "subdimension": "essay holistic QWK",
+       "weight": 0.2,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "QWK holistic total score",
+       "weight": 0.15,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "CCS step scoring consistency",
+       "weight": 0.2,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_solution_correctness",
+       "subdimension": "Solution Correctness",
+       "weight": 0.15,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_mistake_location",
+       "subdimension": "Mistake Location",
+       "weight": 0.2,
+       "evidence_tier": "education_core"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P03",
+   "p_name": "多模态理解",
+   "group": "SRG",
+   "model_type": "formative",
+   "rationale": "【裁决 R5】原 P03（常规感知）+ P04（复杂理解）合并：深浅是难度维度用证据标签表达，不是构念维度；facet 按材料类型划分。eduillustrate（生成方向）摘除，归 P10/P18。",
+   "facets": [
+    {
+     "facet_id": "problem_images",
+     "facet_name": "解题图像",
+     "cells": [
+      {
+       "benchmark_id": "mathvista",
+       "subdimension": "task/question_type/answer_type accuracy",
+       "weight": 0.35,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "olympiadbench",
+       "subdimension": "overall/subject/language/modality accuracy",
+       "weight": 0.2,
+       "evidence_tier": "foundation_gate"
+      }
+     ]
+    },
+    {
+     "facet_id": "subject_charts",
+     "facet_name": "学科图表",
+     "cells": [
+      {
+       "benchmark_id": "k12vista",
+       "subdimension": "official partial-credit score (per-blank 0/1 mean)",
+       "weight": 0.55,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "【裁决 R15】K12Vista 接入（学科图多步理解，五学科×三学段 300 题分层抽样）。裁判未校准、仅 4 个视觉模型可跑——参考值。"
+      }
+     ]
+    },
+    {
+     "facet_id": "teaching_multimodal",
+     "facet_name": "教学场景图文",
+     "cells": [
+      {
+       "benchmark_id": "tutorbench",
+       "subdimension": "Fair815 multimodal tutor quality",
+       "weight": 0.25,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mmtutorbench",
+       "subdimension": "multimodal tutor score",
+       "weight": 0.3,
+       "evidence_tier": "diagnostic"
+      }
+     ]
+    },
+    {
+     "facet_id": "video_audio",
+     "facet_name": "视频/音频",
+     "coverage_gap": true,
+     "cells": []
+    }
+   ]
+  },
+  {
+   "p_code": "P04",
+   "p_name": "（已并入 P03）",
+   "group": "SRG",
+   "model_type": "tombstone",
+   "merged_into": "P03",
+   "coverage_gap": false,
+   "rationale": "【裁决 R5，2026-07-15】并入 P03『多模态理解』。编号保留作墓碑、不复用，避免全库改引用；原 K12Vista 挂载移至 P03 学科图表 facet。",
+   "facets": []
+  },
+  {
+   "p_code": "P05",
+   "p_name": "知识调用与掌握",
+   "group": "FDR",
+   "model_type": "formative",
+   "rationale": "知识调用横跨'会学科知识'、'懂教学专业知识'、'能在生成中运用知识'三个不必协变的方向。知识簇普遍天花板，门槛性质。",
+   "facets": [
+    {
+     "facet_id": "subject_knowledge",
+     "facet_name": "学科知识调用",
+     "cells": [
+      {
+       "benchmark_id": "mmlu_pro",
+       "subdimension": "overall/category accuracy",
+       "weight": 0.6,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "ceval",
+       "subdimension": "overall/category/subject accuracy",
+       "weight": 0.6,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "agieval",
+       "subdimension": "overall/task/language/question_type accuracy",
+       "weight": 0.35,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "mathtutorbench_problem_solving",
+       "subdimension": "Problem Solving",
+       "weight": 0.3,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "olympiadbench",
+       "subdimension": "overall/subject/language/modality accuracy",
+       "weight": 0.25,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "mathvista",
+       "subdimension": "task/question_type/answer_type accuracy",
+       "weight": 0.2,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "mooccube_prereq",
+       "subdimension": "chance-corrected composite (先修选择 + 学习顺序排序)",
+       "weight": 0.2,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "【裁决 R16】先修选择部分含学科知识记忆成分，副挂 0.20。"
+      },
+      {
+       "benchmark_id": "k12vista",
+       "subdimension": "official partial-credit score (per-blank 0/1 mean)",
+       "weight": 0.15,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "【裁决 R15】副挂。"
+      }
+     ]
+    },
+    {
+     "facet_id": "pedagogical_knowledge",
+     "facet_name": "教学专业知识",
+     "cells": [
+      {
+       "benchmark_id": "pedagogy_benchmark",
+       "subdimension": "CDPK teaching knowledge selection",
+       "weight": 0.45,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "pedagogy_benchmark",
+       "subdimension": "SEND special education needs selection",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "pedagogy_benchmark",
+       "subdimension": "CDPK/SEND aggregate from 0701 card",
+       "weight": 0.4,
+       "evidence_tier": "education_core"
+      }
+     ]
+    },
+    {
+     "facet_id": "applied_generation",
+     "facet_name": "生成中的知识运用",
+     "cells": [
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "domain_knowledge_accuracy (metric)",
+       "weight": 0.35,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】edubench 改指标级取分；知识类指标被裁判打到天花板，门槛性质【草案权重】。"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "basic_factual_accuracy (metric)",
+       "weight": 0.3,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】同上【草案权重】。"
+      },
+      {
+       "benchmark_id": "mathtutorbench_pedagogy",
+       "subdimension": "Pedagogy IF",
+       "weight": 0.25,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_pedagogy_hard",
+       "subdimension": "Pedagogy IF hard",
+       "weight": 0.25,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "ECS error-cause consistency",
+       "weight": 0.2,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "asap_2",
+       "subdimension": "essay holistic QWK",
+       "weight": 0.15,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "QWK holistic total score",
+       "weight": 0.15,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_scaffolding",
+       "subdimension": "Scaffolding",
+       "weight": 0.15,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_scaffolding_hard",
+       "subdimension": "Scaffolding hard",
+       "weight": 0.15,
+       "evidence_tier": "education_core"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P06",
+   "p_name": "推理与生成",
+   "group": "FDR",
+   "model_type": "formative",
+   "rationale": "解题式推理与生成/归因式推理侧重不同，不强制协变。【裁决 R8】pedagogy_benchmark 移出 P06。",
+   "facets": [
+    {
+     "facet_id": "problem_reasoning",
+     "facet_name": "解题推理",
+     "cells": [
+      {
+       "benchmark_id": "mathtutorbench_problem_solving",
+       "subdimension": "Problem Solving",
+       "weight": 0.6,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "olympiadbench",
+       "subdimension": "overall/subject/language/modality accuracy",
+       "weight": 0.55,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "agieval",
+       "subdimension": "overall/task/language/question_type accuracy",
+       "weight": 0.45,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "mathvista",
+       "subdimension": "task/question_type/answer_type accuracy",
+       "weight": 0.45,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "mmlu_pro",
+       "subdimension": "overall/category accuracy",
+       "weight": 0.3,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "k12vista",
+       "subdimension": "official partial-credit score (per-blank 0/1 mean)",
+       "weight": 0.3,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "【裁决 R15】图表多步推理成分。"
+      },
+      {
+       "benchmark_id": "ceval",
+       "subdimension": "overall/category/subject accuracy",
+       "weight": 0.25,
+       "evidence_tier": "foundation_gate"
+      },
+      {
+       "benchmark_id": "mooccube_prereq",
+       "subdimension": "chance-corrected composite (先修选择 + 学习顺序排序)",
+       "weight": 0.1,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "【裁决 R16】排序推理成分，副挂 0.10。"
+      }
+     ]
+    },
+    {
+     "facet_id": "generative_reasoning",
+     "facet_name": "生成与归因推理",
+     "cells": [
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "reasoning_process_rigor (metric)",
+       "weight": 0.35,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】替换原 QG/TMG 任务分【草案权重】。"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "higher_order_thinking_ability_development (metric)",
+       "weight": 0.2,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】换裁判稳健（ρ 0.63-0.73），与 P18 分挂【草案权重】。"
+      },
+      {
+       "benchmark_id": "mathtutorbench_mistake_correction",
+       "subdimension": "Mistake Correction",
+       "weight": 0.2,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "ECS error-cause consistency",
+       "weight": 0.1,
+       "evidence_tier": "education_core"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P07",
+   "p_name": "自我校验与修正",
+   "group": "FDR",
+   "model_type": "reflective",
+   "rationale": "两轮自查协议为直接测量主格（headline 与首轮正确率解耦）；解答正确性判断与校准分为相邻代理。",
+   "facets": [
+    {
+     "facet_id": "core",
+     "facet_name": "自我校验与修正",
+     "cells": [
+      {
+       "benchmark_id": "p07_selfcheck",
+       "subdimension": "two-round self-check (fix/break rate)",
+       "weight": 0.85,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "mathtutorbench_solution_correctness",
+       "subdimension": "Solution Correctness",
+       "weight": 0.25,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "p08_calibration",
+       "subdimension": "calibration composite (CWR/AUROC)",
+       "weight": 0.2,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "mathtutorbench_problem_solving",
+       "subdimension": "Problem Solving",
+       "weight": 0.1,
+       "evidence_tier": "foundation_gate"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P08",
+   "p_name": "置信度校准与弃答",
+   "group": "FDR",
+   "model_type": "formative",
+   "rationale": "置信度校准（概率质量）与能力性弃答（行为决策）相关但可分离；两个自建测验按设计各测一半。",
+   "facets": [
+    {
+     "facet_id": "calibration",
+     "facet_name": "置信度校准",
+     "cells": [
+      {
+       "benchmark_id": "p08_calibration",
+       "subdimension": "calibration composite (CWR/AUROC)",
+       "weight": 0.8,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "p07_selfcheck",
+       "subdimension": "two-round self-check (fix/break rate)",
+       "weight": 0.15,
+       "evidence_tier": "diagnostic"
+      }
+     ]
+    },
+    {
+     "facet_id": "abstention",
+     "facet_name": "能力性弃答",
+     "cells": [
+      {
+       "benchmark_id": "p08_abstention",
+       "subdimension": "balanced abstention score",
+       "weight": 0.85,
+       "evidence_tier": "diagnostic"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P09",
+   "p_name": "工具使用与长程智能体执行",
+   "group": "FDR",
+   "model_type": "undeclared",
+   "coverage_gap": true,
+   "rationale": "领域空白：教育场景 agent/工具使用类评测缺位。报告诚实标『暂未覆盖』。",
+   "facets": []
+  },
+  {
+   "p_code": "P10",
+   "p_name": "多模态教学产物生成",
+   "group": "FDR",
+   "model_type": "reflective",
+   "rationale": "孤证维度（仅 eduillustrate），无法做配对检验，评级恒为 single_source。",
+   "single_source": true,
+   "facets": [
+    {
+     "facet_id": "core",
+     "facet_name": "多模态教学产物生成",
+     "cells": [
+      {
+       "benchmark_id": "eduillustrate",
+       "subdimension": "8-dim 0-5 visual explanation score",
+       "weight": 0.45,
+       "evidence_tier": "diagnostic"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P11",
+   "p_name": "错误诊断",
+   "group": "LAD",
+   "model_type": "formative",
+   "rationale": "【裁决 R17，2026-07-16】原 P11 作答正误判定 / P12 错误位置定位 / P13 错因归因合并为一个 P，原三项降为 facet（诊断深度：判对→定位→归因）。依据（benchmark 无关）：①按拆分准入规则（四类依据至少两个），P11/P12 拆分不达标——v3 审计自认两者残余约等于无、机制同为对参考解核验，分开的表象来自 mathtutorbench 恰好分任务，而 benchmark 存在不构成拆分依据；②P13 归因单独保留虽可（教师 noticing 的 perceive/interpret 之分、误概念知识残余、sas_bench CCS/ECS 独立标注），但允许拆≠必须拆，合入后口径与 P03/P04 合并一致：诊断深度用 facet 表达，不是三个独立构念；③测量上原 P11/P12 均为薄证据单源+，合并后整 P 多源，facet 机制（facet 内加权、跨 facet 等权）现成。与 P14 的边界：本 P 是对着参考解找错、解释错（诊断）；P14 是把作答证据映射到 rubric 分档（量尺映射），机制不同。方法学注记：本裁决发生在见数之后（v2 聚合分数已产出），修订仅以上述构念层依据支撑，不引用任何分数模式。",
+   "facets": [
+    {
+     "facet_id": "answer_verdict",
+     "facet_name": "P11a 作答正误判定",
+     "cells": [
+      {
+       "benchmark_id": "mathtutorbench_solution_correctness",
+       "subdimension": "Solution Correctness",
+       "weight": 0.6,
+       "evidence_tier": "education_core"
+      }
+     ],
+     "revision_rationale": "R17 附带删除两格：①mathtutorbench_mistake_location 0.1 搭车格——同源主格（0.7）已是 P11b 主格；②bea2025_judge 0.25 暂不计分占位格——同一占位（同 subdimension）已在 P11c（0.3，与 mrbench_judge 并列），合并后每 P 保留一份即可。两处均为避免同 P 跨 facet 双计同一数据源。"
+    },
+    {
+     "facet_id": "error_location",
+     "facet_name": "P11b 错误位置定位",
+     "cells": [
+      {
+       "benchmark_id": "mathtutorbench_mistake_location",
+       "subdimension": "Mistake Location",
+       "weight": 0.7,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "CCS step scoring consistency",
+       "weight": 0.25,
+       "evidence_tier": "education_core"
+      }
+     ]
+    },
+    {
+     "facet_id": "error_attribution",
+     "facet_name": "P11c 错因归因",
+     "cells": [
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "ECS error-cause consistency",
+       "weight": 0.7,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "bea2025_tutor",
+       "subdimension": "dimension: Mistake_Identification",
+       "weight": 0.25,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R2】复合 pass rate 换单维度分。"
+      },
+      {
+       "benchmark_id": "mrbench_tutor",
+       "subdimension": "dimension: Mistake_Identification",
+       "weight": 0.25,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R2】同上。"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "error_identification_correction_accuracy (metric)",
+       "weight": 0.25,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1（R14 否决后口径）】入映射但带方法学局限注记：M2 换裁判实验显示该指标跨裁判 ρ≤0.14、三裁判均分 4.6/7.4/8.7，分歧大【草案权重】。"
+      },
+      {
+       "benchmark_id": "mathtutorbench_mistake_correction",
+       "subdimension": "Mistake Correction",
+       "weight": 0.2,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R6】0.45→0.20：只测改对与否，与归因部分相关。"
+      },
+      {
+       "benchmark_id": "longtutor_diagnosis",
+       "subdimension": "four-category knowledge-state diagnosis macro-F1",
+       "weight": 0.1,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "2026-07-16 裁决：P16a 主挂、P13 低权重副挂。语义核实——四标签（Recall Failure/Conceptual Gap/Procedural Error/Transfer Deficit）名义上是错因类别，但归因证据源是交互历史特征而非作答内容，与 ECS 锚动用的能力不同，故仅作相邻证据副挂 0.10。"
+      },
+      {
+       "benchmark_id": "bea2025_judge",
+       "subdimension": "judge labels: mistake/guidance/actionability",
+       "weight": 0.3,
+       "evidence_tier": "excluded_judge_task"
+      },
+      {
+       "benchmark_id": "mrbench_judge",
+       "subdimension": "8-dimension tutor response judging",
+       "weight": 0.25,
+       "evidence_tier": "excluded_judge_task"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P12",
+   "p_name": "（已并入 P11）",
+   "group": "LAD",
+   "model_type": "tombstone",
+   "merged_into": "P11",
+   "coverage_gap": false,
+   "rationale": "【裁决 R17，2026-07-16】原『错误位置定位』并入 P11『错误诊断』为 facet。编号保留作墓碑、不复用。原格子原权重迁入 P11b。longtutor_diagnosis 不挂的 2026-07-16 裁决随迁（任务无解题步骤可定位）。",
+   "facets": []
+  },
+  {
+   "p_code": "P13",
+   "p_name": "（已并入 P11）",
+   "group": "LAD",
+   "model_type": "tombstone",
+   "merged_into": "P11",
+   "coverage_gap": false,
+   "rationale": "【裁决 R17，2026-07-16】原『错因归因』并入 P11『错误诊断』为 facet。编号保留作墓碑、不复用。原格子原权重迁入 P11c，含 longtutor_diagnosis 副挂 0.1 与 edubench 指标方法学注记。",
+   "facets": []
+  },
+  {
+   "p_code": "P14",
+   "p_name": "主观题 rubric 评分能力",
+   "group": "LAD",
+   "model_type": "formative",
+   "rationale": "【裁决 R3】重定义为『依据（或构建）评分标准评判主观作答与教学回复』，三 facet：学业作答评分（有分）/ 教学回复评判（judge 任务暂不计分）/ 生成 rubric（空白）。",
+   "facets": [
+    {
+     "facet_id": "academic_scoring",
+     "facet_name": "学业作答评分",
+     "cells": [
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "QWK holistic total score",
+       "weight": 0.7,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "asap_2",
+       "subdimension": "essay holistic QWK",
+       "weight": 0.65,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "sas_bench",
+       "subdimension": "CCS step scoring consistency",
+       "weight": 0.55,
+       "evidence_tier": "education_core"
+      }
+     ]
+    },
+    {
+     "facet_id": "response_judging",
+     "facet_name": "教学回复评判",
+     "cells": [
+      {
+       "benchmark_id": "bea2025_judge",
+       "subdimension": "judge labels: mistake/guidance/actionability",
+       "weight": 0.45,
+       "evidence_tier": "excluded_judge_task"
+      },
+      {
+       "benchmark_id": "mrbench_judge",
+       "subdimension": "8-dimension tutor response judging",
+       "weight": 0.45,
+       "evidence_tier": "excluded_judge_task"
+      }
+     ]
+    },
+    {
+     "facet_id": "rubric_generation",
+     "facet_name": "生成 rubric",
+     "coverage_gap": true,
+     "cells": []
+    }
+   ]
+  },
+  {
+   "p_code": "P15",
+   "p_name": "学术诚信与作答真实性判定",
+   "group": "LAD",
+   "model_type": "undeclared",
+   "coverage_gap": true,
+   "rationale": "领域空白：抄袭/代写/真实性判定评测缺位。报告诚实标『暂未覆盖』。",
+   "facets": []
+  },
+  {
+   "p_code": "P16",
+   "p_name": "学习者画像建模",
+   "group": "CLM",
+   "model_type": "formative",
+   "rationale": "【裁决 R12】facet 升级为 4 个子能力声明（知识状态估计/误概念识别/情感与参与识别/支持需求判断），允许空 facet；覆盖 2/4（2026-07-16 起 P16a 有分）。",
+   "facets": [
+    {
+     "facet_id": "knowledge_state_estimation",
+     "facet_name": "P16a 知识状态估计",
+     "cells": [
+      {
+       "benchmark_id": "longtutor_diagnosis",
+       "subdimension": "four-category knowledge-state diagnosis macro-F1",
+       "weight": 0.3,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "2026-07-16 裁决（主挂）：语义核实结论——模型看到的是 199 条历史作答记录（题面+知识点+时间+对错）+ 当前题面，没有任何学生解题过程；四标签是认知层失败机制（官方 schema L1 记忆/L2 理解/L3 应用/L4 迁移），归因证据源是交互历史特征。构念对齐 P16a『从作答历史判断学生会什么、不会什么』（构念核对文档声明的零覆盖子能力，缺口原因正是'缺任务协议'）。方法学注记：①类别不平衡（Procedural 506/Recall 212/Conceptual 180/Transfer 102），多数类基线 accuracy 0.506，三模型 accuracy 仅 0.35-0.44（headline 用 macro-F1 0.23-0.32 是对的）；②金标为特征决策矩阵 + 人工修订，非独立盲标，有模板化风险——权重保守 0.30、参考值；③3 模型面不补跑。"
+      }
+     ]
+    },
+    {
+     "facet_id": "misconception_identification",
+     "facet_name": "P16b 误概念识别",
+     "coverage_gap": true,
+     "cells": []
+    },
+    {
+     "facet_id": "affect_engagement",
+     "facet_name": "P16c 情感与参与识别",
+     "coverage_gap": true,
+     "cells": []
+    },
+    {
+     "facet_id": "support_needs",
+     "facet_name": "P16d 支持需求判断",
+     "cells": [
+      {
+       "benchmark_id": "pedagogy_benchmark",
+       "subdimension": "SEND special education needs selection",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "pedagogy_benchmark",
+       "subdimension": "CDPK/SEND aggregate from 0701 card",
+       "weight": 0.3,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "personalized_adaptation_learning_support (metric)",
+       "weight": 0.3,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】原 PLS 任务均分换该原生指标（换裁判稳健 ρ 0.77-0.81）【草案权重】。"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P17",
+   "p_name": "个性化教学策略选择",
+   "group": "CLM",
+   "model_type": "formative",
+   "rationale": "教学策略知识（选择题）与教学策略执行（对话/生成中被裁判评价）是知识 vs 行为。【裁决 R4】执行 facet 不再细分（两版拆分方案议后均放弃）。",
+   "facets": [
+    {
+     "facet_id": "strategy_knowledge",
+     "facet_name": "教学策略知识",
+     "cells": [
+      {
+       "benchmark_id": "pedagogy_benchmark",
+       "subdimension": "CDPK teaching knowledge selection",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "pedagogy_benchmark",
+       "subdimension": "SEND special education needs selection",
+       "weight": 0.3,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "pedagogy_benchmark",
+       "subdimension": "CDPK/SEND aggregate from 0701 card",
+       "weight": 0.3,
+       "evidence_tier": "education_core"
+      }
+     ]
+    },
+    {
+     "facet_id": "strategy_enactment",
+     "facet_name": "教学策略执行",
+     "cells": [
+      {
+       "benchmark_id": "mathtutorbench_socratic",
+       "subdimension": "Socratic Questioning",
+       "weight": 0.65,
+       "evidence_tier": "education_core",
+       "revision_rationale": "R11（2026-07-12）：提问式引导为 P17a 手段之一，不单列子能力；BLEU 代理保守加权。"
+      },
+      {
+       "benchmark_id": "mathtutorbench_scaffolding",
+       "subdimension": "Scaffolding",
+       "weight": 0.5,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_scaffolding_hard",
+       "subdimension": "Scaffolding hard",
+       "weight": 0.5,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_pedagogy",
+       "subdimension": "Pedagogy IF",
+       "weight": 0.45,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_pedagogy_hard",
+       "subdimension": "Pedagogy IF hard",
+       "weight": 0.45,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "personalized_adaptation_learning_support (metric)",
+       "weight": 0.4,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】换裁判稳健指标（ρ 0.77-0.81）【草案权重】。"
+      },
+      {
+       "benchmark_id": "tutorbench",
+       "subdimension": "Fair815 multimodal tutor quality",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "bea2025_tutor",
+       "subdimension": "dimension: Providing_Guidance",
+       "weight": 0.3,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R2】复合 pass rate 换单维度分。"
+      },
+      {
+       "benchmark_id": "mrbench_tutor",
+       "subdimension": "dimension: Providing_Guidance",
+       "weight": 0.3,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R2】同上。"
+      },
+      {
+       "benchmark_id": "mmtutorbench",
+       "subdimension": "multimodal tutor score",
+       "weight": 0.3,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "longtutor_teaching",
+       "subdimension": "judge dims: strategy_alignment + history_utilization (1-5)",
+       "weight": 0.3,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "2026-07-16 裁决：挂载定稿。前置条件（4 维全 0 bug 修复后分数重算验证）已满足：glm-5.2 / deepseek-v4-pro 全量真分（valid 1001），minimax3 重判收尾中；strategy_alignment 三模型 3.68-4.13 有区分度。取 strategy_alignment 与 history_utilization 两维（coherence/appropriateness 不入分）；3 模型面不补跑。"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "scenario_element_integration (metric)",
+       "weight": 0.25,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】【草案权重】。"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P18",
+   "p_name": "适配性解释与反馈生成",
+   "group": "CLM",
+   "model_type": "formative",
+   "rationale": "对话式反馈引导（对学生当下作答的响应）与教学产物生成（材料/题目/图解）是两类产出，简单加权前应分开呈现。",
+   "facets": [
+    {
+     "facet_id": "dialogic_feedback",
+     "facet_name": "对话式反馈与引导",
+     "cells": [
+      {
+       "benchmark_id": "tutorbench",
+       "subdimension": "Fair815 multimodal tutor quality",
+       "weight": 0.4,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mmtutorbench",
+       "subdimension": "multimodal tutor score",
+       "weight": 0.4,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "motivation_guidance_positive_feedback (metric)",
+       "weight": 0.35,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】换裁判稳健（ρ 0.61-0.68）【草案权重】。"
+      },
+      {
+       "benchmark_id": "mathtutorbench_mistake_correction",
+       "subdimension": "Mistake Correction",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_scaffolding",
+       "subdimension": "Scaffolding",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_scaffolding_hard",
+       "subdimension": "Scaffolding hard",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_socratic",
+       "subdimension": "Socratic Questioning",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "clarity_concision_inspiration (metric)",
+       "weight": 0.3,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】【草案权重】。"
+      },
+      {
+       "benchmark_id": "mathtutorbench_pedagogy",
+       "subdimension": "Pedagogy IF",
+       "weight": 0.3,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mathtutorbench_pedagogy_hard",
+       "subdimension": "Pedagogy IF hard",
+       "weight": 0.3,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "higher_order_thinking_ability_development (metric)",
+       "weight": 0.25,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】换裁判稳健（ρ 0.63-0.73）【草案权重】。"
+      },
+      {
+       "benchmark_id": "bea2025_tutor",
+       "subdimension": "dimension: Actionability",
+       "weight": 0.2,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R2】换单维度分且权重减半（0.45→0.20）：该维度裁判校准弱（κ 0.22，vs 识错 0.38），校准数字进方法学局限。"
+      },
+      {
+       "benchmark_id": "mrbench_tutor",
+       "subdimension": "dimension: Actionability",
+       "weight": 0.2,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R2】同上。"
+      },
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "tone_style_consistency (metric)",
+       "weight": 0.1,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1】小权重；P20 曾是候选，构念对齐弱不挂【草案权重】。"
+      },
+      {
+       "benchmark_id": "eduguard_adversarial",
+       "subdimension": "Refusal quality distribution",
+       "weight": 0.1,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "【裁决 R7】0.25→0.10：主体是安全处置，主挂 P22。"
+      }
+     ]
+    },
+    {
+     "facet_id": "artifact_generation",
+     "facet_name": "教学产物生成",
+     "cells": [
+      {
+       "benchmark_id": "edubench",
+       "subdimension": "QG/TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)",
+       "weight": 0.4,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R1+草案】替换原 PCC 0.45 / QG 0.35 / TMG 0.4 任务分；R7 裁决 QG 不动（份额不降、不移 P06）。死格子（题级 SD<0.5，如 PCC 上 4 个指标）在首轮 v2 聚合后剔除。"
+      },
+      {
+       "benchmark_id": "eduillustrate",
+       "subdimension": "8-dim 0-5 visual explanation score",
+       "weight": 0.3,
+       "evidence_tier": "diagnostic"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P19",
+   "p_name": "学习路径规划（知识结构层）",
+   "group": "CLM",
+   "model_type": "reflective",
+   "single_source": true,
+   "rationale": "【裁决 R16】定义澄清为知识结构层的路径规划；『针对学生当前状态的个性化路径』是 P16×P19 组合能力，不设 P19b。单源·参考值（自建协议、无公开基线）。",
+   "facets": [
+    {
+     "facet_id": "core",
+     "facet_name": "知识结构层路径规划",
+     "cells": [
+      {
+       "benchmark_id": "mooccube_prereq",
+       "subdimension": "chance-corrected composite (先修选择 + 学习顺序排序)",
+       "weight": 0.7,
+       "evidence_tier": "diagnostic",
+       "revision_rationale": "【裁决 R16】P19 首个测量。规则判分零裁判；自建协议、无公开基线，benchmark 权重压至 0.70，参考值。"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P20",
+   "p_name": "教育角色边界判断",
+   "group": "CEG",
+   "model_type": "formative",
+   "rationale": "知道边界（SATA 知识）与守住边界（对抗/对话行为）不协变（pilot ρ=0.07）。【裁决 R10】知识 facet 与 P21/P22 同源，报告注明不构成互证；SATA 类别标注 todo 发布后做。",
+   "facets": [
+    {
+     "facet_id": "safety_knowledge",
+     "facet_name": "安全知识",
+     "cells": [
+      {
+       "benchmark_id": "eduguard_sata",
+       "subdimension": "Teaching Harm / SATA RFS",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mrbench_judge",
+       "subdimension": "8-dimension tutor response judging",
+       "weight": 0.3,
+       "evidence_tier": "excluded_judge_task"
+      }
+     ]
+    },
+    {
+     "facet_id": "boundary_behavior",
+     "facet_name": "边界行为",
+     "cells": [
+      {
+       "benchmark_id": "eduguard_adversarial",
+       "subdimension": "Adversarial Safety ASR",
+       "weight": 0.3,
+       "evidence_tier": "education_core"
+      },
+      {
+       "benchmark_id": "mrbench_tutor",
+       "subdimension": "dimension: Tutor_Tone",
+       "weight": 0.25,
+       "evidence_tier": "education_core",
+       "revision_rationale": "【裁决 R2 延伸+草案】原 pass rate 格换语气维度（Encouraging/Neutral/Offensive），构念对齐『角色边界』。"
+      },
+      {
+       "benchmark_id": "eduguard_adversarial",
+       "subdimension": "Refusal quality distribution",
+       "weight": 0.15,
+       "evidence_tier": "diagnostic"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P21",
+   "p_name": "学生风险识别",
+   "group": "CEG",
+   "model_type": "formative",
+   "rationale": "同 P20：风险知识 vs 对抗情境下的识别行为；知识 facet 与 P20/P22 同源（R10 注记）。",
+   "facets": [
+    {
+     "facet_id": "safety_knowledge",
+     "facet_name": "安全知识",
+     "cells": [
+      {
+       "benchmark_id": "eduguard_sata",
+       "subdimension": "Teaching Harm / SATA RFS",
+       "weight": 0.3,
+       "evidence_tier": "education_core"
+      }
+     ]
+    },
+    {
+     "facet_id": "adversarial_robustness",
+     "facet_name": "对抗鲁棒",
+     "cells": [
+      {
+       "benchmark_id": "eduguard_adversarial",
+       "subdimension": "Adversarial Safety ASR",
+       "weight": 0.25,
+       "evidence_tier": "education_core"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "p_code": "P22",
+   "p_name": "安全处置选择",
+   "group": "CEG",
+   "model_type": "formative",
+   "rationale": "同 P20：处置知识 vs 对抗处置行为。【裁决 R7】拒答质量主格在此（P18 副挂降至 0.10）。知识 facet 同源注记同 P20。",
+   "facets": [
+    {
+     "facet_id": "safety_knowledge",
+     "facet_name": "安全知识",
+     "cells": [
+      {
+       "benchmark_id": "eduguard_sata",
+       "subdimension": "Teaching Harm / SATA RFS",
+       "weight": 0.35,
+       "evidence_tier": "education_core"
+      }
+     ]
+    },
+    {
+     "facet_id": "adversarial_robustness",
+     "facet_name": "对抗鲁棒",
+     "cells": [
+      {
+       "benchmark_id": "eduguard_adversarial",
+       "subdimension": "Refusal quality distribution",
+       "weight": 0.6,
+       "evidence_tier": "diagnostic"
+      },
+      {
+       "benchmark_id": "eduguard_adversarial",
+       "subdimension": "Adversarial Safety ASR",
+       "weight": 0.45,
+       "evidence_tier": "education_core"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -197,3 +197,15 @@ nohup bash -c 'for M in deepseek-v4-pro glm-5.2 doubao-seed-2.0-pro MiniMax-M2.7
    - `build_mapping_validation.py` 默认测量模型已指向 v2；v1 产物快照在 `reports/atomic_ability_rebenchmark_2026-07-08_v1_snapshot_20260716/`（供 v1/v2 对比）。
 2. ~~重跑聚合 + 13 号检查~~ **已重跑（2026-07-16）**：56 个映射格、304 条选中证据、13 号 789 对配对。新格子区分度：edubench 指标级里 personalized（sd 1.77）/error_id（1.45，裁判噪声注记）/higher_order（1.23）拉得开，知识类与语气类天花板（sd 0.18-0.42，受限）；eduguard 拒答质量 sd 1.51 好用；longtutor_evidence sd 仅 0.10（印证"区分度待验证"）。**遗留三个数据缺口**：①k12vista、mooccube_prereq 有 adapter 但一次都没跑出产物（R15/R16 格子空转，P19 无分、P03 学科图表 facet 无分）；②pedagogy_benchmark 的 CDPK/SEND 两个分列格子无独立数据源（现只有 0701 卡的合并分）；③mmtutorbench 全部是 <100 题冒烟跑，被收录规则排除。
 3. 死格子（题级 SD<0.5）剔除与【草案】权重核对 → 红旗格子回裁决 → v1/v2 对比（21 P 口径，P03 合并与 P04 墓碑在对比中说明）+ 排名稳定性 → M4 双报告（研究版/用户版）。
+
+## 2026-07-16（晚）：R17 裁决 P11/P12/P13 合并 + 原子能力大类划分（回来先看这一节）
+
+**裁决 R17：原 P11 作答正误判定 / P12 错误位置定位 / P13 错因归因合并为 P11「错误诊断」**，三项降为 facet（P11a 判定 / P11b 定位 / P11c 归因），P12/P13 编号墓碑保留，清单 **21→19 P**。依据全部 benchmark 无关：P11/P12 拆分不满足我们自己的拆分准入规则（残余约等于无、机制同为对参考解核验、"两个 P"的表象来自 mathtutorbench 恰好分成两个任务）；P13 可以单独保留但不必（口径与 P03/P04 合并一致：诊断深度用 facet 表达）。**方法学披露：见数后修订**，论证只用构念层依据，全文见定稿文档"裁决记录 R17"。
+
+**落地范围（相关方全改）**：
+
+- `data/mapping_measurement_model_v3.json` 落盘（v2 保留为 R17 前快照）。119 格：原 P12 两格→P11b、原 P13 八格→P11c 原样迁移；原 P11 删两个同源重复格（mistake_location 0.1 搭车格、bea2025_judge 0.25 占位格）。
+- 聚合脚本 + 13 号检查 + HTML 报告脚本全部切 v3 并重跑；v2 口径聚合产物快照在 `reports/atomic_ability_rebenchmark_2026-07-08_v2_snapshot_20260716/`；报告改出 `html_report/atomic_ability_benchmark_v3_report_2026-07-16.html`。合并后 P11 呈诊断深度梯度：判对（8.6-9.0）＞定位（7.6-7.9）＞归因（6.9-8.2）。
+- 两份映射文档（定稿 + 变化记录 v3 增量节）、benchmark profiles、eval README 的 P 引用同步更新。
+
+**同日新增：原子能力大类划分**（`doc/atomic_ability_category_grouping_2026-07-16.md`）：两大类——模型基础能力（P01-P09，8 项，子类：输入理解与遵循/知识与推理/输出可靠性/工具与长程执行）、教育领域能力（11 项，子类：学业评价与诊断/学习者建模与教学规划/教学生成与表达/教育安全与边界）。P10 从 v3 审计的操作基座移到教育侧（残余内核"教学正确性与可读性"是教育专有）。展示与组织层，不进测量模型。

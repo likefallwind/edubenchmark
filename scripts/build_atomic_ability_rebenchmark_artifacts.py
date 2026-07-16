@@ -41,7 +41,7 @@ ABILITY_PRIORITY = {
     "P08": 0.95,
     "P09": 0.95,
     "P10": 0.90,
-    "P11": 0.85,
+    "P11": 0.95,
     "P12": 0.90,
     "P13": 0.95,
     "P14": 0.90,
@@ -76,9 +76,9 @@ P_GROUPS = {
     "P08": ("FDR", "置信度校准与弃答"),
     "P09": ("FDR", "工具使用与长程智能体执行"),
     "P10": ("FDR", "多模态教学产物生成"),
-    "P11": ("LAD", "作答正误判定"),
-    "P12": ("LAD", "错误位置定位"),
-    "P13": ("LAD", "错因归因"),
+    "P11": ("LAD", "错误诊断"),
+    "P12": ("LAD", "（已并入 P11，墓碑编号）"),
+    "P13": ("LAD", "（已并入 P11，墓碑编号）"),
     "P14": ("LAD", "主观题 rubric 评分能力"),
     "P15": ("LAD", "学术诚信与作答真实性判定"),
     "P16": ("CLM", "学习者画像建模"),
@@ -91,12 +91,13 @@ P_GROUPS = {
 }
 
 
-MEASUREMENT_MODEL_PATH = ROOT / "data" / "mapping_measurement_model_v2.json"
+MEASUREMENT_MODEL_PATH = ROOT / "data" / "mapping_measurement_model_v3.json"
 
 # Benchmark-level metadata joined onto measurement-model cells to form MAPPINGS
 # rows.  Ability weights, facets and evidence tiers live in
-# ``data/mapping_measurement_model_v2.json`` (single source of truth,
-# adjudicated 2026-07-15/16); this table only carries what the JSON
+# ``data/mapping_measurement_model_v3.json`` (single source of truth,
+# adjudicated 2026-07-15/16; R17 merged P11/P12/P13 into P11 错误诊断 with
+# facets P11a/P11b/P11c); this table only carries what the JSON
 # deliberately does not: display name, ingestion scope, metric family per
 # subdimension ("*" = all subdimensions), benchmark-level confidence weight
 # (with per-subdimension overrides), and the benchmark-level rationale.
@@ -171,7 +172,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
             "ECS error-cause consistency": 1.0,
         },
         "metric_family": {"*": "score_0_to_100"},
-        "rationale": "简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P13 核心锚）。",
+        "rationale": "简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P11c 核心锚）。",
     },
     "edubench": {
         "benchmark_name": "EduBench",
@@ -220,7 +221,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "score_direction": "higher_better",
         "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy_or_f1"},
-        "rationale": "错误位置定位是 P12 的直接测量。",
+        "rationale": "错误位置定位是 P11b（原 P12）的直接测量。",
     },
     "mathtutorbench_mistake_correction": {
         "benchmark_name": "MathTutorBench",
@@ -228,7 +229,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.9,
         "metric_family": {"*": "accuracy"},
-        "rationale": "纠错需要识别错因并生成可用修正/反馈；R6 裁决 P13 权重 0.45→0.20（只测改对与否）。",
+        "rationale": "纠错需要识别错因并生成可用修正/反馈；R6 裁决错因归因（原 P13，现 P11c）权重 0.45→0.20（只测改对与否）。",
     },
     "mathtutorbench_pedagogy": {
         "benchmark_name": "MathTutorBench",
@@ -289,7 +290,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "metric_family": {"*": "share_0_to_1"},
         "rationale": (
             "生成 tutor 回复、固定裁判逐维度标注。R2 裁决：复合 pass rate 换单维度 Yes 占比"
-            "（Mistake_Identification→P13、Providing_Guidance→P17、Actionability→P18 减半权重，κ 0.22 校准弱）。"
+            "（Mistake_Identification→P11c、Providing_Guidance→P17、Actionability→P18 减半权重，κ 0.22 校准弱）。"
             "仅 3 个模型面（缺 deepseek-v4-pro / doubao-seed-2.0-pro 生成，2026-07-16 决定不补跑）。"
         ),
     },
@@ -441,7 +442,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "metric_family": {"*": "accuracy_or_f1"},
         "rationale": (
             "从交互历史推断学生知识状态（四类认知层失败机制），headline macro-F1。"
-            "2026-07-16 裁决：P16a『知识状态估计』主挂 0.30（参考值）+ P13 副挂 0.10，P12 排除"
+            "2026-07-16 裁决：P16a『知识状态估计』主挂 0.30（参考值）+ P11c（原 P13）副挂 0.10，P11b（原 P12）排除"
             "（输入无解题步骤）。注记：类别不平衡（多数类基线 acc 0.506 > 模型 0.35-0.44）；"
             "金标为特征决策矩阵+人工修订，非独立盲标。"
         ),
@@ -1386,7 +1387,7 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
             if tier == "foundation_gate":
                 slot["foundation_rows"] += 1
 
-    # 测量模型 v2 的聚合方向：facet 内按格子权重加权平均，P 分数 = 有证据的
+    # 测量模型 v3 的聚合方向：facet 内按格子权重加权平均，P 分数 = 有证据的
     # facet 的等权平均（formative 声明；reflective P 只有一个 core facet，
     # 退化为原先的整体加权平均）。
     p_rows: list[dict[str, Any]] = []
@@ -1791,8 +1792,8 @@ def write_atomic_scores(p_rows: list[dict[str, Any]], evidence_rows: list[dict[s
             "- `P21` and `P22` are covered through EduGuard P1/P2 safety evidence.",
             "- `P09` has no current benchmark mapping in this pass.",
             "- `P15` has no current benchmark mapping after BEA/MRBench judge-task exclusion.",
-            "- `P09` and `P15` are declared domain gaps (mapping v2); `P10`/`P19` are single-source and `P16` covers 2 of 4 declared sub-abilities.",
-            "- The v3 atomic list is `P01-P22`; no `P0` code exists in the current spec.",
+            "- `P09` and `P15` are declared domain gaps (mapping v3); `P10`/`P19` are single-source and `P16` covers 2 of 4 declared sub-abilities.",
+            "- The atomic list is `P01-P22` with tombstones `P04` (merged into P03) and `P12`/`P13` (merged into P11 错误诊断, R17); 19 active P codes.",
             "",
             "Full P rows are in `09_atomic_p_scores_raw_adjusted.jsonl`; allocated evidence rows are in `09_atomic_p_score_evidence.jsonl`.",
         ]
@@ -2604,7 +2605,7 @@ th {{ position:sticky; top:0; z-index:1; background:#f2e5cf; font-size:12px; col
     <div class="controls">
       <div>
         <label for="search">搜索 benchmark / P code / 理由</label>
-        <input id="search" placeholder="例如 MathTutorBench、P13、安全、门槛">
+        <input id="search" placeholder="例如 MathTutorBench、P11、安全、门槛">
       </div>
       <div>
         <label for="recFilter">建议档位</label>
@@ -2842,8 +2843,8 @@ Resolved in this pass:
 
 Remaining review points:
 
-1. The v3 atomic list has `P01-P22`; there is no `P0`. If the request meant a specific ability, confirm whether it means `P01` or another P code.
-2. `P09` and `P15` are declared domain gaps under mapping v2 (report them honestly as uncovered); `P10`/`P19` are single-source reference values and `P16` covers 2 of 4 declared sub-abilities.
+1. The atomic list spans `P01-P22` with tombstones `P04` (into P03) and `P12`/`P13` (into P11, R17); there is no `P0`. If the request meant a specific ability, confirm whether it means `P01` or another P code.
+2. `P09` and `P15` are declared domain gaps under mapping v3 (report them honestly as uncovered); `P10`/`P19` are single-source reference values and `P16` covers 2 of 4 declared sub-abilities.
 3. `P21/P22` are covered mainly by EduGuard safety evidence. Confirm whether that is sufficient, or whether to require student-risk-specific datasets.
 4. For cross-model comparison, decide whether to add a strict `common-evidence` mode that only compares models on shared benchmark/subdimension coverage.
 """

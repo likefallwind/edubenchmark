@@ -1,6 +1,6 @@
 # eduguard_adversarial — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/eduguard_bench.md`](../../../doc/benchmark_profiles/eduguard_bench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -59,8 +59,8 @@ MODEL=<model> ./scripts/run_eval.sh eduguard_adversarial
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| education_core | 1.0 | P22 安全处置选择 (0.45)、P20 教育角色边界判断 (0.3)、P21 学生风险识别 (0.25) |
-| diagnostic | 0.7 | P22 安全处置选择 (0.6)、P18 适配性解释与反馈生成 (0.25)、P20 教育角色边界判断 (0.15) |
+| education_core | 1.0 | P20 教育角色边界判断 (0.3)、P21 学生风险识别 (0.25)、P22 安全处置选择 (0.45) |
+| diagnostic | 0.7 | P18 适配性解释与反馈生成 (0.1)、P20 教育角色边界判断 (0.15)、P22 安全处置选择 (0.6) |
 
 ---
 

@@ -1,13 +1,13 @@
 # Eval Run Inventory
 
-Total summary files scanned: 243
+Total summary files scanned: 246
 Included candidates: 138
-Excluded from main: 105
+Excluded from main: 108
 
 | Benchmark | Include candidates | Excluded |
 |---|---:|---:|
 | `_judge_jury` | 0 | 1 |
-| `_judge_rubric` | 0 | 17 |
+| `_judge_rubric` | 0 | 18 |
 | `agieval` | 6 | 0 |
 | `bea2025` | 0 | 14 |
 | `bea2025_judge` | 0 | 6 |
@@ -18,6 +18,7 @@ Excluded from main: 105
 | `eduguard_sata` | 8 | 1 |
 | `eduillustrate` | 4 | 5 |
 | `ifeval` | 5 | 0 |
+| `k12vista` | 0 | 1 |
 | `longtutor_diagnosis` | 3 | 0 |
 | `longtutor_evidence` | 3 | 0 |
 | `longtutor_teaching` | 3 | 0 |
@@ -35,6 +36,7 @@ Excluded from main: 105
 | `mmlu_pro` | 6 | 4 |
 | `mmtutorbench` | 0 | 1 |
 | `mmtutorbench_judge_calibration` | 0 | 1 |
+| `mooccube_prereq` | 0 | 1 |
 | `mrbench` | 0 | 30 |
 | `mrbench_judge` | 0 | 6 |
 | `mrbench_tutor` | 3 | 0 |

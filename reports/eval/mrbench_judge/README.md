@@ -1,6 +1,6 @@
 # mrbench_judge — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mrbench.md`](../../../doc/benchmark_profiles/mrbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -40,7 +40,7 @@ MODEL=<model> ./scripts/run_eval.sh mrbench_judge
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| excluded_judge_task | 0.0 | P14 Rubric 映射评分 (0.45)、P13 错因归因 (0.25)、P20 教育角色边界判断 (0.3) |
+| excluded_judge_task | 0.0 | P11 错误诊断 (0.25)、P14 主观题 rubric 评分能力 (0.45)、P20 教育角色边界判断 (0.3) |
 
 ---
 

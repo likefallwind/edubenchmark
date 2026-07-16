@@ -36,5 +36,5 @@
 
 ## 当前映射
 
-- 8 个任务各一行（见 `02_benchmark_ability_mapping.jsonl`）：解题类挂 P05/P06/P07/P11/P12/P13，辅导类挂 P17/P18；problem_solving 是 foundation_gate，其余 education_core。
-- 构念核对：mistake_correction 在 P13 权重下调（R6）；scaffolding/pedagogy 归 strategy_enactment"对话辅导"侧（R4）；socratic 补挂（R11）。
+- 8 个任务各一行（见 `02_benchmark_ability_mapping.jsonl`）：解题类挂 P05/P06/P07/P11（R17 后判对/定位/归因是 P11a/b/c facet），辅导类挂 P17/P18；problem_solving 是 foundation_gate，其余 education_core。
+- 构念核对：mistake_correction 在 P11c（原 P13）权重下调（R6）；scaffolding/pedagogy 归 strategy_enactment"对话辅导"侧（R4）；socratic 补挂（R11）。

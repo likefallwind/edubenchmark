@@ -1,6 +1,6 @@
 # mathvista — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mathvista.md`](../../../doc/benchmark_profiles/mathvista.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -36,7 +36,7 @@ MODEL=<model> ./scripts/run_eval.sh mathvista
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| diagnostic | 0.7 | P03 常规多模态感知 (0.35)、P06 推理与生成 (0.45)、P05 知识调用与掌握 (0.2) |
+| diagnostic | 0.7 | P03 多模态理解 (0.35)、P05 知识调用与掌握 (0.2)、P06 推理与生成 (0.45) |
 
 ---
 

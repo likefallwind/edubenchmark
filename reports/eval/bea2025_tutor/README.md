@@ -1,20 +1,20 @@
 # bea2025_tutor — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/bea2025.md`](../../../doc/benchmark_profiles/bea2025.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-**这个 benchmark 下有 3 个 run 的分数不可用（unusable）。** 在重跑之前，不要把它们写进任何报告、聚合或映射裁决。
+全部 run 干净。
 
 headline 口径：本地教学通过率（三个关键维度全 Yes）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `glm-5.2` | 0.5533 | **unusable**（分数是假的，必须重跑） | 34.3% | 0.0% | 34.3% 的题命中失败标记：关键维度 unparsed，被当成教学不通过 |
-| `minimax3` | 0.6133 | **unusable**（分数是假的，必须重跑） | 26.3% | 0.0% | 26.3% 的题命中失败标记：关键维度 unparsed，被当成教学不通过 |
-| `MiniMax-M2.7` | 0.5467 | **unusable**（分数是假的，必须重跑） | 24.3% | 0.0% | 24.3% 的题命中失败标记：关键维度 unparsed，被当成教学不通过 |
+| `MiniMax-M2.7` | 0.7133 | clean | 0.0% | 0.0% | — |
+| `glm-5.2` | 0.8100 | clean | 0.0% | 0.0% | — |
+| `minimax3` | 0.8200 | clean | 0.0% | 0.0% | — |
 
 ### 已定位的 bug（根因 + 修法）
 
@@ -47,9 +47,9 @@ MODEL=<model> ./scripts/run_eval.sh bea2025_tutor
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| education_core | 0.9 | P18 适配性解释与反馈生成 (0.45)、P17 个性化教学策略选择 (0.3)、P13 错因归因 (0.25) |
-
-**这些 P 的证据因此受污染：P13、P17、P18**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+| education_core | 0.9 | P18 适配性解释与反馈生成 (0.2) |
+| education_core | 0.9 | P11 错误诊断 (0.25) |
+| education_core | 0.9 | P17 个性化教学策略选择 (0.3) |
 
 ---
 

@@ -1,24 +1,24 @@
 # mathtutorbench_pedagogy_hard — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mathtutorbench.md`](../../../doc/benchmark_profiles/mathtutorbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-没有不可用的 run，但有 7 个带保留意见（caveat），引用时必须一并写出。
+没有不可用的 run，但有 2 个带保留意见（caveat），引用时必须一并写出。
 
 headline 口径：胜率（对金标 tutor 回复）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `doubao-seed-2.0-lite` | 0.6728 | caveat（可用，但必须带着下面的保留意见一起引用） | 11.6% | 0.0% | 11.6% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `MiniMax-M2.7` | 0.5535 | caveat（可用，但必须带着下面的保留意见一起引用） | 10.4% | 0.0% | 10.4% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `deepseek-v4-flash` | 0.6330 | caveat（可用，但必须带着下面的保留意见一起引用） | 9.5% | 0.0% | 9.5% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `minimax3` | 0.6789 | caveat（可用，但必须带着下面的保留意见一起引用） | 9.5% | 0.0% | 9.5% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `doubao-seed-2.0-pro` | 0.7645 | caveat（可用，但必须带着下面的保留意见一起引用） | 8.0% | 0.0% | 8.0% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `deepseek-v4-pro` | 0.7706 | caveat（可用，但必须带着下面的保留意见一起引用） | 7.6% | 0.0% | 7.6% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
-| `glm-5.2` | 0.7431 | caveat（可用，但必须带着下面的保留意见一起引用） | 6.7% | 0.0% | 6.7% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输 |
+| `doubao-seed-2.0-lite` | 0.6728 | caveat（可用，但必须带着下面的保留意见一起引用） | 11.6% | 0.0% | 11.6% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输；11.6% 的抽取/判分行带 error；summary.json 比产物旧：盘上的分数跟盘上的数据对不上 |
+| `deepseek-v4-flash` | 0.6330 | caveat（可用，但必须带着下面的保留意见一起引用） | 9.5% | 0.0% | 9.5% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输；9.5% 的抽取/判分行带 error；summary.json 比产物旧：盘上的分数跟盘上的数据对不上 |
+| `MiniMax-M2.7` | 0.5902 | clean | 0.0% | 0.0% | — |
+| `deepseek-v4-pro` | 0.8104 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.8226 | clean | 0.0% | 0.0% | — |
+| `glm-5.2` | 0.7768 | clean | 0.0% | 0.0% | — |
+| `minimax3` | 0.7339 | clean | 0.0% | 0.0% | — |
 
 ### 已定位的 bug（根因 + 修法）
 
@@ -51,7 +51,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_pedagogy_hard
 
 | evidence_tier | benchmark_weight | 能力（P:权重） |
 | --- | --- | --- |
-| education_core | 1.0 | P17 个性化教学策略选择 (0.45)、P18 适配性解释与反馈生成 (0.3)、P05 知识调用与掌握 (0.25) |
+| education_core | 1.0 | P05 知识调用与掌握 (0.25)、P17 个性化教学策略选择 (0.45)、P18 适配性解释与反馈生成 (0.3) |
 
 ---
 

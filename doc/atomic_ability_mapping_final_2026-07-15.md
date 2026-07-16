@@ -1,10 +1,10 @@
-# 原子能力与 Benchmark 映射(定稿,2026-07-15;2026-07-16 三个待确认项已裁决,全部定稿)
+# 原子能力与 Benchmark 映射(定稿,2026-07-15;2026-07-16 三个待确认项已裁决;同日 R17 裁决 P11/P12/P13 合并为 P11 错误诊断)
 
-这是当前的最终结论:原子能力清单是什么、每个能力由哪些 benchmark 的哪些维度测量、权重多少。不含历史沿革(变化记录见 `doc/benchmark_ability_mapping_v2_2026-07-15.md`)。机器可读版:`data/mapping_measurement_model_v2.json`(与本文档同步,2026-07-16)。
+这是当前的最终结论:原子能力清单是什么、每个能力由哪些 benchmark 的哪些维度测量、权重多少。不含历史沿革(变化记录见 `doc/benchmark_ability_mapping_v2_2026-07-15.md`)。机器可读版:`data/mapping_measurement_model_v3.json`(与本文档同步,2026-07-16;v2 为 R17 前快照)。
 
 约定:权重是 facet 内的相对重要度,不归一。格子写法为 `benchmark · 取分维度`。原三处 ※ 待确认项已于 2026-07-16 裁决完毕(文末有裁决记录),全表均为定稿。
 
-## 原子能力清单(21 项)
+## 原子能力清单(19 项)
 
 | P | 名称 | 一句话定义 | 测量成熟度 |
 |---|---|---|---|
@@ -17,9 +17,7 @@
 | P08 | 置信度校准与弃答 | 自信程度与正确率一致;不会时主动弃答 | 直接测量(双任务) |
 | P09 | 工具使用与长程智能体执行 | 调用工具、完成多步长程任务 | **空白,暂未覆盖** |
 | P10 | 多模态教学产物生成 | 生成图示等非文本教学产物 | 单源 |
-| P11 | 作答正误判定 | 判断学生作答的对错 | 单源+ |
-| P12 | 错误位置定位 | 指出错误发生在作答的哪一步 | 单源+ |
-| P13 | 错因归因 | 解释错误背后的原因/误概念 | 多源 |
+| P11 | 错误诊断 | 诊断学生错误:判对错、定位错误步骤、解释错因/误概念(三 facet,R17 合并) | 判对/定位 facet 单源+,归因 facet 多源 |
 | P14 | 主观题 rubric 评分能力 | 依据(或构建)评分标准评判主观作答与教学回复 | 学业评分多格;评判/生成 facet 暂无分 |
 | P15 | 学术诚信与作答真实性判定 | 识别抄袭、代写等真实性问题 | **空白,暂未覆盖** |
 | P16 | 学习者画像建模 | 从交互中建模学生的水平、需求与特征 | 弱(4 个子能力覆盖 2 个;P16a 2026-07-16 起有分) |
@@ -30,9 +28,10 @@
 | P21 | 学生风险识别 | 识别学生消息中的风险信号 | 双源(同上) |
 | P22 | 安全处置选择 | 对风险与越界请求选择正确处置方式 | 双源(同上) |
 
-三条解释性口径:
+四条解释性口径:
 
 - **P03 覆盖全部多模态理解**(不分深浅——难度用证据标签表达,不是构念维度),按材料类型分 facet。
+- **P11 覆盖全部错误诊断**(判对→定位→归因是同一诊断任务的深度梯度,不是三个独立构念——与 P03 合并同一口径),按诊断深度分 facet:P11a 作答正误判定 / P11b 错误位置定位 / P11c 错因归因。P12/P13 编号墓碑保留不复用。与 P14 的边界:P11 是对着参考解找错、解释错(诊断);P14 是把作答证据映射到 rubric 分档(量尺映射),机制不同。
 - **P19 只管知识结构层**。"针对某个学生当前状态的个性化路径规划"是 P16 × P19 的组合能力,不是 P19 的缺口。
 - **测不了 ≠ 不存在**:P09/P15 及各空白 facet 保留在清单里标"暂未覆盖",清单不随测量可行性伸缩。
 
@@ -129,34 +128,22 @@
 |---|---|
 | eduillustrate · 视觉讲解八维 | 0.45 |
 
-### P11 作答正误判定
+### P11 错误诊断(三 facet,R17 合并)
 
-| 格子 | 权重 | 性质 |
-|---|---|---|
-| mathtutorbench_solution_correctness | 0.6 | education_core |
-| mathtutorbench_mistake_location | 0.1 | education_core |
-| bea2025_judge · 判卷一致性 | 0.25 | 暂不计分(judge 任务) |
+| facet | 格子 | 权重 | 性质 |
+|---|---|---|---|
+| P11a 作答正误判定 | mathtutorbench_solution_correctness | 0.6 | education_core |
+| P11b 错误位置定位 | mathtutorbench_mistake_location | 0.7 | education_core |
+| P11b 错误位置定位 | sas_bench · CCS | 0.25 | education_core |
+| P11c 错因归因 | sas_bench · ECS(与人类专家错因标签一致性) | 0.7 | 核心证据 |
+| P11c 错因归因 | bea2025_tutor · Mistake_Identification | 0.25 | LLM 裁判单维度分 |
+| P11c 错因归因 | mrbench_tutor · Mistake_Identification | 0.25 | 同上 |
+| P11c 错因归因 | edubench · 错误识别与纠正 | 0.25 | 方法学局限注记:换裁判分歧大 |
+| P11c 错因归因 | mathtutorbench_mistake_correction | 0.2 | 只测改对与否,部分相关 |
+| P11c 错因归因 | longtutor_diagnosis · 四类知识状态诊断 macro-F1 | 0.1 | 副挂(2026-07-16 裁决:标签名义是错因类别,但归因证据源是交互历史特征而非作答内容,与 ECS 锚动用的能力不同,仅作相邻证据;主挂 P16a) |
+| P11c 错因归因 | bea2025_judge / mrbench_judge | 0.3 / 0.25 | 暂不计分(judge 任务) |
 
-### P12 错误位置定位
-
-| 格子 | 权重 | 性质 |
-|---|---|---|
-| mathtutorbench_mistake_location | 0.7 | education_core |
-| sas_bench · CCS | 0.25 | education_core |
-
-(2026-07-16 裁决:longtutor_diagnosis 不挂 P12——语义核实后,任务输入里没有任何解题步骤可供定位,改挂 P16a 主 + P13 副,见对应小节。)
-
-### P13 错因归因
-
-| 格子 | 权重 | 性质 |
-|---|---|---|
-| sas_bench · ECS(与人类专家错因标签一致性) | 0.7 | 核心证据 |
-| bea2025_tutor · Mistake_Identification | 0.25 | LLM 裁判单维度分 |
-| mrbench_tutor · Mistake_Identification | 0.25 | 同上 |
-| edubench · 错误识别与纠正 | 0.25 | 方法学局限注记:换裁判分歧大 |
-| mathtutorbench_mistake_correction | 0.2 | 只测改对与否,部分相关 |
-| longtutor_diagnosis · 四类知识状态诊断 macro-F1 | 0.1 | 副挂(2026-07-16 裁决:标签名义是错因类别,但归因证据源是交互历史特征而非作答内容,与 ECS 锚动用的能力不同,仅作相邻证据;主挂 P16a) |
-| bea2025_judge / mrbench_judge | 0.3 / 0.25 | 暂不计分(judge 任务) |
+两条随迁注记:①longtutor_diagnosis 不挂 P11b——语义核实后,任务输入里没有任何解题步骤可供定位(原"不挂 P12"裁决);②R17 附带删除原 P11 内两个同源重复格:mathtutorbench_mistake_location 0.1 搭车格(P11b 主格已持有)、bea2025_judge 0.25 暂不计分占位格(P11c 已持有同一占位),避免同 P 跨 facet 双计同一数据源。
 
 ### P14 主观题 rubric 评分能力(三 facet)
 
@@ -288,18 +275,18 @@ P01/P02/P07/P08 在此前的常规做法里全是"搭车分"(别的任务顺带�
 | p07_selfcheck | 两轮自查 | 规则判分 | P07、P08 |
 | p08_calibration / p08_abstention | 置信度校准 / 弃答 | 规则判分 | P08、P07、P01 |
 | asap_2 | 学生作文评分 | QWK 对人类分 | P14、P02、P05 |
-| sas_bench | 简答题评分(QWK/CCS/ECS 三指标) | 对人类标注一致性 | P14、P13、P12、P02、P05、P06 |
+| sas_bench | 简答题评分(QWK/CCS/ECS 三指标) | 对人类标注一致性 | P14、P11(b 定位/c 归因)、P02、P05、P06 |
 | pedagogy_benchmark | 教学专业知识选择题(CDPK/SEND) | 精确匹配 | P05、P16、P17 |
-| edubench | 5 任务生成 × 12 裁判指标(取指标级分) | LLM 裁判(deepseek-v3.2,原论文设定) | P05、P06、P13、P16、P17、P18 |
-| mathtutorbench 家族(9 任务) | 数学辅导对话(解题/判对/定位/纠错/脚手架/教学法/苏格拉底) | 精确匹配 + LLM 裁判胜率 | P02、P05、P06、P07、P11、P12、P13、P17、P18 |
+| edubench | 5 任务生成 × 12 裁判指标(取指标级分) | LLM 裁判(deepseek-v3.2,原论文设定) | P05、P06、P11c、P16、P17、P18 |
+| mathtutorbench 家族(9 任务) | 数学辅导对话(解题/判对/定位/纠错/脚手架/教学法/苏格拉底) | 精确匹配 + LLM 裁判胜率 | P02、P05、P06、P07、P11(a/b/c)、P17、P18 |
 | tutorbench | 多模态辅导质量 | LLM 裁判 | P03、P17、P18 |
 | mmtutorbench | 多模态数学辅导(六维 rubric) | LLM 裁判 | P03、P17、P18 |
-| bea2025_tutor / mrbench_tutor | 生成辅导回复,固定裁判逐维度标注 | LLM 裁判单维度分 | P13、P17、P18、P20(mrbench) |
-| bea2025_judge / mrbench_judge | 被测模型当裁判,对人类金标 | 一致性/F1 | P11、P13、P14、P20(均暂不计分) |
+| bea2025_tutor / mrbench_tutor | 生成辅导回复,固定裁判逐维度标注 | LLM 裁判单维度分 | P11c、P17、P18、P20(mrbench) |
+| bea2025_judge / mrbench_judge | 被测模型当裁判,对人类金标 | 一致性/F1 | P11c、P14、P20(均暂不计分) |
 | eduguard_sata | 教学伤害多选(SATA) | 规则判分(RFS) | P20、P21、P22(同源) |
 | eduguard_adversarial | 对抗越狱 + 拒答质量 | 两阶段 LLM 裁判 | P20、P21、P22、P18 |
 | eduillustrate | 生成教学图示质量 | LLM 裁判八维 | P10、P18 |
-| longtutor 三任务 | 长对话辅导(证据/诊断/教学) | 语义裁判 / 规则 F1 / LLM 裁判四维 | P02(evidence)、P16a 主 + P13 副(diagnosis)、P17(teaching)——2026-07-16 裁决定稿 |
+| longtutor 三任务 | 长对话辅导(证据/诊断/教学) | 语义裁判 / 规则 F1 / LLM 裁判四维 | P02(evidence)、P16a 主 + P11c 副(diagnosis)、P17(teaching)——2026-07-16 裁决定稿 |
 
 ## 裁决记录(2026-07-16,原三处待确认项全部落定)
 
@@ -310,6 +297,22 @@ P01/P02/P07/P08 在此前的常规做法里全是"搭车分"(别的任务顺带�
 同日决定:**longtutor 三任务与 mrbench_tutor / bea2025_tutor 的模型面缺口不补跑**(longtutor 缺 MiniMax-M2.7、doubao-seed-2.0-pro;mrbench/bea 缺 deepseek-v4-pro、doubao-seed-2.0-pro 的生成),v2 聚合与 13 号检查按 3 模型面注记。
 
 机器可读落盘:`data/mapping_measurement_model_v2.json`(2026-07-16,含全部 R1-R16 裁决 + 本页三项)。
+
+## 裁决记录 R17(2026-07-16,P11/P12/P13 合并)
+
+**原 P11 作答正误判定 / P12 错误位置定位 / P13 错因归因合并为 P11「错误诊断」**,原三项降为 facet(P11a/P11b/P11c),P12/P13 编号墓碑保留不复用,清单 21→19。
+
+依据(全部 benchmark 无关):
+
+1. **P11/P12 拆分不满足拆分准入规则**(理论/失败机制/教师标准/同源数据四类依据至少两个):v3 审计自认两者残余约等于无、机制同为对参考解核验;分成两个 P 的表象来自 mathtutorbench 恰好分成两个任务,而 benchmark 的存在不构成拆分依据。
+2. **P13 单独保留虽通过准入检验**(教师 noticing 的 perceive/interpret 之分、误概念知识残余、sas_bench CCS/ECS 独立标注),但允许拆≠必须拆;合入后与 P03/P04 合并同一口径——诊断深度用 facet 表达,不是独立构念。
+3. **测量上互补**:原 P11/P12 均为薄证据单源+,合并后整 P 多源,formative facet 机制现成。
+
+附带变更:原 P11 内删除两个同源重复格(mathtutorbench_mistake_location 0.1 搭车格、bea2025_judge 0.25 暂不计分占位格),均已由 P11b/P11c 持有,避免同 P 跨 facet 双计。其余格子、权重、evidence_tier 原样迁移,含 longtutor_diagnosis 副挂 0.1 与 edubench 指标的方法学注记。
+
+**方法学披露**:本裁决发生在见数之后(v2 聚合分数已产出)。修订仅以上述构念层依据支撑,不引用任何分数模式;v2 聚合产物快照保存在 `reports/atomic_ability_rebenchmark_2026-07-08_v2_snapshot_20260716/`,可做 v2/v3 对比。
+
+机器可读落盘:`data/mapping_measurement_model_v3.json`(2026-07-16,R1-R17 全部裁决;v2 为 R17 前快照,保留不删)。
 
 ## 评测覆盖与数据缺口(截至 2026-07-16)
 

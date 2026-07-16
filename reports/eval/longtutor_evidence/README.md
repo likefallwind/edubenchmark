@@ -1,27 +1,20 @@
 # longtutor_evidence — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-14.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：（暂无档案；本文件的“这个评测是什么”一节即是权威描述，事实来源是 adapter 源码与 AGENTS.md）
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-**这个 benchmark 下有 2 个 run 的分数不可用（unusable）。** 在重跑之前，不要把它们写进任何报告、聚合或映射裁决。
+全部 run 干净。
 
 headline 口径：准确率（accuracy）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `deepseek-v4-pro` | — | **unusable**（分数是假的，必须重跑） | 0.0% | 100.0% | 100.0% 的题没进判分（分数建立在 0/3003 的残缺样本上）；一小时内还在写盘，疑似仍在跑，当前 summary 只是中间值 |
-| `glm-5.2` | — | **unusable**（分数是假的，必须重跑） | 0.0% | 100.0% | 100.0% 的题没进判分（分数建立在 0/3003 的残缺样本上）；产物数量对不上，最大缺口 64.1% |
+| `deepseek-v4-pro` | 0.7909 | clean | 0.1% | 0.0% | — |
+| `glm-5.2` | 0.8069 | clean | 0.0% | 0.0% | — |
 | `minimax3` | 0.7872 | clean | 0.0% | 0.0% | — |
-
-### 样本残缺的 run
-
-上游配额/限流打挂大批题目后，summary 仍在**幸存样本**上照常出分。这类 run 的分数没有“错”，但它测的是一个自选样本，不能跟全量 run 放在一张表里比。
-
-- `deepseek-v4-pro`：只有 0 / 3003 题进入判分（未判分 100.0%）。
-- `glm-5.2`：只有 0 / 3003 题进入判分（未判分 100.0%）。
 
 ## 二、这个评测是什么
 
@@ -42,7 +35,9 @@ MODEL=<model> ./scripts/run_eval.sh longtutor_evidence
 
 ## 三、当前映射（M3 裁决相关）
 
-`reports/atomic_ability_rebenchmark_2026-07-08/02_benchmark_ability_mapping.jsonl` 里没有这个 benchmark 的条目——它当前**不进能力雷达**。
+| evidence_tier | benchmark_weight | 能力（P:权重） |
+| --- | --- | --- |
+| diagnostic | 0.75 | P02 长上下文与证据定位 (0.7) |
 
 ---
 
