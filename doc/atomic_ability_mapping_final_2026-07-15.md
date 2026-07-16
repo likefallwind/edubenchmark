@@ -310,3 +310,47 @@ P01/P02/P07/P08 在此前的常规做法里全是"搭车分"(别的任务顺带�
 同日决定:**longtutor 三任务与 mrbench_tutor / bea2025_tutor 的模型面缺口不补跑**(longtutor 缺 MiniMax-M2.7、doubao-seed-2.0-pro;mrbench/bea 缺 deepseek-v4-pro、doubao-seed-2.0-pro 的生成),v2 聚合与 13 号检查按 3 模型面注记。
 
 机器可读落盘:`data/mapping_measurement_model_v2.json`(2026-07-16,含全部 R1-R16 裁决 + 本页三项)。
+
+## 评测覆盖与数据缺口(截至 2026-07-16)
+
+映射关系已定稿,但"每个格子都有可信分数"还欠下面这些。分四类:没跑的、面太窄的、构念层缺依据的、流程性的。
+
+### 1. 还没跑出分数的 benchmark(挂载已定,格子空转)
+
+| benchmark | 现状 | 影响 | 补法 |
+|---|---|---|---|
+| **mooccube_prereq** | adapter 已接入,0 个模型跑出产物 | **P19 整个能力无分**(21 P 里唯一"有挂载没分数"的) | `MODEL=<m> ./scripts/run_eval.sh mooccube_prereq`,300 题纯规则判分零裁判,5 个发布模型很便宜,优先做 |
+| **k12vista** | adapter 已接入,0 个模型跑出产物 | P03 学科图表 facet(权重 0.55 的主格)无分 | 只能跑视觉模型(注意 deepseek-v4-pro 收图不报错但看不见);需 LLM 裁判 |
+| **mmtutorbench** | 只有 LIMIT=5 的冒烟跑,被收录规则(<100 题)排除 | P03 教学场景图文 / P17 / P18 各一格空转 | 至少一档 ≥100 题的正式跑(770 题全量或抽样档) |
+
+### 2. 模型面过少的 benchmark(有分,但配对检验和横向对比受限)
+
+发布口径 5 个模型(MiniMax-M3 / M2.7 / deepseek-v4-pro / glm-5.2 / doubao-seed-2.0-pro)。当前各 benchmark 模型面:
+
+| 面宽 | benchmark | 备注 |
+|---|---|---|
+| **1-2 个** | mathvista(1)、olympiadbench(2) | 多模态答题类只有视觉模型跑过;P03 解题图像 facet 横向比不了 |
+| **3 个** | longtutor 三任务、bea2025_tutor、mrbench_tutor | **2026-07-16 已裁决不补跑**,按 3 模型面注记;若未来要用这些格子做排名再回头补(longtutor 缺 M2.7/doubao;bea/mrbench 缺 deepseek-v4-pro/doubao 的**生成**) |
+| **4 个** | eduillustrate、mathtutorbench_problem_solving、mathtutorbench_socratic | 补 1-2 个模型即可齐面 |
+| 模型错位 | edubench 面是 **glm-5.1** 而非发布口径的 glm-5.2 | glm-5.2 的 P16/P17/P18 里 edubench 格子全缺,P16 尤其失真(只剩 P16a 一个 facet,不可横比);同事数据不可重跑,选择:接受错位注记,或自跑 glm-5.2 的 edubench 面 |
+| 数据源缺 | pedagogy_benchmark 的 CDPK / SEND 两个**分列**格子无独立数据源 | 现只有 0701 卡的合并分在计分;P05 教学知识、P16d、P17 知识 facet 的分辨率因此损失 |
+| 裁判 error 未清 | deepseek-v4-flash、doubao-seed-2.0-lite 在 mathtutorbench win-rate 上还有几十到几百行 error | 非发布模型不挡路;想扩展模型面时先断点续判再采信 |
+
+### 3. 缺失评测依据的原子能力(构念层缺口)
+
+| 能力 | 缺什么 | 候选路线(详见 `doc/benchmark_gap_recommendations_2026-07-11.md`) |
+|---|---|---|
+| **P09 工具使用与长程执行** | 领域空白,无任何挂载 | 教育场景 agent 评测尚无公开基准,需自建或等社区 |
+| **P15 学术诚信判定** | 领域空白,无任何挂载 | 抄袭/代写检测有工业工具但无教育评测协议 |
+| **P16b 误概念识别** | 子能力空 facet | Eedi 误概念标注(NeurIPS 2024 竞赛)、Bridge(700 段真实辅导对话带专家标注) |
+| **P16c 情感与参与识别** | 子能力空 facet | IntrEx(EMNLP 2025,教育对话兴趣/参与度标注)可直接做判别任务 |
+| **P14 教学回复评判 facet** | bea/mrbench_judge 按口径暂不计分 | 裁判校准研究(`doc/judge_rubric_evolution_method_and_contributions_2026-07-16.md`)的结论落地后,可用 judge 一致性分激活 |
+| **P14 生成 rubric facet** | 空白 | 无现成数据,需自建(给任务生成评分标准、对专家 rubric 判一致性) |
+| **P03 视频/音频 facet** | 空白 | 多模态教育视频理解基准尚未接入 |
+| **P02 区分度** | 有直接测量(longtutor_evidence 0.7)但三模型 0.787/0.807/0.791 挤在一起 | 补更难的长上下文任务,或加模型面验证是不是真天花板 |
+| **P20/P21/P22 知识 facet 同源** | 三 P 共用一份 SATA 数据,不构成互证 | R10:SATA 类别标注(LLM 粗标+抽检)拆出三 P 独立证据,已排到发布后 |
+| **P10 单源** | 只有 eduillustrate 一格 | 无配对检验可做,永远 single_source 评级 |
+
+### 4. 流程性 TODO(M4 关键路径)
+
+死格子(题级 SD<0.5)剔除与 edubench 指标级【草案】权重核对 → v1/v2 对比 + 排名稳定性 → M4 双报告(研究版/用户版)。发布目标 7 月底。详见 `doc/rebenchmark_workstream_overview_2026-07-12.md`。
