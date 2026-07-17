@@ -11,6 +11,7 @@ from .agieval import AGIEvalAdapter
 from .bea2025 import BEA2025JudgeAdapter, BEA2025TutorAdapter
 from .ceval import CEvalAdapter
 from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
+from .edubench import EduBenchAdapter
 from .ifeval import IFEvalAdapter
 from .k12vista import K12VistaAdapter
 from .mathtutorbench import (
@@ -55,6 +56,8 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     LongTutorTeachingAdapter,
     EduGuardSATAAdapter,
     EduGuardAdversarialAdapter,
+    # EduBench: comparable 3,797-prompt generation set + fixed 12-dimension judge.
+    EduBenchAdapter,
     # MathTutorBench: judge calibration first, then the 9 tasks.
     MTBJudgeCalibration,
     MTBProblemSolving,

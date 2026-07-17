@@ -191,13 +191,15 @@ def main() -> None:
     extractor_model = args.extractor_model
     judge_model = adapter.resolved_judge_model(extractor_model)
 
-    # Keep the established EduGuard convention: the canonical MiniMax-M3 judge
-    # uses the ordinary model directory; alternate judges get their own namespace
-    # so their scoring caches and summaries can never overwrite one another.
+    # The benchmark's canonical judge uses the ordinary model directory;
+    # alternate judges get their own namespace so scoring caches and summaries
+    # can never overwrite one another. Most adapters inherit MiniMax-M3, while
+    # an adapter may name its established historical judge explicitly.
     base_dir = ROOT / "reports" / "eval" / args.benchmark
+    canonical_judge = adapter.canonical_judge_model or CANONICAL_JUDGE_MODEL
     if args.out_dir is not None:
         out_dir = args.out_dir
-    elif judge_model and model_slug(judge_model) != model_slug(CANONICAL_JUDGE_MODEL):
+    elif judge_model and model_slug(judge_model) != model_slug(canonical_judge):
         out_dir = base_dir / f"_judge-{model_slug(judge_model)}" / model_slug(args.model)
     else:
         out_dir = base_dir / model_slug(args.model)

@@ -147,7 +147,7 @@ def _unscored_section_html(scored: list[dict[str, Any]]) -> str:
 
 def _select_wrong(scored: list[dict[str, Any]], n: int) -> list[dict[str, Any]]:
     """Pick up to ``n`` incorrect rows, spread across tasks for variety."""
-    wrong = [r for r in scored if r.get("score_status") == "scored" and not r.get("correct")]
+    wrong = [r for r in scored if r.get("score_status") == "scored" and r.get("correct") is False]
     by_task: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for r in wrong:
         by_task[str((r.get("buckets") or {}).get("task"))].append(r)
@@ -172,7 +172,9 @@ def build_summary(
 ) -> dict[str, Any]:
     total = len(scored)
     counted = [r for r in scored if r.get("score_status") == "scored"]
-    correct = sum(1 for r in counted if r.get("correct"))
+    accuracy_rows = [r for r in counted if isinstance(r.get("correct"), bool)]
+    correct_count = sum(1 for r in accuracy_rows if r.get("correct"))
+    correct: int | None = correct_count if accuracy_rows else None
     status_counts: dict[str, int] = defaultdict(int)
     for row in scored:
         status_counts[row.get("score_status", "unknown")] += 1
@@ -185,8 +187,17 @@ def build_summary(
         by_bucket[key] = {
             group: {
                 "total": len(rows),
-                "correct": sum(1 for r in rows if r.get("correct")),
-                "accuracy": (sum(1 for r in rows if r.get("correct")) / len(rows)) if rows else None,
+                "correct": (
+                    sum(1 for r in rows if r.get("correct"))
+                    if any(isinstance(r.get("correct"), bool) for r in rows)
+                    else None
+                ),
+                "accuracy": (
+                    sum(1 for r in rows if r.get("correct"))
+                    / sum(1 for r in rows if isinstance(r.get("correct"), bool))
+                    if any(isinstance(r.get("correct"), bool) for r in rows)
+                    else None
+                ),
             }
             for group, rows in sorted(groups.items())
         }
@@ -197,7 +208,7 @@ def build_summary(
         "total_items": total,
         "scored": len(counted),
         "correct": correct,
-        "accuracy": (correct / len(counted)) if counted else None,
+        "accuracy": (correct_count / len(accuracy_rows)) if accuracy_rows else None,
         "status_counts": dict(status_counts),
         "by_bucket": by_bucket,
     }
@@ -318,6 +329,20 @@ def write_report(
 
     acc = summary["accuracy"]
     acc_text = "n/a" if acc is None else f"{acc * 100:.1f}%"
+    primary_text = acc_text
+    primary_label = "正确率"
+    fourth_text: Any = summary["correct"]
+    fourth_label = "答对"
+    # Continuous rubric benchmarks deliberately have no binary accuracy.  When
+    # they expose the established overall/scenario fields, surface those as the
+    # report KPIs instead of leading with four variations of "n/a".
+    overall = (summary.get("extra_metrics") or {}).get("overall") or {}
+    if acc is None and isinstance(overall.get("mean_overall_score"), (int, float)):
+        primary_text = f"{float(overall['mean_overall_score']):.3f}"
+        primary_label = "总体平均分"
+        if isinstance(overall.get("mean_scenario_score"), (int, float)):
+            fourth_text = f"{float(overall['mean_scenario_score']):.3f}"
+            fourth_label = "场景平均分"
     bench_title = (getattr(adapter, "title", "") or summary["benchmark"]) if adapter else summary["benchmark"]
     homepage = getattr(adapter, "homepage", "") if adapter else ""
     description = getattr(adapter, "description", "") if adapter else ""
@@ -398,10 +423,10 @@ def write_report(
     <h1>评测报告 · {esc(bench_title)}</h1>
     <p class="muted">基准 {esc(summary['benchmark'])} · 模型 <strong>{esc(summary['model'])}</strong></p>
     <div class="kpis">
-      <div class="kpi"><div class="v">{acc_text}</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">{esc(primary_text)}</div><div class="k">{esc(primary_label)}</div></div>
       <div class="kpi"><div class="v">{esc(summary['total_items'])}</div><div class="k">总题数</div></div>
       <div class="kpi"><div class="v">{esc(summary['scored'])}</div><div class="k">已判分</div></div>
-      <div class="kpi"><div class="v">{esc(summary['correct'])}</div><div class="k">答对</div></div>
+      <div class="kpi"><div class="v">{esc(fourth_text)}</div><div class="k">{esc(fourth_label)}</div></div>
     </div>
   </header>
   {intro_html}

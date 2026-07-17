@@ -48,6 +48,11 @@ class BenchmarkAdapter:
     title: str = ""
     homepage: str = ""
     description: str = ""
+    # The judge whose results use the ordinary per-model output directory.
+    # Alternate judges are isolated under ``_judge-<slug>/`` by
+    # eval_benchmark.py.  Most adapters use the repository-wide MiniMax-M3
+    # default; benchmarks with an established historical judge can override it.
+    canonical_judge_model: str | None = None
 
     def load_items(self, limit: int | None = None, offset: int = 0) -> list[dict[str, Any]]:
         raise NotImplementedError

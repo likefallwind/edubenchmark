@@ -15,6 +15,8 @@ Outputs (under ``sources/datasets/``, gitignored):
                    (BEA shared task dev has 4-dimension human annotations; test is unlabeled)
   - MMTutorBench:  ``mmtutorbench/mmtutorbench.jsonl`` + ``mmtutorbench/keyframes/*``
                    (Tangchiu/mmtutorbench, JSONL with repo-relative image paths)
+  - EduBench:      ``edubench/`` official repository clone + acquisition manifest
+                   (the harness uses the existing comparable 3,797-prompt export)
 
 Usage:
     python scripts/eval/data/fetch_eval_datasets.py --benchmark mmlu_pro
@@ -22,6 +24,7 @@ Usage:
     python scripts/eval/data/fetch_eval_datasets.py --benchmark eduguard_bench
     python scripts/eval/data/fetch_eval_datasets.py --benchmark bea2025
     python scripts/eval/data/fetch_eval_datasets.py --benchmark mmtutorbench
+    python scripts/eval/data/fetch_eval_datasets.py --benchmark edubench
     python scripts/eval/data/fetch_eval_datasets.py --benchmark all
 """
 
@@ -47,6 +50,7 @@ HF = "https://huggingface.co/datasets"
 MMLU_PRO_URL = f"{HF}/TIGER-Lab/MMLU-Pro/resolve/main/data/test-00000-of-00001.parquet"
 MMTUTORBENCH_REPO = f"{HF}/Tangchiu/mmtutorbench/resolve/main"
 MMTUTORBENCH_JSONL_URL = f"{MMTUTORBENCH_REPO}/mmtutorbench.jsonl"
+EDUBENCH_REPO = "https://github.com/ybai-nlp/EduBench.git"
 BEA2025_REPO = "https://raw.githubusercontent.com/kaushal0494/UnifyingAITutorEvaluation/main/BEA_Shared_Task_2025_Datasets"
 BEA2025_DEV_URL = f"{BEA2025_REPO}/mrbench_v3_devset.json"
 BEA2025_TEST_URL = f"{BEA2025_REPO}/mrbench_v3_testset.json"
@@ -241,6 +245,78 @@ def fetch_mmtutorbench(force: bool = False) -> Path:
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"wrote manifest -> {manifest_path}")
     return base
+
+
+def fetch_edubench(force: bool = False) -> Path:
+    """Acquire the official EduBench repository and record harness provenance.
+
+    The upstream checkout is kept intact under sources/datasets.  The runnable
+    adapter intentionally uses the repository's imported 3,797-prompt export so
+    new models remain comparable with the existing 11 runs; the manifest makes
+    that distinction explicit instead of presenting it as the official 198-row
+    human-evaluation sample.
+    """
+    out_dir = ROOT / "sources" / "datasets" / "edubench"
+    if not (out_dir / ".git").is_dir():
+        out_dir.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["git", "clone", "--depth", "1", EDUBENCH_REPO, str(out_dir)],
+            check=True,
+        )
+    elif force:
+        subprocess.run(["git", "-C", str(out_dir), "pull", "--ff-only"], check=True)
+    else:
+        print(f"skip edubench clone: {out_dir} already exists (use --force to fast-forward)")
+
+    required = [out_dir / "LICENSE", out_dir / "README.md", out_dir / "data" / "all_data" / "sampled_data"]
+    missing = [str(path) for path in required if not path.exists()]
+    if missing:
+        raise SystemExit("incomplete EduBench checkout:\n" + "\n".join(missing))
+
+    commit = subprocess.run(
+        ["git", "-C", str(out_dir), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    def line_count(path: Path) -> int:
+        with path.open(encoding="utf-8", errors="replace") as handle:
+            return sum(1 for line in handle if line.strip())
+
+    sampled_dir = out_dir / "data" / "all_data" / "sampled_data"
+    full_root = out_dir / "data" / "all_data"
+    prompt_source = ROOT / "reports" / "eval" / "edubench" / "minimax-m3" / "predictions.jsonl"
+    manifest = {
+        "benchmark": "edubench",
+        "source_repo": EDUBENCH_REPO.removesuffix(".git"),
+        "source_commit": commit,
+        "license": "MIT",
+        "official_human_evaluation_sample": {
+            "english_rows": line_count(sampled_dir / "en_data_sampled.jsonl"),
+            "chinese_rows": line_count(sampled_dir / "zh_data_sampled.jsonl"),
+        },
+        "official_full_release_rows": {
+            "english": sum(line_count(path) for path in (full_root / "en_data").glob("*.jsonl")),
+            "chinese": sum(line_count(path) for path in (full_root / "zh_data").glob("*.jsonl")),
+        },
+        "upstream_data_caveats": [
+            "The released zh_data/ES.py is generation code, not a Chinese Emotional Support JSONL dataset.",
+            "The official paper's human/model comparison uses the 198-row sampled_data test set.",
+        ],
+        "harness_prompt_set": {
+            "path": str(prompt_source.relative_to(ROOT)),
+            "rows": line_count(prompt_source) if prompt_source.is_file() else 0,
+            "note": (
+                "Comparable English prompt export from the colleague run; five scenarios and stable IDs. "
+                "It is not claimed to be the official 198-row human-evaluation sample."
+            ),
+        },
+    }
+    manifest_path = out_dir / "data_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote EduBench manifest -> {manifest_path}")
+    return out_dir
 
 
 def _bea2025_counts(path: Path, has_annotations: bool) -> dict[str, Any]:
@@ -910,6 +986,7 @@ def main() -> None:
             "mrbench",
             "bea2025",
             "mmtutorbench",
+            "edubench",
             "umwp",
             "ifeval",
             "k12vista",
@@ -936,6 +1013,8 @@ def main() -> None:
         fetch_bea2025(force=args.force)
     if args.benchmark in ("mmtutorbench", "all"):
         fetch_mmtutorbench(force=args.force)
+    if args.benchmark in ("edubench", "all"):
+        fetch_edubench(force=args.force)
     if args.benchmark in ("umwp", "all"):
         fetch_umwp(force=args.force)
     if args.benchmark in ("ifeval", "all"):

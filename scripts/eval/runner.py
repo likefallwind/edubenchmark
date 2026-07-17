@@ -414,9 +414,13 @@ def run_scoring(
             continue
         extracted = str(ext.get("extracted") or "")
         result = adapter.score(extracted, item)
+        correct_value = result["correct"]
         row.update(
             score_status="scored",
-            correct=bool(result["correct"]),
+            # Open-ended rubric benchmarks have a valid continuous score but no
+            # meaningful binary correctness label.  Preserve None instead of
+            # silently turning every response into an incorrect answer.
+            correct=(bool(correct_value) if correct_value is not None else None),
             extracted=extracted,
             normalized=result["normalized"],
             gold=result["gold"],

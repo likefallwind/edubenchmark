@@ -36,6 +36,10 @@
 #     LIMIT=5 MODEL=MiniMax-M3 JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh mmtutorbench
 #   若公开数据后续提供逐题 human/expert gold,再跑 judge calibration;当前公开 JSONL 无 human gold:
 #     LIMIT=20 MODEL=MiniMax-M3 ./scripts/run_eval.sh mmtutorbench_judge_calibration
+# EduBench (3,797 个可比英文 prompt；12 维 0-10 连续分，非 accuracy):
+#     LIMIT=5 MODEL=<model> ./scripts/run_eval.sh edubench
+#   默认沿用已有 11 个模型的 deepseek-v3.2 裁判；替换裁判会自动隔离输出目录：
+#     EDUBENCH_JUDGE_MODEL=MiniMax-M3 LIMIT=5 MODEL=<model> ./scripts/run_eval.sh edubench
 # 语言:eduguard_sata 默认中英双语都跑(--language both)。单语言是该评测独有的刻意选项,
 #   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
 #     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0
@@ -124,6 +128,14 @@ for b in $BENCHMARKS; do
       MMTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
       python scripts/eval_benchmark.py --benchmark mmtutorbench --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+      ;;
+    edubench)
+      # 与已导入的 3,797 题结果保持相同题单和默认裁判。extractor-model 直接设为
+      # judge，确保裁判 token usage 被通用 runner 正确记录。
+      EDUBENCH_JUDGE_MODEL="${EDUBENCH_JUDGE_MODEL:-deepseek-v3.2}" \
+      python scripts/eval_benchmark.py --benchmark edubench --model "$MODEL" \
+        --extractor-model "${EDUBENCH_JUDGE_MODEL:-deepseek-v3.2}" \
+        --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     p08_abstention)
       # P08 能力性弃答：UMWP 不可答/可答混合，规则判分（无裁判、抽取不调用 LLM）。
