@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · sas_bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · SAS-Bench · 高考短答案整体、分步与错因评分</h1>
+    <p class="muted">基准 sas_bench · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">0.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">5</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">5</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">0</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section><h2>基准介绍</h2><p>SAS-Bench 包含 9 学科、12 个学科×题型子任务、1,030 道高考题和 4,109 条专家标注作答。被测模型扮演阅卷评分器，输入题目、参考答案、解析、评分细则、学生逐步作答和允许的错因类型，输出总分、逐步得分和逐步错因。</p><p>官方原生指标是 QWK（整体总分一致性）、CCS（整体+步骤联合一致性）和 ECS（按低/中/高作答质量分层的错因分布一致性）。三项均先在每个子任务上计算，再对已有子任务做不加权宏平均；它们是群体一致性统计量，不是逐题 accuracy。</p><p class='muted'>主页：<a href='https://github.com/PKU-DAIR/SAS-Bench'>https://github.com/PKU-DAIR/SAS-Bench</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_0</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+为了解这个问题，我们需要先根据重力对小球的影响来解题。
+首先，小球 $\mathrm{A}$ 从某高度释放，开始下落。根据能量守恒，${\mathrm{A}}$ 触碰地面的速度 $v_A = \sqrt{2gH}$（其中 $H$ 是释放高度，$g$ 是重力加速度）。这个速度在碰撞后变为向上的速度，假设小球 A 和地面发生弹性碰撞后，向上的速度不变即为 $v_A = \sqrt{2gH}$。因此在距离释放点 $H$ 下方的位置，小球 A 的速度仍为 $v_A$。
+小球 $\mathrm{B}$ 从静止释放，经过高度 $H$ 的下落时间 $t$ 可得：
+$$H = \frac{1}{2} g t^2 \Rightarrow t = \sqrt{\frac{2H}{g}}.$$
+在这个时间内，$B$ 达到的速度为：
+$$v_B = g t = g \sqrt{\frac{2H}{g}} = \sqrt{2gH}.$$
+
+## Step 1
+我们现在遇到了两个小球的质量与速度：
+- 小球 A 的质量为 $m_A$，速度为 $v_A = \sqrt{2gH}$。
+- 小球 B 的质量为 $m_B$，速度为 $v_B = \sqrt{2gH}$。
+由于碰撞是完全弹性的，根据动量守恒和能量守恒：
+1. 动量守恒：
+$$m_A v_A + m_B v_B = m_A v_A&#x27; + m_B v_B&#x27;,$$
+
+## Step 2
+
+
+## Step 3
+由于碰撞是完全弹性的，根据动量守恒和能量守恒：
+1. 动量守恒：
+$$m_A v_A + m_B v_B = m_A v_A&#x27; + m_B v_B&#x27;,$$
+2. 能量守恒：
+$$\frac{1}{2} m_A v_A^2 + \frac{1}{2} m_B v_B^2 = \frac{1}{2} m_A (v_A&#x27;)^2 + \frac{1}{2} m_B (v_B&#x27;)^2.$$
+
+## Step 4
+在碰撞后，$\mathrm{B}$ 的最终速度 $v_B&#x27;$ 可以由一维弹性碰撞公式得出：
+$$v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} v_A + \frac{(2 m_B)}{(m_A + m_B)} v_B.$$
+
+## Step 5
+代入 $v_A = \sqrt{2gH}$ 和 $v_B = \sqrt{2gH}$，得到：
+$$v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} + \frac{(2 m_B)}{(m_A + m_B)} \sqrt{2gH} = \frac{(m_A + m_B)}{(m_A + m_B)} \sqrt{2gH} = \sqrt{2gH}.$$
+
+## Step 6
+因此，小球 B 在碰撞后的速度与前完全相同，继续以$\sqrt{2gH}$ 向上运动。
+此时，$B$ 达到的最大高度 $H_{max}$ 为：
+$$H_{max} = H + \frac{(v_B&#x27;)^2}{2g} = H + \frac{2gH}{2g} = H + H = 2H.$$
+所以小球 B 上升的最大高度为 $\mathbf{2H}$.
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>10</div></div><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_1</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+在这个问题中，小球 A 和 B 分别从某高度释放，且 A 的质量大于 B 的质量。在小球 A 下落到距离 H 的位置时，与正在下落的小球 B 碰撞。我们需要计算小球 B 碰撞后上升的最大高度。
+首先，根据题意，小球 A 自由下落的速度可由以下公式得到：
+$$ v_A = \sqrt{2gH} $$
+这里 H 是小球 A 的释放高度，g 是重力加速度。
+小球 B 也是从静止开始自由下落的，在 H 高度时的速度可以用相同的公式得出：
+$$ v_B = \sqrt{2gH} $$
+
+## Step 1
+当小球 A 和小球 B 在高度 H 的地方发生碰撞时，由于小球 A 的质量大于小球 B，我们可以使用弹性碰撞的公式来计算碰撞后的速度。根据一维弹性碰撞的结果：
+$$ v_A&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} v_A + \frac{(2m_B)}{(m_A + m_B)} v_B $$
+
+## Step 2
+$$ v_B&#x27; = \frac{(2m_A)}{(m_A + m_B)} v_A - \frac{(m_A - m_B)}{(m_A + m_B)} v_B $$
+
+## Step 3
+由于 v_A 和 v_B 都为 $\sqrt{2gH}$，将其代入 $v_B&#x27;$ 的公式，我们有：
+$$ v_B&#x27; = \frac{(2m_A)}{(m_A + m_B)} \sqrt{2gH} - \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} $$
+
+## Step 4
+简化后：
+$$ v_B&#x27; = \sqrt{2gH} \left( \frac{(2m_A) - (m_A - m_B)}{(m_A + m_B)} \right) $$
+$$ = \sqrt{2gH} \left( \frac{(m_A + m_B)}{(m_A + m_B)} \right) = \sqrt{2gH} $$
+
+## Step 5
+我们可以看到，$v_B&#x27;$ 的值恰好与$v_B$相同，意味着小球 B 在碰撞后依然以速度 $\sqrt{2gH}$向上运动。
+小球 B 达到的最大高度 H_max 通过以下公式求得：
+$$ H_{max} = \frac{(v_B&#x27;)^2}{2g} $$
+将 $v_B&#x27;$ 代入得：
+$$ H_{max} = \frac{(\sqrt{2gH})^2}{2g} = \frac{2gH}{2g} = H $$
+因此，小球 B 上升的最大高度是 $\mathbf{H}$。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>6</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;QWK/CCS/ECS are population agreement statistics against human expert labels on a 0-100 scale, not per-item accuracy. The generic accuracy field is strict structured exact match and is diagnostic only.&quot;,
+  &quot;headline_metric&quot;: &quot;unweighted mean of each available per-subtask metric&quot;,
+  &quot;overall&quot;: {
+    &quot;qwk&quot;: 34.482758620689644,
+    &quot;ccs&quot;: 20.6537657272004,
+    &quot;ecs&quot;: 15.517881972309237
+  },
+  &quot;overall_ecs_breakdown&quot;: {
+    &quot;ecs_low&quot;: 63.77481392176932,
+    &quot;ecs_medium&quot;: 0.0,
+    &quot;ecs_high&quot;: -17.221168004841612
+  },
+  &quot;by_task&quot;: {
+    &quot;0_Physics_ShortAns&quot;: {
+      &quot;n&quot;: 5,
+      &quot;qwk&quot;: 34.482758620689644,
+      &quot;ccs&quot;: 20.6537657272004,
+      &quot;ecs&quot;: 15.517881972309237,
+      &quot;ecs_low&quot;: 63.77481392176932,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: -17.221168004841612
+    }
+  },
+  &quot;audit&quot;: {
+    &quot;metric_protocol&quot;: &quot;in-repo standard-library port of PKU-DAIR/SAS-Bench&quot;,
+    &quot;prompt_version&quot;: &quot;official-zero-shot-v1&quot;,
+    &quot;prompt_sha256&quot;: &quot;702fd877f91c881a037e78713a2846c232980961546b6aaf8d7c5415ae9ed410&quot;,
+    &quot;scored_rows&quot;: 5,
+    &quot;tasks_present&quot;: 1,
+    &quot;step_count_mismatches&quot;: 0,
+    &quot;unknown_error_labels_dropped&quot;: 0
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>5</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>0_Physics_ShortAns</td><td>5</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Physics</td><td>5</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>ShortAns</td><td>5</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（5 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_0</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+为了解这个问题，我们需要先根据重力对小球的影响来解题。
+首先，小球 $\mathrm{A}$ 从某高度释放，开始下落。根据能量守恒，${\mathrm{A}}$ 触碰地面的速度 $v_A = \sqrt{2gH}$（其中 $H$ 是释放高度，$g$ 是重力加速度）。这个速度在碰撞后变为向上的速度，假设小球 A 和地面发生弹性碰撞后，向上的速度不变即为 $v_A = \sqrt{2gH}$。因此在距离释放点 $H$ 下方的位置，小球 A 的速度仍为 $v_A$。
+小球 $\mathrm{B}$ 从静止释放，经过高度 $H$ 的下落时间 $t$ 可得：
+$$H = \frac{1}{2} g t^2 \Rightarrow t = \sqrt{\frac{2H}{g}}.$$
+在这个时间内，$B$ 达到的速度为：
+$$v_B = g t = g \sqrt{\frac{2H}{g}} = \sqrt{2gH}.$$
+
+## Step 1
+我们现在遇到了两个小球的质量与速度：
+- 小球 A 的质量为 $m_A$，速度为 $v_A = \sqrt{2gH}$。
+- 小球 B 的质量为 $m_B$，速度为 $v_B = \sqrt{2gH}$。
+由于碰撞是完全弹性的，根据动量守恒和能量守恒：
+1. 动量守恒：
+$$m_A v_A + m_B v_B = m_A v_A&#x27; + m_B v_B&#x27;,$$
+
+## Step 2
+
+
+## Step 3
+由于碰撞是完全弹性的，根据动量守恒和能量守恒：
+1. 动量守恒：
+$$m_A v_A + m_B v_B = m_A v_A&#x27; + m_B v_B&#x27;,$$
+2. 能量守恒：
+$$\frac{1}{2} m_A v_A^2 + \frac{1}{2} m_B v_B^2 = \frac{1}{2} m_A (v_A&#x27;)^2 + \frac{1}{2} m_B (v_B&#x27;)^2.$$
+
+## Step 4
+在碰撞后，$\mathrm{B}$ 的最终速度 $v_B&#x27;$ 可以由一维弹性碰撞公式得出：
+$$v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} v_A + \frac{(2 m_B)}{(m_A + m_B)} v_B.$$
+
+## Step 5
+代入 $v_A = \sqrt{2gH}$ 和 $v_B = \sqrt{2gH}$，得到：
+$$v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} + \frac{(2 m_B)}{(m_A + m_B)} \sqrt{2gH} = \frac{(m_A + m_B)}{(m_A + m_B)} \sqrt{2gH} = \sqrt{2gH}.$$
+
+## Step 6
+因此，小球 B 在碰撞后的速度与前完全相同，继续以$\sqrt{2gH}$ 向上运动。
+此时，$B$ 达到的最大高度 $H_{max}$ 为：
+$$H_{max} = H + \frac{(v_B&#x27;)^2}{2g} = H + \frac{2gH}{2g} = H + H = 2H.$$
+所以小球 B 上升的最大高度为 $\mathbf{2H}$.
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 18, &quot;pred_score&quot;: 12, &quot;steps&quot;: [{&quot;step_score&quot;: 3, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;公式套用&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;公式套用&quot;]}, {&quot;step_score&quot;: 1, &quot;errors&quot;: [&quot;计算错误或单位错误&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}], &quot;reported_step_count&quot;: 7, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>12</div><div class='ans gold'><span class='lbl'>正确答案</span>10</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 18,
+  &quot;pred_score&quot;: 12,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [
+        &quot;公式套用&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;回答不完整&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [
+        &quot;缺少合理的推理过程&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [
+        &quot;公式套用&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 1,
+      &quot;errors&quot;: [
+        &quot;计算错误或单位错误&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    }
+  ]
+}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_1</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+在这个问题中，小球 A 和 B 分别从某高度释放，且 A 的质量大于 B 的质量。在小球 A 下落到距离 H 的位置时，与正在下落的小球 B 碰撞。我们需要计算小球 B 碰撞后上升的最大高度。
+首先，根据题意，小球 A 自由下落的速度可由以下公式得到：
+$$ v_A = \sqrt{2gH} $$
+这里 H 是小球 A 的释放高度，g 是重力加速度。
+小球 B 也是从静止开始自由下落的，在 H 高度时的速度可以用相同的公式得出：
+$$ v_B = \sqrt{2gH} $$
+
+## Step 1
+当小球 A 和小球 B 在高度 H 的地方发生碰撞时，由于小球 A 的质量大于小球 B，我们可以使用弹性碰撞的公式来计算碰撞后的速度。根据一维弹性碰撞的结果：
+$$ v_A&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} v_A + \frac{(2m_B)}{(m_A + m_B)} v_B $$
+
+## Step 2
+$$ v_B&#x27; = \frac{(2m_A)}{(m_A + m_B)} v_A - \frac{(m_A - m_B)}{(m_A + m_B)} v_B $$
+
+## Step 3
+由于 v_A 和 v_B 都为 $\sqrt{2gH}$，将其代入 $v_B&#x27;$ 的公式，我们有：
+$$ v_B&#x27; = \frac{(2m_A)}{(m_A + m_B)} \sqrt{2gH} - \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} $$
+
+## Step 4
+简化后：
+$$ v_B&#x27; = \sqrt{2gH} \left( \frac{(2m_A) - (m_A - m_B)}{(m_A + m_B)} \right) $$
+$$ = \sqrt{2gH} \left( \frac{(m_A + m_B)}{(m_A + m_B)} \right) = \sqrt{2gH} $$
+
+## Step 5
+我们可以看到，$v_B&#x27;$ 的值恰好与$v_B$相同，意味着小球 B 在碰撞后依然以速度 $\sqrt{2gH}$向上运动。
+小球 B 达到的最大高度 H_max 通过以下公式求得：
+$$ H_{max} = \frac{(v_B&#x27;)^2}{2g} $$
+将 $v_B&#x27;$ 代入得：
+$$ H_{max} = \frac{(\sqrt{2gH})^2}{2g} = \frac{2gH}{2g} = H $$
+因此，小球 B 上升的最大高度是 $\mathbf{H}$。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 18, &quot;pred_score&quot;: 12, &quot;steps&quot;: [{&quot;step_score&quot;: 3, &quot;errors&quot;: []}, {&quot;step_score&quot;: 3, &quot;errors&quot;: []}, {&quot;step_score&quot;: 3, &quot;errors&quot;: []}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;]}, {&quot;step_score&quot;: 3, &quot;errors&quot;: [&quot;计算错误或单位错误&quot;]}], &quot;reported_step_count&quot;: 6, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>12</div><div class='ans gold'><span class='lbl'>正确答案</span>6</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>```json
+{
+  &quot;total&quot;: 18,
+  &quot;pred_score&quot;: 12,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;公式套用&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: [
+        &quot;计算错误或单位错误&quot;
+      ]
+    }
+  ]
+}
+```</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_2</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+小球 A 和 B 的质量分别为 $ m_A $ 和 $ m_B $，且 $ m_A &gt; m_B $。小球 A 从某高度 H 处释放，而小球 B 从静止释放。碰撞发生时小球 A 已经弹回。
+首先，考虑小球 A 的下落。当 A 自由下落到地面时，根据自由落体运动的公式，我们可以得出 A 的速度：
+$$ v_A = \sqrt{2gH} $$
+小球 A 碰撞后弹回的速度依然是 $ v_A $（假设碰撞是完全弹性的），所以碰撞前 A 的速度是向下的，碰撞后 A 的速度是向上的，也可以表示为：
+$$ v_A&#x27; = \sqrt{2gH} $$
+当小球 B 从高度 H 释放时，经过同样的高度 A 下落到的时间，B 的速度在达到 H 底部时为：
+$$ v_B = \sqrt{2gH} $$
+
+## Step 1
+在下落过程中，小球 A 在我们考虑的 H 高度时与小球 B 碰撞。设碰撞后小球 B 的速度为 $ v_B&#x27; $，我们根据一维弹性碰撞的动量和能量守恒定律来进行计算。
+动量守恒公式如下：
+$$ m_A v_A&#x27; + m_B v_B = m_A v_A&#x27;&#x27; + m_B v_B&#x27; $$
+
+## Step 2
+由于碰撞是完全弹性的，能量守恒公式也是成立的：
+$$ \frac{1}{2} m_A (v_A&#x27;)^2 + \frac{1}{2} m_B (v_B)^2 = \frac{1}{2} m_A (v_A&#x27;&#x27;)^2 + \frac{1}{2} m_B (v_B&#x27;)^2 $$
+
+## Step 3
+在这个碰撞中， $ v_A&#x27; $ 和 $ v_B $ 的值都为 $ \sqrt{2gH} $，我们更容易直接用声波的反射、速度转换来处理。
+采用一维弹性碰撞的结论计算 B 的最终速度 $ v_B&#x27; $，我们可以得到：
+$$ v_B&#x27; = \frac{(2 m_A)}{(m_A + m_B)} v_A - \frac{(m_A - m_B)}{(m_A + m_B)} v_B $$
+
+## Step 4
+将 $ v_A = \sqrt{2gH} $ 和 $ v_B = \sqrt{2gH} $ 代入：
+$$ v_B&#x27; = \frac{(2 m_A)}{(m_A + m_B)} \sqrt{2gH} - \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} $$
+$$ = \sqrt{2gH} \left( \frac{(2m_A) - (m_A - m_B)}{(m_A + m_B)} \right) $$
+$$ = \sqrt{2gH} \left( \frac{(m_A + m_B)}{(m_A + m_B)} \right) = \sqrt{2gH} $$
+但是，我在这一步很可能做错了，因为我认为 B 的速度会变大并超过正常速度，所以最终 B 的速度不是 $ \sqrt{2gH} $。因为我误认为 B 能以比弹回速度还快的速度向上运动。
+根据错误理解，找到小球 B 碰撞后最大的高度：
+$$ H_{max} = \frac{(v_B&#x27;)^2}{2g} = \frac{(\sqrt{2gH}^2)}{2g} = \frac{2gH}{2g} = H $$
+但是我认为这个高度是 $ 2H $，所以结论错了。
+因此，小球 B 碰撞后上升的最大高度为 $ \mathbf{2H} $。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 18, &quot;pred_score&quot;: 14, &quot;steps&quot;: [{&quot;step_score&quot;: 3, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;]}, {&quot;step_score&quot;: 4, &quot;errors&quot;: []}, {&quot;step_score&quot;: 4, &quot;errors&quot;: []}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;公式套用&quot;]}, {&quot;step_score&quot;: 1, &quot;errors&quot;: [&quot;计算错误或单位错误&quot;]}], &quot;reported_step_count&quot;: 5, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>14</div><div class='ans gold'><span class='lbl'>正确答案</span>11</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 18,
+  &quot;pred_score&quot;: 14,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: [
+        &quot;缺少合理的推理过程&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 4,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 4,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [
+        &quot;公式套用&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 1,
+      &quot;errors&quot;: [
+        &quot;计算错误或单位错误&quot;
+      ]
+    }
+  ]
+}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_3</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+在分析小球 A 和 B 的碰撞问题时，我们可以首先考虑小球 A 的释放及其下落情况。
+小球 A 从高度 H 下落时，其速度 $ v_A $ 可以用自由落体公式计算：
+$$ v_A = \sqrt{2gH} $$
+小球 A 碰撞地面的时刻速度是向下的，假设它弹回的速度也为 $ v_A $，所以此时的速度为：
+$$ v_A&#x27; = \sqrt{2gH} $$
+小球 B 也是从高度 H 自由下落，达到 H 地面的速度为：
+$$ v_B = \sqrt{2gH} $$
+
+## Step 1
+碰撞发生在小球 A 向上移动，而小球 B 向下移动的时刻。由于重力加速度 g 稍有不同，小球 A 和 B 的碰撞涉及到了各自的质量和速度。
+在碰撞时，我们可以利用动量守恒和能量守恒来看 B 的速度变化。动量守恒公式如下：
+$$ m_A v_A&#x27; + m_B v_B = m_A v_A&#x27;&#x27; + m_B v_B&#x27; $$
+
+## Step 2
+考虑到 B 的速度在碰撞前后是可以反向的，我们假设用一个公式如下把它表达出来：
+$$ v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} v_A + \frac{(2 m_B)}{(m_A + m_B)} v_B $$
+将刚刚的 $ v_A $ 和 $ v_B $ 代入：
+$$ v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} + \frac{(2 m_B)}{(m_A + m_B)} \sqrt{2gH} $$
+这个公式，我们可以简化为：
+$$ v_B&#x27; = \left(\frac{(m_A + m_B)}{(m_A + m_B)}\right) \sqrt{2gH} = \sqrt{2gH} $$
+因此，假设碰撞后小球 B 的速度仍然保持为 $ v_B&#x27; = \sqrt{2gH} $。
+在计算小球 B 的最大高度时，使用公式：
+$$ H_{max} = \frac{(v_B&#x27;)^2}{2g} $$
+
+## Step 3
+
+
+## Step 4
+将刚刚的 $ v_A $ 和 $ v_B $ 代入：
+$$ v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} + \frac{(2 m_B)}{(m_A + m_B)} \sqrt{2gH} $$
+这个公式，我们可以简化为：
+$$ v_B&#x27; = \left(\frac{(m_A + m_B)}{(m_A + m_B)}\right) \sqrt{2gH} = \sqrt{2gH} $$
+
+## Step 5
+
+
+## Step 6
+这个公式，我们可以简化为：
+$$ v_B&#x27; = \left(\frac{(m_A + m_B)}{(m_A + m_B)}\right) \sqrt{2gH} = \sqrt{2gH} $$
+因此，假设碰撞后小球 B 的速度仍然保持为 $ v_B&#x27; = \sqrt{2gH} $。
+在计算小球 B 的最大高度时，使用公式：
+$$ H_{max} = \frac{(v_B&#x27;)^2}{2g} $$
+代入 $ v_B&#x27; $ 的值：
+$$ H_{max} = \frac{(\sqrt{2gH})^2}{2g} = \frac{2gH}{2g} = H $$
+最终，由于碰撞后的速度并没有超过 A 的速度或没有考虑质量的影响，我们认为小球 B 上升的最大高度为：
+$$ \boxed{H} $$
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 18, &quot;pred_score&quot;: 12, &quot;steps&quot;: [{&quot;step_score&quot;: 4, &quot;errors&quot;: []}, {&quot;step_score&quot;: 3, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 3, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;公式套用&quot;]}], &quot;reported_step_count&quot;: 7, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>12</div><div class='ans gold'><span class='lbl'>正确答案</span>11</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 18,
+  &quot;pred_score&quot;: 12,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 4,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;回答不完整&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;回答不完整&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;回答不完整&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [
+        &quot;公式套用&quot;
+      ]
+    }
+  ]
+}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_4</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (20 分) 真空中存在电场强度大小为 $\mathrm{E}_{1}$ 的匀强电场, 一带电油滴在该电场 中竖直向上做匀速直线运动, 速度大小为 $\mathrm{v}_{0}$, 在油滴处于位置 $\mathrm{A}$ 时, 将电场 强度的大小突然增大到某值, 但保持其方向不变。持续一段时间 $\mathrm{t}_{1}$ 后, 又突 然将电场反向, 但保持其大小不变; 再持续同样一段时间后, 油滴运动到 $B$ 点。重力加速度大小为 $g$ 。
+
+(1) 油滴运动到 $B$ 点时的速度;
+
+（2）求增大后的电场强度的大小; 为保证后来的电场强度比原来的大, 试给出 相应的 $\mathrm{t}_{1}$ 和 $v_{0}$ 应满足的条件。已知不存在电场时, 油滴以初速度 $v_{0}$ 做竖直上 抛运动的最大高度恰好等于 $B 、 A$ 两点间距离的两倍。
+
+- 题目分值：20
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：(1) 油滴运动到 $B$ 点时的速度为 $v_{0}-2 \mathrm{gt}_{1}$;
+
+(2) 增大后的电场强度的大小为 $E_{1}+\frac{E_{1}}{g}\left(g-\frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right), t_{1}$ 和 $v_{0}$ 应满足的条件 为 $0&lt;\mathrm{t}_{1}&lt;\left(1-\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{\mathrm{~g}}$ 或 $\mathrm{t}_{1}&gt;\left(1+\frac{\sqrt{3}}{2}\right) \frac{\mathrm{v}_{0}}{\mathrm{~g}}$;
+
+或 $E_{1}+\frac{E_{1}}{g}\left(g \frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right)$; 相应的 $t_{1}$ 和 $v_{0}$ 应满足的条件为 $t_{1}&gt;\left(1+\frac{\sqrt{5}}{2}\right) \frac{v_{0}}{g}$ 。
+
+- 解析说明：解：（1）方法一:
+
+设油滴质量为 $m$, 带电荷量为 $q$, 增大后的电场强度为 $E_{2}$, 根据题中条件可以判 断电场力与重力方向相反;
+
+对于匀速运动阶段, 有 $q E_{1}=m g \ldots$..1)
+
+对于场强突然增大后的第一段 $t_{1}$ 时间, 由牛顿第二定律得: $q E_{2}-m g=m a_{1} \ldots(2)$
+
+对于场强第二段 $t_{1}$ 时间，由牛顿第二定律得: $q E_{2}+m g=m a_{2} \ldots$ (3)
+
+由运动学公式, 可得油滴在电场反向时的速度为: $v_{1}=v_{0}+a_{1} t_{1}$ (4)
+
+油滴在 $B$ 的速度为: $v_{B}=v_{1}-a_{2} t_{1}$ (5)
+
+联立(1)至(5)式, 可得: $\mathrm{v}_{\mathrm{B}}=\mathrm{v}_{0}-2 \mathrm{gt}_{1}$; 方向向上;
+
+方法二:
+
+选向上为正方向, 由动量定理有: $-m g \times 2 t+q E_{1} t-q E_{1} t=m v-m v_{0}$
+
+解得: $\mathrm{v}_{\mathrm{B}}=\mathrm{v}_{0}-2 \mathrm{gt}_{1}$; 方向向上;
+
+（2）设无电场时坚直上抛的最大高度为 $h$, 由运动学公式, 有: $v_{0}{ }^{2}=2 g h \ldots$ (6) 根据位移时间关系可得: $v_{0} t_{1}+\frac{1}{2} \mathrm{a}_{1}+{ }_{1}^{2}=x_{1} \ldots$ (7)
+
+$\mathrm{v}_{1} \mathrm{t}_{1}-\frac{1}{2} \mathrm{a}_{2} \mathrm{t}_{1}^{2}=\mathrm{x}_{2} \ldots$ (8)
+
+油滴运动有两种情况:
+
+情况一：
+
+位移之和 $\mathrm{x}_{1}+\mathrm{x}_{2}=\frac{\mathrm{h}}{2} 9$ 联立(1)、(2)、(3)、6)、(7)、(8)、(9)可得:
+
+$\mathrm{E}_{2}=\mathrm{E}_{1}+\frac{\mathrm{E}_{1}}{\mathrm{~g}}\left(\mathrm{~g}+\frac{\mathrm{v}_{0}^{2}}{4 \mathrm{gt}{ }_{1}^{2}}-\frac{2 \mathrm{v}_{0}}{\mathrm{t}_{1}}\right)$
+
+由题意得 $E_{2}&gt;E_{1}$, 即满足条件 $\frac{2 v_{0}}{t_{1}}-\frac{v_{0}^{2}}{4 \mathrm{gt}}&lt;\mathrm{g}$, 即当 $0&lt;\mathrm{t}_{1}&lt;\left(1-\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{g}$ 或 $t_{1}&gt;\left(1+\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{g}$ 才是可能的;
+
+情况二:
+
+位移之和 $x_{1}+x_{2}=-\frac{h}{2}$
+
+联立(1)、(2)、(3)、(6)、 (7)、(8)、(10)可得:
+
+$E_{2}=E_{1}+\frac{E_{1}}{g}\left(g \frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right)$
+
+由题意得 $E_{2}&gt;E_{1}$, 即满足条件 $\frac{2 v_{0}}{t_{1}}+\frac{v_{0}^{2}}{4 g t_{1}^{2}}&lt;g$, 即 $t_{1}&gt;\left(1+\frac{\sqrt{5}}{2}\right) \frac{v_{0}}{g}$, 另一解为负 , 不合题意, 舍去。
+
+- 学生作答：## Step 0
+(1) 油滴运动到 $B$ 点时的速度：
+设电场强度由 $\mathrm{E}_{1}$ 增大为 $\mathrm{E}_{2}$，油滴在电场作用下，将受到一个向上的电场力 $\mathbf{F}_e = q \cdot \mathrm{E}_{2}$，其中 $q$ 是油滴的电量。在运动过程中，油滴的重力始终向下，重力为 $\mathbf{F}_g = mg$。
+
+## Step 1
+当电场增强到 $\mathrm{E}_{2}$ 时，油滴的合力为：
+$$ F_{\text{合}} = F_e - F_g = q \cdot \mathrm{E}_{2} - mg $$
+
+## Step 2
+由于油滴做的是匀速直线运动，所以合力为零：
+$$ q \cdot \mathrm{E}_{2} - mg = 0 $$
+
+## Step 3
+因此：
+$$ q \cdot \mathrm{E}_{2} = mg $$
+
+## Step 4
+$$ \mathrm{E}_{2} = \frac{mg}{q} $$
+
+## Step 5
+在时间 $\mathrm{t}_{1}$ 内，油滴以速度 $\mathrm{v}_{0}$ 向上运动，所以在此段时间内它的位移为：
+$$ s_1 = v_0 \cdot t_1 $$
+
+## Step 6
+再考虑电场反向后的情况，我们设造向下的电场强度为 $\mathrm{E}_{2}$，油滴会受到向下的电场力，这时合力为：
+$$ F&#x27;_{\text{合}} = F_g + F_e - mg = mg + q \cdot \mathrm{E}_{2} - mg = q \cdot \mathrm{E}_{2} $$
+
+## Step 7
+此时油滴加速向下，假设加速时间同为 $\mathrm{t}_{1}$，根据运动学公式，速度改变为：
+$$ v&#x27; = v_0 + a \cdot t_1  $$
+
+## Step 8
+其中加速度为：
+$$ a = \frac{q \cdot \mathrm{E}_{2}}{m} = \frac{mg}{m} = g $$
+
+## Step 9
+所以：
+$$ v&#x27; = v_0 + g \cdot t_1 $$
+
+## Step 10
+(2) 求增大后的电场强度的大小：
+根据题意，油滴在不存在电场的初始上抛运动状态下，最大高度恰好等于 $B、A$ 两点间距离的两倍。设 $h$ 为点 $A$ 和点 $B$ 之间的距离，则：
+
+## Step 11
+$$ h_{\text{max}} = \frac{v_0^2}{2g} $$
+
+## Step 12
+故有关系：
+$$ h = 2 \cdot h_{\text{max}} = \frac{v_0^2}{g} $$
+
+## Step 13
+那么，结合上面的速度计算和位移关系，可以得到：
+为了保证后来的电场强度 $\mathrm{E}_{2}$ 大于原来的 $\mathrm{E}_{1}$，我们能够设定为：
+$$ \mathrm{E}_{1} &lt; \frac{mg}{q} $$
+
+## Step 14
+同时，时间 $\mathrm{t}_{1}$ 和初速度 $v_0$ 的条件为：
+$$ t_1 &lt; \frac{v_0^2}{2g \cdot \mathrm{v}_0} = \frac{v_0}{2g} $$
+
+## Step 15
+这样就能保证在电场加强后，油滴运动至 $B$ 点时的速度大于先前的初速度。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 20, &quot;pred_score&quot;: 4, &quot;steps&quot;: [{&quot;step_score&quot;: 1, &quot;errors&quot;: []}, {&quot;step_score&quot;: 1, &quot;errors&quot;: []}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;忽视题目条件&quot;, &quot;缺少合理的推理过程&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;, &quot;缺少合理的推理过程&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;, &quot;缺少合理的推理过程&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;计算错误或单位错误&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;计算错误或单位错误&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: []}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;计算错误或单位错误&quot;, &quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;, &quot;计算错误或单位错误&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;, &quot;缺少合理的推理过程&quot;]}], &quot;reported_step_count&quot;: 16, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>4</div><div class='ans gold'><span class='lbl'>正确答案</span>6</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 20,
+  &quot;pred_score&quot;: 4,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 1,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 1,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;,
+        &quot;缺少合理的推理过程&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;公式套用&quot;,
+        &quot;缺少合理的推理过程&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;公式套用&quot;,
+        &quot;缺少合理的推理过程&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;计算错误或单位错误&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;计算错误或单位错误&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;计算错误或单位错误&quot;,
+        &quot;忽视题目条件&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;缺少合理的推理过程&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;公式套用&quot;,
+        &quot;计算错误或单位错误&quot;
+      ]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [
+        &quot;回答不完整&quot;,
+        &quot;缺少合理的推理过程&quot;
+      ]
+    }
+  ]
+}</pre></details></div></section>
+</main>
+</body>
+</html>

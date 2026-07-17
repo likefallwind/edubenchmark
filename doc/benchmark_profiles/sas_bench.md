@@ -22,7 +22,20 @@
 
 ## 在本仓库怎么用
 
-- **无 adapter**，分数来自同事报告 `otherbenchmark/sas-bench-result0630.md`（6 模型：GPT-5.4 / GLM-5.1 / DeepSeek-V4-Pro / Kimi / MiniMax-M3 / M2.7）。
+- 已接入通用评测基础设施，adapter 为 `scripts/eval/benchmarks/sas_bench.py`。先固定 revision 下载官方数据：
+
+```bash
+python scripts/eval/data/prepare_sas_bench.py
+```
+
+- 小样本先检查 prompt 与模型结构化输出；`max_tokens` 不设上限：
+
+```bash
+MODEL=MiniMax-M3 LIMIT=5 ./scripts/run_eval.sh sas_bench
+```
+
+- 全量运行使用 `LIMIT=0`。标准输出位于 `reports/eval/sas_bench/<model-slug>/`，包含 `predictions.jsonl`、`extractions.jsonl`、`scored.jsonl`、`summary.json` 和 `report.html`。`summary.json.extra_metrics` 给 QWK / CCS / ECS 的子任务值与宏平均；通用 `accuracy` 仅为严格结构完全匹配诊断值，不是 benchmark headline。
+- 旧的 7 模型结果仍来自同事报告的规范化导入；新 adapter 使后续模型可由本仓库独立复跑。
 
 ## 局限与注意
 

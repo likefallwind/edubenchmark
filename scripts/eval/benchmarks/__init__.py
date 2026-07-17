@@ -35,6 +35,7 @@ from .olympiadbench import OlympiadBenchAdapter
 from .p07_selfcheck import P07SelfCheckAdapter
 from .p08_abstention import P08AbstentionAdapter
 from .p08_calibration import P08CalibrationAdapter
+from .sas_bench import SASBenchAdapter
 
 
 _ADAPTERS: list[type[BenchmarkAdapter]] = [
@@ -80,6 +81,8 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     P08AbstentionAdapter,
     # P07 self-check: two-round intrinsic self-correction over the P08 delegates.
     P07SelfCheckAdapter,
+    # SAS-Bench: model-as-grader, official QWK / CCS / ECS population metrics.
+    SASBenchAdapter,
 ]
 
 _REGISTRY: dict[str, type[BenchmarkAdapter]] = {a.name: a for a in _ADAPTERS}
