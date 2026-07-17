@@ -303,16 +303,16 @@ facet 定义:**题目生成(正确性与质量)**——生成题干、选项、�
 
 | benchmark | 是什么 | 判分方式 | 喂给哪些 P | 现状/模型面 |
 |---|---|---|---|---|
-| ifeval | 541 条可验证指令 | 规则判分 | P01 | 齐 |
-| mmlu_pro / ceval / agieval | 通识/学科选择题卷 | 精确匹配 | P01(门槛)、P05、P06 | 齐 |
+| ifeval | 541 条可验证指令 | 规则判分 | P01 | 齐(5/5) |
+| mmlu_pro / ceval / agieval | 通识/学科选择题卷 | 精确匹配 | P01(门槛)、P05、P06 | **4/5**(缺 doubao) |
 | olympiadbench | 奥赛开放题(含多模态) | 符号等价判分 | P03、P05、P06 | 仅 2 个视觉模型 |
 | mathvista | 数学图像理解 | 官方抽取+匹配 | P03、P05、P06 | 仅 1 个视觉模型 |
 | k12vista | K12 学科图多步理解(600 题) | LLM 裁判(未校准) | P03、P05、P06 | 1 模型面(doubao 产物 summary 缺 totals 被排除) |
 | mooccube_prereq | 课程先修关系推理(自建协议,300 题) | 规则判分 | P19、P05、P06 | 3 模型面(缺 M2.7 / doubao) |
 | p07_selfcheck | 两轮自查(自建) | 规则判分 | P07、P08 | 齐 |
 | p08_calibration / p08_abstention | 置信度校准 / 弃答(自建) | 规则判分 | P08、P07、P01 | 齐 |
-| asap_2 | 学生作文评分 | QWK 对人类分 | P14、P02 | 齐 |
-| sas_bench | 简答题评分(QWK/CCS/ECS 三指标) | 对人类标注一致性 | P14、P11(b/c)、P02、P05(仅 ECS)、P06 | 齐 |
+| asap_2 | 学生作文评分 | QWK 对人类分 | P14、P02 | **2/5**(缺 doubao、glm-5.2、M3) |
+| sas_bench | 简答题评分(QWK/CCS/ECS 三指标) | 对人类标注一致性 | P14、P11(b/c)、P02、P05(仅 ECS)、P06 | 7 模型面,但发布口径 **4/5**——缺 glm-5.2(面是 glm-5.1,同 edubench 错位);doubao 于 2026-07-17 导入补上 |
 | pedagogy_benchmark | 教学专业知识选择题(CDPK/SEND) | 精确匹配 | P05、P16d、P17 | CDPK/SEND 分列格无独立数据源,现只有合并卡计分 |
 | edubench | 5 任务生成 × 12 裁判指标(指标级取分) | LLM 裁判(deepseek-v3.2,原论文设定) | P05、P06、P11c、P16d、P17、P18、P23(QG) | 11 模型,但面是 glm-5.1 而非发布口径的 glm-5.2 |
 | mathtutorbench 家族(9 任务) | 数学辅导对话(解题/判对/定位/纠错/脚手架/教学法/苏格拉底) | 精确匹配 + LLM 裁判胜率 | P02、P05、P06、P07、P11(a/b/c)、P17、P18 | problem_solving / socratic 4 模型面,其余基本齐 |
@@ -320,9 +320,9 @@ facet 定义:**题目生成(正确性与质量)**——生成题干、选项、�
 | mmtutorbench | 多模态数学辅导(六维 rubric,770 题) | LLM 裁判 | P03、P17、P18 | 1 模型面 |
 | bea2025_tutor / mrbench_tutor | 生成辅导回复,固定裁判逐维度标注 | LLM 裁判单维度分 | P11c、P17、P18(含 Tutor_Tone 鼓励占比)、P20(1−Offensive) | 3 模型面(已裁决不补跑) |
 | bea2025_judge / mrbench_judge | 被测模型当裁判,对人类金标 | 一致性/F1 | P11c、P14、P20 | 均暂不计分 |
-| eduguard_sata | 教学伤害多选(SATA,2,635 题) | 规则判分(RFS) | P20、P21、P22(三 P 同源) | 齐 |
-| eduguard_adversarial | 对抗越狱 + 拒答质量(801 题) | 两阶段 LLM 裁判 | P20、P22 | 齐 |
-| eduillustrate | 生成教学图示质量 | LLM 裁判八维 | P10、P18 | 4 模型面 |
+| eduguard_sata | 教学伤害多选(SATA,2,635 题) | 规则判分(RFS) | P20、P21、P22(三 P 同源) | 齐(5/5) |
+| eduguard_adversarial | 对抗越狱 + 拒答质量(801 题) | 两阶段 LLM 裁判 | P20、P22 | **4/5**(缺 M2.7) |
+| eduillustrate | 生成教学图示质量 | LLM 裁判八维 | P10、P18 | 4 模型面,发布口径 **2/5**(仅 M3、doubao) |
 | longtutor 三任务 | 长对话辅导(证据/诊断/教学) | 语义裁判 / 规则 F1 / LLM 裁判四维 | P02(evidence)、P16a 主 + P11c 副(diagnosis)、P17(teaching) | 3 模型面(已裁决不补跑) |
 
 ## 四、我们的创新与自建工作
@@ -363,16 +363,41 @@ P01/P02/P07/P08 在常规做法里全是"搭车分",这四个测验加上 IFEval
 
 ### 数据缺口(挂载已定,分数不全)
 
+以下覆盖数字于 2026-07-17 从 `09_atomic_p_score_evidence.jsonl` 逐格重算,口径是**发布口径 5 模型**(M3 / M2.7 / deepseek-v4-pro / glm-5.2 / doubao),不是"跑过几个模型"。此前本节多处写"齐"与事实不符,已按数据订正。
+
+**先看后果——发布口径下整个 P 拿不到分的格局:**
+
+| P | 哪些模型整 P 无分 | 根因 |
+|---|---|---|
+| P14 主观题评价 | **glm-5.2** | P14 只有 sas_bench + asap_2 两个来源,**两个都没有 glm-5.2** |
+| P23 命题与作业设计 | **glm-5.2** | 唯一来源 edubench 的面是 glm-5.1 |
+| P03 多模态理解 | M2.7、glm-5.2、doubao | 视觉面窄(mathvista 1/5、olympiadbench 2/5、tutorbench 1/5、mmtutorbench 1/5) |
+| P10 多模态教学产物 | M2.7、deepseek-v4-pro、glm-5.2 | 唯一来源 eduillustrate 只有 M3、doubao |
+| P19 学习路径规划 | M2.7、doubao | 唯一来源 mooccube_prereq 3/5 |
+
+按模型看(分母是 18 个可计分 P,即在册 20 项扣掉 P09/P15 两个整 P 领域空白):**glm-5.2 最惨,4 个 P 无分(P03/P10/P14/P23)**;M2.7 缺 3 个(P03/P10/P19);doubao 缺 2 个(P03/P19);deepseek-v4-pro 缺 1 个(P10);M3 全覆盖。
+
+**按"补了解锁什么"排序:**
+
 | 项 | 现状 | 补法 |
 |---|---|---|
-| mooccube_prereq 模型面 | 3/5(缺 M2.7、doubao) | 300 题规则判分零裁判,跑起来便宜,优先补 |
-| k12vista 模型面 | 1/5;doubao 产物 summary 缺 totals 被收录规则排除 | 修复 doubao summary;补视觉模型(注意 deepseek-v4-pro 收图不报错但看不见) |
-| mmtutorbench 模型面 | 1/5(770 题全量仅 MiniMax-M3) | 补跑,需 LLM 裁判 |
-| mathvista / olympiadbench 面窄 | 1 / 2 个视觉模型 | P03 解题图像 facet 横向比不了,补视觉模型 |
+| **sas_bench 缺 glm-5.2** | 4/5。面是 glm-5.1。这一格卡着 P14 **整个 P**(glm-5.2 无分)、P11c 核心锚(权重 0.7)、P11b(0.25),且 sas 置信权重 0.9 是全表最高档之一 | **优先级最高**。官方 repo 已在本地 `sources/datasets/sas_bench`(`sas_pipelines/1_predict→4_compute_ecs` 全套 + prompts + CCS/ECS 官方实现),4,109 题跑 1 个模型即可;或请同事按原 runner 补跑。注:我们 harness 里**没有** sas adapter,同事的 runner 也未随产物入库 |
+| **asap_2 缺 doubao / glm-5.2 / M3** | 2/5,是全表覆盖最差的计分 benchmark | 补齐后 P14 整体性评分 facet 才是双源;现在 M3、doubao 在该 facet 上**单源**(只剩 sas) |
+| doubao 通识面 | mmlu_pro / ceval / agieval 均 4/5 缺 doubao;mathtutorbench 家族多数 4/5 缺 doubao | 全是精确匹配/规则判分,**最便宜**,优先补掉 |
+| mooccube_prereq | 3/5(缺 M2.7、doubao) | 300 题规则判分零裁判,跑起来便宜;补齐即解锁 P19 |
+| k12vista | 1/5;doubao 产物 summary 缺 totals 被收录规则排除 | 修复 doubao summary;补视觉模型(注意 deepseek-v4-pro 收图不报错但看不见) |
+| mmtutorbench | 1/5(770 题全量仅 M3) | 补跑,需 LLM 裁判 |
+| mathvista / olympiadbench | 1/5 / 2/5 | P03 解题图像 facet 横向比不了;三个模型整 P 无分,补视觉模型 |
+| eduillustrate | 4 模型面,发布口径 2/5(仅 M3、doubao) | P10 唯一来源,补 3 个即解锁 P10 |
+| pedagogy_benchmark | 2/5,且 CDPK/SEND 两个分列格无独立数据源,只有合并卡计分 | 找/跑分列数据,恢复 P05 教学知识、P16d、P17 制定的分辨率 |
+| eduguard_adversarial | 4/5(缺 M2.7) | 801 题两阶段裁判,补 1 个模型即齐 |
+| edubench 模型错位 | 4/5,面是 glm-5.1 而非 glm-5.2 | 接受错位注记,或自跑 glm-5.2 的 edubench 面;这一格同时卡着 P23 |
 | longtutor 三任务、bea2025_tutor、mrbench_tutor | 3 模型面,**已裁决不补跑** | 若未来要用这些格子做排名再回头补 |
-| edubench 模型错位 | 面是 glm-5.1 而非发布口径 glm-5.2 | 接受错位注记,或自跑 glm-5.2 的 edubench 面 |
-| pedagogy_benchmark CDPK/SEND 分列 | 两个分列格无独立数据源,只有合并卡计分 | 找/跑分列数据,恢复 P05 教学知识、P16d、P17 制定的分辨率 |
 | 裁判 error 未清 | deepseek-v4-flash、doubao-lite 在 mathtutorbench win-rate 有残余 error 行 | 非发布模型不挡路;扩面时先断点续判 |
+
+**glm-5.2 与 glm-5.1 的系统性错位**:sas_bench、asap_2、edubench 三个"重"benchmark 的 glm 面全是 5.1,而发布口径是 5.2。补 glm-5.2 的这三笔,是把 glm-5.2 从"4 个 P 无分"救回来的同一条路径;若最终决定不补,则需在发布物里显式声明 glm-5.2 的 P14/P23 不可比,而不是留空当作 0。
+
+**sas_bench 的 CCS/ECS 尚未独立复算**:2026-07-17 导入时 QWK 已用 manual_label vs pred_label 逐子任务复算并与同事日志完全吻合(最大偏差 2.8e-14),但 CCS/ECS 仍直接沿用日志值(`summary.json` 的 `audit.ccs_ecs_independently_verified: false`)。官方实现既然在本地,应补一次复算把这个 flag 翻正。
 
 ### 构念缺口(空白 facet / 空白 P)
 

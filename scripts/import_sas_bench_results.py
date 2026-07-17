@@ -13,10 +13,16 @@ null rather than inventing a binary threshold.
 
 Metric provenance: QWK/CCS/ECS are carried from the run logs, which is what the
 0630 report tabulated. QWK is independently recomputed here from manual_label
-vs pred_label as an audit check. CCS/ECS are NOT recomputed: SAS-Bench's
-official scoring script is not vendored in this repo, and a step-level QWK
-reimplementation lands close to but not exactly on the logged CCS, so the
-logged values stay authoritative and the audit records that they are unverified.
+vs pred_label as an audit check. CCS/ECS are NOT recomputed here: a step-level
+QWK reimplementation lands close to but not exactly on the logged CCS, so the
+logged values stay authoritative and audit.ccs_ecs_independently_verified
+records that they are unverified.
+
+That flag is a TODO, not a dead end: the official scorer IS available locally at
+sources/datasets/sas_bench (utils/collaborative_consistency_score.py,
+utils/errors_consistency_score.py, driven by sas_pipelines/3_compute_ccs.py and
+4_compute_ecs.py). Wiring those in would verify CCS/ECS the same way QWK is
+verified now.
 """
 
 from __future__ import annotations
