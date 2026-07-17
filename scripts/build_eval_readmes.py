@@ -304,7 +304,7 @@ P: dict[str, dict[str, str]] = {
         "one_liner": "英文教育场景生成，12 维裁判打 0-10 分——当前证据体系里最大的分数来源。",
         "source": "同事完整跑批由 `scripts/import_edubench_results.py` 导入；原 prompt/item_id 现由 harness adapter 复用。",
         "data": "可比题单 3,797 题（IP 1253 / QG 1266 / TMG 578 / PLS 448 / PCC 252），现有 11 模型；不含 EC/QA/AG/ES。",
-        "scoring": "固定 deepseek-v3.2 裁判按官方 12 维打连续分（0-10）；总体分是 12 维均值，场景分只平均官方动态分配给该任务的维度；不是准确率。",
+        "scoring": "默认 MiniMax-M3 裁判按官方 12 维打连续分（0-10）；同事历史跑批使用 deepseek-v3.2，隔离在 `_judge-deepseek-v3.2/`。总体分是 12 维均值，场景分只平均官方动态分配给该任务的维度；不是准确率。",
         "adapter": "scripts/eval/benchmarks/edubench.py（原始外部结果仍由 scripts/import_edubench_results.py 导入）",
         "limits": "同事精确 judge prompt 未随产物交付，adapter 依据论文 12 维定义重建，故新旧结果不是逐字节协议复放。换裁判实验（`_judge_swap`）还显示：只有支持类簇（个性化/激励/高阶思维）对裁判稳健；**错误识别维度在这些任务上是裁判噪声，不可用于映射**。",
     },

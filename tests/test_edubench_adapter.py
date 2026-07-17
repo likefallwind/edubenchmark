@@ -10,12 +10,21 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from eval.benchmarks.edubench import (  # noqa: E402
+    DEFAULT_JUDGE_MODEL,
     DIMENSIONS,
     TASK_DIMENSIONS,
     EduBenchAdapter,
     _parse_judgment,
 )
 from eval.report import build_summary, write_report  # noqa: E402
+
+
+def test_edubench_uses_repository_standard_judge_namespace() -> None:
+    adapter = EduBenchAdapter()
+
+    assert DEFAULT_JUDGE_MODEL == "MiniMax-M3"
+    assert adapter.canonical_judge_model is None
+    assert adapter.resolved_judge_model("MiniMax-M2.7") == "MiniMax-M3"
 
 
 def test_parse_judgment_accepts_fenced_json_and_confirmed_aliases() -> None:

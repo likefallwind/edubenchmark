@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """M2 judge-swap experiment for EduBench (mapping validation plan §2.5).
 
-The original EduBench run (reports/eval/edubench/) was judged once by
-deepseek-v3.2. This script re-judges a stratified sample of the *same*
+The original EduBench run
+(reports/eval/edubench/_judge-deepseek-v3.2/) was judged once by deepseek-v3.2.
+This script re-judges a stratified sample of the *same*
 responses with second/third judges and measures inter-judge agreement, to
 decide whether cross-family low correlations reflect real construct
 differences (-> revise mapping) or judge variance (-> judge governance).
@@ -42,6 +43,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from eval.providers import build_client, model_slug  # noqa: E402
 
 EVAL_DIR = ROOT / "reports" / "eval" / "edubench"
+SOURCE_DIR = EVAL_DIR / "_judge-deepseek-v3.2"
 OUT_DIR = EVAL_DIR / "_judge_swap"
 TASKS = ["IP", "PCC", "PLS", "QG", "TMG"]
 PER_TASK = 50
@@ -143,18 +145,18 @@ def sample_id(item_id: str, model: str) -> str:
 def build_samples() -> None:
     models = sorted(
         d.name
-        for d in EVAL_DIR.iterdir()
+        for d in SOURCE_DIR.iterdir()
         if d.is_dir() and not d.name.startswith("_") and (d.name != "_judge_swap")
         and (d / "scored.jsonl").is_file()
     )
     prompts: dict[tuple[str, str], str] = {}
     rows_by_task: dict[str, list[dict]] = defaultdict(list)
     for model in models:
-        for rec in read_jsonl(EVAL_DIR / model / "predictions.jsonl"):
+        for rec in read_jsonl(SOURCE_DIR / model / "predictions.jsonl"):
             prompts[(rec["item_id"], model)] = (rec.get("metadata") or {}).get(
                 "prompt", ""
             )
-        for rec in read_jsonl(EVAL_DIR / model / "scored.jsonl"):
+        for rec in read_jsonl(SOURCE_DIR / model / "scored.jsonl"):
             task = (rec.get("buckets") or {}).get("task")
             if task not in TASKS:
                 continue

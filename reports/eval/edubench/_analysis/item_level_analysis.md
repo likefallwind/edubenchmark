@@ -1,7 +1,7 @@
 # EduBench 逐题级指标分析（2026-07-12）
 
 数据：11 个模型 × 每模型 3797 题 × 12 个裁判指标（裁判 deepseek-v3.2）。
-来源 `reports/eval/edubench/<model>/scored.jsonl`，脚本 `scripts/analyze_edubench_item_level.py`。
+来源 `reports/eval/edubench/_judge-deepseek-v3.2/<model>/scored.jsonl`，脚本 `scripts/analyze_edubench_item_level.py`。
 
 ## 任务分布
 

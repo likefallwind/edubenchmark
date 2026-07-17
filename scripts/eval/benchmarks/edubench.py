@@ -29,12 +29,21 @@ from ..providers import build_client, extraction_max_tokens
 
 
 HOMEPAGE = "https://github.com/ybai-nlp/EduBench"
-DEFAULT_JUDGE_MODEL = "deepseek-v3.2"
+DEFAULT_JUDGE_MODEL = "MiniMax-M3"
+HISTORICAL_JUDGE_MODEL = "deepseek-v3.2"
 JUDGE_MODEL_ENV = "EDUBENCH_JUDGE_MODEL"
 
 # Prefer the historical MiniMax-M3 prompt export because it is complete and
 # preserves the stable IDs used by all imported runs.  Responses are never read.
-PROMPT_SOURCE = ROOT / "reports" / "eval" / "edubench" / "minimax-m3" / "predictions.jsonl"
+PROMPT_SOURCE = (
+    ROOT
+    / "reports"
+    / "eval"
+    / "edubench"
+    / "_judge-deepseek-v3.2"
+    / "minimax-m3"
+    / "predictions.jsonl"
+)
 
 DIMENSIONS = (
     "instruction_following",
@@ -197,7 +206,6 @@ class EduBenchAdapter(BenchmarkAdapter):
     name = "edubench"
     title = "EduBench · Diverse Educational Scenarios"
     homepage = HOMEPAGE
-    canonical_judge_model = DEFAULT_JUDGE_MODEL
     description = (
         "EduBench evaluates open-ended generation in diverse educational scenarios. This adapter "
         "uses the repository's existing 3,797-item English prompt set (IP, QG, TMG, PLS, PCC) so "

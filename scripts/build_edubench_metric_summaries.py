@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Derive per-model (task x metric) means from the imported EduBench raw scores.
 
-The colleague-run EduBench results under ``reports/eval/edubench/<model>/`` are
-immutable inputs (see CLAUDE.md).  This script only READS ``scored.jsonl`` and
+The colleague-run EduBench results under
+``reports/eval/edubench/_judge-deepseek-v3.2/<model>/`` are immutable inputs
+(see CLAUDE.md).  This script only READS ``scored.jsonl`` and
 writes derived, regenerable artifacts to ``reports/eval/edubench/_metrics/`` so
 the rebenchmark aggregation can consume EduBench at the same granularity and in
 the same "one row per (benchmark, subdimension, model)" shape as every other
@@ -30,6 +31,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EDUBENCH_DIR = ROOT / "reports" / "eval" / "edubench"
+SOURCE_DIR = EDUBENCH_DIR / "_judge-deepseek-v3.2"
 OUT_DIR = EDUBENCH_DIR / "_metrics"
 
 METRICS = [
@@ -56,8 +58,8 @@ COMPOSITES = (
 
 def model_dirs() -> list[Path]:
     return sorted(
-        p for p in EDUBENCH_DIR.iterdir()
-        if p.is_dir() and not p.name.startswith("_") and (p / "scored.jsonl").exists()
+        p for p in SOURCE_DIR.iterdir()
+        if p.is_dir() and (p / "scored.jsonl").exists()
     )
 
 
@@ -118,7 +120,7 @@ def main() -> None:
     )
     (OUT_DIR / "README.md").write_text(
         "# EduBench 指标级派生分数（生成物，勿手改）\n\n"
-        "由 `scripts/build_edubench_metric_summaries.py` 从各模型目录的 `scored.jsonl`"
+        "由 `scripts/build_edubench_metric_summaries.py` 从 `_judge-deepseek-v3.2/` 各模型目录的 `scored.jsonl`"
         "（同事原始判分，只读不改）派生：每行一个 (model, task, metric) 的 n/mean/sd。\n\n"
         "- `task == \"ALL\"`：五任务合并的指标均值——映射 v2 中 `<metric> (metric)` 格子的取分来源。\n"
         "- `metric == \"tmg_pcc_composite\"`（task=TMG/PCC）与 `metric == \"qg_composite\"`（task=QG）："

@@ -2,7 +2,10 @@
 """Import standalone EduBench results into the standard reports/eval layout.
 
 The source directory is treated as immutable. Per-model predictions and judge
-records are joined by sample_id and written beneath reports/eval/edubench.
+records are joined by sample_id and written beneath
+reports/eval/edubench/_judge-deepseek-v3.2 because the imported runs use the
+historical deepseek-v3.2 judge rather than the repository-standard MiniMax-M3
+judge.
 EduBench uses continuous 0-10 judge scores, so accuracy/correct are deliberately
 left null rather than inventing a binary threshold.
 """
@@ -22,6 +25,7 @@ from typing import Any, Iterable
 
 
 ROOT = Path(__file__).resolve().parents[1]
+HISTORICAL_JUDGE_SLUG = "deepseek-v3.2"
 BUCKET_KEYS = ("lang", "task", "scenario", "subject", "difficulty")
 DIMENSION_ALIASES = {
     "higher_order_ththinking_ability_development": "higher_order_thinking_ability_development",
@@ -259,7 +263,11 @@ def import_model(source_dir: Path, output_dir: Path, prediction_path: Path) -> d
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-dir", type=Path, default=ROOT / "edubench-results")
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "reports" / "eval" / "edubench")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=ROOT / "reports" / "eval" / "edubench" / f"_judge-{HISTORICAL_JUDGE_SLUG}",
+    )
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     summaries = []

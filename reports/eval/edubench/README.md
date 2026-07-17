@@ -6,7 +6,9 @@
 
 ## 一、健康状况（坏消息在前）
 
-没有不可用的 run，但有 1 个带保留意见（caveat），引用时必须一并写出。
+以下健康表是同事历史 deepseek-v3.2 裁判快照，现已统一隔离在 `_judge-deepseek-v3.2/`；没有不可用的 run，但有 1 个带保留意见（caveat），引用时必须一并写出。
+
+当前标准 MiniMax-M3 裁判目录只有 `glm-5.2/` 的 5 条 smoke test（5/5 判分，平均总分 8.0667），只能用于验证链路，不能与下面的 3,797 题历史完整跑批直接比较。
 
 headline 口径：12 维裁判总分均值（0-10）。
 
@@ -30,7 +32,7 @@ headline 口径：12 维裁判总分均值（0-10）。
 
 - **出处**：同事完整跑批由 `scripts/import_edubench_results.py` 导入；原 prompt/item_id 现由 harness adapter 复用。
 - **数据**：可比题单 3,797 题（IP 1253 / QG 1266 / TMG 578 / PLS 448 / PCC 252），现有 11 模型；不含 EC/QA/AG/ES。
-- **任务与判分**：固定 deepseek-v3.2 裁判按官方 12 维打连续分（0-10）；总体分是 12 维均值，场景分只平均官方动态分配给该任务的维度；不是准确率。
+- **任务与判分**：默认 MiniMax-M3 裁判按官方 12 维打连续分（0-10）；同事历史跑批使用 deepseek-v3.2，隔离在 `_judge-deepseek-v3.2/`。总体分是 12 维均值，场景分只平均官方动态分配给该任务的维度；不是准确率。
 - **adapter**：`scripts/eval/benchmarks/edubench.py（原始外部结果仍由 scripts/import_edubench_results.py 导入）`
 - **局限**：同事精确 judge prompt 未随产物交付，adapter 依据论文 12 维定义重建，故新旧结果不是逐字节协议复放。换裁判实验（`_judge_swap`）还显示：只有支持类簇（个性化/激励/高阶思维）对裁判稳健；**错误识别维度在这些任务上是裁判噪声，不可用于映射**。
 
@@ -39,6 +41,7 @@ headline 口径：12 维裁判总分均值（0-10）。
 ```bash
 MODEL=<model> ./scripts/run_eval.sh edubench
 # 或：python scripts/eval_benchmark.py --benchmark edubench --model <model> --limit 0
+# 非默认裁判：EDUBENCH_JUDGE_MODEL=<judge> MODEL=<model> ./scripts/run_eval.sh edubench
 ```
 
 ## 三、当前映射（M3 裁决相关）

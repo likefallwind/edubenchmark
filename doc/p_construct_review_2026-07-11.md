@@ -251,7 +251,7 @@ facet 划分（对话式反馈 / 教学产物生成）基本成立，三处要�
 
 ### 数据依据第二例：edubench 逐题级矩阵（2026-07-12，原始数据到位后）
 
-原始跑分数据到位（`reports/eval/edubench/<model>/scored.jsonl`，11 模型 × 3,797 题 × 12 指标逐题分，裁判 deepseek-v3.2），分析脚本 `scripts/analyze_edubench_item_level.py`，产出 `reports/eval/edubench/_analysis/item_level_analysis.{md,json}`。题级证据比第一例的 11 个模型级点强得多（每模型 3,797 题，模型内算相关再对 11 个模型平均），几个结论：
+原始跑分数据到位（`reports/eval/edubench/_judge-deepseek-v3.2/<model>/scored.jsonl`，11 模型 × 3,797 题 × 12 指标逐题分，裁判 deepseek-v3.2），分析脚本 `scripts/analyze_edubench_item_level.py`，产出 `reports/eval/edubench/_analysis/item_level_analysis.{md,json}`。题级证据比第一例的 11 个模型级点强得多（每模型 3,797 题，模型内算相关再对 11 个模型平均），几个结论：
 
 - **先说清数据边界：这批只有 5 个任务（IP 1253 / QG 1266 / TMG 578 / PLS 448 / PCC 252），没有 EC（错误纠正）、QA、AG、ES**。也就是说 edubench 在本仓库里的分数全部来自"生成/支持类"任务，不含真正的错误纠正任务。
 - **两簇结构在题内也成立**：基础事实准确性与动机引导（ρ=−0.05）、个性化适应（0.02）、高阶思维（−0.05）题级相关约等于零——同一批回答、同一个裁判，"答得准"和"教得好"就是两个独立方向。这是"会答题≠会教"目前最硬的一条同源证据（不依赖跨 benchmark 比较，halo 解释不了零相关）。
