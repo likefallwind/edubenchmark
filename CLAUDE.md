@@ -56,7 +56,7 @@ A separate, extensible harness for evaluating **one benchmark at a time** agains
 
 ## The atomic-ability mapping & rebenchmark pipeline
 
-The per-benchmark eval results are aggregated into a 20-ability profile (**P01–P23**, with P04/P12/P13 as tombstone numbers) defined in `doc/atomic_ability_mapping_final_2026-07-15.md` (adjudication records R1–R19). **Single source of truth is `data/mapping_measurement_model_v5.json`** (2026-07-17, R19; older v1–v4 are kept as pre-adjudication snapshots — never edit or delete them). Facet-level rules (R19): a facet split must be *boundary-decidable* (every task has exactly one home; open-ended scenario axes don't qualify) and *non-duplicative* (two facets must not be the same construct twice); borderline proxy cells are left out rather than mounted.
+The per-benchmark eval results are aggregated into a 20-ability profile (**P01–P23**, with P04/P12/P13 as tombstone numbers). Current-state reference: `doc/atomic_ability_mapping_v5_2026-07-17.md` (clean snapshot: ability list, per-P mapping tables, benchmark list, innovations, TODOs); adjudication history (R1–R19) lives in `doc/atomic_ability_mapping_final_2026-07-15.md`. **Single source of truth is `data/mapping_measurement_model_v5.json`** (2026-07-17, R19; older v1–v4 are kept as pre-adjudication snapshots — never edit or delete them). Facet-level rules (R19): a facet split must be *boundary-decidable* (every task has exactly one home; open-ended scenario axes don't qualify) and *non-duplicative* (two facets must not be the same construct twice); borderline proxy cells are left out rather than mounted.
 
 Pipeline (run in this order; all idempotent):
 
