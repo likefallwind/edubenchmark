@@ -1,7 +1,7 @@
 # Eval Run Inventory
 
-Total summary files scanned: 249
-Included candidates: 143
+Total summary files scanned: 256
+Included candidates: 150
 Excluded from main: 106
 
 | Benchmark | Include candidates | Excluded |
@@ -44,6 +44,7 @@ Excluded from main: 106
 | `p07_selfcheck` | 5 | 0 |
 | `p08_abstention` | 5 | 0 |
 | `p08_calibration` | 5 | 0 |
+| `sas_bench` | 7 | 0 |
 
 Detailed per-run records are in `04_eval_run_inventory.jsonl`.
 

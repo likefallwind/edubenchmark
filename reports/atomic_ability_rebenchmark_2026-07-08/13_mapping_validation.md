@@ -32,11 +32,11 @@
 | `edubench` | tone_style_consistency (metric) | 11 | 8.477 | 0.184 | low_variance |
 | `edubench` | clarity_concision_inspiration (metric) | 11 | 8.378 | 0.284 | low_variance |
 | `mathtutorbench_pedagogy` | Pedagogy IF | 7 | 8.253 | 0.483 | low_variance |
-| `sas_bench` | QWK holistic total score | 6 | 8.244 | 0.304 | low_variance |
+| `sas_bench` | QWK holistic total score | 7 | 8.24 | 0.278 | low_variance |
 | `edubench` | QG × clarity_concision_inspiration + scenario_element_integration (task×metric) | 11 | 8.155 | 0.434 | low_variance |
 | `mathtutorbench_mistake_location` | Mistake Location | 5 | 7.748 | 0.105 | low_variance |
 | `edubench` | scenario_element_integration (metric) | 11 | 7.684 | 0.42 | low_variance |
-| `sas_bench` | CCS step scoring consistency | 6 | 7.627 | 0.294 | low_variance |
+| `sas_bench` | CCS step scoring consistency | 7 | 7.623 | 0.269 | low_variance |
 | `eduguard_sata` | Teaching Harm / SATA RFS | 8 | 7.473 | 0.255 | low_variance |
 | `eduillustrate` | 8-dim 0-5 visual explanation score | 4 | 6.929 | 0.467 | low_variance |
 | `p08_calibration` | calibration composite (CWR/AUROC) | 5 | 6.439 | 0.492 | low_variance |
@@ -50,7 +50,9 @@
 
 每条 flagged 需人工裁决：改权重 / 拆 facet / 降 tier / 转裁判治理（计划 §2.6）。
 
-（无）
+| A | B | 共享 P（权重A/B） | n | ρ | 偏ρ(控综合分) | perm p | 90% CI | 评级 |
+|---|---|---|---:|---:|---:|---:|---|---|
+| `edubench` error_identification_correction_accuracy (metric) | `sas_bench` ECS error-cause consistency | P11(0.25/0.7) | 6 | -0.486 | -0.497 | 0.3556 | [-1.0, 0.8] | flagged |
 
 ## 观察带（watch：0≤ρ<0.2 且 n≥8）
 
@@ -64,7 +66,6 @@
 
 | A | B | 共享 P（权重A/B） | n | ρ | 偏ρ(控综合分) | perm p | 90% CI | 评级 |
 |---|---|---|---:|---:|---:|---:|---|---|
-| `edubench` error_identification_correction_accuracy (metric) | `sas_bench` ECS error-cause consistency | P11(0.25/0.7) | 5 | -0.7 | -0.717 | 0.2333 | [-1.0, 0.25] | provisional |
 | `edubench` higher_order_thinking_ability_development (metric) | `mathtutorbench_scaffolding` Scaffolding | P18(0.25/0.35) | 6 | 0.371 | 0.486 | 0.4972 | [-0.636, 1.0] | provisional |
 | `edubench` higher_order_thinking_ability_development (metric) | `mathtutorbench_scaffolding_hard` Scaffolding hard | P18(0.25/0.35) | 6 | 0.371 | 0.486 | 0.4972 | [-0.636, 1.0] | provisional |
 | `edubench` higher_order_thinking_ability_development (metric) | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P18(0.25/0.3) | 6 | 0.486 | 0.723 | 0.3556 | [-0.818, 1.0] | provisional |
@@ -76,21 +77,21 @@
 | A | B | 共享 P（权重A/B） | n | ρ | 偏ρ(控综合分) | perm p | 90% CI | 评级 |
 |---|---|---|---:|---:|---:|---:|---|---|
 | `edubench` personalized_adaptation_learning_support (metric) | `pedagogy_benchmark` CDPK/SEND aggregate from 0701 card | P16(0.3/0.3), P17(0.4/0.3 异facet) | 5 | -0.9 | -0.995 | 0.0833 | [-1.0, -0.25] | variance_restricted |
-| `edubench` clarity_concision_inspiration (metric) | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P18(0.3/0.3) | 6 | -0.771 | -0.42 | 0.1028 | [-1.0, -0.032] | variance_restricted |
+| `edubench` clarity_concision_inspiration (metric) | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P18(0.3/0.3) | 6 | -0.771 | -0.42 | 0.1028 | [-1.0, -0.091] | variance_restricted |
 | `edubench` clarity_concision_inspiration (metric) | `mathtutorbench_scaffolding` Scaffolding | P18(0.3/0.35) | 6 | -0.771 | -0.772 | 0.1028 | [-1.0, -0.091] | variance_restricted |
 | `edubench` clarity_concision_inspiration (metric) | `mathtutorbench_scaffolding_hard` Scaffolding hard | P18(0.3/0.35) | 6 | -0.771 | -0.772 | 0.1028 | [-1.0, -0.091] | variance_restricted |
 | `edubench` clarity_concision_inspiration (metric) | `mathtutorbench_pedagogy` Pedagogy IF | P18(0.3/0.3) | 6 | -0.714 | 0.062 | 0.1361 | [-1.0, 0.091] | variance_restricted |
-| `edubench` basic_factual_accuracy (metric) | `sas_bench` ECS error-cause consistency | P05(0.3/0.2) | 5 | -0.4 | -0.402 | 0.5167 | [-1.0, 0.667] | variance_restricted |
-| `edubench` personalized_adaptation_learning_support (metric) | `mathtutorbench_pedagogy` Pedagogy IF | P17(0.4/0.45) | 6 | -0.086 | -0.311 | 0.9194 | [-0.935, 0.818] | variance_restricted |
+| `edubench` basic_factual_accuracy (metric) | `sas_bench` ECS error-cause consistency | P05(0.3/0.2) | 6 | -0.371 | -0.382 | 0.4972 | [-1.0, 0.636] | variance_restricted |
+| `edubench` domain_knowledge_accuracy (metric) | `sas_bench` ECS error-cause consistency | P05(0.35/0.2) | 6 | -0.086 | -0.058 | 0.9194 | [-0.939, 0.92] | variance_restricted |
+| `edubench` personalized_adaptation_learning_support (metric) | `mathtutorbench_pedagogy` Pedagogy IF | P17(0.4/0.45) | 6 | -0.086 | -0.311 | 0.9194 | [-0.92, 0.92] | variance_restricted |
 | `edubench` scenario_element_integration (metric) | `mathtutorbench_pedagogy` Pedagogy IF | P17(0.25/0.45) | 6 | -0.086 | -0.311 | 0.9194 | [-0.92, 0.92] | variance_restricted |
 | `edubench` personalized_adaptation_learning_support (metric) | `mathtutorbench_scaffolding` Scaffolding | P17(0.4/0.5) | 6 | -0.029 | -0.144 | 1.0 | [-0.818, 1.0] | variance_restricted |
 | `edubench` personalized_adaptation_learning_support (metric) | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.4/0.5) | 6 | -0.029 | -0.144 | 1.0 | [-0.818, 1.0] | variance_restricted |
 | `edubench` scenario_element_integration (metric) | `mathtutorbench_scaffolding` Scaffolding | P17(0.25/0.5) | 6 | -0.029 | -0.144 | 1.0 | [-0.935, 1.0] | variance_restricted |
 | `edubench` scenario_element_integration (metric) | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.25/0.5) | 6 | -0.029 | -0.144 | 1.0 | [-0.818, 1.0] | variance_restricted |
 | `p07_selfcheck` two-round self-check (fix/break rate) | `p08_calibration` calibration composite (CWR/AUROC) | P07(0.85/0.2) | 5 | 0.0 | -0.075 | 1.0 | [-0.875, 1.0] | variance_restricted |
-| `edubench` personalized_adaptation_learning_support (metric) | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P17(0.4/0.45) | 6 | 0.029 | -0.106 | 1.0 | [-0.8, 1.0] | variance_restricted |
+| `edubench` personalized_adaptation_learning_support (metric) | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P17(0.4/0.45) | 6 | 0.029 | -0.106 | 1.0 | [-0.806, 1.0] | variance_restricted |
 | `edubench` scenario_element_integration (metric) | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P17(0.25/0.45) | 6 | 0.029 | -0.106 | 1.0 | [-0.806, 1.0] | variance_restricted |
-| `edubench` domain_knowledge_accuracy (metric) | `sas_bench` ECS error-cause consistency | P05(0.35/0.2) | 5 | 0.1 | 0.137 | 0.95 | [-1.0, 1.0] | variance_restricted |
 | `edubench` higher_order_thinking_ability_development (metric) | `mathtutorbench_pedagogy` Pedagogy IF | P18(0.25/0.3) | 6 | 0.543 | 0.888 | 0.2972 | [-0.548, 1.0] | variance_restricted |
 | `agieval` overall/task/language/question_type accuracy | `ceval` overall/category/subject accuracy | P05(0.35/0.6), P06(0.45/0.25) | 5 | 0.9 | 0.98 | 0.0833 | [0.25, 1.0] | variance_restricted |
 | `ceval` overall/category/subject accuracy | `mmlu_pro` overall/category accuracy | P05(0.6/0.6), P06(0.25/0.3) | 5 | 0.9 | 0.98 | 0.0833 | [0.25, 1.0] | variance_restricted |
@@ -98,9 +99,9 @@
 
 ## 区分效度（同 P 收敛配对 vs 不共享 P 的 baseline）
 
-- 收敛配对（跨家族、非受限、n≥5）：4 对，mean ρ = 0.132，median = 0.371
-- baseline（不共享任何 P）：25 对，mean ρ = -0.205，median = -0.2
-- 差值 = 0.337，单侧 permutation p = 0.0541（配对之间共享格子、非独立；p 值仅供参考，结论以红旗/非红旗为主。）
+- 收敛配对（跨家族、非受限、n≥5）：4 对，mean ρ = 0.185，median = 0.371
+- baseline（不共享任何 P）：25 对，mean ρ = -0.209，median = -0.2
+- 差值 = 0.395，单侧 permutation p = 0.0237（配对之间共享格子、非独立；p 值仅供参考，结论以红旗/非红旗为主。）
 
 若差值不显著为正，说明 P 划分对'哪些 benchmark 相关'没有预测力，映射层需整体重审。
 
@@ -108,9 +109,9 @@
 
 | 家族 | 家族内配对数 | 家族内 mean ρ | 跨家族配对数 | 跨家族 mean ρ | halo 分 | 家族内先聚合? |
 |---|---:|---:|---:|---:|---:|---|
-| `sas_bench` | 3 | 0.733 | 36 | -0.361 | 1.094 | 是 |
-| `eduguard` | 3 | 0.357 | 52 | -0.249 | 0.606 | 是 |
-| `edubench` | 66 | 0.291 | 144 | -0.253 | 0.544 | 是 |
+| `sas_bench` | 3 | 0.714 | 39 | -0.218 | 0.932 | 是 |
+| `eduguard` | 3 | 0.357 | 55 | -0.186 | 0.543 | 是 |
+| `edubench` | 66 | 0.291 | 144 | -0.24 | 0.531 | 是 |
 | `mathtutorbench` | 21 | 0.658 | 97 | 0.15 | 0.508 | 是 |
 | `p08` | 1 | 0.6 | 14 | 0.586 | 0.014 | 否 |
 
@@ -118,7 +119,7 @@ halo 分 > 0.5 的家族：多子维度在 P 聚合前先合成一票（计划 �
 
 ## P × 格子评级汇总
 
-评级分布：provisional=6、variance_restricted=55、insufficient_evidence=39、single_source=2
+评级分布：flagged=2、provisional=4、variance_restricted=55、insufficient_evidence=39、single_source=2
 
 | P | 类型 | facet | Benchmark | Subdimension | 权重 | 评级 |
 |---|---|---|---|---|---:|---|
@@ -164,11 +165,11 @@ halo 分 > 0.5 的家族：多子维度在 P 聚合前先合成一票（计划 �
 | P08 置信度校准与弃答 | formative | abstention | `p08_abstention` | balanced abstention score | 0.85 | **variance_restricted** |
 | P08 置信度校准与弃答 | formative | calibration | `p08_calibration` | calibration composite (CWR/AUROC) | 0.8 | **variance_restricted** |
 | P10 多模态教学产物生成 | formative | static_visual | `eduillustrate` | 8-dim 0-5 visual explanation score | 0.45 | **single_source** |
+| P11 错误诊断 | formative | error_attribution | `edubench` | error_identification_correction_accuracy (metric) | 0.25 | **flagged** |
+| P11 错误诊断 | formative | error_attribution | `sas_bench` | ECS error-cause consistency | 0.7 | **flagged** |
 | P11 错误诊断 | formative | error_attribution | `bea2025_judge` | judge labels: mistake/guidance/actionability | 0.3 | **insufficient_evidence** |
 | P11 错误诊断 | formative | error_attribution | `bea2025_tutor` | dimension: Mistake_Identification | 0.25 | **insufficient_evidence** |
 | P11 错误诊断 | formative | error_attribution | `mrbench_judge` | 8-dimension tutor response judging | 0.25 | **insufficient_evidence** |
-| P11 错误诊断 | formative | error_attribution | `edubench` | error_identification_correction_accuracy (metric) | 0.25 | **provisional** |
-| P11 错误诊断 | formative | error_attribution | `sas_bench` | ECS error-cause consistency | 0.7 | **provisional** |
 | P11 错误诊断 | formative | error_attribution | `mathtutorbench_mistake_correction` | Mistake Correction | 0.2 | **variance_restricted** |
 | P11 错误诊断 | formative | error_location | `mathtutorbench_mistake_location` | Mistake Location | 0.7 | **variance_restricted** |
 | P11 错误诊断 | formative | answer_verdict | `mathtutorbench_solution_correctness` | Solution Correctness | 0.6 | **variance_restricted** |
@@ -232,9 +233,13 @@ halo 分 > 0.5 的家族：多子维度在 P 聚合前先合成一票（计划 �
 | `ceval` overall/category/subject accuracy | `mooccube_prereq` chance-corrected composite (先修选择 + 学习顺序排序) | P05(0.6/0.2) | 3 | -1.0 |
 | `edubench` personalized_adaptation_learning_support (metric) | `mathtutorbench_socratic` Socratic Questioning | P17(0.4/0.65) | 3 | -1.0 |
 | `edubench` scenario_element_integration (metric) | `mathtutorbench_socratic` Socratic Questioning | P17(0.25/0.65) | 3 | -1.0 |
+| `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_socratic` Socratic Questioning | P17(0.3/0.65) | 3 | -1.0 |
 | `agieval` overall/task/language/question_type accuracy | `mooccube_prereq` chance-corrected composite (先修选择 + 学习顺序排序) | P05(0.35/0.2) | 3 | -0.5 |
 | `asap_2` essay holistic QWK | `mathtutorbench_mistake_location` Mistake Location | P02(0.2/0.2) | 3 | -0.5 |
 | `edubench` clarity_concision_inspiration (metric) | `mathtutorbench_socratic` Socratic Questioning | P18(0.3/0.35) | 3 | -0.5 |
+| `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_pedagogy` Pedagogy IF | P17(0.3/0.45) | 3 | -0.5 |
+| `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_scaffolding` Scaffolding | P17(0.3/0.5) | 3 | -0.5 |
+| `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.3/0.5) | 3 | -0.5 |
 | `mmlu_pro` overall/category accuracy | `mooccube_prereq` chance-corrected composite (先修选择 + 学习顺序排序) | P05(0.6/0.2) | 3 | -0.5 |
 | `agieval` overall/task/language/question_type accuracy | `edubench` basic_factual_accuracy (metric) | P05(0.35/0.3) | 4 | -0.4 |
 | `asap_2` essay holistic QWK | `sas_bench` CCS step scoring consistency | P02(0.2/0.2), P14(0.65/0.55 异facet) | 4 | -0.4 |
@@ -262,7 +267,6 @@ halo 分 > 0.5 的家族：多子维度在 P 聚合前先合成一票（计划 �
 | `edubench` basic_factual_accuracy (metric) | `mathtutorbench_problem_solving` Problem Solving | P05(0.3/0.3) | 3 | 0.5 |
 | `longtutor_evidence` semantic evidence accuracy (3 memory types) | `mathtutorbench_mistake_location` Mistake Location | P02(0.7/0.2) | 3 | 0.5 |
 | `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P17(0.3/0.45) | 3 | 0.5 |
-| `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_socratic` Socratic Questioning | P17(0.3/0.65) | 3 | 0.5 |
 | `mathtutorbench_mistake_correction` Mistake Correction | `mrbench_tutor` dimension: Mistake_Identification | P11(0.2/0.25) | 3 | 0.5 |
 | `mathtutorbench_mistake_correction` Mistake Correction | `sas_bench` ECS error-cause consistency | P11(0.2/0.7) | 3 | 0.5 |
 | `mathtutorbench_mistake_location` Mistake Location | `sas_bench` CCS step scoring consistency | P02(0.2/0.2), P11(0.7/0.25) | 3 | 0.5 |
@@ -289,9 +293,6 @@ halo 分 > 0.5 的家族：多子维度在 P 聚合前先合成一票（计划 �
 | `edubench` TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) | `eduillustrate` 8-dim 0-5 visual explanation score | P18(0.4/0.3) | 3 | 1.0 |
 | `edubench` domain_knowledge_accuracy (metric) | `mathtutorbench_problem_solving` Problem Solving | P05(0.35/0.3) | 3 | 1.0 |
 | `edubench` higher_order_thinking_ability_development (metric) | `mathtutorbench_socratic` Socratic Questioning | P18(0.25/0.35) | 3 | 1.0 |
-| `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_pedagogy` Pedagogy IF | P17(0.3/0.45) | 3 | 1.0 |
-| `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_scaffolding` Scaffolding | P17(0.3/0.5) | 3 | 1.0 |
-| `longtutor_teaching` judge dims: strategy_alignment + history_utilization (1-5) | `mathtutorbench_scaffolding_hard` Scaffolding hard | P17(0.3/0.5) | 3 | 1.0 |
 | `mathtutorbench_pedagogy` Pedagogy IF | `mrbench_tutor` dimension: Providing_Guidance | P17(0.45/0.3) | 3 | 1.0 |
 | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | `mrbench_tutor` dimension: Providing_Guidance | P17(0.45/0.3) | 3 | 1.0 |
 | `mathtutorbench_problem_solving` Problem Solving | `mmlu_pro` overall/category accuracy | P05(0.3/0.6), P06(0.6/0.3) | 4 | 1.0 |
@@ -305,9 +306,9 @@ halo 分 > 0.5 的家族：多子维度在 P 聚合前先合成一票（计划 �
 |---|---|---|---:|---:|
 | `edubench` basic_factual_accuracy (metric) | `mathtutorbench_pedagogy_hard` Pedagogy IF hard | P05(0.3/0.25 异facet) | 6 | -0.771 |
 | `edubench` basic_factual_accuracy (metric) | `mathtutorbench_pedagogy` Pedagogy IF | P05(0.3/0.25 异facet) | 6 | -0.714 |
-| `edubench` error_identification_correction_accuracy (metric) | `sas_bench` CCS step scoring consistency | P11(0.25/0.25 异facet) | 5 | -0.5 |
 | `edubench` basic_factual_accuracy (metric) | `pedagogy_benchmark` CDPK/SEND aggregate from 0701 card | P05(0.3/0.4 异facet) | 5 | -0.4 |
 | `edubench` motivation_guidance_positive_feedback (metric) | `mathtutorbench_pedagogy` Pedagogy IF | P18(0.35/0.3 异facet) | 6 | -0.371 |
+| `edubench` error_identification_correction_accuracy (metric) | `sas_bench` CCS step scoring consistency | P11(0.25/0.25 异facet) | 6 | -0.314 |
 | `edubench` domain_knowledge_accuracy (metric) | `pedagogy_benchmark` CDPK/SEND aggregate from 0701 card | P05(0.35/0.4 异facet) | 5 | -0.3 |
 | `edubench` scenario_element_integration (metric) | `pedagogy_benchmark` CDPK/SEND aggregate from 0701 card | P17(0.25/0.3 异facet) | 5 | -0.3 |
 | `edubench` TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) | `mathtutorbench_scaffolding` Scaffolding | P18(0.4/0.35 异facet) | 6 | -0.257 |

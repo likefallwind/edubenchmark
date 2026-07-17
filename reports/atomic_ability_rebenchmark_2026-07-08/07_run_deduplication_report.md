@@ -7,7 +7,7 @@ Canonical scoring rules:
 3. For MiniMax-M3 conflicts, prefer included `minimax3/` paths and fuller-scored runs.
 4. EduGuard P2 keeps only `deepseek-v3.2` judge rows in main scoring.
 
-Duplicate score groups recorded: 28
+Duplicate score groups recorded: 64
 MiniMax-M3 path-conflict rows recorded: 17
 
 ## Duplicate Score Rows
@@ -42,6 +42,42 @@ MiniMax-M3 path-conflict rows recorded: 17
 | rejected | `mmlu_pro` | `minimax-m3` | repo_eval | 8.1379 | `reports/eval/mmlu_pro/2026-06-07/summary.json` |
 | selected | `olympiadbench` | `minimax-m3` | repo_eval | 7.1601 | `reports/eval/olympiadbench/minimax3/summary.json` |
 | rejected | `olympiadbench` | `minimax-m3` | repo_eval | 8.9664 | `reports/eval/olympiadbench/2026-06-08/summary.json` |
+| selected | `sas_bench` | `deepseek-v4-pro` | repo_eval | 7.6629 | `reports/eval/sas_bench/deepseek-v4-pro/summary.json` |
+| rejected | `sas_bench` | `deepseek-v4-pro` | otherbenchmark | 7.6630 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `glm-5.1` | repo_eval | 7.8142 | `reports/eval/sas_bench/glm-5.1/summary.json` |
+| rejected | `sas_bench` | `glm-5.1` | otherbenchmark | 7.8140 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `gpt-5.4` | repo_eval | 8.0261 | `reports/eval/sas_bench/gpt-5.4/summary.json` |
+| rejected | `sas_bench` | `gpt-5.4` | otherbenchmark | 8.0260 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `kimi-k2-6` | repo_eval | 7.3299 | `reports/eval/sas_bench/kimi-k2.6/summary.json` |
+| rejected | `sas_bench` | `kimi-k2-6` | otherbenchmark | 7.3300 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `minimax-m2.7` | repo_eval | 7.2457 | `reports/eval/sas_bench/minimax-m2.7/summary.json` |
+| rejected | `sas_bench` | `minimax-m2.7` | otherbenchmark | 7.2460 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `minimax-m3` | repo_eval | 7.6833 | `reports/eval/sas_bench/minimax-m3/summary.json` |
+| rejected | `sas_bench` | `minimax-m3` | otherbenchmark | 7.6830 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `deepseek-v4-pro` | repo_eval | 6.1694 | `reports/eval/sas_bench/deepseek-v4-pro/summary.json` |
+| rejected | `sas_bench` | `deepseek-v4-pro` | otherbenchmark | 6.1690 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `glm-5.1` | repo_eval | 6.2602 | `reports/eval/sas_bench/glm-5.1/summary.json` |
+| rejected | `sas_bench` | `glm-5.1` | otherbenchmark | 6.2600 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `gpt-5.4` | repo_eval | 5.5636 | `reports/eval/sas_bench/gpt-5.4/summary.json` |
+| rejected | `sas_bench` | `gpt-5.4` | otherbenchmark | 5.5640 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `kimi-k2-6` | repo_eval | 5.2204 | `reports/eval/sas_bench/kimi-k2.6/summary.json` |
+| rejected | `sas_bench` | `kimi-k2-6` | otherbenchmark | 5.2200 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `minimax-m2.7` | repo_eval | 5.1393 | `reports/eval/sas_bench/minimax-m2.7/summary.json` |
+| rejected | `sas_bench` | `minimax-m2.7` | otherbenchmark | 5.1390 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `minimax-m3` | repo_eval | 6.6022 | `reports/eval/sas_bench/minimax-m3/summary.json` |
+| rejected | `sas_bench` | `minimax-m3` | otherbenchmark | 6.6020 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `deepseek-v4-pro` | repo_eval | 8.1864 | `reports/eval/sas_bench/deepseek-v4-pro/summary.json` |
+| rejected | `sas_bench` | `deepseek-v4-pro` | otherbenchmark | 8.1860 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `glm-5.1` | repo_eval | 8.3563 | `reports/eval/sas_bench/glm-5.1/summary.json` |
+| rejected | `sas_bench` | `glm-5.1` | otherbenchmark | 8.3560 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `gpt-5.4` | repo_eval | 8.6767 | `reports/eval/sas_bench/gpt-5.4/summary.json` |
+| rejected | `sas_bench` | `gpt-5.4` | otherbenchmark | 8.6770 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `kimi-k2-6` | repo_eval | 7.9129 | `reports/eval/sas_bench/kimi-k2.6/summary.json` |
+| rejected | `sas_bench` | `kimi-k2-6` | otherbenchmark | 7.9130 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `minimax-m2.7` | repo_eval | 7.9043 | `reports/eval/sas_bench/minimax-m2.7/summary.json` |
+| rejected | `sas_bench` | `minimax-m2.7` | otherbenchmark | 7.9040 | `otherbenchmark/sas-bench-result0630.md` |
+| selected | `sas_bench` | `minimax-m3` | repo_eval | 8.4304 | `reports/eval/sas_bench/minimax-m3/summary.json` |
+| rejected | `sas_bench` | `minimax-m3` | otherbenchmark | 8.4300 | `otherbenchmark/sas-bench-result0630.md` |
 
 ## MiniMax-M3 Path Conflicts
 

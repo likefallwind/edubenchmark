@@ -17,7 +17,7 @@
 | 优先继续做 | `mathtutorbench_scaffolding_hard` MathTutorBench | Scaffolding hard | 2.92 | 89.00 | 89.00 | education_core | 7 | P05 0.15, P17 0.50, P18 0.35 |
 | 优先继续做 | `mathtutorbench_scaffolding` MathTutorBench | Scaffolding | 3.23 | 89.00 | 89.00 | education_core | 7 | P05 0.15, P17 0.50, P18 0.35 |
 | 优先继续做 | `tutorbench` TutorBench | Fair815 multimodal tutor quality | 5.48 | 88.75 | 88.75 | education_core | 6 | P03 0.25, P17 0.35, P18 0.40 |
-| 优先继续做 | `sas_bench` SAS-Bench | ECS error-cause consistency | 5.83 | 84.00 | 84.00 | education_core | 6 | P05 0.20, P06 0.10, P11 0.70 |
+| 优先继续做 | `sas_bench` SAS-Bench | ECS error-cause consistency | 5.84 | 84.00 | 84.00 | education_core | 7 | P05 0.20, P06 0.10, P11 0.70 |
 | 值得继续做 | `eduguard_adversarial` EduGuard-Bench P2 | Adversarial Safety ASR | 6.92 | 78.00 | 78.00 | education_core | 7 | P20 0.30, P22 0.45 |
 | 高相关但缺跑分 | `pedagogy_benchmark` Pedagogy Benchmark | SEND special education needs selection | NA | 68.20 | 85.25 | education_core | 0 | P05 0.35, P16 0.35, P17 0.30 |
 | 优先继续做 | `asap_2` ASAP 2.0 | essay holistic QWK | 5.45 | 62.00 | 77.50 | education_core | 7 | P02 0.20, P14 0.65 |
@@ -26,12 +26,12 @@
 | 优先继续做 | `mathtutorbench_socratic` MathTutorBench | Socratic Questioning | 2.73 | 57.00 | 95.00 | education_core | 4 | P17 0.65, P18 0.35 |
 | 优先继续做 | `edubench` EduBench | personalized_adaptation_learning_support (metric) | 6.29 | 56.80 | 71.00 | education_core | 11 | P16 0.30, P17 0.40 |
 | 高相关但缺跑分 | `pedagogy_benchmark` Pedagogy Benchmark | CDPK teaching knowledge selection | NA | 46.40 | 58.00 | education_core | 0 | P05 0.45, P17 0.35 |
-| 重要但可降频 | `sas_bench` SAS-Bench | CCS step scoring consistency | 7.63 | 87.64 | 92.25 | education_core | 6 | P02 0.20, P11 0.25, P14 0.55 |
+| 重要但可降频 | `sas_bench` SAS-Bench | CCS step scoring consistency | 7.62 | 87.64 | 92.25 | education_core | 7 | P02 0.20, P11 0.25, P14 0.55 |
 | 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | Mistake Location | 7.75 | 85.50 | 85.50 | education_core | 5 | P02 0.20, P11 0.70 |
 | 重要但可降频 | `mathtutorbench_pedagogy_hard` MathTutorBench | Pedagogy IF hard | 7.92 | 85.00 | 85.00 | education_core | 7 | P05 0.25, P17 0.45, P18 0.30 |
 | 重要但可降频 | `mathtutorbench_pedagogy` MathTutorBench | Pedagogy IF | 8.25 | 80.75 | 85.00 | education_core | 7 | P05 0.25, P17 0.45, P18 0.30 |
 | 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | Solution Correctness | 8.68 | 77.78 | 91.50 | education_core | 5 | P02 0.15, P07 0.25, P11 0.60 |
-| 重要但可降频 | `sas_bench` SAS-Bench | QWK holistic total score | 8.24 | 70.88 | 78.75 | education_core | 6 | P02 0.15, P14 0.70 |
+| 重要但可降频 | `sas_bench` SAS-Bench | QWK holistic total score | 8.24 | 70.88 | 78.75 | education_core | 7 | P02 0.15, P14 0.70 |
 | 重要但可降频 | `pedagogy_benchmark` Pedagogy Benchmark | CDPK/SEND aggregate from 0701 card | 8.56 | 66.80 | 83.50 | education_core | 7 | P05 0.40, P16 0.30, P17 0.30 |
 | 重要但可降频 | `mathtutorbench_mistake_correction` MathTutorBench | Mistake Correction | 9.02 | 58.72 | 65.25 | education_core | 5 | P06 0.20, P11 0.20, P18 0.35 |
 | 重要但可降频 | `p08_abstention` P08 能力性弃答 | balanced abstention score | 8.90 | 55.78 | 87.50 | diagnostic | 5 | P01 0.15, P08 0.85 |
@@ -58,7 +58,7 @@
 | 不必重点看 | `mrbench_tutor` MRBench Tutor | dimension: Tutor_Tone (non-offensive) | 10.00 | 18.00 | 22.50 | education_core | 3 | P20 0.25 |
 | 不必重点看 | `bea2025_tutor` BEA 2025 Tutor | dimension: Actionability | 9.31 | 17.10 | 19.00 | education_core | 3 | P18 0.20 |
 | 低频门槛 | `ifeval` IFEval | prompt-level strict accuracy | 9.06 | 16.20 | 45.00 | foundation_gate | 5 | P01 1.00 |
-| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | judge dims: strategy_alignment + history_utilization (1-5) | 6.45 | 16.03 | 28.50 | diagnostic | 3 | P17 0.30 |
+| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | judge dims: strategy_alignment + history_utilization (1-5) | 6.34 | 16.03 | 28.50 | diagnostic | 3 | P17 0.30 |
 | 门槛保留 | `olympiadbench` OlympiadBench | overall/subject/language/modality accuracy | 7.26 | 15.72 | 63.50 | foundation_gate | 2 | P03 0.20, P05 0.25, P06 0.55 |
 | 不必重点看 | `edubench` EduBench | domain_knowledge_accuracy (metric) | 8.69 | 15.40 | 19.25 | education_core | 11 | P05 0.35 |
 | 不必重点看 | `mrbench_tutor` MRBench Tutor | dimension: Actionability | 9.10 | 15.20 | 19.00 | education_core | 3 | P18 0.20 |
@@ -106,7 +106,7 @@
 | 不必重点看 | `bea2025_tutor` BEA 2025 Tutor | 3 | 9.09 | 21.38 | education_core | P11, P17, P18 |
 | 不必重点看 | `mrbench_tutor` MRBench Tutor | 5 | 9.30 | 18.04 | education_core | P11, P17, P18, P20 |
 | 低频门槛 | `ifeval` IFEval | 1 | 9.06 | 16.20 | foundation_gate | P01 |
-| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | 1 | 6.45 | 16.03 | diagnostic | P17 |
+| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | 1 | 6.34 | 16.03 | diagnostic | P17 |
 | 门槛保留 | `olympiadbench` OlympiadBench | 1 | 7.26 | 15.72 | foundation_gate | P03, P05, P06 |
 | 低频门槛 | `mathtutorbench_problem_solving` MathTutorBench | 1 | 9.70 | 12.76 | foundation_gate | P05, P06, P07 |
 | 低频门槛 | `agieval` AGIEval | 1 | 8.74 | 10.35 | foundation_gate | P01, P05, P06 |

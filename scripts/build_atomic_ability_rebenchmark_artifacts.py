@@ -1132,6 +1132,17 @@ def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any
                     "Encouraging share（R19：P18 语气支持 facet 副挂）",
                 )
         return rows
+    if benchmark == "sas_bench":
+        # 三个指标同出一份 summary：QWK 判总分、CCS 判分步、ECS 判错因。
+        # metric 名必须与 parse_sas_scores 的 md 行一致，否则 dedupe 认不出是同一格，
+        # 两份来源会各留一行变成重复计数。
+        for subdimension, metric, key, note in (
+            ("QWK holistic total score", "qwk_0_to_100", "qwk", "extra_metrics.overall.qwk（12 子任务等权均值）"),
+            ("CCS step scoring consistency", "score_0_to_100", "ccs", "extra_metrics.overall.ccs（12 子任务等权均值）"),
+            ("ECS error-cause consistency", "score_0_to_100", "ecs", "extra_metrics.overall.ecs（12 子任务等权均值）"),
+        ):
+            add(subdimension, metric, overall.get(key), note)
+        return rows
     if benchmark == "longtutor_evidence":
         add(None, "accuracy", data.get("accuracy"), "summary.accuracy（精确匹配+语义等价裁判）")
         return rows
