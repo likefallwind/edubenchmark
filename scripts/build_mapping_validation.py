@@ -44,7 +44,7 @@ from collections import defaultdict
 from pathlib import Path
 
 DEFAULT_REBENCH_DIR = Path("reports/atomic_ability_rebenchmark_2026-07-08")
-DEFAULT_MEASUREMENT_MODEL = Path("data/mapping_measurement_model_v3.json")
+DEFAULT_MEASUREMENT_MODEL = Path("data/mapping_measurement_model_v5.json")
 
 EVIDENCE_NAME = "08_selected_score_evidence.jsonl"
 MAPPING_NAME = "02_benchmark_ability_mapping.jsonl"

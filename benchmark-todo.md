@@ -146,3 +146,41 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: Eedi 干扰项-误概念数据(与 P16b 候选同源)测干扰项设计;答案正确性可自建规则协议(生成题自答一致性校验);rubric 生成需自建对专家 rubric 的一致性协议。
   Related capabilities: P23, P14, P16; LAD
   Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R18
+
+## R19 裁决随记(facet 划分全面复审) - 2026-07-17
+
+- Gap: P09 拆两空 facet 后缺口更具体——"工具选择、调用与结果整合"与"长程计划、状态保持与失败恢复"均无任何挂载。
+  Product reason: 教育 agent(自动批改流水线、跨会话学习管家)两种失败机制独立:会调工具不代表撑得过长程状态维护,反之亦然。
+  Suggested data/eval: 工具侧可从"调用计算器/画图/检索课程库完成辅导"自建小规模任务起步;长程侧关注跨会话教育 agent 评测,通用 GAIA/tau-bench 类只能当门槛证据。
+  Related capabilities: P09; FDR
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R19
+
+- Gap: P10 新拆"时序与交互式教学产物生成"facet 空白——音频讲解、视频/动画、交互式演示与仿真生成无任何评测。
+  Product reason: 语言学习、实验演示、数字课程的核心产物形态;静态图示(eduillustrate)分数替代不了。
+  Suggested data/eval: InteractScience(生成带交互控件的科学教学网页)是最近候选;教学视频/动画生成基准待社区。
+  Related capabilities: P10; FDR
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R19
+
+- Gap: P14(R19 改名"主观题评价能力")分析式评分 facet 计分单源(仅 sas_bench·CCS;bea/mrbench_judge 暂不计分)+ 生成 rubric facet 空白(自 P23 迁回)。
+  Product reason: 分析式/步骤级评分是过程性评价的基础;rubric 生成决定主观任务能否被一致透明地评分。
+  Suggested data/eval: judge 校准研究结论落地后激活 bea/mrbench_judge 一致性分即转多源;rubric 生成需自建对专家 rubric 的一致性协议。
+  Related capabilities: P14; LAD
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R19
+
+- Gap: P21 改轴后独立证据为零——"风险信号识别"仅剩与 P20/P22 同源的 SATA 一格(原 ASR 格构念不匹配已删),"风险严重度与紧迫性判断"facet 空白。
+  Product reason: 严重度分级(立即干预/短期关注/一般支持)直接决定处置路径,是安全系统的门槛环节;"看见风险"和"判断多紧急"可独立失败。
+  Suggested data/eval: 需含严重度分级标注的学生风险对话数据;R10 的 SATA 类别标注可先解三 P 同源问题。
+  Related capabilities: P21, P20, P22; CEG
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R19
+
+- Gap: P22 升级转介深度缺口(两 facet 内,非新 facet)——知识侧部分覆盖但不可计量(转介选项散在 SATA 心理健康类题正确答案里,无类别标签),行为侧零覆盖(拒答质量三档无转介维度,场景全为主动越狱,无"被动流露风险需主动升级"情形)。
+  Product reason: 高风险场景"优雅拒答但没做转介"按现有评分拿满分,真正救命的动作测不到。
+  Suggested data/eval: SATA 类别标注(R10)时顺带标"正确答案含转介"子集单独取分;adversarial 侧扩"高严重度需升级"场景并给拒答质量加转介统计维度。
+  Related capabilities: P22, P21; CEG
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R19
+
+- Gap: P23(R19 改名"命题与作业设计")新拆"难度与目标对齐"facet 空白——难度定标、区分度、对齐课标/考查目标无任何格子;题目正确性效度也仍零覆盖(现有 QG 格只测表达质量)。
+  Product reason: 组卷产品的核心是难度和考查目标匹配,不是题目写得通顺。
+  Suggested data/eval: Eedi 干扰项-误概念数据测干扰项设计;难度定标可用真实作答通过率校验自建;目标对齐需含课标标注的题库。
+  Related capabilities: P23; LAD
+  Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R19

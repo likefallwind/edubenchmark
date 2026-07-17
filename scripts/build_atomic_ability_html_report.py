@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Build the standalone HTML report for the atomic-ability benchmark (mapping v3).
+"""Build the standalone HTML report for the atomic-ability benchmark (mapping v5).
 
 Reads the aggregation/validation artifacts and the adjudicated measurement model,
 writes a self-contained Chinese HTML report to ``html_report/``.  Regenerate by
 rerunning; never hand-edit the output.
 
 Inputs:
-- data/mapping_measurement_model_v3.json
+- data/mapping_measurement_model_v5.json
 - reports/atomic_ability_rebenchmark_2026-07-08/09_atomic_p_scores_raw_adjusted.jsonl
 - reports/atomic_ability_rebenchmark_2026-07-08/13_mapping_validation_cells.jsonl
 """
@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
 OUT_DIR = ROOT / "html_report"
-OUT = OUT_DIR / "atomic_ability_benchmark_v3_report_2026-07-16.html"
+OUT = OUT_DIR / "atomic_ability_benchmark_v5_report_2026-07-17.html"
 
 RELEASE_MODELS = [
     ("minimax-m3", "MiniMax-M3"),
@@ -88,7 +88,7 @@ def esc(text: object) -> str:
 
 
 def build() -> str:
-    mm = json.loads((ROOT / "data" / "mapping_measurement_model_v3.json").read_text(encoding="utf-8"))
+    mm = json.loads((ROOT / "data" / "mapping_measurement_model_v5.json").read_text(encoding="utf-8"))
     p_rows = load_jsonl(ART / "09_atomic_p_scores_raw_adjusted.jsonl")
     cells = load_jsonl(ART / "13_mapping_validation_cells.jsonl")
 
@@ -174,7 +174,7 @@ def build() -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>教育 AI 原子能力评测·映射 v3 报告（2026-07-16）</title>
+<title>教育 AI 原子能力评测·映射 v5 报告（2026-07-17）</title>
 <style>
 :root {{
   color-scheme: light;
@@ -238,8 +238,8 @@ ol li {{ margin: 4px 0; }}
 <body>
 <main>
 <p class="sub">研究层预览 · 生成于 {generated} · 生成脚本 <span class="mono">scripts/build_atomic_ability_html_report.py</span></p>
-<h1>教育 AI 原子能力评测：映射 v3 报告</h1>
-<p>用 <strong>19 项原子能力（编号 P01–P22；P04 并入 P03，P12/P13 并入 P11 错误诊断）</strong>给大模型画教育能力画像。本报告基于 2026-07-15/16 裁决定稿的映射 v3（R17：错误诊断三合一，判对/定位/归因降为 facet）：每个能力由哪些评测的哪些维度测量、权重多少，全部带数据依据；分数按"facet 内加权、跨 facet 等权"聚合。这是研究层数据的预览——正式的双报告（研究版/用户版）在 M4 里程碑交付。</p>
+<h1>教育 AI 原子能力评测：映射 v5 报告</h1>
+<p>用 <strong>20 项原子能力（编号 P01–P23；P04 并入 P03，P12/P13 并入 P11 错误诊断，P23 命题与作业设计为 R18 新设）</strong>给大模型画教育能力画像。本报告基于 2026-07-15/16/17 裁决定稿的映射 v5（R17：错误诊断三合一；R18：P17 重构、P23 新设；R19：facet 划分全面复审——P05 两 facet、P14 主观题评价能力、P18 三 facet、P21 改轴、P23 改名收窄等）：每个能力由哪些评测的哪些维度测量、权重多少，全部带数据依据；分数按"facet 内加权、跨 facet 等权"聚合。这是研究层数据的预览——正式的双报告（研究版/用户版）在 M4 里程碑交付。</p>
 
 <div class="tiles">
   <div class="tile"><div class="n">19 项</div><div class="l">原子能力（16 项有分，P09/P15 领域空白，P19 评测待跑）</div></div>
@@ -285,7 +285,7 @@ ol li {{ margin: 4px 0; }}
 </table>
 </div>
 
-<h2>五、效度检查摘要（13 号检查，映射 v3 口径）</h2>
+<h2>五、效度检查摘要（13 号检查，映射 v5 口径）</h2>
 <p>每个格子算跨模型区分度、每对同 P 格子算跨模型相关。区分度最好与最差的格子：</p>
 <h3>拉得开（适合排名）</h3>
 <ul>{top_html}</ul>
@@ -328,7 +328,7 @@ ol li {{ margin: 4px 0; }}
 <footer>
 数据源：<span class="mono">reports/atomic_ability_rebenchmark_2026-07-08/</span>（09 分数、10 证据、13 效度）·
 映射定稿 <span class="mono">doc/atomic_ability_mapping_final_2026-07-15.md</span> ·
-测量模型 <span class="mono">data/mapping_measurement_model_v3.json</span>。
+测量模型 <span class="mono">data/mapping_measurement_model_v5.json</span>。
 分数为研究层原始口径，用户版报告（每 P 一分 + 三档可信度 + 产品语言）随 M4 交付。
 </footer>
 </main>

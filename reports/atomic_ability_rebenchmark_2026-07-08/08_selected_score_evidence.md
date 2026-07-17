@@ -1,13 +1,13 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 304
+Canonical normalized score rows used for P scoring: 323
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
-| `otherbenchmark` | 159 |
-| `repo_eval` | 145 |
+| `otherbenchmark` | 170 |
+| `repo_eval` | 153 |
 
 ## By Benchmark
 
@@ -17,11 +17,12 @@ Canonical normalized score rows used for P scoring: 304
 | `asap_2` | 7 |
 | `bea2025_tutor` | 9 |
 | `ceval` | 5 |
-| `edubench` | 121 |
+| `edubench` | 132 |
 | `eduguard_adversarial` | 14 |
 | `eduguard_sata` | 8 |
 | `eduillustrate` | 4 |
 | `ifeval` | 5 |
+| `k12vista` | 1 |
 | `longtutor_diagnosis` | 3 |
 | `longtutor_evidence` | 3 |
 | `longtutor_teaching` | 3 |
@@ -36,7 +37,9 @@ Canonical normalized score rows used for P scoring: 304
 | `mathtutorbench_solution_correctness` | 5 |
 | `mathvista` | 1 |
 | `mmlu_pro` | 5 |
-| `mrbench_tutor` | 12 |
+| `mmtutorbench` | 1 |
+| `mooccube_prereq` | 3 |
+| `mrbench_tutor` | 15 |
 | `olympiadbench` | 2 |
 | `p07_selfcheck` | 5 |
 | `p08_abstention` | 5 |
@@ -50,7 +53,8 @@ Canonical normalized score rows used for P scoring: 304
 | Benchmark | Model key | Metric | Raw | Score 0-10 | Source |
 |---|---|---|---:|---:|---|
 | `asap_2` | `claude-sonnet-4.6` | `qwk_0_to_100` | 61.06 | 6.1060 | `otherbenchmark/rebenchmark-summary-0701.html` |
-| `edubench` | `claude-sonnet-4.6` | `likert_0_to_10` | 8.2261 | 8.2261 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `claude-sonnet-4.6` | `likert_0_to_10` | 8.043 | 8.0430 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `claude-sonnet-4.6` | `likert_0_to_10` | 8.5054 | 8.5054 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `claude-sonnet-4.6` | `likert_0_to_10` | 9.2902 | 9.2902 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `claude-sonnet-4.6` | `likert_0_to_10` | 8.5939 | 8.5939 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `claude-sonnet-4.6` | `likert_0_to_10` | 9.1909 | 9.1909 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
@@ -65,7 +69,8 @@ Canonical normalized score rows used for P scoring: 304
 | `agieval` | `deepseek-v4-flash` | `accuracy` | 0.8936726272352132 | 8.9367 | `reports/eval/agieval/deepseek-v4-flash/summary.json` |
 | `asap_2` | `deepseek-v4-flash` | `qwk_0_to_100` | 50.78 | 5.0780 | `otherbenchmark/rebenchmark-summary-0701.html` |
 | `ceval` | `deepseek-v4-flash` | `accuracy` | 0.921875 | 9.2188 | `reports/eval/ceval/deepseek-v4-flash/summary.json` |
-| `edubench` | `deepseek-v4-flash` | `likert_0_to_10` | 8.3891 | 8.3891 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-flash` | `likert_0_to_10` | 8.09 | 8.0900 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-flash` | `likert_0_to_10` | 8.8452 | 8.8452 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-flash` | `likert_0_to_10` | 9.6558 | 9.6558 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-flash` | `likert_0_to_10` | 8.6913 | 8.6913 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-flash` | `likert_0_to_10` | 9.3584 | 9.3584 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
@@ -89,7 +94,8 @@ Canonical normalized score rows used for P scoring: 304
 | `agieval` | `deepseek-v4-pro` | `accuracy` | 0.9019526952695269 | 9.0195 | `reports/eval/agieval/deepseek-v4-pro/summary.json` |
 | `asap_2` | `deepseek-v4-pro` | `qwk_0_to_100` | 52.32 | 5.2320 | `otherbenchmark/rebenchmark-summary-0701.html` |
 | `ceval` | `deepseek-v4-pro` | `accuracy` | 0.9383358098068351 | 9.3834 | `reports/eval/ceval/deepseek-v4-pro/summary.json` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.1582 | 8.1582 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.3472 | 8.3472 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.8699 | 7.8699 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.7588 | 8.7588 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.1962 | 8.1962 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.2236 | 8.2236 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
@@ -116,6 +122,7 @@ Canonical normalized score rows used for P scoring: 304
 | `mathtutorbench_socratic` | `deepseek-v4-pro` | `bleu_0_to_1` | 0.2838 | 2.8380 | `reports/eval/mathtutorbench_socratic/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_solution_correctness` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.8621 | 8.6210 | `reports/eval/mathtutorbench_solution_correctness/deepseek-v4-pro/summary.json` |
 | `mmlu_pro` | `deepseek-v4-pro` | `accuracy` | 0.8740851630073186 | 8.7409 | `reports/eval/mmlu_pro/deepseek-v4-pro/summary.json` |
+| `mooccube_prereq` | `deepseek-v4-pro` | `composite_0_to_10` | 3.789 | 3.7890 | `reports/eval/mooccube_prereq/deepseek-v4-pro/summary.json` |
 | `olympiadbench` | `deepseek-v4-pro` | `accuracy` | 0.7361256544502618 | 7.3613 | `reports/eval/olympiadbench/deepseek-v4-pro/summary.json` |
 | `p07_selfcheck` | `deepseek-v4-pro` | `composite_0_to_10` | 5.572 | 5.5720 | `reports/eval/p07_selfcheck/deepseek-v4-pro/summary.json` |
 | `p08_abstention` | `deepseek-v4-pro` | `composite_0_to_10` | 9.06 | 9.0600 | `reports/eval/p08_abstention/deepseek-v4-pro/summary.json` |
@@ -124,10 +131,6 @@ Canonical normalized score rows used for P scoring: 304
 | `sas_bench` | `deepseek-v4-pro` | `score_0_to_100` | 76.63 | 7.6630 | `otherbenchmark/sas-bench-result0630.md` |
 | `sas_bench` | `deepseek-v4-pro` | `score_0_to_100` | 61.69 | 6.1690 | `otherbenchmark/sas-bench-result0630.md` |
 | `sas_bench` | `deepseek-v4-pro` | `qwk_0_to_100` | 81.86 | 8.1860 | `otherbenchmark/sas-bench-result0630.md` |
-| `edubench` | `doubao-seed-2-0-lite` | `likert_0_to_10` | 8.2729 | 8.2729 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `doubao-seed-2-0-lite` | `likert_0_to_10` | 9.1328 | 9.1328 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `doubao-seed-2-0-lite` | `likert_0_to_10` | 8.4488 | 8.4488 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `doubao-seed-2-0-lite` | `likert_0_to_10` | 9.0413 | 9.0413 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `doubao-seed-2-0-lite` | `likert_0_to_10` | 6.3803 | 6.3803 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `doubao-seed-2-0-lite` | `likert_0_to_10` | 8.1386 | 8.1386 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 
 Full selected rows are in `08_selected_score_evidence.jsonl`.

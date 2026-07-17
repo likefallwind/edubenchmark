@@ -54,6 +54,21 @@ A separate, extensible harness for evaluating **one benchmark at a time** agains
 - Data acquisition for HF/repo datasets: `python scripts/eval/data/fetch_eval_datasets.py --benchmark mmlu_pro|olympiadbench|eduguard_bench|ceval|mrbench|bea2025|mmtutorbench|umwp|ifeval|all` materializes data under `sources/datasets/` (MMLU-Pro from the **public** `TIGER-Lab/MMLU-Pro`; the `TIGER-AI-Lab/MMLU-Pro` path is gated. OlympiadBench OE configs from `Hothan/OlympiadBench`, images extracted to `olympiadbench/images/`, TP proof configs skipped; eduguard_bench → `satas.jsonl`/`adversarial.jsonl`; ceval iterates the 52 `ceval/ceval-exam` subject configs → `ceval/data/{val,dev}.jsonl`, reading the subject→category map from the repo clone's `subject_mapping.json`; mrbench downloads `MRBench_V2.json` via urllib; bea2025 downloads dev/test JSON and writes a manifest documenting hidden test labels; mmtutorbench downloads JSONL + keyframes and writes `data_manifest.json` with rubric/human-gold status). AGIEval data ships in its repo checkout.
 - **OlympiadBench scoring needs `antlr4-python3-runtime==4.11`** (sympy `parse_latex`), which conflicts with `hydra-core`/`omegaconf` (they pin `4.9.*`) — run it in a dedicated venv if you use hydra. OmniEduBench (a C1/C3 main test) has no public data and is **not** adapted; the gap is logged in `benchmark-todo.md`.
 
+## The atomic-ability mapping & rebenchmark pipeline
+
+The per-benchmark eval results are aggregated into a 20-ability profile (**P01–P23**, with P04/P12/P13 as tombstone numbers) defined in `doc/atomic_ability_mapping_final_2026-07-15.md` (adjudication records R1–R19). **Single source of truth is `data/mapping_measurement_model_v5.json`** (2026-07-17, R19; older v1–v4 are kept as pre-adjudication snapshots — never edit or delete them). Facet-level rules (R19): a facet split must be *boundary-decidable* (every task has exactly one home; open-ended scenario axes don't qualify) and *non-duplicative* (two facets must not be the same construct twice); borderline proxy cells are left out rather than mounted.
+
+Pipeline (run in this order; all idempotent):
+
+```bash
+python3 scripts/build_edubench_metric_summaries.py            # edubench metric-level means + tmg_pcc_composite / qg_composite
+python3 scripts/build_atomic_ability_rebenchmark_artifacts.py # aggregation → reports/atomic_ability_rebenchmark_2026-07-08/
+python3 scripts/build_mapping_validation.py                   # 13号 validity check (same output dir)
+python3 scripts/build_atomic_ability_html_report.py           # html_report/atomic_ability_benchmark_v5_report_2026-07-17.html
+```
+
+Gotchas: the aggregation matches cells by **exact `subdimension` string** — renaming a cell in the JSON without updating score producers silently drops it (check the removed/added cell diff of `09_atomic_p_score_evidence.jsonl` against the previous snapshot after any mapping change). A cell may carry a **different `evidence_tier` per P** (e.g. sas ECS: education_core in P11c, diagnostic in P05); per-P tier drives scoring, row-level tier is display-only. mrbench_tutor `Tutor_Tone` is one annotation consumed as two statistics (`(non-offensive)` → P20, `(encouraging share)` → P18) — not double counting. Before rerunning after a mapping revision, snapshot `reports/atomic_ability_rebenchmark_2026-07-08/` to `*_vN_snapshot_YYYYMMDD/`. The category grouping (`doc/atomic_ability_category_grouping_2026-07-16.md`) is presentation-layer only.
+
 ## Common commands
 
 ```bash

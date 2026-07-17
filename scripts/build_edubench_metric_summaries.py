@@ -10,11 +10,13 @@ benchmark (mapping v2 / R1: metric-level cells instead of task means).
 
 Outputs (idempotent, overwritten on each run):
 - ``task_metric_means.jsonl``: one row per (model, task, metric) with
-  ``n / mean / sd``; ``task == "ALL"`` rows pool all five tasks, and the
-  special metric ``artifact_composite`` pools QG/TMG/PCC items over the
-  clarity_concision_inspiration + scenario_element_integration pair
-  (per-item mean of the two metrics, then mean over items) for the P18
-  artifact_generation cell.
+  ``n / mean / sd``; ``task == "ALL"`` rows pool all five tasks.  Two
+  special composite metrics pool the clarity_concision_inspiration +
+  scenario_element_integration pair (per-item mean of the two metrics,
+  then mean over items): ``tmg_pcc_composite`` over TMG/PCC items for the
+  P18 artifact_generation cell, and ``qg_composite`` over QG items for
+  the P23 item_generation cell (mapping v4/R18 split QG out of P18; the
+  legacy pooled ``artifact_composite`` row is no longer emitted).
 - ``README.md``: provenance note.
 
 Usage: python scripts/build_edubench_metric_summaries.py
@@ -44,9 +46,12 @@ METRICS = [
     "personalized_adaptation_learning_support",
     "higher_order_thinking_ability_development",
 ]
-ARTIFACT_TASKS = {"QG", "TMG", "PCC"}
-ARTIFACT_METRICS = ("clarity_concision_inspiration", "scenario_element_integration")
-ARTIFACT_METRIC_NAME = "artifact_composite"
+COMPOSITE_METRICS = ("clarity_concision_inspiration", "scenario_element_integration")
+# (composite metric name, task label, member tasks); R18/R19: QG feeds P23, TMG/PCC feed P18
+COMPOSITES = (
+    ("tmg_pcc_composite", "TMG/PCC", {"TMG", "PCC"}),
+    ("qg_composite", "QG", {"QG"}),
+)
 
 
 def model_dirs() -> list[Path]:
@@ -68,7 +73,7 @@ def main() -> None:
     for mdir in model_dirs():
         model = mdir.name
         by_cell: dict[tuple[str, str], list[float]] = {}
-        artifact_values: list[float] = []
+        composite_values: dict[str, list[float]] = {name: [] for name, _, _ in COMPOSITES}
         n_items = 0
         with (mdir / "scored.jsonl").open(encoding="utf-8") as fh:
             for line in fh:
@@ -88,19 +93,22 @@ def main() -> None:
                     value = float(value)
                     by_cell.setdefault((task, metric), []).append(value)
                     by_cell.setdefault(("ALL", metric), []).append(value)
-                if task in ARTIFACT_TASKS:
-                    pair = [
-                        float(dims[m])
-                        for m in ARTIFACT_METRICS
-                        if dims.get(m) is not None and not math.isnan(float(dims[m]))
-                    ]
-                    if pair:
-                        artifact_values.append(sum(pair) / len(pair))
+                pair = [
+                    float(dims[m])
+                    for m in COMPOSITE_METRICS
+                    if dims.get(m) is not None and not math.isnan(float(dims[m]))
+                ]
+                if pair:
+                    for name, _, member_tasks in COMPOSITES:
+                        if task in member_tasks:
+                            composite_values[name].append(sum(pair) / len(pair))
         for (task, metric), values in sorted(by_cell.items()):
             rows.append({"model": model, "task": task, "metric": metric, **stats(values)})
-        if artifact_values:
-            rows.append({"model": model, "task": "QG/TMG/PCC", "metric": ARTIFACT_METRIC_NAME, **stats(artifact_values)})
-        print(f"{model}: items={n_items} cells={len(by_cell)} artifact_n={len(artifact_values)}")
+        for name, task_label, _ in COMPOSITES:
+            if composite_values[name]:
+                rows.append({"model": model, "task": task_label, "metric": name, **stats(composite_values[name])})
+        counts = " ".join(f"{name}_n={len(composite_values[name])}" for name, _, _ in COMPOSITES)
+        print(f"{model}: items={n_items} cells={len(by_cell)} {counts}")
 
     OUT_DIR.mkdir(exist_ok=True)
     out = OUT_DIR / "task_metric_means.jsonl"
@@ -113,9 +121,10 @@ def main() -> None:
         "由 `scripts/build_edubench_metric_summaries.py` 从各模型目录的 `scored.jsonl`"
         "（同事原始判分，只读不改）派生：每行一个 (model, task, metric) 的 n/mean/sd。\n\n"
         "- `task == \"ALL\"`：五任务合并的指标均值——映射 v2 中 `<metric> (metric)` 格子的取分来源。\n"
-        "- `metric == \"artifact_composite\"`（task=QG/TMG/PCC）：三个产物类任务上 "
-        "clarity_concision_inspiration + scenario_element_integration 的逐题两指标均值再取均值，"
-        "对应 P18 教学产物生成 facet 的 task×metric 复合格子。\n"
+        "- `metric == \"tmg_pcc_composite\"`（task=TMG/PCC）与 `metric == \"qg_composite\"`（task=QG）："
+        "对应任务上 clarity_concision_inspiration + scenario_element_integration 的逐题两指标均值再取均值，"
+        "分别对应 P18 教学产物生成与 P23 题目生成的 task×metric 复合格子"
+        "（R18 拆分 QG→P23 后原 artifact_composite 不再产出）。\n"
         "- `sd` 为题级标准差，供 13 号检查的死格子（SD<0.5）判定参考。\n",
         encoding="utf-8",
     )

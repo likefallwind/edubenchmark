@@ -53,6 +53,7 @@ ABILITY_PRIORITY = {
     "P20": 0.90,
     "P21": 0.95,
     "P22": 1.00,
+    "P23": 0.90,
 }
 
 TIER_IMPORTANCE_FACTOR = {
@@ -79,8 +80,8 @@ P_GROUPS = {
     "P11": ("LAD", "错误诊断"),
     "P12": ("LAD", "（已并入 P11，墓碑编号）"),
     "P13": ("LAD", "（已并入 P11，墓碑编号）"),
-    "P14": ("LAD", "主观题 rubric 评分能力"),
-    "P15": ("LAD", "学术诚信与作答真实性判定"),
+    "P14": ("LAD", "主观题评价能力"),
+    "P15": ("CEG", "学术诚信与作答真实性判定"),
     "P16": ("CLM", "学习者画像建模"),
     "P17": ("CLM", "个性化教学策略选择"),
     "P18": ("CLM", "适配性解释与反馈生成"),
@@ -88,19 +89,21 @@ P_GROUPS = {
     "P20": ("CEG", "教育角色边界判断"),
     "P21": ("CEG", "学生风险识别"),
     "P22": ("CEG", "安全处置选择"),
+    "P23": ("LAD", "命题与作业设计"),
 }
 
 
-MEASUREMENT_MODEL_PATH = ROOT / "data" / "mapping_measurement_model_v3.json"
+MEASUREMENT_MODEL_PATH = ROOT / "data" / "mapping_measurement_model_v5.json"
 
 # Benchmark-level metadata joined onto measurement-model cells to form MAPPINGS
 # rows.  Ability weights, facets and evidence tiers live in
-# ``data/mapping_measurement_model_v3.json`` (single source of truth,
-# adjudicated 2026-07-15/16; R17 merged P11/P12/P13 into P11 错误诊断 with
-# facets P11a/P11b/P11c); this table only carries what the JSON
-# deliberately does not: display name, ingestion scope, metric family per
-# subdimension ("*" = all subdimensions), benchmark-level confidence weight
-# (with per-subdimension overrides), and the benchmark-level rationale.
+# ``data/mapping_measurement_model_v5.json`` (single source of truth,
+# adjudicated 2026-07-15/16/17; R17 merged P11/P12/P13 into P11, R18 added
+# P23, R19 re-adjudicated facet structures across ten Ps); this table only
+# carries what the JSON deliberately does not: display name, ingestion scope,
+# metric family per subdimension ("*" = all subdimensions), benchmark-level
+# confidence weight (with per-subdimension overrides), and the benchmark-level
+# rationale.
 BENCHMARK_META: dict[str, dict[str, Any]] = {
     "mmlu_pro": {
         "benchmark_name": "MMLU-Pro",
@@ -180,7 +183,8 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "score_direction": "higher_better",
         "default_benchmark_weight": 0.8,
         "benchmark_weight_overrides": {
-            "QG/TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)": 0.75,
+            "TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)": 0.75,
+            "QG × clarity_concision_inspiration + scenario_element_integration (task×metric)": 0.75,
         },
         "metric_family": {"*": "likert_0_to_10"},
         "rationale": (
@@ -310,8 +314,9 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "metric_family": {"*": "share_0_to_1"},
         "rationale": (
             "tutor 回复生成、固定裁判 8 维标注。R2 裁决：复合 pass rate 换单维度分"
-            "（Mistake_Identification/Providing_Guidance/Actionability 用 Yes 占比；"
-            "Tutor_Tone 用 Encouraging+0.5×Neutral，对齐 P20 角色边界）。"
+            "（Mistake_Identification/Providing_Guidance/Actionability 用 Yes 占比）。"
+            "R19：Tutor_Tone 一份标注取两个统计量——P20 边界用 1−Offensive，"
+            "P18 语气支持用 Encouraging 占比（替换原 Encouraging+0.5×Neutral 单格，去重）。"
             "仅 3 个模型面（2026-07-16 决定不补跑）。"
         ),
     },
@@ -502,9 +507,14 @@ def _build_mappings() -> list[dict[str, Any]]:
                         "rationale": meta["rationale"],
                     }
                 elif row["evidence_tier"] != cell["evidence_tier"]:
-                    raise SystemExit(
-                        f"evidence_tier conflict for {key}: {row['evidence_tier']} vs {cell['evidence_tier']}"
-                    )
+                    # R19: the same (benchmark, subdimension) may carry different
+                    # tiers per P (e.g. sas ECS education_core in P11c but
+                    # diagnostic in P05).  Keep the most-core tier at row level
+                    # for display; the per-P tier lives in the ability entry and
+                    # drives scoring.
+                    rank = {"education_core": 3, "diagnostic": 2, "foundation_gate": 1, "excluded_judge_task": 0}
+                    if rank[cell["evidence_tier"]] > rank[row["evidence_tier"]]:
+                        row["evidence_tier"] = cell["evidence_tier"]
                 group, name = P_GROUPS[ability["p_code"]]
                 row["abilities"].append(
                     {
@@ -514,6 +524,7 @@ def _build_mappings() -> list[dict[str, Any]]:
                         "weight": cell["weight"],
                         "facet_id": facet["facet_id"],
                         "facet_name": facet.get("facet_name", facet["facet_id"]),
+                        "evidence_tier": cell["evidence_tier"],
                         "cell_rationale": cell.get("revision_rationale", ""),
                     }
                 )
@@ -648,22 +659,28 @@ def parse_edubench_scores(rows: list[dict[str, Any]]) -> None:
 def parse_edubench_metric_scores(rows: list[dict[str, Any]]) -> None:
     """Ingest metric-level EduBench means derived by
     ``scripts/build_edubench_metric_summaries.py`` (mapping v2 / R1: one cell
-    per judge metric pooled over tasks, plus the QG/TMG/PCC x clarity+scenario
-    composite for the P18 artifact facet)."""
+    per judge metric pooled over tasks, plus two task×metric composites —
+    TMG/PCC for the P18 artifact facet and QG for the P23 item_generation
+    facet, split per R18)."""
     path = EVAL_DIR / "edubench" / "_metrics" / "task_metric_means.jsonl"
     if not path.exists():
         return
-    artifact_subdimension = (
-        "QG/TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)"
-    )
+    composite_subdimensions = {
+        "tmg_pcc_composite": (
+            "TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)"
+        ),
+        "qg_composite": (
+            "QG × clarity_concision_inspiration + scenario_element_integration (task×metric)"
+        ),
+    }
     with path.open(encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
             if not line:
                 continue
             row = json.loads(line)
-            if row["metric"] == "artifact_composite":
-                subdimension = artifact_subdimension
+            if row["metric"] in composite_subdimensions:
+                subdimension = composite_subdimensions[row["metric"]]
             elif row["task"] == "ALL":
                 subdimension = f"{row['metric']} (metric)"
             else:
@@ -1097,12 +1114,22 @@ def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any
             tone = dist.get("Tutor_Tone") or {}
             encouraging = ((tone.get("Encouraging") or {}).get("share"))
             neutral = ((tone.get("Neutral") or {}).get("share"))
-            if encouraging is not None or neutral is not None:
+            offensive = ((tone.get("Offensive") or {}).get("share"))
+            if encouraging is not None or neutral is not None or offensive is not None:
+                # R19: one annotation, two statistics — P20 boundary facet takes
+                # non-offensive share, P18 tone_support facet takes encouraging
+                # share (dedup vs the old Encouraging+0.5×Neutral single cell).
                 add(
-                    "dimension: Tutor_Tone",
+                    "dimension: Tutor_Tone (non-offensive)",
                     "share_0_to_1",
-                    (encouraging or 0.0) + 0.5 * (neutral or 0.0),
-                    "Encouraging + 0.5×Neutral share（Offensive 记 0）",
+                    1.0 - (offensive or 0.0),
+                    "1 − Offensive share（R19：P20 边界构念只取越界信号）",
+                )
+                add(
+                    "dimension: Tutor_Tone (encouraging share)",
+                    "share_0_to_1",
+                    encouraging or 0.0,
+                    "Encouraging share（R19：P18 语气支持 facet 副挂）",
                 )
         return rows
     if benchmark == "longtutor_evidence":
@@ -1331,11 +1358,16 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
         mapping = find_mapping(row["benchmark_id"], subdimension=row["subdimension"], metric=row["metric"])
         if mapping is None:
             continue
-        tier = mapping["evidence_tier"]
-        if tier == "excluded_judge_task":
+        if all(
+            (ability.get("evidence_tier") or mapping["evidence_tier"]) == "excluded_judge_task"
+            for ability in mapping["abilities"]
+        ):
             continue
-        foundation_factor = FOUNDATION_GATE_FACTOR if tier == "foundation_gate" else 1.0
         for ability in mapping["abilities"]:
+            tier = ability.get("evidence_tier") or mapping["evidence_tier"]
+            if tier == "excluded_judge_task":
+                continue
+            foundation_factor = FOUNDATION_GATE_FACTOR if tier == "foundation_gate" else 1.0
             raw_weight = mapping["default_benchmark_weight"] * ability["weight"]
             adjusted_weight = raw_weight * foundation_factor
             evidence = {
@@ -1387,7 +1419,7 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
             if tier == "foundation_gate":
                 slot["foundation_rows"] += 1
 
-    # 测量模型 v3 的聚合方向：facet 内按格子权重加权平均，P 分数 = 有证据的
+    # 测量模型 v5 的聚合方向：facet 内按格子权重加权平均，P 分数 = 有证据的
     # facet 的等权平均（formative 声明；reflective P 只有一个 core facet，
     # 退化为原先的整体加权平均）。
     p_rows: list[dict[str, Any]] = []
@@ -1792,7 +1824,7 @@ def write_atomic_scores(p_rows: list[dict[str, Any]], evidence_rows: list[dict[s
             "- `P21` and `P22` are covered through EduGuard P1/P2 safety evidence.",
             "- `P09` has no current benchmark mapping in this pass.",
             "- `P15` has no current benchmark mapping after BEA/MRBench judge-task exclusion.",
-            "- `P09` and `P15` are declared domain gaps (mapping v3); `P10`/`P19` are single-source and `P16` covers 2 of 4 declared sub-abilities.",
+            "- `P09` and `P15` are declared domain gaps (mapping v5); `P10`/`P19` are single-source and `P16` covers 2 of 4 declared sub-abilities; `P21` has zero independent evidence (shared-SATA single cell) and `P23` is expression-quality-only.",
             "- The atomic list is `P01-P22` with tombstones `P04` (merged into P03) and `P12`/`P13` (merged into P11 错误诊断, R17); 19 active P codes.",
             "",
             "Full P rows are in `09_atomic_p_scores_raw_adjusted.jsonl`; allocated evidence rows are in `09_atomic_p_score_evidence.jsonl`.",
@@ -1974,7 +2006,7 @@ footer {{ color:var(--muted); font-size:12px; padding:22px 0 6px; }}
 <header class="hero">
   <p class="eyebrow">Capability-Oriented Rebenchmark · 2026</p>
   <h1>原子能力 Rebenchmark 可视化报告</h1>
-  <p class="hero-sub">基于本仓库评测与 <code>otherbenchmark/</code> 结果，将 benchmark/subdimension 映射到 <code>doc/atomic_ability_principle_audit_v3.md</code> 的 P01-P22 原子能力，并聚合到 SRG/FDR/LAD/CLM/CEG 五大维度。模型选择与分数版本切换逻辑保持可交互。</p>
+  <p class="hero-sub">基于本仓库评测与 <code>otherbenchmark/</code> 结果，将 benchmark/subdimension 映射到定稿映射 v5（<code>data/mapping_measurement_model_v5.json</code>）的 P01-P23 原子能力，并聚合到 SRG/FDR/LAD/CLM/CEG 五大维度。模型选择与分数版本切换逻辑保持可交互。</p>
 </header>
   <section class="summary">
     <div class="kpi"><div class="v">{len(MAPPINGS)}</div><div class="l">benchmark / 维度映射行</div></div>

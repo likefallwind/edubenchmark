@@ -225,3 +225,15 @@ nohup bash -c 'for M in deepseek-v4-pro glm-5.2 doubao-seed-2.0-pro MiniMax-M2.7
 **已落地**:定稿文档全量更新(清单/口径/各 P 小节含义/P17 重构/P23 新节/缺口表/R18 记录);`data/mapping_measurement_model_v4.json`(v3 保留为 R18 前快照;23 条目=20 在册 P+3 墓碑,38/38 facet 有 description);benchmark-todo.md 记三条(教师协作重审触发条件/P17 目标对齐缺口/P23 效度缺口)。
 
 **未落地(下一步管线迁移,不要直接切路径)**:聚合/13 号检查/HTML 报告三脚本仍指 v3。**直接改路径会静默丢分**——聚合按 subdimension 字符串精确匹配,P18 的 edubench 格子在 v4 里已改名"TMG/PCC × …",而 `build_edubench_metric_summaries.py` 产出的 `artifact_composite` 还是 QG/TMG/PCC 合并口径。迁移顺序:①metric summaries 脚本把 artifact 复合拆成 TMG/PCC 复合 + QG 复合两行;②聚合脚本的 `artifact_subdimension` 映射与 `BENCHMARK_META` 权重覆盖键改成两个新字符串;③三脚本切 v4 重跑,v3 口径聚合产物先快照(参照 `*_v2_snapshot_20260716/` 惯例)。
+
+## 2026-07-17:R19 裁决 facet 划分全面复审(回来先看这一节)
+
+**裁决 R19(对 AI 生成的 facet 建议 v3 逐项讨论后定稿,用户逐条拍板)**,全文见定稿文档"裁决记录 R19":
+
+**方法学产出:facet 级划分规则成文**——P 层靠组合覆盖场景(atomic_principle.md 已有);facet 层两条硬约束:**边界可判**(任何任务无歧义归入唯一 facet,划分依据封闭可操作;场景类开放轴不合格)+ **不重复**(两 facet 不能是同一构念换个说法);现阶段**过于擦边的证据格宁缺勿滥**。
+
+十项:①P03 轴统一为内容构成("教学场景图文"→"图文混排材料");②P05 砍"生成中的知识运用"facet(与学科/教学知识构念重复;附带删 asap/sas QWK 两搭车格、ECS 与 mtb pedagogy/scaffolding 迁入降 diagnostic);③P09 拆两空 facet(工具调用/长程执行);④P10 拆静态(单源)/时序交互(空)两 facet;⑤P14 改名"主观题评价能力",按评分操作类型三 facet(整体/分析式/生成 rubric,后者自 P23 迁回);⑥P15 归安全诚信家族(group LAD→CEG,大类文档 2.1→2.4),暂不拆 facet;⑦P18 对话侧拆内容反馈/语气支持(整 P 三 facet;删 eduguard 拒答质量副挂,新增 mrbench Tutor_Tone 鼓励占比 0.2 副挂,P20 同标注改取 1−Offensive 去重);⑧P21 改轴为信号识别/严重度判断(空),删 ASR 格,成熟度"单源·同源,近似缺口";⑨P22 对抗 facet 精确为对抗鲁棒,升级转介定性为两 facet 内深度缺口(经 satas.jsonl 核实:知识侧不可计量、行为侧零覆盖);⑩P23 改名"命题与作业设计"收窄纯命题,facet 题目生成(正确性与质量)/难度与目标对齐(空)。
+
+**方法学披露**:见数后修订,论证只用构念层依据。格子变更:删 4(P05×2/P18×1/P21×1)、增 1(P18 Tutor_Tone 鼓励占比)、改统计量 1(P20 Tutor_Tone→1−Offensive);facet 38→42。
+
+**已落地**:`data/mapping_measurement_model_v5.json`(v4 保留为 R19 前快照);定稿文档(清单/口径/十个 P 小节/附录索引/缺口表/R19 记录);大类划分文档(补录 P23 进 2.1、P15 移 2.4、子类改名"教育安全与诚信");benchmark-todo.md 六条 R19 缺口。
