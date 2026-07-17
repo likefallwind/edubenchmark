@@ -4,7 +4,9 @@
 
 机器可读版(单一事实源):`data/mapping_measurement_model_v5.json`。本文档所有表格由该 JSON 逐格核对生成,如有出入以 JSON 为准。
 
-约定:权重是 facet 内的相对重要度,不归一;格子写法为 `benchmark · 取分维度`。证据分四档:education_core(教学核心)/ diagnostic(诊断,×0.75)/ foundation_gate(门槛,×0.45)/ excluded_judge_task(暂不计分)。分数聚合:facet 内按格子权重加权平均,跨 facet 等权(空 facet 不计入)。
+约定:权重是 facet 内的相对重要度,不归一;格子写法为 `benchmark · 取分维度`。证据分四档:education_core(教学核心)/ diagnostic(诊断)/ foundation_gate(门槛)/ excluded_judge_task(暂不计分)。
+
+分数聚合(逐层):①格子分 = benchmark 原始分按指标族归一到 0–10;②格子有效权重 = **映射表格子权重 × benchmark 置信权重**(后者按 benchmark 定于聚合脚本 `BENCHMARK_META`,表达该 benchmark 本身多可信,如 mmlu_pro 0.35 / sas_bench 0.9 / tutorbench 1.0);③facet 分 = 格子分按有效权重加权平均;④P 分 = 有证据 facet 的等权平均(空 facet 不计);⑤headline 用 tier_adjusted 口径:foundation_gate 档权重再 ×0.45,diagnostic 与 education_core 在 P 分中**不**降权(诊断档 ×0.75 只用于 12 号组合重要度分析,不进 P 分),excluded_judge_task 跳过。
 
 ## 划分规则(先读这个)
 

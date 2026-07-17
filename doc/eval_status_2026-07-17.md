@@ -1,4 +1,4 @@
-# 评测进度总览（截至 2026-07-16）
+# 评测进度总览（截至 2026-07-17）
 
 说明：
 
@@ -6,6 +6,7 @@
 - `-/-` 表示该模型在该评测下尚无 `summary.json`，也无 `predictions.jsonl` 产出。
 - `predictions only` 表示仅有 `predictions.jsonl`，无 `summary.json`。
 - `x/y` 表示 `summary.json` 中 `scored` 或 `judged` 与 `total_items`（或 `total`）比对。
+- 统计口径：按本仓库内 `reports/eval/*/*/summary.json`（或 `predictions.jsonl`）可见产物直接统计，不单列 smoke 测试口径。
 
 ## 主表（12 模型口径）
 
@@ -17,11 +18,11 @@
 |ceval|-/-|1344/1346|1346/1346|-/-|-/-|5/5|1345/1346|-/-|-/-|-/-|1346/1346|1346/1346|
 |eduguard_adversarial|-/-|-/-|801/801|801/801|801/801|772/801|801/801|797/801|-/-|-/-|801/801|801/801|
 |eduguard_sata|-/-|4/4|5266/5270|5270/5270|5270/5270|5268/5270|5270/5270|2148/2635|-/-|-/-|5269/5270|5270/5270|
-|eduillustrate|4/5|-/-|-/-|4/5|4/5|-/-|-/-|-/-|-/-|4/5|-/-|4/5|
+|eduillustrate|4/5|-/-|-/-|206/230|180/230|-/-|-/-|-/-|229/230|4/5|-/-|230/230|
 |mathtutorbench_judge_calibration|964/964|964/964|964/964|-/-|-/-|-/-|964/964|-/-|-/-|-/-|964/964|964/964|
 |mathtutorbench_mistake_correction|-/-|1002/1002|1002/1002|-/-|-/-|-/-|1001/1002|-/-|-/-|-/-|1002/1002|1002/1002|
 |mathtutorbench_mistake_location|-/-|2004/2004|2004/2004|-/-|-/-|-/-|2004/2004|-/-|-/-|-/-|2004/2004|2004/2004|
-|mathtutorbench_pedagogy|-/-|1150/1150|1150/1150|1150/1150|1150/1150|-/-|1150/1150|-/-|-/-|-/-|1150/1150|1149/1150|
+|mathtutorbench_pedagogy|-/-|1150/1150|1150/1150|1150/1150|1150/1150|-/-|1150/1150|-/-|-/-|-/-|1150/1150|1150/1150|
 |mathtutorbench_pedagogy_hard|-/-|327/327|327/327|327/327|327/327|-/-|327/327|-/-|-/-|-/-|327/327|327/327|
 |mathtutorbench_problem_solving|-/-|1319/1319|-/-|-/-|-/-|-/-|1319/1319|-/-|-/-|-/-|1319/1319|1319/1319|
 |mathtutorbench_scaffolding|-/-|1150/1150|1150/1150|1150/1150|1150/1150|-/-|1150/1150|-/-|-/-|-/-|1150/1150|1150/1150|
@@ -30,12 +31,12 @@
 |mathtutorbench_solution_correctness|-/-|2004/2004|2004/2004|-/-|-/-|-/-|2004/2004|-/-|-/-|-/-|2004/2004|2004/2004|
 |mathvista|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|993/1000|
 |mmlu_pro|-/-|12021/12032|12024/12032|5/5|5/5|5/5|11875/12032|1/1|-/-|-/-|12022/12032|12032/12032|
-|mmtutorbench|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|5/5|
+|mmtutorbench|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|769/770|
 |mmtutorbench_judge_calibration|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|0/0|
 |mrbench_judge|13240/13240|13240/13240|13240/13240|-/-|-/-|-/-|13240/13240|-/-|-/-|-/-|13240/13240|13238/13240|
 |mrbench_tutor|-/-|-/-|-/-|-/-|-/-|-/-|200/200|-/-|-/-|-/-|200/200|200/200|
 |olympiadbench|-/-|-/-|6685/6728|-/-|-/-|-/-|-/-|-/-|-/-|-/-|-/-|6722/6728|
-|edubench|-/-|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|-/-|-/-|-/-|-/-|-/-|-/-|
+|edubench|-/-|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|-/-|-/-|-/-|-/-|3797/3797|3797/3797|
 |ifeval|-/-|-/-|540/541|541/541|-/-|-/-|541/541|-/-|-/-|-/-|538/541|540/541|
 |longtutor_diagnosis|-/-|-/-|1001/1001|-/-|-/-|-/-|1001/1001|-/-|-/-|-/-|-/-|1001/1001|
 |longtutor_evidence|-/-|-/-|3003/3003|-/-|-/-|-/-|3003/3003|-/-|-/-|-/-|-/-|3003/3003|
@@ -52,14 +53,21 @@
 |eduguard_sata|predictions only|-/-|-/-|-/-|-/-|-/-|
 |edubench|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|3797/3797|
 
+## 新增任务（主表外）
+
+| 评测任务（纵轴） \ 模型（横轴） | deepseek-v4-pro | glm-5.2 | minimax3 |
+|---|---|---|---|
+|k12vista|-/-|-/-|598/600|
+|mooccube_prereq|300/300|300/300|300/300|
+
+说明：`k12vista/_judge-MiniMax-M2.7/doubao-seed-2.0-pro/summary.json` 为裁判侧中间产物，当前 `summary.json` 缺失 total/scores 字段，暂不纳入矩阵统计。
+
 ## 本次主表新增已完成 `summary.json`
 
-- `reports/eval/longtutor_diagnosis/deepseek-v4-pro/summary.json`
-- `reports/eval/longtutor_diagnosis/glm-5.2/summary.json`
-- `reports/eval/longtutor_diagnosis/minimax3/summary.json`
-- `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json`
-- `reports/eval/longtutor_evidence/glm-5.2/summary.json`
-- `reports/eval/longtutor_evidence/minimax3/summary.json`
-- `reports/eval/longtutor_teaching/deepseek-v4-pro/summary.json`
-- `reports/eval/longtutor_teaching/glm-5.2/summary.json`
-- `reports/eval/longtutor_teaching/minimax3/summary.json`
+- `reports/eval/edubench/minimax3/summary.json`
+- `reports/eval/edubench/minimax-m2.7/summary.json`
+- `reports/eval/mmtutorbench/minimax3/summary.json`
+- `reports/eval/k12vista/minimax3/summary.json`
+- `reports/eval/mooccube_prereq/minimax3/summary.json`
+- `reports/eval/mooccube_prereq/deepseek-v4-pro/summary.json`
+- `reports/eval/mooccube_prereq/glm-5.2/summary.json`
