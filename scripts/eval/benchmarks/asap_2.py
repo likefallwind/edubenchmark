@@ -20,15 +20,27 @@ alongside as readable diagnostics.
 
 **Prompt provenance matters here.** ASAP 2.0 is a corpus, not an LLM benchmark:
 it ships human scores, the official train/test split and the official holistic
-rubric, but *no* official LLM prompting protocol. So the rubric text
-(``data/rubric.txt``, extracted from the repo's ``asap_scoring_rubric.docx``)
-and the per-prompt writing task (the corpus's own ``assignment`` column) are
-upstream and verbatim, while the surrounding scoring instruction is ours. Do
-not present ASAP 2.0 QWK as an official leaderboard number.
+rubric, but *no* official LLM prompting protocol. There is therefore no
+"official" prompt to port, and this adapter ships two, selected by
+``ASAP_PROMPT_VARIANT``:
 
-The rubric is 1-6 for every prompt. Some prompts happen to have no 6s in the
-test split; that is a property of the sample, not a per-prompt scale, so the
-prompt always states 1-6 rather than leaking the observed range.
+- ``colleague`` (**default**) — reproduces the prompt used for the imported runs
+  under ``reports/eval/asap_2/`` (an external ``benchmark_runner.py``), so new
+  results are directly comparable with them and with the other benchmarks routed
+  through it. It gives the model the prompt name, task, assignment and a score
+  range, but **no rubric**, and the range is the *observed* min/max of human
+  scores for that prompt. That range is a property of the label distribution, so
+  this variant does leak a little (prompts where raters never awarded a 6 are
+  announced as "1 to 5"); it is the default for comparability, not because it is
+  the better measurement.
+- ``rubric`` — supplies the official holistic rubric (``data/rubric.txt``,
+  extracted from the repo's ``asap_scoring_rubric.docx``) verbatim and always
+  states the full 1-6 scale, leaking nothing about the label distribution. This
+  is the cleaner measurement but is not comparable with the imported runs.
+
+Under both variants the per-prompt writing task (the corpus's own ``assignment``
+column) is upstream and verbatim. Do not present ASAP 2.0 QWK as an official
+leaderboard number under either variant.
 
 ``WITH_SOURCE=1`` additionally supplies the source article(s) the students read,
 which is the condition human raters worked under. Availability is partial: the
@@ -61,9 +73,24 @@ SOURCE_TEXTS_FILE = DATA_DIR / "source_texts.json"
 MIN_SCORE = 1
 MAX_SCORE = 6
 PROMPT_VERSION = "v1"
+DEFAULT_VARIANT = "colleague"
 
-# Ours, not official — ASAP 2.0 ships no LLM protocol. The rubric and the
-# writing task are injected verbatim from upstream.
+# Reproduces the external benchmark_runner.py build_asap_prompt() that produced
+# the imported runs, so new models stay comparable with them. No rubric; the
+# score range is the observed min/max of human scores for that prompt.
+COLLEAGUE_PROMPT = """You are scoring a student essay for an automated essay scoring benchmark.
+Prompt name: {prompt_name}
+Task: {task}
+Assignment: {assignment}
+Valid integer score range: {min_score} to {max_score}.
+
+Student essay:
+{essay}
+
+Return only one integer score in the valid range. Stop exactly after the integer."""
+
+# Ours — ASAP 2.0 ships no LLM protocol. The rubric and the writing task are
+# injected verbatim from upstream; the full 1-6 scale is always stated.
 SCORING_PROMPT = """You are an experienced rater scoring student essays for a US state writing assessment.
 
 The student read one or more source articles and responded to this assignment:
@@ -140,6 +167,32 @@ class ASAP2Adapter(BenchmarkAdapter):
     def _with_source() -> bool:
         return os.environ.get("WITH_SOURCE", "").strip() in ("1", "true", "yes")
 
+    @staticmethod
+    def _variant() -> str:
+        variant = (os.environ.get("ASAP_PROMPT_VARIANT") or DEFAULT_VARIANT).strip().lower()
+        if variant not in ("colleague", "rubric"):
+            raise SystemExit(
+                f"ASAP_PROMPT_VARIANT must be colleague/rubric, got {variant!r}"
+            )
+        return variant
+
+    @staticmethod
+    def _observed_ranges(rows: list[dict[str, Any]]) -> dict[str, tuple[int, int]]:
+        """Per-prompt observed min/max of human scores, as the external runner's
+        ``asap_score_ranges`` computed them.
+
+        Deliberately computed over the **whole split** before any --limit is
+        applied: deriving the announced score range from however many rows a
+        smoke test happened to load would make the prompt depend on LIMIT and
+        silently diverge from the full run.
+        """
+        values: dict[str, list[int]] = defaultdict(list)
+        for row in rows:
+            score = row.get("score")
+            if isinstance(score, int):
+                values[str(row.get("prompt_name"))].append(score)
+        return {name: (min(vals), max(vals)) for name, vals in values.items() if vals}
+
     def load_items(self, limit: int | None = None, offset: int = 0) -> list[dict[str, Any]]:
         if not ESSAYS_FILE.exists():
             raise SystemExit(
@@ -160,6 +213,10 @@ class ASAP2Adapter(BenchmarkAdapter):
                     continue
                 rows.append(row)
 
+        # Ranges come from the full split, before --limit narrows the run.
+        ranges = self._observed_ranges(rows)
+        variant = self._variant()
+
         rows = rows[offset:]
         if limit:
             rows = rows[:limit]
@@ -168,6 +225,12 @@ class ASAP2Adapter(BenchmarkAdapter):
         for row in rows:
             prompt_name = str(row.get("prompt_name"))
             sources = source_texts.get(prompt_name) or []
+            if variant == "colleague":
+                if prompt_name not in ranges:
+                    raise SystemExit(f"no observed score range for ASAP prompt {prompt_name!r}")
+                lo, hi = ranges[prompt_name]
+            else:
+                lo, hi = MIN_SCORE, MAX_SCORE
             items.append(
                 {
                     "item_id": row["item_id"],
@@ -178,11 +241,15 @@ class ASAP2Adapter(BenchmarkAdapter):
                         "split": row.get("split"),
                         "prompt_name": prompt_name,
                         "assignment": row.get("assignment"),
+                        "task": row.get("task"),
                         "full_text": row.get("full_text"),
                         "grade_level": row.get("grade_level"),
                         "essay_word_count": row.get("essay_word_count"),
                         "sources": sources,
                         "source_used": bool(sources),
+                        "variant": variant,
+                        "min_score": lo,
+                        "max_score": hi,
                     },
                 }
             )
@@ -192,6 +259,21 @@ class ASAP2Adapter(BenchmarkAdapter):
 
     def build_messages(self, item: dict[str, Any]) -> list[dict[str, Any]]:
         meta = item["meta"]
+        essay = str(meta.get("full_text") or "")
+        if meta.get("variant") == "colleague":
+            # Verbatim reconstruction of the external runner's prompt. Its essay
+            # truncation knob defaulted to "off" and the imported runs did not
+            # set it, so no truncation here either.
+            prompt = COLLEAGUE_PROMPT.format(
+                prompt_name=str(meta.get("prompt_name") or "").strip(),
+                task=str(meta.get("task") or "").strip(),
+                assignment=str(meta.get("assignment") or "").strip(),
+                min_score=meta["min_score"],
+                max_score=meta["max_score"],
+                essay=essay,
+            )
+            return [{"role": "user", "content": prompt}]
+
         sources = meta.get("sources") or []
         source_block = ""
         if sources:
@@ -201,7 +283,7 @@ class ASAP2Adapter(BenchmarkAdapter):
             assignment=str(meta.get("assignment") or "").strip(),
             source_block=source_block,
             rubric=self._load_rubric(),
-            essay=str(meta.get("full_text") or "").strip(),
+            essay=essay.strip(),
             min_score=MIN_SCORE,
             max_score=MAX_SCORE,
         )
@@ -210,33 +292,39 @@ class ASAP2Adapter(BenchmarkAdapter):
     # --- scoring ----------------------------------------------------------------
 
     @staticmethod
-    def _parse_score(response: str) -> int | None:
-        """First in-range integer in the reply, else None.
+    def _parse_score(response: str, lo: int, hi: int) -> int | None:
+        """Last integer in the reply after any reasoning block, else None.
 
-        Models overwhelmingly answer with a bare digit as instructed. We take
-        the first integer token so a stray "Score: 4" still parses, but reject
-        out-of-range values rather than clamping them — a 0 or an 8 means the
-        model did not follow the rubric scale and should count as bad format,
-        not as a boundary score that flatters the agreement statistic.
+        Mirrors the external runner's ``parse_int``: drop everything up to the
+        final ``</think>`` so a reasoning trace full of candidate scores cannot
+        hijack the answer, then take the **last** integer token. Values outside
+        ``[lo, hi]`` are rejected rather than clamped — an out-of-range reply
+        means the model ignored the scale and should count as bad format, not
+        as a boundary score that flatters the agreement statistic.
         """
         if not response:
             return None
-        for token in re.findall(r"-?\d+", str(response)):
-            value = int(token)
-            if MIN_SCORE <= value <= MAX_SCORE:
-                return value
+        text = str(response)
+        marker = text.lower().rfind("</think>")
+        if marker != -1:
+            text = text[marker + len("</think>") :]
+        matches = re.findall(r"-?\d+", text)
+        if not matches:
             return None
-        return None
+        value = int(matches[-1])
+        return value if lo <= value <= hi else None
 
     def extract_answer(
         self, item: dict[str, Any], response: str, client: MiniMaxClient, model: str
     ) -> str:
         # Rule-based: the prompt asks for a bare integer, so no extractor LLM.
-        parsed = self._parse_score(response)
+        meta = item["meta"]
+        parsed = self._parse_score(response, meta["min_score"], meta["max_score"])
         return "" if parsed is None else str(parsed)
 
     def score(self, extracted: str, item: dict[str, Any]) -> dict[str, Any]:
-        parsed = self._parse_score(extracted)
+        meta = item["meta"]
+        parsed = self._parse_score(extracted, meta["min_score"], meta["max_score"])
         gold = item["gold"]
         gold_int = int(gold) if gold is not None else None
         return {
@@ -250,6 +338,11 @@ class ASAP2Adapter(BenchmarkAdapter):
             "adjacent": (
                 parsed is not None and gold_int is not None and abs(parsed - gold_int) <= 1
             ),
+            # Carried into scored.jsonl so extra_summary can build each QWK on
+            # the same rating grid the prompt announced for that item.
+            "min_score": meta["min_score"],
+            "max_score": meta["max_score"],
+            "variant": meta["variant"],
         }
 
     def buckets(self, item: dict[str, Any]) -> dict[str, str]:
@@ -277,10 +370,20 @@ class ASAP2Adapter(BenchmarkAdapter):
         if not usable:
             return {"n": len(rows), "scorable": 0, "qwk": None}
         gold, pred = self._pairs(usable)
+        # Grid = the announced rating scale for this group, never the observed
+        # labels: a slice that happens to skip a rating must not have the
+        # ratings either side of it treated as adjacent. Matches the external
+        # runner, which grids each prompt on that prompt's own range and the
+        # overall figure on the range spanning the whole set.
+        lo = min(r.get("min_score", MIN_SCORE) for r in usable)
+        hi = max(r.get("max_score", MAX_SCORE) for r in usable)
+        lo = min([lo, *gold, *pred])
+        hi = max([hi, *gold, *pred])
         return {
             "n": len(rows),
             "scorable": len(usable),
-            "qwk": quadratic_weighted_kappa(gold, pred),
+            "qwk": quadratic_weighted_kappa(gold, pred, scale=(lo, hi)),
+            "scale": [lo, hi],
             "exact_agreement": fmean(1.0 if r["exact"] else 0.0 for r in usable),
             "adjacent_agreement": fmean(1.0 if r["adjacent"] else 0.0 for r in usable),
             "mean_pred": fmean(pred),
@@ -291,6 +394,11 @@ class ASAP2Adapter(BenchmarkAdapter):
 
     def extra_summary(self, scored: list[dict[str, Any]]) -> dict[str, Any]:
         rows = [r for r in scored if r.get("score_status") == "scored"]
+        # Read back from the rows rather than the env, so a --score-only rerun
+        # reports the variant the predictions were actually produced under.
+        variant = next(
+            (r["variant"] for r in rows if r.get("variant")), self._variant()
+        )
         overall = self._stats(rows)
 
         by_prompt: dict[str, dict[str, Any]] = {}
@@ -324,15 +432,30 @@ class ASAP2Adapter(BenchmarkAdapter):
             "bad_format_count": bad,
             "audit": {
                 "split": os.environ.get("SPLIT", "test"),
-                "with_source": self._with_source(),
-                "rubric_source": "official asap_scoring_rubric.docx (verbatim)",
+                "prompt_variant": variant,
+                "comparable_with_imported_runs": variant == "colleague",
+                "with_source": self._with_source() and variant == "rubric",
                 "assignment_source": "corpus 'assignment' column (verbatim)",
+                "rubric_source": (
+                    "not shown to the model under the 'colleague' variant"
+                    if variant == "colleague"
+                    else "official asap_scoring_rubric.docx (verbatim)"
+                ),
+                "score_range_source": (
+                    "observed per-prompt min/max of human scores (leaks label range)"
+                    if variant == "colleague"
+                    else "full official 1-6 scale"
+                ),
                 "scoring_instruction_source": (
-                    "in-repo; ASAP 2.0 defines no official LLM prompting protocol"
+                    "external benchmark_runner.py build_asap_prompt(), reproduced for "
+                    "comparability with the imported runs"
+                    if variant == "colleague"
+                    else "in-repo; ASAP 2.0 defines no official LLM prompting protocol"
                 ),
                 "prompt_version": PROMPT_VERSION,
-                "prompt_sha256": prompt_sha256(SCORING_PROMPT, SOURCE_BLOCK),
-                "score_range": [MIN_SCORE, MAX_SCORE],
+                "prompt_sha256": prompt_sha256(
+                    COLLEAGUE_PROMPT if variant == "colleague" else SCORING_PROMPT + SOURCE_BLOCK
+                ),
                 "scored_rows": len(rows),
             },
         }

@@ -171,25 +171,44 @@ def multiclass_f1(targets: list[Any], preds: list[Any]) -> dict[str, float]:
     }
 
 
-def quadratic_weighted_kappa(gold: list[int], pred: list[int]) -> float | None:
+def quadratic_weighted_kappa(
+    gold: list[int], pred: list[int], scale: tuple[int, int] | None = None
+) -> float | None:
     """Quadratic weighted kappa for two ordinal rating sequences.
 
     The standard agreement statistic for ordinal human/machine scoring, where
     disagreements are penalized by the *square* of their distance, so a 1-point
-    miss costs far less than a 4-point one. Mirrors
-    ``sklearn.metrics.cohen_kappa_score(weights="quadratic")``.
+    miss costs far less than a 4-point one.
 
-    Labels are the sorted union of both sequences, so the rating scale is taken
-    from the data rather than assumed. Returns ``None`` when the statistic is
-    undefined: empty or mismatched inputs, fewer than two distinct labels, or
-    zero expected disagreement.
+    ``scale`` selects how the rating grid is built, and the choice is not
+    cosmetic when a rating is unused:
 
-    Used by SAS-Bench (per-subtask agreement with expert step labels) and by
-    ASAP 2.0 (essay scores against human raters).
+    - ``None`` (default): labels are the sorted union of both sequences, i.e.
+      ``sklearn.metrics.cohen_kappa_score(weights="quadratic")`` behaviour. An
+      unused middle rating collapses, so ratings on either side of it are
+      treated as adjacent.
+    - ``(lo, hi)``: the full inclusive rating scale is used even where a rating
+      never occurs, so distances reflect the real scale. This is what ordinal
+      scoring scales (and the classic Kaggle ASAP QWK) mean, and the two differ
+      materially on gappy data — e.g. gold/pred over {1,2,4,5,6} with 3 unused
+      gives 0.900 under ``None`` but 0.767 under ``(1, 6)``.
+
+    Prefer ``scale`` whenever the rating scale is known a priori. Returns
+    ``None`` when the statistic is undefined: empty or mismatched inputs, fewer
+    than two ratings in the grid, or zero expected disagreement.
+
+    Used by SAS-Bench (per-subtask agreement with expert step labels, observed
+    labels) and ASAP 2.0 (essay scores against human raters, fixed 1-6 scale).
     """
     if not gold or len(gold) != len(pred):
         return None
-    labels = sorted(set(gold) | set(pred))
+    if scale is None:
+        labels = sorted(set(gold) | set(pred))
+    else:
+        lo, hi = scale
+        if any(value < lo or value > hi for value in (*gold, *pred)):
+            raise ValueError(f"rating outside scale {scale}")
+        labels = list(range(lo, hi + 1))
     if len(labels) < 2:
         return None
     index = {label: idx for idx, label in enumerate(labels)}
