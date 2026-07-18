@@ -47,11 +47,13 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 from pathlib import Path
 from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient
+from ..providers import build_client
 
 
 DATA_DIR = ROOT / "sources" / "datasets" / "pedagogy_benchmark" / "data"
@@ -61,6 +63,9 @@ EXAMPLES_FILE = DATA_DIR / "examples.jsonl"
 LETTERS = list("ABCDEFG")
 N_SHOT = 3
 PROMPT_VERSION = "official-v1"
+# Comparability with the imported runs is the default; the official-text
+# variants stay available via PROMPT_VARIANT.
+DEFAULT_VARIANT = "colleague"
 
 # Verbatim from the official src/cdpk/benchmark_answers.py REPAT, including the
 # per-model tolerances. Order matters: the first match wins.
@@ -82,6 +87,39 @@ FEWSHOT_TAIL = (
 )
 ZEROSHOT_LEAD = "Answer the following question using the answer format specified below: \n"
 ZEROSHOT_TAIL = "\n\nOnly provide the letter for your answer.\n\nStop exactly after the letter."
+
+# Reproduces the external benchmark_runner.py build_pedagogy_prompt() that
+# produced the imported runs under reports/eval/pedagogy_benchmark/, so new
+# models stay comparable with them. It is a loose paraphrase of the official
+# prompt, not the official text: "with answers" loses its parentheses, the lead
+# gains a "the", the "Only answer the real question." line is dropped, and the
+# two closing instructions are merged onto one line. It is also 3-shot for
+# *every* model, including reasoning models that the official code routes to a
+# zero-shot prompt.
+COLLEAGUE_HEADER = "The following are example multiple choice questions with answers.\n"
+COLLEAGUE_LEAD = "Answer the following real question using the same answer format:"
+COLLEAGUE_TAIL = "Only provide the letter for your answer. Stop exactly after the letter."
+
+# Appended verbatim (as the external runner did) when a reply does not parse,
+# then the whole prompt is re-sent to the model under test.
+RETRY_SUFFIX = (
+    "Your previous response was not parseable. "
+    "Reply with exactly one capital letter from A to G and nothing else."
+)
+DEFAULT_BAD_FORMAT_RETRIES = 2
+
+# HF category label -> the category key the external runner used in item ids,
+# so per-item diffs against the imported runs line up.
+COLLEAGUE_CATEGORY_KEYS = {
+    "Creative arts": "CDPK_creative_arts",
+    "General": "CDPK_gen_pk",
+    "Literacy": "CDPK_literacy",
+    "Maths": "CDPK_maths",
+    "Science": "CDPK_science",
+    "Social studies": "CDPK_social_studies",
+    "Technology": "CDPK_technology",
+    "SEND": "CDPK_send",
+}
 
 # Models routed to the official zero-shot variant under PROMPT_VARIANT=auto.
 # Substring match, lowercased. Reasoning models emit a thinking block before the
@@ -131,6 +169,34 @@ class PedagogyBenchmarkAdapter(BenchmarkAdapter):
     def __init__(self) -> None:
         self._examples: dict[str, list[dict[str, Any]]] = {}
         self._variant: str | None = None
+        self._mut_client: MiniMaxClient | None = None
+        self._mut_lock = threading.Lock()
+
+    # --- bad-format retry (benchmark-local, not a harness feature) ---------------
+
+    @staticmethod
+    def _bad_format_retries() -> int:
+        raw = (os.environ.get("PEDAGOGY_BAD_FORMAT_RETRIES") or "").strip()
+        if not raw:
+            return DEFAULT_BAD_FORMAT_RETRIES
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            raise SystemExit(
+                f"PEDAGOGY_BAD_FORMAT_RETRIES must be an integer, got {raw!r}"
+            )
+
+    def _model_client(self) -> MiniMaxClient | None:
+        """Client for the model under test, for bad-format retries. ``None``
+        when the harness did not set ``model_under_test`` (e.g. --score-only),
+        so re-scoring stored predictions never issues new calls."""
+        with self._mut_lock:
+            if self._mut_client is None:
+                model = getattr(self, "model_under_test", None)
+                if not model:
+                    return None
+                self._mut_client = build_client(model, timeout=600)
+            return self._mut_client
 
     # --- data loading -----------------------------------------------------------
 
@@ -148,14 +214,14 @@ class PedagogyBenchmarkAdapter(BenchmarkAdapter):
         """Decide between the official 3-shot and zero-shot prompt variants."""
         if self._variant is not None:
             return self._variant
-        requested = (os.environ.get("PROMPT_VARIANT") or "auto").strip().lower()
-        if requested not in ("auto", "fewshot", "zeroshot"):
+        requested = (os.environ.get("PROMPT_VARIANT") or DEFAULT_VARIANT).strip().lower()
+        if requested not in ("colleague", "auto", "fewshot", "zeroshot"):
             raise SystemExit(
-                f"PROMPT_VARIANT must be auto/fewshot/zeroshot, got {requested!r}"
+                f"PROMPT_VARIANT must be colleague/auto/fewshot/zeroshot, got {requested!r}"
             )
         if requested == "auto":
             requested = "zeroshot" if _is_reasoning_model(self.model_under_test) else "fewshot"
-        if requested == "fewshot":
+        if requested in ("fewshot", "colleague"):
             self._load_examples()
         self._variant = requested
         return requested
@@ -196,15 +262,31 @@ class PedagogyBenchmarkAdapter(BenchmarkAdapter):
         if not include_exemplars:
             rows = [row for row in rows if not row.get("is_exemplar")]
 
+        # Under the colleague variant, mirror the external runner's item ids
+        # ("<task>:<category_key>:<index within category, exemplars excluded>")
+        # so per-item diffs against the imported runs line up. Numbered over the
+        # whole scored set *before* offset/limit, so a partial run keeps the
+        # same ids the full run would give.
+        colleague_ids: dict[str, str] = {}
+        if self._resolve_variant() == "colleague" and not include_exemplars:
+            seen: dict[str, int] = {}
+            for row in rows:
+                category = str(row.get("category"))
+                key = COLLEAGUE_CATEGORY_KEYS.get(category, category)
+                index = seen.get(category, 0)
+                seen[category] = index + 1
+                colleague_ids[row["item_id"]] = f"{row.get('task')}:{key}:{index}"
+
         rows = rows[offset:]
         if limit:
             rows = rows[:limit]
+
         items: list[dict[str, Any]] = []
         for row in rows:
             options = {k: v for k, v in (row.get("options") or {}).items() if v not in (None, "")}
             items.append(
                 {
-                    "item_id": row["item_id"],
+                    "item_id": colleague_ids.get(row["item_id"], row["item_id"]),
                     "text": "",  # built per-call in build_messages (variant-dependent)
                     "image_paths": [],
                     "gold": str(row.get("correct_answer") or "").strip().upper(),
@@ -246,10 +328,29 @@ class PedagogyBenchmarkAdapter(BenchmarkAdapter):
             block += "\n{}\n\n".format(row.get("correct_answer"))
         return block
 
+    def _colleague_example_block(self, category: str | None) -> list[str]:
+        rows = self._examples.get(str(category)) or []
+        parts: list[str] = []
+        for row in rows[:N_SHOT]:
+            parts.append(self._format_question(row.get("question"), row.get("options") or {}))
+            # Their answer normalization, for multi-answer keys like "A and B".
+            parts.append(str(row.get("correct_answer") or "").replace(" and", ",").strip())
+            parts.append("")
+        return parts
+
     def build_messages(self, item: dict[str, Any]) -> list[dict[str, Any]]:
         meta = item["meta"]
         question = self._format_question(meta["question"], meta["options"])
-        if self._resolve_variant() == "zeroshot":
+        variant = self._resolve_variant()
+        if variant == "colleague":
+            parts = [COLLEAGUE_HEADER]
+            parts += self._colleague_example_block(meta.get("category"))
+            parts.append(COLLEAGUE_LEAD)
+            parts.append(question)
+            parts.append("")
+            parts.append(COLLEAGUE_TAIL)
+            prompt = "\n".join(parts)
+        elif variant == "zeroshot":
             prompt = ZEROSHOT_LEAD + question + ZEROSHOT_TAIL
         else:
             prompt = FEWSHOT_HEADER + self._example_block(meta.get("category"))
@@ -270,13 +371,68 @@ class PedagogyBenchmarkAdapter(BenchmarkAdapter):
                 return groups[0] if groups else None
         return None
 
+    @staticmethod
+    def _colleague_choice(response: str) -> str | None:
+        """The external runner's ``extract_choice``.
+
+        Drops everything up to the final ``</think>`` so a reasoning trace can't
+        hijack the answer, then takes a bare letter if the whole reply is one,
+        else the **last** standalone A-G token. More permissive than the
+        official REPAT regexes, which anchor on specific reply shapes.
+        """
+        text = str(response or "")
+        marker = text.lower().rfind("</think>")
+        if marker != -1:
+            text = text[marker + len("</think>") :]
+        stripped = text.strip().upper()
+        if re.fullmatch(r"[A-G]", stripped):
+            return stripped
+        matches = re.findall(r"\b([A-G])\b", stripped)
+        return matches[-1] if matches else None
+
+    def _parse_choice(self, response: str) -> str | None:
+        if self._resolve_variant() == "colleague":
+            return self._colleague_choice(response)
+        # Official clean_resps. A trailing strip is the one liberty taken:
+        # providers vary on trailing whitespace and the regexes anchor on
+        # end-of-string.
+        return self._clean_resp((response or "").strip())
+
     def extract_answer(
         self, item: dict[str, Any], response: str, client: MiniMaxClient, model: str
     ) -> str:
-        # Rule-based only, exactly like the official runner. A trailing strip is
-        # the one liberty taken: providers vary on trailing whitespace, and the
-        # official regexes anchor on end-of-string.
-        return self._clean_resp((response or "").strip()) or ""
+        """Parse the option letter; on failure, re-ask the model under test.
+
+        Parsing is rule-based under every variant, so the ``client`` argument —
+        the *extractor* model — is deliberately unused. The bad-format retry
+        re-sends the full prompt plus RETRY_SUFFIX to the **model under test**,
+        reproducing the external runner's ``--bad-format-retries`` loop, and is
+        scoped to this adapter: the shared harness retries transport errors,
+        not unparseable content.
+        """
+        parsed = self._parse_choice(response)
+        if parsed:
+            return parsed
+
+        retries = self._bad_format_retries()
+        if retries <= 0:
+            return ""
+        mut = self._model_client()
+        if mut is None:
+            return ""
+        messages = self.build_messages(item)
+        retry_messages = [
+            {**messages[0], "content": messages[0]["content"] + "\n" + RETRY_SUFFIX}
+        ]
+        for _ in range(retries):
+            try:
+                retry_response = mut.chat(retry_messages)
+            except Exception:  # noqa: BLE001 - a failed retry is just no answer
+                continue
+            parsed = self._parse_choice(retry_response)
+            if parsed:
+                return parsed
+        return ""
 
     def score(self, extracted: str, item: dict[str, Any]) -> dict[str, Any]:
         normalized = (extracted or "").strip().upper()

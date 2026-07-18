@@ -45,16 +45,24 @@
 #   数据集是 gated: 先在 HF 数据集页接受条款,并 export HF_TOKEN=<read token>
 #   计分 1,119 题(每类目前 3 题是官方 few-shot 示例,不计分;详见 adapter 文档):
 #     LIMIT=20 MODEL=glm-5.2 ./scripts/run_eval.sh pedagogy_benchmark
-#   提示词变体默认按模型自动选(推理模型走官方零样本,其余走官方 3-shot),可强制:
-#     PROMPT_VARIANT=fewshot|zeroshot MODEL=<model> ./scripts/run_eval.sh pedagogy_benchmark
-#   官方规则解析,无 LLM 抽取;bad_format 率>5% 时官方会剔除该模型,本仓库只在 summary 标记不自动剔除。
+#   PROMPT_VARIANT 默认 colleague:复刻已迁移结果所用的提示词与解析,补跑新模型可与它们直接对比。
+#   官方原文变体(与已迁移结果不可比,勿混用):
+#     PROMPT_VARIANT=auto|fewshot|zeroshot MODEL=<model> ./scripts/run_eval.sh pedagogy_benchmark
+#   两种变体都是规则解析、无 LLM 抽取;bad_format 率>5% 时官方会剔除该模型,本仓库只标记不剔除。
+#   解析失败时重问被测模型(复刻同事 --bad-format-retries,默认 2 次;仅本 benchmark 内生效):
+#     PEDAGOGY_BAD_FORMAT_RETRIES=0 ...   # 关掉
 # ASAP 2.0 (学生议论文整体评分,模型当评分员; github.com/scrosseye/ASAP_2.0): 先物化数据(一次性)
 #     python scripts/eval/data/fetch_eval_datasets.py --benchmark asap_2
 #   评官方 test 划分 7,421 篇,主指标 QWK(对齐人工评分);accuracy 按设计为 null:
 #     LIMIT=20 MODEL=glm-5.2 ./scripts/run_eval.sh asap_2
-#   全量单模型约合数十美元,不要默认跑全量。附源文章的对照条件(部分 prompt 源文被上游版权扣留):
-#     WITH_SOURCE=1 LIMIT=20 MODEL=glm-5.2 ./scripts/run_eval.sh asap_2
-#   量规与 train/test 划分为官方原文,外围评分指令是本仓库自拟,QWK 不等同官方排行榜成绩。
+#   ASAP_PROMPT_VARIANT 默认 colleague:复刻已迁移结果所用提示词(无量规、分数区间取观测值),
+#   已逐题验证可复现其发布的 QWK 到浮点精度,补跑新模型可与它们直接对比。
+#   本仓库自拟的量规变体(给官方 rubric 全文、固定 1-6、不泄露标签区间;与已迁移结果不可比):
+#     ASAP_PROMPT_VARIANT=rubric MODEL=<model> ./scripts/run_eval.sh asap_2
+#     WITH_SOURCE=1 ASAP_PROMPT_VARIANT=rubric ...   # 附源文章(仅 rubric 变体;部分源文被上游版权扣留)
+#   解析失败时重问被测模型(复刻同事 --bad-format-retries,默认 2 次;仅本 benchmark 内生效):
+#     ASAP_BAD_FORMAT_RETRIES=0 ...   # 关掉
+#   全量单模型约合数十美元,不要默认跑全量。ASAP 2.0 无官方 LLM 协议,QWK 不等同官方排行榜成绩。
 # 语言:eduguard_sata 默认中英双语都跑(--language both)。单语言是该评测独有的刻意选项,
 #   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
 #     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0

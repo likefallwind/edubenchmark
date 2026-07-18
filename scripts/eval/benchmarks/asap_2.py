@@ -55,6 +55,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 from collections import defaultdict
 from pathlib import Path
 from statistics import fmean
@@ -62,6 +63,7 @@ from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient
+from ..providers import build_client
 from ..scoring import quadratic_weighted_kappa
 
 
@@ -115,6 +117,15 @@ The student had access to this source material:
 {sources}
 """
 
+# Appended verbatim (as the external runner did) when a reply does not parse,
+# then the whole prompt is re-sent to the model under test.
+RETRY_SUFFIX = (
+    "Your previous response was not parseable. "
+    "Reply with exactly one integer from {min_score} to {max_score} and nothing else."
+)
+# Their --bad-format-retries, defaulted to what the documented rerun used.
+DEFAULT_BAD_FORMAT_RETRIES = 2
+
 
 class ASAP2Adapter(BenchmarkAdapter):
     name = "asap_2"
@@ -142,6 +153,35 @@ class ASAP2Adapter(BenchmarkAdapter):
     def __init__(self) -> None:
         self._rubric: str | None = None
         self._source_texts: dict[str, list[str]] | None = None
+        self._mut_client: MiniMaxClient | None = None
+        self._mut_lock = threading.Lock()
+
+    # --- bad-format retry (benchmark-local, not a harness feature) ---------------
+
+    @staticmethod
+    def _bad_format_retries() -> int:
+        raw = (os.environ.get("ASAP_BAD_FORMAT_RETRIES") or "").strip()
+        if not raw:
+            return DEFAULT_BAD_FORMAT_RETRIES
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            raise SystemExit(f"ASAP_BAD_FORMAT_RETRIES must be an integer, got {raw!r}")
+
+    def _model_client(self) -> MiniMaxClient | None:
+        """Client for the model under test, for bad-format retries.
+
+        Returns ``None`` when the harness did not set ``model_under_test`` (e.g.
+        a --score-only rerun), so retrying degrades to "no retry" rather than
+        exploding: re-scoring stored predictions must never issue new calls.
+        """
+        with self._mut_lock:
+            if self._mut_client is None:
+                model = getattr(self, "model_under_test", None)
+                if not model:
+                    return None
+                self._mut_client = build_client(model, timeout=600)
+            return self._mut_client
 
     # --- data loading -----------------------------------------------------------
 
@@ -181,10 +221,16 @@ class ASAP2Adapter(BenchmarkAdapter):
         """Per-prompt observed min/max of human scores, as the external runner's
         ``asap_score_ranges`` computed them.
 
-        Deliberately computed over the **whole split** before any --limit is
-        applied: deriving the announced score range from however many rows a
-        smoke test happened to load would make the prompt depend on LIMIT and
-        silently diverge from the full run.
+        Two scoping details are load-bearing for comparability, both verified
+        against that runner's recorded per-row ``min_score``/``max_score``:
+
+        - Over **both splits**, not just the split being evaluated. "The Face on
+          Mars" tops out at 5 in test but reaches 6 in train, and the runner
+          announced 1-6 for it; scoping to test alone would announce 1-5 and
+          reject a model's legitimate 6 as out-of-range. ("A Cowboy Who Rode the
+          Waves" is 1-5 in both splits, which is why it is announced as 1-5.)
+        - Over the whole corpus, before any ``--limit`` narrows the run, so the
+          announced range never depends on how many rows a smoke test loaded.
         """
         values: dict[str, list[int]] = defaultdict(list)
         for row in rows:
@@ -202,6 +248,7 @@ class ASAP2Adapter(BenchmarkAdapter):
         wanted_split = (os.environ.get("SPLIT") or "test").strip().lower()
         source_texts = self._load_source_texts() if self._with_source() else {}
 
+        all_rows: list[dict[str, Any]] = []
         rows: list[dict[str, Any]] = []
         with ESSAYS_FILE.open(encoding="utf-8") as fh:
             for line in fh:
@@ -209,12 +256,13 @@ class ASAP2Adapter(BenchmarkAdapter):
                 if not line:
                     continue
                 row = json.loads(line)
-                if wanted_split != "all" and str(row.get("split")) != wanted_split:
-                    continue
-                rows.append(row)
+                all_rows.append(row)
+                if wanted_split == "all" or str(row.get("split")) == wanted_split:
+                    rows.append(row)
 
-        # Ranges come from the full split, before --limit narrows the run.
-        ranges = self._observed_ranges(rows)
+        # Ranges span both splits and the whole corpus, never just the rows this
+        # run happens to evaluate — see _observed_ranges.
+        ranges = self._observed_ranges(all_rows)
         variant = self._variant()
 
         rows = rows[offset:]
@@ -317,10 +365,49 @@ class ASAP2Adapter(BenchmarkAdapter):
     def extract_answer(
         self, item: dict[str, Any], response: str, client: MiniMaxClient, model: str
     ) -> str:
-        # Rule-based: the prompt asks for a bare integer, so no extractor LLM.
+        """Parse the score; on failure, re-ask the model under test.
+
+        Parsing is rule-based (the prompt asks for a bare integer), so the
+        ``client`` argument — the *extractor* model — is deliberately unused.
+        The bad-format retry re-sends the full prompt plus RETRY_SUFFIX to the
+        **model under test**, reproducing the external runner's
+        ``--bad-format-retries`` loop. It is scoped to this adapter on purpose:
+        the shared harness retries transport errors, not unparseable content.
+
+        For reference, in the imported runs this path fired 4 times across
+        14,842 rows — their retry traffic was almost entirely connection
+        failures, which the harness already handles.
+        """
         meta = item["meta"]
-        parsed = self._parse_score(response, meta["min_score"], meta["max_score"])
-        return "" if parsed is None else str(parsed)
+        lo, hi = meta["min_score"], meta["max_score"]
+        parsed = self._parse_score(response, lo, hi)
+        if parsed is not None:
+            return str(parsed)
+
+        retries = self._bad_format_retries()
+        if retries <= 0:
+            return ""
+        mut = self._model_client()
+        if mut is None:
+            return ""
+        messages = self.build_messages(item)
+        retry_messages = [
+            {
+                **messages[0],
+                "content": messages[0]["content"]
+                + "\n"
+                + RETRY_SUFFIX.format(min_score=lo, max_score=hi),
+            }
+        ]
+        for _ in range(retries):
+            try:
+                retry_response = mut.chat(retry_messages)
+            except Exception:  # noqa: BLE001 - a failed retry is just no answer
+                continue
+            parsed = self._parse_score(retry_response, lo, hi)
+            if parsed is not None:
+                return str(parsed)
+        return ""
 
     def score(self, extracted: str, item: dict[str, Any]) -> dict[str, Any]:
         meta = item["meta"]
