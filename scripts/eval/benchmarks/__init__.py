@@ -33,6 +33,7 @@ from .mmtutorbench import MMTutorBenchAdapter, MMTutorBenchJudgeCalibrationAdapt
 from .mooccube_prereq import MOOCCubePrereqAdapter
 from .mrbench import MRBenchJudgeAdapter, MRBenchTutorAdapter
 from .olympiadbench import OlympiadBenchAdapter
+from .pedagogy_benchmark import PedagogyBenchmarkAdapter
 from .p07_selfcheck import P07SelfCheckAdapter
 from .p08_abstention import P08AbstentionAdapter
 from .p08_calibration import P08CalibrationAdapter
@@ -86,6 +87,9 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     P07SelfCheckAdapter,
     # SAS-Bench: model-as-grader, official QWK / CCS / ECS population metrics.
     SASBenchAdapter,
+    # Pedagogy Benchmark: teacher-exam pedagogical knowledge MCQ, official
+    # prompt + REPAT parsing, 1,119 scored items (24 are prompt exemplars).
+    PedagogyBenchmarkAdapter,
 ]
 
 _REGISTRY: dict[str, type[BenchmarkAdapter]] = {a.name: a for a in _ADAPTERS}

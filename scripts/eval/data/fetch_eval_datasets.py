@@ -879,6 +879,219 @@ def fetch_ceval(force: bool = False) -> Path:
     return out_dir
 
 
+def fetch_pedagogy_benchmark(force: bool = False) -> Path:
+    """Materialize the Pedagogy Benchmark (AI-for-Education/pedagogy-benchmark).
+
+    1,143 English multiple-choice questions from Chilean teacher qualification
+    exams, split into CDPK (920, config ``cdpk_main``) and SEND (223, config
+    ``cdpk_send``). Options run A..G — most items use A-D, a minority go
+    further, so ``answer_e``/``answer_f``/``answer_g`` are often null.
+
+    The HF repo is **gated**: accept the terms at
+    https://huggingface.co/datasets/AI-for-Education/pedagogy-benchmark while
+    logged in, then export ``HF_TOKEN`` (or run ``huggingface-cli login``).
+
+    The HF release merges the upstream dev and test CSVs into one file per
+    config, grouped by category. The official configs use ``example_rows:
+    [0, 1, 2]``, so **the first three rows of each category are the few-shot
+    exemplars** and are not scored: 1,143 rows - 8 categories x 3 = 1,119
+    scored items, which is exactly the official scored set. We tag each row
+    with ``is_exemplar`` / ``category_index`` here so the adapter can split
+    them without re-deriving the ordering.
+    """
+    base = ROOT / "sources" / "datasets" / "pedagogy_benchmark"
+    out_dir = base / "data"
+    questions_out = out_dir / "questions.jsonl"
+    examples_out = out_dir / "examples.jsonl"
+    if not force and _ok(questions_out):
+        print(f"skip pedagogy_benchmark: {questions_out} already exists (use --force to rebuild)")
+        return out_dir
+
+    try:
+        from datasets import load_dataset
+    except ImportError as exc:  # pragma: no cover - actionable hint
+        raise SystemExit(
+            "the `datasets` library is required to fetch the Pedagogy Benchmark. "
+            "Install it: pip install datasets"
+        ) from exc
+
+    option_keys = [f"answer_{letter}" for letter in "abcdefg"]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    records: list[dict[str, Any]] = []
+    try:
+        for config, task in (("cdpk_main", "cdpk"), ("cdpk_send", "send")):
+            ds = load_dataset("AI-for-Education/pedagogy-benchmark", name=config)
+            split = "train" if "train" in ds else next(iter(ds))
+            for row in ds[split]:
+                options = {
+                    letter.upper(): _jsonable(row.get(key))
+                    for letter, key in zip("abcdefg", option_keys)
+                }
+                records.append(
+                    {
+                        "item_id": f"{task}:{config}:{_jsonable(row.get('question_id'))}",
+                        "task": task,
+                        "config": config,
+                        "question_id": _jsonable(row.get("question_id")),
+                        "question": _jsonable(row.get("question")),
+                        "options": {k: v for k, v in options.items() if v not in (None, "")},
+                        "correct_answer": _jsonable(row.get("correct_answer")),
+                        "category": _jsonable(row.get("category")),
+                        "secondary_category": _jsonable(row.get("secondary_category")),
+                        "pedagogical_subdomain": _jsonable(row.get("pedagogical_subdomain")),
+                        "age_group": _jsonable(row.get("age_group")),
+                        "education_level": _jsonable(row.get("education_level")),
+                        "year": _jsonable(row.get("year")),
+                    }
+                )
+    except Exception as exc:  # noqa: BLE001 - surface the gate as an actionable message
+        raise SystemExit(
+            f"failed to load AI-for-Education/pedagogy-benchmark: {exc}\n"
+            "This dataset is gated. Accept the terms on the dataset page while logged in, "
+            "then export HF_TOKEN=<read token> (or run `huggingface-cli login`)."
+        ) from exc
+
+    # Tag the official example_rows [0, 1, 2] of each category. Rows arrive
+    # grouped by category in dataset order, which is the order the official
+    # per-category CSVs are read in.
+    per_category: dict[str, int] = {}
+    for rec in records:
+        category = str(rec["category"])
+        index = per_category.get(category, 0)
+        per_category[category] = index + 1
+        rec["category_index"] = index
+        rec["is_exemplar"] = index < 3
+
+    exemplars = [r for r in records if r["is_exemplar"]]
+    scored = [r for r in records if not r["is_exemplar"]]
+    with questions_out.open("w", encoding="utf-8") as fh:
+        for rec in records:
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    with examples_out.open("w", encoding="utf-8") as fh:
+        for rec in exemplars:
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+    print(
+        f"wrote pedagogy_benchmark: {len(records)} questions -> {questions_out}\n"
+        f"  {len(scored)} scored items + {len(exemplars)} few-shot exemplars "
+        f"({len(per_category)} categories x 3) -> {examples_out}"
+    )
+    return out_dir
+
+
+# ASAP 2.0 column-name candidates. The Kaggle release has gone through several
+# namings (and the corpus is also distributed as PERSUADE 2.0), so we map by
+# candidate list and fail loudly with the observed header rather than guessing.
+_ASAP_COLUMNS: dict[str, tuple[str, ...]] = {
+    "essay_id": ("essay_id", "essay_id_comp", "id"),
+    "full_text": ("full_text", "essay_text", "text"),
+    "score": ("score", "holistic_essay_score", "holistic_score"),
+    "prompt_name": ("prompt_name", "assignment", "prompt"),
+    "split": ("split", "train_split", "holdout", "assignment_split"),
+}
+
+
+def fetch_asap_2(force: bool = False) -> Path:
+    """Materialize ASAP 2.0 (Kaggle ``lburleigh/asap-2-0``) into JSONL.
+
+    ~25k source-based argumentative essays by US grade 6-12 students, each
+    holistically scored 1-6 by trained raters (Crossley et al., ASAP 2.0; an
+    extension of the PERSUADE corpus). CC BY licensed.
+
+    Needs Kaggle API credentials: kaggle.com -> Settings -> API ->
+    "Create New Token", save as ``~/.kaggle/kaggle.json`` (chmod 600).
+
+    Unlike the other benchmarks here ASAP 2.0 is a *corpus*, not an LLM
+    evaluation suite: it ships human scores and the holistic rubric but no
+    official LLM prompting protocol. The prompt lives in the adapter and is
+    ours; the rubric and the QWK-against-human-scores metric are not.
+    """
+    base = ROOT / "sources" / "datasets" / "asap_2"
+    out_dir = base / "data"
+    out_path = out_dir / "essays.jsonl"
+    if not force and _ok(out_path):
+        print(f"skip asap_2: {out_path} already exists (use --force to rebuild)")
+        return out_dir
+
+    raw_dir = base / "raw"
+    csv_files = sorted(raw_dir.glob("**/*.csv"))
+    if not csv_files or force:
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        if not (Path.home() / ".kaggle" / "kaggle.json").exists():
+            raise SystemExit(
+                "ASAP 2.0 needs Kaggle credentials: kaggle.com -> Settings -> API -> "
+                "'Create New Token', then save the file as ~/.kaggle/kaggle.json "
+                "(chmod 600). Dataset: https://www.kaggle.com/datasets/lburleigh/asap-2-0"
+            )
+        import subprocess
+
+        print("downloading kaggle dataset lburleigh/asap-2-0 ...")
+        result = subprocess.run(
+            ["kaggle", "datasets", "download", "-d", "lburleigh/asap-2-0", "-p", str(raw_dir), "--unzip"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise SystemExit(
+                f"kaggle download failed (exit {result.returncode}):\n{result.stderr.strip()}\n"
+                "Install the CLI with `pip install kaggle` if it is missing."
+            )
+        csv_files = sorted(raw_dir.glob("**/*.csv"))
+        if not csv_files:
+            raise SystemExit(f"no CSV found under {raw_dir} after download")
+
+    pandas = _require_pandas()
+    # Pick the widest CSV: the corpus release ships the essay table alongside
+    # smaller companion files (source texts, demographics, rubric).
+    frames = {path: pandas.read_csv(path) for path in csv_files}
+    essay_path = max(frames, key=lambda p: len(frames[p].columns))
+    frame = frames[essay_path]
+    header = list(frame.columns)
+
+    resolved: dict[str, str | None] = {}
+    for field, candidates in _ASAP_COLUMNS.items():
+        match = next((c for c in candidates if c in header), None)
+        if match is None and field in ("essay_id", "full_text", "score"):
+            raise SystemExit(
+                f"could not find a '{field}' column in {essay_path.name}.\n"
+                f"tried {candidates}; observed columns: {header}\n"
+                "Add the real name to _ASAP_COLUMNS in this file."
+            )
+        resolved[field] = match
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written = 0
+    with out_path.open("w", encoding="utf-8") as fh:
+        for _, row in frame.iterrows():
+            rec = {
+                "item_id": str(_jsonable(row[resolved["essay_id"]])),
+                "full_text": _jsonable(row[resolved["full_text"]]),
+                "score": _jsonable(row[resolved["score"]]),
+                "prompt_name": _jsonable(row[resolved["prompt_name"]]) if resolved["prompt_name"] else None,
+                "split": _jsonable(row[resolved["split"]]) if resolved["split"] else None,
+            }
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            written += 1
+
+    manifest = {
+        "dataset": "lburleigh/asap-2-0",
+        "source_csv": essay_path.name,
+        "rows": written,
+        "resolved_columns": resolved,
+        "observed_columns": header,
+        "rubric": "holistic 1-6, Crossley et al. ASAP 2.0",
+        "note": (
+            "Corpus only: ships human scores and rubric, no official LLM prompting "
+            "protocol. The scoring prompt lives in the adapter and is not official."
+        ),
+    }
+    (out_dir / "data_manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    print(f"wrote asap_2: {written} essays -> {out_path} (from {essay_path.name})")
+    return out_dir
+
+
 def fetch_longtutor(force: bool = False) -> Path:
     """Clone the official LongTutor code/data into the unified dataset root."""
     base = ROOT / "sources" / "datasets" / "longtutor"
@@ -992,6 +1205,8 @@ def main() -> None:
             "k12vista",
             "longtutor",
             "mooccube",
+            "pedagogy_benchmark",
+            "asap_2",
             "all",
         ],
     )
@@ -1025,6 +1240,10 @@ def main() -> None:
         fetch_longtutor(force=args.force)
     if args.benchmark in ("mooccube", "all"):
         fetch_mooccube(force=args.force)
+    if args.benchmark in ("pedagogy_benchmark", "all"):
+        fetch_pedagogy_benchmark(force=args.force)
+    if args.benchmark in ("asap_2", "all"):
+        fetch_asap_2(force=args.force)
 
 
 if __name__ == "__main__":
