@@ -44,6 +44,7 @@ def _write_run_start_summary(
     extractor_model: str,
     judge_model: str | None,
     judge_provenance: dict,
+    generation_params: dict | None = None,
 ) -> dict:
     """Persist run identity before clients, datasets, or predictions can fail."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -74,6 +75,9 @@ def _write_run_start_summary(
         "judge_model": judge_model,
         "run_status": "running",
         "started_at": started_at,
+        # Recorded so a finished run can always be told apart from one made under
+        # different sampling settings; "provider_default" means the field was omitted.
+        "generation_params": generation_params or {},
         **judge_provenance,
     }
     existing.pop("completed_at", None)
@@ -156,6 +160,18 @@ def main() -> None:
         help="max times a single rate-limited item is re-queued (env RATE_LIMIT_MAX_RETRIES; default 3)",
     )
     parser.add_argument("--max-tokens", type=int, default=None)
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=(float(os.environ["TEMPERATURE"]) if os.environ.get("TEMPERATURE") else None),
+        help=(
+            "sampling temperature for the prediction model (env TEMPERATURE). "
+            "Unset = omit the field and inherit the backend default (~1.0 for most "
+            "OpenAI-compatible relays, but lower for some GLM routes); this is what "
+            "every historical run in this repo did. Pass 0 for greedy, reproducible "
+            "decoding when a run must be comparable with an external greedy-decoded run."
+        ),
+    )
     parser.add_argument("--skip-extract", action="store_true", help="only generate predictions, no extract/score")
     parser.add_argument("--score-only", action="store_true", help="reuse existing predictions; extract + score only")
     parser.add_argument("--dry-run", action="store_true", help="print constructed messages, no API calls")
@@ -213,6 +229,10 @@ def main() -> None:
             extractor_model=extractor_model,
             judge_model=judge_model,
             judge_provenance=adapter.judge_prompt_provenance(),
+            generation_params={
+                "temperature": "provider_default" if args.temperature is None else args.temperature,
+                "max_tokens": "uncapped" if args.max_tokens is None else args.max_tokens,
+            },
         )
 
     # Predictions and extraction use separate clients: the prediction model may
@@ -228,6 +248,7 @@ def main() -> None:
             base_url=args.base_url,
             api_key_env=args.api_key_env,
             chat_path=args.chat_path,
+            temperature=args.temperature,
         )
         extractor_client = build_client(extractor_model, timeout=args.timeout)
 

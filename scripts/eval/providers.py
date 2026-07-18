@@ -282,6 +282,7 @@ def build_client(
     api_key_env: str | None = None,
     chat_path: str | None = None,
     extra_params: dict | None = None,
+    temperature: float | None = None,
 ) -> MiniMaxClient:
     """Construct a client for ``model`` against its resolved provider.
 
@@ -291,6 +292,12 @@ def build_client(
     e.g. ``gpt-5.5``'s ``reasoning_effort: medium``) are applied unless
     ``extra_params`` is given explicitly. Raises a clear error if the key env var
     is unset.
+
+    ``temperature`` is merged on top of the resolved params rather than replacing
+    them, so pinning a sampling temperature never drops a per-model workaround
+    (e.g. ``deepseek-v3.2``'s mandatory ``max_tokens``). Leave it ``None`` to omit
+    the field entirely and inherit whatever the backend defaults to — that is the
+    historical behaviour of every run in this repo.
     """
     prov = PROVIDERS[provider] if provider else resolve_provider(model)
     if prov.models is not None and model not in prov.models and base_url is None:
@@ -312,6 +319,8 @@ def build_client(
     params = (
         resolve_model_params(model, prov.name) if extra_params is None else extra_params
     )
+    if temperature is not None:
+        params = {**params, "temperature": temperature}
     return MiniMaxClient(
         model=model,
         base_url=url,
