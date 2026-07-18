@@ -53,11 +53,11 @@ MODEL=<model> ./scripts/run_eval.sh eduillustrate
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| diagnostic | 0.85 | P10 多模态教学产物生成 (0.45)、P18 适配性解释与反馈生成 (0.3) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.85 | P15 适配性解释与反馈生成 (0.3)、P16 多模态教学产物生成 (0.45) |
 
-**这些 P 的证据因此受污染：P10、P18**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+**这些 P 的证据因此受污染：P15、P16**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

@@ -34,9 +34,9 @@ MODEL=<model> ./scripts/run_eval.sh mooccube_prereq
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| diagnostic | 0.7 | P05 知识调用与掌握 (0.2)、P06 推理与生成 (0.1)、P19 学习路径规划（知识结构层） (0.7) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.7 | P04 知识调用与掌握 (0.2)、P05 推理与生成 (0.1)、P14 学习路径规划（知识结构层） (0.7) |
 
 ---
 

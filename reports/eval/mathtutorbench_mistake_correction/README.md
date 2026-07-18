@@ -37,9 +37,9 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_mistake_correction
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| education_core | 0.9 | P06 推理与生成 (0.2)、P11 错误诊断 (0.2)、P18 适配性解释与反馈生成 (0.35) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.9 | P05 推理与生成 (0.2)、P09 错误诊断 (0.2)、P15 适配性解释与反馈生成 (0.35) |
 
 ---
 

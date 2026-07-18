@@ -38,9 +38,9 @@ MODEL=<model> ./scripts/run_eval.sh bea2025_judge
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| excluded_judge_task | 0.0 | P11 错误诊断 (0.3)、P14 主观题 rubric 评分能力 (0.45) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.0 | P09 错误诊断 (0.3)、P10 主观题评价能力 (0.45) |
 
 ---
 

@@ -35,9 +35,9 @@ MODEL=<model> ./scripts/run_eval.sh longtutor_diagnosis
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| diagnostic | 0.75 | P11 错误诊断 (0.1)、P16 学习者画像建模 (0.3) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.75 | P09 错误诊断 (0.1)、P12 学习者画像建模 (0.3) |
 
 ---
 

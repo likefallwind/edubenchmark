@@ -49,9 +49,9 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_scaffolding_hard
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| education_core | 1.0 | P05 知识调用与掌握 (0.15)、P17 个性化教学策略选择 (0.5)、P18 适配性解释与反馈生成 (0.35) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 1.0 | P04 知识调用与掌握 (0.15)、P13 个性化教学策略选择 (0.5)、P15 适配性解释与反馈生成 (0.35) |
 
 ---
 

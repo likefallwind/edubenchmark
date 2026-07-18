@@ -41,9 +41,9 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_mistake_location
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| education_core | 1.0 | P02 长上下文与证据定位 (0.2)、P11 错误诊断 (0.7) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 1.0 | P02 长上下文与证据定位 (0.2)、P09 错误诊断 (0.7) |
 
 ---
 

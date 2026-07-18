@@ -38,9 +38,9 @@ MODEL=<model> ./scripts/run_eval.sh ceval
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| foundation_gate | 0.35 | P01 指令与约束遵循 (0.15)、P05 知识调用与掌握 (0.6)、P06 推理与生成 (0.25) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.35 | P04 知识调用与掌握 (0.6)、P05 推理与生成 (0.25) |
 
 ---
 

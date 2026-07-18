@@ -41,9 +41,9 @@ MODEL=<model> ./scripts/run_eval.sh ifeval
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| foundation_gate | 0.8 | P01 指令与约束遵循 (1.0) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.8 | P01 指令与约束遵循 (1.0) |
 
 ---
 

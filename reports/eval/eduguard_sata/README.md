@@ -48,9 +48,9 @@ MODEL=<model> ./scripts/run_eval.sh eduguard_sata
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| education_core | 1.0 | P20 教育角色边界判断 (0.35)、P21 学生风险识别 (0.3)、P22 安全处置选择 (0.35) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 1.0 | P17 教育角色边界判断 (0.35)、P18 学生风险识别 (0.3)、P19 安全处置选择 (0.35) |
 
 ---
 

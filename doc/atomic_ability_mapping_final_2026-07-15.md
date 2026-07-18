@@ -463,3 +463,37 @@ P01/P02/P07/P08 在此前的常规做法里全是"搭车分"(别的任务顺带�
 ### 4. 流程性 TODO(M4 关键路径)
 
 死格子(题级 SD<0.5)剔除与 edubench 指标级【草案】权重核对 → v1/v2 对比 + 排名稳定性 → M4 双报告(研究版/用户版)。发布目标 7 月底。详见 `doc/rebenchmark_workstream_overview_2026-07-12.md`。
+
+---
+
+## 裁决 R20(2026-07-18,逐 P 复核第一批,与用户逐格确认)
+
+> 注意:本节以前的全部内容使用 v5 及更早的旧编号(P01–P23 带墓碑)。R20 起编号统一到 v5 文档口径 P01–P20,对照表见下。
+
+### R20-1 编号统一到文档口径
+
+v5 文档(`doc/atomic_ability_mapping_v5_2026-07-17.md`)使用干净的 P01–P20,而 JSON/聚合脚本沿用带墓碑的 P01–P23,从 P04 起两套编号错位且从未显式披露。用户裁决:**以文档编号为准**。`data/mapping_measurement_model_v6.json` 与 `scripts/build_atomic_ability_rebenchmark_artifacts.py`(P_GROUPS/ABILITY_PRIORITY/P_GAP_BONUS)、`scripts/build_mapping_validation.py`、`scripts/build_atomic_ability_html_report.py` 已全部迁移,墓碑条目删除。
+
+旧→新对照:P05→P04(知识)、P06→P05(推理)、P07→P06(自查)、P08→P07(校准弃答)、P09→P08(工具)、P11→P09(错误诊断,facet P11a/b/c→P09a/b/c)、P14→P10(主观题)、P23→P11(命题)、P16→P12(画像,P16a-d→P12a-d)、P17→P13(策略)、P19→P14(路径)、P18→P15(解释反馈)、P10→P16(多模态产物)、P20→P17(边界)、P21→P18(风险)、P22→P19(处置)、P15→P20(诚信);P01–P03 不变;旧 P04/P12/P13 墓碑删除。benchmark 名 p07_selfcheck/p08_* 沿用旧编号起名,不改名(避免断产物目录),文档注记即可。
+
+### R20-2 四档证据分层整体废除
+
+用户裁决:education_core / diagnostic / foundation_gate / excluded_judge_task 四档"本身无意义、分类也不准,纯属画蛇添足",整体废除。理由链(见数据检验):
+
+1. 档位对分数的唯一作用是 foundation_gate ×0.45,而它在 facet 内压制的恰是构念最贴、判分最硬的证据——P04 学科知识调用里 mmlu/ceval(精确匹配)被压到 25% 话语权,让位给自注记"打到天花板"的 edubench 裁判分;P05 解题推理里 olympiadbench(唯一难度未饱和的解题测量)被压过 mathvista 裁判分。
+2. "通识不主导教学画像"护栏的真正执行者是映射结构(通识 benchmark 不挂任何教育侧 P)+ 刻意压低的置信权重(0.35–0.55),档位是第三重冗余且方向错位。
+3. core/diagnostic 之分不碰分数(纯注记),且分类标准漂移(同一格跨 P 换档)。
+
+落地:JSON cell 的 evidence_tier 字段删除;原 excluded_judge_task 格改显式 `excluded: "judge_task"` 标记;judge 任务排除由聚合脚本 `EXCLUDED_SCORING_BENCHMARKS` 名单(盘点层)+ 置信权重 0.0 双保险承担(验证仍生效);`FOUNDATION_GATE_FACTOR`、`TIER_IMPORTANCE_FACTOR` 删除;raw/tier_adjusted 双口径塌缩为单一 `score_10`;产物更名 `09_atomic_p_scores.jsonl`/`10_group_scores.jsonl`;12 号重要度公式去掉 tier 因子(I = 100 × benchmark_weight × Σ(P_priority × weight))。附带修复:大类聚合原 `or 0.0` 会把 None 分 P 按 0 计入分母,现改为跳过。
+
+**分数影响披露**(与 v5 snapshot 逐格对比,发布口径 5 模型):纯算法效应很小——P01 +0.02~+0.21(摘格),P04 +0.07~+0.14、P05 +0.12~+0.21(门槛话语权回升,如 P04 学科知识 facet 门槛证据 25%→43%),P03(M3)-0.06,P06 +0.07~+0.08,其余 P 分毫不动。对比中出现的更大变化(glm-5.2 P05 -0.73/P09 -0.76、doubao P04 -0.34/P05 -0.76 等)全部来自同期新落地的评测数据(sas_bench glm-5.2、mooccube M2.7/doubao、k12vista doubao、mmtutorbench doubao),与算法改动无关;这批数据同时解锁 glm-5.2 P10、M2.7/doubao P14、doubao P03 三处整 P 空缺。旧产物快照:`reports/atomic_ability_rebenchmark_2026-07-08_v5_snapshot_20260718/`。
+
+### R20-3 P01 仅保留 ifeval(单源直接测量)
+
+摘除四格:agieval/ceval/mmlu_pro"格式遵循"(实际取分为 overall accuracy,知识方差污染;换纯格式指标则近天花板成死格子)与 p08_abstention"弃答约束遵循"(adapter 判弃答含散文兜底短语、不要求遵循格式,分数中无可分离的指令遵循信号,主体方差是 P07 弃答能力)。P01 成熟度改"直接测量·单源"。用户原话:"除了 ifeval 别的都不靠谱,很牵强的,现在版本就不应该放进。"
+
+### R20 另记(算法层已确认不改的事项)
+
+- 指标族混聚合(不同指标族绝对水平不可比但在 facet 内直接平均):用户接受,理由"大家都跑了就公平";注记该公平性只对覆盖相同的模型成立,报告须按 P 标注证据覆盖。
+- facet 等权平均放大薄证据:接受(formative 设计意图)。
+- 去重路径字典序兜底:记 TODO 不挡发布。

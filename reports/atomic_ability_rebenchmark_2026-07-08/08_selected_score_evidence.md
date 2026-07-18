@@ -1,13 +1,13 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 326
+Canonical normalized score rows used for P scoring: 333
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
 | `otherbenchmark` | 152 |
-| `repo_eval` | 174 |
+| `repo_eval` | 181 |
 
 ## By Benchmark
 
@@ -22,7 +22,7 @@ Canonical normalized score rows used for P scoring: 326
 | `eduguard_sata` | 8 |
 | `eduillustrate` | 4 |
 | `ifeval` | 5 |
-| `k12vista` | 1 |
+| `k12vista` | 2 |
 | `longtutor_diagnosis` | 3 |
 | `longtutor_evidence` | 3 |
 | `longtutor_teaching` | 3 |
@@ -37,15 +37,15 @@ Canonical normalized score rows used for P scoring: 326
 | `mathtutorbench_solution_correctness` | 5 |
 | `mathvista` | 1 |
 | `mmlu_pro` | 5 |
-| `mmtutorbench` | 1 |
-| `mooccube_prereq` | 3 |
+| `mmtutorbench` | 2 |
+| `mooccube_prereq` | 5 |
 | `mrbench_tutor` | 15 |
 | `olympiadbench` | 2 |
 | `p07_selfcheck` | 5 |
 | `p08_abstention` | 5 |
 | `p08_calibration` | 5 |
 | `pedagogy_benchmark` | 7 |
-| `sas_bench` | 21 |
+| `sas_bench` | 24 |
 | `tutorbench` | 6 |
 
 ## Sample Rows
@@ -112,7 +112,7 @@ Canonical normalized score rows used for P scoring: 326
 | `ifeval` | `deepseek-v4-pro` | `accuracy` | 0.9222222222222223 | 9.2222 | `reports/eval/ifeval/deepseek-v4-pro/summary.json` |
 | `longtutor_diagnosis` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.3158242873546295 | 3.1582 | `reports/eval/longtutor_diagnosis/deepseek-v4-pro/summary.json` |
 | `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.7915417915417915 | 7.9154 | `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json` |
-| `longtutor_teaching` | `deepseek-v4-pro` | `likert_1_to_5` | 3.5915 | 6.4787 | `reports/eval/longtutor_teaching/deepseek-v4-pro/summary.json` |
+| `longtutor_teaching` | `deepseek-v4-pro` | `likert_1_to_5` | 3.6079999999999997 | 6.5200 | `reports/eval/longtutor_teaching/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_mistake_correction` | `deepseek-v4-pro` | `accuracy` | 0.9201596806387226 | 9.2016 | `reports/eval/mathtutorbench_mistake_correction/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_mistake_location` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.765 | 7.6500 | `reports/eval/mathtutorbench_mistake_location/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_pedagogy` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.8396 | 8.3960 | `reports/eval/mathtutorbench_pedagogy/deepseek-v4-pro/summary.json` |

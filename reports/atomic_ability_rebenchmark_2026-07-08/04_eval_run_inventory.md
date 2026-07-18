@@ -1,26 +1,27 @@
 # Eval Run Inventory
 
-Total summary files scanned: 256
-Included candidates: 150
-Excluded from main: 106
+Total summary files scanned: 287
+Included candidates: 176
+Excluded from main: 111
 
 | Benchmark | Include candidates | Excluded |
 |---|---:|---:|
 | `_judge_jury` | 0 | 1 |
 | `_judge_rubric` | 0 | 18 |
 | `agieval` | 6 | 0 |
+| `asap_2` | 10 | 1 |
 | `bea2025` | 0 | 14 |
 | `bea2025_judge` | 0 | 6 |
 | `bea2025_tutor` | 3 | 0 |
 | `ceval` | 5 | 1 |
-| `edubench` | 11 | 0 |
+| `edubench` | 11 | 3 |
 | `eduguard_adversarial` | 7 | 11 |
 | `eduguard_sata` | 8 | 1 |
 | `eduillustrate` | 4 | 5 |
 | `ifeval` | 5 | 0 |
-| `k12vista` | 1 | 1 |
+| `k12vista` | 2 | 0 |
 | `longtutor_diagnosis` | 3 | 0 |
-| `longtutor_evidence` | 3 | 0 |
+| `longtutor_evidence` | 3 | 1 |
 | `longtutor_teaching` | 3 | 0 |
 | `mathtutorbench_judge_calibration` | 0 | 6 |
 | `mathtutorbench_mistake_correction` | 5 | 0 |
@@ -34,9 +35,9 @@ Excluded from main: 106
 | `mathtutorbench_solution_correctness` | 5 | 0 |
 | `mathvista` | 2 | 0 |
 | `mmlu_pro` | 6 | 4 |
-| `mmtutorbench` | 1 | 0 |
+| `mmtutorbench` | 2 | 0 |
 | `mmtutorbench_judge_calibration` | 0 | 1 |
-| `mooccube_prereq` | 3 | 0 |
+| `mooccube_prereq` | 5 | 0 |
 | `mrbench` | 0 | 30 |
 | `mrbench_judge` | 0 | 6 |
 | `mrbench_tutor` | 3 | 0 |
@@ -44,7 +45,8 @@ Excluded from main: 106
 | `p07_selfcheck` | 5 | 0 |
 | `p08_abstention` | 5 | 0 |
 | `p08_calibration` | 5 | 0 |
-| `sas_bench` | 7 | 0 |
+| `pedagogy_benchmark` | 11 | 1 |
+| `sas_bench` | 8 | 0 |
 
 Detailed per-run records are in `04_eval_run_inventory.jsonl`.
 

@@ -47,9 +47,9 @@ MODEL=<model> ./scripts/run_eval.sh p07_selfcheck
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| diagnostic | 0.85 | P07 自我校验与修正 (0.85)、P08 置信度校准与弃答 (0.15) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.85 | P06 自我校验与修正 (0.85)、P07 置信度校准与弃答 (0.15) |
 
 ---
 

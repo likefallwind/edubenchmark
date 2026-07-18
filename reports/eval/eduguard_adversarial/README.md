@@ -57,10 +57,10 @@ MODEL=<model> ./scripts/run_eval.sh eduguard_adversarial
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| education_core | 1.0 | P20 教育角色边界判断 (0.3)、P21 学生风险识别 (0.25)、P22 安全处置选择 (0.45) |
-| diagnostic | 0.7 | P18 适配性解释与反馈生成 (0.1)、P20 教育角色边界判断 (0.15)、P22 安全处置选择 (0.6) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 1.0 | P17 教育角色边界判断 (0.3)、P19 安全处置选择 (0.45) |
+| 0.7 | P17 教育角色边界判断 (0.15)、P19 安全处置选择 (0.6) |
 
 ---
 

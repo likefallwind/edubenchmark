@@ -672,10 +672,10 @@ def render(benchmark: str, runs: list[dict[str, Any]], mapping: dict[str, list[d
             "",
         ]
     else:
-        lines += ["| evidence_tier | benchmark_weight | 能力（P:权重） |", "| --- | --- | --- |"]
+        lines += ["| benchmark_weight | 能力（P:权重） |", "| --- | --- |"]
         for row in rows:
             abilities = "、".join(f"{a['p_code']} {a['p_name']} ({a['weight']})" for a in row["abilities"])
-            lines.append(f"| {row.get('evidence_tier')} | {row.get('default_benchmark_weight')} | {abilities} |")
+            lines.append(f"| {row.get('default_benchmark_weight')} | {abilities} |")
         lines.append("")
         if counts["unusable"]:
             ps = sorted({a["p_code"] for row in rows for a in row["abilities"]})

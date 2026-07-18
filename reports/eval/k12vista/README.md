@@ -33,11 +33,11 @@ MODEL=<model> ./scripts/run_eval.sh k12vista
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| diagnostic | 0.8 | P03 多模态理解 (0.55)、P05 知识调用与掌握 (0.15)、P06 推理与生成 (0.3) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.8 | P03 多模态理解 (0.55)、P04 知识调用与掌握 (0.15)、P05 推理与生成 (0.3) |
 
-**这些 P 的证据因此受污染：P03、P05、P06**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+**这些 P 的证据因此受污染：P03、P04、P05**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

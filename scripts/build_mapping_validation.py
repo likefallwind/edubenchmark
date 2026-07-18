@@ -44,7 +44,7 @@ from collections import defaultdict
 from pathlib import Path
 
 DEFAULT_REBENCH_DIR = Path("reports/atomic_ability_rebenchmark_2026-07-08")
-DEFAULT_MEASUREMENT_MODEL = Path("data/mapping_measurement_model_v5.json")
+DEFAULT_MEASUREMENT_MODEL = Path("data/mapping_measurement_model_v6.json")
 
 EVIDENCE_NAME = "08_selected_score_evidence.jsonl"
 MAPPING_NAME = "02_benchmark_ability_mapping.jsonl"
@@ -228,7 +228,7 @@ def load_mapping(path):
         weights[cell] = {a["p_code"]: a["weight"] for a in row["abilities"]}
         meta[cell] = {
             "benchmark_name": row.get("benchmark_name"),
-            "evidence_tier": row.get("evidence_tier"),
+            "excluded": row.get("excluded"),
         }
     return weights, meta
 
@@ -286,7 +286,7 @@ def audit_cells(matrix, mapping_weights, mapping_meta, args):
             "benchmark_id": cell[0],
             "subdimension": cell[1],
             "family": family_of(cell[0]),
-            "evidence_tier": (mapping_meta.get(cell) or {}).get("evidence_tier"),
+            "excluded": (mapping_meta.get(cell) or {}).get("excluded"),
             "n_models": n,
             "mean_score_10": round(mean, 3) if mean is not None else None,
             "sd_score_10": round(sd, 3) if sd is not None else None,
@@ -627,7 +627,7 @@ def write_md(path, cells, pairs, grid, halo, disc, mm, args):
     var_pairs = [p for p in rated if p["rating"] == "variance_restricted"]
 
     pair_table("红旗配对（flagged：同 P 预期收敛却 ρ<0，n≥6）", sorted(flagged, key=lambda p: p["spearman_rho"] or 0),
-               "每条 flagged 需人工裁决：改权重 / 拆 facet / 降 tier / 转裁判治理（计划 §2.6）。")
+               "每条 flagged 需人工裁决：改权重 / 拆 facet / 转裁判治理（计划 §2.6）。")
     pair_table("观察带（watch：0≤ρ<0.2 且 n≥8）", watch)
     pair_table("已验证配对（validated：ρ≥0.5 且 CI 下界>0）", sorted(validated, key=lambda p: -(p["spearman_rho"] or 0)))
     pair_table("待定配对（provisional）", sorted(provisional, key=lambda p: p["spearman_rho"] or 0))

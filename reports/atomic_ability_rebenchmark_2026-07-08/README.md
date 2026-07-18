@@ -19,10 +19,10 @@ Files:
 - `07_run_deduplication_report.jsonl`: duplicate/canonical scoring decisions.
 - `07_run_deduplication_report.md`: human-readable duplicate/canonical scoring decisions.
 - `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
-- `09_atomic_p_scores_raw_adjusted.jsonl`: per-model P01-P22 scores before and after foundation-gate weighting.
-- `09_atomic_p_scores_raw_adjusted.md`: compact per-model P score table and coverage notes.
-- `10_group_scores_raw_adjusted.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
-- `10_group_scores_raw_adjusted.md`: compact group-score table.
+- `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (single R20 scheme: relevance × confidence weights, no tier factor).
+- `09_atomic_p_scores.md`: compact per-model P score table and coverage notes.
+- `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
+- `10_group_scores.md`: compact group-score table.
 - `11_atomic_ability_rebenchmark_report.html`: self-contained interactive HTML report.
 - `12_benchmark_priority_analysis.jsonl`: benchmark/subdimension priority analysis for deciding what to keep, downweight, or skip.
 - `12_benchmark_priority_report.html`: self-contained HTML triage report for benchmark portfolio decisions.

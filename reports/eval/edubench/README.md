@@ -6,9 +6,7 @@
 
 ## 一、健康状况（坏消息在前）
 
-以下健康表是同事历史 deepseek-v3.2 裁判快照，现已统一隔离在 `_judge-deepseek-v3.2/`；没有不可用的 run，但有 1 个带保留意见（caveat），引用时必须一并写出。
-
-当前标准 MiniMax-M3 裁判目录只有 `glm-5.2/` 的 5 条 smoke test（5/5 判分，平均总分 8.0667），只能用于验证链路，不能与下面的 3,797 题历史完整跑批直接比较。
+没有不可用的 run，但有 1 个带保留意见（caveat），引用时必须一并写出。
 
 headline 口径：12 维裁判总分均值（0-10）。
 
@@ -41,24 +39,24 @@ headline 口径：12 维裁判总分均值（0-10）。
 ```bash
 MODEL=<model> ./scripts/run_eval.sh edubench
 # 或：python scripts/eval_benchmark.py --benchmark edubench --model <model> --limit 0
-# 非默认裁判：EDUBENCH_JUDGE_MODEL=<judge> MODEL=<model> ./scripts/run_eval.sh edubench
 ```
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| education_core | 0.75 | P18 适配性解释与反馈生成 (0.4) |
-| education_core | 0.8 | P05 知识调用与掌握 (0.3) |
-| education_core | 0.8 | P18 适配性解释与反馈生成 (0.3) |
-| education_core | 0.8 | P05 知识调用与掌握 (0.35) |
-| education_core | 0.8 | P11 错误诊断 (0.25) |
-| education_core | 0.8 | P06 推理与生成 (0.2)、P18 适配性解释与反馈生成 (0.25) |
-| education_core | 0.8 | P18 适配性解释与反馈生成 (0.35) |
-| education_core | 0.8 | P16 学习者画像建模 (0.3)、P17 个性化教学策略选择 (0.4) |
-| education_core | 0.8 | P06 推理与生成 (0.35) |
-| education_core | 0.8 | P17 个性化教学策略选择 (0.25) |
-| education_core | 0.8 | P18 适配性解释与反馈生成 (0.1) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.75 | P11 命题与作业设计 (0.4) |
+| 0.75 | P15 适配性解释与反馈生成 (0.4) |
+| 0.8 | P04 知识调用与掌握 (0.3) |
+| 0.8 | P15 适配性解释与反馈生成 (0.3) |
+| 0.8 | P04 知识调用与掌握 (0.35) |
+| 0.8 | P09 错误诊断 (0.25) |
+| 0.8 | P05 推理与生成 (0.2)、P15 适配性解释与反馈生成 (0.25) |
+| 0.8 | P15 适配性解释与反馈生成 (0.35) |
+| 0.8 | P12 学习者画像建模 (0.3)、P13 个性化教学策略选择 (0.4) |
+| 0.8 | P05 推理与生成 (0.35) |
+| 0.8 | P13 个性化教学策略选择 (0.25) |
+| 0.8 | P15 适配性解释与反馈生成 (0.1) |
 
 ---
 

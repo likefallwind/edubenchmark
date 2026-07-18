@@ -45,11 +45,11 @@ MODEL=<model> ./scripts/run_eval.sh bea2025_tutor
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| education_core | 0.9 | P18 适配性解释与反馈生成 (0.2) |
-| education_core | 0.9 | P11 错误诊断 (0.25) |
-| education_core | 0.9 | P17 个性化教学策略选择 (0.3) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.9 | P15 适配性解释与反馈生成 (0.2) |
+| 0.9 | P09 错误诊断 (0.25) |
+| 0.9 | P13 个性化教学策略选择 (0.3) |
 
 ---
 

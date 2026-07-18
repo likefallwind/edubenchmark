@@ -28,76 +28,68 @@ OTHER_DIR = ROOT / "otherbenchmark"
 
 EDUGUARD_P2_PRIMARY_JUDGE = "deepseek-v3.2 judge"
 EXCLUDED_SCORING_BENCHMARKS = {"bea2025_judge", "mrbench_judge"}
-FOUNDATION_GATE_FACTOR = 0.45
+
+# R20 (2026-07-18): P codes follow the v5 doc scheme (P01-P20, no tombstones);
+# the four-level evidence_tier system is removed — discounting lives solely in
+# default_benchmark_weight (confidence) and cell weight (relevance).  Judge
+# tasks stay out of scoring via EXCLUDED_SCORING_BENCHMARKS + zero confidence
+# weight + the cells' explicit "excluded" marker.
 
 ABILITY_PRIORITY = {
     "P01": 0.45,
     "P02": 0.65,
     "P03": 0.70,
-    "P04": 0.90,
-    "P05": 0.55,
-    "P06": 0.65,
-    "P07": 0.75,
+    "P04": 0.55,
+    "P05": 0.65,
+    "P06": 0.75,
+    "P07": 0.95,
     "P08": 0.95,
     "P09": 0.95,
     "P10": 0.90,
-    "P11": 0.95,
+    "P11": 0.90,
     "P12": 0.90,
     "P13": 0.95,
-    "P14": 0.90,
+    "P14": 0.95,
     "P15": 0.95,
     "P16": 0.90,
-    "P17": 0.95,
+    "P17": 0.90,
     "P18": 0.95,
-    "P19": 0.95,
-    "P20": 0.90,
-    "P21": 0.95,
-    "P22": 1.00,
-    "P23": 0.90,
+    "P19": 1.00,
+    "P20": 0.95,
 }
 
-TIER_IMPORTANCE_FACTOR = {
-    "education_core": 1.00,
-    "diagnostic": 0.75,
-    "foundation_gate": 0.45,
-    "excluded_judge_task": 0.08,
-}
-
-P_GAP_BONUS = {"P02", "P09", "P10", "P15", "P16", "P19", "P22"}
+P_GAP_BONUS = {"P02", "P08", "P12", "P14", "P16", "P19", "P20"}
 
 
 P_GROUPS = {
     "P01": ("SRG", "指令与约束遵循"),
     "P02": ("SRG", "长上下文与证据定位"),
     "P03": ("SRG", "多模态理解"),
-    "P04": ("SRG", "（已并入 P03，墓碑编号）"),
-    "P05": ("FDR", "知识调用与掌握"),
-    "P06": ("FDR", "推理与生成"),
-    "P07": ("FDR", "自我校验与修正"),
-    "P08": ("FDR", "置信度校准与弃答"),
-    "P09": ("FDR", "工具使用与长程智能体执行"),
-    "P10": ("FDR", "多模态教学产物生成"),
-    "P11": ("LAD", "错误诊断"),
-    "P12": ("LAD", "（已并入 P11，墓碑编号）"),
-    "P13": ("LAD", "（已并入 P11，墓碑编号）"),
-    "P14": ("LAD", "主观题评价能力"),
-    "P15": ("CEG", "学术诚信与作答真实性判定"),
-    "P16": ("CLM", "学习者画像建模"),
-    "P17": ("CLM", "个性化教学策略选择"),
-    "P18": ("CLM", "适配性解释与反馈生成"),
-    "P19": ("CLM", "学习路径规划（知识结构层）"),
-    "P20": ("CEG", "教育角色边界判断"),
-    "P21": ("CEG", "学生风险识别"),
-    "P22": ("CEG", "安全处置选择"),
-    "P23": ("LAD", "命题与作业设计"),
+    "P04": ("FDR", "知识调用与掌握"),
+    "P05": ("FDR", "推理与生成"),
+    "P06": ("FDR", "自我校验与修正"),
+    "P07": ("FDR", "置信度校准与弃答"),
+    "P08": ("FDR", "工具使用与长程智能体执行"),
+    "P09": ("LAD", "错误诊断"),
+    "P10": ("LAD", "主观题评价能力"),
+    "P11": ("LAD", "命题与作业设计"),
+    "P12": ("CLM", "学习者画像建模"),
+    "P13": ("CLM", "个性化教学策略选择"),
+    "P14": ("CLM", "学习路径规划（知识结构层）"),
+    "P15": ("CLM", "适配性解释与反馈生成"),
+    "P16": ("FDR", "多模态教学产物生成"),
+    "P17": ("CEG", "教育角色边界判断"),
+    "P18": ("CEG", "学生风险识别"),
+    "P19": ("CEG", "安全处置选择"),
+    "P20": ("CEG", "学术诚信与作答真实性判定"),
 }
 
 
-MEASUREMENT_MODEL_PATH = ROOT / "data" / "mapping_measurement_model_v5.json"
+MEASUREMENT_MODEL_PATH = ROOT / "data" / "mapping_measurement_model_v6.json"
 
 # Benchmark-level metadata joined onto measurement-model cells to form MAPPINGS
-# rows.  Ability weights, facets and evidence tiers live in
-# ``data/mapping_measurement_model_v5.json`` (single source of truth,
+# rows.  Ability weights and facets live in
+# ``data/mapping_measurement_model_v6.json`` (single source of truth,
 # adjudicated 2026-07-15/16/17; R17 merged P11/P12/P13 into P11, R18 added
 # P23, R19 re-adjudicated facet structures across ten Ps); this table only
 # carries what the JSON deliberately does not: display name, ingestion scope,
@@ -496,7 +488,7 @@ def _build_mappings() -> list[dict[str, Any]]:
                         "benchmark_id": benchmark_id,
                         "benchmark_name": meta["benchmark_name"],
                         "subdimension": cell["subdimension"],
-                        "evidence_tier": cell["evidence_tier"],
+                        "excluded": cell.get("excluded"),
                         "source_scope": meta["source_scope"],
                         "metric_family": family,
                         "score_direction": meta["score_direction"],
@@ -506,15 +498,6 @@ def _build_mappings() -> list[dict[str, Any]]:
                         "abilities": [],
                         "rationale": meta["rationale"],
                     }
-                elif row["evidence_tier"] != cell["evidence_tier"]:
-                    # R19: the same (benchmark, subdimension) may carry different
-                    # tiers per P (e.g. sas ECS education_core in P11c but
-                    # diagnostic in P05).  Keep the most-core tier at row level
-                    # for display; the per-P tier lives in the ability entry and
-                    # drives scoring.
-                    rank = {"education_core": 3, "diagnostic": 2, "foundation_gate": 1, "excluded_judge_task": 0}
-                    if rank[cell["evidence_tier"]] > rank[row["evidence_tier"]]:
-                        row["evidence_tier"] = cell["evidence_tier"]
                 group, name = P_GROUPS[ability["p_code"]]
                 row["abilities"].append(
                     {
@@ -524,7 +507,7 @@ def _build_mappings() -> list[dict[str, Any]]:
                         "weight": cell["weight"],
                         "facet_id": facet["facet_id"],
                         "facet_name": facet.get("facet_name", facet["facet_id"]),
-                        "evidence_tier": cell["evidence_tier"],
+                        "excluded": cell.get("excluded"),
                         "cell_rationale": cell.get("revision_rationale", ""),
                     }
                 )
@@ -1366,21 +1349,15 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
     evidence_rows: list[dict[str, Any]] = []
     accum: dict[tuple[str, str], dict[str, Any]] = {}
     for row in selected_rows:
+        if row["benchmark_id"] in EXCLUDED_SCORING_BENCHMARKS:
+            continue
         mapping = find_mapping(row["benchmark_id"], subdimension=row["subdimension"], metric=row["metric"])
         if mapping is None:
             continue
-        if all(
-            (ability.get("evidence_tier") or mapping["evidence_tier"]) == "excluded_judge_task"
-            for ability in mapping["abilities"]
-        ):
-            continue
         for ability in mapping["abilities"]:
-            tier = ability.get("evidence_tier") or mapping["evidence_tier"]
-            if tier == "excluded_judge_task":
+            if ability.get("excluded"):
                 continue
-            foundation_factor = FOUNDATION_GATE_FACTOR if tier == "foundation_gate" else 1.0
             raw_weight = mapping["default_benchmark_weight"] * ability["weight"]
-            adjusted_weight = raw_weight * foundation_factor
             evidence = {
                 "model_key": row["model_key"],
                 "model": row["model"],
@@ -1396,11 +1373,9 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                 "metric": row["metric"],
                 "raw_value": row["raw_value"],
                 "score_10": row["score_10"],
-                "evidence_tier": tier,
                 "row_weight": mapping["default_benchmark_weight"],
                 "ability_weight": ability["weight"],
-                "raw_effective_weight": raw_weight,
-                "adjusted_effective_weight": adjusted_weight,
+                "effective_weight": raw_weight,
             }
             evidence_rows.append(evidence)
             slot = accum.setdefault(
@@ -1414,35 +1389,25 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                     "facets": {},
                     "evidence_count": 0,
                     "benchmarks": set(),
-                    "foundation_rows": 0,
                 },
             )
             facet_slot = slot["facets"].setdefault(
                 ability["facet_id"],
-                {"raw_weighted_sum": 0.0, "raw_weight_sum": 0.0, "adjusted_weighted_sum": 0.0, "adjusted_weight_sum": 0.0},
+                {"weighted_sum": 0.0, "weight_sum": 0.0},
             )
-            facet_slot["raw_weighted_sum"] += row["score_10"] * raw_weight
-            facet_slot["raw_weight_sum"] += raw_weight
-            facet_slot["adjusted_weighted_sum"] += row["score_10"] * adjusted_weight
-            facet_slot["adjusted_weight_sum"] += adjusted_weight
+            facet_slot["weighted_sum"] += row["score_10"] * raw_weight
+            facet_slot["weight_sum"] += raw_weight
             slot["evidence_count"] += 1
             slot["benchmarks"].add(row["benchmark_id"])
-            if tier == "foundation_gate":
-                slot["foundation_rows"] += 1
 
-    # 测量模型 v5 的聚合方向：facet 内按格子权重加权平均，P 分数 = 有证据的
-    # facet 的等权平均（formative 声明；reflective P 只有一个 core facet，
-    # 退化为原先的整体加权平均）。
+    # 聚合方向（R20 后单一口径）：facet 内按 相关度×置信 有效权重加权平均，
+    # P 分数 = 有证据 facet 的等权平均（formative 声明；reflective P 只有一个
+    # core facet，退化为整体加权平均）。
     p_rows: list[dict[str, Any]] = []
     for slot in accum.values():
-        raw_facet_means = [f["raw_weighted_sum"] / f["raw_weight_sum"] for f in slot["facets"].values() if f["raw_weight_sum"]]
-        adjusted_facet_means = [
-            f["adjusted_weighted_sum"] / f["adjusted_weight_sum"] for f in slot["facets"].values() if f["adjusted_weight_sum"]
-        ]
-        raw_score = sum(raw_facet_means) / len(raw_facet_means) if raw_facet_means else None
-        tier_adjusted = sum(adjusted_facet_means) / len(adjusted_facet_means) if adjusted_facet_means else None
-        raw_weight_sum = sum(f["raw_weight_sum"] for f in slot["facets"].values())
-        adjusted_weight_sum = sum(f["adjusted_weight_sum"] for f in slot["facets"].values())
+        facet_means = [f["weighted_sum"] / f["weight_sum"] for f in slot["facets"].values() if f["weight_sum"]]
+        score = sum(facet_means) / len(facet_means) if facet_means else None
+        weight_sum = sum(f["weight_sum"] for f in slot["facets"].values())
         p_rows.append(
             {
                 "model_key": slot["model_key"],
@@ -1450,40 +1415,37 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                 "p_code": slot["p_code"],
                 "p_name": slot["p_name"],
                 "group": slot["group"],
-                "raw_score_10": round(raw_score, 4) if raw_score is not None else None,
-                "tier_adjusted_score_10": round(tier_adjusted, 4) if tier_adjusted is not None else None,
-                "raw_weight_sum": round(raw_weight_sum, 4),
-                "adjusted_weight_sum": round(adjusted_weight_sum, 4),
-                "facet_count_with_evidence": len(raw_facet_means),
+                "score_10": round(score, 4) if score is not None else None,
+                "weight_sum": round(weight_sum, 4),
+                "facet_count_with_evidence": len(facet_means),
                 "facet_scores": {
-                    facet_id: round(f["raw_weighted_sum"] / f["raw_weight_sum"], 4)
+                    facet_id: round(f["weighted_sum"] / f["weight_sum"], 4)
                     for facet_id, f in sorted(slot["facets"].items())
-                    if f["raw_weight_sum"]
+                    if f["weight_sum"]
                 },
                 "evidence_count": slot["evidence_count"],
                 "benchmark_count": len(slot["benchmarks"]),
                 "benchmarks": sorted(slot["benchmarks"]),
-                "foundation_rows": slot["foundation_rows"],
             }
         )
     p_rows.sort(key=lambda r: (r["model_key"], r["p_code"]))
 
     group_accum: dict[tuple[str, str], dict[str, Any]] = {}
     for row in p_rows:
+        if row["score_10"] is None:
+            continue
         slot = group_accum.setdefault(
             (row["model_key"], row["group"]),
             {
                 "model_key": row["model_key"],
                 "display_model": row["display_model"],
                 "group": row["group"],
-                "raw_sum": 0.0,
-                "tier_sum": 0.0,
+                "score_sum": 0.0,
                 "p_count": 0,
                 "p_codes": [],
             },
         )
-        slot["raw_sum"] += row["raw_score_10"] or 0.0
-        slot["tier_sum"] += row["tier_adjusted_score_10"] or 0.0
+        slot["score_sum"] += row["score_10"]
         slot["p_count"] += 1
         slot["p_codes"].append(row["p_code"])
     group_rows: list[dict[str, Any]] = []
@@ -1493,8 +1455,7 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                 "model_key": slot["model_key"],
                 "display_model": slot["display_model"],
                 "group": slot["group"],
-                "raw_score_10": round(slot["raw_sum"] / slot["p_count"], 4),
-                "tier_adjusted_score_10": round(slot["tier_sum"] / slot["p_count"], 4),
+                "score_10": round(slot["score_sum"] / slot["p_count"], 4),
                 "p_count_with_evidence": slot["p_count"],
                 "p_codes": sorted(slot["p_codes"]),
             }
@@ -1526,10 +1487,10 @@ Files:
 - `07_run_deduplication_report.jsonl`: duplicate/canonical scoring decisions.
 - `07_run_deduplication_report.md`: human-readable duplicate/canonical scoring decisions.
 - `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
-- `09_atomic_p_scores_raw_adjusted.jsonl`: per-model P01-P22 scores before and after foundation-gate weighting.
-- `09_atomic_p_scores_raw_adjusted.md`: compact per-model P score table and coverage notes.
-- `10_group_scores_raw_adjusted.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
-- `10_group_scores_raw_adjusted.md`: compact group-score table.
+- `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (single R20 scheme: relevance × confidence weights, no tier factor).
+- `09_atomic_p_scores.md`: compact per-model P score table and coverage notes.
+- `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
+- `10_group_scores.md`: compact group-score table.
 - `11_atomic_ability_rebenchmark_report.html`: self-contained interactive HTML report.
 - `12_benchmark_priority_analysis.jsonl`: benchmark/subdimension priority analysis for deciding what to keep, downweight, or skip.
 - `12_benchmark_priority_report.html`: self-contained HTML triage report for benchmark portfolio decisions.
@@ -1552,7 +1513,7 @@ Include a model-run only when all conditions hold:
 1. It is a benchmark/model result, not a judge calibration, jury calibration, rubric prompt experiment, or backup copy.
 2. It has a concrete model name and a non-zero `total_items`.
 3. It has at least 100 total items, unless a human explicitly promotes the run after inspection.
-4. It maps to at least one `P01-P22` ability through `02_benchmark_ability_mapping.jsonl`.
+4. It maps to at least one `P01-P20` ability through `02_benchmark_ability_mapping.jsonl`.
 5. If multiple judge versions score the same model responses, keep only the selected primary judge in the main scoring layer and keep the others as context rows.
 
 ## Excluded by default
@@ -1564,14 +1525,14 @@ Include a model-run only when all conditions hold:
 - BEA/MRBench judge tasks: `bea2025_judge` and `mrbench_judge` are excluded in this pass. Tutor-generation tasks remain eligible.
 - EduGuard P2 rows not judged by `deepseek-v3.2` are excluded from the repo scoring layer and preserved only as context.
 
-## Foundation gate handling
+## General-benchmark handling (R20)
 
 MMLU-Pro, C-EVAL, AGIEval, OlympiadBench, and MathTutorBench problem-solving
-style results are not ignored. They map mostly to `P05` and `P06`, with smaller
-`P01/P03/P07` components. However, they are tagged as `foundation_gate` and
-their effective weight is multiplied by 0.45 in adjusted scoring because high
-answer accuracy does not prove teaching, diagnosis, personalization, or safety
-capability.
+style results map mostly to `P04` and `P05` (knowledge and reasoning), where
+answering IS the construct. The former foundation-gate ×0.45 tier factor was
+removed in R20: high answer accuracy still cannot dominate the education-side
+abilities because general benchmarks are simply not mounted on education Ps,
+and their confidence weights stay deliberately low (0.35-0.55).
 
 EduIllustrate full-230 runs are included when `total_items >= 100`; 5-item
 smoke/calibration runs remain excluded.
@@ -1586,13 +1547,13 @@ def write_mapping_files() -> None:
         "",
         "Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 within the row.",
         "",
-        "| Benchmark | Subdimension | Tier | Metric | Default weight | P weights | Rationale |",
-        "|---|---|---|---|---:|---|---|",
+        "| Benchmark | Subdimension | Metric | Default weight | P weights | Rationale |",
+        "|---|---|---|---:|---|---|",
     ]
     for row in MAPPINGS:
         pweights = ", ".join(f"{a['p_code']} {a['weight']:.2f}" for a in row["abilities"])
         lines.append(
-            "| {benchmark_name} (`{benchmark_id}`) | {subdimension} | {evidence_tier} | {metric_family} | {default_benchmark_weight:.2f} | {pweights} | {rationale} |".format(
+            "| {benchmark_name} (`{benchmark_id}`) | {subdimension} | {metric_family} | {default_benchmark_weight:.2f} | {pweights} | {rationale} |".format(
                 **row,
                 pweights=pweights,
             )
@@ -1618,14 +1579,13 @@ def write_normalization() -> None:
             "",
             "1. Normalize each benchmark subdimension score to 0-10.",
             "2. Allocate that score to P abilities using `02_benchmark_ability_mapping.jsonl` weights.",
-            "3. `raw_score_10`: weighted average over evidence rows using default benchmark weights.",
-            f"4. `tier_adjusted_score_10`: same weighted average after multiplying `foundation_gate` evidence by {FOUNDATION_GATE_FACTOR:.2f}.",
-            "5. Report coverage separately per model/P ability: number of contributing rows, total effective weight, and benchmark families.",
-            "6. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available. Missing P abilities are not imputed.",
+            "3. `score_10` (R20 single scheme): facet-level weighted average with effective weight = relevance × confidence; P score = equal-weight mean over facets with evidence.",
+            "4. Report coverage separately per model/P ability: number of contributing rows, total effective weight, and benchmark families.",
+            "5. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available. Missing P abilities are not imputed.",
             "",
             "## Resolved scoring choices in this pass",
             "",
-            "- `foundation_gate` contributes to SRG/FDR through P scores at reduced effective weight.",
+            "- R20: the four-level evidence-tier system (and the foundation-gate ×0.45 factor) is removed; general benchmarks are constrained structurally (not mounted on education Ps) and by low confidence weights.",
             "- EduGuard P2 uses `deepseek-v3.2` judge as the primary scoring judge.",
             "- BEA/MRBench judge tasks are excluded; BEA/MRBench tutor tasks remain eligible.",
             "- EduIllustrate full-230 runs are eligible; small 5-item runs are excluded.",
@@ -1806,59 +1766,57 @@ def write_score_evidence(rows: list[dict[str, Any]]) -> None:
 
 def write_atomic_scores(p_rows: list[dict[str, Any]], evidence_rows: list[dict[str, Any]]) -> None:
     dump_jsonl(OUT / "09_atomic_p_score_evidence.jsonl", evidence_rows)
-    dump_jsonl(OUT / "09_atomic_p_scores_raw_adjusted.jsonl", p_rows)
+    dump_jsonl(OUT / "09_atomic_p_scores.jsonl", p_rows)
     covered = sorted({row["p_code"] for row in p_rows})
     missing = [code for code in P_GROUPS if code not in covered]
     lines = [
-        "# Atomic P Scores: Raw And Adjusted",
+        "# Atomic P Scores",
         "",
         f"P-score rows: {len(p_rows)}",
         f"Covered P codes: {', '.join(covered) if covered else 'none'}",
         f"Missing P codes: {', '.join(missing) if missing else 'none'}",
         "",
-        "`raw_score_10` uses default benchmark weights. `tier_adjusted_score_10` reduces foundation-gate evidence. Coverage completeness is reported separately and is not folded back into the score.",
+        "`score_10` (R20 single scheme): facet-weighted average with effective weight = relevance × confidence. Coverage completeness is reported separately and is not folded back into the score.",
         "",
         "## Sample Scores",
         "",
-        "| Model key | P | Group | Raw | Tier adjusted | Evidence | Weight raw/adj | Benchmarks |",
-        "|---|---|---|---:|---:|---:|---:|---|",
+        "| Model key | P | Group | Score | Evidence | Weight sum | Benchmarks |",
+        "|---|---|---|---:|---:|---:|---|",
     ]
     for row in p_rows[:120]:
         lines.append(
-            f"| `{row['model_key']}` | `{row['p_code']}` {row['p_name']} | {row['group']} | {row['raw_score_10']} | {row['tier_adjusted_score_10']} | {row['evidence_count']} | {row['raw_weight_sum']}/{row['adjusted_weight_sum']} | {', '.join(row['benchmarks'])} |"
+            f"| `{row['model_key']}` | `{row['p_code']}` {row['p_name']} | {row['group']} | {row['score_10']} | {row['evidence_count']} | {row['weight_sum']} | {', '.join(row['benchmarks'])} |"
         )
     lines.extend(
         [
             "",
             "## Coverage Notes",
             "",
-            "- `P21` and `P22` are covered through EduGuard P1/P2 safety evidence.",
-            "- `P09` has no current benchmark mapping in this pass.",
-            "- `P15` has no current benchmark mapping after BEA/MRBench judge-task exclusion.",
-            "- `P09` and `P15` are declared domain gaps (mapping v5); `P10`/`P19` are single-source and `P16` covers 2 of 4 declared sub-abilities; `P21` has zero independent evidence (shared-SATA single cell) and `P23` is expression-quality-only.",
-            "- The atomic list is `P01-P22` with tombstones `P04` (merged into P03) and `P12`/`P13` (merged into P11 错误诊断, R17); 19 active P codes.",
+            "- `P17`-`P19` are covered through EduGuard P1/P2 safety evidence.",
+            "- `P08` (tool use / long-horizon) and `P20` (academic integrity) are declared domain gaps; `P16`/`P14` are single-source and `P12` covers 2 of 4 declared sub-abilities; `P18` has zero independent evidence (shared-SATA single cell) and `P11` is expression-quality-only.",
+            "- The atomic list is `P01-P20` (R20 doc-scheme renumbering, no tombstones).",
             "",
-            "Full P rows are in `09_atomic_p_scores_raw_adjusted.jsonl`; allocated evidence rows are in `09_atomic_p_score_evidence.jsonl`.",
+            "Full P rows are in `09_atomic_p_scores.jsonl`; allocated evidence rows are in `09_atomic_p_score_evidence.jsonl`.",
         ]
     )
-    (OUT / "09_atomic_p_scores_raw_adjusted.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (OUT / "09_atomic_p_scores.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_group_scores(group_rows: list[dict[str, Any]]) -> None:
-    dump_jsonl(OUT / "10_group_scores_raw_adjusted.jsonl", group_rows)
+    dump_jsonl(OUT / "10_group_scores.jsonl", group_rows)
     lines = [
-        "# Group Scores: Raw And Adjusted",
+        "# Group Scores",
         "",
         "These are provisional SRG/FDR/LAD/CLM/CEG aggregates from currently covered P abilities only. Missing P abilities are not imputed here.",
         "",
-        "| Model key | Group | Raw | Tier adjusted | P count | P codes |",
-        "|---|---|---:|---:|---:|---|",
+        "| Model key | Group | Score | P count | P codes |",
+        "|---|---|---:|---:|---|",
     ]
     for row in group_rows:
         lines.append(
-            f"| `{row['model_key']}` | {row['group']} | {row['raw_score_10']} | {row['tier_adjusted_score_10']} | {row['p_count_with_evidence']} | {', '.join(row['p_codes'])} |"
+            f"| `{row['model_key']}` | {row['group']} | {row['score_10']} | {row['p_count_with_evidence']} | {', '.join(row['p_codes'])} |"
         )
-    (OUT / "10_group_scores_raw_adjusted.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (OUT / "10_group_scores.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def json_payload(rows: Any) -> str:
@@ -1912,7 +1870,6 @@ def write_final_html(
                     "benchmark_id": mapping["benchmark_id"],
                     "benchmark_name": mapping["benchmark_name"],
                     "subdimension": mapping["subdimension"],
-                    "evidence_tier": mapping["evidence_tier"],
                     "metric_family": mapping["metric_family"],
                     "benchmark_weight": mapping["default_benchmark_weight"],
                     "rationale": mapping["rationale"],
@@ -1936,7 +1893,7 @@ def write_final_html(
                 "p_count": len(covered_p),
                 "p_total": len(P_GROUPS),
                 "p_coverage": round(len(covered_p) / len(P_GROUPS), 4),
-                "adjusted_weight_sum": round(sum(float(row["adjusted_weight_sum"]) for row in model_p_rows), 4),
+                "weight_sum": round(sum(float(row["weight_sum"]) for row in model_p_rows), 4),
                 "covered_p": covered_p,
                 "missing_p": missing_p,
                 "covered_benchmark_dimensions": [f"{bench} / {subdim}" for bench, subdim in covered_dims],
@@ -2017,26 +1974,26 @@ footer {{ color:var(--muted); font-size:12px; padding:22px 0 6px; }}
 <header class="hero">
   <p class="eyebrow">Capability-Oriented Rebenchmark · 2026</p>
   <h1>原子能力 Rebenchmark 可视化报告</h1>
-  <p class="hero-sub">基于本仓库评测与 <code>otherbenchmark/</code> 结果，将 benchmark/subdimension 映射到定稿映射 v5（<code>data/mapping_measurement_model_v5.json</code>）的 P01-P23 原子能力，并聚合到 SRG/FDR/LAD/CLM/CEG 五大维度。模型选择与分数版本切换逻辑保持可交互。</p>
+  <p class="hero-sub">基于本仓库评测与 <code>otherbenchmark/</code> 结果，将 benchmark/subdimension 映射到定稿映射 v6（<code>data/mapping_measurement_model_v6.json</code>）的 P01-P20 原子能力，并聚合到 SRG/FDR/LAD/CLM/CEG 五大维度。模型选择与分数版本切换逻辑保持可交互。</p>
 </header>
   <section class="summary">
     <div class="kpi"><div class="v">{len(MAPPINGS)}</div><div class="l">benchmark / 维度映射行</div></div>
     <div class="kpi"><div class="v">{sum(1 for r in eval_rows if r['main_inclusion'] == 'include_candidate')}</div><div class="l">本仓库可计分候选 run</div></div>
     <div class="kpi"><div class="v">{len(other_rows)}</div><div class="l">otherbenchmark 原始分数行</div></div>
     <div class="kpi"><div class="v">{len(selected_score_rows)}</div><div class="l">去重后的计分证据行</div></div>
-    <div class="kpi"><div class="v">{len(covered)}/22</div><div class="l">已覆盖 P 级原子能力</div></div>
+    <div class="kpi"><div class="v">{len(covered)}/20</div><div class="l">已覆盖 P 级原子能力</div></div>
   </section>
 
   <section class="panel">
     <h2>评分口径</h2>
     <div class="chips">
-      <span class="chip">foundation_gate 调整权重 × {FOUNDATION_GATE_FACTOR:.2f}</span>
+      <span class="chip">R20：证据四档已废除，权重 = 相关度 × 置信</span>
       <span class="chip">EduGuard P2 主裁判：{EDUGUARD_P2_PRIMARY_JUDGE}</span>
       <span class="chip">BEA/MRBench judge task 已排除</span>
       <span class="chip">EduIllustrate full-230 已纳入</span>
       <span class="chip">MiniMax-M3 优先 minimax3/full-scored run</span>
     </div>
-    <div class="note">未覆盖或极弱覆盖的 P code：<b>{", ".join(missing)}</b>。P21/P22 当前主要由 EduGuard 安全证据覆盖。当前 atomic list 为 P01-P22，不存在 P0。</div>
+    <div class="note">未覆盖或极弱覆盖的 P code：<b>{", ".join(missing)}</b>。P17-P19 当前主要由 EduGuard 安全证据覆盖。当前 atomic list 为 P01-P20（R20 文档口径编号）。</div>
   </section>
 
   <section class="panel">
@@ -2047,12 +2004,8 @@ footer {{ color:var(--muted); font-size:12px; padding:22px 0 6px; }}
         <code>accuracy/pass_rate/rfs: score10 = value × 10<br>ASR: score10 = (1 - ASR) × 10<br>0-100 指标: score10 = value / 10<br>0-5 指标: score10 = value × 2<br>0-6 指标: score10 = value / 6 × 10</code>
       </div>
       <div class="formula">
-        <b>2. benchmark 分数分配到 P 能力</b>
-        <code>raw_effective_weight = benchmark_weight × ability_weight<br>P_raw = Σ(score10 × raw_effective_weight) / Σ(raw_effective_weight)</code>
-      </div>
-      <div class="formula">
-        <b>3. 证据层调整分</b>
-        <code>foundation_gate: adjusted_weight = raw_weight × {FOUNDATION_GATE_FACTOR:.2f}<br>P_tier = Σ(score10 × adjusted_weight) / Σ(adjusted_weight)<br>其中 foundation_gate 主要是基础答题/学科门槛类 benchmark。</code>
+        <b>2. benchmark 分数分配到 P 能力（facet 内加权，跨 facet 等权）</b>
+        <code>effective_weight = benchmark_weight × ability_weight<br>facet = Σ(score10 × effective_weight) / Σ(effective_weight)<br>P = mean(有证据 facet)</code>
       </div>
     </div>
     <div class="note">当前 HTML 不再把覆盖惩罚折入主分数。覆盖问题改为单独展示“覆盖完整度”，避免把“没测”混同为“能力差”。五大维度分数是在每个模型已有 P 能力分数上求平均；缺失 P 不做插补。</div>
@@ -2069,7 +2022,7 @@ footer {{ color:var(--muted); font-size:12px; padding:22px 0 6px; }}
     </div>
     <div class="table-wrap">
       <table id="pMapTable">
-        <thead><tr><th>P</th><th>Benchmark</th><th>细分维度</th><th>证据层级</th><th>指标族</th><th class="num">benchmark 权重</th><th class="num">能力权重</th><th>映射理由</th></tr></thead>
+        <thead><tr><th>P</th><th>Benchmark</th><th>细分维度</th><th>指标族</th><th class="num">benchmark 权重</th><th class="num">能力权重</th><th>映射理由</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -2080,13 +2033,6 @@ footer {{ color:var(--muted); font-size:12px; padding:22px 0 6px; }}
       <label for="modelSelect">选择模型</label>
       <select id="modelSelect"></select>
     </div>
-    <div>
-      <label>分数版本</label>
-      <div class="seg" id="scoreMode">
-        <button data-mode="raw_score_10">原始</button>
-        <button data-mode="tier_adjusted_score_10" class="active">证据层调整</button>
-      </div>
-    </div>
   </div>
 
   <section class="grid">
@@ -2096,7 +2042,7 @@ footer {{ color:var(--muted); font-size:12px; padding:22px 0 6px; }}
       <div class="axis-list" id="axisCards"></div>
     </div>
     <div class="panel">
-      <h2>P01-P22 原子能力明细</h2>
+      <h2>P01-P20 原子能力明细</h2>
       <div class="table-wrap">
         <table id="pTable">
           <thead><tr><th>P</th><th>大类</th><th class="num">当前分数</th><th class="num">证据数</th><th>Benchmark</th></tr></thead>
@@ -2192,13 +2138,12 @@ const coverageRows = JSON.parse(document.getElementById('coverageRows').textCont
 const axes = {json_payload(axis_order)};
 const axisLabels = {json_payload(axis_labels)};
 let selectedModel = {json_payload(default_model)};
-let scoreMode = 'tier_adjusted_score_10';
 let selectedPForMapping = 'ALL';
 let selectedBenchmarkView = 'ALL';
 
 function fmt(v) {{ return v === null || v === undefined ? '—' : Number(v).toFixed(2); }}
 function esc(s) {{ return String(s ?? '').replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c])); }}
-function scoreFor(row) {{ return row ? row[scoreMode] : null; }}
+function scoreFor(row) {{ return row ? row.score_10 : null; }}
 
 function initModelSelect() {{
   const models = [...new Set(pRows.map(r => r.model_key))].sort();
@@ -2206,14 +2151,6 @@ function initModelSelect() {{
   sel.innerHTML = models.map(m => `<option value="${{esc(m)}}">${{esc(m)}}</option>`).join('');
   sel.value = selectedModel;
   sel.addEventListener('change', () => {{ selectedModel = sel.value; render(); }});
-  document.querySelectorAll('#scoreMode button').forEach(btn => {{
-    btn.addEventListener('click', () => {{
-      document.querySelectorAll('#scoreMode button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      scoreMode = btn.dataset.mode;
-      render();
-    }});
-  }});
 
   const pSelect = document.getElementById('pMapSelect');
   pSelect.innerHTML = '<option value="ALL">全部 P 能力</option>' + pMeta.map(p => `<option value="${{p.p_code}}">${{p.p_code}} · ${{esc(p.p_name)}}</option>`).join('');
@@ -2329,7 +2266,7 @@ function renderEvidenceTable() {{
     <td>${{esc(r.benchmark_id)}}<div class="small">${{esc(r.subdimension)}}</div></td>
     <td>${{esc(r.metric)}}</td>
     <td class="num">${{fmt(r.score_10)}}</td>
-    <td class="num">${{Number(r.adjusted_effective_weight).toFixed(3)}}</td>
+    <td class="num">${{Number(r.effective_weight).toFixed(3)}}</td>
     <td><span class="mono">${{esc(r.source_path)}}</span></td>
   </tr>`).join('');
 }}
@@ -2358,7 +2295,7 @@ function renderCoverageTable() {{
       <td class="num">${{r.score_row_count}}</td>
       <td class="num"><b>${{r.benchmark_dimension_count}}/${{r.benchmark_dimension_total}}</b><div class="barbox"><div class="bar" style="width:${{benchPct}}%"></div></div></td>
       <td class="num"><b>${{r.p_count}}/${{r.p_total}}</b><div class="barbox"><div class="bar" style="width:${{pPct}}%"></div></div></td>
-      <td class="num">${{Number(r.adjusted_weight_sum).toFixed(2)}}</td>
+      <td class="num">${{Number(r.weight_sum).toFixed(2)}}</td>
       <td>${{r.missing_p.length ? esc(r.missing_p.join(', ')) : '无'}}</td>
       <td><div class="small">${{esc(r.covered_benchmark_dimensions.join('; '))}}</div></td>
     </tr>`;
@@ -2373,7 +2310,6 @@ function renderPMappingTable() {{
     <td><b>${{r.p_code}}</b><div class="small">${{esc(r.p_name)}}</div></td>
     <td>${{esc(r.benchmark_name)}}<div class="mono">${{esc(r.benchmark_id)}}</div></td>
     <td>${{esc(r.subdimension)}}</td>
-    <td>${{esc(r.evidence_tier)}}</td>
     <td>${{esc(r.metric_family)}}</td>
     <td class="num">${{Number(r.benchmark_weight).toFixed(2)}}</td>
     <td class="num">${{Number(r.ability_weight).toFixed(2)}}</td>
@@ -2463,9 +2399,9 @@ def analyze_benchmark_priorities(
         )
         if any(ability["p_code"] in P_GAP_BONUS for ability in mapping["abilities"]):
             ability_priority = min(1.0, ability_priority + 0.06)
-        tier_factor = TIER_IMPORTANCE_FACTOR.get(mapping["evidence_tier"], 0.60)
+        excluded = bool(mapping.get("excluded")) or mapping["benchmark_id"] in EXCLUDED_SCORING_BENCHMARKS
         p_relevance_score = 100.0 * ability_priority
-        importance_score = 100.0 * mapping["default_benchmark_weight"] * ability_priority * tier_factor
+        importance_score = 100.0 * mapping["default_benchmark_weight"] * ability_priority
 
         model_coverage = len(model_keys) / model_target if model_target else 0.0
         p_gap = statistics.mean(
@@ -2475,10 +2411,10 @@ def analyze_benchmark_priorities(
         coverage_gap = 0.60 * (1.0 - clamp(model_coverage)) + 0.40 * p_gap
 
         priority_score = importance_score * (0.58 * unsolved_index + 0.32 * coverage_gap + 0.10)
-        if mapping["evidence_tier"] == "excluded_judge_task":
+        if excluded:
             priority_score *= 0.10
 
-        if mapping["evidence_tier"] == "excluded_judge_task":
+        if excluded:
             recommendation = "先不看"
             rationale = "本轮明确排除 judge task，避免把裁判能力混入模型教育能力。"
         elif priority_score >= 35 and importance_score >= 50:
@@ -2490,9 +2426,6 @@ def analyze_benchmark_priorities(
         elif importance_score >= 45:
             recommendation = "值得保留/补跑"
             rationale = "能力相关性较强，适合保留为主榜或分项诊断。"
-        elif mapping["evidence_tier"] == "foundation_gate":
-            recommendation = "降为门槛项"
-            rationale = "主要测基础答题能力，高分不能证明教学、诊断、个性化或安全。"
         elif priority_score >= 25:
             recommendation = "诊断性保留"
             rationale = "不是主排序核心，但能解释特定能力短板或补覆盖。"
@@ -2513,7 +2446,7 @@ def analyze_benchmark_priorities(
                 "benchmark_id": mapping["benchmark_id"],
                 "benchmark_name": mapping["benchmark_name"],
                 "subdimension": mapping["subdimension"],
-                "evidence_tier": mapping["evidence_tier"],
+                "excluded": excluded,
                 "metric_family": mapping["metric_family"],
                 "p_codes": [ability["p_code"] for ability in mapping["abilities"]],
                 "p_weights": [
@@ -2522,7 +2455,6 @@ def analyze_benchmark_priorities(
                 "groups": sorted({ability["group"] for ability in mapping["abilities"]}),
                 "benchmark_weight": mapping["default_benchmark_weight"],
                 "p_relevance_score": round(p_relevance_score, 2),
-                "tier_factor": tier_factor,
                 "all_model_average_score_10": round(mean_score, 4) if mean_score is not None else None,
                 "importance_score": round(importance_score, 2),
                 "unsolved_index": round(unsolved_index, 4),
@@ -2625,7 +2557,7 @@ th {{ position:sticky; top:0; z-index:1; background:#f2e5cf; font-size:12px; col
   <section class="panel">
     <h2>计算口径</h2>
     <div class="formula">
-      <div><b>重要性</b><br><code>I = 100 × benchmark_weight × tier_factor × Σ(P_priority × P_weight)</code><br><span class="small">education_core=1.00，diagnostic=0.75，foundation_gate=0.45；P08/P09/P10/P15/P16/P19/P22 等覆盖洼地提高 P_priority。</span></div>
+      <div><b>重要性</b><br><code>I = 100 × benchmark_weight × Σ(P_priority × P_weight)</code><br><span class="small">R20 起无 tier 因子；P02/P08/P12/P14/P16/P19/P20 等覆盖洼地提高 P_priority。</span></div>
       <div><b>尚未解决程度</b><br><code>G = 0.6 × max(0,(9-best)/9) + 0.4 × max(0,(8-median)/8)</code><br><span class="small">best 看是否已有前沿模型能做，median 看是否仍能区分多数模型；无当前跑分按未知缺口处理。</span></div>
       <div><b>继续投入优先级</b><br><code>Priority = I × (0.58 × G + 0.32 × coverage_gap + 0.10)</code><br><span class="small">coverage_gap 来自模型覆盖不足和对应 P 能力覆盖稀缺；它只影响“是否该补测”，不折入模型能力分。</span></div>
     </div>
@@ -2654,10 +2586,6 @@ th {{ position:sticky; top:0; z-index:1; background:#f2e5cf; font-size:12px; col
         <label for="recFilter">建议档位</label>
         <select id="recFilter"><option value="ALL">全部</option></select>
       </div>
-      <div>
-        <label for="tierFilter">证据层级</label>
-        <select id="tierFilter"><option value="ALL">全部</option></select>
-      </div>
     </div>
     <div class="table-wrap">
       <table id="priorityTable">
@@ -2667,7 +2595,7 @@ th {{ position:sticky; top:0; z-index:1; background:#f2e5cf; font-size:12px; col
     </div>
   </section>
 
-  <footer class="small">数据源：<span class="mono">08_selected_score_evidence.jsonl</span>、<span class="mono">02_benchmark_ability_mapping.jsonl</span>、<span class="mono">09_atomic_p_scores_raw_adjusted.jsonl</span>。机器可读排序：<span class="mono">12_benchmark_priority_analysis.jsonl</span>。</footer>
+  <footer class="small">数据源：<span class="mono">08_selected_score_evidence.jsonl</span>、<span class="mono">02_benchmark_ability_mapping.jsonl</span>、<span class="mono">09_atomic_p_scores.jsonl</span>。机器可读排序：<span class="mono">12_benchmark_priority_analysis.jsonl</span>。</footer>
 </main>
 <script id="priorityRows" type="application/json">{json_payload(priority_rows)}</script>
 <script id="topRows" type="application/json">{json_payload(top_rows)}</script>
@@ -2695,26 +2623,21 @@ function renderMini(target, data) {{
 }}
 function initFilters() {{
   const recs = [...new Set(rows.map(r => r.recommendation))];
-  const tiers = [...new Set(rows.map(r => r.evidence_tier))];
   document.getElementById('recFilter').innerHTML += recs.map(v => `<option value="${{esc(v)}}">${{esc(v)}}</option>`).join('');
-  document.getElementById('tierFilter').innerHTML += tiers.map(v => `<option value="${{esc(v)}}">${{esc(v)}}</option>`).join('');
   document.getElementById('search').addEventListener('input', renderTable);
   document.getElementById('recFilter').addEventListener('change', renderTable);
-  document.getElementById('tierFilter').addEventListener('change', renderTable);
 }}
 function renderTable() {{
   const q = document.getElementById('search').value.trim().toLowerCase();
   const rec = document.getElementById('recFilter').value;
-  const tier = document.getElementById('tierFilter').value;
   const data = rows.filter(r => {{
     if (rec !== 'ALL' && r.recommendation !== rec) return false;
-    if (tier !== 'ALL' && r.evidence_tier !== tier) return false;
     if (!q) return true;
     return JSON.stringify([r.benchmark_name,r.benchmark_id,r.subdimension,r.p_codes,r.rationale,r.mapping_rationale]).toLowerCase().includes(q);
   }});
   document.querySelector('#priorityTable tbody').innerHTML = data.map(r => `<tr>
     <td><span class="tag ${{tagClass(r.recommendation)}}">${{esc(r.recommendation)}}</span><div class="small">${{esc(r.quadrant)}}</div></td>
-    <td><b>${{esc(r.benchmark_name)}}</b><div class="mono small">${{esc(r.benchmark_id)}}</div><div class="small">${{esc(r.subdimension)}}</div><div class="small">${{esc(r.evidence_tier)}}</div></td>
+    <td><b>${{esc(r.benchmark_name)}}</b><div class="mono small">${{esc(r.benchmark_id)}}</div><div class="small">${{esc(r.subdimension)}}</div></td>
     <td>${{esc(r.p_weights.join(', '))}}<div class="small">${{esc(r.groups.join(', '))}}</div></td>
     <td class="num"><b>${{fmt(r.priority_score)}}</b><div class="barbox"><div class="bar" style="width:${{pct(r.priority_score)}}%"></div></div></td>
     <td class="num">${{fmt(r.importance_score)}}<div class="barbox"><div class="bar" style="width:${{pct(r.importance_score)}}%"></div></div></td>
@@ -2739,13 +2662,10 @@ renderTable();
 def simple_portfolio_recommendation(row: dict[str, Any]) -> str:
     avg = row["all_model_average_score_10"]
     relevance = row["importance_score"]
-    tier = row["evidence_tier"]
-    if tier == "excluded_judge_task":
+    if row.get("excluded"):
         return "先排除"
     if avg is None:
         return "高相关但缺跑分" if relevance >= 45 else "暂不判断"
-    if tier == "foundation_gate":
-        return "门槛保留" if avg < 8.5 else "低频门槛"
     if relevance >= 55 and avg < 6.5:
         return "优先继续做"
     if relevance >= 55 and avg < 7.5:
@@ -2782,7 +2702,6 @@ def write_benchmark_portfolio_markdown(priority_rows: list[dict[str, Any]]) -> N
                 "relevance": [],
                 "subdimensions": 0,
                 "p_codes": set(),
-                "tiers": set(),
                 "recommendations": [],
             },
         )
@@ -2791,7 +2710,6 @@ def write_benchmark_portfolio_markdown(priority_rows: list[dict[str, Any]]) -> N
             slot["scores"].append(row["all_model_average_score_10"])
         slot["relevance"].append(row["importance_score"])
         slot["p_codes"].update(row["p_codes"])
-        slot["tiers"].add(row["evidence_tier"])
         slot["recommendations"].append(simple_portfolio_recommendation(row))
 
     group_rows = []
@@ -2808,7 +2726,6 @@ def write_benchmark_portfolio_markdown(priority_rows: list[dict[str, Any]]) -> N
                 "avg_relevance": avg_relevance,
                 "subdimensions": slot["subdimensions"],
                 "p_codes": sorted(slot["p_codes"]),
-                "tiers": sorted(slot["tiers"]),
                 "recommendation": preferred_rec,
             }
         )
@@ -2829,18 +2746,18 @@ def write_benchmark_portfolio_markdown(priority_rows: list[dict[str, Any]]) -> N
         "## 两个主指标",
         "",
         "1. **所有模型平均分**：对进入最终计算的 canonical score rows，在同一个 benchmark/subdimension 下跨模型取 `score_10` 平均。分数越高，说明当前模型整体越接近解决；分数越低，越有继续区分模型的价值。`NA` 表示该 mapping 目前没有进入最终计分的模型结果。",
-        "2. **原子能力有效相关性**：只由 mapping 决定，不看模型表现。公式：`100 × benchmark_weight × tier_factor × Σ(P_priority × ability_weight)`。其中 `tier_factor`: education_core=1.00, diagnostic=0.75, foundation_gate=0.45, excluded_judge_task=0.08。",
+        "2. **原子能力有效相关性**：只由 mapping 决定，不看模型表现。公式（R20，无 tier 因子）：`100 × benchmark_weight × Σ(P_priority × ability_weight)`。",
         "",
-        "辅助列：`P 相关性` 是不乘 benchmark/tier 的纯 P 能力相关性；`tier` 表示证据直接性。基础答题类通常会因为 `foundation_gate` 被降权。",
+        "辅助列：`P 相关性` 是不乘 benchmark 置信权重的纯 P 能力相关性。",
         "",
         "## 先看结论排序",
         "",
-        "| 建议 | Benchmark | Subdimension | 所有模型平均分 | 原子能力有效相关性 | P 相关性 | tier | 模型数 | P 映射 |",
-        "|---|---|---|---:|---:|---:|---|---:|---|",
+        "| 建议 | Benchmark | Subdimension | 所有模型平均分 | 原子能力有效相关性 | P 相关性 | 模型数 | P 映射 |",
+        "|---|---|---|---:|---:|---:|---:|---|",
     ]
     for row in ranked:
         lines.append(
-            f"| {simple_portfolio_recommendation(row)} | `{row['benchmark_id']}` {row['benchmark_name']} | {row['subdimension']} | {fmt(row['all_model_average_score_10'])} | {fmt(row['importance_score'])} | {fmt(row['p_relevance_score'])} | {row['evidence_tier']} | {row['model_count']} | {', '.join(row['p_weights'])} |"
+            f"| {simple_portfolio_recommendation(row)} | `{row['benchmark_id']}` {row['benchmark_name']} | {row['subdimension']} | {fmt(row['all_model_average_score_10'])} | {fmt(row['importance_score'])} | {fmt(row['p_relevance_score'])} | {row['model_count']} | {', '.join(row['p_weights'])} |"
         )
 
     lines.extend(
@@ -2850,13 +2767,13 @@ def write_benchmark_portfolio_markdown(priority_rows: list[dict[str, Any]]) -> N
             "",
             "聚合口径：同一 benchmark 的多个 subdimension 先各自计算平均分和相关性，再在 benchmark 内做简单平均；只用于概览，具体判断仍看上面的 subdimension 明细。",
             "",
-            "| 建议 | Benchmark | Subdimension 数 | benchmark 平均分 | 平均原子相关性 | tier | P 覆盖 |",
-            "|---|---|---:|---:|---:|---|---|",
+            "| 建议 | Benchmark | Subdimension 数 | benchmark 平均分 | 平均原子相关性 | P 覆盖 |",
+            "|---|---|---:|---:|---:|---|",
         ]
     )
     for row in group_rows:
         lines.append(
-            f"| {row['recommendation']} | `{row['benchmark_id']}` {row['benchmark_name']} | {row['subdimensions']} | {fmt(row['avg_score'])} | {fmt(row['avg_relevance'])} | {', '.join(row['tiers'])} | {', '.join(row['p_codes'])} |"
+            f"| {row['recommendation']} | `{row['benchmark_id']}` {row['benchmark_name']} | {row['subdimensions']} | {fmt(row['avg_score'])} | {fmt(row['avg_relevance'])} | {', '.join(row['p_codes'])} |"
         )
 
     lines.extend(
@@ -2878,18 +2795,18 @@ def write_open_questions() -> None:
 
 Resolved in this pass:
 
-- `foundation_gate` contributes to SRG/FDR through P-level scores at reduced effective weight.
+- R20: the four-level evidence-tier system is removed; scoring weight = relevance × confidence only.
+- R20: P codes renumbered to the doc scheme `P01-P20` (no tombstones).
 - EduGuard P2 uses `deepseek-v3.2` judge as primary.
-- BEA/MRBench judge tasks are excluded.
+- BEA/MRBench judge tasks are excluded (EXCLUDED_SCORING_BENCHMARKS + zero confidence weight + cell `excluded` marker).
 - EduIllustrate full-230 runs are included; 5-item runs are excluded.
 - MiniMax-M3 canonical policy prefers included `minimax3/` or fuller-scored runs.
 
 Remaining review points:
 
-1. The atomic list spans `P01-P22` with tombstones `P04` (into P03) and `P12`/`P13` (into P11, R17); there is no `P0`. If the request meant a specific ability, confirm whether it means `P01` or another P code.
-2. `P09` and `P15` are declared domain gaps under mapping v3 (report them honestly as uncovered); `P10`/`P19` are single-source reference values and `P16` covers 2 of 4 declared sub-abilities.
-3. `P21/P22` are covered mainly by EduGuard safety evidence. Confirm whether that is sufficient, or whether to require student-risk-specific datasets.
-4. For cross-model comparison, decide whether to add a strict `common-evidence` mode that only compares models on shared benchmark/subdimension coverage.
+1. `P08` (tool use / long-horizon) and `P20` (academic integrity) are declared domain gaps (report them honestly as uncovered); `P16`/`P14` are single-source reference values and `P12` covers 2 of 4 declared sub-abilities.
+2. `P17-P19` are covered mainly by EduGuard safety evidence. Confirm whether that is sufficient, or whether to require student-risk-specific datasets.
+3. For cross-model comparison, decide whether to add a strict `common-evidence` mode that only compares models on shared benchmark/subdimension coverage.
 """
     (OUT / "06_open_calibration_questions.md").write_text(text, encoding="utf-8")
 

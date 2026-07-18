@@ -37,9 +37,9 @@ MODEL=<model> ./scripts/run_eval.sh p08_abstention
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| diagnostic | 0.85 | P01 指令与约束遵循 (0.15)、P08 置信度校准与弃答 (0.85) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.85 | P07 置信度校准与弃答 (0.85) |
 
 ---
 

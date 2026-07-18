@@ -1,4 +1,4 @@
-# 评测进度总览（截至 2026-07-17）
+# 评测进度总览（截至 2026-07-18）
 
 说明：
 
@@ -57,13 +57,20 @@
 
 | 评测任务（纵轴） \ 模型（横轴） | deepseek-v4-pro | glm-5.2 | minimax3 |
 |---|---|---|---|
+|asap_2|7421/7421|30/30|7417/7421|
+|pedagogy_benchmark|1119/1119|30/30|1119/1119|
 |k12vista|-/-|-/-|598/600|
 |mooccube_prereq|300/300|300/300|300/300|
+|sas_bench|4109/4109|4095/4109|-/-|
 
 说明：`k12vista/_judge-MiniMax-M2.7/doubao-seed-2.0-pro/summary.json` 为裁判侧中间产物，当前 `summary.json` 缺失 total/scores 字段，暂不纳入矩阵统计。
+`asap_2` 与 `pedagogy_benchmark` 的 `glm-5.2` 为抽样子集（30 条）；`sas_bench` 当前表里未纳入 `minimax3` 列，表内已有值取 `deepseek-v4-pro` 与 `glm-5.2` 的直接 `summary`。
 
 ## 本次主表新增已完成 `summary.json`
 
+- `reports/eval/asap_2/glm-5.2/summary.json`
+- `reports/eval/pedagogy_benchmark/glm-5.2/summary.json`
+- `reports/eval/sas_bench/glm-5.2/summary.json`
 - `reports/eval/edubench/minimax3/summary.json`
 - `reports/eval/edubench/minimax-m2.7/summary.json`
 - `reports/eval/mmtutorbench/minimax3/summary.json`

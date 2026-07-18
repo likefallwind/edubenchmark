@@ -44,11 +44,11 @@ MODEL=<model> ./scripts/run_eval.sh agieval
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| foundation_gate | 0.4 | P01 指令与约束遵循 (0.2)、P05 知识调用与掌握 (0.35)、P06 推理与生成 (0.45) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.4 | P04 知识调用与掌握 (0.35)、P05 推理与生成 (0.45) |
 
-**这些 P 的证据因此受污染：P01、P05、P06**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+**这些 P 的证据因此受污染：P04、P05**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

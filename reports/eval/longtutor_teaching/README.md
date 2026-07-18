@@ -45,9 +45,9 @@ MODEL=<model> ./scripts/run_eval.sh longtutor_teaching
 
 ## 三、当前映射（M3 裁决相关）
 
-| evidence_tier | benchmark_weight | 能力（P:权重） |
-| --- | --- | --- |
-| diagnostic | 0.75 | P17 个性化教学策略选择 (0.3) |
+| benchmark_weight | 能力（P:权重） |
+| --- | --- |
+| 0.75 | P13 个性化教学策略选择 (0.3) |
 
 ---
 

@@ -6,8 +6,8 @@ writes a self-contained Chinese HTML report to ``html_report/``.  Regenerate by
 rerunning; never hand-edit the output.
 
 Inputs:
-- data/mapping_measurement_model_v5.json
-- reports/atomic_ability_rebenchmark_2026-07-08/09_atomic_p_scores_raw_adjusted.jsonl
+- data/mapping_measurement_model_v6.json
+- reports/atomic_ability_rebenchmark_2026-07-08/09_atomic_p_scores.jsonl
 - reports/atomic_ability_rebenchmark_2026-07-08/13_mapping_validation_cells.jsonl
 """
 
@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
 OUT_DIR = ROOT / "html_report"
-OUT = OUT_DIR / "atomic_ability_benchmark_v5_report_2026-07-17.html"
+OUT = OUT_DIR / "atomic_ability_benchmark_v6_report_2026-07-18.html"
 
 RELEASE_MODELS = [
     ("minimax-m3", "MiniMax-M3"),
@@ -35,45 +35,47 @@ P_DEFINITIONS = {
     "P01": "按显式指令和格式/行为约束产出",
     "P02": "在长材料/长对话中定位并引用相关证据",
     "P03": "读懂教育场景中的图像/图表等非文本材料并据此推理",
-    "P05": "学科知识与教学专业知识的正确调用",
-    "P06": "解题推理与约束下的生成推理",
-    "P07": "复查自己的输出,发现并修正错误",
-    "P08": "自信程度与正确率一致;不会时主动弃答",
-    "P09": "调用工具、完成多步长程任务",
-    "P10": "生成图示等非文本教学产物",
-    "P11": "诊断学生错误:判对错、定位错误步骤、解释错因/误概念(三 facet)",
-    "P14": "依据(或构建)评分标准评判主观作答与教学回复",
-    "P15": "识别抄袭、代写等真实性问题",
-    "P16": "从交互中建模学生的水平、需求与特征",
-    "P17": "针对学生选择并执行合适的教学策略",
-    "P18": "生成适配学生的解释、引导与反馈",
-    "P19": "基于知识先修结构规划学习顺序",
-    "P20": "守住教育者的角色与行为边界",
-    "P21": "识别学生消息中的风险信号",
-    "P22": "对风险与越界请求选择正确处置方式",
+    "P04": "学科知识与教学专业知识的正确调用",
+    "P05": "解题推理与约束下的生成推理",
+    "P06": "复查自己的输出,发现并修正错误",
+    "P07": "自信程度与正确率一致;不会时主动弃答",
+    "P08": "调用工具、完成多步长程任务",
+    "P09": "诊断学生错误:判对错、定位错误步骤、解释错因/误概念(三 facet)",
+    "P10": "依据(或构建)评分标准评判主观作答与教学回复",
+    "P11": "为学生设计考试/作业题目:出题、难度定标、目标对齐",
+    "P12": "从交互中建模学生的水平、需求与特征",
+    "P13": "针对学生选择并执行合适的教学策略",
+    "P14": "基于知识先修结构规划学习顺序",
+    "P15": "生成适配学生的解释、引导与反馈",
+    "P16": "生成图示等非文本教学产物",
+    "P17": "守住教育者的角色与行为边界",
+    "P18": "识别学生消息中的风险信号",
+    "P19": "对风险与越界请求选择正确处置方式",
+    "P20": "识别抄袭、代写等真实性问题",
 }
 
 # 研究层数据 -> 用户版三档可信度的当前定档(与定稿文档口径一致)
 P_CREDIBILITY = {
-    "P01": ("可信", "直接测量,规则判分无裁判"),
+    "P01": ("可信", "直接测量,规则判分无裁判;R20 起单源(仅 ifeval)"),
     "P02": ("参考值", "直接测量但三模型区分度弱(0.79/0.81/0.79)"),
-    "P03": ("参考值", "学科图表 facet(K12Vista)未跑;现仅两 facet 计分"),
-    "P05": ("可信·门槛", "多源成熟,但知识簇天花板,门槛性质"),
-    "P06": ("可信", "多源成熟"),
-    "P07": ("可信", "直接测量(两轮自查)"),
-    "P08": ("可信", "直接测量(双任务)"),
-    "P09": ("暂未覆盖", "领域空白,诚实标注"),
-    "P10": ("参考值", "单源(eduillustrate)"),
-    "P11": ("可信", "R17 合并(原 P11/P12/P13);判对/定位 facet 单源+,归因 facet 多源;edubench 错误识别指标带裁判噪声注记"),
-    "P14": ("参考值", "现仅学业作答评分 facet 计分;评判/生成 facet 无分"),
-    "P16": ("参考值", "4 个子能力覆盖 2 个;P16a 金标有模板化风险"),
-    "P15": ("暂未覆盖", "领域空白,诚实标注"),
-    "P17": ("可信", "证据最厚(10+ benchmark)"),
-    "P18": ("可信", "证据最厚"),
-    "P19": ("暂未覆盖", "已挂 mooccube_prereq(自建协议)但评测尚未跑出分数"),
-    "P20": ("参考值", "双源;知识 facet 与 P21/P22 同源,不构成互证"),
-    "P21": ("参考值", "同上"),
-    "P22": ("参考值", "同上"),
+    "P03": ("参考值", "学科图表与图文混排主格仅 1 模型面;视频/音频 facet 空白"),
+    "P04": ("可信·门槛", "多源成熟,但知识簇天花板,门槛性质"),
+    "P05": ("可信", "多源成熟"),
+    "P06": ("可信", "直接测量(两轮自查)"),
+    "P07": ("可信", "直接测量(双任务)"),
+    "P08": ("暂未覆盖", "领域空白,诚实标注"),
+    "P09": ("可信", "R17 合并(原编号 P11/P12/P13);判对/定位 facet 单源+,归因 facet 多源;edubench 错误识别指标带裁判噪声注记"),
+    "P10": ("参考值", "现仅学业作答评分 facet 计分;评判/生成 facet 无分"),
+    "P11": ("参考值", "单源,QG 格仅测表达质量,整 P 参考值"),
+    "P12": ("参考值", "4 个子能力覆盖 2 个;P12a 金标有模板化风险"),
+    "P13": ("可信", "证据最厚(10+ benchmark)"),
+    "P14": ("参考值", "单源自建协议,3 模型面,机会校正后 3.8-4.5/10"),
+    "P15": ("可信", "证据最厚"),
+    "P16": ("参考值", "单源(eduillustrate)"),
+    "P17": ("参考值", "双源;知识 facet 与 P18/P19 同源,不构成互证"),
+    "P18": ("参考值", "同上"),
+    "P19": ("参考值", "同上"),
+    "P20": ("暂未覆盖", "领域空白,诚实标注"),
 }
 
 MATURITY = {}  # filled from measurement model rationale below
@@ -88,8 +90,8 @@ def esc(text: object) -> str:
 
 
 def build() -> str:
-    mm = json.loads((ROOT / "data" / "mapping_measurement_model_v5.json").read_text(encoding="utf-8"))
-    p_rows = load_jsonl(ART / "09_atomic_p_scores_raw_adjusted.jsonl")
+    mm = json.loads((ROOT / "data" / "mapping_measurement_model_v6.json").read_text(encoding="utf-8"))
+    p_rows = load_jsonl(ART / "09_atomic_p_scores.jsonl")
     cells = load_jsonl(ART / "13_mapping_validation_cells.jsonl")
 
     abilities = {a["p_code"]: a for a in mm["abilities"] if a.get("model_type") != "tombstone"}
@@ -98,7 +100,7 @@ def build() -> str:
     for code, ability in abilities.items():
         n = 0
         for facet in ability.get("facets", []):
-            if any(c.get("evidence_tier") != "excluded_judge_task" for c in facet.get("cells", [])):
+            if any(not c.get("excluded") for c in facet.get("cells", [])):
                 n += 1
         scorable_facets[code] = n
 
@@ -106,7 +108,7 @@ def build() -> str:
     for row in p_rows:
         scores.setdefault(row["model_key"], {})[row["p_code"]] = row
 
-    p_codes = [c for c in sorted(abilities) if c not in ("P04",)]
+    p_codes = sorted(abilities)
 
     # ---------- 矩阵 ----------
     matrix_rows = []
@@ -118,7 +120,7 @@ def build() -> str:
             if row is None:
                 cells_html.append('<td class="cell none">—</td>')
                 continue
-            value = row["raw_score_10"]
+            value = row["score_10"]
             width = max(0.0, min(100.0, value * 10))
             partial = row["facet_count_with_evidence"] < scorable_facets.get(code, 1)
             mark = ""
@@ -164,7 +166,7 @@ def build() -> str:
     top_html = "\n".join(cell_li(c) for c in top)
     flat_html = "\n".join(cell_li(c) for c in flat)
 
-    n_cells = len([c for c in cells if c.get("evidence_tier") != "excluded_judge_task"])
+    n_cells = len([c for c in cells if not c.get("excluded")])
     n_restricted = sum(1 for c in scored_cells if c.get("variance_restricted"))
 
     generated = datetime.date.today().isoformat()
@@ -174,7 +176,7 @@ def build() -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>教育 AI 原子能力评测·映射 v5 报告（2026-07-17）</title>
+<title>教育 AI 原子能力评测·映射 v6 报告（2026-07-18）</title>
 <style>
 :root {{
   color-scheme: light;
@@ -239,10 +241,10 @@ ol li {{ margin: 4px 0; }}
 <main>
 <p class="sub">研究层预览 · 生成于 {generated} · 生成脚本 <span class="mono">scripts/build_atomic_ability_html_report.py</span></p>
 <h1>教育 AI 原子能力评测：映射 v5 报告</h1>
-<p>用 <strong>20 项原子能力（编号 P01–P23；P04 并入 P03，P12/P13 并入 P11 错误诊断，P23 命题与作业设计为 R18 新设）</strong>给大模型画教育能力画像。本报告基于 2026-07-15/16/17 裁决定稿的映射 v5（R17：错误诊断三合一；R18：P17 重构、P23 新设；R19：facet 划分全面复审——P05 两 facet、P14 主观题评价能力、P18 三 facet、P21 改轴、P23 改名收窄等）：每个能力由哪些评测的哪些维度测量、权重多少，全部带数据依据；分数按"facet 内加权、跨 facet 等权"聚合。这是研究层数据的预览——正式的双报告（研究版/用户版）在 M4 里程碑交付。</p>
+<p>用 <strong>20 项原子能力（编号 P01–P20，R20 重编号后与文档口径一致）</strong>给大模型画教育能力画像。本报告基于映射 v6（R20，2026-07-18：编号迁移到文档口径、四档证据分层废除、P01 摘至 ifeval 单源；此前 R17 错误诊断三合一、R18/R19 facet 复审沿用）：每个能力由哪些评测的哪些维度测量、权重多少，全部带数据依据；分数按"facet 内加权、跨 facet 等权"聚合。这是研究层数据的预览——正式的双报告（研究版/用户版）在 M4 里程碑交付。</p>
 
 <div class="tiles">
-  <div class="tile"><div class="n">19 项</div><div class="l">原子能力（16 项有分，P09/P15 领域空白，P19 评测待跑）</div></div>
+  <div class="tile"><div class="n">20 项</div><div class="l">原子能力（18 项可计分，P08/P20 领域空白）</div></div>
   <div class="tile"><div class="n">{n_cells} 个</div><div class="l">计分格子（benchmark × 取分维度），来自 30+ 评测变体</div></div>
   <div class="tile"><div class="n">4 个</div><div class="l">自建测验（校准 / 弃答 / 自查 / 先修推理），全部规则判分</div></div>
   <div class="tile"><div class="n">5 + 6</div><div class="l">发布模型全量面 + 扩展模型部分面（edubench 面 11 模型）</div></div>
@@ -258,9 +260,9 @@ ol li {{ margin: 4px 0; }}
 
 <h2>二、核心发现</h2>
 <ol>
-  <li><strong>"会答题 ≠ 会教"是数字，不是口号。</strong>同一模型内，答题类能力（P06 推理 8.0–9.4、P11a 判对错 facet 8.6–9.0）普遍比教学核心能力（P17 策略执行 5.8–7.3、P16 画像 2.3–7.5、P07 自查 5.3–6.4）高出 1.5–3 分；P11 错误诊断内部同样呈深度梯度——判对（8.6–9.0）＞定位（7.6–7.9）＞归因（6.9–8.2）。题级证据更硬：同一批回答里，事实准确性与个性化/动机引导的题内相关约等于零。</li>
-  <li><strong>教学短板集中在"看见学生"</strong>：P16 学习者画像（知识状态估计 macro-F1 仅 0.23–0.32，全体模型跑不过多数类基线的 accuracy）和 P07 自我校验（改对率约 0.10）是全场最低的两块。</li>
-  <li><strong>安全能力模型间差异大</strong>：P20–P22 上 MiniMax-M3（8.2–8.5）与 DeepSeek-V4-Pro（5.7–6.0）拉开近 3 分——但注意三 P 的知识 facet 同源，不构成三份独立证据。</li>
+  <li><strong>"会答题 ≠ 会教"是数字，不是口号。</strong>同一模型内，答题类能力（P05 推理、P09a 判对错 facet）普遍比教学核心能力（P13 策略执行、P12 画像、P06 自查）高出 1.5–3 分；P09 错误诊断内部同样呈深度梯度——判对（8.6–9.0）＞定位（7.6–7.9）＞归因（6.9–8.2）。题级证据更硬：同一批回答里，事实准确性与个性化/动机引导的题内相关约等于零。</li>
+  <li><strong>教学短板集中在"看见学生"</strong>：P12 学习者画像（知识状态估计 macro-F1 仅 0.23–0.32，全体模型跑不过多数类基线的 accuracy）和 P06 自我校验（改对率约 0.10）是全场最低的两块。</li>
+  <li><strong>安全能力模型间差异大</strong>：P17–P19 上 MiniMax-M3（8.2–8.5）与 DeepSeek-V4-Pro（5.7–6.0）拉开近 3 分——但注意三 P 的知识 facet 同源，不构成三份独立证据。</li>
   <li><strong>天花板依然是最大威胁</strong>：{n_restricted}/{len(scored_cells)} 个有分格子跨模型方差受限（分数挤在一起），知识类与语气类指标尤甚——这些格子只能当门槛，不能用来排名。</li>
 </ol>
 
@@ -273,7 +275,7 @@ ol li {{ margin: 4px 0; }}
 </tbody>
 </table>
 </div>
-<p class="sub">◐ = facet 面不齐（悬停单元格看 facet 明细与缺口）；— = 该模型无任何该 P 的证据。GLM-5.2 的 P16 只有"知识状态估计"一个 facet（edubench 面跑的是 GLM-5.1），横向不可比。多模态类（P03/P10）仅视觉模型有分。</p>
+<p class="sub">◐ = facet 面不齐（悬停单元格看 facet 明细与缺口）；— = 该模型无任何该 P 的证据。GLM-5.2 的 P12 只有"知识状态估计"一个 facet（edubench 面跑的是 GLM-5.1），横向不可比。多模态类（P03/P16）仅视觉模型有分。</p>
 
 <h2>四、能力清单与可信度</h2>
 <div class="tablewrap">
@@ -301,7 +303,7 @@ ol li {{ margin: 4px 0; }}
   <li><strong>两轮自查</strong>（p07_selfcheck）：无提示复查，改对率/改错率与首轮正确率解耦；</li>
   <li><strong>先修关系推理</strong>（mooccube_prereq）：905 条专家先修边做金标的自建协议（评测已接入，分数待跑）。</li>
 </ul>
-<p>这四个 + IFEval 接入 + LongTutor 挂载，把 P01/P07/P08 从"搭车分"变成了直接测量。</p>
+<p>这四个 + IFEval 接入 + LongTutor 挂载，把 P01/P06/P07 从"搭车分"变成了直接测量。</p>
 <h3>方法学（相对"拿榜单分加权"）</h3>
 <ol>
   <li>预注册测量模型：先声明每个 P 的结构（reflective/formative + facet），再看数据；</li>
@@ -317,18 +319,18 @@ ol li {{ margin: 4px 0; }}
 
 <h2>七、缺口与限制（诚实声明）</h2>
 <ul>
-  <li><strong>领域空白</strong>：P09 工具使用与长程执行、P15 学术诚信判定——教育评测领域没有可用基准，报告不硬凑。</li>
-  <li><strong>待跑</strong>：P19（mooccube_prereq）与 P03 学科图表 facet（K12Vista）已接入未出分。</li>
+  <li><strong>领域空白</strong>：P08 工具使用与长程执行、P20 学术诚信判定——教育评测领域没有可用基准，报告不硬凑。</li>
+  <li><strong>参考值</strong>：P14（mooccube_prereq，3 模型面）与 P03 学科图表 facet（K12Vista，1 模型面）面窄。</li>
   <li><strong>面不齐</strong>：LongTutor / MRBench / BEA 类格子只有 3 个模型面（已决定不补跑，按注记处理）；edubench 面是 GLM-5.1 而非 5.2。</li>
-  <li><strong>子能力覆盖</strong>：P16 声明 4 个子能力只测到 2 个；P14 三 facet 只有学业评分有分。</li>
-  <li><strong>同源</strong>：P20/P21/P22 的知识 facet 来自同一份 SATA 数据，三个分数不构成互证。</li>
+  <li><strong>子能力覆盖</strong>：P12 声明 4 个子能力只测到 2 个；P10 三 facet 只有学业评分有分。</li>
+  <li><strong>同源</strong>：P17/P18/P19 的知识 facet 来自同一份 SATA 数据，三个分数不构成互证。</li>
   <li><strong>方差受限</strong>：约六成有分格子分数挤在一起，排名意义有限——补更难的题比调权重更要紧。</li>
 </ul>
 
 <footer>
 数据源：<span class="mono">reports/atomic_ability_rebenchmark_2026-07-08/</span>（09 分数、10 证据、13 效度）·
 映射定稿 <span class="mono">doc/atomic_ability_mapping_final_2026-07-15.md</span> ·
-测量模型 <span class="mono">data/mapping_measurement_model_v5.json</span>。
+测量模型 <span class="mono">data/mapping_measurement_model_v6.json</span>。
 分数为研究层原始口径，用户版报告（每 P 一分 + 三档可信度 + 产品语言）随 M4 交付。
 </footer>
 </main>
