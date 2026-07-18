@@ -218,7 +218,12 @@ def resolve_model_params(model: str, provider: str | None = None) -> dict:
 # answer (the budget is spent on reasoning) and returns empty ``content`` — which
 # surfaced as bogus "empty reply" / "unparsed" judge failures. Matched by
 # case-insensitive prefix.
-_REASONING_MODEL_PREFIXES: tuple[str, ...] = ("minimax-m3",)
+# ``deepseek-v3.2-think`` is the other one: verified 2026-07-18 against the ZGC
+# relay, a "what is 8347*2916" call spent 977 of its 982 completion tokens on
+# ``reasoning_content`` and put only the bare answer in ``content``. Capping it
+# would starve the answer exactly the way it starves MiniMax-M3. The plain
+# ``deepseek-v3.2`` is *not* listed: it reasons inline in ``content`` instead.
+_REASONING_MODEL_PREFIXES: tuple[str, ...] = ("minimax-m3", "deepseek-v3.2-think")
 
 
 def is_reasoning_model(model: str) -> bool:

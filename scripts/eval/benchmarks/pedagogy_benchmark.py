@@ -99,6 +99,9 @@ REASONING_MODEL_HINTS = (
     "doubao-seed",
     "claude-opus-4",
     "claude-sonnet-4",
+    # Generic marker for explicit reasoning variants, e.g. deepseek-v3.2-think.
+    # Also catches "-thinking", which is the same thing.
+    "-think",
 )
 
 
