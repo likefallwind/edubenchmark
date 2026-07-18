@@ -171,6 +171,48 @@ def multiclass_f1(targets: list[Any], preds: list[Any]) -> dict[str, float]:
     }
 
 
+def quadratic_weighted_kappa(gold: list[int], pred: list[int]) -> float | None:
+    """Quadratic weighted kappa for two ordinal rating sequences.
+
+    The standard agreement statistic for ordinal human/machine scoring, where
+    disagreements are penalized by the *square* of their distance, so a 1-point
+    miss costs far less than a 4-point one. Mirrors
+    ``sklearn.metrics.cohen_kappa_score(weights="quadratic")``.
+
+    Labels are the sorted union of both sequences, so the rating scale is taken
+    from the data rather than assumed. Returns ``None`` when the statistic is
+    undefined: empty or mismatched inputs, fewer than two distinct labels, or
+    zero expected disagreement.
+
+    Used by SAS-Bench (per-subtask agreement with expert step labels) and by
+    ASAP 2.0 (essay scores against human raters).
+    """
+    if not gold or len(gold) != len(pred):
+        return None
+    labels = sorted(set(gold) | set(pred))
+    if len(labels) < 2:
+        return None
+    index = {label: idx for idx, label in enumerate(labels)}
+    n = len(labels)
+    observed = [[0.0] * n for _ in range(n)]
+    gold_hist = [0.0] * n
+    pred_hist = [0.0] * n
+    for g, p in zip(gold, pred):
+        gi, pi = index[g], index[p]
+        observed[gi][pi] += 1.0
+        gold_hist[gi] += 1.0
+        pred_hist[pi] += 1.0
+    observed_error = 0.0
+    expected_error = 0.0
+    scale = float((n - 1) ** 2)
+    for i in range(n):
+        for j in range(n):
+            weight = ((i - j) ** 2) / scale
+            observed_error += observed[i][j] * weight
+            expected_error += (gold_hist[i] * pred_hist[j] / len(gold)) * weight
+    return 1.0 - observed_error / expected_error if expected_error else None
+
+
 def cohen_kappa(targets: list[Any], preds: list[Any]) -> float:
     """Cohen's kappa for two single-label rating sequences (chance-corrected
     agreement). Mirrors ``sklearn.metrics.cohen_kappa_score`` for nominal labels.

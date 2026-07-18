@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -979,117 +980,165 @@ def fetch_pedagogy_benchmark(force: bool = False) -> Path:
     return out_dir
 
 
-# ASAP 2.0 column-name candidates. The Kaggle release has gone through several
-# namings (and the corpus is also distributed as PERSUADE 2.0), so we map by
-# candidate list and fail loudly with the observed header rather than guessing.
-_ASAP_COLUMNS: dict[str, tuple[str, ...]] = {
-    "essay_id": ("essay_id", "essay_id_comp", "id"),
-    "full_text": ("full_text", "essay_text", "text"),
-    "score": ("score", "holistic_essay_score", "holistic_score"),
-    "prompt_name": ("prompt_name", "assignment", "prompt"),
-    "split": ("split", "train_split", "holdout", "assignment_split"),
-}
+ASAP2_REPO = "https://github.com/scrosseye/ASAP_2.0/raw/main"
+# The authors ship the test split password-protected to slow down scraping; the
+# password is published in the repo README.
+ASAP2_TEST_PASSWORD = b"asap2_test"
+# Per-prompt source articles as plain text. The authors' repo ships these only
+# as (partly scanned) PDFs, so we take the text columns from the Kaggle mirror
+# of the same corpus when it happens to be present locally. Optional: only the
+# adapter's --with-source variant needs them.
+ASAP2_KAGGLE_CSV = "ASAP2_train_sourcetexts.csv"
 
 
 def fetch_asap_2(force: bool = False) -> Path:
-    """Materialize ASAP 2.0 (Kaggle ``lburleigh/asap-2-0``) into JSONL.
+    """Materialize ASAP 2.0 from the authors' repo (github.com/scrosseye/ASAP_2.0).
 
-    ~25k source-based argumentative essays by US grade 6-12 students, each
+    ~24.7k source-based argumentative essays by US grade 6-10 students, each
     holistically scored 1-6 by trained raters (Crossley et al., ASAP 2.0; an
-    extension of the PERSUADE corpus). CC BY licensed.
+    extension of the PERSUADE corpus).
 
-    Needs Kaggle API credentials: kaggle.com -> Settings -> API ->
-    "Create New Token", save as ``~/.kaggle/kaggle.json`` (chmod 600).
+    We use the **authors' repo, not the Kaggle mirror**, because only the repo
+    ships the official train/test split (17,307 / 7,421) and the official
+    holistic scoring rubric. The Kaggle dataset ``lburleigh/asap-2-0`` is the
+    same corpus already merged, with no split column. The 7,421-row ``test``
+    split is the evaluation set; ``train`` is materialized too but not scored
+    by default.
 
-    Unlike the other benchmarks here ASAP 2.0 is a *corpus*, not an LLM
-    evaluation suite: it ships human scores and the holistic rubric but no
-    official LLM prompting protocol. The prompt lives in the adapter and is
-    ours; the rubric and the QWK-against-human-scores metric are not.
+    Source articles: the repo ships them as PDFs, several of which are scans
+    with no text layer, so plain text is lifted from the Kaggle mirror's
+    ``source_text_*`` columns when that CSV is already present under ``raw/``.
+    Note the "Facial action coding system" article is withheld there as
+    "Copyright Restricted", so it is unavailable at any quality.
+
+    ASAP 2.0 is a *corpus*, not an LLM evaluation suite: it ships human scores
+    and the rubric but no official LLM prompting protocol. The scoring prompt
+    lives in the adapter and is ours; the rubric, the split, and QWK against
+    human scores are not.
     """
+    import io
+    import zipfile
+
     base = ROOT / "sources" / "datasets" / "asap_2"
     out_dir = base / "data"
     out_path = out_dir / "essays.jsonl"
-    if not force and _ok(out_path):
-        print(f"skip asap_2: {out_path} already exists (use --force to rebuild)")
+    rubric_path = out_dir / "rubric.txt"
+    if not force and _ok(out_path) and _ok(rubric_path):
+        print(f"skip asap_2: outputs already in {out_dir} (use --force to rebuild)")
         return out_dir
 
-    raw_dir = base / "raw"
-    csv_files = sorted(raw_dir.glob("**/*.csv"))
-    if not csv_files or force:
-        raw_dir.mkdir(parents=True, exist_ok=True)
-        if not (Path.home() / ".kaggle" / "kaggle.json").exists():
-            raise SystemExit(
-                "ASAP 2.0 needs Kaggle credentials: kaggle.com -> Settings -> API -> "
-                "'Create New Token', then save the file as ~/.kaggle/kaggle.json "
-                "(chmod 600). Dataset: https://www.kaggle.com/datasets/lburleigh/asap-2-0"
-            )
-        import subprocess
-
-        print("downloading kaggle dataset lburleigh/asap-2-0 ...")
-        result = subprocess.run(
-            ["kaggle", "datasets", "download", "-d", "lburleigh/asap-2-0", "-p", str(raw_dir), "--unzip"],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            raise SystemExit(
-                f"kaggle download failed (exit {result.returncode}):\n{result.stderr.strip()}\n"
-                "Install the CLI with `pip install kaggle` if it is missing."
-            )
-        csv_files = sorted(raw_dir.glob("**/*.csv"))
-        if not csv_files:
-            raise SystemExit(f"no CSV found under {raw_dir} after download")
-
-    pandas = _require_pandas()
-    # Pick the widest CSV: the corpus release ships the essay table alongside
-    # smaller companion files (source texts, demographics, rubric).
-    frames = {path: pandas.read_csv(path) for path in csv_files}
-    essay_path = max(frames, key=lambda p: len(frames[p].columns))
-    frame = frames[essay_path]
-    header = list(frame.columns)
-
-    resolved: dict[str, str | None] = {}
-    for field, candidates in _ASAP_COLUMNS.items():
-        match = next((c for c in candidates if c in header), None)
-        if match is None and field in ("essay_id", "full_text", "score"):
-            raise SystemExit(
-                f"could not find a '{field}' column in {essay_path.name}.\n"
-                f"tried {candidates}; observed columns: {header}\n"
-                "Add the real name to _ASAP_COLUMNS in this file."
-            )
-        resolved[field] = match
-
+    github_dir = base / "github"
+    github_dir.mkdir(parents=True, exist_ok=True)
     out_dir.mkdir(parents=True, exist_ok=True)
-    written = 0
+
+    frames = {}
+    pandas = _require_pandas()
+    for split, archive, password in (
+        ("train", "ASAP_2_Final_github_train.zip", None),
+        ("test", "ASAP_2_Final_github_test.zip", ASAP2_TEST_PASSWORD),
+    ):
+        archive_path = github_dir / archive
+        _download_file(f"{ASAP2_REPO}/{archive}", archive_path, force=force)
+        with zipfile.ZipFile(archive_path) as zf:
+            member = next(
+                name
+                for name in zf.namelist()
+                if name.endswith(".csv") and "__MACOSX" not in name
+            )
+            with zf.open(member, pwd=password) as fh:
+                frames[split] = pandas.read_csv(io.BytesIO(fh.read()))
+
+    # Official holistic rubric (1-6), extracted from the repo's .docx.
+    rubric_docx = github_dir / "asap_scoring_rubric.docx"
+    _download_file(f"{ASAP2_REPO}/asap_scoring_rubric.docx", rubric_docx, force=force)
+    rubric_path.write_text(_asap_rubric_text(rubric_docx), encoding="utf-8")
+
+    # Optional plain-text source articles from the Kaggle mirror, if present.
+    source_texts: dict[str, list[str]] = {}
+    kaggle_csv = base / "raw" / ASAP2_KAGGLE_CSV
+    if kaggle_csv.exists():
+        cols = ["prompt_name"] + [f"source_text_{i}" for i in range(1, 5)]
+        mirror = pandas.read_csv(kaggle_csv, usecols=cols).drop_duplicates("prompt_name")
+        for _, row in mirror.iterrows():
+            texts = [
+                str(row[f"source_text_{i}"]).strip()
+                for i in range(1, 5)
+                if pandas.notna(row[f"source_text_{i}"])
+            ]
+            # The FACS article is withheld upstream; treat it as absent rather
+            # than feeding the model the string "Copyright Restricted".
+            texts = [t for t in texts if t and t.lower() != "copyright restricted"]
+            if texts:
+                source_texts[str(row["prompt_name"])] = texts
+
+    written = {"train": 0, "test": 0}
     with out_path.open("w", encoding="utf-8") as fh:
-        for _, row in frame.iterrows():
-            rec = {
-                "item_id": str(_jsonable(row[resolved["essay_id"]])),
-                "full_text": _jsonable(row[resolved["full_text"]]),
-                "score": _jsonable(row[resolved["score"]]),
-                "prompt_name": _jsonable(row[resolved["prompt_name"]]) if resolved["prompt_name"] else None,
-                "split": _jsonable(row[resolved["split"]]) if resolved["split"] else None,
-            }
-            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
-            written += 1
+        for split in ("train", "test"):
+            for _, row in frames[split].iterrows():
+                prompt_name = _jsonable(row.get("prompt_name"))
+                rec = {
+                    "item_id": str(_jsonable(row.get("essay_id"))),
+                    "split": split,
+                    "full_text": _jsonable(row.get("full_text")),
+                    "score": _jsonable(row.get("score")),
+                    "prompt_name": prompt_name,
+                    "assignment": _jsonable(row.get("assignment")),
+                    "task": _jsonable(row.get("task")),
+                    "grade_level": _jsonable(row.get("grade_level")),
+                    "essay_word_count": _jsonable(row.get("essay_word_count")),
+                    "has_source_text": str(prompt_name) in source_texts,
+                }
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                written[split] += 1
+
+    if source_texts:
+        (out_dir / "source_texts.json").write_text(
+            json.dumps(source_texts, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
     manifest = {
-        "dataset": "lburleigh/asap-2-0",
-        "source_csv": essay_path.name,
-        "rows": written,
-        "resolved_columns": resolved,
-        "observed_columns": header,
-        "rubric": "holistic 1-6, Crossley et al. ASAP 2.0",
-        "note": (
-            "Corpus only: ships human scores and rubric, no official LLM prompting "
-            "protocol. The scoring prompt lives in the adapter and is not official."
+        "source": "https://github.com/scrosseye/ASAP_2.0",
+        "splits": written,
+        "eval_split": "test",
+        "rubric": "official holistic 1-6, asap_scoring_rubric.docx",
+        "source_texts_available_for": sorted(source_texts),
+        "source_texts_note": (
+            "Plain text lifted from the Kaggle mirror lburleigh/asap-2-0; the repo's own "
+            "PDFs are partly scans. 'Facial action coding system' is withheld upstream as "
+            "'Copyright Restricted' and is unavailable."
+        ),
+        "protocol_note": (
+            "Corpus, not an LLM benchmark: human scores, official split and rubric are "
+            "upstream; the LLM scoring prompt is defined in the adapter and is not official."
         ),
     }
     (out_dir / "data_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    print(f"wrote asap_2: {written} essays -> {out_path} (from {essay_path.name})")
+    test_prompts = set(frames["test"].prompt_name.astype(str))
+    with_source = len(test_prompts & set(source_texts))
+    print(
+        f"wrote asap_2: {written['test']} test + {written['train']} train essays -> {out_path}\n"
+        f"  official rubric -> {rubric_path}; source texts for "
+        f"{with_source}/{len(test_prompts)} test prompts"
+    )
     return out_dir
+
+
+def _asap_rubric_text(docx_path: Path) -> str:
+    """Plain text of the official holistic rubric from the repo's .docx.
+
+    Stdlib only: a .docx is a zip whose word/document.xml carries the text;
+    paragraph breaks are </w:p>.
+    """
+    import html
+    import zipfile
+
+    with zipfile.ZipFile(docx_path) as zf:
+        xml = zf.read("word/document.xml").decode("utf-8")
+    xml = re.sub(r"</w:p>", "\n", xml)
+    text = html.unescape(re.sub(r"<[^>]+>", "", xml))
+    return "\n".join(line.strip() for line in text.split("\n") if line.strip())
 
 
 def fetch_longtutor(force: bool = False) -> Path:

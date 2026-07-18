@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from ..base import BenchmarkAdapter
 from .agieval import AGIEvalAdapter
+from .asap_2 import ASAP2Adapter
 from .bea2025 import BEA2025JudgeAdapter, BEA2025TutorAdapter
 from .ceval import CEvalAdapter
 from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
@@ -90,6 +91,9 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     # Pedagogy Benchmark: teacher-exam pedagogical knowledge MCQ, official
     # prompt + REPAT parsing, 1,119 scored items (24 are prompt exemplars).
     PedagogyBenchmarkAdapter,
+    # ASAP 2.0: model-as-rater on the official 7,421-essay test split, QWK
+    # against human holistic scores (official rubric, in-repo scoring prompt).
+    ASAP2Adapter,
 ]
 
 _REGISTRY: dict[str, type[BenchmarkAdapter]] = {a.name: a for a in _ADAPTERS}

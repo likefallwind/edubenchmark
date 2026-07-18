@@ -20,6 +20,7 @@ from statistics import fmean
 from typing import Any
 
 from ..base import BenchmarkAdapter, ROOT, prompt_sha256
+from ..scoring import quadratic_weighted_kappa
 
 
 HOMEPAGE = "https://github.com/PKU-DAIR/SAS-Bench"
@@ -161,31 +162,8 @@ def _spearman(left: list[float], right: list[float]) -> float:
     return numerator / denominator if denominator else 0.0
 
 
-def _qwk(gold: list[int], pred: list[int]) -> float | None:
-    if not gold or len(gold) != len(pred):
-        return None
-    labels = sorted(set(gold) | set(pred))
-    if len(labels) < 2:
-        return None
-    index = {label: idx for idx, label in enumerate(labels)}
-    n = len(labels)
-    observed = [[0.0] * n for _ in range(n)]
-    gold_hist = [0.0] * n
-    pred_hist = [0.0] * n
-    for g, p in zip(gold, pred):
-        gi, pi = index[g], index[p]
-        observed[gi][pi] += 1.0
-        gold_hist[gi] += 1.0
-        pred_hist[pi] += 1.0
-    observed_error = 0.0
-    expected_error = 0.0
-    scale = float((n - 1) ** 2)
-    for i in range(n):
-        for j in range(n):
-            weight = ((i - j) ** 2) / scale
-            observed_error += observed[i][j] * weight
-            expected_error += (gold_hist[i] * pred_hist[j] / len(gold)) * weight
-    return 1.0 - observed_error / expected_error if expected_error else None
+# QWK lives in ..scoring so ASAP 2.0 and this adapter share one implementation.
+_qwk = quadratic_weighted_kappa
 
 
 def _ccs(rows: list[dict[str, Any]]) -> float | None:
