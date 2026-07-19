@@ -166,3 +166,103 @@
 ## 逐 P 复核完毕
 
 P01（R20）→ P02（R21）→ P03–P07（R22）→ P08–P20（R23）全部走完；编号迁移 R24 完成。
+
+---
+
+## R25（拟）：权重分档改革——相关度五档 + 置信度规则化（2026-07-19 讨论中，未落地）
+
+**动机**：相关度现有 16 个取值、0.05 一档（0.25–0.35 挤了 45 格），是假精度；置信度 26 个基准 9 个取值，混装判分硬度、教育相关性、协议来源、污染风险，无分解规则。两者都改为"对号入座"的可裁决判断。
+
+**用户已定八决（2026-07-19）**：①相关度保留 0.2 弱相关档，现有低权格并入 0.2，后续再议是否砍；②污染风险进置信度规则，协议保真度不进（协议不保真一般是优化选择；若是 bug 另案处理）；③置信度用扣分制；④判分方式**二分**——只分客观规则判分与 LLM-as-judge，不细分受限/自由裁判；⑤认可度**两档**——官方/广泛使用与其余（新发布/小众/自建不再区分），且**严格纯规则**，例外只留 R23 已裁的 edubench error_identification 0.3，其余（judge-swap、κ、BLEU 效度等实测折价动议）全部不采纳；⑥**污染因子在逐格审核中取消（推翻②）**——按"公开答案可背"扣分则几乎全表该扣、按"题源既存"扣分界限难辩护，污染风险降为注记；⑦判分方式归类**按子任务实际判分路径据实归类**——longtutor_evidence 名义"规则+语义等价裁判"，实测四模型三子任务裁判定分占比 53–96%（无一以精确匹配为主），整体归 LLM 裁判档；⑧**第二因子由"被认可程度"改为"质量"**——"广泛认可/非广泛"不是好尺度（一个 benchmark 用的人多不等于测得准），改为 **高质量不扣 / 普通质量 −0.15**，判据取"数据与金标有没有外部把关"：官方发布、同行评议、人工标注金标 = 高质量；自建自判、金标只有内部把关 = 普通质量。这个判据是可核查的事实，不掺主观评价，也不与已排除的协议保真度（决②）和实测噪声（决⑤）重叠。**普通质量共 8 个，全部是本仓自建**：mooccube_prereq、p07_selfcheck、p08_calibration、p08_abstention、longtutor 三件、eduillustrate。
+
+**判分路径全量核查（2026-07-19，逐适配器读源码 + 实测占比，明细见 `doc/r25_weight_change_review_2026-07-19.md` 的「判分路径核查」节）**：36 个基准全部核过，**无第二个路径混装的 benchmark**——所有多维度基准（sas_bench 三指标、k12vista 三子集、edubench 12 维、mrbench_tutor/bea2025_tutor 各维、olympiadbench 两维、eduguard_adversarial 两阶段）在自己的取分维度间路径一致。三个**家族**内部路径不一但已按 benchmark_id 拆开、归类正确：mathtutorbench（5 规则 + 4 胜率裁判）、longtutor（diagnosis 规则 / evidence + teaching 裁判）、eduguard-mrbench-bea 系（sata 与两个 judge 客观 / adversarial 与两个 tutor 裁判）。另有三个基准 LLM 只做答案提取、对错仍由规则判定，留客观档：eduguard_sata（>64 字符触发，实测 0.0–0.4%）、mmlu_pro（正则失配兜底，0.1–2.4%）、mathvista（官方协议恒定 LLM 抽取，但比对走 `normalize_extracted_answer` + 最近选项编辑距离）。
+
+### 相关度五档（锚点定义）
+
+| 档 | 名称 | 定义 |
+|---|---|---|
+| 1.0 | 完全一致 | 该指标测的构念就是 facet 本身（ifeval → P01） |
+| 0.8 | 强相关 | 直接测该 facet，但范围偏窄或混少量其他构念 |
+| 0.5 | 中等相关 | facet 是成绩的主要成分之一，与其他能力方差混杂 |
+| 0.2 | 弱相关 | 有信号但被其他方差主导；必须能一句话说出"该指标里 facet 的信号是什么"，说不出归 0 |
+| 0 | 不相关 | 不挂格（是排除，不是权重）——即 R19"宁缺勿滥"的显式化 |
+
+**机械迁移规则**：就近归档，等距（0.35、0.65）向下（保守，与宁缺勿滥同向）；0.1/0.15 按用户裁决并入 0.2（不归 0，摘格只走人工裁决）。迁移结果：104 格 → 0.2×65、0.5×28、0.8×10、1.0×1。
+
+**必裁清单（15 格，等距值）**：0.35→0.2 的 14 格 + 0.65→0.5 的 1 格（asap_2 essay holistic QWK @P11）。名单见影响面脚本输出；其中构念上明显该上 0.5 的候选：mathvista/k12vista 解题图（P03）、pedagogy SEND（P05）、asap_2 QWK 维持 0.5 即可。
+
+**抽查清单（23 格）**：0.3 与 0.4 只差 0.1 却落进相差 2.5 倍的两档（0.2 vs 0.5），逐格按锚点定义确认落点。
+
+**机械迁移破坏既有裁决意图的三处，须单独裁**：
+
+1. **P17 `mrbench_tutor · Tutor_Tone (non-offensive)` 哨兵格 0.1→0.2**：R23 刚把它降到 0.1 以免压缩 ASR 拉开的差距；机械翻倍后该格（5 面全 10.00）权重回升，弱模型 P17 虚涨 +0.43～+0.51，**是本次改革最大的单点失真**。建议：ASR 0.3 上裁 0.5（对抗条件守边界的直接测量，构念站得住），恢复主导；哨兵留 0.2 可接受。
+2. **P19 拒答质量主格意图消失**：refusal 0.6→0.5、ASR 0.45→0.5，权重打平，R23"拒答质量为 facet 主格"（R7 原意）落空。建议 refusal 上裁 0.8（按 rubric 判处置得体与否，正是"安全处置选择"构念的直接测量）。
+3. **mathtutorbench_problem_solving 置信 0.45→0.85**：原值把"解题强≠会辅导"折进了置信度；规则化后这层护栏必须完全由相关度承担（其 P05 格 0.3→0.2、P06 格 0.6→0.5，构念上成立，确认即可）。
+
+### 置信度扣分制（终版，起点 1.0，两因子各扣 0.15）
+
+| 因子 | 不扣 | 扣 0.15 |
+|---|---|---|
+| **判分方式**（按实际判分路径归类，非名义描述） | 客观规则判分（exact match / checker / 与人工金标算一致率 / BLEU 等客观计算） | LLM-as-judge：LLM 输出的就是对错或好坏判断；仅做答案提取、由规则比对金标的不算 |
+| **质量**（判据＝数据与金标有无外部把关） | 高质量：官方发布 / 同行评议 / 人工标注金标 | 普通质量：自建自判，金标只有内部把关 |
+
+污染因子已取消（决⑥），污染风险只在 rationale 注记。第二因子的判据刻意选"外部把关"这个可核查的事实，不掺"用的人多不多"的主观评价，也不与已排除的协议保真度（决②）、实测噪声（决⑤）重叠。
+
+**严格纯规则**：唯一例外 `edubench · error_identification_correction_accuracy` 维持 **0.3**（R23 裁决：换裁判 ρ≤0.14）。讨论中提过的其他实测折价（edubench 整体 judge-swap、bea/mrbench_tutor κ≈0.22、socratic BLEU 效度）**均不采纳**——只作 rationale 注记。原 QG/TMG 0.75、sas_bench 分指标、eduguard refusal 0.8 等全部 per-subdimension override 并入基准级规则值。
+
+**结果全表四值**：
+
+| 值 | 组合 | 数量 | 成员 |
+|---|---|---|---|
+| **1.0** | 客观+高质量 | 17 | ifeval、mmlu_pro、ceval、agieval、olympiadbench、mathvista、sas_bench、pedagogy_benchmark、asap_2、eduguard_sata、bea2025_judge、mrbench_judge、mathtutorbench 规则判分五件（problem_solving / solution_correctness / mistake_location / mistake_correction / socratic） |
+| **0.85** | 客观+普通 | 5 | mooccube_prereq、p07_selfcheck、p08_calibration、p08_abstention、longtutor_diagnosis |
+| **0.85** | 裁判+高质量 | 11 | eduguard_adversarial、bea2025_tutor、mrbench_tutor、mathtutorbench 胜率四件、mmtutorbench、tutorbench、k12vista、edubench |
+| **0.7** | 裁判+普通 | 3 | longtutor_evidence、longtutor_teaching、eduillustrate |
+| **0.3** | 唯一例外 | 1 | edubench · error_identification_correction_accuracy |
+
+**需注意的两个后果**：①**edubench 落 0.85**（裁判+高质量：数据与判分维度是原论文设定、同事按原设定跑的）——judge-swap 实锤的裁判噪声按决⑤只进注记不进权重，单独那个最脏的指标由 0.3 例外兜住；②**本仓自建的 8 个基准整体降一档**（p07/p08 三件套 0.85→0.85 不变、mooccube 0.7→0.85 升、longtutor 三件与 eduillustrate 降），这是"外部把关"判据的直接结果，方向与"自建协议无公开基线"的既有裁决一致。
+
+### 逐格裁决建议（2026-07-19，待用户拍板）
+
+对必裁 15 格 + 抽查 23 格逐格按锚点定义复核后：**28 格确认机械落点**，10 格建议偏离机械值向上裁（都是"指标名就是 facet 构念"或"须保住既有裁决的 facet 内排序"两类理由）：
+
+| 格 | 机械 | 建议 | 理由 |
+|---|---|---|---|
+| P03 解题图像 · mathvista | 0.2 | **0.5** | 读图是分数主成分（区别于盲测已证伪的 olympiadbench 格），混数学推理方差，正是 0.5 定义 |
+| P03 解题图像 · k12vista 数学子集 | 0.2 | **0.5** | 同上 |
+| P05 教学专业知识 · pedagogy SEND | 0.2 | **0.5** | 特教知识选择题是本 facet 的直接测量（子领域偏窄），不应掉到与胜率代理格同档 |
+| P06 生成与归因推理 · edubench reasoning_process_rigor | 0.2 | **0.5** | 裁判逐题标"推理过程严谨"，指标名即构念；保持 facet 内首格地位 |
+| P11 整体性评分 · asap_2 QWK | 0.5(等距) | **0.8** | 与 sas_bench QWK（0.7→0.8 机械）是同一操作换语料，同构念必须同档 |
+| P13 知识状态估计 · longtutor_diagnosis | 0.2 | **0.8** | 从交互历史推断知识状态就是 facet 构念本身（范围窄：数学辅导、四分类）；金标非盲标的疑虑移到 rationale 注记。单格 facet，**不影响分数**，纯文档口径 |
+| P14 策略制定 · pedagogy CDPK | 0.5 | **0.8** | R23 原话"本 facet 构念最贴的直接测量"即强相关定义；同时保住 CDPK>SEND 排序 |
+| P16 语气动机支持 · edubench motivation_guidance | 0.2 | **0.5** | 指标名即构念，且属 judge-swap 验证过的裁判鲁棒簇；机械落 0.2 会与鼓励占比格打平、抹掉排序 |
+| P17 边界行为 · eduguard ASR | 0.2 | **0.5** | 对抗压力下守边界的直接测量；恢复对哨兵格（0.1→0.2 翻倍）的主导，消除机械迁移最大失真 |
+| P19 对抗鲁棒 · eduguard 拒答质量 | 0.5 | **0.8** | 按 rubric 判处置得体与否是"安全处置选择"构念的直接测量；恢复 R7/R23"拒答质量为主格"意图 |
+
+机械确认里两个值得注记的：①P03 olympiadbench 多模态子集 0.1→0.2——盲测已证视觉信号极弱，按"低格并 0.2"用户裁决保留，但这是全表最接近 0 档的格，若后续砍 0.2 档它第一个走；②eduguard_sata 在 P17/P18/P19 三个知识 facet 均为单格 facet，落 0.2 纯属文档口径，不影响分数（单格权重在 facet 内约掉）。
+
+### 影响面（终版规则：机械迁移 + 逐格裁决 + 两因子置信；旧值复算与已发布 189 格零误差）
+
+总体温和：全 P 平均 |Δ| 0.061、最大 0.27，改革收益主要是**可辩护性**，不是分数重排。纯机械迁移会让弱模型 P17 虚涨 +0.43～+0.51（哨兵格翻倍），ASR 上裁 0.5 后收敛到 +0.03～+0.19。变动可观的：
+
+| P | 方向 | 幅度 | 原因 |
+|---|---|---|---|
+| P11 主观题评价 | ↓ | −0.16～−0.27 | 分析式 facet 三格权重拉平（CCS 与 bea/mrbench_judge 同落 1.0），macro-F1 尺度更狠的 judge 格权重相对上升 |
+| P12 命题 | ↓ | −0.05～−0.24 | QG 表达复合格（分数偏低）相关度 0.5 相对正确性复合格 0.2 权重上升 |
+| P17 边界判断 | 弱模型↑ | +0.03～+0.19 | ASR 裁决上调 0.5 后主导恢复；哨兵格残余抬升 |
+| P14 策略 | ↓ | −0.10～−0.16 | 执行 facet 内规则判分格（socratic 1.0）相对裁判格（0.85）权重上升 |
+| P10 错误诊断 | ↓ | −0.11～−0.16 | 同上，ECS/mistake_location 客观格与 tutor 裁判格拉开 |
+| P19 处置 | 模型间互见 | −0.13～+0.12 | refusal 主格恢复（0.8）后各模型拒答质量与 ASR 的相对强弱互现 |
+| P05/P06 | 模型间互见 | glm-5.2 −0.12，余 ±0.09 内 | MCQ 族升 1.0 与 edubench 降 0.85 的相对位移 |
+
+P01/P03/P04/P07/P08/P13/P15/P16/P18 变动 ≤0.08。发布面板排名有 **3 处邻位互换**，均发生在原本就贴着的分差上：P06 与 P16 的 minimax-m3 ↔ deepseek-v4-pro、P12 的 deepseek-v4-pro ↔ minimax-m3。
+
+### 落地步骤（裁决完成后一批执行）
+
+1. 快照 `reports/atomic_ability_rebenchmark_2026-07-08/` → `*_v6r24_snapshot_YYYYMMDD/`；
+2. 改 `data/mapping_measurement_model_v6.json` 全部 cell weight（机械值 + 必裁/抽查修正），`schema_notes` 记五档制；
+3. 改聚合脚本 `BENCHMARK_META`：`default_benchmark_weight` 按规则值，删除除 error_identification 例外之外的全部 `benchmark_weight_overrides`，规则本身写进注释；
+4. final 文档记 R25（含两张规则表 + 逐基准分类表 + 例外清单），标注 **分数不可跨 R25 比较**；
+5. 重跑管线四步 + `09_atomic_p_score_evidence.jsonl` 逐格 diff 核验 + v6 文档各 P 表格同步。
+
+分析脚本（一次性，只读）：scratchpad `r25_impact.py`，方法：相关度机械映射 + 置信度规则表 → 用证据文件按"facet 内有效权重加权平均 → facet 等权平均"重算全部 P 分，与已发布值对账后出 delta。

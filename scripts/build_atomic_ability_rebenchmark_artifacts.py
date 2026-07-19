@@ -56,6 +56,25 @@ IMPUTE_MIN_FACES = 3
 # default_benchmark_weight (confidence) and cell weight (relevance).  Judge
 # tasks stay out of scoring via EXCLUDED_SCORING_BENCHMARKS + zero confidence
 # weight + the cells' explicit "excluded" marker.
+#
+# R25 (2026-07-19): both weights become rule-derived, not hand-tuned.
+#   relevance (cell weight, in the JSON): five tiers 1.0 / 0.8 / 0.5 / 0.2 / 0
+#     (0 = not mounted, an exclusion rather than a weight).
+#   confidence (default_benchmark_weight, below): start at 1.0, two factors
+#     deduct 0.15 each —
+#       scoring method: objective rule scoring deducts nothing; LLM-as-judge
+#         deducts.  Classify by the *actual* scoring path, not the benchmark's
+#         nominal description: an LLM that only extracts an answer which a rule
+#         then compares against gold stays objective (mmlu_pro fallback,
+#         eduguard_sata verbose replies, mathvista's official protocol);
+#         longtutor_evidence emits CORRECT/INCORRECT itself, so it is a judge.
+#       quality: externally vetted data and gold (official release, peer review,
+#         human annotation) deducts nothing; self-built and self-judged, with
+#         gold vetted only in-repo, deducts.
+#   Result is four values: 1.0 / 0.85 / 0.7, plus the single exception
+#   edubench·error_identification_correction_accuracy = 0.3 (R23).  Contamination
+#   risk and measured judge noise (judge-swap, kappa, BLEU validity) are
+#   deliberately kept out of the weights and live in rationale notes only.
 
 ABILITY_PRIORITY = {
     "P01": 0.45,
@@ -119,12 +138,18 @@ MEASUREMENT_MODEL_PATH = ROOT / "data" / "mapping_measurement_model_v6.json"
 # metric family per subdimension ("*" = all subdimensions), benchmark-level
 # confidence weight (with per-subdimension overrides), and the benchmark-level
 # rationale.
+#
+# Since R25 every default_benchmark_weight is derived from the two-factor rule
+# documented above, so it must not be hand-tuned per benchmark: to change one,
+# change its scoring-method or quality classification and say why.  Exactly one
+# per-subdimension override survives (edubench error_identification, R23); the
+# rest were folded into the benchmark-level rule values.
 BENCHMARK_META: dict[str, dict[str, Any]] = {
     "mmlu_pro": {
         "benchmark_name": "MMLU-Pro",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.7,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": "基础学科知识与选择题答题能力，主要验证 LLM 答题门槛，不应主导教育能力雷达图。R22：0.35→0.7——精确匹配判分最硬却被压到低于裁判天花板分的 edubench，倒挂；护栏由映射结构（不挂教育侧 P）承担。",
     },
@@ -132,7 +157,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "C-EVAL",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.7,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": "中文考试与学科知识，属于基础答题门槛；对应知识调用、推理和选项约束遵循。R22：0.35→0.7，与 mmlu_pro 同批调整（判分硬度倒挂修正）。",
     },
@@ -140,7 +165,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "AGIEval",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.7,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": "标准化考试推理与答题，仍是 LLM 答题能力门槛。R22：0.4→0.7，与 mmlu/ceval 同族（考试 MCQ、官方解析、精确匹配）跟随同档。",
     },
@@ -148,7 +173,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "OlympiadBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.7,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": "高难学科推理和多模态竞赛题，答题能力未完全饱和；仍作为门槛/诊断而非教育核心。R22：0.55→0.7——解题簇唯一未饱和、真正承担区分度的证据不应压最低档；污染风险低于 mmlu。",
     },
@@ -156,7 +181,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathVista",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.7,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": "静态图文数学题，主要测多模态理解（解题图像 facet）、数学推理和知识调用。",
     },
@@ -164,7 +189,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "Pedagogy Benchmark",
         "source_scope": "otherbenchmark",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.8,
+        "default_benchmark_weight": 1.0,
         "metric_family": {
             "CDPK teaching knowledge selection": "accuracy",
             "SEND special education needs selection": "accuracy",
@@ -176,7 +201,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "ASAP 2.0",
         "source_scope": "otherbenchmark",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.8,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "qwk_0_to_100"},
         "rationale": "作文评分一致性主要是主观题 rubric 评分（学业作答 facet），同时需要定位文本证据与写作知识。",
     },
@@ -184,11 +209,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "SAS-Bench",
         "source_scope": "otherbenchmark",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.9,
-        "benchmark_weight_overrides": {
-            "CCS step scoring consistency": 0.95,
-            "ECS error-cause consistency": 1.0,
-        },
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "score_0_to_100"},
         "rationale": "简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P11c 核心锚）。",
     },
@@ -196,14 +217,9 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "EduBench",
         "source_scope": "otherbenchmark",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.8,
+        "default_benchmark_weight": 0.85,
         "benchmark_weight_overrides": {
-            "TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)": 0.75,
-            "QG × clarity_concision_inspiration + scenario_element_integration (task×metric)": 0.75,
-            "QG × domain_knowledge_accuracy + basic_factual_accuracy (task×metric)": 0.75,  # R23
-            # R23：M2 换裁判实验 ρ≤0.14、三裁判均分 4.6/7.4/8.7，全仓库噪声最实锤的格；
-            # 跨模型排序与其他错误诊断格全部相反（M2.7 9.35 vs M3 5.99）。格不删、注记在位，
-            # 但噪声实质失去话语权（有效权重 0.2→0.075，降为尾部证据）。
+            # R25 唯一例外（R23 裁决）：换裁判 ρ≤0.14，全仓噪声最实锤的格。
             "error_identification_correction_accuracy (metric)": 0.3,
         },
         "metric_family": {"*": "likert_0_to_10"},
@@ -219,7 +235,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "TutorBench",
         "source_scope": "otherbenchmark",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.8,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "score_0_to_100"},
         "rationale": "真实多模态 tutor 质量综合考察反馈生成、策略选择和图文感知。R22：1.0→0.8——分数混教学回复质量方差（P03 facet 注记的代理性质）且模型面与主面板不重叠，满置信不自洽。",
     },
@@ -227,7 +243,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.45,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": "数学求解门槛，重要但不能证明会辅导。",
     },
@@ -235,7 +251,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.85,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy_or_f1"},
         "rationale": "给定参考/学生解判断正确性，主测作答正误判定。",
     },
@@ -251,7 +267,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.9,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": "纠错需要识别错因并生成可用修正/反馈；R6 裁决错因归因（原 P13，现 P11c）权重 0.45→0.20（只测改对与否）。",
     },
@@ -259,7 +275,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.95,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "win_rate_or_accuracy"},
         "rationale": "教学法指令遵循主测策略选择和适配反馈。",
     },
@@ -267,7 +283,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.0,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "win_rate_or_accuracy"},
         "rationale": "hard 子集较有区分度，权重略高。",
     },
@@ -275,7 +291,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.0,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "win_rate_or_accuracy"},
         "rationale": "脚手架主测下一步教学干预选择与反馈生成。",
     },
@@ -283,7 +299,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.0,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "win_rate_or_accuracy"},
         "rationale": "hard 子集仍主测教学干预与反馈。",
     },
@@ -291,7 +307,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MathTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.6,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "bleu_0_to_1"},
         "rationale": (
             "生成引导性提问、与教师金标问题比 BLEU，是 P17a（提问式干预）的测量来源"
@@ -302,7 +318,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "BEA 2025 Judge",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.75,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": (
             "作为教育评判者逐维度标注 tutor 回复，与人类标注算一致率/macro-F1/kappa。"
@@ -315,7 +331,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "BEA 2025 Tutor",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.9,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "share_0_to_1"},
         "rationale": (
             "生成 tutor 回复、固定裁判逐维度标注。R2 裁决：复合 pass rate 换单维度 Yes 占比"
@@ -327,7 +343,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MRBench Judge",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.75,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": (
             "多维 tutor 回复评判（被测模型自己当裁判，与人类标注算一致率/macro-F1/kappa）。"
@@ -342,7 +358,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MRBench Tutor",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.8,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "share_0_to_1"},
         "rationale": (
             "tutor 回复生成、固定裁判 8 维标注。R2 裁决：复合 pass rate 换单维度分"
@@ -364,8 +380,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "EduGuard-Bench P2",
         "source_scope": "repo_eval_and_otherbenchmark",
         "score_direction": "lower_better",
-        "default_benchmark_weight": 1.0,
-        "benchmark_weight_overrides": {"Refusal quality distribution": 0.8},  # R23: 0.7→0.8
+        "default_benchmark_weight": 0.85,  # R23: 0.7→0.8
         "metric_family": {
             "Adversarial Safety ASR": "asr_0_to_1_lower_better",
             "Refusal quality distribution": "share_0_to_1",
@@ -376,7 +391,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "EduIllustrate",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.85,
+        "default_benchmark_weight": 0.7,
         "metric_family": {"*": "likert_0_to_5"},
         "rationale": "教学图示/图文协同生成直接测多模态教学产物生成；R5 后不再挂 P03（理解侧）。",
     },
@@ -384,7 +399,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MMTutorBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.9,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "score_0_to_6"},
         "rationale": "多模态 tutor 综合测图文感知、反馈生成和策略选择；当前小样本默认排除主图。",
     },
@@ -392,7 +407,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "IFEval",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.8,
+        "default_benchmark_weight": 1.0,
         "metric_family": {"*": "accuracy"},
         "rationale": (
             "可验证指令的规则判分（官方 checker，无裁判），P01 的首个直接测量"
@@ -404,7 +419,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "K12Vista",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.8,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "composite_0_to_10"},
         "rationale": (
             "中文 K12 图文学科题（五学科×三学段，固定 300 题分层抽样）。R15 裁决：挂 P03 学科图表 facet 0.55"
@@ -416,7 +431,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MOOCCube 先修关系推理",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.7,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "composite_0_to_10"},
         "rationale": (
             "MOOCCube（ACL 2020，学堂在线）905 条专家先修边当金标，200 道先修选择 + 100 道排序，"
@@ -463,7 +478,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "LongTutor 证据抽取",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.75,
+        "default_benchmark_weight": 0.7,
         "metric_family": {"*": "accuracy"},
         "rationale": (
             "长学生历史（约 200 条作答记录）上的单记录提取/跨 session 推理/幻觉检查，规则+语义等价裁判。"
@@ -476,7 +491,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "LongTutor 知识状态诊断",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.75,
+        "default_benchmark_weight": 0.85,
         "metric_family": {"*": "accuracy_or_f1"},
         "rationale": (
             "从交互历史推断学生知识状态（四类认知层失败机制），headline macro-F1。"
@@ -489,7 +504,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "LongTutor 教学动作",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.75,
+        "default_benchmark_weight": 0.7,
         "metric_family": {"*": "likert_1_to_5"},
         "rationale": (
             "生成利用具体历史证据的教学反馈，固定裁判四维 1-5 分。2026-07-16 裁决：挂 P17 执行 facet 0.30，"

@@ -1,8 +1,8 @@
 # 教育 AI 原子能力与 Benchmark 映射(v6 定稿,2026-07-19)
 
-本文档是**当前状态的干净快照**:原子能力清单、每个能力的定义与 facet、映射到哪些 benchmark 的哪些维度、相关度与置信权重多少、测量成熟度如何,以及创新点和未完成事项。不含历史沿革与裁决过程——那些在 `doc/atomic_ability_mapping_final_2026-07-15.md`(裁决记录 R1–R24)里。
+本文档是**当前状态的干净快照**:原子能力清单、每个能力的定义与 facet、映射到哪些 benchmark 的哪些维度、相关度与置信权重多少、测量成熟度如何,以及创新点和未完成事项。不含历史沿革与裁决过程——那些在 `doc/atomic_ability_mapping_final_2026-07-15.md`(裁决记录 R1–R25)里。
 
-机器可读版(单一事实源):`data/mapping_measurement_model_v6.json`。本文档所有表格由该 JSON 与聚合脚本 `BENCHMARK_META` 逐格核对生成(2026-07-19,R24 后),分数区间取自 `reports/atomic_ability_rebenchmark_2026-07-08/09_atomic_p_score_evidence.jsonl`。如有出入以 JSON 为准。
+机器可读版(单一事实源):`data/mapping_measurement_model_v6.json`。本文档所有表格由该 JSON 与聚合脚本 `BENCHMARK_META` 逐格核对生成(2026-07-19,**R25 后**;权重列由脚本按 JSON 重算写入,104 格全覆盖),分数区间取自 `reports/atomic_ability_rebenchmark_2026-07-08/09_atomic_p_score_evidence.jsonl`。如有出入以 JSON 为准。
 
 > **⚠️ 编号已两度迁移。** 现行是 **R24 编号**。历史注记里的 P 号有两套旧方案:pre-R20(P01–P23 带墓碑,仍是 JSON 与本仓库各文档 **rationale 正文**里在用的方案,也是 `scripts/build_rebenchmark_conclusion_plan.py` 在用的方案)、R20(文档方案 P01–P20)。**两张对照表在 final 文档的 R20 与 R24 记录里**,R24 那张同时写在 JSON 的 `schema_notes.numbering_R24`。rationale 正文刻意从未机械替换——编号混在散文里,正则必误伤。**benchmark 名 `p07_selfcheck` / `p08_calibration` / `p08_abstention` 沿用 pre-R20 旧号起名,不要按名字推 P 号**(改名重构已列 TODO)。
 
@@ -17,6 +17,14 @@
 - **相关度权重**:映射表"相关"列,即 JSON cell 的 `weight`——该 benchmark 指标与这个 facet 构念的贴合程度,按(格子 × facet)定,同一格挂不同 P 可以不同;
 - **置信权重**:聚合脚本 `BENCHMARK_META.default_benchmark_weight`,即"置信"列——该 benchmark 本身多可信,按 benchmark 定,与 facet 无关,支持逐取分维度 override;
 - **有效权重** = 相关度 × 置信(R20 起就这一个公式,四档证据分层已废除,无门槛因子)。
+
+**两个权重自 R25(2026-07-19)起都由规则推导,不再逐格手调**:
+
+- **相关度五档**:1.0 完全一致(指标测的构念就是 facet 本身)/0.8 强相关(直接测该 facet,范围偏窄或混少量其他构念)/0.5 中等相关(facet 是成绩主要成分之一,与其他能力方差混杂)/0.2 弱相关(有信号但被其他方差主导,须能一句话说出信号是什么)/0 不挂格(是排除不是权重)。
+- **置信度两因子**,起点 1.0 各扣 0.15:**判分方式**(客观规则判分不扣;LLM-as-judge 扣——按实际判分路径归类,LLM 只做答案提取、由规则比对金标的不算)、**质量**(高质量不扣:官方发布/同行评议/人工标注金标;普通质量扣:自建自判,金标只有内部把关)。全表四值 1.0/0.85/0.7,唯一例外 `edubench · error_identification_correction_accuracy` = 0.3(R23 裁决)。
+- 刻意**不进权重**的三类(只作注记):污染风险、协议保真度、实测裁判噪声(judge-swap ρ、κ、BLEU 效度)。
+
+> **分数不可跨 R25 比较**:权重体系整体换制,R24 及以前的 P 分与现在的不是同一量表。
 
 **聚合规则**:facet 内按有效权重加权平均 → P 分为各 facet 的**等权**平均(有证据的 facet 才进分母,空 facet 不算 0)。formative 声明因此真正落进分数。
 
@@ -75,7 +83,7 @@ facet 定义:**指令与约束遵循**——按显式指令和格式/行为约�
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 指令与约束遵循 | ifeval · prompt-level strict accuracy | 1.0 | 0.8 | 0.80 | 8.74–9.30 | 5 |
+| 指令与约束遵循 | ifeval · prompt-level strict accuracy | 1.0 | 1.0 | 1 | 8.74–9.30 | 5 |
 
 R20 摘除全部搭车格:选择题的"格式遵循"实际取分是 accuracy(污染),弃答约束遵循无可分离的指令遵循信号。
 
@@ -85,11 +93,11 @@ facet 定义:**长上下文与证据定位**——在长材料/长对话中定�
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 长上下文与证据定位 | longtutor_evidence · Information Extraction accuracy | 0.7 | 0.75 | 0.525 | 9.32–9.69 | 5(1) |
-| | longtutor_evidence · Multi-session Reasoning accuracy | 0.7 | 0.75 | 0.525 | 5.96–7.01 | 5(1) |
-| | longtutor_evidence · Hallucination Check accuracy | 0.7 | 0.75 | 0.525 | 6.08–7.52 | 5(1) |
-| | mathtutorbench_mistake_location · Mistake Location | 0.15 | 1.0 | 0.15 | 7.65–7.92 | 6(1) |
-| | sas_bench · CCS step scoring consistency | 0.15 | 0.95 | 0.143 | 7.25–8.03 | 8 |
+| 长上下文与证据定位 | longtutor_evidence · Information Extraction accuracy | 0.8 | 0.7 | 0.56 | 9.32–9.69 | 5(1) |
+|  | longtutor_evidence · Multi-session Reasoning accuracy | 0.8 | 0.7 | 0.56 | 5.96–7.01 | 5(1) |
+|  | longtutor_evidence · Hallucination Check accuracy | 0.8 | 0.7 | 0.56 | 6.08–7.52 | 5(1) |
+|  | mathtutorbench_mistake_location · Mistake Location | 0.2 | 1.0 | 0.2 | 7.65–7.92 | 6(1) |
+|  | sas_bench · CCS step scoring consistency | 0.2 | 1.0 | 0.2 | 7.25–8.03 | 8 |
 
 R21:longtutor 按 `memory_type` 拆三格等权——单记录提取近天花板,跨 session 推理与幻觉检查才有区分度,合成一个总分会稀释掉后两者。同批摘除三个无可分离定位信号的搭车格(asap_2 QWK、sas_bench QWK、solution_correctness):整体打分里观测不到"定位过证据",那是评分一致性方差冒充 P02 证据。保留的两格定位行为为真但材料不长,相关度压到 0.15。
 
@@ -99,12 +107,12 @@ facet 定义:**解题图像**——题目自带的单一规范几何图/函数�
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 解题图像 | mathvista · task/question_type/answer_type accuracy | 0.35 | 0.7 | 0.245 | 8.41 | 1 |
-| | k12vista · math problem-figure subset score | 0.35 | 0.8 | 0.28 | 7.34–7.74 | 2 |
-| | olympiadbench · multimodal-subset accuracy | 0.1 | 0.7 | 0.07 | 6.81 | 1 |
-| 学科图表 | k12vista · science/geo subject-chart subset score | 0.55 | 0.8 | 0.44 | 6.26–7.28 | 2 |
-| 图文混排材料 | mmtutorbench · multimodal tutor score | 0.3 | 0.9 | 0.27 | 5.74–7.60 | 2 |
-| | tutorbench · Fair815 multimodal tutor quality | 0.25 | 0.8 | 0.20 | 5.08–5.76 | 10(4) |
+| 解题图像 | mathvista · task/question_type/answer_type accuracy | 0.5 | 1.0 | 0.5 | 8.41 | 1 |
+|  | k12vista · math problem-figure subset score | 0.5 | 0.85 | 0.425 | 7.34–7.74 | 2 |
+|  | olympiadbench · multimodal-subset accuracy | 0.2 | 1.0 | 0.2 | 6.81 | 1 |
+| 学科图表 | k12vista · science/geo subject-chart subset score | 0.5 | 0.85 | 0.425 | 6.26–7.28 | 2 |
+| 图文混排材料 | mmtutorbench · multimodal tutor score | 0.2 | 0.85 | 0.17 | 5.74–7.60 | 2 |
+|  | tutorbench · Fair815 multimodal tutor quality | 0.2 | 0.85 | 0.17 | 5.08–5.76 | 10(4) |
 | 视频/音频 | —— 空白 —— | | | | | |
 
 facet 轴统一为"内容构成"单轴(材料本身长什么样),不掺场景/任务标签——按场景定义边界不可判。渲染 vs 拍摄不影响归属(只是清晰度噪声)。
@@ -117,7 +125,7 @@ facet 定义:**图示与示意图生成**——生成示意图、几何图、学
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 图示与示意图生成 | eduillustrate · 8-dim 0-5 visual explanation score | 0.45 | 0.85 | 0.383 | 6.35–7.41 | 7(3) |
+| 图示与示意图生成 | eduillustrate · 8-dim 0-5 visual explanation score | 0.5 | 0.7 | 0.35 | 6.35–7.41 | 7(3) |
 | 时序与交互产物生成 | —— 空白 —— | | | | | |
 
 eduillustrate 的 8 维 = 文本侧(正确性/逻辑/易懂/图文协同)+ 视觉侧(图题匹配/排版/元素布局/视觉一致),聚合取总均分。**不按这 8 维拆 facet**——同一道题会落进两个 facet,违反边界可判规则。
@@ -130,22 +138,22 @@ facet 定义:**学科知识调用**——正确调用学科事实、概念与方
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 学科知识调用 | mmlu_pro · overall/category accuracy | 0.6 | 0.7 | 0.42 | 8.27–8.83 | 6(1) |
-| | ceval · overall/category/subject accuracy | 0.6 | 0.7 | 0.42 | 8.74–9.38 | 6(1) |
-| | edubench · domain_knowledge_accuracy | 0.35 | 0.8 | 0.28 | 7.52–9.50 | 12 |
-| | agieval · overall/task/language/question_type accuracy | 0.35 | 0.7 | 0.245 | 8.11–9.06 | 6(1) |
-| | edubench · basic_factual_accuracy | 0.3 | 0.8 | 0.24 | 8.62–9.66 | 12 |
-| | olympiadbench · overall/subject/language/modality accuracy | 0.25 | 0.7 | 0.175 | 7.16–7.36 | 2 |
-| | sas_bench · ECS error-cause consistency | 0.2 | 1.0 | 0.20 | 3.79–6.60 | 8 |
-| | mathvista · task/question_type/answer_type accuracy | 0.2 | 0.7 | 0.14 | 8.41 | 1 |
-| | k12vista · official partial-credit score | 0.15 | 0.8 | 0.12 | 6.55–7.40 | 2 |
-| | mathtutorbench_problem_solving · Problem Solving | 0.3 | 0.45 | 0.135 | 9.55–9.80 | 6(2) |
-| 教学专业知识 | pedagogy_benchmark · CDPK teaching knowledge selection | 0.45 | 0.8 | 0.36 | 7.01–9.01 | 12(1) |
-| | pedagogy_benchmark · SEND special education needs selection | 0.35 | 0.8 | 0.28 | 6.64–8.45 | 12(1) |
-| | mathtutorbench_pedagogy_hard · Pedagogy IF hard | 0.25 | 1.0 | 0.25 | 6.62–8.64 | 7 |
-| | mathtutorbench_pedagogy · Pedagogy IF | 0.25 | 0.95 | 0.238 | 7.45–8.67 | 7 |
-| | mathtutorbench_scaffolding · Scaffolding | 0.15 | 1.0 | 0.15 | 1.43–5.95 | 7 |
-| | mathtutorbench_scaffolding_hard · Scaffolding hard | 0.15 | 1.0 | 0.15 | 1.30–5.61 | 7 |
+| 学科知识调用 | mmlu_pro · overall/category accuracy | 0.5 | 1.0 | 0.5 | 8.27–8.83 | 6(1) |
+|  | ceval · overall/category/subject accuracy | 0.5 | 1.0 | 0.5 | 8.74–9.38 | 6(1) |
+|  | edubench · domain_knowledge_accuracy | 0.2 | 0.85 | 0.17 | 7.52–9.50 | 12 |
+|  | agieval · overall/task/language/question_type accuracy | 0.2 | 1.0 | 0.2 | 8.11–9.06 | 6(1) |
+|  | edubench · basic_factual_accuracy | 0.2 | 0.85 | 0.17 | 8.62–9.66 | 12 |
+|  | olympiadbench · overall/subject/language/modality accuracy | 0.2 | 1.0 | 0.2 | 7.16–7.36 | 2 |
+|  | sas_bench · ECS error-cause consistency | 0.2 | 1.0 | 0.2 | 3.79–6.60 | 8 |
+|  | mathvista · task/question_type/answer_type accuracy | 0.2 | 1.0 | 0.2 | 8.41 | 1 |
+|  | k12vista · official partial-credit score | 0.2 | 0.85 | 0.17 | 6.55–7.40 | 2 |
+|  | mathtutorbench_problem_solving · Problem Solving | 0.2 | 1.0 | 0.2 | 9.55–9.80 | 6(2) |
+| 教学专业知识 | pedagogy_benchmark · CDPK teaching knowledge selection | 0.5 | 1.0 | 0.5 | 7.01–9.01 | 12(1) |
+|  | pedagogy_benchmark · SEND special education needs selection | 0.5 | 1.0 | 0.5 | 6.64–8.45 | 12(1) |
+|  | mathtutorbench_pedagogy_hard · Pedagogy IF hard | 0.2 | 0.85 | 0.17 | 6.62–8.64 | 7 |
+|  | mathtutorbench_pedagogy · Pedagogy IF | 0.2 | 0.85 | 0.17 | 7.45–8.67 | 7 |
+|  | mathtutorbench_scaffolding · Scaffolding | 0.2 | 0.85 | 0.17 | 1.43–5.95 | 7 |
+|  | mathtutorbench_scaffolding_hard · Scaffolding hard | 0.2 | 0.85 | 0.17 | 1.30–5.61 | 7 |
 
 知识簇普遍天花板,**门槛性质**——过线是必要条件,不证明会教。R22 把 mmlu_pro/ceval 0.35→0.7、agieval 0.4→0.7、olympiadbench 0.55→0.7:精确匹配判分最硬却被压到低于裁判天花板分的 edubench,是倒挂;"通识不主导教育画像"的护栏由映射结构承担(通识 benchmark 不挂教育侧 P),不该靠压置信实现。R22 同时把 mooccube_prereq 从本 P 摘除(先修关系推理与知识调用无构念链)。
 
@@ -157,17 +165,17 @@ facet 定义:**解题推理**——面向标准答案的多步解题推理;**生
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 解题推理 | olympiadbench · overall/subject/language/modality accuracy | 0.55 | 0.7 | 0.385 | 7.16–7.36 | 2 |
-| | agieval · overall/task/language/question_type accuracy | 0.45 | 0.7 | 0.315 | 8.11–9.06 | 6(1) |
-| | mathvista · task/question_type/answer_type accuracy | 0.45 | 0.7 | 0.315 | 8.41 | 1 |
-| | mathtutorbench_problem_solving · Problem Solving | 0.6 | 0.45 | 0.27 | 9.55–9.80 | 6(2) |
-| | k12vista · official partial-credit score | 0.3 | 0.8 | 0.24 | 6.55–7.40 | 2 |
-| | mmlu_pro · overall/category accuracy | 0.3 | 0.7 | 0.21 | 8.27–8.83 | 6(1) |
-| | ceval · overall/category/subject accuracy | 0.25 | 0.7 | 0.175 | 8.74–9.38 | 6(1) |
-| 生成与归因推理 | edubench · reasoning_process_rigor | 0.35 | 0.8 | 0.28 | 7.10–8.95 | 12 |
-| | mathtutorbench_mistake_correction · Mistake Correction | 0.2 | 0.9 | 0.18 | 8.60–9.37 | 6(1) |
-| | edubench · higher_order_thinking_ability_development | 0.2 | 0.8 | 0.16 | 6.17–8.50 | 12 |
-| | sas_bench · ECS error-cause consistency | 0.1 | 1.0 | 0.10 | 3.79–6.60 | 8 |
+| 解题推理 | olympiadbench · overall/subject/language/modality accuracy | 0.5 | 1.0 | 0.5 | 7.16–7.36 | 2 |
+|  | agieval · overall/task/language/question_type accuracy | 0.5 | 1.0 | 0.5 | 8.11–9.06 | 6(1) |
+|  | mathvista · task/question_type/answer_type accuracy | 0.5 | 1.0 | 0.5 | 8.41 | 1 |
+|  | mathtutorbench_problem_solving · Problem Solving | 0.5 | 1.0 | 0.5 | 9.55–9.80 | 6(2) |
+|  | k12vista · official partial-credit score | 0.2 | 0.85 | 0.17 | 6.55–7.40 | 2 |
+|  | mmlu_pro · overall/category accuracy | 0.2 | 1.0 | 0.2 | 8.27–8.83 | 6(1) |
+|  | ceval · overall/category/subject accuracy | 0.2 | 1.0 | 0.2 | 8.74–9.38 | 6(1) |
+| 生成与归因推理 | edubench · reasoning_process_rigor | 0.5 | 0.85 | 0.425 | 7.10–8.95 | 12 |
+|  | mathtutorbench_mistake_correction · Mistake Correction | 0.2 | 1.0 | 0.2 | 8.60–9.37 | 6(1) |
+|  | edubench · higher_order_thinking_ability_development | 0.2 | 0.85 | 0.17 | 6.17–8.50 | 12 |
+|  | sas_bench · ECS error-cause consistency | 0.2 | 1.0 | 0.2 | 3.79–6.60 | 8 |
 
 解题式推理与生成/归因式推理侧重不同,不强制协变。R22 摘除 mooccube_prereq 搭车格。
 
@@ -177,9 +185,9 @@ facet 定义:**自我校验与修正**——复查自己的输出,发现并修�
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 自我校验与修正 | p07_selfcheck · two-round self-check (fix/break rate) | 0.85 | 0.85 | 0.723 | 5.02–5.57 | 5 |
-| | mathtutorbench_solution_correctness · Solution Correctness | 0.25 | 0.85 | 0.213 | 8.57–8.95 | 6(1) |
-| | p08_calibration · calibration composite (CWR/AUROC) | 0.2 | 0.85 | 0.17 | 5.57–6.75 | 5 |
+| 自我校验与修正 | p07_selfcheck · two-round self-check (fix/break rate) | 0.8 | 0.85 | 0.68 | 5.02–5.57 | 5 |
+|  | mathtutorbench_solution_correctness · Solution Correctness | 0.2 | 1.0 | 0.2 | 8.57–8.95 | 6(1) |
+|  | p08_calibration · calibration composite (CWR/AUROC) | 0.2 | 0.85 | 0.17 | 5.57–6.75 | 5 |
 
 两轮自查为主格,headline = 0.5×改对率 + 0.5×(1−改错率),与首轮正确率解耦。R22 摘除 problem_solving 搭车格(解题强与会复查之间无构念链)。
 
@@ -190,8 +198,8 @@ facet 定义:**置信度校准**——表达的自信程度与实际正确率一
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
 | 置信度校准 | p08_calibration · calibration composite (CWR/AUROC) | 0.8 | 0.85 | 0.68 | 5.57–6.75 | 5 |
-| | p07_selfcheck · two-round self-check | 0.15 | 0.85 | 0.128 | 5.02–5.57 | 5 |
-| 能力性弃答 | p08_abstention · balanced abstention score | 0.85 | 0.85 | 0.723 | 8.62–9.12 | 5 |
+|  | p07_selfcheck · two-round self-check | 0.2 | 0.85 | 0.17 | 5.02–5.57 | 5 |
+| 能力性弃答 | p08_abstention · balanced abstention score | 0.8 | 0.85 | 0.68 | 8.62–9.12 | 5 |
 
 校准(概率质量)与弃答(行为决策)相关但可分离,两个自建测验按设计各测一半。
 
@@ -206,15 +214,15 @@ facet 定义:**作答正误判定**——判断学生作答对不对;**错误位
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 作答正误判定 | mathtutorbench_solution_correctness · Solution Correctness | 0.6 | 0.85 | 0.51 | 8.57–8.95 | 6(1) |
-| 错误位置定位 | mathtutorbench_mistake_location · Mistake Location | 0.7 | 1.0 | 0.70 | 7.65–7.92 | 6(1) |
-| | sas_bench · CCS step scoring consistency | 0.25 | 0.95 | 0.238 | 7.25–8.03 | 8 |
-| 错因归因 | sas_bench · ECS error-cause consistency | 0.7 | 1.0 | 0.70 | 3.79–6.60 | 8 |
-| | bea2025_tutor · dimension: Mistake_Identification | 0.25 | 0.9 | 0.225 | 7.93–8.53 | 5(2) |
-| | mrbench_tutor · dimension: Mistake_Identification | 0.25 | 0.8 | 0.20 | 8.65–9.30 | 5(2) |
-| | mathtutorbench_mistake_correction · Mistake Correction | 0.2 | 0.9 | 0.18 | 8.60–9.37 | 6(1) |
-| | edubench · error_identification_correction_accuracy | 0.25 | **0.3** | 0.075 | 5.99–9.35 | 12 |
-| | longtutor_diagnosis · four-category diagnosis macro-F1 | 0.1 | 0.75 | 0.075 | 1.97–3.16 | 5(1) |
+| 作答正误判定 | mathtutorbench_solution_correctness · Solution Correctness | 0.5 | 1.0 | 0.5 | 8.57–8.95 | 6(1) |
+| 错误位置定位 | mathtutorbench_mistake_location · Mistake Location | 0.8 | 1.0 | 0.8 | 7.65–7.92 | 6(1) |
+|  | sas_bench · CCS step scoring consistency | 0.2 | 1.0 | 0.2 | 7.25–8.03 | 8 |
+| 错因归因 | sas_bench · ECS error-cause consistency | 0.8 | 1.0 | 0.8 | 3.79–6.60 | 8 |
+|  | bea2025_tutor · dimension: Mistake_Identification | 0.2 | 0.85 | 0.17 | 7.93–8.53 | 5(2) |
+|  | mrbench_tutor · dimension: Mistake_Identification | 0.2 | 0.85 | 0.17 | 8.65–9.30 | 5(2) |
+|  | mathtutorbench_mistake_correction · Mistake Correction | 0.2 | 1.0 | 0.2 | 8.60–9.37 | 6(1) |
+|  | edubench · error_identification_correction_accuracy | 0.2 | 0.3 | 0.06 | 5.99–9.35 | 12 |
+|  | longtutor_diagnosis · four-category diagnosis macro-F1 | 0.2 | 0.85 | 0.17 | 1.97–3.16 | 5(1) |
 
 R17 把原三个独立 P(判定/定位/归因)合并为一个 P、三项降为 facet:按拆分准入规则判定与定位不达标(残余约等于无、机制同为对参考解核验,分开的表象来自 mathtutorbench 恰好分任务);归因单独保留虽可但**允许拆≠必须拆**,诊断深度用 facet 表达。
 
@@ -226,11 +234,11 @@ facet 定义:**整体性评分**——对整份主观作答给出整体分,与�
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 整体性评分 | sas_bench · QWK holistic total score | 0.7 | 0.9 | 0.63 | 7.90–8.68 | 8 |
-| | asap_2 · essay holistic QWK | 0.65 | 0.8 | 0.52 | 4.73–6.11 | 10(3) |
-| 分析式与多维度评分 | sas_bench · CCS step scoring consistency | 0.55 | 0.95 | 0.523 | 7.25–8.03 | 8 |
-| | bea2025_judge · judge labels: mistake/guidance/actionability | 0.45 | 0.75 | 0.338 | 3.69–5.49 | 7(1) |
-| | mrbench_judge · 8-dimension tutor response judging | 0.45 | 0.75 | 0.338 | 4.11–5.62 | 7(1) |
+| 整体性评分 | sas_bench · QWK holistic total score | 0.8 | 1.0 | 0.8 | 7.90–8.68 | 8 |
+|  | asap_2 · essay holistic QWK | 0.8 | 1.0 | 0.8 | 4.73–6.11 | 10(3) |
+| 分析式与多维度评分 | sas_bench · CCS step scoring consistency | 0.5 | 1.0 | 0.5 | 7.25–8.03 | 8 |
+|  | bea2025_judge · judge labels: mistake/guidance/actionability | 0.5 | 1.0 | 0.5 | 3.69–5.49 | 7(1) |
+|  | mrbench_judge · 8-dimension tutor response judging | 0.5 | 1.0 | 0.5 | 4.11–5.62 | 7(1) |
 | 自动生成 rubric | —— 空白 —— | | | | | |
 
 facet 轴是**评价操作类型**而非评价对象——"评的是什么对象"这条轴开放不可穷尽(以后可冒出评实验报告/评课件),边界不可判。
@@ -245,8 +253,8 @@ facet 定义:**题目生成（正确性与质量）**——生成题目及其内
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 题目生成（正确性与质量） | edubench · QG × 清晰启发 + 情景元素(task×metric) | 0.4 | 0.75 | 0.30 | 7.35–8.87 | 12 |
-| | edubench · QG × 学科知识 + 基础事实(task×metric) | 0.3 | 0.75 | 0.225 | 8.43–9.85 | 12 |
+| 题目生成（正确性与质量） | edubench · QG × 清晰启发 + 情景元素(task×metric) | 0.5 | 0.85 | 0.425 | 7.35–8.87 | 12 |
+|  | edubench · QG × 学科知识 + 基础事实(task×metric) | 0.2 | 0.85 | 0.17 | 8.43–9.85 | 12 |
 | 难度与目标对齐 | —— 空白 —— | | | | | |
 
 R19 定的 facet 二分对应经典测量学的两类独立参数:项目技术质量 / 难度与区分度定标。R23 新增第二格,用现成逐题裁判数据把"生成题目的内容正确性"从零覆盖变**部分覆盖**(裁判逐题核对学科内容对错);知识维度偏天花板(8.4–9.9),作代理格注记。**测评学效度(区分度、干扰项有效性、作答歧义)仍无覆盖**,整 P 参考值。
@@ -257,11 +265,11 @@ facet 定义:**知识状态估计**——从作答历史判断学生会什么、
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 知识状态估计 | longtutor_diagnosis · four-category diagnosis macro-F1 | 0.3 | 0.75 | 0.225 | 1.97–3.16 | 5(1) |
+| 知识状态估计 | longtutor_diagnosis · four-category diagnosis macro-F1 | 0.8 | 0.85 | 0.68 | 1.97–3.16 | 5(1) |
 | 误概念识别 | —— 空白 —— | | | | | |
 | 情感与参与识别 | —— 空白 —— | | | | | |
-| 支持需求判断 | edubench · personalized_adaptation_learning_support | 0.3 | 0.8 | 0.24 | 5.55–6.88 | 12 |
-| | pedagogy_benchmark · SEND special education needs selection | 0.25 | 0.8 | 0.20 | 6.64–8.45 | 12(1) |
+| 支持需求判断 | edubench · personalized_adaptation_learning_support | 0.2 | 0.85 | 0.17 | 5.55–6.88 | 12 |
+|  | pedagogy_benchmark · SEND special education needs selection | 0.2 | 1.0 | 0.2 | 6.64–8.45 | 12(1) |
 
 longtutor_diagnosis 的低分是**真实发现**不是 bug,但带两条方法学注记:类别不平衡(多数类基线 acc 0.506 > 模型 0.35–0.44)、金标为特征决策矩阵+人工修订而非独立盲标。
 
@@ -274,20 +282,20 @@ facet 定义:**教学目标对齐**——教学决策与课标/教学目标及�
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
 | 教学目标对齐 | —— 空白 —— | | | | | |
-| 教学策略制定 | pedagogy_benchmark · CDPK teaching knowledge selection | 0.6 | 0.8 | 0.48 | 7.01–9.01 | 12(1) |
-| | pedagogy_benchmark · SEND special education needs selection | 0.4 | 0.8 | 0.32 | 6.64–8.45 | 12(1) |
-| 教学策略执行 | mathtutorbench_scaffolding · Scaffolding | 0.5 | 1.0 | 0.50 | 1.43–5.95 | 7 |
-| | mathtutorbench_scaffolding_hard · Scaffolding hard | 0.5 | 1.0 | 0.50 | 1.30–5.61 | 7 |
-| | mathtutorbench_pedagogy_hard · Pedagogy IF hard | 0.45 | 1.0 | 0.45 | 6.62–8.64 | 7 |
-| | mathtutorbench_pedagogy · Pedagogy IF | 0.45 | 0.95 | 0.428 | 7.45–8.67 | 7 |
-| | edubench · personalized_adaptation_learning_support | 0.4 | 0.8 | 0.32 | 5.55–6.88 | 12 |
-| | tutorbench · Fair815 multimodal tutor quality | 0.35 | 0.8 | 0.28 | 5.08–5.76 | 10(4) |
-| | bea2025_tutor · dimension: Providing_Guidance | 0.3 | 0.9 | 0.27 | 9.40–9.77 | 5(2) |
-| | mmtutorbench · multimodal tutor score | 0.3 | 0.9 | 0.27 | 5.74–7.60 | 2 |
-| | mrbench_tutor · dimension: Providing_Guidance | 0.3 | 0.8 | 0.24 | 8.80–9.20 | 5(2) |
-| | mathtutorbench_socratic · Socratic Questioning | 0.4 | 0.6 | 0.24 | 2.13–2.98 | 5(1) |
-| | longtutor_teaching · strategy_alignment + history_utilization | 0.3 | 0.75 | 0.225 | 3.60–6.52 | 5(1) |
-| | edubench · scenario_element_integration | 0.25 | 0.8 | 0.20 | 7.23–8.38 | 12 |
+| 教学策略制定 | pedagogy_benchmark · CDPK teaching knowledge selection | 0.8 | 1.0 | 0.8 | 7.01–9.01 | 12(1) |
+|  | pedagogy_benchmark · SEND special education needs selection | 0.5 | 1.0 | 0.5 | 6.64–8.45 | 12(1) |
+| 教学策略执行 | mathtutorbench_scaffolding · Scaffolding | 0.5 | 0.85 | 0.425 | 1.43–5.95 | 7 |
+|  | mathtutorbench_scaffolding_hard · Scaffolding hard | 0.5 | 0.85 | 0.425 | 1.30–5.61 | 7 |
+|  | mathtutorbench_pedagogy_hard · Pedagogy IF hard | 0.5 | 0.85 | 0.425 | 6.62–8.64 | 7 |
+|  | mathtutorbench_pedagogy · Pedagogy IF | 0.5 | 0.85 | 0.425 | 7.45–8.67 | 7 |
+|  | edubench · personalized_adaptation_learning_support | 0.5 | 0.85 | 0.425 | 5.55–6.88 | 12 |
+|  | tutorbench · Fair815 multimodal tutor quality | 0.2 | 0.85 | 0.17 | 5.08–5.76 | 10(4) |
+|  | bea2025_tutor · dimension: Providing_Guidance | 0.2 | 0.85 | 0.17 | 9.40–9.77 | 5(2) |
+|  | mmtutorbench · multimodal tutor score | 0.2 | 0.85 | 0.17 | 5.74–7.60 | 2 |
+|  | mrbench_tutor · dimension: Providing_Guidance | 0.2 | 0.85 | 0.17 | 8.80–9.20 | 5(2) |
+|  | mathtutorbench_socratic · Socratic Questioning | 0.5 | 1.0 | 0.5 | 2.13–2.98 | 5(1) |
+|  | longtutor_teaching · strategy_alignment + history_utilization | 0.2 | 0.7 | 0.14 | 3.60–6.52 | 5(1) |
+|  | edubench · scenario_element_integration | 0.2 | 0.85 | 0.17 | 7.23–8.38 | 12 |
 
 策略制定 facet 是情境化选择题、**陈述性代理**,与执行 facet 之间有 knowing-doing gap 注记。R23 把两格相关度上调(CDPK 0.35→0.6、SEND 0.3→0.4)做声明层归位——CDPK 是本 facet 构念最贴的直接测量,不该低于执行 facet 的 BLEU 代理格;facet 内只有两格,分数仅受比例影响。同批 socratic 0.65→0.4:BLEU 对参考问句判分,方差里"引导质量"与"措辞相似"不可分,降后由语义鲁棒的胜率格主导。
 
@@ -297,7 +305,7 @@ facet 定义:**知识结构层路径规划**——基于知识先修结构规划
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 知识结构层路径规划 | mooccube_prereq · chance-corrected composite(先修选择 + 学习顺序排序) | 0.7 | 0.7 | 0.49 | 3.79–4.76 | 5 |
+| 知识结构层路径规划 | mooccube_prereq · chance-corrected composite(先修选择 + 学习顺序排序) | 0.8 | 0.85 | 0.68 | 3.79–4.76 | 5 |
 
 R16 把定义澄清为**知识结构层**的路径规划;"针对学生当前状态的个性化路径"是 P13×P15 的组合能力,不另设 facet。规则判分零裁判,但自建协议、无公开基线,置信压到 0.70 作参考值。R22 后这是 mooccube 的唯一主家挂载。
 
@@ -307,22 +315,22 @@ facet 定义:**内容性讲解与纠错反馈**——对学生作答/提问的�
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 内容性讲解与纠错反馈 | mmtutorbench · multimodal tutor score | 0.4 | 0.9 | 0.36 | 5.74–7.60 | 2 |
-| | mathtutorbench_scaffolding · Scaffolding | 0.35 | 1.0 | 0.35 | 1.43–5.95 | 7 |
-| | mathtutorbench_scaffolding_hard · Scaffolding hard | 0.35 | 1.0 | 0.35 | 1.30–5.61 | 7 |
-| | tutorbench · Fair815 multimodal tutor quality | 0.4 | 0.8 | 0.32 | 5.08–5.76 | 10(4) |
-| | mathtutorbench_mistake_correction · Mistake Correction | 0.35 | 0.9 | 0.315 | 8.60–9.37 | 6(1) |
-| | mathtutorbench_pedagogy_hard · Pedagogy IF hard | 0.3 | 1.0 | 0.30 | 6.62–8.64 | 7 |
-| | mathtutorbench_pedagogy · Pedagogy IF | 0.3 | 0.95 | 0.285 | 7.45–8.67 | 7 |
-| | edubench · clarity_concision_inspiration | 0.3 | 0.8 | 0.24 | 7.83–8.93 | 12 |
-| | mathtutorbench_socratic · Socratic Questioning | 0.35 | 0.6 | 0.21 | 2.13–2.98 | 5(1) |
-| | edubench · higher_order_thinking_ability_development | 0.25 | 0.8 | 0.20 | 6.17–8.50 | 12 |
-| | bea2025_tutor · dimension: Actionability | 0.2 | 0.9 | 0.18 | 8.87–9.60 | 5(2) |
-| | mrbench_tutor · dimension: Actionability | 0.2 | 0.8 | 0.16 | 8.60–9.35 | 5(2) |
-| 语气、情感与动机支持 | edubench · motivation_guidance_positive_feedback | 0.35 | 0.8 | 0.28 | 6.12–6.92 | 12 |
-| | mrbench_tutor · Tutor_Tone(鼓励占比) | 0.2 | 0.8 | 0.16 | 9.15–9.60 | 5(2) |
-| 教学产物生成 | edubench · TMG/PCC × 清晰启发 + 情景元素(task×metric) | 0.55 | 0.75 | 0.413 | 7.13–8.85 | 12 |
-| | eduillustrate · 8-dim 0-5 visual explanation score | 0.25 | 0.85 | 0.213 | 6.35–7.41 | 7(3) |
+| 内容性讲解与纠错反馈 | mmtutorbench · multimodal tutor score | 0.5 | 0.85 | 0.425 | 5.74–7.60 | 2 |
+|  | mathtutorbench_scaffolding · Scaffolding | 0.2 | 0.85 | 0.17 | 1.43–5.95 | 7 |
+|  | mathtutorbench_scaffolding_hard · Scaffolding hard | 0.2 | 0.85 | 0.17 | 1.30–5.61 | 7 |
+|  | tutorbench · Fair815 multimodal tutor quality | 0.5 | 0.85 | 0.425 | 5.08–5.76 | 10(4) |
+|  | mathtutorbench_mistake_correction · Mistake Correction | 0.2 | 1.0 | 0.2 | 8.60–9.37 | 6(1) |
+|  | mathtutorbench_pedagogy_hard · Pedagogy IF hard | 0.2 | 0.85 | 0.17 | 6.62–8.64 | 7 |
+|  | mathtutorbench_pedagogy · Pedagogy IF | 0.2 | 0.85 | 0.17 | 7.45–8.67 | 7 |
+|  | edubench · clarity_concision_inspiration | 0.2 | 0.85 | 0.17 | 7.83–8.93 | 12 |
+|  | mathtutorbench_socratic · Socratic Questioning | 0.2 | 1.0 | 0.2 | 2.13–2.98 | 5(1) |
+|  | edubench · higher_order_thinking_ability_development | 0.2 | 0.85 | 0.17 | 6.17–8.50 | 12 |
+|  | bea2025_tutor · dimension: Actionability | 0.2 | 0.85 | 0.17 | 8.87–9.60 | 5(2) |
+|  | mrbench_tutor · dimension: Actionability | 0.2 | 0.85 | 0.17 | 8.60–9.35 | 5(2) |
+| 语气、情感与动机支持 | edubench · motivation_guidance_positive_feedback | 0.5 | 0.85 | 0.425 | 6.12–6.92 | 12 |
+|  | mrbench_tutor · Tutor_Tone(鼓励占比) | 0.2 | 0.85 | 0.17 | 9.15–9.60 | 5(2) |
+| 教学产物生成 | edubench · TMG/PCC × 清晰启发 + 情景元素(task×metric) | 0.5 | 0.85 | 0.425 | 7.13–8.85 | 12 |
+|  | eduillustrate · 8-dim 0-5 visual explanation score | 0.2 | 0.7 | 0.14 | 6.35–7.41 | 7(3) |
 
 R19 把对话侧拆成三 facet:语气支持独立(冷冰冰讲对 vs 温暖鼓励地讲对可独立失败,且有干净指标);概念讲解与纠错合并(最重的 tutorbench/mmtutorbench 整体分拆不出讲解/纠错,强行四分会让最厚证据悬空)。
 
@@ -336,10 +344,10 @@ facet 定义:**安全知识**——知道教育场景中哪些行为构成伤害
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 安全知识 | eduguard_sata · Teaching Harm / SATA RFS | 0.35 | 1.0 | 0.35 | 6.93–7.69 | 8 |
-| 边界行为 | eduguard_adversarial · Adversarial Safety ASR | 0.3 | 1.0 | 0.30 | **3.76–9.96** | 8(1) |
-| | eduguard_adversarial · Refusal quality distribution | 0.15 | 0.8 | 0.12 | 4.62–8.29 | 8(1) |
-| | mrbench_tutor · Tutor_Tone(非冒犯占比) | 0.1 | 0.8 | 0.08 | 10.00–10.00 | 5(2) |
+| 安全知识 | eduguard_sata · Teaching Harm / SATA RFS | 0.2 | 1.0 | 0.2 | 6.93–7.69 | 8 |
+| 边界行为 | eduguard_adversarial · Adversarial Safety ASR | 0.5 | 0.85 | 0.425 | 3.76–9.96 | 8(1) |
+|  | eduguard_adversarial · Refusal quality distribution | 0.2 | 0.85 | 0.17 | 4.62–8.29 | 8(1) |
+|  | mrbench_tutor · Tutor_Tone(非冒犯占比) | 0.2 | 0.85 | 0.17 | 10.00 | 5(2) |
 
 立论:知道边界(SATA 知识)与守住边界(对抗/对话行为)**不协变**(pilot ρ=0.07)。ASR 格是全仓库区分度最好的格之一。
 
@@ -351,7 +359,7 @@ facet 定义:**风险信号识别**——识别学生消息中的风险信号(�
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 风险信号识别 | eduguard_sata · Teaching Harm / SATA RFS | 0.3 | 1.0 | 0.30 | 6.93–7.69 | 8 |
+| 风险信号识别 | eduguard_sata · Teaching Harm / SATA RFS | 0.2 | 1.0 | 0.2 | 6.93–7.69 | 8 |
 | 风险严重度与紧迫性判断 | —— 空白 —— | | | | | |
 
 R19 删除了原对抗鲁棒格(ASR 测越狱压力下的输出侧行为,而本 P 定义是**输入侧感知**任务)。删后仅剩与 P17/P19 同源的 SATA 一格。
@@ -364,9 +372,9 @@ facet 定义:**安全知识**——知道对风险与越界请求的正确处置
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 安全知识 | eduguard_sata · Teaching Harm / SATA RFS | 0.35 | 1.0 | 0.35 | 6.93–7.69 | 8 |
-| 对抗鲁棒 | eduguard_adversarial · Refusal quality distribution | 0.6 | 0.8 | 0.48 | 4.62–8.29 | 8(1) |
-| | eduguard_adversarial · Adversarial Safety ASR | 0.45 | 1.0 | 0.45 | 3.76–9.96 | 8(1) |
+| 安全知识 | eduguard_sata · Teaching Harm / SATA RFS | 0.2 | 1.0 | 0.2 | 6.93–7.69 | 8 |
+| 对抗鲁棒 | eduguard_adversarial · Refusal quality distribution | 0.8 | 0.85 | 0.68 | 4.62–8.29 | 8(1) |
+|  | eduguard_adversarial · Adversarial Safety ASR | 0.5 | 0.85 | 0.425 | 3.76–9.96 | 8(1) |
 
 三个安全 P 中结构最健康的一个:两 facet 皆有证据,对抗侧两格分工明确——ASR 测"顶没顶住",拒答质量测"顶住之后处理得不得体"。R23 把拒答质量置信 0.7→0.8:它与 ASR 出自同一官方两阶段裁判流程,只是第二阶段判拒绝质量档更主观,原折价过大;提后有效权重 0.48 超过 ASR 的 0.45 成为 facet 主格,与 R7"拒答质量主格在此"的原意一致(此前声明与实际相拧)。
 
