@@ -53,6 +53,38 @@
 
 全部自建直接测量、三格同一 5 模型面、facet 边界可判不重复；p07_selfcheck 副挂 0.15 构念链成立保留；弃答 facet 单源+偏高（8.6–9.1）记区分度观察注记。
 
+## 待落地裁决（R23 批次）
+
+### P08 工具使用与长程智能体执行（2026-07-19 零改动过审）
+
+领域空白：两个空 facet（工具调用/长程执行，R19 拆分显式呈现缺口）、零格子零证据，维持"暂未覆盖"声明。
+
+### P09 错误诊断（2026-07-19 裁决完毕）
+
+1. **edubench · error_identification_correction_accuracy 置信 override 0.8→0.3**（用户裁决选 C 折中；机制参照 QG/TMG 的 0.75 override 先例，加 `benchmark_weight_overrides` 条目）。依据：M2 换裁判实验 ρ≤0.14、三裁判均分 4.6/7.4/8.7，全仓库噪声最实锤的格；跨模型排序与其他错误诊断格全部拧着（M2.7 9.35 vs M3 5.99）。R14"12 维全可挂"原则形式保留（格不删、注记在位），噪声实质失去话语权（有效权重 0.2→0.075，降为尾部证据）。
+2. 其余格子零改动：facet a/b 干净；facet c 的 ECS 锚 + bea/mrbench MI + mistake_correction + longtutor_diagnosis 副挂结构维持。
+
+### P10 主观题评价能力（2026-07-19 零改动过审）
+
+三 facet（整体性/分析式/生成 rubric 空白）结构与格子全部维持；asap_2/sas QWK 在此为主家构念对口。附带：**asap_2 补跑 minimax-m3 / glm-5.2 / doubao 记入遗留补测清单**（当前三者拿替代值 4.73，补跑后自动覆盖；harness colleague 变体与导入面可比；注意 CLAUDE.md 的导入目录覆写陷阱，用 `--out-dir` 或补跑后核对）。
+
+### P12 学习者画像建模（2026-07-19 裁决完毕）
+
+1. **pedagogy_benchmark · SEND 在 P12d 相关度 0.35→0.25**（用户裁决选 B）：SEND 是教师考试选择题，测"知道特教需求知识"；P12d 构念是"判断学生需要哪类支持"——知识侧证据挂行为侧构念，降一档并注记知识代理。知识主家 P04 不动。
+2. 其余零改动：P12a longtutor_diagnosis 0.3（方法学注记扎实，低分是真实发现）；P12b/c 空白声明；P12d edubench personalized_adaptation 0.3。
+3. 附注：R22 补丁（canonical_model 归一 doubao-seed-2-0-pro-260215）后 SEND 格 13 个真实面。
+
+### P11 命题与作业设计（2026-07-19 裁决：采纳 B）
+
+1. **新增格**：item_generation facet 加 `edubench · QG × domain_knowledge + basic_factual (task×metric)` 复合，rel **0.3**、置信沿用 QG override **0.75**——用现成裁判数据把"生成题目的内容正确性"从零覆盖变部分覆盖（裁判逐题核对学科内容对错；知识维度偏天花板 7.8–9.9，注记保留）。实现：`build_edubench_metric_summaries.py` COMPOSITES 加 `qg_correctness_composite`（QG 任务上 domain_knowledge_accuracy + basic_factual_accuracy 均值）→ 聚合脚本 metric 行 + 映射格。facet 描述"正确性效度无格子"降级为"部分覆盖（表达+内容正确性；测评学效度仍无）"。
+2. 现有 QG 表达复合格维持 0.4×0.75；难度对齐空 facet 维持。
+
+### P13 个性化教学策略选择（2026-07-19 裁决完毕）
+
+1. **facet2 相关度上调**（用户裁决："给低了"）：CDPK 0.35→**0.6**、SEND 0.3→**0.4**。声明层归位（CDPK 是本 facet 构念最贴的直接测量，不该低于 facet3 的 BLEU 格）；facet 内只有两格，分数仅受比例影响，实际不变。
+2. **mathtutorbench_socratic 相关度 0.65→0.4**（用户裁决）：BLEU 对参考问句判分，方差里"引导质量"与"措辞相似"不可分（置信 0.6 已折价，但 0.65 rel 仍居 facet 前三）；降后由语义鲁棒的胜率格主导执行 facet。
+3. 其余零改动：facet1 空白声明维持；facet3 另 11 格（MathTutorBench 4 胜率格、EduBench 2、TutorBench、MRBench/BEA Providing_Guidance、MMTutorBench、LongTutor teaching）维持；bea/mrbench 近天花板与 TutorBench 替代依赖作注记。
+
 ## 讨论中 / 未裁决
 
-- P08 工具使用（下一个）
+- P14 学习路径规划（下一个）

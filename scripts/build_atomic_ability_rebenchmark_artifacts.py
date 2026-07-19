@@ -934,6 +934,9 @@ def canonical_model(model: str) -> str:
         "glm-5-2": "glm-5.2",
         "minimax-m2-7": "minimax-m2.7",
         "minimax-m3": "minimax-m3",
+        # 带日期后缀的快照版本归一到面板键（R23：doubao 的 pedagogy 跑分目录
+        # 是 doubao-seed-2-0-pro-260215，不归一会让面板键拿替代值、真分挂幽灵键）
+        "doubao-seed-2-0-pro-260215": "doubao-seed-2-0-pro",
     }
     return aliases.get(key, key)
 

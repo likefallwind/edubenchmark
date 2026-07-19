@@ -567,3 +567,5 @@ R16/v6 注记"三模型面 0.787/0.807/0.791 挤在一起、区分度待验证"�
 ### R22 分数影响披露(发布 5 模型,vs `_v6r21_snapshot_20260719`)
 
 共 90 行替代证据。主要变化:P04 全员 +0.4~+0.9(mmlu/ceval/agieval 置信回升 + pedagogy 修复 + mooccube 摘除);P05 全员 +0.1~+0.9(同前 + olympiadbench 置信回升);P03 深度重构——dsv4-pro 7.36→5.08※(盲跑作废后全靠替代)、glm-5.2/M2.7 从无分变 5.08※(tutorbench min 替代)、M3 6.71→6.52(真实多格);P13 M3 5.76→6.96(pedagogy CDPK/SEND 接入);替代机制普遍压低此前"缺难测验"的虚高分(M2.7 P17 8.47→6.45※、P19 6.93→5.56※;doubao P12 6.43→4.25※;glm-5.2 P15 8.25→7.06※)并压低 P10(asap_2 min 4.73 替代入分:M3 8.06→7.22※)。P01/P07/P14/P18 分毫不动。全替代格(imputed_weight_share=1.0,如 P16 三模型 6.35※)在报告中依 ※ 提示读者只作下界参考。旧产物快照:`reports/atomic_ability_rebenchmark_2026-07-08_v6r21_snapshot_20260719/`。
+
+**R22 补丁(同日)**:canonical_model 未归一带日期后缀的跑分目录名——doubao 的 pedagogy 全量跑分(目录 doubao-seed-2-0-pro-260215)挂在幽灵键下,面板键 doubao-seed-2-0-pro 反而拿了 SEND/CDPK 的 min 替代值。加别名归一后 doubao P04 7.58→7.97、P12 4.25→4.68、P13 6.41→7.27(真分覆盖替代值)。

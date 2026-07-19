@@ -23,12 +23,10 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from currently covered P ab
 | `doubao-seed-2-0-lite` | FDR | 7.5301 | 3 | P04, P05, P16 |
 | `doubao-seed-2-0-lite` | LAD | 7.2595 | 2 | P09, P11 |
 | `doubao-seed-2-0-pro` | CEG | 6.9922 | 3 | P17, P18, P19 |
-| `doubao-seed-2-0-pro` | CLM | 5.651 | 4 | P12, P13, P14, P15 |
-| `doubao-seed-2-0-pro` | FDR | 7.4139 | 5 | P04, P05, P06, P07, P16 |
+| `doubao-seed-2-0-pro` | CLM | 5.9734 | 4 | P12, P13, P14, P15 |
+| `doubao-seed-2-0-pro` | FDR | 7.4914 | 5 | P04, P05, P06, P07, P16 |
 | `doubao-seed-2-0-pro` | LAD | 7.5057 | 3 | P09, P10, P11 |
 | `doubao-seed-2-0-pro` | SRG | 7.7757 | 3 | P01, P02, P03 |
-| `doubao-seed-2-0-pro-260215` | CLM | 8.3931 | 2 | P12, P13 |
-| `doubao-seed-2-0-pro-260215` | FDR | 8.5737 | 1 | P04 |
 | `glm-5.1` | CEG | 8.047 | 3 | P17, P18, P19 |
 | `glm-5.1` | CLM | 7.3936 | 3 | P12, P13, P15 |
 | `glm-5.1` | FDR | 7.7364 | 2 | P04, P05 |

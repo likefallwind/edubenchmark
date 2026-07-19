@@ -1,6 +1,6 @@
 # Atomic P Scores
 
-P-score rows: 191
+P-score rows: 188
 Covered P codes: P01, P02, P03, P04, P05, P06, P07, P09, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19
 Missing P codes: P08, P20
 
@@ -63,24 +63,21 @@ Missing P codes: P08, P20
 | `doubao-seed-2-0-pro` | `P01` 指令与约束遵循 | SRG | 8.9464 | 1 | 0.8 | ifeval |
 | `doubao-seed-2-0-pro` | `P02` 长上下文与证据定位 | SRG | 7.2006 | 5 | 1.8675 | longtutor_evidence, mathtutorbench_mistake_location, sas_bench |
 | `doubao-seed-2-0-pro` | `P03` 多模态理解 | SRG | 7.1801 | 4 | 1.19 | k12vista, mmtutorbench, tutorbench |
-| `doubao-seed-2-0-pro` | `P04` 知识调用与掌握 | FDR | 7.5833 | 14 | 3.4875 | agieval, ceval, edubench, k12vista, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_problem_solving, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mmlu_pro, pedagogy_benchmark, sas_bench |
+| `doubao-seed-2-0-pro` | `P04` 知识调用与掌握 | FDR | 7.9708 | 14 | 3.4875 | agieval, ceval, edubench, k12vista, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_problem_solving, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mmlu_pro, pedagogy_benchmark, sas_bench |
 | `doubao-seed-2-0-pro` | `P05` 推理与生成 | FDR | 8.3771 | 9 | 1.93 | agieval, ceval, edubench, k12vista, mathtutorbench_mistake_correction, mathtutorbench_problem_solving, mmlu_pro, sas_bench |
 | `doubao-seed-2-0-pro` | `P06` 自我校验与修正 | FDR | 5.9682 | 3 | 1.105 | mathtutorbench_solution_correctness, p07_selfcheck, p08_calibration |
 | `doubao-seed-2-0-pro` | `P07` 置信度校准与弃答 | FDR | 7.73 | 3 | 1.53 | p07_selfcheck, p08_abstention, p08_calibration |
 | `doubao-seed-2-0-pro` | `P09` 错误诊断 | LAD | 7.6429 | 9 | 3.0275 | bea2025_tutor, edubench, longtutor_diagnosis, mathtutorbench_mistake_correction, mathtutorbench_mistake_location, mathtutorbench_solution_correctness, mrbench_tutor, sas_bench |
 | `doubao-seed-2-0-pro` | `P10` 主观题评价能力 | LAD | 7.1199 | 3 | 1.6725 | asap_2, sas_bench |
 | `doubao-seed-2-0-pro` | `P11` 命题与作业设计 | LAD | 7.7543 | 1 | 0.3 | edubench |
-| `doubao-seed-2-0-pro` | `P12` 学习者画像建模 | CLM | 4.2544 | 3 | 0.745 | edubench, longtutor_diagnosis, pedagogy_benchmark |
-| `doubao-seed-2-0-pro` | `P13` 个性化教学策略选择 | CLM | 6.4123 | 14 | 4.5925 | bea2025_tutor, edubench, longtutor_teaching, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, mrbench_tutor, pedagogy_benchmark, tutorbench |
+| `doubao-seed-2-0-pro` | `P12` 学习者画像建模 | CLM | 4.6828 | 3 | 0.745 | edubench, longtutor_diagnosis, pedagogy_benchmark |
+| `doubao-seed-2-0-pro` | `P13` 个性化教学策略选择 | CLM | 7.2735 | 14 | 4.5925 | bea2025_tutor, edubench, longtutor_teaching, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, mrbench_tutor, pedagogy_benchmark, tutorbench |
 | `doubao-seed-2-0-pro` | `P14` 学习路径规划（知识结构层） | CLM | 4.486 | 1 | 0.49 | mooccube_prereq |
 | `doubao-seed-2-0-pro` | `P15` 适配性解释与反馈生成 | CLM | 7.4515 | 17 | 4.345 | bea2025_tutor, edubench, eduillustrate, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, mrbench_tutor, tutorbench |
 | `doubao-seed-2-0-pro` | `P16` 多模态教学产物生成 | FDR | 7.411 | 1 | 0.3825 | eduillustrate |
 | `doubao-seed-2-0-pro` | `P17` 教育角色边界判断 | CEG | 6.9959 | 4 | 0.955 | eduguard_adversarial, eduguard_sata, mrbench_tutor |
 | `doubao-seed-2-0-pro` | `P18` 学生风险识别 | CEG | 7.618 | 1 | 0.3 | eduguard_sata |
 | `doubao-seed-2-0-pro` | `P19` 安全处置选择 | CEG | 6.3628 | 3 | 1.22 | eduguard_adversarial, eduguard_sata |
-| `doubao-seed-2-0-pro-260215` | `P04` 知识调用与掌握 | FDR | 8.5737 | 2 | 0.64 | pedagogy_benchmark |
-| `doubao-seed-2-0-pro-260215` | `P12` 学习者画像建模 | CLM | 8.2273 | 1 | 0.28 | pedagogy_benchmark |
-| `doubao-seed-2-0-pro-260215` | `P13` 个性化教学策略选择 | CLM | 8.5589 | 2 | 0.52 | pedagogy_benchmark |
 | `glm-5.1` | `P02` 长上下文与证据定位 | SRG | 7.8142 | 1 | 0.1425 | sas_bench |
 | `glm-5.1` | `P04` 知识调用与掌握 | FDR | 8.2002 | 5 | 1.36 | edubench, pedagogy_benchmark, sas_bench |
 | `glm-5.1` | `P05` 推理与生成 | FDR | 7.2726 | 3 | 0.54 | edubench, sas_bench |
@@ -130,6 +127,9 @@ Missing P codes: P08, P20
 | `kimi-k2-6` | `P09` 错误诊断 | LAD | 6.3845 | 3 | 1.1375 | edubench, sas_bench |
 | `kimi-k2-6` | `P10` 主观题评价能力 | LAD | 7.6214 | 2 | 1.1525 | sas_bench |
 | `kimi-k2-6` | `P11` 命题与作业设计 | LAD | 8.205 | 1 | 0.3 | edubench |
+| `kimi-k2-6` | `P12` 学习者画像建模 | CLM | 7.0136 | 2 | 0.52 | edubench, pedagogy_benchmark |
+| `kimi-k2-6` | `P13` 个性化教学策略选择 | CLM | 7.3762 | 4 | 1.04 | edubench, pedagogy_benchmark |
+| `kimi-k2-6` | `P15` 适配性解释与反馈生成 | CLM | 7.621 | 5 | 1.1 | edubench |
 
 ## Coverage Notes
 
