@@ -130,6 +130,10 @@ def build() -> str:
             if partial:
                 mark = '<span class="partial" title="facet 面不齐,见脚注">◐</span>'
                 title += f'（facet {row["facet_count_with_evidence"]}/{scorable_facets[code]}）'
+            imputed_share = row.get("imputed_weight_share") or 0.0
+            if imputed_share > 0:
+                mark += '<span class="partial" title="含未测替代值,见脚注">※</span>'
+                title += f'（未测替代权重占比 {imputed_share:.0%}，缺格取已测模型最低分临时替代）'
             cells_html.append(
                 f'<td class="cell" title="{title}"><div class="val">{value:.2f}{mark}</div>'
                 f'<div class="track"><div class="bar" style="width:{width:.0f}%"></div></div></td>'
@@ -275,7 +279,7 @@ ol li {{ margin: 4px 0; }}
 </tbody>
 </table>
 </div>
-<p class="sub">◐ = facet 面不齐（悬停单元格看 facet 明细与缺口）；— = 该模型无任何该 P 的证据。GLM-5.2 的 P12 只有"知识状态估计"一个 facet（edubench 面跑的是 GLM-5.1），横向不可比。多模态类（P03/P16）仅视觉模型有分。</p>
+<p class="sub">◐ = facet 面不齐（悬停单元格看 facet 明细与缺口）；※ = 含未测替代值——该模型缺某些格子的评测，临时取该格已测模型（≥3 面）的最低分替代（保守下界，悬停看替代权重占比；长期以补跑为正解）；— = 该模型无任何该 P 的证据。GLM-5.2 的 P12 只有"知识状态估计"一个 facet（edubench 面跑的是 GLM-5.1），横向不可比。多模态类（P03/P16）仅视觉模型有分。</p>
 
 <h2>四、能力清单与可信度</h2>
 <div class="tablewrap">

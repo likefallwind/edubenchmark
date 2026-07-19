@@ -519,3 +519,51 @@ sas_bench·CCS(分步踩分需将解答各步与评分点对齐)与 mathtutorben
 R16/v6 注记"三模型面 0.787/0.807/0.791 挤在一起、区分度待验证"已过时:MiniMax-M2.7 补跑落地后四模型面总分 0.71–0.81 拉开,且拆格后天花板子维度不再稀释。P02 成熟度可表述为"直接测量(拆维)"。跨模型面错位问题(asap_2 只在同事导入 7 模型面上,与 longtutor/sas/mathtutorbench 的自跑面几乎不重叠,不同模型的 P02 由不同格子组合算出)随 asap_2 摘除大幅缓解。
 
 权重结果:P02 有效权重 = longtutor 三格各 0.525(0.7×0.75)+ CCS 0.1425(0.15×0.95)+ mistake_location 0.15(0.15×1.0),longtutor 占比约 84%(复核前 39%)。旧产物快照:`reports/atomic_ability_rebenchmark_2026-07-08_v6_snapshot_20260719/`。
+
+## 裁决 R22(2026-07-19,逐 P 复核 P03–P07 批量落地,与用户逐格确认)
+
+工作方式自本批起改为"逐 P 讨论、裁决记 `doc/mapping_review_pending_decisions_2026-07-19.md`、攒批落地"。本批覆盖 P03–P07 与一项全局聚合算法改动。
+
+### R22-1 P03 多模态理解
+
+- **olympiadbench 格改取多模态子集 + 降相关度 0.2→0.1,不删**。原取全量准确率(约 40% 纯文本题灌入纯文本方差);改取 `by_bucket.modality.MM`。降权依据是一次天然盲测对照:走 gateway 看不见图的 deepseek-v4-pro 在 4,013 道带图题上拿 0.658,仅比明眼 M3(0.681)低 0.023——该 benchmark 的视觉信号极弱。deepseek-v4-pro 的 MM 格作废(`BLIND_VISION_MODELS` 名单排除)。
+- **k12vista 按学科拆两格**:math-g6/g9/g12(158/598,解题条件图)→ 解题图像 facet 0.35;理化生地(440/598,装置/地图/图表)→ 学科图表 facet 0.55。取数从 `extra_metrics.by_subject` 按 n 加权。P04/P05 的整体挂载不动。
+- **mathvista 维持整体不拆**(FQA 可归学科图表但 TQA/VQA 两 facet 均无家;单模型面拆分无收益,记 TODO)。
+- **tutorbench 置信 1.0→0.8**(代理性质 + 模型面与主面板不重叠,满置信不自洽)。
+
+### R22-2 P04 知识调用与掌握
+
+- **重大 bug 修复:pedagogy_benchmark 取数缺口**。聚合脚本此前无该 benchmark 分支,而映射有三格(CDPK/SEND/0701 聚合卡),多格 benchmark 需精确 subdimension 匹配——结果 `reports/eval/pedagogy_benchmark/` 下 11 个 1,119 题完整跑分被静默丢弃,CDPK/SEND 长期零证据,教学专业知识 facet 只靠 0701 卡片 7 个导入模型的聚合数字活着(如 doubao 实考 87.2% 被丢、facet 分只有 6.7)。修复:新增分支从 `by_bucket.category` 取数(SEND=CDPK_send 类 220 题,CDPK=其余 7 类合并 899 题;scored<600 或类别<8 的冒烟跑跳过,glm-5.2 的 20 题冒烟因此不入分)。**0701 聚合卡格子退役**(`legacy_context`,同一考试同一协议的旧快照,避免同信号双算)——P04/P12/P13 三处挂载一并移除。
+- **mmlu_pro / ceval 置信 0.35→0.7**(判分最硬的精确匹配证据被压到低于裁判天花板分的 edubench,倒挂;与 R20 废门槛因子同一逻辑,护栏由映射结构承担)。
+- **mooccube_prereq 从 P04 摘除**(用户:"和这个事情关系不大";机会校正量表混入问题就地消失)。
+- 用户裁决维持:edubench 两知识指标(生成侧知识测量正当,天花板作注记不折权重);mathvista/olympiadbench/k12vista 三解题格;facet2 的 mathtutorbench 四 win-rate 格(Pedagogy IF 是教学法知识的生成式测量,与 facet 描述"判别式与生成式并用"一致)。
+
+### R22-3 P05 推理与生成
+
+- **agieval 置信 0.4→0.7**(与 mmlu/ceval 同族跟随)。
+- **olympiadbench 置信 0.55→0.7**(全 facet 唯一未饱和、真正承担区分度的解题证据;余格 8.3–9.8 天花板)。
+- **mooccube_prereq 从 P05 摘除**(构念沾边但有效权重 0.07、量表不合群)。
+- sas_bench ECS 的 glm-5.2 异常(3.79)排查结论:**非 bug,分数保留**。QWK/CCS 正常、无解析失败;异常来自真实行为——glm-5.2 从不贴"步骤正确"(物理/地理 0 次 vs glm-5.1 的 180/85 次)、物理题几乎不用金标第一高频错因"忽略特殊情况或近似假设"(3 vs 122)、滥用"回答不完整"。ECS 测的就是错因分布与人类的一致性。注记:任务级 ECS 仅 5–7 个错因可排,Spearman 噪声大,负值≈零相关放大。
+
+### R22-4 P06 自我校验与修正
+
+- **mathtutorbench_problem_solving 摘除**("解题强"与"会复查"无构念链,0.045 有效权重天花板尾巴)。
+- benchmark 改名(p07_selfcheck/p08_* 沿用旧编号,名不符实)记为独立重构事项,不并入本批。
+- deepseek-v4-flash 虚高(8.77,无直接测量)由 R22-6 缺测机制解决;长期仍应补跑。
+
+### R22-5 P07 置信度校准与弃答
+
+**零改动过审**。全部自建直接测量、三格同一 5 模型面、facet 边界可判不重复;弃答 facet 单源+偏高(8.6–9.1)记区分度观察注记。
+
+### R22-6 缺测处理机制(全局聚合算法改动,用户裁决)
+
+背景:P 分 = 已有格子的加权平均,缺格不进分母——缺的恰是难测验时模型虚高(flash P06=8.77 vs 直测模型 5.4–6.4;P02 claude/qwen 靠 asap 单格;P04 facet2 卡片模型 vs 自跑模型)。用户方案(取代此前讨论的"覆盖率门槛不发布"):
+
+1. **缺格取该格已测模型中的最低分临时替代**(保守下界),逐格标 `imputed`/`imputed_from_model`/`imputed_faces`,P 级报 `imputed_weight_share`,HTML 矩阵加 ※ 标注;
+2. 格子已测面 **≥3(IMPUTE_MIN_FACES)才参与替代**(1–2 面的 min 等于白送单模型分数,如 mathvista 单面 8.41);
+3. 替代只对**发布面板 5 模型**(`PANEL_MODEL_KEYS`,与 HTML 的 RELEASE_MODELS 一致)做;min 取自该格全部已测面(含非面板模型);
+4. 长期以补齐测试为正解,替代是过渡。
+
+### R22 分数影响披露(发布 5 模型,vs `_v6r21_snapshot_20260719`)
+
+共 90 行替代证据。主要变化:P04 全员 +0.4~+0.9(mmlu/ceval/agieval 置信回升 + pedagogy 修复 + mooccube 摘除);P05 全员 +0.1~+0.9(同前 + olympiadbench 置信回升);P03 深度重构——dsv4-pro 7.36→5.08※(盲跑作废后全靠替代)、glm-5.2/M2.7 从无分变 5.08※(tutorbench min 替代)、M3 6.71→6.52(真实多格);P13 M3 5.76→6.96(pedagogy CDPK/SEND 接入);替代机制普遍压低此前"缺难测验"的虚高分(M2.7 P17 8.47→6.45※、P19 6.93→5.56※;doubao P12 6.43→4.25※;glm-5.2 P15 8.25→7.06※)并压低 P10(asap_2 min 4.73 替代入分:M3 8.06→7.22※)。P01/P07/P14/P18 分毫不动。全替代格(imputed_weight_share=1.0,如 P16 三模型 6.35※)在报告中依 ※ 提示读者只作下界参考。旧产物快照:`reports/atomic_ability_rebenchmark_2026-07-08_v6r21_snapshot_20260719/`。

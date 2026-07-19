@@ -6,8 +6,8 @@ Parsed score rows: 353
 
 | Role | Rows |
 |---|---:|
-| `legacy_context` | 157 |
-| `scoring_candidate` | 196 |
+| `legacy_context` | 150 |
+| `scoring_candidate` | 203 |
 
 `scoring_candidate` rows are eligible for the P-score layer. `legacy_context` rows are stored for audit only.
 

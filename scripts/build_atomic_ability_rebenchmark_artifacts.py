@@ -29,6 +29,24 @@ OTHER_DIR = ROOT / "otherbenchmark"
 EDUGUARD_P2_PRIMARY_JUDGE = "deepseek-v3.2 judge"
 EXCLUDED_SCORING_BENCHMARKS = {"bea2025_judge", "mrbench_judge"}
 
+# 走 gateway 收到图不报错但看不见的模型（见记忆 gateway-model-vision-capability，
+# 实测 2026-07）；其多模态子集分数是盲答废分，不得作为视觉证据（R22）。
+BLIND_VISION_MODELS = {"deepseek-v4-pro"}
+
+# 发布面板（与 build_atomic_ability_html_report.py 的 RELEASE_MODELS 保持一致）。
+# R22 缺测替代只对这些模型做，顺路导入的外围模型不铺替代行。
+PANEL_MODEL_KEYS = (
+    "minimax-m3",
+    "minimax-m2.7",
+    "deepseek-v4-pro",
+    "glm-5.2",
+    "doubao-seed-2-0-pro",
+)
+
+# R22 缺测处理：格子至少有这么多个已测模型面，min 才有意义、才参与替代
+# （1–2 面的 min 等于把单个模型的分数白送给未测者）。
+IMPUTE_MIN_FACES = 3
+
 # R20 (2026-07-18): P codes follow the v5 doc scheme (P01-P20, no tombstones);
 # the four-level evidence_tier system is removed — discounting lives solely in
 # default_benchmark_weight (confidence) and cell weight (relevance).  Judge
@@ -101,33 +119,33 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MMLU-Pro",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.35,
+        "default_benchmark_weight": 0.7,
         "metric_family": {"*": "accuracy"},
-        "rationale": "基础学科知识与选择题答题能力，主要验证 LLM 答题门槛，不应主导教育能力雷达图。",
+        "rationale": "基础学科知识与选择题答题能力，主要验证 LLM 答题门槛，不应主导教育能力雷达图。R22：0.35→0.7——精确匹配判分最硬却被压到低于裁判天花板分的 edubench，倒挂；护栏由映射结构（不挂教育侧 P）承担。",
     },
     "ceval": {
         "benchmark_name": "C-EVAL",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.35,
+        "default_benchmark_weight": 0.7,
         "metric_family": {"*": "accuracy"},
-        "rationale": "中文考试与学科知识，属于基础答题门槛；对应知识调用、推理和选项约束遵循。",
+        "rationale": "中文考试与学科知识，属于基础答题门槛；对应知识调用、推理和选项约束遵循。R22：0.35→0.7，与 mmlu_pro 同批调整（判分硬度倒挂修正）。",
     },
     "agieval": {
         "benchmark_name": "AGIEval",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.4,
+        "default_benchmark_weight": 0.7,
         "metric_family": {"*": "accuracy"},
-        "rationale": "标准化考试推理与答题，仍是 LLM 答题能力门槛；更偏 P06。",
+        "rationale": "标准化考试推理与答题，仍是 LLM 答题能力门槛。R22：0.4→0.7，与 mmlu/ceval 同族（考试 MCQ、官方解析、精确匹配）跟随同档。",
     },
     "olympiadbench": {
         "benchmark_name": "OlympiadBench",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.55,
+        "default_benchmark_weight": 0.7,
         "metric_family": {"*": "accuracy"},
-        "rationale": "高难学科推理和多模态竞赛题，答题能力未完全饱和；仍作为门槛/诊断而非教育核心。",
+        "rationale": "高难学科推理和多模态竞赛题，答题能力未完全饱和；仍作为门槛/诊断而非教育核心。R22：0.55→0.7——解题簇唯一未饱和、真正承担区分度的证据不应压最低档；污染风险低于 mmlu。",
     },
     "mathvista": {
         "benchmark_name": "MathVista",
@@ -191,9 +209,9 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "TutorBench",
         "source_scope": "otherbenchmark",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 1.0,
+        "default_benchmark_weight": 0.8,
         "metric_family": {"*": "score_0_to_100"},
-        "rationale": "真实多模态 tutor 质量综合考察反馈生成、策略选择和图文感知。",
+        "rationale": "真实多模态 tutor 质量综合考察反馈生成、策略选择和图文感知。R22：1.0→0.8——分数混教学回复质量方差（P03 facet 注记的代理性质）且模型面与主面板不重叠，满置信不自洽。",
     },
     "mathtutorbench_problem_solving": {
         "benchmark_name": "MathTutorBench",
@@ -720,7 +738,9 @@ def parse_rebenchmark_0701_scores(rows: list[dict[str, Any]]) -> None:
         return
     text = path.read_text(encoding="utf-8")
     card_specs = [
-        ("Pedagogy Accuracy", "pedagogy_benchmark", "Pedagogy Benchmark", "CDPK/SEND aggregate from 0701 card", "accuracy_percent", "scoring_candidate"),
+        # R22：0701 聚合卡退役为纯参考——同一考试同一协议的旧快照，repo 全量跑分
+        # 接入 CDPK/SEND 两格后留它会同信号双算。
+        ("Pedagogy Accuracy", "pedagogy_benchmark", "Pedagogy Benchmark", "CDPK/SEND aggregate from 0701 card", "accuracy_percent", "legacy_context"),
         ("ASAP 2.0 QWK", "asap_2", "ASAP 2.0", "essay holistic QWK", "qwk_0_to_100", "scoring_candidate"),
         ("EduBench Mean", "edubench", "EduBench", "overall mean aggregate from 0701 card", "mean_0_to_10", "legacy_context"),
         ("TutorBench Fair815", "tutorbench", "TutorBench", "Fair815 multimodal tutor quality", "score_0_to_100", "scoring_candidate"),
@@ -1116,6 +1136,84 @@ def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any
                     "Encouraging share（R19：P18 语气支持 facet 副挂）",
                 )
         return rows
+    if benchmark == "olympiadbench":
+        # R22：P03 改取多模态子集，P04/P05 仍取全量。盲视模型的 MM 子集是
+        # 盲答废分，跳过（BLIND_VISION_MODELS）。
+        add(
+            "overall/subject/language/modality accuracy",
+            "accuracy",
+            data.get("accuracy"),
+            "summary.accuracy（全量，P04/P05 用）",
+        )
+        model_key = canonical_model(data.get("model") or "")
+        mm = ((data.get("by_bucket") or {}).get("modality") or {}).get("MM") or {}
+        if model_key not in BLIND_VISION_MODELS and mm.get("accuracy") is not None:
+            add(
+                "multimodal-subset accuracy",
+                "accuracy",
+                mm.get("accuracy"),
+                "by_bucket.modality.MM.accuracy（仅带图题，P03 用）",
+            )
+        return rows
+    if benchmark == "k12vista":
+        # R22：P03 按学科拆两格（math=解题图像 / 理化生地=学科图表），
+        # P04/P05 仍取整体 score_10。分桶分数在 extra_metrics.by_subject（0–1）。
+        add(
+            "official partial-credit score (per-blank 0/1 mean)",
+            "composite_0_to_10",
+            extra.get("score_10"),
+            "extra_metrics.score_10（整体，P04/P05 用）",
+        )
+        by_subject = extra.get("by_subject") or {}
+        groups = {
+            "math problem-figure subset score": lambda s: s.startswith("math"),
+            "science/geo subject-chart subset score": lambda s: not s.startswith("math"),
+        }
+        for subdimension, pred in groups.items():
+            total_n = 0
+            total_score = 0.0
+            for subject, stats in by_subject.items():
+                if not pred(subject):
+                    continue
+                n = stats.get("n") or 0
+                score = stats.get("score")
+                if score is None or not n:
+                    continue
+                total_n += n
+                total_score += float(score) * n
+            if total_n:
+                add(
+                    subdimension,
+                    "composite_0_to_10",
+                    10.0 * total_score / total_n,
+                    f"extra_metrics.by_subject 按 n 加权（{total_n} 题，P03 用）",
+                )
+        return rows
+    if benchmark == "pedagogy_benchmark":
+        # R22：修复取数缺口——此前无本分支，1,119 题完整跑分被静默丢弃，
+        # CDPK/SEND 两格长期零证据。SEND=CDPK_send 类，CDPK=其余 7 类合并。
+        # 冒烟跑（如 glm-5.2 的 20 题）不足以代表 8 类，跳过。
+        categories = (data.get("by_bucket") or {}).get("category") or {}
+        if (data.get("scored") or 0) < 600 or len(categories) < 8:
+            return rows
+        send = categories.get("CDPK_send") or {}
+        cdpk_total = sum(v.get("total", 0) for k, v in categories.items() if k != "CDPK_send")
+        cdpk_correct = sum(v.get("correct", 0) for k, v in categories.items() if k != "CDPK_send")
+        if cdpk_total:
+            add(
+                "CDPK teaching knowledge selection",
+                "accuracy",
+                cdpk_correct / cdpk_total,
+                f"by_bucket.category 除 CDPK_send 外 7 类合并（{cdpk_total} 题）",
+            )
+        if send.get("total"):
+            add(
+                "SEND special education needs selection",
+                "accuracy",
+                (send.get("correct") or 0) / send["total"],
+                f"by_bucket.category.CDPK_send（{send['total']} 题）",
+            )
+        return rows
     if benchmark == "sas_bench":
         # 三个指标同出一份 summary：QWK 判总分、CCS 判分步、ECS 判错因。
         # metric 名必须与 parse_sas_scores 的 md 行一致，否则 dedupe 认不出是同一格，
@@ -1186,13 +1284,12 @@ def _repo_single_metric(benchmark, data, extra, single):
         return single("bleu_0_to_1", extra.get("avg_bleu"), "extra_metrics.avg_bleu (official headline; summary.accuracy is a coarse BLEU>=0.5 proxy)")
     if benchmark.startswith("mathtutorbench_"):
         return single("accuracy", data.get("accuracy"), "summary.accuracy")
-    if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "olympiadbench", "ifeval"}:
+    if benchmark in {"agieval", "ceval", "mmlu_pro", "mathvista", "ifeval"}:
         return single("accuracy", data.get("accuracy"), "summary.accuracy")
     if benchmark in {
         "p07_selfcheck",
         "p08_calibration",
         "p08_abstention",
-        "k12vista",
         "mooccube_prereq",
     }:
         return single("composite_0_to_10", extra.get("score_10"), "extra_metrics.score_10")
@@ -1414,6 +1511,60 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
             slot["evidence_count"] += 1
             slot["benchmarks"].add(row["benchmark_id"])
 
+    # R22 缺测处理（用户裁决 2026-07-19）：发布面板模型缺某格时，取该格已测
+    # 模型的最低分临时替代（保守下界），显式标注 imputed；只对 ≥IMPUTE_MIN_FACES
+    # 个已测面的格子做（1–2 面的 min 等于白送单模型分数）；长期以补跑为正解。
+    cell_faces: dict[tuple[str, str, str, str], dict[str, dict[str, Any]]] = {}
+    for ev in evidence_rows:
+        key = (ev["p_code"], ev["facet_id"], ev["benchmark_id"], ev["subdimension"])
+        cell_faces.setdefault(key, {})[ev["model_key"]] = ev
+    imputed_rows: list[dict[str, Any]] = []
+    for key, faces in cell_faces.items():
+        if len(faces) < IMPUTE_MIN_FACES:
+            continue
+        min_model = min(faces, key=lambda m: faces[m]["score_10"])
+        template = faces[min_model]
+        for model_key in PANEL_MODEL_KEYS:
+            if model_key in faces:
+                continue
+            imputed = dict(template)
+            imputed.update(
+                {
+                    "model_key": model_key,
+                    "model": model_key,
+                    "source_type": "imputed_min",
+                    "imputed": True,
+                    "imputed_from_model": min_model,
+                    "imputed_faces": len(faces),
+                }
+            )
+            imputed_rows.append(imputed)
+    for ev in imputed_rows:
+        evidence_rows.append(ev)
+        slot = accum.setdefault(
+            (ev["model_key"], ev["p_code"]),
+            {
+                "model_key": ev["model_key"],
+                "display_model": ev["model"],
+                "p_code": ev["p_code"],
+                "p_name": ev["p_name"],
+                "group": ev["group"],
+                "facets": {},
+                "evidence_count": 0,
+                "benchmarks": set(),
+            },
+        )
+        facet_slot = slot["facets"].setdefault(
+            ev["facet_id"],
+            {"weighted_sum": 0.0, "weight_sum": 0.0},
+        )
+        facet_slot["weighted_sum"] += ev["score_10"] * ev["effective_weight"]
+        facet_slot["weight_sum"] += ev["effective_weight"]
+        facet_slot["imputed_weight_sum"] = facet_slot.get("imputed_weight_sum", 0.0) + ev["effective_weight"]
+        slot["evidence_count"] += 1
+        slot["benchmarks"].add(ev["benchmark_id"])
+        slot["imputed_count"] = slot.get("imputed_count", 0) + 1
+
     # 聚合方向（R20 后单一口径）：facet 内按 相关度×置信 有效权重加权平均，
     # P 分数 = 有证据 facet 的等权平均（formative 声明；reflective P 只有一个
     # core facet，退化为整体加权平均）。
@@ -1422,6 +1573,7 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
         facet_means = [f["weighted_sum"] / f["weight_sum"] for f in slot["facets"].values() if f["weight_sum"]]
         score = sum(facet_means) / len(facet_means) if facet_means else None
         weight_sum = sum(f["weight_sum"] for f in slot["facets"].values())
+        imputed_weight = sum(f.get("imputed_weight_sum", 0.0) for f in slot["facets"].values())
         p_rows.append(
             {
                 "model_key": slot["model_key"],
@@ -1440,6 +1592,8 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                 "evidence_count": slot["evidence_count"],
                 "benchmark_count": len(slot["benchmarks"]),
                 "benchmarks": sorted(slot["benchmarks"]),
+                "imputed_evidence_count": slot.get("imputed_count", 0),
+                "imputed_weight_share": round(imputed_weight / weight_sum, 4) if weight_sum else 0.0,
             }
         )
     p_rows.sort(key=lambda r: (r["model_key"], r["p_code"]))
