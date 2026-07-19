@@ -50,9 +50,9 @@ MODEL=<model> ./scripts/run_eval.sh mmlu_pro
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.35 | P04 知识调用与掌握 (0.6)、P05 推理与生成 (0.3) |
+| 1.0 | P05 知识调用与掌握 (0.5)、P06 推理与生成 (0.2) |
 
-**这些 P 的证据因此受污染：P04、P05**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+**这些 P 的证据因此受污染：P05、P06**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

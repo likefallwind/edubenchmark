@@ -42,7 +42,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_problem_solving
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.45 | P04 知识调用与掌握 (0.3)、P05 推理与生成 (0.6)、P06 自我校验与修正 (0.1) |
+| 1.0 | P05 知识调用与掌握 (0.2)、P06 推理与生成 (0.5) |
 
 ---
 

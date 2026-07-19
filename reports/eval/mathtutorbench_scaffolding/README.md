@@ -51,9 +51,9 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_scaffolding
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 1.0 | P04 知识调用与掌握 (0.15)、P13 个性化教学策略选择 (0.5)、P15 适配性解释与反馈生成 (0.35) |
+| 0.85 | P05 知识调用与掌握 (0.2)、P14 个性化教学策略选择 (0.5)、P16 适配性解释与反馈生成 (0.2) |
 
-**这些 P 的证据因此受污染：P04、P13、P15**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+**这些 P 的证据因此受污染：P05、P14、P16**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

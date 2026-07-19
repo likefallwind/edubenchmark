@@ -37,7 +37,9 @@ MODEL=<model> ./scripts/run_eval.sh longtutor_evidence
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.75 | P02 长上下文与证据定位 (0.7) |
+| 0.7 | P02 长上下文与证据定位 (0.8) |
+| 0.7 | P02 长上下文与证据定位 (0.8) |
+| 0.7 | P02 长上下文与证据定位 (0.8) |
 
 ---
 

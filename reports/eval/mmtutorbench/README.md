@@ -35,9 +35,9 @@ MODEL=<model> ./scripts/run_eval.sh mmtutorbench
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.9 | P03 多模态理解 (0.3)、P13 个性化教学策略选择 (0.3)、P15 适配性解释与反馈生成 (0.4) |
+| 0.85 | P03 多模态理解 (0.2)、P14 个性化教学策略选择 (0.2)、P16 适配性解释与反馈生成 (0.5) |
 
-**这些 P 的证据因此受污染：P03、P13、P15**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+**这些 P 的证据因此受污染：P03、P14、P16**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

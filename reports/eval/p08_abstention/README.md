@@ -39,7 +39,7 @@ MODEL=<model> ./scripts/run_eval.sh p08_abstention
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.85 | P07 置信度校准与弃答 (0.85) |
+| 0.85 | P08 置信度校准与弃答 (0.8) |
 
 ---
 

@@ -39,7 +39,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_mistake_correction
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.9 | P05 推理与生成 (0.2)、P09 错误诊断 (0.2)、P15 适配性解释与反馈生成 (0.35) |
+| 1.0 | P06 推理与生成 (0.2)、P10 错误诊断 (0.2)、P16 适配性解释与反馈生成 (0.2) |
 
 ---
 

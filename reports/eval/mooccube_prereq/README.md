@@ -36,7 +36,7 @@ MODEL=<model> ./scripts/run_eval.sh mooccube_prereq
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.7 | P04 知识调用与掌握 (0.2)、P05 推理与生成 (0.1)、P14 学习路径规划（知识结构层） (0.7) |
+| 0.85 | P15 学习路径规划（知识结构层） (0.8) |
 
 ---
 

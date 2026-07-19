@@ -47,7 +47,7 @@ MODEL=<model> ./scripts/run_eval.sh longtutor_teaching
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.75 | P13 个性化教学策略选择 (0.3) |
+| 0.7 | P14 个性化教学策略选择 (0.2) |
 
 ---
 

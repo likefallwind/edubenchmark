@@ -37,7 +37,7 @@ MODEL=<model> ./scripts/run_eval.sh longtutor_diagnosis
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.75 | P09 错误诊断 (0.1)、P12 学习者画像建模 (0.3) |
+| 0.85 | P10 错误诊断 (0.2)、P13 学习者画像建模 (0.8) |
 
 ---
 

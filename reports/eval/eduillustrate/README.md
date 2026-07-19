@@ -55,9 +55,9 @@ MODEL=<model> ./scripts/run_eval.sh eduillustrate
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.85 | P15 适配性解释与反馈生成 (0.3)、P16 多模态教学产物生成 (0.45) |
+| 0.7 | P04 多模态生成 (0.5)、P16 适配性解释与反馈生成 (0.2) |
 
-**这些 P 的证据因此受污染：P15、P16**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+**这些 P 的证据因此受污染：P04、P16**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

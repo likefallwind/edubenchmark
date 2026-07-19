@@ -40,7 +40,7 @@ MODEL=<model> ./scripts/run_eval.sh mrbench_judge
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.0 | P09 错误诊断 (0.25)、P10 主观题评价能力 (0.45)、P17 教育角色边界判断 (0.3) |
+| 1.0 | P11 主观题评价能力 (0.5) |
 
 ---
 

@@ -1714,7 +1714,7 @@ Files:
 - `07_run_deduplication_report.jsonl`: duplicate/canonical scoring decisions.
 - `07_run_deduplication_report.md`: human-readable duplicate/canonical scoring decisions.
 - `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
-- `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (single R20 scheme: relevance × confidence weights, no tier factor).
+- `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (relevance × confidence weights, no tier factor; both weights rule-derived since R25).
 - `09_atomic_p_scores.md`: compact per-model P score table and coverage notes.
 - `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
 - `10_group_scores.md`: compact group-score table.
@@ -1758,8 +1758,11 @@ MMLU-Pro, C-EVAL, AGIEval, OlympiadBench, and MathTutorBench problem-solving
 style results map mostly to `P04` and `P05` (knowledge and reasoning), where
 answering IS the construct. The former foundation-gate ×0.45 tier factor was
 removed in R20: high answer accuracy still cannot dominate the education-side
-abilities because general benchmarks are simply not mounted on education Ps,
-and their confidence weights stay deliberately low (0.35-0.55).
+abilities because general benchmarks are simply not mounted on education Ps.
+Since R25 the guardrail is carried entirely by that structural constraint plus
+per-cell relevance — confidence is rule-derived and no longer discounts a
+benchmark for being general, so these exam-style benchmarks sit at 1.0
+(objective scoring + externally vetted data).
 
 EduIllustrate full-230 runs are included when `total_items >= 100`; 5-item
 smoke/calibration runs remain excluded.
@@ -1806,15 +1809,16 @@ def write_normalization() -> None:
             "",
             "1. Normalize each benchmark subdimension score to 0-10.",
             "2. Allocate that score to P abilities using `02_benchmark_ability_mapping.jsonl` weights.",
-            "3. `score_10` (R20 single scheme): facet-level weighted average with effective weight = relevance × confidence; P score = equal-weight mean over facets with evidence.",
+            "3. `score_10`: facet-level weighted average with effective weight = relevance × confidence (five relevance tiers + the two-factor confidence rule, R25); P score = equal-weight mean over facets with evidence.",
             "4. Report coverage separately per model/P ability: number of contributing rows, total effective weight, and benchmark families.",
             "5. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available. Missing P abilities are not imputed.",
             "",
             "## Resolved scoring choices in this pass",
             "",
-            "- R20: the four-level evidence-tier system (and the foundation-gate ×0.45 factor) is removed; general benchmarks are constrained structurally (not mounted on education Ps) and by low confidence weights.",
+            "- R20: the four-level evidence-tier system (and the foundation-gate ×0.45 factor) is removed; general benchmarks are constrained structurally (not mounted on education Ps).",
+            "- R25: relevance uses five tiers (1.0/0.8/0.5/0.2/0); confidence is derived from two factors — scoring method (objective / LLM-judge) and data quality (externally vetted / self-built) — each -0.15.",
             "- EduGuard P2 uses `deepseek-v3.2` judge as the primary scoring judge.",
-            "- BEA/MRBench judge tasks are excluded; BEA/MRBench tutor tasks remain eligible.",
+            "- R23: BEA/MRBench judge tasks are scored (only on the subjective-scoring P, whose construct IS judging ability); exclusion is carried per cell, not by a global list.",
             "- EduIllustrate full-230 runs are eligible; small 5-item runs are excluded.",
         ]
     )
@@ -2003,7 +2007,7 @@ def write_atomic_scores(p_rows: list[dict[str, Any]], evidence_rows: list[dict[s
         f"Covered P codes: {', '.join(covered) if covered else 'none'}",
         f"Missing P codes: {', '.join(missing) if missing else 'none'}",
         "",
-        "`score_10` (R20 single scheme): facet-weighted average with effective weight = relevance × confidence. Coverage completeness is reported separately and is not folded back into the score.",
+        "`score_10`: facet-weighted average with effective weight = relevance × confidence (R25 rule-derived weights). Coverage completeness is reported separately and is not folded back into the score.",
         "",
         "## Sample Scores",
         "",
@@ -3023,9 +3027,10 @@ def write_open_questions() -> None:
 Resolved in this pass:
 
 - R20: the four-level evidence-tier system is removed; scoring weight = relevance × confidence only.
+- R25: both weights become rule-derived — relevance in five tiers (1.0/0.8/0.5/0.2/0), confidence from two factors (objective vs LLM-judge scoring; externally vetted vs self-built data), giving 1.0/0.85/0.7 plus one documented exception.
 - R20: P codes renumbered to the doc scheme `P01-P20` (no tombstones).
 - EduGuard P2 uses `deepseek-v3.2` judge as primary.
-- BEA/MRBench judge tasks are excluded (EXCLUDED_SCORING_BENCHMARKS + zero confidence weight + cell `excluded` marker).
+- R23: BEA/MRBench judge tasks are scored on the subjective-scoring P (its construct IS judging ability); `EXCLUDED_SCORING_BENCHMARKS` is now empty and exclusion is carried by per-cell `excluded` markers.
 - EduIllustrate full-230 runs are included; 5-item runs are excluded.
 - MiniMax-M3 canonical policy prefers included `minimax3/` or fuller-scored runs.
 

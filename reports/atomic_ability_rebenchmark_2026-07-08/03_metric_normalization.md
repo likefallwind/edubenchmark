@@ -27,13 +27,14 @@ All benchmark-native metrics are first normalized to a 0-10 scale.
 
 1. Normalize each benchmark subdimension score to 0-10.
 2. Allocate that score to P abilities using `02_benchmark_ability_mapping.jsonl` weights.
-3. `score_10` (R20 single scheme): facet-level weighted average with effective weight = relevance × confidence; P score = equal-weight mean over facets with evidence.
+3. `score_10`: facet-level weighted average with effective weight = relevance × confidence (five relevance tiers + the two-factor confidence rule, R25); P score = equal-weight mean over facets with evidence.
 4. Report coverage separately per model/P ability: number of contributing rows, total effective weight, and benchmark families.
 5. Aggregate P abilities to SRG/FDR/LAD/CLM/CEG only after P-level scores are available. Missing P abilities are not imputed.
 
 ## Resolved scoring choices in this pass
 
-- R20: the four-level evidence-tier system (and the foundation-gate ×0.45 factor) is removed; general benchmarks are constrained structurally (not mounted on education Ps) and by low confidence weights.
+- R20: the four-level evidence-tier system (and the foundation-gate ×0.45 factor) is removed; general benchmarks are constrained structurally (not mounted on education Ps).
+- R25: relevance uses five tiers (1.0/0.8/0.5/0.2/0); confidence is derived from two factors — scoring method (objective / LLM-judge) and data quality (externally vetted / self-built) — each -0.15.
 - EduGuard P2 uses `deepseek-v3.2` judge as the primary scoring judge.
-- BEA/MRBench judge tasks are excluded; BEA/MRBench tutor tasks remain eligible.
+- R23: BEA/MRBench judge tasks are scored (only on the subjective-scoring P, whose construct IS judging ability); exclusion is carried per cell, not by a global list.
 - EduIllustrate full-230 runs are eligible; small 5-item runs are excluded.

@@ -19,7 +19,7 @@ Files:
 - `07_run_deduplication_report.jsonl`: duplicate/canonical scoring decisions.
 - `07_run_deduplication_report.md`: human-readable duplicate/canonical scoring decisions.
 - `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
-- `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (single R20 scheme: relevance × confidence weights, no tier factor).
+- `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (relevance × confidence weights, no tier factor; both weights rule-derived since R25).
 - `09_atomic_p_scores.md`: compact per-model P score table and coverage notes.
 - `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
 - `10_group_scores.md`: compact group-score table.

@@ -43,7 +43,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_solution_correctness
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.85 | P02 长上下文与证据定位 (0.15)、P06 自我校验与修正 (0.25)、P09 错误诊断 (0.6) |
+| 1.0 | P07 自我校验与修正 (0.2)、P10 错误诊断 (0.5) |
 
 ---
 

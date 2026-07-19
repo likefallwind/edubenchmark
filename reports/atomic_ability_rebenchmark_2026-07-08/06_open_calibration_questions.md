@@ -3,9 +3,10 @@
 Resolved in this pass:
 
 - R20: the four-level evidence-tier system is removed; scoring weight = relevance × confidence only.
+- R25: both weights become rule-derived — relevance in five tiers (1.0/0.8/0.5/0.2/0), confidence from two factors (objective vs LLM-judge scoring; externally vetted vs self-built data), giving 1.0/0.85/0.7 plus one documented exception.
 - R20: P codes renumbered to the doc scheme `P01-P20` (no tombstones).
 - EduGuard P2 uses `deepseek-v3.2` judge as primary.
-- BEA/MRBench judge tasks are excluded (EXCLUDED_SCORING_BENCHMARKS + zero confidence weight + cell `excluded` marker).
+- R23: BEA/MRBench judge tasks are scored on the subjective-scoring P (its construct IS judging ability); `EXCLUDED_SCORING_BENCHMARKS` is now empty and exclusion is carried by per-cell `excluded` markers.
 - EduIllustrate full-230 runs are included; 5-item runs are excluded.
 - MiniMax-M3 canonical policy prefers included `minimax3/` or fuller-scored runs.
 

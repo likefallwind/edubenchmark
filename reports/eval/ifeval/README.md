@@ -43,7 +43,7 @@ MODEL=<model> ./scripts/run_eval.sh ifeval
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.8 | P01 指令与约束遵循 (1.0) |
+| 1.0 | P01 指令与约束遵循 (1.0) |
 
 ---
 

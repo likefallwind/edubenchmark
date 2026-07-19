@@ -40,7 +40,7 @@ MODEL=<model> ./scripts/run_eval.sh bea2025_judge
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.0 | P09 错误诊断 (0.3)、P10 主观题评价能力 (0.45) |
+| 1.0 | P11 主观题评价能力 (0.5) |
 
 ---
 

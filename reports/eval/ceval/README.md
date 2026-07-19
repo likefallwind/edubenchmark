@@ -40,7 +40,7 @@ MODEL=<model> ./scripts/run_eval.sh ceval
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.35 | P04 知识调用与掌握 (0.6)、P05 推理与生成 (0.25) |
+| 1.0 | P05 知识调用与掌握 (0.5)、P06 推理与生成 (0.2) |
 
 ---
 

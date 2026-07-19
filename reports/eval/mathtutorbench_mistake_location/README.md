@@ -43,7 +43,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_mistake_location
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 1.0 | P02 长上下文与证据定位 (0.2)、P09 错误诊断 (0.7) |
+| 1.0 | P02 长上下文与证据定位 (0.2)、P10 错误诊断 (0.8) |
 
 ---
 

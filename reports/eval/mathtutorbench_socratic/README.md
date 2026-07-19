@@ -38,7 +38,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_socratic
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.6 | P13 个性化教学策略选择 (0.65)、P15 适配性解释与反馈生成 (0.35) |
+| 1.0 | P14 个性化教学策略选择 (0.5)、P16 适配性解释与反馈生成 (0.2) |
 
 ---
 

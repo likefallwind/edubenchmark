@@ -25,8 +25,11 @@ MMLU-Pro, C-EVAL, AGIEval, OlympiadBench, and MathTutorBench problem-solving
 style results map mostly to `P04` and `P05` (knowledge and reasoning), where
 answering IS the construct. The former foundation-gate ×0.45 tier factor was
 removed in R20: high answer accuracy still cannot dominate the education-side
-abilities because general benchmarks are simply not mounted on education Ps,
-and their confidence weights stay deliberately low (0.35-0.55).
+abilities because general benchmarks are simply not mounted on education Ps.
+Since R25 the guardrail is carried entirely by that structural constraint plus
+per-cell relevance — confidence is rule-derived and no longer discounts a
+benchmark for being general, so these exam-style benchmarks sit at 1.0
+(objective scoring + externally vetted data).
 
 EduIllustrate full-230 runs are included when `total_items >= 100`; 5-item
 smoke/calibration runs remain excluded.

@@ -46,9 +46,9 @@ MODEL=<model> ./scripts/run_eval.sh agieval
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.4 | P04 知识调用与掌握 (0.35)、P05 推理与生成 (0.45) |
+| 1.0 | P05 知识调用与掌握 (0.2)、P06 推理与生成 (0.5) |
 
-**这些 P 的证据因此受污染：P04、P05**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
+**这些 P 的证据因此受污染：P05、P06**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

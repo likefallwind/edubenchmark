@@ -51,7 +51,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_pedagogy
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.95 | P04 知识调用与掌握 (0.25)、P13 个性化教学策略选择 (0.45)、P15 适配性解释与反馈生成 (0.3) |
+| 0.85 | P05 知识调用与掌握 (0.2)、P14 个性化教学策略选择 (0.5)、P16 适配性解释与反馈生成 (0.2) |
 
 ---
 

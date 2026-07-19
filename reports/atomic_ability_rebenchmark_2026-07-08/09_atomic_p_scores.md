@@ -4,7 +4,7 @@ P-score rows: 189
 Covered P codes: P01, P02, P03, P04, P05, P06, P07, P08, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19
 Missing P codes: P09, P20
 
-`score_10` (R20 single scheme): facet-weighted average with effective weight = relevance × confidence. Coverage completeness is reported separately and is not folded back into the score.
+`score_10`: facet-weighted average with effective weight = relevance × confidence (R25 rule-derived weights). Coverage completeness is reported separately and is not folded back into the score.
 
 ## Sample Scores
 

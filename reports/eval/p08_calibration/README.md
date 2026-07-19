@@ -39,7 +39,7 @@ MODEL=<model> ./scripts/run_eval.sh p08_calibration
 
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
-| 0.85 | P06 自我校验与修正 (0.2)、P07 置信度校准与弃答 (0.8) |
+| 0.85 | P07 自我校验与修正 (0.2)、P08 置信度校准与弃答 (0.8) |
 
 ---
 
