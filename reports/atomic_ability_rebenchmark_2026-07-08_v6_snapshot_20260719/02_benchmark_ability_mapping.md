@@ -5,7 +5,7 @@ Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 wi
 | Benchmark | Subdimension | Metric | Default weight | P weights | Rationale |
 |---|---|---|---:|---|---|
 | AGIEval (`agieval`) | overall/task/language/question_type accuracy | accuracy | 0.40 | P04 0.35, P05 0.45 | 标准化考试推理与答题，仍是 LLM 答题能力门槛；更偏 P06。 |
-| ASAP 2.0 (`asap_2`) | essay holistic QWK | qwk_0_to_100 | 0.80 | P10 0.65 | 作文评分一致性主要是主观题 rubric 评分（学业作答 facet），同时需要定位文本证据与写作知识。 |
+| ASAP 2.0 (`asap_2`) | essay holistic QWK | qwk_0_to_100 | 0.80 | P02 0.20, P10 0.65 | 作文评分一致性主要是主观题 rubric 评分（学业作答 facet），同时需要定位文本证据与写作知识。 |
 | BEA 2025 Judge (`bea2025_judge`) | judge labels: mistake/guidance/actionability | accuracy | 0.00 | P09 0.30, P10 0.45 | 作为教育评判者可映射到 rubric/错因/正误判断，但按用户口径排除 judge task，不进入 P-score。 |
 | BEA 2025 Tutor (`bea2025_tutor`) | dimension: Actionability | share_0_to_1 | 0.90 | P15 0.20 | 生成 tutor 回复、固定裁判逐维度标注。R2 裁决：复合 pass rate 换单维度 Yes 占比（Mistake_Identification→P11c、Providing_Guidance→P17、Actionability→P18 减半权重，κ 0.22 校准弱）。仅 3 个模型面（缺 deepseek-v4-pro / doubao-seed-2.0-pro 生成，2026-07-16 决定不补跑）。 |
 | BEA 2025 Tutor (`bea2025_tutor`) | dimension: Mistake_Identification | share_0_to_1 | 0.90 | P09 0.25 | 生成 tutor 回复、固定裁判逐维度标注。R2 裁决：复合 pass rate 换单维度 Yes 占比（Mistake_Identification→P11c、Providing_Guidance→P17、Actionability→P18 减半权重，κ 0.22 校准弱）。仅 3 个模型面（缺 deepseek-v4-pro / doubao-seed-2.0-pro 生成，2026-07-16 决定不补跑）。 |
@@ -30,19 +30,17 @@ Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 wi
 | IFEval (`ifeval`) | prompt-level strict accuracy | accuracy | 0.80 | P01 1.00 | 可验证指令的规则判分（官方 checker，无裁判），P01 的首个直接测量（2026-07-12 缺口填补，R13：edubench 裁判打的指令遵循分在模型排名上无独立信息量）。通用指令非教育语境，作 P01 操作基座的门槛证据。 |
 | K12Vista (`k12vista`) | official partial-credit score (per-blank 0/1 mean) | composite_0_to_10 | 0.80 | P03 0.55, P04 0.15, P05 0.30 | 中文 K12 图文学科题（五学科×三学段，固定 300 题分层抽样）。R15 裁决：挂 P03 学科图表 facet 0.55（P03/P04 合并后难度不再分 P）；判分用官方 rubric 的 LLM 裁判逐空 0/1，裁判未校准、仅 4 个视觉模型可跑——参考值。 |
 | LongTutor 知识状态诊断 (`longtutor_diagnosis`) | four-category knowledge-state diagnosis macro-F1 | accuracy_or_f1 | 0.75 | P09 0.10, P12 0.30 | 从交互历史推断学生知识状态（四类认知层失败机制），headline macro-F1。2026-07-16 裁决：P16a『知识状态估计』主挂 0.30（参考值）+ P11c（原 P13）副挂 0.10，P11b（原 P12）排除（输入无解题步骤）。注记：类别不平衡（多数类基线 acc 0.506 > 模型 0.35-0.44）；金标为特征决策矩阵+人工修订，非独立盲标。 |
-| LongTutor 证据抽取 (`longtutor_evidence`) | Hallucination Check accuracy | accuracy | 0.75 | P02 0.70 | 长学生历史（约 200 条作答记录）上的单记录提取/跨 session 推理/幻觉检查，规则+语义等价裁判。R21(2026-07-19)：按 memory_type 拆三格等权直接测量（单记录提取近天花板 0.93–0.97，跨 session 推理 0.60–0.70 与幻觉检查 0.61–0.75 才有区分度）；四模型面（M2.7 补跑后）总分 0.71–0.81 已拉开，区分度红旗解除。 |
-| LongTutor 证据抽取 (`longtutor_evidence`) | Information Extraction accuracy | accuracy | 0.75 | P02 0.70 | 长学生历史（约 200 条作答记录）上的单记录提取/跨 session 推理/幻觉检查，规则+语义等价裁判。R21(2026-07-19)：按 memory_type 拆三格等权直接测量（单记录提取近天花板 0.93–0.97，跨 session 推理 0.60–0.70 与幻觉检查 0.61–0.75 才有区分度）；四模型面（M2.7 补跑后）总分 0.71–0.81 已拉开，区分度红旗解除。 |
-| LongTutor 证据抽取 (`longtutor_evidence`) | Multi-session Reasoning accuracy | accuracy | 0.75 | P02 0.70 | 长学生历史（约 200 条作答记录）上的单记录提取/跨 session 推理/幻觉检查，规则+语义等价裁判。R21(2026-07-19)：按 memory_type 拆三格等权直接测量（单记录提取近天花板 0.93–0.97，跨 session 推理 0.60–0.70 与幻觉检查 0.61–0.75 才有区分度）；四模型面（M2.7 补跑后）总分 0.71–0.81 已拉开，区分度红旗解除。 |
+| LongTutor 证据抽取 (`longtutor_evidence`) | semantic evidence accuracy (3 memory types) | accuracy | 0.75 | P02 0.70 | 长学生历史（约 200 条作答记录）上的单记录提取/跨 session 推理/幻觉检查，规则+语义等价裁判。2026-07-16 裁决：P02 首个直接测量（0.7）；三模型面 0.787/0.807/0.791 区分度待验证，成熟度按『直接测量·区分度待验证』表述；3 模型面不补跑。 |
 | LongTutor 教学动作 (`longtutor_teaching`) | judge dims: strategy_alignment + history_utilization (1-5) | likert_1_to_5 | 0.75 | P13 0.30 | 生成利用具体历史证据的教学反馈，固定裁判四维 1-5 分。2026-07-16 裁决：挂 P17 执行 facet 0.30，取 strategy_alignment + history_utilization 两维均值（coherence/appropriateness 不入分）；三模型 valid 1001、strategy_alignment 3.68-4.13 有区分度；3 模型面不补跑。 |
 | MathTutorBench (`mathtutorbench_mistake_correction`) | Mistake Correction | accuracy | 0.90 | P05 0.20, P09 0.20, P15 0.35 | 纠错需要识别错因并生成可用修正/反馈；R6 裁决错因归因（原 P13，现 P11c）权重 0.45→0.20（只测改对与否）。 |
-| MathTutorBench (`mathtutorbench_mistake_location`) | Mistake Location | accuracy_or_f1 | 1.00 | P02 0.15, P09 0.70 | 错误位置定位是 P11b（原 P12）的直接测量。 |
+| MathTutorBench (`mathtutorbench_mistake_location`) | Mistake Location | accuracy_or_f1 | 1.00 | P02 0.20, P09 0.70 | 错误位置定位是 P11b（原 P12）的直接测量。 |
 | MathTutorBench (`mathtutorbench_pedagogy`) | Pedagogy IF | win_rate_or_accuracy | 0.95 | P04 0.25, P13 0.45, P15 0.30 | 教学法指令遵循主测策略选择和适配反馈。 |
 | MathTutorBench (`mathtutorbench_pedagogy_hard`) | Pedagogy IF hard | win_rate_or_accuracy | 1.00 | P04 0.25, P13 0.45, P15 0.30 | hard 子集较有区分度，权重略高。 |
 | MathTutorBench (`mathtutorbench_problem_solving`) | Problem Solving | accuracy | 0.45 | P04 0.30, P05 0.60, P06 0.10 | 数学求解门槛，重要但不能证明会辅导。 |
 | MathTutorBench (`mathtutorbench_scaffolding`) | Scaffolding | win_rate_or_accuracy | 1.00 | P04 0.15, P13 0.50, P15 0.35 | 脚手架主测下一步教学干预选择与反馈生成。 |
 | MathTutorBench (`mathtutorbench_scaffolding_hard`) | Scaffolding hard | win_rate_or_accuracy | 1.00 | P04 0.15, P13 0.50, P15 0.35 | hard 子集仍主测教学干预与反馈。 |
 | MathTutorBench (`mathtutorbench_socratic`) | Socratic Questioning | bleu_0_to_1 | 0.60 | P13 0.65, P15 0.35 | 生成引导性提问、与教师金标问题比 BLEU，是 P17a（提问式干预）的测量来源（R11 补挂，2026-07-12；按拆分准入规则提问不单列子能力）。BLEU 对合理的不同问法会误罚，权重保守。 |
-| MathTutorBench (`mathtutorbench_solution_correctness`) | Solution Correctness | accuracy_or_f1 | 0.85 | P06 0.25, P09 0.60 | 给定参考/学生解判断正确性，主测作答正误判定。 |
+| MathTutorBench (`mathtutorbench_solution_correctness`) | Solution Correctness | accuracy_or_f1 | 0.85 | P02 0.15, P06 0.25, P09 0.60 | 给定参考/学生解判断正确性，主测作答正误判定。 |
 | MathVista (`mathvista`) | task/question_type/answer_type accuracy | accuracy | 0.70 | P03 0.35, P04 0.20, P05 0.45 | 静态图文数学题，主要测多模态理解（解题图像 facet）、数学推理和知识调用。 |
 | MMLU-Pro (`mmlu_pro`) | overall/category accuracy | accuracy | 0.35 | P04 0.60, P05 0.30 | 基础学科知识与选择题答题能力，主要验证 LLM 答题门槛，不应主导教育能力雷达图。 |
 | MMTutorBench (`mmtutorbench`) | multimodal tutor score | score_0_to_6 | 0.90 | P03 0.30, P13 0.30, P15 0.40 | 多模态 tutor 综合测图文感知、反馈生成和策略选择；当前小样本默认排除主图。 |
@@ -60,7 +58,7 @@ Each row maps one benchmark subdimension to 1-3 P abilities. Weights sum to 1 wi
 | Pedagogy Benchmark (`pedagogy_benchmark`) | CDPK teaching knowledge selection | accuracy | 0.80 | P04 0.45, P13 0.35 | 教学法知识选择题，既有教育知识，也有教学策略选择；R8 裁决后不再挂 P06。 |
 | Pedagogy Benchmark (`pedagogy_benchmark`) | CDPK/SEND aggregate from 0701 card | accuracy_percent | 0.80 | P04 0.40, P12 0.30, P13 0.30 | 教学法知识选择题，既有教育知识，也有教学策略选择；R8 裁决后不再挂 P06。 |
 | Pedagogy Benchmark (`pedagogy_benchmark`) | SEND special education needs selection | accuracy | 0.80 | P04 0.35, P12 0.35, P13 0.30 | 教学法知识选择题，既有教育知识，也有教学策略选择；R8 裁决后不再挂 P06。 |
-| SAS-Bench (`sas_bench`) | CCS step scoring consistency | score_0_to_100 | 0.95 | P02 0.15, P09 0.25, P10 0.55 | 简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P11c 核心锚）。 |
+| SAS-Bench (`sas_bench`) | CCS step scoring consistency | score_0_to_100 | 0.95 | P02 0.20, P09 0.25, P10 0.55 | 简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P11c 核心锚）。 |
 | SAS-Bench (`sas_bench`) | ECS error-cause consistency | score_0_to_100 | 1.00 | P04 0.20, P05 0.10, P09 0.70 | 简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P11c 核心锚）。 |
-| SAS-Bench (`sas_bench`) | QWK holistic total score | score_0_to_100 | 0.90 | P10 0.70 | 简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P11c 核心锚）。 |
+| SAS-Bench (`sas_bench`) | QWK holistic total score | score_0_to_100 | 0.90 | P02 0.15, P10 0.70 | 简答题评分三指标：QWK 总分评分一致性、CCS 分步踩分、ECS 错因诊断一致性（P11c 核心锚）。 |
 | TutorBench (`tutorbench`) | Fair815 multimodal tutor quality | score_0_to_100 | 1.00 | P03 0.25, P13 0.35, P15 0.40 | 真实多模态 tutor 质量综合考察反馈生成、策略选择和图文感知。 |

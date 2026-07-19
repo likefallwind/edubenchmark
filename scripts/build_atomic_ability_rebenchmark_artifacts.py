@@ -427,8 +427,9 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "metric_family": {"*": "accuracy"},
         "rationale": (
             "长学生历史（约 200 条作答记录）上的单记录提取/跨 session 推理/幻觉检查，规则+语义等价裁判。"
-            "2026-07-16 裁决：P02 首个直接测量（0.7）；三模型面 0.787/0.807/0.791 区分度待验证，"
-            "成熟度按『直接测量·区分度待验证』表述；3 模型面不补跑。"
+            "R21(2026-07-19)：按 memory_type 拆三格等权直接测量（单记录提取近天花板 0.93–0.97，"
+            "跨 session 推理 0.60–0.70 与幻觉检查 0.61–0.75 才有区分度）；"
+            "四模型面（M2.7 补跑后）总分 0.71–0.81 已拉开，区分度红旗解除。"
         ),
     },
     "longtutor_diagnosis": {
@@ -1127,7 +1128,20 @@ def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any
             add(subdimension, metric, overall.get(key), note)
         return rows
     if benchmark == "longtutor_evidence":
-        add(None, "accuracy", data.get("accuracy"), "summary.accuracy（精确匹配+语义等价裁判）")
+        # R21：按 memory_type 拆三格（各 1,001 题）。子维度名必须与映射格
+        # subdimension 完全一致，聚合按精确字符串匹配。
+        memory_buckets = ((data.get("by_bucket") or {}).get("memory_type")) or {}
+        for bucket, subdimension in (
+            ("Information Extraction", "Information Extraction accuracy"),
+            ("Multi-session Reasoning", "Multi-session Reasoning accuracy"),
+            ("Hallucination Check", "Hallucination Check accuracy"),
+        ):
+            add(
+                subdimension,
+                "accuracy",
+                (memory_buckets.get(bucket) or {}).get("accuracy"),
+                f"by_bucket.memory_type['{bucket}'].accuracy（精确匹配+语义等价裁判）",
+            )
         return rows
     if benchmark == "longtutor_diagnosis":
         add(None, "accuracy_or_f1", extra.get("f1_macro"), "extra_metrics.f1_macro（headline，类别不平衡故不用 accuracy）")

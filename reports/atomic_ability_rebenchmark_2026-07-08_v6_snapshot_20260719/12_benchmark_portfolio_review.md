@@ -25,28 +25,26 @@
 | 优先继续做 | `p07_selfcheck` P07 两轮自查 | two-round self-check (fix/break rate) | 5.29 | 66.30 | 78.00 | 5 | P06 0.85, P07 0.15 |
 | 值得继续做 | `eduillustrate` EduIllustrate | 8-dim 0-5 visual explanation score | 6.93 | 63.75 | 75.00 | 4 | P15 0.30, P16 0.45 |
 | 优先继续做 | `mooccube_prereq` MOOCCube 先修关系推理 | chance-corrected composite (先修选择 + 学习顺序排序) | 4.28 | 63.00 | 90.00 | 5 | P04 0.20, P05 0.10, P14 0.70 |
+| 优先继续做 | `asap_2` ASAP 2.0 | essay holistic QWK | 5.45 | 62.00 | 77.50 | 7 | P02 0.20, P10 0.65 |
 | 优先继续做 | `mathtutorbench_socratic` MathTutorBench | Socratic Questioning | 2.73 | 57.00 | 95.00 | 4 | P13 0.65, P15 0.35 |
 | 优先继续做 | `edubench` EduBench | personalized_adaptation_learning_support (metric) | 6.29 | 56.80 | 71.00 | 11 | P12 0.30, P13 0.40 |
 | 值得继续做 | `eduguard_adversarial` EduGuard-Bench P2 | Refusal quality distribution | 6.71 | 55.65 | 79.50 | 7 | P17 0.15, P19 0.60 |
 | 高相关但缺跑分 | `pedagogy_benchmark` Pedagogy Benchmark | CDPK teaching knowledge selection | NA | 46.40 | 58.00 | 0 | P04 0.45, P13 0.35 |
+| 重要但可降频 | `sas_bench` SAS-Bench | CCS step scoring consistency | 7.65 | 87.64 | 92.25 | 8 | P02 0.20, P09 0.25, P10 0.55 |
+| 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | Mistake Location | 7.75 | 85.50 | 85.50 | 5 | P02 0.20, P09 0.70 |
 | 重要但可降频 | `mathtutorbench_pedagogy_hard` MathTutorBench | Pedagogy IF hard | 7.92 | 85.00 | 85.00 | 7 | P04 0.25, P13 0.45, P15 0.30 |
-| 重要但可降频 | `sas_bench` SAS-Bench | CCS step scoring consistency | 7.65 | 84.55 | 89.00 | 8 | P02 0.15, P09 0.25, P10 0.55 |
-| 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | Mistake Location | 7.75 | 82.25 | 82.25 | 5 | P02 0.15, P09 0.70 |
 | 重要但可降频 | `mathtutorbench_pedagogy` MathTutorBench | Pedagogy IF | 8.25 | 80.75 | 85.00 | 7 | P04 0.25, P13 0.45, P15 0.30 |
+| 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | Solution Correctness | 8.68 | 77.78 | 91.50 | 5 | P02 0.15, P06 0.25, P09 0.60 |
+| 重要但可降频 | `sas_bench` SAS-Bench | QWK holistic total score | 8.27 | 70.88 | 78.75 | 8 | P02 0.15, P10 0.70 |
 | 重要但可降频 | `p08_abstention` P08 能力性弃答 | balanced abstention score | 8.90 | 68.64 | 80.75 | 5 | P07 0.85 |
 | 重要但可降频 | `pedagogy_benchmark` Pedagogy Benchmark | CDPK/SEND aggregate from 0701 card | 8.56 | 66.80 | 83.50 | 7 | P04 0.40, P12 0.30, P13 0.30 |
-| 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | Solution Correctness | 8.68 | 64.39 | 75.75 | 5 | P06 0.25, P09 0.60 |
 | 重要但可降频 | `mathtutorbench_mistake_correction` MathTutorBench | Mistake Correction | 9.02 | 58.72 | 65.25 | 5 | P05 0.20, P09 0.20, P15 0.35 |
-| 重要但可降频 | `sas_bench` SAS-Bench | QWK holistic total score | 8.27 | 56.70 | 63.00 | 8 | P10 0.70 |
 | 不必重点看 | `k12vista` K12Vista | official partial-credit score (per-blank 0/1 mean) | 6.97 | 53.00 | 66.25 | 2 | P03 0.55, P04 0.15, P05 0.30 |
-| 诊断保留 | `asap_2` ASAP 2.0 | essay holistic QWK | 5.45 | 46.80 | 58.50 | 7 | P10 0.65 |
 | 不必重点看 | `mathvista` MathVista | task/question_type/answer_type accuracy | 8.41 | 45.32 | 64.75 | 1 | P03 0.35, P04 0.20, P05 0.45 |
-| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Multi-session Reasoning accuracy | 6.71 | 38.62 | 51.50 | 4 | P02 0.70 |
-| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Hallucination Check accuracy | 6.94 | 38.62 | 51.50 | 4 | P02 0.70 |
-| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Information Extraction accuracy | 9.58 | 38.62 | 51.50 | 4 | P02 0.70 |
+| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | semantic evidence accuracy (3 memory types) | 7.95 | 38.62 | 51.50 | 3 | P02 0.70 |
 | 不必重点看 | `ifeval` IFEval | prompt-level strict accuracy | 9.06 | 36.00 | 45.00 | 5 | P01 1.00 |
 | 不必重点看 | `olympiadbench` OlympiadBench | overall/subject/language/modality accuracy | 7.26 | 34.93 | 63.50 | 2 | P03 0.20, P04 0.25, P05 0.55 |
-| 诊断保留 | `longtutor_diagnosis` LongTutor 知识状态诊断 | four-category knowledge-state diagnosis macro-F1 | 2.65 | 31.88 | 42.50 | 4 | P09 0.10, P12 0.30 |
+| 诊断保留 | `longtutor_diagnosis` LongTutor 知识状态诊断 | four-category knowledge-state diagnosis macro-F1 | 2.87 | 31.88 | 42.50 | 3 | P09 0.10, P12 0.30 |
 | 不必重点看 | `edubench` EduBench | higher_order_thinking_ability_development (metric) | 7.44 | 29.40 | 36.75 | 11 | P05 0.20, P15 0.25 |
 | 不必重点看 | `edubench` EduBench | TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) | 8.13 | 28.50 | 38.00 | 11 | P15 0.40 |
 | 不必重点看 | `mathtutorbench_problem_solving` MathTutorBench | Problem Solving | 9.70 | 28.35 | 63.00 | 4 | P04 0.30, P05 0.60, P06 0.10 |
@@ -56,7 +54,7 @@
 | 不必重点看 | `edubench` EduBench | clarity_concision_inspiration (metric) | 8.38 | 22.80 | 28.50 | 11 | P15 0.30 |
 | 不必重点看 | `mrbench_tutor` MRBench Tutor | dimension: Providing_Guidance | 9.05 | 22.80 | 28.50 | 3 | P13 0.30 |
 | 不必重点看 | `bea2025_tutor` BEA 2025 Tutor | dimension: Mistake_Identification | 8.32 | 21.38 | 23.75 | 3 | P09 0.25 |
-| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | judge dims: strategy_alignment + history_utilization (1-5) | 5.66 | 21.37 | 28.50 | 4 | P13 0.30 |
+| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | judge dims: strategy_alignment + history_utilization (1-5) | 6.35 | 21.37 | 28.50 | 3 | P13 0.30 |
 | 不必重点看 | `agieval` AGIEval | overall/task/language/question_type accuracy | 8.74 | 19.40 | 48.50 | 5 | P04 0.35, P05 0.45 |
 | 不必重点看 | `edubench` EduBench | error_identification_correction_accuracy (metric) | 7.45 | 19.00 | 23.75 | 11 | P09 0.25 |
 | 不必重点看 | `edubench` EduBench | scenario_element_integration (metric) | 7.68 | 19.00 | 23.75 | 11 | P13 0.25 |
@@ -90,26 +88,26 @@
 | 优先继续做 | `p07_selfcheck` P07 两轮自查 | 1 | 5.29 | 66.30 | P06, P07 |
 | 值得继续做 | `eduillustrate` EduIllustrate | 1 | 6.93 | 63.75 | P15, P16 |
 | 优先继续做 | `mooccube_prereq` MOOCCube 先修关系推理 | 1 | 4.28 | 63.00 | P04, P05, P14 |
+| 优先继续做 | `asap_2` ASAP 2.0 | 1 | 5.45 | 62.00 | P02, P10 |
 | 高相关但缺跑分 | `pedagogy_benchmark` Pedagogy Benchmark | 3 | 8.56 | 60.47 | P04, P12, P13 |
 | 优先继续做 | `mathtutorbench_socratic` MathTutorBench | 1 | 2.73 | 57.00 | P13, P15 |
+| 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | 1 | 7.75 | 85.50 | P02, P09 |
 | 重要但可降频 | `mathtutorbench_pedagogy_hard` MathTutorBench | 1 | 7.92 | 85.00 | P04, P13, P15 |
-| 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | 1 | 7.75 | 82.25 | P02, P09 |
+| 重要但可降频 | `sas_bench` SAS-Bench | 3 | 7.17 | 80.84 | P02, P04, P05, P09, P10 |
 | 重要但可降频 | `mathtutorbench_pedagogy` MathTutorBench | 1 | 8.25 | 80.75 | P04, P13, P15 |
-| 重要但可降频 | `sas_bench` SAS-Bench | 3 | 7.17 | 75.08 | P02, P04, P05, P09, P10 |
+| 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | 1 | 8.68 | 77.78 | P02, P06, P09 |
 | 重要但可降频 | `p08_abstention` P08 能力性弃答 | 1 | 8.90 | 68.64 | P07 |
-| 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | 1 | 8.68 | 64.39 | P06, P09 |
 | 重要但可降频 | `mathtutorbench_mistake_correction` MathTutorBench | 1 | 9.02 | 58.72 | P05, P09, P15 |
 | 不必重点看 | `k12vista` K12Vista | 1 | 6.97 | 53.00 | P03, P04, P05 |
-| 诊断保留 | `asap_2` ASAP 2.0 | 1 | 5.45 | 46.80 | P10 |
 | 不必重点看 | `mathvista` MathVista | 1 | 8.41 | 45.32 | P03, P04, P05 |
-| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | 3 | 7.74 | 38.62 | P02 |
+| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | 1 | 7.95 | 38.62 | P02 |
 | 不必重点看 | `ifeval` IFEval | 1 | 9.06 | 36.00 | P01 |
 | 不必重点看 | `olympiadbench` OlympiadBench | 1 | 7.26 | 34.93 | P03, P04, P05 |
-| 诊断保留 | `longtutor_diagnosis` LongTutor 知识状态诊断 | 1 | 2.65 | 31.88 | P09, P12 |
+| 诊断保留 | `longtutor_diagnosis` LongTutor 知识状态诊断 | 1 | 2.87 | 31.88 | P09, P12 |
 | 不必重点看 | `mathtutorbench_problem_solving` MathTutorBench | 1 | 9.70 | 28.35 | P04, P05, P06 |
 | 不必重点看 | `edubench` EduBench | 12 | 7.87 | 23.62 | P04, P05, P09, P11, P12, P13, P15 |
 | 不必重点看 | `bea2025_tutor` BEA 2025 Tutor | 3 | 9.09 | 21.38 | P09, P13, P15 |
-| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | 1 | 5.66 | 21.37 | P13 |
+| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | 1 | 6.35 | 21.37 | P13 |
 | 不必重点看 | `agieval` AGIEval | 1 | 8.74 | 19.40 | P04, P05 |
 | 不必重点看 | `mmlu_pro` MMLU-Pro | 1 | 8.60 | 18.38 | P04, P05 |
 | 不必重点看 | `mrbench_tutor` MRBench Tutor | 5 | 9.30 | 18.04 | P09, P13, P15, P17 |

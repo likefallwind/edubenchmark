@@ -497,3 +497,25 @@ v5 文档(`doc/atomic_ability_mapping_v5_2026-07-17.md`)使用干净的 P01–P2
 - 指标族混聚合(不同指标族绝对水平不可比但在 facet 内直接平均):用户接受,理由"大家都跑了就公平";注记该公平性只对覆盖相同的模型成立,报告须按 P 标注证据覆盖。
 - facet 等权平均放大薄证据:接受(formative 设计意图)。
 - 去重路径字典序兜底:记 TODO 不挡发布。
+
+## 裁决 R21(2026-07-19,逐 P 复核 P02,与用户逐格确认)
+
+P02 长上下文与证据定位。复核前 6 格:longtutor_evidence 单格 0.7 + 五个搭车格(asap_2·QWK 0.2、sas_bench·QWK 0.15、sas_bench·CCS 0.2、solution_correctness 0.15、mistake_location 0.2)。三项裁决:
+
+### R21-1 摘除三个无定位信号的搭车格
+
+摘除 asap_2·essay holistic QWK、sas_bench·QWK holistic total score、mathtutorbench_solution_correctness。前两者是整体评分一致性:模型只输出一个总分,定位没定位过证据无从观测,分数方差属 P10 评分构念——与 R20-3 摘除"选择题格式遵循实为 accuracy"同一性质的污染。solution_correctness 是二值对错判断,无定位输出。用户裁决:"把完全不相关的去掉。"
+
+### R21-2 保留两个真定位格,相关度 0.2→0.15
+
+sas_bench·CCS(分步踩分需将解答各步与评分点对齐)与 mathtutorbench_mistake_location(输出即"错在第几步")有真实定位行为,保留;但材料都不长(简答/单道解题),且 mistake_location 同一信号已是 P09 错误定位核心格,相关度双双降至 0.15。
+
+### R21-3 longtutor_evidence 按 memory_type 拆三格,等权 0.7
+
+原单格"semantic evidence accuracy (3 memory types)"取 summary.accuracy(3,003 题混合总准确率,三子维度各 1,001 题等量,等价于三者等权均值)。拆为 Information Extraction / Multi-session Reasoning / Hallucination Check 三格,各 0.7 等权(用户:"其实涉及到不同维度,暂时给的权重一样,且都比较重要")。聚合脚本改读 `by_bucket.memory_type` 分桶 accuracy。拆分动机:单记录提取四模型面 0.93–0.97 近天花板,把三分之一权重灌成常数;区分度实际在跨 session 推理(0.60–0.70)与幻觉检查(0.61–0.75)。
+
+### R21 另记:区分度红旗解除
+
+R16/v6 注记"三模型面 0.787/0.807/0.791 挤在一起、区分度待验证"已过时:MiniMax-M2.7 补跑落地后四模型面总分 0.71–0.81 拉开,且拆格后天花板子维度不再稀释。P02 成熟度可表述为"直接测量(拆维)"。跨模型面错位问题(asap_2 只在同事导入 7 模型面上,与 longtutor/sas/mathtutorbench 的自跑面几乎不重叠,不同模型的 P02 由不同格子组合算出)随 asap_2 摘除大幅缓解。
+
+权重结果:P02 有效权重 = longtutor 三格各 0.525(0.7×0.75)+ CCS 0.1425(0.15×0.95)+ mistake_location 0.15(0.15×1.0),longtutor 占比约 84%(复核前 39%)。旧产物快照:`reports/atomic_ability_rebenchmark_2026-07-08_v6_snapshot_20260719/`。

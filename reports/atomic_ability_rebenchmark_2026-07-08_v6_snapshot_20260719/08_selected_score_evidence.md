@@ -1,13 +1,13 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 344
+Canonical normalized score rows used for P scoring: 333
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
 | `otherbenchmark` | 152 |
-| `repo_eval` | 192 |
+| `repo_eval` | 181 |
 
 ## By Benchmark
 
@@ -23,9 +23,9 @@ Canonical normalized score rows used for P scoring: 344
 | `eduillustrate` | 4 |
 | `ifeval` | 5 |
 | `k12vista` | 2 |
-| `longtutor_diagnosis` | 4 |
-| `longtutor_evidence` | 12 |
-| `longtutor_teaching` | 4 |
+| `longtutor_diagnosis` | 3 |
+| `longtutor_evidence` | 3 |
+| `longtutor_teaching` | 3 |
 | `mathtutorbench_mistake_correction` | 5 |
 | `mathtutorbench_mistake_location` | 5 |
 | `mathtutorbench_pedagogy` | 7 |
@@ -111,9 +111,7 @@ Canonical normalized score rows used for P scoring: 344
 | `eduguard_sata` | `deepseek-v4-pro` | `rfs_0_to_1` | 0.7612 | 7.6120 | `reports/eval/eduguard_sata/deepseek-v4-pro/summary.json` |
 | `ifeval` | `deepseek-v4-pro` | `accuracy` | 0.9222222222222223 | 9.2222 | `reports/eval/ifeval/deepseek-v4-pro/summary.json` |
 | `longtutor_diagnosis` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.3158242873546295 | 3.1582 | `reports/eval/longtutor_diagnosis/deepseek-v4-pro/summary.json` |
-| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.7082917082917083 | 7.0829 | `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json` |
-| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.9690309690309691 | 9.6903 | `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json` |
-| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.6973026973026973 | 6.9730 | `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json` |
+| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.7915417915417915 | 7.9154 | `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json` |
 | `longtutor_teaching` | `deepseek-v4-pro` | `likert_1_to_5` | 3.6079999999999997 | 6.5200 | `reports/eval/longtutor_teaching/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_mistake_correction` | `deepseek-v4-pro` | `accuracy` | 0.9201596806387226 | 9.2016 | `reports/eval/mathtutorbench_mistake_correction/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_mistake_location` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.765 | 7.6500 | `reports/eval/mathtutorbench_mistake_location/deepseek-v4-pro/summary.json` |
@@ -132,5 +130,7 @@ Canonical normalized score rows used for P scoring: 344
 | `pedagogy_benchmark` | `deepseek-v4-pro` | `accuracy_percent` | 85.34 | 8.5340 | `otherbenchmark/rebenchmark-summary-0701.html` |
 | `sas_bench` | `deepseek-v4-pro` | `score_0_to_100` | 76.62895853240961 | 7.6629 | `reports/eval/sas_bench/deepseek-v4-pro/summary.json` |
 | `sas_bench` | `deepseek-v4-pro` | `score_0_to_100` | 61.69390262769861 | 6.1694 | `reports/eval/sas_bench/deepseek-v4-pro/summary.json` |
+| `sas_bench` | `deepseek-v4-pro` | `qwk_0_to_100` | 81.86360495639899 | 8.1864 | `reports/eval/sas_bench/deepseek-v4-pro/summary.json` |
+| `edubench` | `doubao-seed-2-0-lite` | `likert_0_to_10` | 8.1386 | 8.1386 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 
 Full selected rows are in `08_selected_score_evidence.jsonl`.
