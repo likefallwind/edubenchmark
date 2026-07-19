@@ -1,8 +1,8 @@
 # Eval Run Inventory
 
 Total summary files scanned: 289
-Included candidates: 192
-Excluded from main: 97
+Included candidates: 180
+Excluded from main: 109
 
 | Benchmark | Include candidates | Excluded |
 |---|---:|---:|
@@ -11,7 +11,7 @@ Excluded from main: 97
 | `agieval` | 6 | 0 |
 | `asap_2` | 10 | 1 |
 | `bea2025` | 0 | 14 |
-| `bea2025_judge` | 6 | 0 |
+| `bea2025_judge` | 0 | 6 |
 | `bea2025_tutor` | 3 | 0 |
 | `ceval` | 5 | 1 |
 | `edubench` | 12 | 2 |
@@ -39,7 +39,7 @@ Excluded from main: 97
 | `mmtutorbench_judge_calibration` | 0 | 1 |
 | `mooccube_prereq` | 5 | 0 |
 | `mrbench` | 0 | 30 |
-| `mrbench_judge` | 6 | 0 |
+| `mrbench_judge` | 0 | 6 |
 | `mrbench_tutor` | 3 | 0 |
 | `olympiadbench` | 3 | 1 |
 | `p07_selfcheck` | 5 | 0 |

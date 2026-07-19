@@ -27,7 +27,11 @@ EVAL_DIR = ROOT / "reports" / "eval"
 OTHER_DIR = ROOT / "otherbenchmark"
 
 EDUGUARD_P2_PRIMARY_JUDGE = "deepseek-v3.2 judge"
-EXCLUDED_SCORING_BENCHMARKS = {"bea2025_judge", "mrbench_judge"}
+# R23：judge 类 benchmark 不再全局排除——P10「主观题评价能力」的被测构念就是判卷能力，
+# 在该 P 上 judge 数据构念对口应当计分（R19 已判定 rel 0.45 并正式入列，R20 全局规则一刀切
+# 把它永久化了）。排除改由格级 cell["excluded"] 标记承担，构念错位的挂载（原 P09c/P17a）
+# 已在 v6 JSON 中直接删除。名单保留为空以备将来 benchmark 级排除之需。
+EXCLUDED_SCORING_BENCHMARKS: set[str] = set()
 
 # 走 gateway 收到图不报错但看不见的模型（见记忆 gateway-model-vision-capability，
 # 实测 2026-07）；其多模态子集分数是盲答废分，不得作为视觉证据（R22）。
@@ -57,45 +61,46 @@ ABILITY_PRIORITY = {
     "P01": 0.45,
     "P02": 0.65,
     "P03": 0.70,
-    "P04": 0.55,
-    "P05": 0.65,
-    "P06": 0.75,
-    "P07": 0.95,
+    "P05": 0.55,
+    "P06": 0.65,
+    "P07": 0.75,
     "P08": 0.95,
     "P09": 0.95,
-    "P10": 0.90,
+    "P10": 0.95,
     "P11": 0.90,
     "P12": 0.90,
-    "P13": 0.95,
+    "P13": 0.90,
     "P14": 0.95,
     "P15": 0.95,
-    "P16": 0.90,
+    "P16": 0.95,
+    "P04": 0.90,
     "P17": 0.90,
     "P18": 0.95,
     "P19": 1.00,
     "P20": 0.95,
 }
 
-P_GAP_BONUS = {"P02", "P08", "P12", "P14", "P16", "P19", "P20"}
+# R24 编号迁移后：P02 长上下文 / P09 工具 / P13 画像 / P15 路径 / P04 多模态生成 / P19 处置 / P20 诚信
+P_GAP_BONUS = {"P02", "P09", "P13", "P15", "P04", "P19", "P20"}
 
 
 P_GROUPS = {
     "P01": ("SRG", "指令与约束遵循"),
     "P02": ("SRG", "长上下文与证据定位"),
     "P03": ("SRG", "多模态理解"),
-    "P04": ("FDR", "知识调用与掌握"),
-    "P05": ("FDR", "推理与生成"),
-    "P06": ("FDR", "自我校验与修正"),
-    "P07": ("FDR", "置信度校准与弃答"),
-    "P08": ("FDR", "工具使用与长程智能体执行"),
-    "P09": ("LAD", "错误诊断"),
-    "P10": ("LAD", "主观题评价能力"),
-    "P11": ("LAD", "命题与作业设计"),
-    "P12": ("CLM", "学习者画像建模"),
-    "P13": ("CLM", "个性化教学策略选择"),
-    "P14": ("CLM", "学习路径规划（知识结构层）"),
-    "P15": ("CLM", "适配性解释与反馈生成"),
-    "P16": ("FDR", "多模态教学产物生成"),
+    "P05": ("FDR", "知识调用与掌握"),
+    "P06": ("FDR", "推理与生成"),
+    "P07": ("FDR", "自我校验与修正"),
+    "P08": ("FDR", "置信度校准与弃答"),
+    "P09": ("FDR", "工具使用与长程智能体执行"),
+    "P10": ("LAD", "错误诊断"),
+    "P11": ("LAD", "主观题评价能力"),
+    "P12": ("LAD", "命题与作业设计"),
+    "P13": ("CLM", "学习者画像建模"),
+    "P14": ("CLM", "个性化教学策略选择"),
+    "P15": ("CLM", "学习路径规划（知识结构层）"),
+    "P16": ("CLM", "适配性解释与反馈生成"),
+    "P04": ("SRG", "多模态生成"),  # R23 改制 + R24 迁号（原 P16）
     "P17": ("CEG", "教育角色边界判断"),
     "P18": ("CEG", "学生风险识别"),
     "P19": ("CEG", "安全处置选择"),
@@ -195,6 +200,11 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_weight_overrides": {
             "TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric)": 0.75,
             "QG × clarity_concision_inspiration + scenario_element_integration (task×metric)": 0.75,
+            "QG × domain_knowledge_accuracy + basic_factual_accuracy (task×metric)": 0.75,  # R23
+            # R23：M2 换裁判实验 ρ≤0.14、三裁判均分 4.6/7.4/8.7，全仓库噪声最实锤的格；
+            # 跨模型排序与其他错误诊断格全部相反（M2.7 9.35 vs M3 5.99）。格不删、注记在位，
+            # 但噪声实质失去话语权（有效权重 0.2→0.075，降为尾部证据）。
+            "error_identification_correction_accuracy (metric)": 0.3,
         },
         "metric_family": {"*": "likert_0_to_10"},
         "rationale": (
@@ -292,9 +302,14 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "BEA 2025 Judge",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.0,
+        "default_benchmark_weight": 0.75,
         "metric_family": {"*": "accuracy"},
-        "rationale": "作为教育评判者可映射到 rubric/错因/正误判断，但按用户口径排除 judge task，不进入 P-score。",
+        "rationale": (
+            "作为教育评判者逐维度标注 tutor 回复，与人类标注算一致率/macro-F1/kappa。"
+            "R23：仅在「主观题评价能力」P 计分（该 P 的被测构念就是判卷能力；见 mrbench_judge 条目）。"
+            "取分用 extra_metrics.recommended_judge_score（官方口径：四维 exact macro-F1 均值，"
+            "抗类别不平衡，优于裸 accuracy）。置信 0.0→0.75。"
+        ),
     },
     "bea2025_tutor": {
         "benchmark_name": "BEA 2025 Tutor",
@@ -312,9 +327,16 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "benchmark_name": "MRBench Judge",
         "source_scope": "repo_eval",
         "score_direction": "higher_better",
-        "default_benchmark_weight": 0.0,
+        "default_benchmark_weight": 0.75,
         "metric_family": {"*": "accuracy"},
-        "rationale": "多维 tutor 回复评判可映射到评分/错因/边界，但按用户口径排除 judge task，不进入 P-score。",
+        "rationale": (
+            "多维 tutor 回复评判（被测模型自己当裁判，与人类标注算一致率/macro-F1/kappa）。"
+            "R23：仅在 P10「主观题评价能力」计分——该 P 的被测构念就是判卷能力，"
+            "与已计分的 sas_bench CCS 同属『按维度分解评判 + 与人类标注算一致性』这类操作"
+            "（R19 定的 facet 划分轴是评分操作类型，不是评分对象）。"
+            "置信 0.0→0.75：人类标注锚定的一致率统计，与 CCS 0.95、asap_2 0.8 同族，"
+            "因裁判协议自身噪声折价一档。构念错位的原 P09c/P17a 挂载已删除。"
+        ),
     },
     "mrbench_tutor": {
         "benchmark_name": "MRBench Tutor",
@@ -343,7 +365,7 @@ BENCHMARK_META: dict[str, dict[str, Any]] = {
         "source_scope": "repo_eval_and_otherbenchmark",
         "score_direction": "lower_better",
         "default_benchmark_weight": 1.0,
-        "benchmark_weight_overrides": {"Refusal quality distribution": 0.7},
+        "benchmark_weight_overrides": {"Refusal quality distribution": 0.8},  # R23: 0.7→0.8
         "metric_family": {
             "Adversarial Safety ASR": "asr_0_to_1_lower_better",
             "Refusal quality distribution": "share_0_to_1",
@@ -673,6 +695,10 @@ def parse_edubench_metric_scores(rows: list[dict[str, Any]]) -> None:
         ),
         "qg_composite": (
             "QG × clarity_concision_inspiration + scenario_element_integration (task×metric)"
+        ),
+        # R23：出题内容正确性（裁判逐题核对学科内容对错）
+        "qg_correctness_composite": (
+            "QG × domain_knowledge_accuracy + basic_factual_accuracy (task×metric)"
         ),
     }
     with path.open(encoding="utf-8") as fh:
@@ -1268,6 +1294,21 @@ def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any
 
 
 def _repo_single_metric(benchmark, data, extra, single):
+    # R23：judge 类不再全局排除——「主观题评价能力」P 的被测构念就是判卷能力。
+    # 取分一律用抗类别不平衡的 macro-F1 口径，而非裸 accuracy（多数类占比高会虚高）。
+    if benchmark == "bea2025_judge":
+        return single(
+            "accuracy",
+            extra.get("recommended_judge_score"),
+            "extra_metrics.recommended_judge_score（官方口径：四维 exact macro-F1 均值）",
+        )
+    if benchmark == "mrbench_judge":
+        macro = extra.get("macro_over_dimensions") or {}
+        return single(
+            "accuracy",
+            macro.get("f1_macro"),
+            "extra_metrics.macro_over_dimensions.f1_macro（8 维 macro-F1 的跨维均值）",
+        )
     if benchmark == "eduillustrate":
         return single("likert_0_to_5", data.get("overall_mean_judged_only"), "overall_mean_judged_only")
     if benchmark == "mmtutorbench":

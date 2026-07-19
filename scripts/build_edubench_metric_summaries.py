@@ -48,11 +48,15 @@ METRICS = [
     "personalized_adaptation_learning_support",
     "higher_order_thinking_ability_development",
 ]
-COMPOSITE_METRICS = ("clarity_concision_inspiration", "scenario_element_integration")
-# (composite metric name, task label, member tasks); R18/R19: QG feeds P23, TMG/PCC feed P18
+EXPRESSION_METRICS = ("clarity_concision_inspiration", "scenario_element_integration")
+CORRECTNESS_METRICS = ("domain_knowledge_accuracy", "basic_factual_accuracy")
+# (composite metric name, task label, member tasks, member metrics).
+# R18/R19: QG feeds the item-generation P, TMG/PCC the artifact P (P 编号见 v6 JSON)。
+# R23: qg_correctness_composite 新增——把"生成题目的内容正确性"从零覆盖变部分覆盖。
 COMPOSITES = (
-    ("tmg_pcc_composite", "TMG/PCC", {"TMG", "PCC"}),
-    ("qg_composite", "QG", {"QG"}),
+    ("tmg_pcc_composite", "TMG/PCC", {"TMG", "PCC"}, EXPRESSION_METRICS),
+    ("qg_composite", "QG", {"QG"}, EXPRESSION_METRICS),
+    ("qg_correctness_composite", "QG", {"QG"}, CORRECTNESS_METRICS),
 )
 
 
@@ -75,7 +79,7 @@ def main() -> None:
     for mdir in model_dirs():
         model = mdir.name
         by_cell: dict[tuple[str, str], list[float]] = {}
-        composite_values: dict[str, list[float]] = {name: [] for name, _, _ in COMPOSITES}
+        composite_values: dict[str, list[float]] = {name: [] for name, _, _, _ in COMPOSITES}
         n_items = 0
         with (mdir / "scored.jsonl").open(encoding="utf-8") as fh:
             for line in fh:
@@ -95,21 +99,22 @@ def main() -> None:
                     value = float(value)
                     by_cell.setdefault((task, metric), []).append(value)
                     by_cell.setdefault(("ALL", metric), []).append(value)
-                pair = [
-                    float(dims[m])
-                    for m in COMPOSITE_METRICS
-                    if dims.get(m) is not None and not math.isnan(float(dims[m]))
-                ]
-                if pair:
-                    for name, _, member_tasks in COMPOSITES:
-                        if task in member_tasks:
-                            composite_values[name].append(sum(pair) / len(pair))
+                for name, _, member_tasks, member_metrics in COMPOSITES:
+                    if task not in member_tasks:
+                        continue
+                    pair = [
+                        float(dims[m])
+                        for m in member_metrics
+                        if dims.get(m) is not None and not math.isnan(float(dims[m]))
+                    ]
+                    if pair:
+                        composite_values[name].append(sum(pair) / len(pair))
         for (task, metric), values in sorted(by_cell.items()):
             rows.append({"model": model, "task": task, "metric": metric, **stats(values)})
-        for name, task_label, _ in COMPOSITES:
+        for name, task_label, _, _ in COMPOSITES:
             if composite_values[name]:
                 rows.append({"model": model, "task": task_label, "metric": name, **stats(composite_values[name])})
-        counts = " ".join(f"{name}_n={len(composite_values[name])}" for name, _, _ in COMPOSITES)
+        counts = " ".join(f"{name}_n={len(composite_values[name])}" for name, _, _, _ in COMPOSITES)
         print(f"{model}: items={n_items} cells={len(by_cell)} {counts}")
 
     OUT_DIR.mkdir(exist_ok=True)

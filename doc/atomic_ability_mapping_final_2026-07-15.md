@@ -569,3 +569,101 @@ R16/v6 注记"三模型面 0.787/0.807/0.791 挤在一起、区分度待验证"�
 共 90 行替代证据。主要变化:P04 全员 +0.4~+0.9(mmlu/ceval/agieval 置信回升 + pedagogy 修复 + mooccube 摘除);P05 全员 +0.1~+0.9(同前 + olympiadbench 置信回升);P03 深度重构——dsv4-pro 7.36→5.08※(盲跑作废后全靠替代)、glm-5.2/M2.7 从无分变 5.08※(tutorbench min 替代)、M3 6.71→6.52(真实多格);P13 M3 5.76→6.96(pedagogy CDPK/SEND 接入);替代机制普遍压低此前"缺难测验"的虚高分(M2.7 P17 8.47→6.45※、P19 6.93→5.56※;doubao P12 6.43→4.25※;glm-5.2 P15 8.25→7.06※)并压低 P10(asap_2 min 4.73 替代入分:M3 8.06→7.22※)。P01/P07/P14/P18 分毫不动。全替代格(imputed_weight_share=1.0,如 P16 三模型 6.35※)在报告中依 ※ 提示读者只作下界参考。旧产物快照:`reports/atomic_ability_rebenchmark_2026-07-08_v6r21_snapshot_20260719/`。
 
 **R22 补丁(同日)**:canonical_model 未归一带日期后缀的跑分目录名——doubao 的 pedagogy 全量跑分(目录 doubao-seed-2-0-pro-260215)挂在幽灵键下,面板键 doubao-seed-2-0-pro 反而拿了 SEND/CDPK 的 min 替代值。加别名归一后 doubao P04 7.58→7.97、P12 4.25→4.68、P13 6.41→7.27(真分覆盖替代值)。
+
+---
+
+## R23（2026-07-19）逐 P 复核第三批：P08–P20 裁决落地
+
+承 R21（P02）、R22（P03–P07）。本批把逐 P 复核走完，并推翻两条既有全局决定。裁决明细的讨论过程见 `doc/mapping_review_pending_decisions_2026-07-19.md`。
+
+### 一、推翻 R20 的全局 judge 排除
+
+**问题**：「主观题评价能力」P 的分析式评分 facet 三格死了两格——`bea2025_judge`（rel 0.45）与 `mrbench_judge`（rel 0.45）被 R20 的 `EXCLUDED_SCORING_BENCHMARKS` 吃掉，facet 只剩 sas_bench CCS 一格独撑（7.25–8.03 区间窄），且 sas_bench 同时占据整体性与分析式两 facet 主格，该 P 分数实质由其单家决定。
+
+**裁决**：judge 类 benchmark 在该 P 上计分。依据三条：①R19 已完成构念判定——原话「bea/mrbench judge 属分析式多维评判，正式入列该 facet（仍按 excluded_judge_task **暂**不计分，不再脚注化）」，给了 0.45 相关度并由脚注升为正式格，只是暂缓计分；R20 废四档时把 judge 排除做成全局硬规则，「暂」被永久化。②R19 定的该 facet 划分轴是**评分操作类型**而非评分对象（「评的是什么对象」轴因开放不可穷尽、边界不可判而废弃）——按操作类型，judge 干的是「按维度分解评判 + 与人类标注算一致性」，与已计分的 CCS 同类，对象从学生作答换成辅导回复不影响归属。③全局排除的理由「评估别人 ≠ 自己会做」在错误诊断 P、角色边界 P 成立（那里被测的是诊断能力/边界行为，判卷是元能力），在主观题评价 P 反转——该 P 被测的**就是**判卷能力。
+
+**落地**：`EXCLUDED_SCORING_BENCHMARKS` 清空（保留空集备用），排除改由格级 `cell["excluded"]` 标记承担；构念错位的两处挂载（错误诊断 P 的错因归因 facet、角色边界 P 的安全知识 facet）直接删格——因为置信是 benchmark 级、且 mrbench_judge 三处用同一 subdimension 字符串，无法按 P 区分，必须先收拢挂载；两个 judge benchmark 的 `default_benchmark_weight` 0.0→0.75。
+
+**取数分支同时补齐**（此前不存在，属与 pedagogy_benchmark 同型的死格子 bug）：`bea2025_judge` 取 `extra_metrics.recommended_judge_score`（官方口径：四维 exact macro-F1 均值），`mrbench_judge` 取 `extra_metrics.macro_over_dimensions.f1_macro`。**一律用 macro-F1 而非裸 accuracy**——judge 标签类别高度不平衡，裸 accuracy 会虚高。
+
+**须随分数呈现的注记**：macro-F1（3.69–5.62）与 QWK/CCS（7.25–8.68）不在同一尺度上，两者进同一个加权平均隐含了可比性假设。该 P 分数因此整体下移约 0.7–1.0 分，这是口径变化而非模型退步，跨 R23 前后不可比。
+
+### 二、多模态生成 P 改制 + 移入基础类别（编号迁移见 R24）
+
+**问题**：「适配性解释与反馈生成」P 的「教学产物生成」facet 与「多模态教学产物生成」P 是同一构念被按模态切成两个 P（文本归前者、图归后者），`eduillustrate` 因此双挂＝重复计分；且后者仅此一格，发布面板 5 模型中 3 个吃 min 替代值（全显 6.35），几无区分力。
+
+**裁决**：不按「教学产物」定义，改为 **「多模态生成」**，与「多模态理解」P 配对并移入基础类别（SRG）——一对读/写：一个把图看懂，一个把图产出来；构念通用（能否产出结构正确、可读、图文对应的非文本产物），脱离教育场景仍可定义。`eduillustrate` 主家迁入并单挂 0.45，解释反馈 P 保留 0.25 副挂。
+
+**facet 维持 R19 的静态/时序两分**（只改名与描述）。不按 eduillustrate 的 8 个判分维度拆——那会让同一道题落进两个 facet，违反 R19 的 boundary-decidable 规则；亦不镜像多模态理解 P 的另两个 facet：①「解题图像/学科图表」两分源于 mathvista/k12vista 证据天然分家，生成侧无此分家；②「图文混排」在理解侧的定义是「掺杂手写笔迹、批注、多来源拼贴」，属**输入端才有的性质**（材料脏、来源杂所以难理解），生成端无对应物。
+
+**证据局限（必须随分数呈现）**：eduillustrate 是教育域 benchmark，单独承担一个基础能力构念偏窄——用教学场景样本推断通用生成能力，是**下界代理而非通用测量**（R5 当初正因此把它从理解侧 P 摘除）；通用图像/图表生成 benchmark 列入待补，`single_source` 保留。
+
+**连带**：`doc/atomic_ability_category_grouping_2026-07-16.md` 当初把这项能力**从基础侧移到教育侧**，理由是「定义残余是教育专有的 + 与教学表达 P 共用 eduillustrate」；本次改制把它移回基础侧并解决共用问题，两条原理由均已失效，该文档需同步。
+
+### 三、其余逐 P 裁决
+
+| P（新号） | 裁决 |
+|---|---|
+| P09 工具使用 | 零改动过审（领域空白，诚实标注） |
+| P10 错误诊断 | `edubench · error_identification_correction_accuracy` 置信 override **0.8→0.3**（M2 换裁判实验 ρ≤0.14、三裁判均分 4.6/7.4/8.7，全仓库噪声最实锤的格；跨模型排序与其他错误诊断格全部相反，M2.7 9.35 vs M3 5.99）。R14「12 维全可挂」原则形式保留（格不删、注记在位），噪声实质失去话语权（有效权重 0.2→0.075）。同批删除本 P 的两个 judge 格。 |
+| P11 主观题评价 | 见上「一」。 |
+| P12 命题与作业设计 | 新增 `edubench · QG × domain_knowledge_accuracy + basic_factual_accuracy` 复合格，rel **0.3**、置信沿用 QG override 0.75——用现成逐题裁判数据把「生成题目的内容正确性」从零覆盖变部分覆盖。实现：`build_edubench_metric_summaries.py` 的 `COMPOSITES` 增加 `qg_correctness_composite`（元组扩为四元，每个复合格自带 metric 组，原 `COMPOSITE_METRICS` 常量拆为 `EXPRESSION_METRICS`/`CORRECTNESS_METRICS`）。知识维度偏天花板（7.8–9.9）作代理格注记；测评学效度（区分度、干扰项有效性、作答歧义）仍无覆盖。 |
+| P13 学习者画像建模 | `pedagogy_benchmark · SEND` 在支持需求 facet 相关度 **0.35→0.25**：SEND 是教师考试选择题，测「知道特教需求知识」，本 facet 构念是「判断学生需要哪类支持」（行为侧），知识侧证据挂行为侧构念降一档。知识主家不动。 |
+| P14 个性化教学策略 | 策略制定 facet 声明层归位：`CDPK` **0.35→0.6**（本 facet 构念最贴的直接测量，不应低于执行 facet 的 BLEU 代理格）、`SEND` **0.3→0.4**（facet 内仅两格，分数只受比例影响）；`mathtutorbench_socratic` **0.65→0.4**（BLEU 对参考问句判分，方差中「引导质量」与「措辞相似」不可分；降后由语义鲁棒的胜率格主导）。 |
+| P15 学习路径规划 | 零改动过审（mooccube_prereq 唯一主家挂载，规则判分零裁判；自建协议无公开基线，置信 0.7 已作参考值折价）。 |
+| P16 适配性解释与反馈 | 摘除 `edubench · tone_style_consistency`（R19 已标「死格子剔除候选」、R1 注记「构念对齐弱」、权重 0.1 象征性，三处标记同指）；`TMG/PCC` 复合格 **0.4→0.55**（生成教学产物的直接测量，原值低于内容反馈 facet 一批代理格）；`eduillustrate` **0.3→0.25**（主家外迁，降为副挂）。内容反馈 facet 十二格**零改动**（用户裁决）——复核中提出的精简候选（socratic 构念属策略 P、edubench 高阶思维偏效果侧）与统计相关性红旗留待「精简版」再议。 |
+| P17 教育角色边界 | `mrbench_tutor · Tutor_Tone (non-offensive)` **保留、rel 0.25→0.1**（用户裁决：无区分度不构成删除理由）——5 个面全 10.00 方差为零，但这是「当前面板全都不冒犯」而非指标永久饱和，留作**哨兵格**，降权使其不再压缩 ASR 格拉开的真实差距（ASR 3.76–9.96 是全仓库区分度最好的格之一）；facet2 描述放宽为「**常规与对抗条件下**实际守住边界」（原描述只写对抗条件，等于默认常规条件必然安全，该默认在弱模型上不成立；不该拿描述否决格子，应反过来检查描述是否写窄）；补 `single_source` 声明（删 judge 格后本 P 证据全来自 EduGuard 一家）。 |
+| P18 学生风险识别 | **零改动**（用户裁决「留下」）。复核中提出但未采纳的删格主张存档：SATA 测「知不知道什么算风险」（教师侧行为知识），本 P 构念是「从学生消息中察觉风险信号」（输入侧感知），失败机制可分离——这正是 R19 删除对抗格时用的推理，当时未向 SATA 再推一步。保留后该格继续作为知识代理承担本 P 唯一证据；**独立证据为零**、与边界 P/处置 P 同源的注记维持，报告中不得读作两份独立证据。 |
+| P19 安全处置选择 | `eduguard_adversarial · Refusal quality distribution` 置信 **0.7→0.8**（与 ASR 出自同一官方两阶段裁判流程，仅第二阶段更主观，原折价过大）。提后有效权重 0.42→0.48 超过 ASR 的 0.45 成为 facet 主格，与 **R7「拒答质量主格在此」** 的原意一致（此前声明 rel 0.6 为主格、实际有效权重反被 ASR 压住）。**升级转介缺口注记前置到报告层**（R19 经语料核实）：知识侧不可计量、行为侧零覆盖——801 条场景全为主动越狱请求，无「学生被动流露风险需主动升级」情形，即本 P 现测的全是「拒绝恶意请求」，完全未测「识别风险后主动转介人类」。补法照 R19：扩题 + 加统计维度，不新开 facet。 |
+| P20 学术诚信 | 零改动（用户裁决「不改了」）。仍为空 P、`coverage_gap: true`、`model_type: undeclared`。复核中提出但未采纳：建两个空 facet（识别/处置）、`undeclared`→`formative`；边界建议（防作弊题目设计归命题 P，本 P 只管「判定作答是否本人真实完成」）留待将来补 benchmark 时再定。 |
+
+### 四、重跑的计划外副作用（必须记录）
+
+重跑 `build_edubench_metric_summaries.py` 时吸收了 **2026-07-19 03:14 新落地的 glm-5.2 EduBench 跑分**（`_judge-deepseek-v3.2/glm-5.2/`，此前提交的 metrics 文件里没有）。glm-5.2 的 edubench 格由 min 替代值变为真实值，其 P05/P06/P16 等分数上升——**这是新数据，不是本批裁决的效果**，读 R23 前后 diff 时须把 glm-5.2 单独摘出。
+
+### 五、格子 diff 核验
+
+`09_atomic_p_score_evidence.jsonl` 相对 R22 快照（`*_v6r22_snapshot_20260719`）：新增 3 格（`bea2025_judge`、`mrbench_judge`、`edubench QG 正确性复合`），消失 1 格（`edubench tone_style_consistency`），与裁决逐条对应，无意外增减。
+
+### 六、待补清单（累积）
+
+- `mmtutorbench` 仅 2 个模型面（低于 `IMPUTE_MIN_FACES`，无替代兜底），却是解释反馈 P 内容 facet 有效权重最高的格 —— 优先补跑。
+- `eduillustrate`：deepseek-v4-pro / glm-5.2 / minimax-m2.7 现吃 min 替代值 6.35。
+- `asap_2`：minimax-m3 / glm-5.2 / doubao 现吃替代值 4.73（注意导入目录覆写陷阱，用 `--out-dir`）。
+- `p07_selfcheck`：deepseek-v4-flash。
+- `pedagogy_benchmark`：glm-5.2 全量（现仅 20 题冒烟）。
+- 新 benchmark：含「学生被动流露风险 → 主动升级/转介」情形的安全处置评测；通用图像/图表生成评测（供多模态生成 P 摆脱教育域代理）。
+- 重构（不并入映射批次）：`p07_selfcheck` / `p08_calibration` / `p08_abstention` 改名去掉 pXX 前缀——benchmark 名沿用 R20 前的旧编号起名，编号已两度迁移，名字已彻底误导。
+
+---
+
+## R24（2026-07-19）编号迁移：多模态生成 P 移入基础类别后全表重排
+
+多模态生成 P 归入基础类别（SRG）后应排在多模态理解 P 之后，故顺位重排编号。**P01–P03 与 P17–P20 不变，原 P04–P15 各顺延一位。**
+
+| 旧号（R20 方案） | 新号（R24） | 能力 |
+|---|---|---|
+| P01 | P01 | 指令与约束遵循 |
+| P02 | P02 | 长上下文与证据定位 |
+| P03 | P03 | 多模态理解 |
+| **P16** | **P04** | **多模态生成**（原「多模态教学产物生成」，R23 改制） |
+| P04 | P05 | 知识调用与掌握 |
+| P05 | P06 | 推理与生成 |
+| P06 | P07 | 自我校验与修正 |
+| P07 | P08 | 置信度校准与弃答 |
+| P08 | P09 | 工具使用与长程智能体执行 |
+| P09 | P10 | 错误诊断 |
+| P10 | P11 | 主观题评价能力 |
+| P11 | P12 | 命题与作业设计 |
+| P12 | P13 | 学习者画像建模 |
+| P13 | P14 | 个性化教学策略选择 |
+| P14 | P15 | 学习路径规划（知识结构层） |
+| P15 | P16 | 适配性解释与反馈生成 |
+| P17–P20 | P17–P20 | 教育角色边界判断 / 学生风险识别 / 安全处置选择 / 学术诚信与作答真实性判定 |
+
+**迁移范围**：`data/mapping_measurement_model_v6.json` 的 `p_code` 结构字段（并按新号重排数组）、`build_atomic_ability_rebenchmark_artifacts.py` 的 `ABILITY_PRIORITY` / `P_GAP_BONUS` / P 码分组名称表、`build_atomic_ability_html_report.py` 的 `P_DEFINITIONS` / `P_CREDIBILITY`。迁移后已校验脚本 P 表与 JSON 的编号、分组、名称三者零失配。
+
+**明确不迁移的两处**：
+
+1. **JSON 与文档中 rationale 正文里的 P 编号一律是 R20 之前的旧方案**（含 P21/P22/P23，以及 P16a/P11c/P09c 这类带 facet 后缀的写法），R20 与 R24 均未机械替换——正文里的编号与结构字段混在一起，正则替换必然误伤。读历史注记须按 R20 记录的对照表 + 本表**两步换算**。该说明同时写入 JSON 的 `schema_notes.numbering_R24`。
+2. **`scripts/build_rebenchmark_conclusion_plan.py`** 的 `primary_p_codes` / `score_p_codes` 等列表仍是 **R20 之前的旧编号**（可由其中出现的 P21/P22 判定），从未随 R20 迁移过，因此也不适用本表。该脚本不在四步管线内，留待单独处理。
