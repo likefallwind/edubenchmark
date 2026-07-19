@@ -7,190 +7,372 @@
 <style>
 :root{
   color-scheme: light;
-  --plane:#f9f9f7; --surface:#fcfcfb; --raised:#ffffff;
+  --plane:#f4f4f1; --surface:#fcfcfb; --raised:#ffffff; --sunken:#efeeea;
   --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
-  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --grid:#e6e5de; --axis:#c3c2b7; --border:rgba(11,11,11,.09);
+  --border-2:rgba(11,11,11,.14);
   --s1:#2a78d6; --s2:#008300; --s3:#e87ba4;
   --seq-100:#cde2fb; --seq-200:#9ec5f4; --seq-300:#6da7ec;
   --seq-400:#3987e5; --seq-500:#256abf; --seq-600:#184f95; --seq-700:#0d366b;
-  --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
-  --shadow:0 1px 2px rgba(11,11,11,.05), 0 8px 24px -12px rgba(11,11,11,.18);
+  --good:#0ca30c; --warning:#fab219; --warning-ink:#7a5200; --critical:#d03b3b;
+  --wash:rgba(42,120,214,.07);
+  --sh-1:0 1px 2px rgba(11,11,11,.04);
+  --sh-2:0 1px 2px rgba(11,11,11,.05), 0 10px 28px -18px rgba(11,11,11,.30);
+  --sh-3:0 2px 6px rgba(11,11,11,.07), 0 18px 44px -22px rgba(11,11,11,.34);
 }
 :root[data-theme="dark"]{
   color-scheme: dark;
-  --plane:#0d0d0d; --surface:#1a1a19; --raised:#212120;
-  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
-  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --plane:#0c0c0c; --surface:#171716; --raised:#1f1f1e; --sunken:#111110;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#8d8b85;
+  --grid:#2a2a28; --axis:#3d3d3a; --border:rgba(255,255,255,.10);
+  --border-2:rgba(255,255,255,.16);
   --s1:#3987e5; --s2:#008300; --s3:#d55181;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+  --warning-ink:#fab219;
+  --wash:rgba(57,135,229,.12);
+  --sh-1:0 1px 2px rgba(0,0,0,.5);
+  --sh-2:0 1px 2px rgba(0,0,0,.5), 0 10px 28px -18px rgba(0,0,0,.9);
+  --sh-3:0 2px 6px rgba(0,0,0,.55), 0 18px 44px -22px rgba(0,0,0,.95);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme: dark;
-    --plane:#0d0d0d; --surface:#1a1a19; --raised:#212120;
-    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
-    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --plane:#0c0c0c; --surface:#171716; --raised:#1f1f1e; --sunken:#111110;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#8d8b85;
+    --grid:#2a2a28; --axis:#3d3d3a; --border:rgba(255,255,255,.10);
+    --border-2:rgba(255,255,255,.16);
     --s1:#3987e5; --s2:#008300; --s3:#d55181;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+    --warning-ink:#fab219;
+    --wash:rgba(57,135,229,.12);
+    --sh-1:0 1px 2px rgba(0,0,0,.5);
+    --sh-2:0 1px 2px rgba(0,0,0,.5), 0 10px 28px -18px rgba(0,0,0,.9);
+    --sh-3:0 2px 6px rgba(0,0,0,.55), 0 18px 44px -22px rgba(0,0,0,.95);
   }
 }
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{
   margin:0; background:var(--plane); color:var(--ink);
-  font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-  font-size:14px; line-height:1.6;
+  font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:14px; line-height:1.62; -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
 }
 a{color:inherit}
-.link{color:var(--s1); cursor:pointer; text-decoration:none; border-bottom:1px solid transparent}
-.link:hover{border-bottom-color:currentColor}
-header{
-  position:sticky; top:0; z-index:20; background:var(--surface);
-  border-bottom:1px solid var(--border); padding:10px 20px;
-  display:flex; gap:16px; align-items:center; flex-wrap:wrap;
+::selection{background:var(--wash)}
+.link{
+  color:var(--s1); cursor:pointer; text-decoration:none;
+  border-bottom:1px solid transparent; transition:border-color .12s, color .12s;
 }
-.brand{font-weight:650; letter-spacing:-.01em; white-space:nowrap}
-.brand small{display:block; font-weight:400; font-size:11px; color:var(--muted); letter-spacing:0}
-nav{display:flex; gap:2px; background:var(--plane); padding:3px; border-radius:9px; border:1px solid var(--border)}
+.link:hover{border-bottom-color:currentColor}
+
+/* ---------- header ---------- */
+header{
+  position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter:saturate(1.6) blur(14px);
+  -webkit-backdrop-filter:saturate(1.6) blur(14px);
+  border-bottom:1px solid var(--border);
+  padding:11px 24px; display:flex; gap:18px; align-items:center; flex-wrap:wrap;
+}
+.brand{
+  font-weight:680; letter-spacing:-.018em; white-space:nowrap; font-size:15px;
+  display:flex; flex-direction:column; line-height:1.25;
+}
+.brand small{
+  font-weight:400; font-size:10.5px; color:var(--muted);
+  letter-spacing:.02em; margin-top:1px;
+}
+nav{
+  display:flex; gap:2px; background:var(--sunken); padding:3px;
+  border-radius:10px; border:1px solid var(--border);
+}
 nav button{
   border:0; background:transparent; color:var(--ink-2); cursor:pointer;
-  padding:6px 14px; border-radius:6px; font:inherit; font-size:13px;
+  padding:6px 15px; border-radius:7px; font:inherit; font-size:13px;
+  transition:background .14s, color .14s;
 }
-nav button[aria-current="true"]{background:var(--raised); color:var(--ink); font-weight:600; box-shadow:var(--shadow)}
+nav button:hover{color:var(--ink)}
+nav button[aria-current="true"]{
+  background:var(--raised); color:var(--ink); font-weight:620; box-shadow:var(--sh-1);
+}
 .spacer{flex:1}
 .search{position:relative}
 .search input{
-  width:230px; padding:7px 11px; border-radius:8px; border:1px solid var(--border);
-  background:var(--plane); color:var(--ink); font:inherit; font-size:13px;
+  width:250px; padding:8px 12px; border-radius:9px;
+  border:1px solid var(--border); background:var(--sunken); color:var(--ink);
+  font:inherit; font-size:13px; transition:border-color .14s, background .14s;
 }
-.search input:focus{outline:2px solid var(--s1); outline-offset:-1px}
+.search input::placeholder{color:var(--muted)}
+.search input:focus{
+  outline:none; border-color:var(--s1); background:var(--raised);
+  box-shadow:0 0 0 3px var(--wash);
+}
 .results{
-  position:absolute; top:calc(100% + 4px); right:0; width:320px; max-height:340px; overflow:auto;
-  background:var(--raised); border:1px solid var(--border); border-radius:10px;
-  box-shadow:var(--shadow); padding:4px; display:none; z-index:30;
+  position:absolute; top:calc(100% + 6px); right:0; width:340px;
+  max-height:360px; overflow:auto; background:var(--raised);
+  border:1px solid var(--border-2); border-radius:12px;
+  box-shadow:var(--sh-3); padding:5px; display:none; z-index:30;
 }
 .results.open{display:block}
-.results div{padding:7px 10px; border-radius:6px; cursor:pointer; font-size:13px}
-.results div:hover,.results div.sel{background:var(--plane)}
-.results .kind{color:var(--muted); font-size:11px; margin-left:6px}
-.modesel{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); white-space:nowrap}
-.modesel select{font-size:12.5px; padding:6px 8px}
-.notice{
-  border:1px solid var(--warning); background:color-mix(in srgb, var(--warning) 9%, transparent);
-  border-radius:10px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; color:var(--ink-2);
+.results div{
+  padding:8px 11px; border-radius:7px; cursor:pointer; font-size:13px;
+  display:flex; justify-content:space-between; gap:10px; align-items:center;
 }
+.results div:hover,.results div.sel{background:var(--wash)}
+.results .kind{color:var(--muted); font-size:10.5px; white-space:nowrap}
 .iconbtn{
-  border:1px solid var(--border); background:var(--plane); color:var(--ink-2);
-  width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:15px;
+  border:1px solid var(--border); background:var(--sunken); color:var(--ink-2);
+  width:36px; height:36px; border-radius:9px; cursor:pointer; font-size:15px;
+  transition:background .14s, color .14s;
 }
-main{max-width:1400px; margin:0 auto; padding:22px 20px 80px}
-h2{font-size:19px; margin:0 0 4px; letter-spacing:-.01em}
-h3{font-size:14px; margin:0 0 10px; color:var(--ink-2); font-weight:600}
-.sub{color:var(--muted); font-size:12.5px; margin:0 0 18px}
+.iconbtn:hover{background:var(--raised); color:var(--ink)}
+
+/* ---------- layout ---------- */
+main{max-width:1440px; margin:0 auto; padding:28px 24px 96px}
+h2{
+  font-size:23px; margin:0 0 5px; letter-spacing:-.022em; font-weight:660;
+}
+h3{
+  font-size:11px; margin:0 0 14px; color:var(--muted); font-weight:640;
+  text-transform:uppercase; letter-spacing:.09em;
+}
+.sub{color:var(--ink-2); font-size:13px; margin:0 0 22px; max-width:80ch}
 .card{
-  background:var(--surface); border:1px solid var(--border); border-radius:12px;
-  padding:18px 20px; margin-bottom:16px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:20px 22px; margin-bottom:18px;
+  box-shadow:var(--sh-1);
 }
-.stats{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px}
+
+/* ---------- stat tiles ---------- */
+.stats{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px}
 .stat{
-  background:var(--surface); border:1px solid var(--border); border-radius:11px;
-  padding:12px 16px; min-width:120px; flex:1;
+  position:relative; background:var(--surface); border:1px solid var(--border);
+  border-radius:13px; padding:15px 18px 14px; min-width:132px; flex:1;
+  box-shadow:var(--sh-1); overflow:hidden;
 }
-.stat b{display:block; font-size:24px; font-weight:650; letter-spacing:-.02em}
-.stat span{color:var(--muted); font-size:12px}
+.stat::before{
+  content:""; position:absolute; inset:0 auto auto 0; width:100%; height:2px;
+  background:linear-gradient(90deg,var(--s1),color-mix(in srgb,var(--s1) 25%,transparent));
+}
+.stat b{
+  display:block; font-size:27px; font-weight:660; letter-spacing:-.03em;
+  line-height:1.15; margin-bottom:2px;
+}
+.stat span{color:var(--muted); font-size:11.5px; letter-spacing:.01em}
+
+/* ---------- tables ---------- */
 table{border-collapse:separate; border-spacing:0; width:100%; font-size:13px}
-th,td{text-align:left; padding:7px 10px; border-bottom:1px solid var(--grid)}
+th,td{text-align:left; padding:8px 11px; border-bottom:1px solid var(--grid)}
+tbody tr:last-child td{border-bottom:0}
 th{
-  color:var(--ink-2); font-weight:600; font-size:12px; white-space:nowrap;
+  color:var(--muted); font-weight:620; font-size:10.5px; white-space:nowrap;
+  text-transform:uppercase; letter-spacing:.07em;
   position:sticky; top:0; background:var(--surface); z-index:2;
+  border-bottom:1px solid var(--border-2);
 }
-th.sortable{cursor:pointer; user-select:none}
+th.sortable{cursor:pointer; user-select:none; transition:color .14s}
 th.sortable:hover{color:var(--ink)}
 td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
-.scroll{overflow-x:auto; border:1px solid var(--border); border-radius:11px; background:var(--surface)}
+tbody tr{transition:background .1s}
+.scroll{
+  overflow-x:auto; border:1px solid var(--border); border-radius:14px;
+  background:var(--surface); box-shadow:var(--sh-1);
+}
 .scroll table th:first-child,.scroll table td:first-child{
   position:sticky; left:0; background:var(--surface); z-index:1;
+  border-right:1px solid var(--grid); min-width:170px;
 }
 .scroll table th:first-child{z-index:3}
+.scroll tbody tr:hover td{background:var(--wash)}
+.scroll tbody tr:hover td:first-child{background:color-mix(in srgb,var(--wash) 100%, var(--surface))}
+.rowsep td{
+  background:var(--sunken)!important; color:var(--muted); font-size:11px;
+  letter-spacing:.04em; padding:7px 11px; border-bottom:1px solid var(--border-2);
+}
+.gsep{border-right:1px solid var(--border-2)}
+
+/* ---------- heat cells ---------- */
 .heat{
-  display:inline-block; min-width:40px; padding:3px 7px; border-radius:5px;
+  display:inline-block; min-width:42px; padding:4px 8px; border-radius:6px;
   text-align:center; font-variant-numeric:tabular-nums; font-size:12.5px;
+  font-weight:560; letter-spacing:-.01em;
+}
+/* Sequential magnitude ramp. Light mode runs light->dark; dark mode runs the
+   other way, so "more" always means "further from the surface" rather than
+   darkest-on-dark, which reads as least. */
+.h0{background:var(--seq-100);color:#0b0b0b} .h1{background:var(--seq-100);color:#0b0b0b}
+.h2{background:var(--seq-200);color:#0b0b0b} .h3{background:var(--seq-200);color:#0b0b0b}
+.h4{background:var(--seq-300);color:#0b0b0b} .h5{background:var(--seq-300);color:#0b0b0b}
+.h6{background:var(--seq-400);color:#fff}    .h7{background:var(--seq-500);color:#fff}
+.h8{background:var(--seq-600);color:#fff}    .h9{background:var(--seq-700);color:#fff}
+:root[data-theme="dark"] .h0,:root[data-theme="dark"] .h1{background:var(--seq-700);color:#fff}
+:root[data-theme="dark"] .h2,:root[data-theme="dark"] .h3{background:var(--seq-600);color:#fff}
+:root[data-theme="dark"] .h4,:root[data-theme="dark"] .h5{background:var(--seq-500);color:#fff}
+:root[data-theme="dark"] .h6{background:var(--seq-400);color:#fff}
+:root[data-theme="dark"] .h7{background:var(--seq-300);color:#0b0b0b}
+:root[data-theme="dark"] .h8{background:var(--seq-200);color:#0b0b0b}
+:root[data-theme="dark"] .h9{background:var(--seq-100);color:#0b0b0b}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .h0,:root:not([data-theme="light"]) .h1{background:var(--seq-700);color:#fff}
+  :root:not([data-theme="light"]) .h2,:root:not([data-theme="light"]) .h3{background:var(--seq-600);color:#fff}
+  :root:not([data-theme="light"]) .h4,:root:not([data-theme="light"]) .h5{background:var(--seq-500);color:#fff}
+  :root:not([data-theme="light"]) .h6{background:var(--seq-400);color:#fff}
+  :root:not([data-theme="light"]) .h7{background:var(--seq-300);color:#0b0b0b}
+  :root:not([data-theme="light"]) .h8{background:var(--seq-200);color:#0b0b0b}
+  :root:not([data-theme="light"]) .h9{background:var(--seq-100);color:#0b0b0b}
 }
 td.cell{white-space:nowrap}
-td.cell .mark{margin-left:2px}
+td.cell .mark{margin-left:3px}
+.mark{color:var(--muted); cursor:help; font-size:11px}
+
+/* ---------- badges ---------- */
 .badge{
-  display:inline-block; padding:1px 7px; border-radius:999px; font-size:11px;
-  border:1px solid var(--border); color:var(--ink-2); background:var(--plane);
-  white-space:nowrap;
+  display:inline-block; padding:2px 8px; border-radius:999px; font-size:10.5px;
+  border:1px solid var(--border-2); color:var(--ink-2); background:var(--sunken);
+  white-space:nowrap; font-weight:520; letter-spacing:.01em;
 }
 .badge.full{border-color:transparent; background:var(--s2); color:#fff}
-.badge.warn{border-color:transparent; background:var(--warning); color:#3a2a00}
-.mark{color:var(--muted); cursor:help; font-size:11px}
-.track{height:9px; border-radius:999px; background:var(--grid); overflow:hidden; min-width:90px}
-.bar{height:100%; border-radius:0 4px 4px 0; background:var(--s1)}
-.bar.hollow{background:transparent; border:1.5px solid var(--s1); border-radius:0 4px 4px 0}
-.chips{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px}
-.chip{
-  border:1px solid var(--border); background:var(--surface); color:var(--ink-2);
-  padding:5px 12px; border-radius:999px; cursor:pointer; font:inherit; font-size:12.5px;
-  display:inline-flex; align-items:center; gap:6px;
+.badge.warn{
+  border-color:color-mix(in srgb,var(--warning) 55%,transparent);
+  background:color-mix(in srgb,var(--warning) 14%,transparent);
+  color:var(--warning-ink);
 }
-.chip:hover{border-color:var(--axis)}
-.chip[aria-pressed="true"]{background:var(--ink); color:var(--surface); border-color:var(--ink)}
-.chip .dot{width:8px; height:8px; border-radius:50%}
+.tag{
+  display:inline-block; font-size:11px; color:var(--ink-2); background:var(--sunken);
+  border:1px solid var(--border); border-radius:6px; padding:3px 9px;
+  white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+
+/* ---------- bars ---------- */
+.track{
+  height:9px; border-radius:999px; background:var(--sunken);
+  overflow:hidden; min-width:90px; box-shadow:inset 0 0 0 1px var(--border);
+}
+.bar{height:100%; border-radius:0 4px 4px 0; background:var(--s1)}
+.bar.hollow{
+  background:transparent; border:1.5px solid var(--s1);
+  border-left:0; border-radius:0 4px 4px 0;
+}
+
+/* ---------- chips ---------- */
+.chips{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px}
+.chip{
+  border:1px solid var(--border-2); background:var(--surface); color:var(--ink-2);
+  padding:6px 13px; border-radius:999px; cursor:pointer; font:inherit; font-size:12.5px;
+  display:inline-flex; align-items:center; gap:7px;
+  transition:border-color .14s, background .14s, color .14s;
+}
+.chip:hover{border-color:var(--axis); background:var(--raised)}
+.chip[aria-pressed="true"]{
+  background:var(--ink); color:var(--surface); border-color:var(--ink); font-weight:560;
+}
+.chip .dot{width:8px; height:8px; border-radius:50%; flex:none}
 .chip.partial{border-style:dashed}
-.grid2{display:grid; grid-template-columns:minmax(340px,1fr) minmax(340px,1.15fr); gap:16px; align-items:start}
-@media (max-width:1000px){.grid2{grid-template-columns:1fr}}
+.chip .cnt{color:var(--muted); font-size:10.5px; font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"] .cnt{color:color-mix(in srgb,var(--surface) 70%,transparent)}
+
+/* ---------- two-column ---------- */
+.grid2{display:grid; grid-template-columns:minmax(360px,.95fr) minmax(380px,1.2fr); gap:18px; align-items:start}
+@media (max-width:1040px){.grid2{grid-template-columns:1fr}}
 .radarwrap{display:flex; flex-direction:column; align-items:center}
-/* An SVG sized only by viewBox collapses to zero width inside a flex column. */
 .radarwrap svg{width:100%; max-width:620px; height:auto; display:block}
 svg{max-width:100%; height:auto; display:block}
-.legend{display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:12px; font-size:12.5px}
-.legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:-1px}
-.legend .cov{color:var(--muted); font-size:11px; margin-left:5px}
-details{border-top:1px solid var(--grid); padding:9px 0}
-details summary{cursor:pointer; color:var(--ink-2); font-size:12.5px; list-style:none; display:flex; gap:7px; align-items:center}
+.legend{
+  display:flex; gap:20px; flex-wrap:wrap; justify-content:center;
+  margin-top:14px; font-size:12.5px; padding-top:14px;
+  border-top:1px solid var(--grid); width:100%;
+}
+.legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:7px; vertical-align:-1px}
+.legend .cov{color:var(--muted); font-size:11px; margin-left:6px}
+
+/* ---------- disclosure ---------- */
+details{border-top:1px solid var(--grid); padding:10px 0}
+details summary{
+  cursor:pointer; color:var(--ink-2); font-size:12.5px; list-style:none;
+  display:flex; gap:8px; align-items:center; transition:color .14s;
+}
+details summary:hover{color:var(--ink)}
 details summary::-webkit-details-marker{display:none}
-details summary::before{content:"▸"; color:var(--muted); transition:transform .15s}
+details summary::before{content:"▸"; color:var(--muted); transition:transform .16s}
 details[open] summary::before{transform:rotate(90deg)}
 details .body{padding:10px 0 4px; color:var(--ink-2); font-size:12.5px}
 .stale{
-  border-left:2px solid var(--warning); padding-left:12px; margin-top:8px;
+  border-left:2px solid var(--warning); padding-left:14px; margin-top:8px;
   color:var(--ink-2); font-size:12.5px;
 }
+.notice{
+  border:1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+  background:color-mix(in srgb, var(--warning) 8%, transparent);
+  border-radius:11px; padding:12px 16px; margin-bottom:16px;
+  font-size:12.5px; color:var(--ink-2); line-height:1.6;
+}
+
+/* ---------- ability rows (model view) ---------- */
 .prow{
-  display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:8px;
-  cursor:pointer; border-bottom:1px solid var(--grid);
+  display:flex; align-items:center; gap:14px; padding:11px 12px;
+  border-radius:9px; cursor:pointer; border-bottom:1px solid var(--grid);
+  position:relative; transition:background .12s;
 }
-.prow:hover{background:var(--plane)}
+.prow::before{
+  content:""; position:absolute; left:0; top:6px; bottom:6px; width:2px;
+  border-radius:2px; background:var(--s1); opacity:0; transition:opacity .14s;
+}
+.prow:hover{background:var(--wash)}
+.prow:hover::before{opacity:1}
 .prow .name{flex:1; min-width:0}
-.prow .name b{font-weight:600; font-size:13px}
-.prow .name span{display:block; color:var(--muted); font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.prow .val{font-variant-numeric:tabular-nums; font-weight:600; width:44px; text-align:right}
-.drill{background:var(--plane); border-radius:9px; padding:12px 14px; margin:2px 0 10px}
-.drill .defn{color:var(--ink-2); font-size:12.5px; margin-bottom:10px}
-.facetgrp{margin-bottom:12px}
-.facetgrp h4{margin:0 0 5px; font-size:12.5px; font-weight:600}
-.facetgrp p{margin:0 0 6px; color:var(--muted); font-size:11.5px}
+.prow .name b{font-weight:620; font-size:13px}
+.prow .name span{
+  display:block; color:var(--muted); font-size:11.5px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.prow .val{
+  font-variant-numeric:tabular-nums; font-weight:640; width:46px;
+  text-align:right; letter-spacing:-.02em; font-size:14px;
+}
+.drill{
+  background:var(--sunken); border:1px solid var(--border);
+  border-radius:11px; padding:14px 16px; margin:4px 0 12px;
+}
+.drill .defn{color:var(--ink-2); font-size:12.5px; margin-bottom:12px}
+.drill table{font-size:12px}
+.drill th,.drill td{padding:7px 9px}
+.facetgrp{margin-bottom:14px}
+.facetgrp:last-child{margin-bottom:0}
+.facetgrp h4{
+  margin:0 0 5px; font-size:12.5px; font-weight:640;
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+.facetgrp p{margin:0 0 8px; color:var(--muted); font-size:11.5px}
+
+/* ---------- imputed / untested ---------- */
 tr.imputed td{color:var(--muted)}
-tr.imputed{background:repeating-linear-gradient(135deg,transparent,transparent 6px,var(--grid) 6px,var(--grid) 7px)}
-.untested{color:var(--warning); font-weight:600}
-.empty{color:var(--muted); padding:24px; text-align:center; font-size:13px}
-.tag{
-  font-size:11px; color:var(--ink-2); background:var(--plane); border:1px solid var(--border);
-  border-radius:5px; padding:1px 6px; margin-right:5px; white-space:nowrap;
+tr.imputed{
+  background:repeating-linear-gradient(135deg,transparent,transparent 6px,var(--grid) 6px,var(--grid) 7px);
 }
-.kv{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 14px}
-.secs{columns:2 300px; column-gap:26px}
-.secs section{break-inside:avoid; margin-bottom:14px}
-.secs h4{margin:0 0 5px; font-size:12.5px; font-weight:600}
-.secs ul{margin:0; padding-left:17px; color:var(--ink-2); font-size:12.5px}
-.secs li{margin-bottom:3px}
-.toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px}
+.untested{color:var(--warning-ink); font-weight:620}
+
+/* ---------- profile card ---------- */
+.kv{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 16px}
+.secs{columns:2 310px; column-gap:30px}
+.secs section{break-inside:avoid; margin-bottom:16px}
+.secs h4{
+  margin:0 0 6px; font-size:10.5px; font-weight:640; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.08em;
+}
+.secs ul{margin:0; padding-left:18px; color:var(--ink-2); font-size:12.5px}
+.secs li{margin-bottom:4px}
+.oneline{font-size:15px; line-height:1.55; margin:0 0 12px; letter-spacing:-.01em}
+
+/* ---------- misc ---------- */
+.toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px}
 select{
-  padding:6px 10px; border-radius:8px; border:1px solid var(--border);
+  padding:7px 11px; border-radius:9px; border:1px solid var(--border-2);
   background:var(--surface); color:var(--ink); font:inherit; font-size:13px;
+  cursor:pointer; transition:border-color .14s;
 }
-.foot{color:var(--muted); font-size:11.5px; margin-top:10px}
+select:hover{border-color:var(--axis)}
+select:focus{outline:none; border-color:var(--s1); box-shadow:0 0 0 3px var(--wash)}
+.empty{color:var(--muted); padding:28px; text-align:center; font-size:13px}
+.foot{color:var(--muted); font-size:11.5px; margin-top:12px; line-height:1.6}
 </style>
 </head>
 <body>
@@ -207,13 +389,6 @@ select{
     <input id="q" type="search" placeholder="搜模型 / 能力 / benchmark" autocomplete="off">
     <div class="results" id="qr"></div>
   </div>
-  <label class="modesel" title="R22 缺测替代：某格已测面 ≥3 时，用该格最低分顶替未测模型，标 ※">
-    缺测替代
-    <select id="mode">
-      <option value="panel">仅发布面板（与已发布产物一致）</option>
-      <option value="all">铺到全部模型</option>
-    </select>
-  </label>
   <button class="iconbtn" id="theme" title="切换深浅色">◐</button>
 </header>
 <main id="app"></main>
@@ -243,8 +418,8 @@ MEASURED.forEach(r => {
   (cellFaces[k] ||= {})[r.m] = r;
 });
 
-function buildScores(mode){
-  const targets = mode === 'all' ? D.models.map(m => m.key) : D.panel;
+function buildScores(){
+  const targets = D.panel;
   const rows = MEASURED.slice();
   Object.values(cellFaces).forEach(faces => {
     const keys = Object.keys(faces);
@@ -289,11 +464,9 @@ function buildScores(mode){
   return {scores: scores, groups: groups, evidence: rows};
 }
 
-let imputeMode = 'panel';
 let scoreOf, groupScoreOf, evByModelP, evByBench;
-function applyMode(mode){
-  imputeMode = mode;
-  const built = buildScores(mode);
+function applyMode(){
+  const built = buildScores();
   scoreOf = built.scores;
   groupScoreOf = built.groups;
   evByModelP = {}; evByBench = {};
@@ -302,9 +475,9 @@ function applyMode(mode){
     (evByBench[r.b] ||= []).push(r);
   });
 }
-applyMode('panel');
+applyMode();
 
-// Self-check: the 'panel' rebuild must reproduce the committed artifact exactly.
+// Self-check: the rebuild must reproduce the committed artifact exactly.
 (() => {
   let worst = 0, n = 0;
   D.scores.forEach(r => {
@@ -332,13 +505,11 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 const fx = (v, n = 2) => (v === null || v === undefined || Number.isNaN(v)) ? '—' : Number(v).toFixed(n);
 const mName = k => (modelBy[k] || {}).display || k;
 
-// Sequential blue ramp, 0-10 -> step. Lightest step means "near zero".
-const SEQ = ['--seq-100','--seq-100','--seq-200','--seq-200','--seq-300','--seq-300','--seq-400','--seq-500','--seq-600','--seq-700'];
-function heatStyle(v){
+// Sequential 0-10 -> ramp class; the steps themselves live in CSS so the
+// dark-mode ramp can run the opposite direction without a re-render.
+function heatClass(v){
   if (v === null || v === undefined) return '';
-  const i = Math.max(0, Math.min(9, Math.floor(v)));
-  const fg = i >= 6 ? '#fff' : 'var(--ink)';
-  return `background:var(${SEQ[i]});color:${fg}`;
+  return 'h' + Math.max(0, Math.min(9, Math.floor(v)));
 }
 function markers(row){
   if (!row) return '';
@@ -451,13 +622,14 @@ function viewOverview(){
     const cells = coveredP.map(p => {
       const r = scoreOf[m.key + '|' + p];
       return r
-        ? `<td class="num cell"><span class="heat" style="${heatStyle(r.s)}"
+        ? `<td class="num cell"><span class="heat ${heatClass(r.s)}"
              title="${esc(m.display)} · ${p} ${esc(abilityBy[p].p_name)}: ${fx(r.s)}（${r.n} 条证据）">${fx(r.s, 1)}</span>${markers(r)}</td>`
         : `<td class="num cell"><span class="mark" title="未覆盖">·</span></td>`;
     }).join('');
     const gcells = D.groups.map(g => {
       const r = groupScoreOf[m.key + '|' + g.id];
-      return `<td class="num">${r ? fx(r.s, 1) : '<span class="mark">·</span>'}</td>`;
+      const last = g.id === D.groups[D.groups.length - 1].id;
+      return `<td class="num${last ? ' gsep' : ''}">${r ? fx(r.s, 1) : '<span class="mark">·</span>'}</td>`;
     }).join('');
     return `<tr><td>${mLink(m.key)}<br>${covBadge(m.key)}</td>${gcells}${cells}</tr>`;
   }).join('');
@@ -477,7 +649,6 @@ function viewOverview(){
     <h2>总览</h2>
     <p class="sub">模型 × 原子能力得分矩阵（0–10）。列头可排序；点任意模型名或能力编号进入详情。
       <span class="mark">◐</span> 该能力并非所有 facet 都有证据，<span class="mark">※</span> 含缺测替代值。</p>
-    ${modeNotice()}
     <div class="stats">
       <div class="stat"><b>${D.meta.n_models}</b><span>已测模型</span></div>
       <div class="stat"><b>${D.meta.full_panel_size}</b><span>全覆盖模型</span></div>
@@ -489,17 +660,15 @@ function viewOverview(){
       <table>
         <thead><tr>
           <th class="sortable" data-k="_avg">模型</th>
-          ${D.groups.map(g => `<th class="num" title="${esc(g.label)}">${g.id}</th>`).join('')}
+          ${D.groups.map((g, i) => `<th class="num${i === D.groups.length - 1 ? ' gsep' : ''}" title="${esc(g.label)}">${g.id}</th>`).join('')}
           ${coveredP.map(p => `<th class="num sortable" data-k="${p}" title="${esc(abilityBy[p].p_name)}">${p}</th>`).join('')}
         </tr></thead>
         <tbody>
-          <tr><td colspan="${1 + D.groups.length + coveredP.length}" style="background:var(--plane);color:var(--muted);font-size:11.5px">
-            全覆盖面板（${coveredP.length}/${coveredP.length} 项能力有证据）</td></tr>
+          <tr class="rowsep"><td colspan="${1 + D.groups.length + coveredP.length}">
+            发布面板 · ${D.panel.length} 个模型，${coveredP.length} 项能力都有分；缺测的格按 R22 用该格最低分顶替，徽章里的「实测 n」才是真跑过的项数</td></tr>
           ${rowsFor(full)}
-          <tr><td colspan="${1 + D.groups.length + coveredP.length}" style="background:var(--plane);color:var(--muted);font-size:11.5px">
-            部分覆盖 —— ${imputeMode === 'all'
-              ? '这些行的空格已由缺测替代值补满，但实测面没变，徽章上的「实测 n」才是真正测过的项数'
-              : '覆盖面差异很大，跨行比较前务必看徽章上的覆盖率'}</td></tr>
+          <tr class="rowsep"><td colspan="${1 + D.groups.length + coveredP.length}">
+            部分覆盖 · 覆盖面差异很大，跨行比较前务必看徽章上的覆盖率</td></tr>
           ${rowsFor(partial)}
         </tbody>
       </table>
@@ -522,8 +691,12 @@ function viewModel(){
   const chips = D.models.map(m => {
     const i = picked.indexOf(m.key);
     const dot = i >= 0 ? `<span class="dot" style="background:var(${SERIES[i]})"></span>` : '';
-    return `<button class="chip${m.full_panel ? '' : ' partial'}" aria-pressed="${i >= 0}" data-m="${esc(m.key)}">
-      ${dot}${esc(m.display)} <span style="color:var(--muted);font-size:11px">${m.p_count}/${coveredP.length}</span></button>`;
+    // Count measured abilities, not scored ones - imputed P scores must not
+    // inflate the chip past what the model was actually run on.
+    const real = (measuredP[m.key] || new Set()).size;
+    return `<button class="chip${real >= coveredP.length ? '' : ' partial'}" aria-pressed="${i >= 0}" data-m="${esc(m.key)}"
+      title="实测 ${real}/${coveredP.length} 项原子能力">
+      ${dot}${esc(m.display)} <span class="cnt">${real}/${coveredP.length}</span></button>`;
   }).join('');
 
   const series = picked.map(k => ({key: k}));
@@ -680,7 +853,6 @@ function viewAbility(){
   app.innerHTML = `
     <h2>原子能力视图</h2>
     <p class="sub">这项能力是什么、怎么测的、谁做得好。</p>
-    ${modeNotice()}
     <div class="toolbar"><select id="psel">${opts}</select>
       <span class="badge">${a.group} ${esc(groupLabel[a.group] || '')}</span>
       <span class="badge">${esc(a.model_type)}</span>
@@ -740,7 +912,7 @@ function viewBench(){
     <div class="toolbar"><select id="bsel">${opts}</select></div>
     <div class="card">
       <h3>${esc(b.name)} <span style="color:var(--muted);font-weight:400">${esc(b.id)}</span></h3>
-      ${b.profile.one_liner ? `<p style="margin:0 0 10px">${esc(b.profile.one_liner)}</p>` : ''}
+      ${b.profile.one_liner ? `<p class="oneline">${esc(b.profile.one_liner)}</p>` : ''}
       ${b.profile.missing ? '<span class="badge warn">档案待补 —— 下方仅有摘要，无完整 profile 文档</span>' : ''}
       <div class="kv">
         <span class="tag">置信权重 ${fx(b.confidence)}</span>
@@ -783,7 +955,7 @@ function viewBench(){
       </tbody></table>
       ${untested.length ? `<p class="foot" style="margin-top:12px">
         <b class="untested">未测过这一维度的 ${untested.length} 个模型</b>：${untested.map(k => mLink(k)).join('、')}。
-        ${imputeMode === 'all' ? '它们在 P 分里按 R22 规则用最低分顶替，但这里不列——榜上只放真跑过的结果。' : '它们不在这一维度的榜上。'}</p>` : ''}
+        榜上只放真跑过的结果。</p>` : ''}
       <p class="foot">原始值为该 benchmark 的原生指标（${esc(b.metric_family)}），0–10 分是归一后进入映射的值。本榜<b>只列实际跑过的模型</b>，缺测替代值不进这里。
         ${v.variance_restricted ? '⚠️ 13 号效度检查判定这一维度<b>方差受限</b>，当前模型集上排名信息量低。' : ''}</p>
     </div>`;
@@ -822,19 +994,6 @@ qEl.onkeydown = e => {
   } else if (e.key === 'Escape'){ qrEl.classList.remove('open'); }
 };
 document.addEventListener('click', e => { if (!e.target.closest('.search')) qrEl.classList.remove('open'); });
-
-/* ---------- impute mode ---------- */
-const modeSel = document.getElementById('mode');
-modeSel.onchange = () => { applyMode(modeSel.value); render(); };
-function modeNotice(){
-  return imputeMode === 'all'
-    ? `<div class="notice"><b>缺测替代已铺到全部模型。</b>
-        凡某格已测面 ≥ ${D.meta.impute_min_faces} 个，未测该格的模型一律用该格最低分顶替，标 <span class="mark">※</span>。
-        这是页面内复算，<b>不改动 ${esc(D.meta.source_dir)} 里的已发布产物</b>——那些产物按聚合脚本的 PANEL_MODEL_KEYS
-        只铺给 ${D.panel.length} 个发布面板模型。替代值是"没测不等于好"的保守下界，不是真实测量：
-        看分必须连 ※ 占比一起看，替代占比高的模型分数基本由别人的最低分决定。</div>`
-    : '';
-}
 
 /* ---------- theme ---------- */
 const themeBtn = document.getElementById('theme');
