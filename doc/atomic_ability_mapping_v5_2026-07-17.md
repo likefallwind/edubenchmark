@@ -1,5 +1,11 @@
 # 教育 AI 原子能力与 Benchmark 映射(v5 定稿,2026-07-17)
 
+> # ⛔ 本文档已被 `doc/atomic_ability_mapping_v6_2026-07-19.md` 取代,仅作历史快照保留,不要再引用其数字。
+>
+> 逐 P 复核已于 2026-07-19 走完(R21–R23),编号亦已重排(R24)。本文档正文相对现状的过期之处:**编号错 13 个**(P04–P16 全部差一位,本文档用的是 R20 方案)、已摘除的格仍在(mooccube 7 处、problem_solving 4 处、tone_style_consistency、原多模态教学产物生成 P)、置信值过期(mmlu_pro 0.35、tutorbench 1.0 等,现为 0.7 / 0.8)、缺 R21 longtutor 三拆、R23 judge 解禁与十余处相关度调整。**以 v6 文档与 `data/mapping_measurement_model_v6.json` 为准。**
+>
+> 以下为写作当时的 R20 增量框,原样保留:
+>
 > **⚠️ R20 增量(2026-07-18,逐 P 复核进行中)**:①**编号以本文档 P01–P20 为准**,机器可读版已迁 `data/mapping_measurement_model_v6.json` 并同步重编号(墓碑删除),聚合脚本同步;②**四档证据分层(education_core/diagnostic/foundation_gate/excluded_judge_task)整体废除**——有效权重 = 相关度 × 置信,无档位因子;judge 任务仍由聚合脚本排除名单 + 置信 0.0 挡在计分外。下文各表"档位/注记"列的档位字样只余注记意义;③**P01 仅保留 ifeval**(其余四格摘除,理由见 R20 记录);④分数影响:纯算法效应 ≤0.21 分,P04/P05 门槛证据话语权回升,详见 R20 裁决记录。本文档其余内容尚未逐段改写,后续 P 复核完成后统一出 v6 文档。
 
 本文档是**当前状态的干净快照**:原子能力清单、每个能力的定义与 facet、映射到哪些 benchmark 的哪些维度、相关度权重多少、测量成熟度如何,以及创新点和未完成事项。不含历史沿革与裁决过程——那些在 `doc/atomic_ability_mapping_final_2026-07-15.md`(裁决记录 R1–R20)和 `doc/benchmark_ability_mapping_v2_2026-07-15.md`(变化记录)里。
