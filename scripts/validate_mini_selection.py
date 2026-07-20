@@ -301,6 +301,70 @@ def kendall_tau_meaningful(full: list[float], mini: list[float], noise: float | 
     return (conc - disc) / meaningful, meaningful, total_pairs
 
 
+def p_noise_scales(evidence_rows: list[dict[str, Any]],
+                   cell_ci: dict[tuple[str, str], float]) -> dict[tuple[str, str], dict[str, Any]]:
+    """Propagate per-cell sampling CIs through the aggregation into a per-P noise scale.
+
+    The aggregation is exactly
+        P = mean over facets of ( sum_c w_c * s_c / sum_c w_c ),
+    so d(P)/d(s_c) = (1/F) * w_c / W_facet.  First-order propagation with
+    independent cells gives
+        noise_P = sqrt( sum_c ( coef_c * CI_c )^2 ).
+
+    Cells from benchmarks the curation does not touch contribute 0 by
+    construction: they are byte-identical between the mini and full runs, so they
+    cannot contribute to mini-vs-full drift.  Cells whose bootstrap CI could not
+    be computed also contribute 0 and are counted in ``cells_without_ci``.
+
+    Independence is the one assumption here.  Cells that share items (sas
+    QWK/CCS/ECS) are positively correlated, so the true noise is larger than this
+    estimate -- which makes the resulting tau criterion STRICTER, not looser
+    (a smaller noise scale admits more pairs as separable).  That is the
+    conservative direction, so the assumption cannot inflate a pass.
+    """
+    by_model_p: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for ev in evidence_rows:
+        by_model_p.setdefault((ev["model_key"], ev["p_code"]), []).append(ev)
+
+    out: dict[tuple[str, str], dict[str, Any]] = {}
+    for key, evs in by_model_p.items():
+        facet_w: dict[str, float] = {}
+        for ev in evs:
+            facet_w[ev["facet_id"]] = facet_w.get(ev["facet_id"], 0.0) + ev["effective_weight"]
+        n_facets = len([f for f, w in facet_w.items() if w])
+        if not n_facets:
+            continue
+        var = 0.0
+        missing = 0
+        imputed_w = 0.0
+        total_w = 0.0
+        for ev in evs:
+            wf = facet_w.get(ev["facet_id"], 0.0)
+            if not wf:
+                continue
+            total_w += ev["effective_weight"]
+            if ev.get("imputed"):
+                imputed_w += ev["effective_weight"]
+            coef = (1.0 / n_facets) * ev["effective_weight"] / wf
+            ci = cell_ci.get((ev["benchmark_id"], ev["subdimension"]))
+            if ci is None:
+                # Curated cell with no CI estimate -> counted; uncurated cell ->
+                # genuinely zero drift, not missing.
+                if (ev["benchmark_id"], ev["subdimension"]) in CURATED_CELLS:
+                    missing += 1
+                continue
+            var += (coef * ci) ** 2
+        out[key] = {
+            "noise": math.sqrt(var),
+            "cells_without_ci": missing,
+            "imputed_weight_share": (imputed_w / total_w) if total_w else 0.0,
+        }
+    return out
+
+
+CURATED_CELLS: set[tuple[str, str]] = set()
+
+
 def bootstrap_ci_halfwidth(bid: str, subset_rows: list[dict[str, Any]], subdim: str, b: int) -> float | None:
     """95% CI half-width of a cell's score_10 under item resampling of the mini
     subset (score_10 units; == raw*10 for QWK/macro-F1, == pp/10 for accuracy)."""
@@ -520,6 +584,7 @@ def main() -> None:
         rows = []
         fv = []
         mvv = []
+        mks_used = []
         max_abs = 0.0
         for mk in mks:
             f = baseline_p.get((mk, pc))
@@ -531,14 +596,19 @@ def main() -> None:
             rows.append({"model_key": mk, "full": round(f, 4), "mini": round(m, 4), "delta": round(d, 4)})
             fv.append(f)
             mvv.append(m)
+            mks_used.append(mk)
         tau = kendall_tau(fv, mvv)
         p_results.append({
             "p_code": pc, "n_models": len(rows),
             "max_abs_delta": round(max_abs, 4),
             "pass_delta": max_abs <= P_DELTA_THRESHOLD,
+            # raw all-pairs tau, retained for audit
+            "tau_raw": round(tau, 4) if tau is not None else None,
+            "pass_tau_raw": (tau is None) or (tau >= TAU_THRESHOLD),
             "tau": round(tau, 4) if tau is not None else None,
             "pass_tau": (tau is None) or (tau >= TAU_THRESHOLD),
             "per_model": rows,
+            "_model_keys": mks_used,
         })
 
     # ---- (4) Leave-one-out (benches with >= MIN_FACES_FOR_DIFFICULTY faces).
@@ -635,6 +705,60 @@ def main() -> None:
         c["pass_tau"] = (tau_m is None) or (tau_m >= TAU_THRESHOLD)
         c["tau_status"] = "no_separable_pairs" if tau_m is None else "computed"
 
+    # ---- Criterion 3 at the P level (round-4 fix): same separable-pairs rule as
+    # the cell level.  The all-pairs tau was reporting noise -- P04 scored
+    # maxDelta 0.000 yet tau 0.714, because three models carry identical imputed
+    # values and the tie was being ordered arbitrarily.
+    global CURATED_CELLS
+    CURATED_CELLS = {(c["benchmark"], c["subdimension"]) for c in ci_results}
+    cell_ci_full = {(c["benchmark"], c["subdimension"]): c["ci_halfwidth_full_score10"]
+                    for c in ci_results if c["ci_halfwidth_full_score10"] is not None}
+    noise_map = p_noise_scales(_fe, cell_ci_full)
+
+    for p in p_results:
+        pc = p["p_code"]
+        mks = p.pop("_model_keys")
+        fv = [r["full"] for r in p["per_model"]]
+        mv = [r["mini"] for r in p["per_model"]]
+        infos = [noise_map.get((mk, pc), {}) for mk in mks]
+        # One scale per P: the largest per-model propagated noise, so a pair is
+        # only called separable when it clears the noisier of the two members.
+        noise = max([i.get("noise", 0.0) for i in infos], default=0.0)
+        tau_m, n_pairs, n_total = kendall_tau_meaningful(fv, mv, noise)
+        imp = [i.get("imputed_weight_share", 0.0) for i in infos]
+        # Missing-data substitution only ever targets the RELEASE panel
+        # (agg.PANEL_MODEL_KEYS), so rankability must be judged on those faces,
+        # not diluted by peripheral models that were never imputation targets.
+        # P03/P04 look fine at 3/10 overall but are 3/5 of the actual panel.
+        panel_shares = {mk: i.get("imputed_weight_share", 0.0)
+                        for mk, i in zip(mks, infos) if mk in agg.PANEL_MODEL_KEYS}
+        p["panel_models_present"] = len(panel_shares)
+        p["panel_imputed_dominated"] = sorted(mk for mk, v in panel_shares.items() if v >= 0.5)
+        # Every non-zero share, named -- summary statistics hide this.
+        p["imputed_share_by_model"] = {mk: round(i.get("imputed_weight_share", 0.0), 4)
+                                       for mk, i in zip(mks, infos)
+                                       if i.get("imputed_weight_share", 0.0) > 0}
+        # Faces whose P score is dominated by the aggregation's missing-data
+        # substitute (the minimum score of the models that WERE measured on that
+        # cell).  Several such faces receive byte-identical placeholder scores, so
+        # they are mutually unrankable and their absolute score is not a
+        # measurement of that model at all.  Must be named, not averaged away.
+        p["imputed_dominated_models"] = [mk for mk, i in zip(mks, infos)
+                                         if i.get("imputed_weight_share", 0.0) >= 0.5]
+        p["noise_scale_score10"] = round(noise, 4)
+        p["cells_without_ci"] = sum(i.get("cells_without_ci", 0) for i in infos)
+        p["tau_meaningful"] = round(tau_m, 4) if tau_m is not None else None
+        p["n_separable_pairs"] = n_pairs
+        p["n_pairs_total"] = n_total
+        p["pass_tau"] = (tau_m is None) or (tau_m >= TAU_THRESHOLD)
+        p["tau_status"] = "no_separable_pairs" if tau_m is None else "computed"
+        p["max_imputed_weight_share"] = round(max(imp, default=0.0), 4)
+        p["median_imputed_weight_share"] = round(statistics.median(imp) if imp else 0.0, 4)
+        p["n_models_majority_imputed"] = sum(1 for x in imp if x >= 0.5)
+        p["benchmarks"] = sorted({ev["benchmark_id"] for ev in _fe if ev["p_code"] == pc})
+
+    assign_p_labels(p_results)
+
     summary = assemble_summary(
         manifest, curated, cell_results, p_results, loo_results, loo_worst,
         ci_results, cell_selfcal, cell_selfcal_maxgap, p_selfcal_maxdiff,
@@ -661,6 +785,86 @@ def _cell_subset_rows(bid: str, sub: str, rows: list[dict[str, Any]]) -> list[di
     return rows
 
 
+LABELS = {
+    "rank_usable": "可用于排名",
+    "score_only": "仅可用于绝对分",
+    "needs_full": "需跑全量",
+    "not_rankable_by_construction": "本就不可排名",
+}
+
+
+def assign_p_labels(p_results: list[dict[str, Any]]) -> None:
+    """Tag each P for how a mini-run panel may be read.
+
+    Rules are applied in order and every tag records the numbers behind it.  The
+    first tag is a property of the evidence base, NOT of the curation: a P whose
+    panel scores are mostly imputed placeholders, or whose only evidence is a
+    single cell shared with other Ps, cannot be ranked even on a full run, so
+    labelling it is the honest action -- adding items would not help and is
+    forbidden anyway.
+    """
+    for p in p_results:
+        pc = p["p_code"]
+        reasons: list[str] = []
+        label: str | None = None
+
+        # (0) Not rankable regardless of curation.
+        imputed = p.get("imputed_dominated_models") or []
+        panel_imp = p.get("panel_imputed_dominated") or []
+        n_panel = p.get("panel_models_present") or 0
+        if n_panel and len(panel_imp) * 2 >= n_panel:
+            label = "not_rankable_by_construction"
+            reasons.append(
+                f"发布面板 {n_panel} 个模型面里有 {len(panel_imp)} 个是缺测替代值（"
+                + "、".join(f"`{m}`" for m in panel_imp)
+                + "）：替代值统一取该格已测模型的最低分，这些面因此拿到完全相同的分数，"
+                "面板过半不可分辨，名次本就不存在——与精选无关，跑全量也一样")
+        elif len(p["benchmarks"]) == 1:
+            label = "not_rankable_by_construction"
+            reasons.append(
+                f"证据只来自单一 benchmark（{p['benchmarks'][0]}），无独立来源可交叉验证；"
+                "全量同样如此，精选不改变这一点")
+        elif p["tau_status"] == "no_separable_pairs":
+            label = "not_rankable_by_construction"
+            reasons.append(
+                f"全量分数在噪声尺度 {p['noise_scale_score10']} 内无任何可分辨的模型对"
+                f"（{p['n_pairs_total']} 对全部不可分辨）：全量自己就排不出名次")
+
+        # (1) Score fidelity, then (2) rank fidelity.
+        if label is None:
+            if not p["pass_delta"] and p["max_abs_delta"] > 1.5 * P_DELTA_THRESHOLD:
+                label = "needs_full"
+                reasons.append(
+                    f"精选与全量的 P 分最大差 {p['max_abs_delta']} 明显超出 {P_DELTA_THRESHOLD} 判据，绝对分不可信")
+            elif p["pass_tau"]:
+                label = "rank_usable"
+                reasons.append(
+                    f"绝对分最大差 {p['max_abs_delta']}（判据 {P_DELTA_THRESHOLD}"
+                    f"{'，略超但在噪声尺度内' if not p['pass_delta'] else ''}）；"
+                    f"{p['n_separable_pairs']}/{p['n_pairs_total']} 个可分辨模型对的名次 τ={p['tau_meaningful']}")
+            else:
+                label = "score_only"
+                reasons.append(
+                    f"绝对分最大差 {p['max_abs_delta']} 可接受，但 {p['n_separable_pairs']} 个可分辨模型对中出现翻转"
+                    f"（τ={p['tau_meaningful']} < {TAU_THRESHOLD}），名次要谨慎")
+
+        # Mandatory caveat whenever ANY face is a placeholder, whatever the label:
+        # those faces must be dropped before reading scores or ranks.
+        if imputed and label != "not_rankable_by_construction":
+            reasons.append(
+                f"**必须排除这 {len(imputed)} 个模型面再读分/排名**（缺测替代值，非真实测量，彼此同分）："
+                + "、".join(f"`{m}`" for m in imputed))
+
+        if p["cells_without_ci"]:
+            reasons.append(
+                f"注意：{p['cells_without_ci']} 个精选格没有 CI 估计（bootstrap 无法计算），"
+                "噪声尺度被低估，判据因此偏严")
+
+        p["usability_label"] = label
+        p["usability_label_zh"] = LABELS[label]
+        p["usability_reasons"] = reasons
+
+
 def assemble_summary(manifest, curated, cell_results, p_results, loo_results, loo_worst,
                      ci_results, cell_selfcal, cell_selfcal_maxgap, p_selfcal_maxdiff,
                      full_group_rows, mini_group_rows, pub10, untied):
@@ -670,6 +874,7 @@ def assemble_summary(manifest, curated, cell_results, p_results, loo_results, lo
     ci_fail_abs = [c for c in ci_results if not c.get("pass_abs_legacy", False)]
     p_fail_delta = [p for p in p_results if not p["pass_delta"]]
     p_fail_tau = [p for p in p_results if not p["pass_tau"]]
+    p_fail_tau_raw = [p for p in p_results if not p.get("pass_tau_raw", True)]
     loo_fail = [l for l in loo_results if not l["pass"]]
     ci_fail = [c for c in ci_results if not c["pass"]]
 
@@ -720,7 +925,12 @@ def assemble_summary(manifest, curated, cell_results, p_results, loo_results, lo
                                     "fail": len(cell_fail_tau_raw),
                                     "criterion": "kendall tau over all pairs (superseded, kept for audit)"},
             "p_delta": {"total": len(p_results), "fail": len(p_fail_delta)},
-            "p_tau": {"total": len([p for p in p_results if p["tau"] is not None]), "fail": len(p_fail_tau)},
+            "p_tau": {"total": len([p for p in p_results if p.get("tau_meaningful") is not None]),
+                      "fail": len(p_fail_tau),
+                      "criterion": "kendall tau over separable P pairs only (revised)"},
+            "p_tau_raw_legacy": {"total": len([p for p in p_results if p.get("tau_raw") is not None]),
+                                 "fail": len(p_fail_tau_raw),
+                                 "criterion": "kendall tau over all pairs (superseded, kept for audit)"},
             "loo": {"total": len(loo_results), "fail": len(loo_fail)},
             "ci": {"total": len([c for c in ci_results if c["status"] == "computed"]),
                    "fail": len([c for c in ci_fail if c["status"] == "computed"]),
@@ -745,6 +955,20 @@ def assemble_summary(manifest, curated, cell_results, p_results, loo_results, lo
                                else None),
              "note": "panel entries from this cell must carry a mini_v1 drift annotation"}
             for c in cell_fail_delta
+        ],
+        "p_usability_labels": [
+            {"p_code": p["p_code"], "label": p["usability_label"], "label_zh": p["usability_label_zh"],
+             "reasons": p["usability_reasons"], "n_models": p["n_models"],
+             "max_abs_delta": p["max_abs_delta"], "tau_meaningful": p.get("tau_meaningful"),
+             "tau_raw": p.get("tau_raw"), "n_separable_pairs": p.get("n_separable_pairs"),
+             "n_pairs_total": p.get("n_pairs_total"), "noise_scale_score10": p.get("noise_scale_score10"),
+             "median_imputed_weight_share": p.get("median_imputed_weight_share"),
+             "imputed_dominated_models": p.get("imputed_dominated_models"),
+             "panel_models_present": p.get("panel_models_present"),
+             "panel_imputed_dominated": p.get("panel_imputed_dominated"),
+             "imputed_share_by_model": p.get("imputed_share_by_model"),
+             "benchmarks": p.get("benchmarks")}
+            for p in sorted(p_results, key=lambda x: x["p_code"])
         ],
         "loo_worst": loo_worst,
         "failures": {
@@ -842,7 +1066,8 @@ def write_markdown(s: dict[str, Any]) -> None:
         f"| 2 逐 P 绝对分漂移 | \\|Δ\\|≤{P_DELTA_THRESHOLD} | {am['p_delta']['total']} | {am['p_delta']['fail']} |",
         f"| 3a 逐格排名 τ（**新**：只算可区分的模型对） | τ≥{TAU_THRESHOLD} | {am['cell_tau']['total']} | {am['cell_tau']['fail']} |",
         f"| 3a' 逐格排名 τ（旧：全部模型对，留档） | τ≥{TAU_THRESHOLD} | {am['cell_tau_raw_legacy']['total']} | {am['cell_tau_raw_legacy']['fail']} |",
-        f"| 3b 逐 P 排名 τ | τ≥{TAU_THRESHOLD} | {am['p_tau']['total']} | {am['p_tau']['fail']} |",
+        f"| 3b 逐 P 排名 τ（**新**：只算可区分的模型对） | τ≥{TAU_THRESHOLD} | {am['p_tau']['total']} | {am['p_tau']['fail']} |",
+        f"| 3b' 逐 P 排名 τ（旧：全部模型对，留档） | τ≥{TAU_THRESHOLD} | {am['p_tau_raw_legacy']['total']} | {am['p_tau_raw_legacy']['fail']} |",
         f"| 4 留一法漂移 | \\|Δ\\|≤{LOO_RELAX} | {am['loo']['total']} | {am['loo']['fail']} |",
         f"| 5 抽样效率（**新**：实测CI膨胀/理论膨胀） | ≤{CI_EFFICIENCY_THRESHOLD} | {am['ci']['total']} | {am['ci']['fail']} |",
         f"| 5' bootstrap CI 绝对半宽（旧，留档） | acc≤{CI_ACC_THRESHOLD} / stat≤{CI_STAT_THRESHOLD} | {am['ci_abs_legacy']['total']} | {am['ci_abs_legacy']['fail']} |",
@@ -890,9 +1115,62 @@ def write_markdown(s: dict[str, Any]) -> None:
         lines.append("五项全部通过，无未通过格/ P。")
         lines.append("")
 
+    # ---- per-P usability labels (round 4)
+    labels = s.get("p_usability_labels") or []
+    lines.append("## 五、逐 P 可用性标签（读 mini 面板前先看这张表）")
+    lines.append("")
+    lines.append("这张表回答的是「这个 P 的 mini 分数能怎么用」。**发现某个 P 表现不好时，正确动作是给它贴准确的标签，")
+    lines.append("不是给它加题** —— 照着当前 5–12 个模型的分数去补题，就是在拟合这批模型，正是留一法要防的毛病。")
+    lines.append("")
+    lines.append("| 标签 | 含义 |")
+    lines.append("|---|---|")
+    lines.append("| 可用于排名 | 绝对分与名次都保真，可直接读 |")
+    lines.append("| 仅可用于绝对分 | 分数可信，但可分辨的模型对里有翻转，名次要谨慎 |")
+    lines.append("| 需跑全量 | 精选的绝对分就不可信，结论必须回全量 |")
+    lines.append("| 本就不可排名 | 全量也排不出（替代值主导 / 证据同源单源），与精选无关 |")
+    lines.append("")
+    order = {"rank_usable": 0, "score_only": 1, "needs_full": 2, "not_rankable_by_construction": 3}
+    lines.append("| P | 标签 | 模型数 | 面板面 | 面板中替代值面 | maxΔ | τ新 | 可分辨对 | τ旧 | 噪声尺度 | 依据 |")
+    lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|")
+    for L in sorted(labels, key=lambda x: (order.get(x["label"], 9), x["p_code"])):
+        lines.append(
+            f"| `{L['p_code']}` | **{L['label_zh']}** | {L['n_models']} | {L.get('panel_models_present')} | {len(L.get('panel_imputed_dominated') or [])} | "
+            f"{L['max_abs_delta']} | "
+            f"{L['tau_meaningful'] if L['tau_meaningful'] is not None else '—'} | "
+            f"{L['n_separable_pairs']}/{L['n_pairs_total']} | "
+            f"{L['tau_raw'] if L['tau_raw'] is not None else '—'} | {L['noise_scale_score10']} | "
+            f"{'；'.join(L['reasons'])} |")
+    lines.append("")
+    # ---- explicit imputed-share listing (never hide this behind a summary stat)
+    lines.append("### 替代值（imputed）占比：逐 P 逐模型列出")
+    lines.append("")
+    lines.append("聚合对发布面板缺测的格会用「该格已测模型的最低分」顶上并标 imputed。**这不是对该模型的测量**，")
+    lines.append("而且多个模型会因此拿到完全相同的分数。汇总统计（如中位数）会把这件事盖掉——3/10 个面是替代值时中位数仍是 0%——")
+    lines.append("所以这里逐个列出，凡占比 >0 的都点名。读 mini 面板（以及读全量面板）前，这些面必须先排除。")
+    lines.append("")
+    rows_imp = []
+    for L in sorted(labels, key=lambda x: x["p_code"]):
+        shares = L.get("imputed_share_by_model") or {}
+        for mk, v in sorted(shares.items(), key=lambda kv: -kv[1]):
+            panel = "是" if mk in (L.get("panel_imputed_dominated") or []) or v >= 0.5 else ""
+            rows_imp.append((L["p_code"], mk, v, panel))
+    if rows_imp:
+        lines.append("| P | 模型面 | 替代值权重占比 | 该面是否已被替代值主导(≥50%) |")
+        lines.append("|---|---|---:|---|")
+        for pc, mk, v, panel in rows_imp:
+            lines.append(f"| `{pc}` | `{mk}` | {v:.0%} | {panel} |")
+    else:
+        lines.append("（本轮无替代值）")
+    lines.append("")
+    lines.append("**P 级噪声尺度怎么来的**：把每个格的 bootstrap CI 半宽按聚合公式")
+    lines.append("`P = facet 等权平均( facet 内 有效权重加权平均 )` 做一阶误差传播，")
+    lines.append("`噪声 = sqrt( Σ (系数 × 格CI)^2 )`。精选不触碰的格（全量原样）贡献 0，因为它们在精选与全量之间逐字节相同，")
+    lines.append("不可能产生漂移。共享题面的格之间是正相关，独立假设会**低估**噪声，也就是让判据**更严**而非更松。")
+    lines.append("")
+
     # ---- accepted drift (user decision, round 2)
     acc = s.get("accepted_drift") or []
-    lines.append("## 五、已接受的漂移（用户裁决：不加题，带注记进面板）")
+    lines.append("## 六、已接受的漂移（用户裁决：不加题，带注记进面板）")
     lines.append("")
     if not acc:
         lines.append("无。")
@@ -909,7 +1187,7 @@ def write_markdown(s: dict[str, Any]) -> None:
                          f"{c['delta_over_ci'] if c['delta_over_ci'] is not None else '—'} |")
     lines.append("")
 
-    lines.append("## 六、逐格漂移与排名（新旧判据并列）")
+    lines.append("## 七、逐格漂移与排名（新旧判据并列）")
     lines.append("")
     lines.append("| benchmark | 格 | 模型数 | maxΔ | τ新(可区分对) | 可区分对数 | τ旧(全部对) | CI半宽精选 | CI半宽全量 | 抽样效率 |")
     lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
