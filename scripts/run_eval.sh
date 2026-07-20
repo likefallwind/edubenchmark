@@ -99,6 +99,66 @@ EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M2.7}" # 答案抽取模型(全局�
 JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/MathTutorBench/MRBench/BEA2025/MMTutorBench;与被测/抽取模型解耦)
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
+# ---------------------------------------------------------------------------
+# MINI=1：跑精选题集 mini_v1(data/mini_selection_v1/),结果写独立结果树
+#   MINI=1 MODEL=MiniMax-M3 ./scripts/run_eval.sh mmlu_pro
+# 有清单的 benchmark 传 --item-list(与 --limit 互斥,故自动摘掉 --limit);
+# C 档无清单的照常全量,但同样落在 mini 树里。
+# 输出一律 reports/eval_mini_v1/<benchmark>/<model-slug>/,绝不写 reports/eval/。
+# (注意:脚本里原有的 OUT_DIR 变量是没接线的摆设,这里不复用它,而是真正把
+#  --out-dir 传给 eval_benchmark.py。)
+# 自测(不打 API):MINI=1 DRY_RUN=1 ./scripts/run_eval.sh mmlu_pro
+# ---------------------------------------------------------------------------
+MINI="${MINI:-}"
+MINI_DIR="data/mini_selection_v1"
+MINI_OUT_ROOT="reports/eval_mini_v1"
+
+# 复刻 scripts/eval/providers.py 的 model_slug(含 MiniMax-M3 别名)
+mini_model_slug() {
+  local m="$1"
+  if [[ "$m" == "MiniMax-M3" ]]; then printf 'minimax3'; return; fi
+  local s
+  s=$(printf '%s' "$m" | sed -e 's/[^A-Za-z0-9._-]\{1,\}/-/g' -e 's/^-*//' -e 's/-*$//')
+  [[ -z "$s" ]] && s="model"
+  printf '%s' "$s"
+}
+
+RUN_PREFIX=()
+# run_eval_py <benchmark-id> <args to eval_benchmark.py...>
+# 非 MINI 模式原样透传;MINI 模式重写选题参数与输出目录。
+run_eval_py() {
+  local bench="$1"; shift
+  local args=("$@")
+  if [[ -n "$MINI" ]]; then
+    local list="$MINI_DIR/${bench}_items_v1.txt"
+    local out="$MINI_OUT_ROOT/${bench}/$(mini_model_slug "$MODEL")"
+    # 摘掉 --limit/--offset/--item-list/--out-dir,记住原有的 item-list
+    local orig_list="" filtered=() i=0
+    while (( i < ${#args[@]} )); do
+      case "${args[$i]}" in
+        --item-list) orig_list="${args[$((i+1))]}"; i=$((i+2)); continue ;;
+        --limit|--offset|--out-dir) i=$((i+2)); continue ;;
+      esac
+      filtered+=("${args[$i]}"); i=$((i+1))
+    done
+    args=(${filtered[@]+"${filtered[@]}"})
+    if [[ -f "$list" ]]; then
+      args+=(--item-list "$list")
+    elif [[ -n "$orig_list" ]]; then
+      # C 档里自带固定题单的(mooccube/p07/p08):保留它自己的题单
+      args+=(--item-list "$orig_list")
+    else
+      args+=(--limit 0)   # C 档无清单:照常全量
+    fi
+    args+=(--out-dir "$out")
+    [[ -n "${DRY_RUN:-}" ]] && args+=(--dry-run)
+  fi
+  ${RUN_PREFIX[@]+"${RUN_PREFIX[@]}"} python scripts/eval_benchmark.py ${args[@]+"${args[@]}"}
+}
+
+if [[ -n "$MINI" ]]; then
+  echo "[run_eval] MINI=1 精选题集模式:题单 $MINI_DIR/ ,输出 $MINI_OUT_ROOT/(不写 reports/eval/)"
+fi
 echo "[run_eval] model=$MODEL extractor_model=$EXTRACTOR_MODEL judge_model=$JUDGE_MODEL benchmarks=$BENCHMARKS"
 
 for b in $BENCHMARKS; do
@@ -110,53 +170,54 @@ for b in $BENCHMARKS; do
   case "$b" in
     olympiadbench)
       # 主环境出预测，再用 uv 临时环境(antlr 4.11)判分
-      python scripts/eval_benchmark.py --benchmark olympiadbench --model "$MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT" --skip-extract
-      uv run --no-project --with sympy --with 'antlr4-python3-runtime==4.11' \
-        python scripts/eval_benchmark.py --benchmark olympiadbench --model "$MODEL" --limit "$LIMIT" --score-only
+      run_eval_py olympiadbench --benchmark olympiadbench --model "$MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT" --skip-extract
+      RUN_PREFIX=(uv run --no-project --with sympy --with 'antlr4-python3-runtime==4.11')
+      run_eval_py olympiadbench --benchmark olympiadbench --model "$MODEL" --limit "$LIMIT" --score-only
+      RUN_PREFIX=()
       ;;
     eduguard_adversarial)
       # 两阶段 LLM-as-judge (每阶段 BoN=3 投票)。judge 经 EDUGUARD_JUDGE_MODEL 固定、与被测/抽取模型解耦。
       EDUGUARD_JUDGE_MODEL="$JUDGE_MODEL" \
-      python scripts/eval_benchmark.py --benchmark eduguard_adversarial --model "$MODEL" \
+      run_eval_py eduguard_adversarial --benchmark eduguard_adversarial --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     eduguard_sata)
       # 规则评分，默认中英双语都跑 (--language en|zh|both)
-      python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
+      run_eval_py eduguard_sata --benchmark eduguard_sata --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     mathtutorbench_scaffolding|mathtutorbench_pedagogy|mathtutorbench_scaffolding_hard|mathtutorbench_pedagogy_hard)
       # 开放式教学反馈：LLM-as-judge 成对 win-rate(对金标教师回应，位置交换去偏)。
       # 裁判经 MATHTUTORBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦，替代官方需 GPU 的 1.5B 偏好奖励模型。
       MATHTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
-      python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" \
+      run_eval_py "$b" --benchmark "$b" --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     mrbench_tutor)
       # Step 2 生成+裁判打分：被测模型生成 tutor 回复，固定裁判逐 8 维打标。
       # 裁判经 MRBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦；每条 item 裁判扇出 8 个维度，故抬高抽取并发。
       MRBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
-      python scripts/eval_benchmark.py --benchmark mrbench_tutor --model "$MODEL" \
+      run_eval_py mrbench_tutor --benchmark mrbench_tutor --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     bea2025_tutor)
       # Step 2 生成+裁判打分：被测模型生成 tutor 回复，固定裁判逐 4 个 BEA 维度打标。
       # extractor 与 judge 保持独立；judge 由 BEA2025_JUDGE_MODEL 的专用 client 调用。
       BEA2025_JUDGE_MODEL="$JUDGE_MODEL" \
-      python scripts/eval_benchmark.py --benchmark bea2025_tutor --model "$MODEL" \
+      run_eval_py bea2025_tutor --benchmark bea2025_tutor --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     mmtutorbench)
       # 多图输入(previous images + current image)生成 tutoring 回复；固定 rubric judge 打 6 个 0/1 维度。
       # extractor 与 judge 保持独立；judge 由 MMTUTORBENCH_JUDGE_MODEL 的专用 client 调用。
       MMTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
-      python scripts/eval_benchmark.py --benchmark mmtutorbench --model "$MODEL" \
+      run_eval_py mmtutorbench --benchmark mmtutorbench --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     edubench)
       # 与已导入的 3,797 题结果保持相同题单和默认裁判。extractor-model 直接设为
       # judge，确保裁判 token usage 被通用 runner 正确记录。
       EDUBENCH_JUDGE_MODEL="${EDUBENCH_JUDGE_MODEL:-deepseek-v3.2}" \
-      python scripts/eval_benchmark.py --benchmark edubench --model "$MODEL" \
+      run_eval_py edubench --benchmark edubench --model "$MODEL" \
         --extractor-model "${EDUBENCH_JUDGE_MODEL:-deepseek-v3.2}" \
         --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
@@ -165,13 +226,13 @@ for b in $BENCHMARKS; do
       # 先物化数据：python scripts/eval/data/fetch_eval_datasets.py --benchmark umwp
       # 默认抽 500 题（分层，任意前缀均衡），LIMIT 可覆盖；不默认跑全量 5200。
       P08_ABS_LIMIT="${LIMIT:-500}"; [[ "$P08_ABS_LIMIT" == "0" ]] && P08_ABS_LIMIT=500
-      python scripts/eval_benchmark.py --benchmark p08_abstention --model "$MODEL" \
+      run_eval_py p08_abstention --benchmark p08_abstention --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$P08_ABS_LIMIT"
       ;;
     ifeval)
       # IFEval 规则判分（无裁判无抽取 LLM）；先物化数据: fetch_eval_datasets.py --benchmark ifeval
       # 判分依赖 nltk/langdetect/immutabledict（miniconda python 已装）。
-      python scripts/eval_benchmark.py --benchmark ifeval --model "$MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT" --extractor-model "$EXTRACTOR_MODEL"
+      run_eval_py ifeval --benchmark ifeval --model "$MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT" --extractor-model "$EXTRACTOR_MODEL"
       ;;
     k12vista)
       # K12Vista 中文 K12 多模态学科推理（P04）；提示与判分照搬官方 prompt.py。
@@ -181,7 +242,7 @@ for b in $BENCHMARKS; do
       # 判分是 LLM 裁判逐空 0/1（官方 rubric），裁判固定为 K12VISTA_JUDGE_MODEL/JUDGE_MODEL
       # （默认跟随 EXTRACTOR_MODEL），与被测模型解耦；被测模型必须是视觉模型。
       K12VISTA_JUDGE_MODEL="${K12VISTA_JUDGE_MODEL:-$JUDGE_MODEL}" \
-      python scripts/eval_benchmark.py --benchmark k12vista --model "$MODEL" \
+      run_eval_py k12vista --benchmark k12vista --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
     mooccube_prereq)
@@ -191,7 +252,7 @@ for b in $BENCHMARKS; do
       #   python scripts/eval/data/build_mooccube_item_list.py --size 300
       # 默认跑固定的 300 题题单（200 先修选择 + 100 学习顺序排序），所有模型同题。
       ITEM_LIST="${ITEM_LIST:-data/mooccube/item_list_v1.txt}"
-      python scripts/eval_benchmark.py --benchmark mooccube_prereq --model "$MODEL" \
+      run_eval_py mooccube_prereq --benchmark mooccube_prereq --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
       ;;
     p07_selfcheck)
@@ -202,7 +263,7 @@ for b in $BENCHMARKS; do
       P07_EXTRACTOR_MODEL="${P07_EXTRACTOR_MODEL:-$MODEL}"
       # 第二轮复查发生在 extract 阶段，所以 --extract-concurrency 必须跟着给：
       # 它默认是 1，漏传的话第二轮会单线程爬（550 题要跑一整天）。
-      python scripts/eval_benchmark.py --benchmark p07_selfcheck --model "$MODEL" \
+      run_eval_py p07_selfcheck --benchmark p07_selfcheck --model "$MODEL" \
         --extractor-model "$P07_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" \
         --extract-concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
       ;;
@@ -214,21 +275,21 @@ for b in $BENCHMARKS; do
       #   MODEL=MiniMax-M3 ./scripts/run_eval.sh p08_calibration
       ITEM_LIST="${ITEM_LIST:-data/p08_calibration/item_list_v1.txt}"
       P08_EXTRACTOR_MODEL="${P08_EXTRACTOR_MODEL:-$MODEL}"
-      python scripts/eval_benchmark.py --benchmark p08_calibration --model "$MODEL" \
+      run_eval_py p08_calibration --benchmark p08_calibration --model "$MODEL" \
         --extractor-model "$P08_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
       ;;
     longtutor_evidence|longtutor_teaching)
-      python scripts/eval_benchmark.py --benchmark "$b" --limit "$LIMIT" \
+      run_eval_py "$b" --benchmark "$b" --limit "$LIMIT" \
         --model "$MODEL" --extractor-model "$JUDGE_MODEL" \
-        --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" "${COMMON_ARGS[@]}"
+        --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" ${COMMON_ARGS[@]+"${COMMON_ARGS[@]}"}
       ;;
     longtutor_diagnosis)
-      python scripts/eval_benchmark.py --benchmark "$b" --limit "$LIMIT" \
+      run_eval_py "$b" --benchmark "$b" --limit "$LIMIT" \
         --model "$MODEL" --extractor-model "$JUDGE_MODEL" \
-        --concurrency "$CONCURRENCY" "${COMMON_ARGS[@]}"
+        --concurrency "$CONCURRENCY" ${COMMON_ARGS[@]+"${COMMON_ARGS[@]}"}
       ;;
     *)
-      python scripts/eval_benchmark.py --benchmark "$b" --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
+      run_eval_py "$b" --benchmark "$b" --model "$MODEL" --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --limit "$LIMIT"
       ;;
   esac
 done

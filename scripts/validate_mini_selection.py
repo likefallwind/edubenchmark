@@ -54,8 +54,14 @@ P_DELTA_THRESHOLD = 0.2
 TAU_THRESHOLD = 0.9
 LOO_RELAX = 0.4  # plan section 5.4 allows individual cells to relax to 0.4 under LOO
 BOOTSTRAP_B = 300
-CI_ACC_THRESHOLD = 0.2   # 2pp on the 0-10 scale
-CI_STAT_THRESHOLD = 0.5  # 0.05 raw QWK/macro-F1 on the 0-10 scale
+CI_ACC_THRESHOLD = 0.2   # 2pp on the 0-10 scale (legacy absolute view, retained)
+CI_STAT_THRESHOLD = 0.5  # 0.05 raw QWK/macro-F1 on the 0-10 scale (legacy)
+# Relative CI criterion: measured CI inflation divided by the inflation pure
+# random sampling would already produce, sqrt(N_full/N_mini).  1.0 means the
+# stratified sample is exactly as efficient as random; 1.3 allows a 30% loss,
+# which is roughly the spread bootstrap noise alone puts on this ratio at
+# B=300 for the cell sizes here.
+CI_EFFICIENCY_THRESHOLD = 1.3
 
 # Cells whose metric is a population statistic (QWK/macro-F1/ASR): CI uses the
 # looser 0.5 threshold; everything else is a per-item mean (accuracy family).
@@ -262,6 +268,39 @@ def kendall_tau(x: list[float], y: list[float]) -> float | None:
     return (conc - disc) / denom
 
 
+def kendall_tau_meaningful(full: list[float], mini: list[float], noise: float | None):
+    """Kendall tau counting only model pairs the full set can actually separate.
+
+    Round-2 decision: plain tau over all pairs punishes swaps between models whose
+    full-set scores differ by less than the measurement noise -- a coin flip we
+    have no business calling a failure -- and at n=9 a single adjacent swap already
+    drops tau to 0.889, so the 0.9 gate effectively demanded zero swaps.  A pair is
+    "meaningful" when the full-set gap exceeds the cell's own bootstrap CI
+    half-width.  Returns (tau, n_meaningful_pairs, n_pairs_total).
+    """
+    n = len(full)
+    total_pairs = n * (n - 1) // 2
+    if noise is None or n < 2:
+        return None, 0, total_pairs
+    conc = disc = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            gap = full[i] - full[j]
+            if abs(gap) <= noise:
+                continue  # statistically indistinguishable on the full set
+            d = mini[i] - mini[j]
+            if d == 0:
+                continue
+            if (gap > 0) == (d > 0):
+                conc += 1
+            else:
+                disc += 1
+    meaningful = conc + disc
+    if meaningful == 0:
+        return None, 0, total_pairs
+    return (conc - disc) / meaningful, meaningful, total_pairs
+
+
 def bootstrap_ci_halfwidth(bid: str, subset_rows: list[dict[str, Any]], subdim: str, b: int) -> float | None:
     """95% CI half-width of a cell's score_10 under item resampling of the mini
     subset (score_10 units; == raw*10 for QWK/macro-F1, == pp/10 for accuracy)."""
@@ -332,7 +371,10 @@ def cell_recompute_all(benches, subset_map):
         rep = next((f for f in faces if f["model_key"] == "minimax-m3"), faces[0] if faces else None)
         if rep is not None:
             rows = bm.read_scored(rep["dir"] / "scored.jsonl")
-            boot_rows[bench.bid] = [r for r in rows if str(r["item_id"]) in subset_ids]
+            boot_rows[bench.bid] = {
+                "full": rows,
+                "mini": [r for r in rows if str(r["item_id"]) in subset_ids],
+            }
     return full, mini, boot_rows, face_index, face_native
 
 
@@ -523,7 +565,17 @@ def main() -> None:
                     loo_worst = {"benchmark": bench.bid, "subdimension": sub,
                                  "model_key": mk, "delta": round(d, 4)}
 
-    # ---- (5) Bootstrap CI half-width per cell (score_10 units).
+    # ---- (5) Bootstrap CI, RELATIVE criterion (round-2 decision).
+    # The absolute thresholds were mis-specified: 13 cells needed more items than
+    # the benchmark contains, i.e. the FULL set fails them too, so they measured
+    # the benchmark's intrinsic precision rather than the curation's fidelity.
+    # We now bootstrap both the full and the mini set and ask whether stratified
+    # sampling did worse than plain random sampling would have:
+    #     ratio       = mini_CI / full_CI
+    #     theoretical = sqrt(N_full / N_mini)   (pure random sampling)
+    #     efficiency  = ratio / theoretical     (1.0 = as good as random, <1 better)
+    # Full-vs-itself is identically 1.0, so the criterion is self-consistent.
+    # Absolute half-widths are retained alongside so nothing is hidden.
     ci_results = []
     for sub in sorted(full_cells):
         bid = sub2bench.get(sub, "?")
@@ -531,27 +583,57 @@ def main() -> None:
         if not rows:
             continue
         # For partitioned cells, restrict rows to the cell's own subset.
-        cell_rows = _cell_subset_rows(bid, sub, rows)
+        cell_rows = _cell_subset_rows(bid, sub, rows["mini"])
+        cell_rows_full = _cell_subset_rows(bid, sub, rows["full"])
         hw = bootstrap_ci_halfwidth(bid, cell_rows, sub, BOOTSTRAP_B)
+        hw_full = bootstrap_ci_halfwidth(bid, cell_rows_full, sub, BOOTSTRAP_B)
+        ratio = (hw / hw_full) if (hw is not None and hw_full) else None
+        theoretical = (math.sqrt(len(cell_rows_full) / len(cell_rows))
+                       if cell_rows and cell_rows_full else None)
+        efficiency = (ratio / theoretical) if (ratio is not None and theoretical) else None
         threshold = CI_STAT_THRESHOLD if sub in STAT_SUBDIMS else CI_ACC_THRESHOLD
         # A cell whose CI could not be computed is NOT a pass -- reporting it as
         # one hides the fact that we have no precision estimate for it.
         ci_results.append({
             "benchmark": bid, "subdimension": sub,
             "kind": "stat" if sub in STAT_SUBDIMS else "accuracy/mean",
-            "n_items": len(cell_rows),
+            "n_items": len(cell_rows), "n_items_full": len(cell_rows_full),
+            # --- raw absolute values, kept on purpose so the old view stays auditable
             "ci_halfwidth_score10": round(hw, 4) if hw is not None else None,
-            "threshold": threshold,
-            "status": "computed" if hw is not None else "not_computed",
-            "pass": hw is not None and hw <= threshold,
-            # Sample size a 2pp (0.2 on the 0-10 scale) CI would require at the
-            # observed rate -- shows when the threshold is an arithmetic floor
-            # rather than a sampling-design problem.
-            "n_needed_for_threshold": (
+            "ci_halfwidth_full_score10": round(hw_full, 4) if hw_full is not None else None,
+            "abs_threshold": threshold,
+            "pass_abs_legacy": hw is not None and hw <= threshold,
+            "n_needed_for_abs_threshold": (
                 None if hw is None or hw <= threshold
                 else int(round(len(cell_rows) * (hw / threshold) ** 2))
             ),
+            # --- relative criterion (the one that now gates)
+            "ci_ratio_mini_over_full": round(ratio, 4) if ratio is not None else None,
+            "ci_ratio_theoretical": round(theoretical, 4) if theoretical is not None else None,
+            "sampling_efficiency": round(efficiency, 4) if efficiency is not None else None,
+            "efficiency_threshold": CI_EFFICIENCY_THRESHOLD,
+            "status": "computed" if efficiency is not None else "not_computed",
+            "pass": efficiency is not None and efficiency <= CI_EFFICIENCY_THRESHOLD,
         })
+
+    # ---- Criterion 3 (revised): recompute tau over separable pairs only, using
+    # each cell's full-set CI half-width as the noise scale.  The raw tau stays.
+    noise_by_cell = {(c["benchmark"], c["subdimension"]): c["ci_halfwidth_full_score10"]
+                     for c in ci_results}
+    for c in cell_results:
+        noise = noise_by_cell.get((c["benchmark"], c["subdimension"]))
+        mks = sorted(c["per_model"])
+        fv = [c["per_model"][mk]["full"] for mk in mks]
+        mv = [c["per_model"][mk]["mini"] for mk in mks]
+        tau_m, n_pairs, n_total = kendall_tau_meaningful(fv, mv, noise)
+        c["tau_raw"] = c["tau"]
+        c["pass_tau_raw"] = c["pass_tau"]
+        c["noise_scale_score10"] = noise
+        c["tau_meaningful"] = round(tau_m, 4) if tau_m is not None else None
+        c["n_separable_pairs"] = n_pairs
+        c["n_pairs_total"] = n_total
+        c["pass_tau"] = (tau_m is None) or (tau_m >= TAU_THRESHOLD)
+        c["tau_status"] = "no_separable_pairs" if tau_m is None else "computed"
 
     summary = assemble_summary(
         manifest, curated, cell_results, p_results, loo_results, loo_worst,
@@ -584,6 +666,8 @@ def assemble_summary(manifest, curated, cell_results, p_results, loo_results, lo
                      full_group_rows, mini_group_rows, pub10, untied):
     cell_fail_delta = [c for c in cell_results if not c["pass_delta"]]
     cell_fail_tau = [c for c in cell_results if not c["pass_tau"]]
+    cell_fail_tau_raw = [c for c in cell_results if not c.get("pass_tau_raw", True)]
+    ci_fail_abs = [c for c in ci_results if not c.get("pass_abs_legacy", False)]
     p_fail_delta = [p for p in p_results if not p["pass_delta"]]
     p_fail_tau = [p for p in p_results if not p["pass_tau"]]
     loo_fail = [l for l in loo_results if not l["pass"]]
@@ -629,15 +713,39 @@ def assemble_summary(manifest, curated, cell_results, p_results, loo_results, lo
         "acceptance_matrix": {
             "cell_delta": {"total": len(cell_results), "pass": len(cell_results) - len(cell_fail_delta),
                            "fail": len(cell_fail_delta)},
-            "cell_tau": {"total": len([c for c in cell_results if c["tau"] is not None]),
-                         "fail": len(cell_fail_tau)},
+            "cell_tau": {"total": len([c for c in cell_results if c.get("tau_meaningful") is not None]),
+                         "fail": len(cell_fail_tau),
+                         "criterion": "kendall tau over separable model pairs only (revised)"},
+            "cell_tau_raw_legacy": {"total": len([c for c in cell_results if c["tau_raw"] is not None]),
+                                    "fail": len(cell_fail_tau_raw),
+                                    "criterion": "kendall tau over all pairs (superseded, kept for audit)"},
             "p_delta": {"total": len(p_results), "fail": len(p_fail_delta)},
             "p_tau": {"total": len([p for p in p_results if p["tau"] is not None]), "fail": len(p_fail_tau)},
             "loo": {"total": len(loo_results), "fail": len(loo_fail)},
             "ci": {"total": len([c for c in ci_results if c["status"] == "computed"]),
                    "fail": len([c for c in ci_fail if c["status"] == "computed"]),
-                   "not_computed": len([c for c in ci_results if c["status"] == "not_computed"])},
+                   "not_computed": len([c for c in ci_results if c["status"] == "not_computed"]),
+                   "criterion": f"sampling efficiency = (mini_CI/full_CI)/sqrt(N_full/N_mini) <= {CI_EFFICIENCY_THRESHOLD} (revised)"},
+            "ci_abs_legacy": {"total": len(ci_results), "fail": len(ci_fail_abs),
+                              "criterion": "absolute CI half-width (superseded: 13 cells needed more items than the benchmark has, so the full set fails it too)"},
         },
+        # Cells the user has explicitly accepted (round 2): the residual drift is
+        # sampling noise, not bias, so they are annotated rather than topped up.
+        # Adding items to make an acceptance metric look better is forbidden.
+        "accepted_drift": [
+            {"benchmark": c["benchmark"], "subdimension": c["subdimension"],
+             "max_abs_delta": c["max_abs_delta"],
+             "ci_halfwidth_score10": next((x["ci_halfwidth_score10"] for x in ci_results
+                                           if x["benchmark"] == c["benchmark"]
+                                           and x["subdimension"] == c["subdimension"]), None),
+             "delta_over_ci": (round(c["max_abs_delta"] / hw, 2)
+                               if (hw := next((x["ci_halfwidth_score10"] for x in ci_results
+                                               if x["benchmark"] == c["benchmark"]
+                                               and x["subdimension"] == c["subdimension"]), None))
+                               else None),
+             "note": "panel entries from this cell must carry a mini_v1 drift annotation"}
+            for c in cell_fail_delta
+        ],
         "loo_worst": loo_worst,
         "failures": {
             "cell_delta": cell_fail_delta,
@@ -725,14 +833,30 @@ def write_markdown(s: dict[str, Any]) -> None:
         "",
         "## 三、验收五项结果矩阵",
         "",
+        "标准 1/2/4 不变；标准 3 与 5 本轮改为相对判据（依据见下），**原始绝对值一并保留**，",
+        "两套判据并列呈现，避免改标准把矩阵改好看。",
+        "",
         "| 项 | 判据 | 总数 | 未通过 |",
         "|---|---|---:|---:|",
         f"| 1 逐格绝对分漂移 | \\|Δ\\|≤{CELL_DELTA_THRESHOLD} | {am['cell_delta']['total']} | {am['cell_delta']['fail']} |",
         f"| 2 逐 P 绝对分漂移 | \\|Δ\\|≤{P_DELTA_THRESHOLD} | {am['p_delta']['total']} | {am['p_delta']['fail']} |",
-        f"| 3a 逐格排名 τ | τ≥{TAU_THRESHOLD} | {am['cell_tau']['total']} | {am['cell_tau']['fail']} |",
+        f"| 3a 逐格排名 τ（**新**：只算可区分的模型对） | τ≥{TAU_THRESHOLD} | {am['cell_tau']['total']} | {am['cell_tau']['fail']} |",
+        f"| 3a' 逐格排名 τ（旧：全部模型对，留档） | τ≥{TAU_THRESHOLD} | {am['cell_tau_raw_legacy']['total']} | {am['cell_tau_raw_legacy']['fail']} |",
         f"| 3b 逐 P 排名 τ | τ≥{TAU_THRESHOLD} | {am['p_tau']['total']} | {am['p_tau']['fail']} |",
         f"| 4 留一法漂移 | \\|Δ\\|≤{LOO_RELAX} | {am['loo']['total']} | {am['loo']['fail']} |",
-        f"| 5 bootstrap 95%CI 半宽 | acc≤{CI_ACC_THRESHOLD} / stat≤{CI_STAT_THRESHOLD} | {am['ci']['total']} | {am['ci']['fail']} |",
+        f"| 5 抽样效率（**新**：实测CI膨胀/理论膨胀） | ≤{CI_EFFICIENCY_THRESHOLD} | {am['ci']['total']} | {am['ci']['fail']} |",
+        f"| 5' bootstrap CI 绝对半宽（旧，留档） | acc≤{CI_ACC_THRESHOLD} / stat≤{CI_STAT_THRESHOLD} | {am['ci_abs_legacy']['total']} | {am['ci_abs_legacy']['fail']} |",
+        "",
+        "**标准 3 为什么改**：旧判据在 n=9 时一次相邻换位就掉到 0.889，实际等于要求零换位；",
+        "而且会把分数统计上无法区分的模型换位也判为失败。新判据只统计**全量分差超过该格 CI 半宽**的模型对，",
+        "分差在噪声内的换位不计。",
+        "",
+        "**标准 5 为什么改**：旧的绝对门槛已证实错配 —— 13 个格所需样本量超过 benchmark 全量本身",
+        "（longtutor_evidence 幻觉检查需 6,051 题、该格全量只有 1,001），即**跑全量也过不了**，",
+        "它衡量的是 benchmark 自身精度而非精选保真度。新判据同时 bootstrap 全量与精选，比较",
+        "`实测比值 / 理论比值`，理论值 `sqrt(N_full/N_mini)` 是纯随机抽样必然产生的膨胀；",
+        f"接近 1.0 表示分层抽样与随机抽样一样有效，明显大于 1 才是真问题（阈值 {CI_EFFICIENCY_THRESHOLD}）。",
+        "全量与自身比恒等于 1.0，逻辑自洽。",
         "",
         f"留一法最差漂移：benchmark `{s['loo_worst']['benchmark']}` · 格 `{s['loo_worst']['subdimension']}` · "
         f"留出模型 `{s['loo_worst']['model_key']}` · Δ={s['loo_worst']['delta']}。",
@@ -749,7 +873,10 @@ def write_markdown(s: dict[str, Any]) -> None:
             ("逐 P |Δ|>阈", "p_delta", lambda c: f"`{c['p_code']}` · maxΔ={c['max_abs_delta']}"),
             ("逐 P τ<0.9", "p_tau", lambda c: f"`{c['p_code']}` · τ={c['tau']} (n={c['n_models']})"),
             ("留一法", "loo", lambda c: f"`{c['benchmark']}` · {c['subdimension']} · 留出 {c['held_out_model']} · Δ={c['delta']}"),
-            ("bootstrap CI", "ci", lambda c: f"`{c['benchmark']}` · {c['subdimension']} · 半宽={c['ci_halfwidth_score10']} (阈 {c['threshold']})"),
+            ("bootstrap CI 抽样效率", "ci", lambda c: (
+                f"`{c['benchmark']}` · {c['subdimension']} · 效率={c['sampling_efficiency']} "
+                f"(阈 {c['efficiency_threshold']};精选半宽 {c['ci_halfwidth_score10']} / 全量半宽 "
+                f"{c['ci_halfwidth_full_score10']} = {c['ci_ratio_mini_over_full']}，理论 {c['ci_ratio_theoretical']})")),
         ]:
             if fails[key]:
                 lines.append(f"### {label}（{len(fails[key])}）")
@@ -763,15 +890,42 @@ def write_markdown(s: dict[str, Any]) -> None:
         lines.append("五项全部通过，无未通过格/ P。")
         lines.append("")
 
-    lines.append("## 五、逐格漂移（前若干）")
+    # ---- accepted drift (user decision, round 2)
+    acc = s.get("accepted_drift") or []
+    lines.append("## 五、已接受的漂移（用户裁决：不加题，带注记进面板）")
     lines.append("")
-    lines.append("| benchmark | 格 | 模型数 | maxΔ | τ | CI半宽 |")
-    lines.append("|---|---|---:|---:|---:|---:|")
-    ci_by = {(c["benchmark"], c["subdimension"]): c["ci_halfwidth_score10"] for c in s["ci_results"]}
+    if not acc:
+        lines.append("无。")
+    else:
+        lines.append("这些格 |Δ| 超过 0.3，但残差在噪声量级内（maxΔ / CI 半宽约 0.4–1.1），")
+        lines.append("即漂移来自抽样方差而非系统偏差。用户已裁决**不加题**（加题会推高总占比，")
+        lines.append("且为了让指标好看而加题是被明确禁止的）。这些格将来进面板时必须带 mini_v1 漂移注记。")
+        lines.append("")
+        lines.append("| benchmark | 格 | maxΔ | CI半宽 | Δ/CI |")
+        lines.append("|---|---|---:|---:|---:|")
+        for c in sorted(acc, key=lambda x: -x["max_abs_delta"]):
+            lines.append(f"| `{c['benchmark']}` | {c['subdimension'][:44]} | {c['max_abs_delta']} | "
+                         f"{c['ci_halfwidth_score10'] if c['ci_halfwidth_score10'] is not None else '—'} | "
+                         f"{c['delta_over_ci'] if c['delta_over_ci'] is not None else '—'} |")
+    lines.append("")
+
+    lines.append("## 六、逐格漂移与排名（新旧判据并列）")
+    lines.append("")
+    lines.append("| benchmark | 格 | 模型数 | maxΔ | τ新(可区分对) | 可区分对数 | τ旧(全部对) | CI半宽精选 | CI半宽全量 | 抽样效率 |")
+    lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+    ci_by = {(c["benchmark"], c["subdimension"]): c for c in s["ci_results"]}
     for c in sorted(s["cell_results"], key=lambda x: -x["max_abs_delta"]):
-        ci = ci_by.get((c["benchmark"], c["subdimension"]))
-        lines.append(f"| `{c['benchmark']}` | {c['subdimension'][:46]} | {c['n_models']} | "
-                     f"{c['max_abs_delta']} | {c['tau'] if c['tau'] is not None else '—'} | {ci if ci is not None else '—'} |")
+        ci = ci_by.get((c["benchmark"], c["subdimension"]), {})
+        def g(k):
+            v = ci.get(k)
+            return v if v is not None else "—"
+        tm = c.get("tau_meaningful")
+        tr = c.get("tau_raw")
+        lines.append(
+            f"| `{c['benchmark']}` | {c['subdimension'][:40]} | {c['n_models']} | {c['max_abs_delta']} | "
+            f"{tm if tm is not None else '—'} | {c.get('n_separable_pairs', '—')}/{c.get('n_pairs_total', '—')} | "
+            f"{tr if tr is not None else '—'} | {g('ci_halfwidth_score10')} | {g('ci_halfwidth_full_score10')} | "
+            f"{g('sampling_efficiency')} |")
     lines.append("")
     (OUT_DIR / "validation_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -782,12 +936,31 @@ def write_html(s: dict[str, Any]) -> None:
     def esc(x):
         return html.escape(str(x))
 
+    ci_by = {(c["benchmark"], c["subdimension"]): c for c in s["ci_results"]}
+
+    def _g(c, k):
+        v = ci_by.get((c["benchmark"], c["subdimension"]), {}).get(k)
+        return v if v is not None else "—"
+
     rows_cells = "".join(
         f"<tr><td>{esc(c['benchmark'])}</td><td>{esc(c['subdimension'])}</td><td>{c['n_models']}</td>"
         f"<td class='{'bad' if not c['pass_delta'] else 'ok'}'>{c['max_abs_delta']}</td>"
-        f"<td class='{'bad' if not c['pass_tau'] else 'ok'}'>{c['tau'] if c['tau'] is not None else '—'}</td></tr>"
+        f"<td class='{'bad' if not c['pass_tau'] else 'ok'}'>"
+        f"{c.get('tau_meaningful') if c.get('tau_meaningful') is not None else '—'}</td>"
+        f"<td>{c.get('n_separable_pairs','—')}/{c.get('n_pairs_total','—')}</td>"
+        f"<td class='muted'>{c.get('tau_raw') if c.get('tau_raw') is not None else '—'}</td>"
+        f"<td>{_g(c,'ci_halfwidth_score10')}</td><td>{_g(c,'ci_halfwidth_full_score10')}</td>"
+        f"<td>{_g(c,'sampling_efficiency')}</td></tr>"
         for c in sorted(s["cell_results"], key=lambda x: -x["max_abs_delta"])
     )
+    acc = s.get("accepted_drift") or []
+    rows_acc = "".join(
+        f"<tr><td>{esc(a['benchmark'])}</td><td>{esc(a['subdimension'])}</td>"
+        f"<td>{a['max_abs_delta']}</td>"
+        f"<td>{a['ci_halfwidth_score10'] if a['ci_halfwidth_score10'] is not None else '—'}</td>"
+        f"<td>{a['delta_over_ci'] if a['delta_over_ci'] is not None else '—'}</td></tr>"
+        for a in sorted(acc, key=lambda x: -x["max_abs_delta"])
+    ) or "<tr><td colspan=5>无</td></tr>"
     rows_p = "".join(
         f"<tr><td>{esc(p['p_code'])}</td><td>{p['n_models']}</td>"
         f"<td class='{'bad' if not p['pass_delta'] else 'ok'}'>{p['max_abs_delta']}</td>"
@@ -802,7 +975,7 @@ body{{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margi
 h1{{font-size:1.5rem}} h2{{font-size:1.15rem;margin-top:2rem;border-bottom:1px solid #ddd;padding-bottom:.3rem}}
 table{{border-collapse:collapse;width:100%;font-size:.86rem;margin:.6rem 0}}
 th,td{{border:1px solid #ddd;padding:.3rem .5rem;text-align:left}} th{{background:#f5f5f5}}
-td.ok{{color:#137333}} td.bad{{background:#fce8e6;color:#c5221f;font-weight:600}}
+td.ok{{color:#137333}} .muted{{color:#70757a}} .note{{font-size:.85rem;color:#5f6368;background:#f8f9fa;padding:.6rem .8rem;border-left:3px solid #dadce0}} td.bad{{background:#fce8e6;color:#c5221f;font-weight:600}}
 .metric{{display:inline-block;background:#f1f3f4;border-radius:6px;padding:.5rem .8rem;margin:.3rem .4rem .3rem 0}}
 .metric b{{font-size:1.2rem;display:block}} .good{{color:#137333}} .warn{{color:#c5221f}}
 </style></head><body>
@@ -817,16 +990,22 @@ td.ok{{color:#137333}} td.bad{{background:#fce8e6;color:#c5221f;font-weight:600}
 <table><tr><th>项</th><th>判据</th><th>总数</th><th>未通过</th></tr>
 <tr><td>1 逐格 |Δ|</td><td>≤{CELL_DELTA_THRESHOLD}</td><td>{am['cell_delta']['total']}</td><td class="{'bad' if am['cell_delta']['fail'] else 'ok'}">{am['cell_delta']['fail']}</td></tr>
 <tr><td>2 逐 P |Δ|</td><td>≤{P_DELTA_THRESHOLD}</td><td>{am['p_delta']['total']}</td><td class="{'bad' if am['p_delta']['fail'] else 'ok'}">{am['p_delta']['fail']}</td></tr>
-<tr><td>3a 逐格 τ</td><td>≥{TAU_THRESHOLD}</td><td>{am['cell_tau']['total']}</td><td class="{'bad' if am['cell_tau']['fail'] else 'ok'}">{am['cell_tau']['fail']}</td></tr>
+<tr><td>3a 逐格 τ <b>新</b>(只算可区分的模型对)</td><td>≥{TAU_THRESHOLD}</td><td>{am['cell_tau']['total']}</td><td class="{'bad' if am['cell_tau']['fail'] else 'ok'}">{am['cell_tau']['fail']}</td></tr>
+<tr class=muted><td>3a' 逐格 τ 旧(全部模型对，留档)</td><td>≥{TAU_THRESHOLD}</td><td>{am['cell_tau_raw_legacy']['total']}</td><td>{am['cell_tau_raw_legacy']['fail']}</td></tr>
 <tr><td>3b 逐 P τ</td><td>≥{TAU_THRESHOLD}</td><td>{am['p_tau']['total']}</td><td class="{'bad' if am['p_tau']['fail'] else 'ok'}">{am['p_tau']['fail']}</td></tr>
 <tr><td>4 留一法</td><td>≤{LOO_RELAX}</td><td>{am['loo']['total']}</td><td class="{'bad' if am['loo']['fail'] else 'ok'}">{am['loo']['fail']}</td></tr>
-<tr><td>5 bootstrap CI</td><td>acc≤{CI_ACC_THRESHOLD}/stat≤{CI_STAT_THRESHOLD}</td><td>{am['ci']['total']}</td><td class="{'bad' if am['ci']['fail'] else 'ok'}">{am['ci']['fail']}</td></tr>
+<tr><td>5 抽样效率 <b>新</b> (实测CI膨胀/理论膨胀)</td><td>≤{CI_EFFICIENCY_THRESHOLD}</td><td>{am['ci']['total']}</td><td class="{'bad' if am['ci']['fail'] else 'ok'}">{am['ci']['fail']}</td></tr>
+<tr class=muted><td>5' bootstrap CI 绝对半宽 旧(留档)</td><td>acc≤{CI_ACC_THRESHOLD}/stat≤{CI_STAT_THRESHOLD}</td><td>{am['ci_abs_legacy']['total']}</td><td>{am['ci_abs_legacy']['fail']}</td></tr>
 </table>
+<p class=note>标准 3/5 本轮改为相对判据：旧 τ 在 n=9 时一次相邻换位即掉到 0.889（等于要求零换位），且会把统计上无法区分的模型换位判为失败；
+旧 CI 绝对门槛有 13 个格所需样本量超过 benchmark 全量本身，跑全量也过不了。原始绝对值全部保留在上表与下表中。</p>
+<h2>已接受的漂移（用户裁决：不加题，带注记进面板）</h2>
+<table><tr><th>benchmark</th><th>格</th><th>maxΔ</th><th>CI半宽</th><th>Δ/CI</th></tr>{rows_acc}</table>
 <p>留一法最差漂移：<code>{esc(s['loo_worst']['benchmark'])}</code> · {esc(s['loo_worst']['subdimension'])} · 留出 <code>{esc(s['loo_worst']['model_key'])}</code> · Δ={s['loo_worst']['delta']}。</p>
 <h2>逐 P 漂移与排名一致性</h2>
 <table><tr><th>P</th><th>模型数</th><th>maxΔ</th><th>τ</th></tr>{rows_p}</table>
-<h2>逐格漂移与排名一致性（按 maxΔ 降序）</h2>
-<table><tr><th>benchmark</th><th>格</th><th>模型数</th><th>maxΔ</th><th>τ</th></tr>{rows_cells}</table>
+<h2>逐格漂移与排名一致性（按 maxΔ 降序，新旧判据并列）</h2>
+<table><tr><th>benchmark</th><th>格</th><th>模型数</th><th>maxΔ</th><th>τ新</th><th>可区分对</th><th>τ旧</th><th>CI半宽<br>精选</th><th>CI半宽<br>全量</th><th>抽样效率</th></tr>{rows_cells}</table>
 </body></html>"""
     (OUT_DIR / "validation_report.html").write_text(doc, encoding="utf-8")
 

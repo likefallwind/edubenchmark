@@ -224,6 +224,7 @@ class Bench:
         axes: tuple[tuple[str, str], ...] = (),
         panel_subdir: str | None = None,
         coverage_floor: dict[str, int] | None = None,
+        coverage_target: tuple[str, int] | None = None,
     ) -> None:
         self.bid = bid
         self.tier = tier
@@ -235,6 +236,13 @@ class Bench:
         self.panel_subdir = panel_subdir
         # axis_name -> minimum items per level of that axis (coverage axes only).
         self.coverage_floor = coverage_floor or {}
+        # (axis_index_name, per_level_target): allocate EQUALLY across the levels
+        # of this coverage axis instead of proportionally.  Correct when the
+        # consumed metric is computed per level and then macro-averaged with
+        # equal weights (sas_bench QWK/CCS/ECS over 12 subtasks): across-level
+        # composition cannot enter the score, so equal allocation is unbiased and
+        # minimizes the variance of the macro-average.  ``rate`` is ignored.
+        self.coverage_target = coverage_target
 
     def panel_base(self) -> Path:
         base = EVAL_DIR / self.bid
@@ -281,7 +289,9 @@ def st_asap(i):
 
 
 def st_sas(i):
-    return (_b(i, "subject"), _b(i, "question_type"))
+    # The subtask (= the level QWK/CCS/ECS are computed on before the equal-weight
+    # macro-average) is exactly the `task` bucket.
+    return (_b(i, "task"),)
 
 
 def st_sata(i):
@@ -354,11 +364,15 @@ BENCHES: list[Bench] = [
           # the human-score band drives QWK directly and must stay proportional.
           axes=(("prompt", C), ("source_used", P), ("gold_band", P)),
           coverage_floor={"prompt": 150}),
+    # Round 2 decision: all three statistics are computed per subtask and then
+    # macro-averaged with EQUAL weights, so subtask is a coverage axis and equal
+    # allocation (~150/subtask, or the whole subtask when it is smaller) is both
+    # unbiased and variance-optimal.  At 12% the smallest subtasks held ~6-41
+    # items, which is what made ECS swing 1.94.  Yields 1,609 items (39.2% of
+    # sas) -- cheaper than a flat 44% rate while giving every subtask >=150.
     Bench("sas_bench", "A", 0.12, sig_correct, st_sas,
           ["QWK holistic total score", "CCS step scoring consistency", "ECS error-cause consistency"],
-          # All three statistics are computed per subtask then macro-averaged, so
-          # subject/question_type (= the subtask) is a coverage axis.
-          axes=(("subject", C), ("question_type", C))),
+          axes=(("task", C),), coverage_target=("task", 150)),
     Bench("eduguard_sata", "A", 0.12, sig_rfs, st_sata, ["Teaching Harm / SATA RFS"],
           axes=(("language", P), ("scenario", P))),
     Bench("bea2025_judge", "A", 0.12, sig_correct, st_judge,
@@ -640,9 +654,23 @@ def select_benchmark(
     # Strict proportional allocation to the benchmark's target size.  No
     # per-stratum floor: on a proportional axis a floor is exactly the bias that
     # broke round 1.
-    target = max(round(rate * len(item_ids)), min(MIN_TOTAL_ITEMS, len(item_ids)))
     sizes = {k: len(v) for k, v in strata.items()}
-    quota = largest_remainder(sizes, target)
+    if bench.coverage_target:
+        # Equal allocation across the coverage axis's levels; within a level the
+        # difficulty sub-strata are still filled proportionally.
+        axis_name, per_level = bench.coverage_target
+        axis_idx = next(i for i, (n, _) in enumerate(bench.axes) if n == axis_name)
+        quota = {}
+        by_level: dict[str, dict[tuple, int]] = {}
+        for skey, n in sizes.items():
+            by_level.setdefault(str(skey[axis_idx]), {})[skey] = n
+        for level, sub_sizes in sorted(by_level.items()):
+            level_total = sum(sub_sizes.values())
+            quota.update(largest_remainder(sub_sizes, min(level_total, per_level)))
+        target = sum(quota.values())
+    else:
+        target = max(round(rate * len(item_ids)), min(MIN_TOTAL_ITEMS, len(item_ids)))
+        quota = largest_remainder(sizes, target)
 
     selected: set[str] = set()
     stratum_report = []
@@ -801,19 +829,28 @@ def main() -> None:
         manifest["not_selectable"].append({"benchmark": bid,
                                            "reason": "no per-item repo run (scored from otherbenchmark HTML card)"})
 
+    frac = total_mini / total_full if total_full else 0.0
     manifest["totals"] = {
         "curated_benchmarks": len(manifest["benchmarks"]),
         "full_items_curated_benchmarks": total_full,
         "mini_items_curated_benchmarks": total_mini,
-        "mini_fraction_curated_benchmarks": round(total_mini / total_full, 4) if total_full else None,
+        "mini_fraction_curated_benchmarks": round(frac, 4),
+        # User constraint: aim for ~10% of the full set, never exceed 20% -- past
+        # that the curation stops being worth doing.  Never raise a sampling rate
+        # to make an acceptance metric look better; accept and annotate instead.
+        "budget_target_fraction": 0.10,
+        "budget_hard_ceiling_fraction": 0.20,
+        "within_hard_ceiling": frac <= 0.20,
     }
 
     manifest_path = OUT_DIR / "selection_manifest.json"
     manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    print(f"\nCurated {total_mini}/{total_full} items across {len(manifest['benchmarks'])} benchmarks "
-          f"({total_mini / total_full:.1%} of their full item count)")
+    print(f"\n{'='*66}")
+    print(f"TOTAL: {total_mini}/{total_full} items = {frac:.2%} of the full set")
+    print(f"  budget target ~10%   hard ceiling 20%   ->  {'WITHIN' if frac <= 0.20 else 'OVER CEILING'}")
+    print(f"{'='*66}")
     print(f"manifest -> {manifest_path.relative_to(ROOT).as_posix()}")
 
 
