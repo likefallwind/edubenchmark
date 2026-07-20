@@ -43,10 +43,16 @@ OUT_DIR = ROOT / "data" / "mini_selection_v1"
 
 SEED = 20260719
 N_DIFF_BINS = 5
-# A content stratum is only split by difficulty when it is large enough that
-# every difficulty bin can still clear the minimum floor; otherwise it stays a
-# single difficulty bin so strata do not fragment into slivers.
-DIFF_SPLIT_MIN_FACTOR = N_DIFF_BINS
+# Content groups smaller than this are pooled into a single "other" group before
+# allocation.  Without pooling, a long tail of tiny levels (mathtutorbench topics:
+# ~95 levels, most with 1-7 items) soaks up quota and crushes the dominant level's
+# share -- the -42pp distortion measured in round 1.
+RARE_GROUP_MIN = 20
+# Split a content group by difficulty only when it can carry the bins.
+DIFF_SPLIT_MIN = 25
+# Every mini list must clear the aggregation's global exclusion guard
+# (inventory_eval_runs drops any run with scored/total < 100); keep margin.
+MIN_TOTAL_ITEMS = 150
 # A benchmark needs at least this many distinct model faces before the
 # difficulty/discrimination signal is trusted; below it we degrade to pure
 # content stratification (plan section 3: k12vista/mathvista/mmtutorbench).
@@ -191,6 +197,22 @@ def _parse_teaching(item: dict[str, Any]) -> float | None:
 
 
 class Bench:
+    """One curated benchmark.
+
+    ``axes`` names each component of the tuple ``strata`` returns and classifies
+    it, which decides how the allocator treats it:
+
+    - ``proportional``: the consumed metric is a pooled mean over items, so its
+      value moves when the composition moves.  These axes are reproduced at
+      population share by largest-remainder allocation and get NO minimum floor
+      -- a floor here silently rewrites the metric (this is what broke
+      longtutor_diagnosis's macro-F1 and mathtutorbench_scaffolding's win-rate).
+    - ``coverage``: the metric is computed *within* each level and then macro-
+      averaged (or reported per level), so across-level composition does not
+      enter the score, but each level needs enough items to be stable.  Only
+      these may carry a floor, and it is kept small.
+    """
+
     def __init__(
         self,
         bid: str,
@@ -199,9 +221,9 @@ class Bench:
         signal: Callable[[dict[str, Any]], float | None] | None,
         strata: Callable[[dict[str, Any]], tuple] | None,
         cells: list[str],
-        min_per_stratum: int = 8,
+        axes: tuple[tuple[str, str], ...] = (),
         panel_subdir: str | None = None,
-        prompt_floor: tuple[str, int] | None = None,
+        coverage_floor: dict[str, int] | None = None,
     ) -> None:
         self.bid = bid
         self.tier = tier
@@ -209,11 +231,10 @@ class Bench:
         self.signal = signal
         self.strata = strata
         self.cells = cells
-        self.min_per_stratum = min_per_stratum
+        self.axes = axes
         self.panel_subdir = panel_subdir
-        # (bucket_key, floor): guarantee every value of buckets[key] keeps at
-        # least ``floor`` items (asap_2 QWK-per-prompt stability, plan section 3).
-        self.prompt_floor = prompt_floor
+        # axis_name -> minimum items per level of that axis (coverage axes only).
+        self.coverage_floor = coverage_floor or {}
 
     def panel_base(self) -> Path:
         base = EVAL_DIR / self.bid
@@ -314,50 +335,92 @@ def st_edubench(i):
     return (_b(i, "task"),)
 
 
+P = "proportional"
+C = "coverage"
+
 BENCHES: list[Bench] = [
     # ---- Tier A (hard cut, ~12%) ----
-    Bench("mmlu_pro", "A", 0.12, sig_correct, st_mmlu, ["overall/category accuracy"]),
-    Bench("agieval", "A", 0.12, sig_correct, st_agieval, ["overall/task/language/question_type accuracy"]),
+    Bench("mmlu_pro", "A", 0.12, sig_correct, st_mmlu, ["overall/category accuracy"],
+          axes=(("category", P),)),
+    Bench("agieval", "A", 0.12, sig_correct, st_agieval, ["overall/task/language/question_type accuracy"],
+          axes=(("task", P), ("question_type", P))),
     Bench("olympiadbench", "A", 0.12, sig_correct, st_olympiad,
-          ["overall/subject/language/modality accuracy", "multimodal-subset accuracy"]),
+          ["overall/subject/language/modality accuracy", "multimodal-subset accuracy"],
+          # modality also carves out the P03 multimodal cell, but the overall cell
+          # pools it, so it must stay at population share.
+          axes=(("modality", P), ("subject", P), ("language", P))),
     Bench("asap_2", "A", 0.12, sig_asap, st_asap, ["essay holistic QWK"],
-          min_per_stratum=6, prompt_floor=("prompt", 150)),
+          # QWK is also reported per prompt, so prompt carries a coverage floor;
+          # the human-score band drives QWK directly and must stay proportional.
+          axes=(("prompt", C), ("source_used", P), ("gold_band", P)),
+          coverage_floor={"prompt": 150}),
     Bench("sas_bench", "A", 0.12, sig_correct, st_sas,
           ["QWK holistic total score", "CCS step scoring consistency", "ECS error-cause consistency"],
-          min_per_stratum=12),
-    Bench("eduguard_sata", "A", 0.12, sig_rfs, st_sata, ["Teaching Harm / SATA RFS"], min_per_stratum=12),
+          # All three statistics are computed per subtask then macro-averaged, so
+          # subject/question_type (= the subtask) is a coverage axis.
+          axes=(("subject", C), ("question_type", C))),
+    Bench("eduguard_sata", "A", 0.12, sig_rfs, st_sata, ["Teaching Harm / SATA RFS"],
+          axes=(("language", P), ("scenario", P))),
     Bench("bea2025_judge", "A", 0.12, sig_correct, st_judge,
-          ["judge labels: mistake/guidance/actionability"], min_per_stratum=15),
+          ["judge labels: mistake/guidance/actionability"],
+          # macro-F1 is averaged over dimensions (coverage) but is computed across
+          # the gold label classes, so gold_label must keep population share.
+          axes=(("dimension", C), ("gold_label", P))),
     Bench("mrbench_judge", "A", 0.12, sig_correct, st_judge,
-          ["8-dimension tutor response judging"], min_per_stratum=15),
+          ["8-dimension tutor response judging"],
+          axes=(("dimension", C), ("gold_label", P))),
     Bench("edubench", "A", 0.12, sig_edubench, st_edubench,
-          ["<edubench-metric-cells>"], min_per_stratum=20, panel_subdir="_judge-deepseek-v3.2"),
+          ["<edubench-metric-cells>"], axes=(("task", P),), panel_subdir="_judge-deepseek-v3.2"),
     Bench("longtutor_evidence", "A", 0.12, sig_correct, st_lt_evidence,
           ["Information Extraction accuracy", "Multi-session Reasoning accuracy", "Hallucination Check accuracy"],
-          min_per_stratum=20),
+          # Each memory_type is its own consumed cell (accuracy within the level),
+          # so composition across levels does not enter any score.
+          axes=(("memory_type", C),)),
     Bench("longtutor_diagnosis", "A", 0.12, sig_correct, st_lt_diagnosis,
-          ["four-category knowledge-state diagnosis macro-F1"], min_per_stratum=20),
+          ["four-category knowledge-state diagnosis macro-F1"],
+          # The headline IS macro-F1 over these gold classes: equalizing them
+          # rewrites the metric. Strictly proportional, no floor.
+          axes=(("diagnosis", P),)),
     Bench("longtutor_teaching", "A", 0.12, sig_teaching, st_lt_teaching,
-          ["judge dims: strategy_alignment + history_utilization (1-5)"], min_per_stratum=20),
-    Bench("mathtutorbench_problem_solving", "A", 0.12, sig_correct, st_none, ["Problem Solving"]),
-    Bench("mathtutorbench_solution_correctness", "A", 0.12, sig_correct, st_mtb_error, ["Solution Correctness"]),
-    Bench("mathtutorbench_mistake_location", "A", 0.12, sig_correct, st_mtb_error, ["Mistake Location"]),
-    Bench("mathtutorbench_mistake_correction", "A", 0.12, sig_correct, st_none, ["Mistake Correction"]),
-    Bench("mathtutorbench_socratic", "A", 0.12, sig_bleu, st_none, ["Socratic Questioning"]),
-    Bench("mathtutorbench_pedagogy", "A", 0.12, sig_win, st_mtb_topic, ["Pedagogy IF"]),
-    Bench("mathtutorbench_scaffolding", "A", 0.12, sig_win, st_mtb_topic, ["Scaffolding"]),
+          ["judge dims: strategy_alignment + history_utilization (1-5)"],
+          axes=(("diagnosis", P),)),
+    Bench("mathtutorbench_problem_solving", "A", 0.12, sig_correct, st_none, ["Problem Solving"],
+          axes=(("all", P),)),
+    Bench("mathtutorbench_solution_correctness", "A", 0.12, sig_correct, st_mtb_error, ["Solution Correctness"],
+          axes=(("is_error", P),)),
+    Bench("mathtutorbench_mistake_location", "A", 0.12, sig_correct, st_mtb_error, ["Mistake Location"],
+          axes=(("is_error", P),)),
+    Bench("mathtutorbench_mistake_correction", "A", 0.12, sig_correct, st_none, ["Mistake Correction"],
+          axes=(("all", P),)),
+    Bench("mathtutorbench_socratic", "A", 0.12, sig_bleu, st_none, ["Socratic Questioning"],
+          axes=(("all", P),)),
+    Bench("mathtutorbench_pedagogy", "A", 0.12, sig_win, st_mtb_topic, ["Pedagogy IF"],
+          # win_rate is a pooled mean and topic is a ~95-level long tail: this is
+          # the axis that suffered the -42pp distortion. Proportional + pooling.
+          axes=(("topic", P),)),
+    Bench("mathtutorbench_scaffolding", "A", 0.12, sig_win, st_mtb_topic, ["Scaffolding"],
+          axes=(("topic", P),)),
     # ---- Tier B (mild cut, ~40%) ----
-    Bench("ceval", "B", 0.40, sig_correct, st_ceval, ["overall/category/subject accuracy"]),
-    Bench("pedagogy_benchmark", "B", 0.40, sig_correct, st_pedagogy,
-          ["CDPK teaching knowledge selection", "SEND special education needs selection"]),
-    Bench("mathvista", "B", 0.40, sig_correct, st_mathvista, ["task/question_type/answer_type accuracy"]),
+    Bench("ceval", "B", 0.40, sig_correct, st_ceval, ["overall/category/subject accuracy"],
+          axes=(("category", P),)),
+    # 0.60, not 0.40: the aggregation drops pedagogy entirely below 600 scored
+    # items (and below 8 categories), so a 40% list would be silently zero-evidence.
+    Bench("pedagogy_benchmark", "B", 0.60, sig_correct, st_pedagogy,
+          ["CDPK teaching knowledge selection", "SEND special education needs selection"],
+          axes=(("category", P),)),
+    Bench("mathvista", "B", 0.40, sig_correct, st_mathvista, ["task/question_type/answer_type accuracy"],
+          axes=(("task", P), ("answer_type", P))),
     Bench("eduguard_adversarial", "B", 0.40, sig_adversarial, st_adversarial,
-          ["Adversarial Safety ASR", "Refusal quality distribution"], panel_subdir="_judge-deepseek-v3.2"),
-    Bench("ifeval", "B", 0.40, sig_correct, st_ifeval, ["prompt-level strict accuracy"]),
-    Bench("mmtutorbench", "B", 0.40, sig_mmtutor, st_mmtutor, ["multimodal tutor score"]),
+          ["Adversarial Safety ASR", "Refusal quality distribution"],
+          axes=(("category", P),), panel_subdir="_judge-deepseek-v3.2"),
+    Bench("ifeval", "B", 0.40, sig_correct, st_ifeval, ["prompt-level strict accuracy"],
+          axes=(("n_instructions", P),)),
+    Bench("mmtutorbench", "B", 0.40, sig_mmtutor, st_mmtutor, ["multimodal tutor score"],
+          axes=(("domain", P), ("category", P))),
     Bench("k12vista", "B", 0.40, sig_k12, st_k12,
           ["official partial-credit score (per-blank 0/1 mean)", "math problem-figure subset score",
-           "science/geo subject-chart subset score"]),
+           "science/geo subject-chart subset score"],
+          axes=(("subject_group", P), ("grade", P), ("type", P))),
 ]
 
 # Tier C (full set, no list -- MINI mode runs whole but into the mini tree).
@@ -432,6 +495,53 @@ def weighted_sample(items: list[str], k: int, disc: dict[str, float], seed_str: 
     return sorted(it for _, it in keyed[:k])
 
 
+def largest_remainder(sizes: dict[Any, int], target: int) -> dict[Any, int]:
+    """Allocate ``target`` items across strata in proportion to their size.
+
+    Largest-remainder (Hare quota): floor each exact share, then hand the leftover
+    seats to the largest fractional remainders.  Ties break on the stringified key
+    so the result is fully deterministic.  Allocations are capped at stratum size
+    and the freed remainder is redistributed, so the total is met exactly whenever
+    the population allows it.
+    """
+    total = sum(sizes.values())
+    if target >= total:
+        return dict(sizes)
+    if target <= 0 or total == 0:
+        return {k: 0 for k in sizes}
+
+    alloc: dict[Any, int] = {}
+    active = dict(sizes)
+    assigned = 0
+    while True:
+        pool = target - assigned
+        denom = sum(active.values())
+        if not active or pool <= 0 or denom == 0:
+            break
+        exact = {k: pool * n / denom for k, n in active.items()}
+        base = {k: int(math.floor(v)) for k, v in exact.items()}
+        leftover = pool - sum(base.values())
+        order = sorted(active, key=lambda k: (-(exact[k] - base[k]), str(k)))
+        for k in order[:leftover]:
+            base[k] += 1
+        # Cap at stratum size; anything capped is finalized and its surplus is
+        # redistributed among the strata that still have room.
+        capped = {k: v for k, v in base.items() if v >= active[k]}
+        if capped:
+            for k in capped:
+                alloc[k] = active[k]
+                assigned += active[k]
+                del active[k]
+            continue
+        for k, v in base.items():
+            alloc[k] = v
+            assigned += v
+        break
+    for k in sizes:
+        alloc.setdefault(k, 0)
+    return alloc
+
+
 def quantile_bins(values: list[float], n_bins: int) -> list[float]:
     """Return ``n_bins - 1`` interior cut points for equal-frequency bins."""
     if not values:
@@ -502,12 +612,23 @@ def select_benchmark(
     for iid in item_ids:
         content.setdefault(bench.strata(rep_row[iid]), []).append(iid)
 
-    # Layer difficulty quintiles inside each sufficiently large content stratum.
+    # Pool rare content groups so the long tail cannot soak up quota.
+    pooled: dict[tuple, list[str]] = {}
+    n_pooled_groups = 0
+    for ckey, ids in sorted(content.items(), key=lambda kv: tuple(map(str, kv[0]))):
+        if len(ids) < RARE_GROUP_MIN:
+            pooled.setdefault(("__other__",), []).extend(ids)
+            n_pooled_groups += 1
+        else:
+            pooled[ckey] = ids
+
+    # Layer difficulty quintiles inside each sufficiently large content group.
+    # Bins are equal-frequency, so proportional allocation across them preserves
+    # the difficulty profile as well as the content profile.
     strata: dict[tuple, list[str]] = {}
-    for ckey, ids in content.items():
+    for ckey, ids in pooled.items():
         diff_vals = [difficulty[i] for i in ids if difficulty[i] is not None]
-        big_enough = len(ids) >= DIFF_SPLIT_MIN_FACTOR * bench.min_per_stratum
-        if use_difficulty and big_enough and len(set(diff_vals)) > 1:
+        if use_difficulty and len(ids) >= DIFF_SPLIT_MIN and len(set(diff_vals)) > 1:
             cuts = quantile_bins(diff_vals, N_DIFF_BINS)
             for i in ids:
                 d = difficulty[i]
@@ -516,31 +637,36 @@ def select_benchmark(
         else:
             strata.setdefault(ckey + ("d*",), []).extend(ids)
 
-    # Proportional-random sampling within each stratum, with a per-stratum floor.
+    # Strict proportional allocation to the benchmark's target size.  No
+    # per-stratum floor: on a proportional axis a floor is exactly the bias that
+    # broke round 1.
+    target = max(round(rate * len(item_ids)), min(MIN_TOTAL_ITEMS, len(item_ids)))
+    sizes = {k: len(v) for k, v in strata.items()}
+    quota = largest_remainder(sizes, target)
+
     selected: set[str] = set()
     stratum_report = []
     for skey in sorted(strata, key=lambda t: tuple(map(str, t))):
         ids = strata[skey]
-        n = len(ids)
-        k = max(min(n, bench.min_per_stratum), round(rate * n))
-        k = min(k, n)
-        picked = weighted_sample(ids, k, disc, f"{bench.bid}|{'/'.join(map(str, skey))}")
+        k = quota[skey]
+        picked = weighted_sample(ids, k, disc, f"{bench.bid}|{'/'.join(map(str, skey))}") if k else []
         selected.update(picked)
-        stratum_report.append({"stratum": "/".join(map(str, skey)), "n_total": n, "n_selected": len(picked)})
+        stratum_report.append({"stratum": "/".join(map(str, skey)),
+                               "n_total": len(ids), "n_selected": len(picked)})
 
-    # Guarantee per-prompt floors (asap_2): top up any prompt under its floor.
-    if bench.prompt_floor:
-        key, floor = bench.prompt_floor
-        by_prompt: dict[str, list[str]] = {}
+    # Coverage-axis floors only (never a proportional axis).
+    for axis_name, floor in sorted(bench.coverage_floor.items()):
+        by_level: dict[str, list[str]] = {}
         for iid in item_ids:
-            by_prompt.setdefault(_b(rep_row[iid], key), []).append(iid)
-        for pval, ids in sorted(by_prompt.items()):
+            by_level.setdefault(_b(rep_row[iid], axis_name), []).append(iid)
+        for level, ids in sorted(by_level.items()):
             have = [i for i in ids if i in selected]
             if len(have) < floor:
                 need = min(floor, len(ids)) - len(have)
                 pool = [i for i in ids if i not in selected]
-                topup = weighted_sample(pool, need, disc, f"{bench.bid}|floor|{pval}")
-                selected.update(topup)
+                selected.update(weighted_sample(pool, need, disc, f"{bench.bid}|floor|{axis_name}|{level}"))
+
+    composition = composition_report(bench, rep_row, item_ids, selected)
 
     # Per-cell counts (how many selected items land in each consumed cell).
     cell_counts = per_cell_counts(bench, rep_row, selected)
@@ -555,11 +681,56 @@ def select_benchmark(
         "difficulty_estimated": use_difficulty,
         "panel_models": [f["model_key"] for f in faces],
         "consumed_cells": bench.cells,
+        "allocation": "largest_remainder_proportional",
+        "axes": [{"axis": n, "kind": k} for n, k in bench.axes],
+        "coverage_floor": bench.coverage_floor,
+        "rare_group_min": RARE_GROUP_MIN,
+        "n_pooled_rare_groups": n_pooled_groups,
         "n_strata": len(strata),
+        "composition": composition,
+        "max_abs_shift_pp_proportional_axes": round(
+            max([v["max_abs_shift_pp"] for v in composition.values() if v["kind"] == "proportional"],
+                default=0.0), 3),
         "strata": stratum_report,
         "cell_selected_counts": cell_counts,
         "selected_ids": sorted(selected),
     }
+
+
+def composition_report(bench: Bench, rep_row: dict[str, dict[str, Any]],
+                       item_ids: list[str], selected: set[str]) -> dict[str, Any]:
+    """Population vs mini share per axis level, in percentage points.
+
+    ``max_abs_shift_pp`` on a proportional axis is the headline fidelity number:
+    it is the largest amount by which the curated subset misrepresents the
+    population on an axis the metric actually depends on."""
+    out: dict[str, Any] = {}
+    for idx, (axis_name, kind) in enumerate(bench.axes):
+        full_c: dict[str, int] = {}
+        mini_c: dict[str, int] = {}
+        for iid in item_ids:
+            key = bench.strata(rep_row[iid])
+            level = str(key[idx]) if idx < len(key) else "?"
+            full_c[level] = full_c.get(level, 0) + 1
+            if iid in selected:
+                mini_c[level] = mini_c.get(level, 0) + 1
+        nf, nm = len(item_ids), len(selected)
+        levels = []
+        worst = 0.0
+        for level in sorted(full_c):
+            fp = 100.0 * full_c[level] / nf if nf else 0.0
+            mp = 100.0 * mini_c.get(level, 0) / nm if nm else 0.0
+            worst = max(worst, abs(mp - fp))
+            levels.append({"level": level, "full_pct": round(fp, 3),
+                           "mini_pct": round(mp, 3), "shift_pp": round(mp - fp, 3)})
+        out[axis_name] = {
+            "kind": kind,
+            "n_levels": len(full_c),
+            "max_abs_shift_pp": round(worst, 3),
+            "levels": levels if len(levels) <= 12 else
+                      sorted(levels, key=lambda x: -abs(x["shift_pp"]))[:12],
+        }
+    return out
 
 
 def per_cell_counts(bench: Bench, rep_row: dict[str, dict[str, Any]], selected: set[str]) -> dict[str, int]:

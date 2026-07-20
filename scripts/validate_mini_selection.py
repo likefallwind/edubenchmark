@@ -534,13 +534,23 @@ def main() -> None:
         cell_rows = _cell_subset_rows(bid, sub, rows)
         hw = bootstrap_ci_halfwidth(bid, cell_rows, sub, BOOTSTRAP_B)
         threshold = CI_STAT_THRESHOLD if sub in STAT_SUBDIMS else CI_ACC_THRESHOLD
+        # A cell whose CI could not be computed is NOT a pass -- reporting it as
+        # one hides the fact that we have no precision estimate for it.
         ci_results.append({
             "benchmark": bid, "subdimension": sub,
             "kind": "stat" if sub in STAT_SUBDIMS else "accuracy/mean",
             "n_items": len(cell_rows),
             "ci_halfwidth_score10": round(hw, 4) if hw is not None else None,
             "threshold": threshold,
-            "pass": (hw is None) or (hw <= threshold),
+            "status": "computed" if hw is not None else "not_computed",
+            "pass": hw is not None and hw <= threshold,
+            # Sample size a 2pp (0.2 on the 0-10 scale) CI would require at the
+            # observed rate -- shows when the threshold is an arithmetic floor
+            # rather than a sampling-design problem.
+            "n_needed_for_threshold": (
+                None if hw is None or hw <= threshold
+                else int(round(len(cell_rows) * (hw / threshold) ** 2))
+            ),
         })
 
     summary = assemble_summary(
@@ -624,8 +634,9 @@ def assemble_summary(manifest, curated, cell_results, p_results, loo_results, lo
             "p_delta": {"total": len(p_results), "fail": len(p_fail_delta)},
             "p_tau": {"total": len([p for p in p_results if p["tau"] is not None]), "fail": len(p_fail_tau)},
             "loo": {"total": len(loo_results), "fail": len(loo_fail)},
-            "ci": {"total": len([c for c in ci_results if c["ci_halfwidth_score10"] is not None]),
-                   "fail": len(ci_fail)},
+            "ci": {"total": len([c for c in ci_results if c["status"] == "computed"]),
+                   "fail": len([c for c in ci_fail if c["status"] == "computed"]),
+                   "not_computed": len([c for c in ci_results if c["status"] == "not_computed"])},
         },
         "loo_worst": loo_worst,
         "failures": {

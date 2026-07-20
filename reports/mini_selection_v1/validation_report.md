@@ -30,203 +30,175 @@
 
 ## 二、总量
 
-精选合计 **14381** 题 / 全量 **90903** 题 = **15.8%**（这 26 个可精选 benchmark）。
+精选合计 **13101** 题 / 全量 **90903** 题 = **14.4%**（这 26 个可精选 benchmark）。
 
 ## 三、验收五项结果矩阵
 
 | 项 | 判据 | 总数 | 未通过 |
 |---|---|---:|---:|
-| 1 逐格绝对分漂移 | \|Δ\|≤0.3 | 45 | 17 |
-| 2 逐 P 绝对分漂移 | \|Δ\|≤0.2 | 18 | 9 |
-| 3a 逐格排名 τ | τ≥0.9 | 36 | 20 |
+| 1 逐格绝对分漂移 | \|Δ\|≤0.3 | 45 | 9 |
+| 2 逐 P 绝对分漂移 | \|Δ\|≤0.2 | 18 | 8 |
+| 3a 逐格排名 τ | τ≥0.9 | 38 | 15 |
 | 3b 逐 P 排名 τ | τ≥0.9 | 18 | 7 |
-| 4 留一法漂移 | \|Δ\|≤0.4 | 278 | 35 |
+| 4 留一法漂移 | \|Δ\|≤0.4 | 300 | 19 |
 | 5 bootstrap 95%CI 半宽 | acc≤0.2 / stat≤0.5 | 43 | 27 |
 
-留一法最差漂移：benchmark `sas_bench` · 格 `ECS error-cause consistency` · 留出模型 `minimax-m3` · Δ=-1.6214。
+留一法最差漂移：benchmark `sas_bench` · 格 `ECS error-cause consistency` · 留出模型 `minimax-m3` · Δ=-1.9408。
 
 ## 四、未通过明细
 
-### 逐格 |Δ|>阈（17）
+### 逐格 |Δ|>阈（9）
 
-- `mrbench_judge` · 8-dimension tutor response judging · maxΔ=0.666
-- `sas_bench` · CCS step scoring consistency · maxΔ=0.4464
-- `sas_bench` · ECS error-cause consistency · maxΔ=1.6214
-- `mathtutorbench_pedagogy` · Pedagogy IF · maxΔ=0.385
-- `sas_bench` · QWK holistic total score · maxΔ=0.453
+- `sas_bench` · CCS step scoring consistency · maxΔ=0.5831
+- `sas_bench` · ECS error-cause consistency · maxΔ=1.9408
+- `longtutor_evidence` · Hallucination Check accuracy · maxΔ=0.3339
+- `sas_bench` · QWK holistic total score · maxΔ=0.619
 - `eduguard_adversarial` · Refusal quality distribution · maxΔ=0.448
-- `mathtutorbench_scaffolding` · Scaffolding · maxΔ=1.135
-- `edubench` · TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) · maxΔ=0.403
-- `longtutor_diagnosis` · four-category knowledge-state diagnosis macro-F1 · maxΔ=1.3144
-- `edubench` · higher_order_thinking_ability_development (metric) · maxΔ=0.3703
-- `longtutor_teaching` · judge dims: strategy_alignment + history_utilization (1-5) · maxΔ=0.3338
-- `bea2025_judge` · judge labels: mistake/guidance/actionability · maxΔ=0.385
-- `k12vista` · math problem-figure subset score · maxΔ=0.4534
-- `edubench` · motivation_guidance_positive_feedback (metric) · maxΔ=0.4315
-- `olympiadbench` · overall/subject/language/modality accuracy · maxΔ=0.3363
-- `edubench` · personalized_adaptation_learning_support (metric) · maxΔ=0.7431
-- `edubench` · scenario_element_integration (metric) · maxΔ=0.5091
+- `pedagogy_benchmark` · SEND special education needs selection · maxΔ=0.303
+- `mathtutorbench_scaffolding` · Scaffolding · maxΔ=0.559
+- `longtutor_teaching` · judge dims: strategy_alignment + history_utilization (1-5) · maxΔ=0.3712
+- `olympiadbench` · overall/subject/language/modality accuracy · maxΔ=0.3402
 
-### 逐格 τ<0.9（20）
+### 逐格 τ<0.9（15）
 
 - `mrbench_judge` · 8-dimension tutor response judging · τ=0.8667 (n=6)
-- `sas_bench` · CCS step scoring consistency · τ=0.7143 (n=8)
 - `sas_bench` · ECS error-cause consistency · τ=0.3571 (n=8)
 - `longtutor_evidence` · Hallucination Check accuracy · τ=0.6667 (n=4)
 - `longtutor_evidence` · Information Extraction accuracy · τ=0.3333 (n=4)
 - `mathtutorbench_mistake_location` · Mistake Location · τ=0.8 (n=5)
 - `longtutor_evidence` · Multi-session Reasoning accuracy · τ=0.6667 (n=4)
-- `mathtutorbench_pedagogy` · Pedagogy IF · τ=0.7143 (n=7)
 - `edubench` · QG × clarity_concision_inspiration + scenario_element_integration (task×metric) · τ=0.8788 (n=12)
-- `sas_bench` · QWK holistic total score · τ=0.7857 (n=8)
+- `sas_bench` · QWK holistic total score · τ=0.7143 (n=8)
 - `mathtutorbench_solution_correctness` · Solution Correctness · τ=0.2 (n=5)
-- `eduguard_sata` · Teaching Harm / SATA RFS · τ=0.4286 (n=7)
-- `edubench` · error_identification_correction_accuracy (metric) · τ=0.8788 (n=12)
+- `eduguard_sata` · Teaching Harm / SATA RFS · τ=0.5855 (n=7)
 - `longtutor_teaching` · judge dims: strategy_alignment + history_utilization (1-5) · τ=0.6667 (n=4)
 - `bea2025_judge` · judge labels: mistake/guidance/actionability · τ=0.8667 (n=6)
-- `edubench` · motivation_guidance_positive_feedback (metric) · τ=0.7273 (n=12)
+- `edubench` · motivation_guidance_positive_feedback (metric) · τ=0.8485 (n=12)
 - `mmlu_pro` · overall/category accuracy · τ=0.8 (n=5)
-- `edubench` · personalized_adaptation_learning_support (metric) · τ=0.7879 (n=12)
-- `ifeval` · prompt-level strict accuracy · τ=0.8 (n=5)
-- `edubench` · scenario_element_integration (metric) · τ=0.8703 (n=12)
+- `edubench` · personalized_adaptation_learning_support (metric) · τ=0.8485 (n=12)
 
-### 逐 P |Δ|>阈（9）
+### 逐 P |Δ|>阈（8）
 
-- `P01` · maxΔ=0.2646
-- `P06` · maxΔ=0.2513
-- `P10` · maxΔ=0.3389
-- `P11` · maxΔ=0.5165
+- `P01` · maxΔ=0.2427
+- `P02` · maxΔ=0.3764
+- `P06` · maxΔ=0.3711
+- `P10` · maxΔ=0.6366
+- `P11` · maxΔ=0.3389
 - `P12` · maxΔ=0.2011
-- `P13` · maxΔ=0.7549
-- `P14` · maxΔ=0.3302
-- `P16` · maxΔ=0.3065
-- `P18` · maxΔ=0.209
+- `P13` · maxΔ=0.2576
+- `P18` · maxΔ=0.2
 
 ### 逐 P τ<0.9（7）
 
-- `P01` · τ=0.8 (n=5)
-- `P02` · τ=0.8889 (n=9)
 - `P03` · τ=0.8667 (n=10)
 - `P04` · τ=0.7143 (n=7)
+- `P06` · τ=0.8718 (n=13)
+- `P11` · τ=0.8485 (n=12)
 - `P12` · τ=0.8788 (n=12)
 - `P17` · τ=0.8571 (n=8)
-- `P18` · τ=0.5714 (n=8)
+- `P18` · τ=0.691 (n=8)
 
-### 留一法（35）
+### 留一法（19）
 
-- `sas_bench` · ECS error-cause consistency · 留出 deepseek-v4-pro · Δ=-0.6795
-- `sas_bench` · ECS error-cause consistency · 留出 doubao-seed-2-0-pro · Δ=-1.173
-- `sas_bench` · ECS error-cause consistency · 留出 glm-5.2 · Δ=-1.2294
-- `sas_bench` · ECS error-cause consistency · 留出 minimax-m2.7 · Δ=-1.3463
-- `sas_bench` · CCS step scoring consistency · 留出 minimax-m3 · Δ=-0.4464
-- `sas_bench` · ECS error-cause consistency · 留出 minimax-m3 · Δ=-1.6214
-- `sas_bench` · QWK holistic total score · 留出 minimax-m3 · Δ=-0.453
-- `mrbench_judge` · 8-dimension tutor response judging · 留出 deepseek-v3-2 · Δ=0.411
-- `mrbench_judge` · 8-dimension tutor response judging · 留出 minimax-m3 · Δ=0.435
-- `edubench` · motivation_guidance_positive_feedback (metric) · 留出 claude-sonnet-4.6 · Δ=0.4634
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 claude-sonnet-4.6 · Δ=0.7129
-- `edubench` · scenario_element_integration (metric) · 留出 claude-sonnet-4.6 · Δ=0.491
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 deepseek-v4-flash · Δ=0.5824
-- `edubench` · scenario_element_integration (metric) · 留出 deepseek-v4-flash · Δ=0.4428
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 doubao-seed-2-0-lite · Δ=0.6903
-- `edubench` · scenario_element_integration (metric) · 留出 doubao-seed-2-0-lite · Δ=0.4368
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 doubao-seed-2-0-pro · Δ=0.6853
-- `edubench` · scenario_element_integration (metric) · 留出 doubao-seed-2-0-pro · Δ=0.4857
-- `edubench` · TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) · 留出 glm-5.1 · Δ=0.5205
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 glm-5.1 · Δ=0.4922
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 glm-5.2 · Δ=0.5199
-- `edubench` · scenario_element_integration (metric) · 留出 glm-5.2 · Δ=0.4042
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 kimi-k2-6 · Δ=0.6383
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 minimax-m3 · Δ=0.6311
-- `edubench` · personalized_adaptation_learning_support (metric) · 留出 qwen3-14b · Δ=0.4411
-- `longtutor_diagnosis` · four-category knowledge-state diagnosis macro-F1 · 留出 deepseek-v4-pro · Δ=0.93
-- `longtutor_diagnosis` · four-category knowledge-state diagnosis macro-F1 · 留出 glm-5.2 · Δ=1.1093
-- `longtutor_diagnosis` · four-category knowledge-state diagnosis macro-F1 · 留出 minimax-m3 · Δ=1.1051
-- `mathtutorbench_scaffolding` · Scaffolding · 留出 deepseek-v4-flash · Δ=-0.406
-- `mathtutorbench_scaffolding` · Scaffolding · 留出 deepseek-v4-pro · Δ=0.873
-- `mathtutorbench_scaffolding` · Scaffolding · 留出 doubao-seed-2-0-lite · Δ=0.459
-- `mathtutorbench_scaffolding` · Scaffolding · 留出 doubao-seed-2-0-pro · Δ=0.779
-- `mathtutorbench_scaffolding` · Scaffolding · 留出 minimax-m2.7 · Δ=1.344
-- `mathtutorbench_scaffolding` · Scaffolding · 留出 minimax-m3 · Δ=1.246
-- `eduguard_adversarial` · Refusal quality distribution · 留出 glm-5.2 · Δ=-0.484
+- `sas_bench` · ECS error-cause consistency · 留出 deepseek-v4-pro · Δ=-0.8581
+- `sas_bench` · QWK holistic total score · 留出 deepseek-v4-pro · Δ=-0.518
+- `sas_bench` · CCS step scoring consistency · 留出 doubao-seed-2-0-pro · Δ=-0.4739
+- `sas_bench` · ECS error-cause consistency · 留出 doubao-seed-2-0-pro · Δ=-0.8803
+- `sas_bench` · QWK holistic total score · 留出 doubao-seed-2-0-pro · Δ=-0.4427
+- `sas_bench` · ECS error-cause consistency · 留出 glm-5.1 · Δ=-1.1885
+- `sas_bench` · CCS step scoring consistency · 留出 glm-5.2 · Δ=-0.5156
+- `sas_bench` · ECS error-cause consistency · 留出 glm-5.2 · Δ=-1.2584
+- `sas_bench` · ECS error-cause consistency · 留出 kimi-k2-6 · Δ=-0.5397
+- `sas_bench` · QWK holistic total score · 留出 kimi-k2-6 · Δ=-0.4302
+- `sas_bench` · CCS step scoring consistency · 留出 minimax-m2.7 · Δ=-0.4301
+- `sas_bench` · ECS error-cause consistency · 留出 minimax-m2.7 · Δ=-1.2959
+- `sas_bench` · CCS step scoring consistency · 留出 minimax-m3 · Δ=-0.5831
+- `sas_bench` · ECS error-cause consistency · 留出 minimax-m3 · Δ=-1.9408
+- `sas_bench` · QWK holistic total score · 留出 minimax-m3 · Δ=-0.619
+- `mrbench_judge` · 8-dimension tutor response judging · 留出 minimax-m3 · Δ=0.443
+- `mathtutorbench_pedagogy` · Pedagogy IF · 留出 deepseek-v4-pro · Δ=0.637
+- `mathtutorbench_scaffolding` · Scaffolding · 留出 deepseek-v4-flash · Δ=-0.471
+- `eduguard_adversarial` · Refusal quality distribution · 留出 glm-5.2 · Δ=-0.492
 
-### bootstrap CI（27）
+### bootstrap CI（29）
 
-- `sas_bench` · CCS step scoring consistency · 半宽=0.5437 (阈 0.5)
-- `sas_bench` · ECS error-cause consistency · 半宽=0.9497 (阈 0.5)
-- `longtutor_evidence` · Hallucination Check accuracy · 半宽=0.8334 (阈 0.2)
-- `longtutor_evidence` · Information Extraction accuracy · 半宽=0.3724 (阈 0.2)
-- `mathtutorbench_mistake_correction` · Mistake Correction · 半宽=0.5417 (阈 0.2)
+- `sas_bench` · CCS step scoring consistency · 半宽=0.5362 (阈 0.5)
+- `pedagogy_benchmark` · CDPK teaching knowledge selection · 半宽=None (阈 0.2)
+- `sas_bench` · ECS error-cause consistency · 半宽=1.182 (阈 0.5)
+- `longtutor_evidence` · Hallucination Check accuracy · 半宽=0.8199 (阈 0.2)
+- `longtutor_evidence` · Information Extraction accuracy · 半宽=0.3444 (阈 0.2)
+- `mathtutorbench_mistake_correction` · Mistake Correction · 半宽=0.5667 (阈 0.2)
 - `mathtutorbench_mistake_location` · Mistake Location · 半宽=0.542 (阈 0.2)
-- `longtutor_evidence` · Multi-session Reasoning accuracy · 半宽=0.894 (阈 0.2)
-- `mathtutorbench_pedagogy` · Pedagogy IF · 半宽=0.4295 (阈 0.2)
+- `longtutor_evidence` · Multi-session Reasoning accuracy · 半宽=0.7972 (阈 0.2)
+- `mathtutorbench_pedagogy` · Pedagogy IF · 半宽=0.5665 (阈 0.2)
 - `mathtutorbench_problem_solving` · Problem Solving · 半宽=0.3165 (阈 0.2)
-- `sas_bench` · QWK holistic total score · 半宽=0.5656 (阈 0.5)
-- `eduguard_adversarial` · Refusal quality distribution · 半宽=0.415 (阈 0.2)
-- `mathtutorbench_scaffolding` · Scaffolding · 半宽=0.539 (阈 0.2)
-- `mathtutorbench_socratic` · Socratic Questioning · 半宽=0.273 (阈 0.2)
+- `sas_bench` · QWK holistic total score · 半宽=0.7131 (阈 0.5)
+- `eduguard_adversarial` · Refusal quality distribution · 半宽=0.47 (阈 0.2)
+- `pedagogy_benchmark` · SEND special education needs selection · 半宽=None (阈 0.2)
+- `mathtutorbench_scaffolding` · Scaffolding · 半宽=0.6165 (阈 0.2)
+- `mathtutorbench_socratic` · Socratic Questioning · 半宽=0.282 (阈 0.2)
 - `mathtutorbench_solution_correctness` · Solution Correctness · 半宽=0.516 (阈 0.2)
-- `eduguard_sata` · Teaching Harm / SATA RFS · 半宽=0.3105 (阈 0.2)
-- `longtutor_diagnosis` · four-category knowledge-state diagnosis macro-F1 · 半宽=0.6189 (阈 0.5)
-- `longtutor_teaching` · judge dims: strategy_alignment + history_utilization (1-5) · 半宽=0.2488 (阈 0.2)
-- `k12vista` · math problem-figure subset score · 半宽=0.9202 (阈 0.2)
-- `mmtutorbench` · multimodal tutor score · 半宽=0.2345 (阈 0.2)
+- `eduguard_sata` · Teaching Harm / SATA RFS · 半宽=0.2575 (阈 0.2)
+- `longtutor_diagnosis` · four-category knowledge-state diagnosis macro-F1 · 半宽=0.5568 (阈 0.5)
+- `longtutor_teaching` · judge dims: strategy_alignment + history_utilization (1-5) · 半宽=0.425 (阈 0.2)
+- `k12vista` · math problem-figure subset score · 半宽=0.9668 (阈 0.2)
+- `mmtutorbench` · multimodal tutor score · 半宽=0.2788 (阈 0.2)
 - `olympiadbench` · multimodal-subset accuracy · 半宽=0.4433 (阈 0.2)
-- `k12vista` · official partial-credit score (per-blank 0/1 mean) · 半宽=0.4685 (阈 0.2)
-- `ceval` · overall/category/subject accuracy · 半宽=0.3154 (阈 0.2)
-- `olympiadbench` · overall/subject/language/modality accuracy · 半宽=0.3009 (阈 0.2)
-- `agieval` · overall/task/language/question_type accuracy · 半宽=0.2152 (阈 0.2)
-- `ifeval` · prompt-level strict accuracy · 半宽=0.4358 (阈 0.2)
+- `k12vista` · official partial-credit score (per-blank 0/1 mean) · 半宽=0.5 (阈 0.2)
+- `ceval` · overall/category/subject accuracy · 半宽=0.3253 (阈 0.2)
+- `olympiadbench` · overall/subject/language/modality accuracy · 半宽=0.3292 (阈 0.2)
+- `agieval` · overall/task/language/question_type accuracy · 半宽=0.252 (阈 0.2)
+- `ifeval` · prompt-level strict accuracy · 半宽=0.4672 (阈 0.2)
 - `k12vista` · science/geo subject-chart subset score · 半宽=0.5602 (阈 0.2)
-- `mathvista` · task/question_type/answer_type accuracy · 半宽=0.3472 (阈 0.2)
+- `mathvista` · task/question_type/answer_type accuracy · 半宽=0.3542 (阈 0.2)
 
 ## 五、逐格漂移（前若干）
 
 | benchmark | 格 | 模型数 | maxΔ | τ | CI半宽 |
 |---|---|---:|---:|---:|---:|
-| `sas_bench` | ECS error-cause consistency | 8 | 1.6214 | 0.3571 | 0.9497 |
-| `longtutor_diagnosis` | four-category knowledge-state diagnosis macro- | 4 | 1.3144 | 1.0 | 0.6189 |
-| `mathtutorbench_scaffolding` | Scaffolding | 7 | 1.135 | 0.9048 | 0.539 |
-| `edubench` | personalized_adaptation_learning_support (metr | 12 | 0.7431 | 0.7879 | 0.1636 |
-| `mrbench_judge` | 8-dimension tutor response judging | 6 | 0.666 | 0.8667 | 0.3255 |
-| `edubench` | scenario_element_integration (metric) | 12 | 0.5091 | 0.8703 | 0.1196 |
-| `k12vista` | math problem-figure subset score | 1 | 0.4534 | — | 0.9202 |
-| `sas_bench` | QWK holistic total score | 8 | 0.453 | 0.7857 | 0.5656 |
-| `eduguard_adversarial` | Refusal quality distribution | 7 | 0.448 | 1.0 | 0.415 |
-| `sas_bench` | CCS step scoring consistency | 8 | 0.4464 | 0.7143 | 0.5437 |
-| `edubench` | motivation_guidance_positive_feedback (metric) | 12 | 0.4315 | 0.7273 | 0.1055 |
-| `edubench` | TMG/PCC × clarity_concision_inspiration + scen | 12 | 0.403 | 0.9091 | 0.1313 |
-| `mathtutorbench_pedagogy` | Pedagogy IF | 7 | 0.385 | 0.7143 | 0.4295 |
-| `bea2025_judge` | judge labels: mistake/guidance/actionability | 6 | 0.385 | 0.8667 | 0.2755 |
-| `edubench` | higher_order_thinking_ability_development (met | 12 | 0.3703 | 0.9091 | 0.113 |
-| `olympiadbench` | overall/subject/language/modality accuracy | 2 | 0.3363 | — | 0.3009 |
-| `longtutor_teaching` | judge dims: strategy_alignment + history_utili | 4 | 0.3338 | 0.6667 | 0.2488 |
-| `longtutor_evidence` | Hallucination Check accuracy | 4 | 0.2856 | 0.6667 | 0.8334 |
-| `longtutor_evidence` | Multi-session Reasoning accuracy | 4 | 0.277 | 0.6667 | 0.894 |
-| `longtutor_evidence` | Information Extraction accuracy | 4 | 0.2736 | 0.3333 | 0.3724 |
-| `edubench` | QG × domain_knowledge_accuracy + basic_factual | 12 | 0.265 | 0.9394 | 0.1384 |
-| `ifeval` | prompt-level strict accuracy | 5 | 0.2646 | 0.8 | 0.4358 |
+| `sas_bench` | ECS error-cause consistency | 8 | 1.9408 | 0.3571 | 1.182 |
+| `sas_bench` | QWK holistic total score | 8 | 0.619 | 0.7143 | 0.7131 |
+| `sas_bench` | CCS step scoring consistency | 8 | 0.5831 | 0.9286 | 0.5362 |
+| `mathtutorbench_scaffolding` | Scaffolding | 7 | 0.559 | 1.0 | 0.6165 |
+| `eduguard_adversarial` | Refusal quality distribution | 7 | 0.448 | 1.0 | 0.47 |
+| `longtutor_teaching` | judge dims: strategy_alignment + history_utili | 4 | 0.3712 | 0.6667 | 0.425 |
+| `olympiadbench` | overall/subject/language/modality accuracy | 2 | 0.3402 | — | 0.3292 |
+| `longtutor_evidence` | Hallucination Check accuracy | 4 | 0.3339 | 0.6667 | 0.8199 |
+| `pedagogy_benchmark` | SEND special education needs selection | 11 | 0.303 | 0.9162 | — |
+| `longtutor_evidence` | Multi-session Reasoning accuracy | 4 | 0.277 | 0.6667 | 0.7972 |
+| `longtutor_evidence` | Information Extraction accuracy | 4 | 0.2736 | 0.3333 | 0.3444 |
+| `edubench` | QG × domain_knowledge_accuracy + basic_factual | 12 | 0.265 | 0.9394 | 0.1319 |
+| `mathtutorbench_pedagogy` | Pedagogy IF | 7 | 0.263 | 0.9048 | 0.5665 |
 | `mathtutorbench_solution_correctness` | Solution Correctness | 5 | 0.259 | 0.2 | 0.516 |
-| `eduguard_sata` | Teaching Harm / SATA RFS | 7 | 0.209 | 0.4286 | 0.3105 |
-| `edubench` | domain_knowledge_accuracy (metric) | 12 | 0.1997 | 0.9394 | 0.0631 |
-| `edubench` | error_identification_correction_accuracy (metr | 12 | 0.1961 | 0.8788 | 0.1271 |
-| `edubench` | clarity_concision_inspiration (metric) | 12 | 0.1951 | 0.9091 | 0.0556 |
-| `edubench` | reasoning_process_rigor (metric) | 12 | 0.193 | 0.9394 | 0.0814 |
-| `edubench` | QG × clarity_concision_inspiration + scenario_ | 12 | 0.1756 | 0.8788 | 0.148 |
-| `ceval` | overall/category/subject accuracy | 5 | 0.173 | 0.9487 | 0.3154 |
-| `eduguard_adversarial` | Adversarial Safety ASR | 7 | 0.159 | 1.0 | 0.296 |
+| `ifeval` | prompt-level strict accuracy | 5 | 0.2427 | 0.9487 | 0.4672 |
+| `eduguard_sata` | Teaching Harm / SATA RFS | 7 | 0.2 | 0.5855 | 0.2575 |
+| `edubench` | TMG/PCC × clarity_concision_inspiration + scen | 12 | 0.1966 | 0.9394 | 0.1876 |
+| `longtutor_diagnosis` | four-category knowledge-state diagnosis macro- | 4 | 0.1962 | 1.0 | 0.5568 |
+| `ceval` | overall/category/subject accuracy | 5 | 0.1757 | 0.9487 | 0.3253 |
+| `edubench` | QG × clarity_concision_inspiration + scenario_ | 12 | 0.1756 | 0.8788 | 0.1569 |
+| `bea2025_judge` | judge labels: mistake/guidance/actionability | 6 | 0.175 | 0.8667 | 0.2825 |
+| `mrbench_judge` | 8-dimension tutor response judging | 6 | 0.172 | 0.8667 | 0.3135 |
+| `eduguard_adversarial` | Adversarial Safety ASR | 7 | 0.172 | 1.0 | 0.2815 |
+| `mathtutorbench_mistake_correction` | Mistake Correction | 5 | 0.1706 | 0.9487 | 0.5667 |
 | `olympiadbench` | multimodal-subset accuracy | 2 | 0.1447 | — | 0.4433 |
-| `agieval` | overall/task/language/question_type accuracy | 5 | 0.1389 | 1.0 | 0.2152 |
-| `edubench` | basic_factual_accuracy (metric) | 12 | 0.138 | 0.9394 | 0.0532 |
-| `k12vista` | official partial-credit score (per-blank 0/1 m | 1 | 0.126 | — | 0.4685 |
-| `mathtutorbench_mistake_correction` | Mistake Correction | 5 | 0.1206 | 0.9487 | 0.5417 |
-| `mmlu_pro` | overall/category accuracy | 5 | 0.1088 | 0.8 | 0.1938 |
-| `mathtutorbench_socratic` | Socratic Questioning | 4 | 0.097 | 1.0 | 0.273 |
-| `mmtutorbench` | multimodal tutor score | 2 | 0.0822 | — | 0.2345 |
+| `edubench` | domain_knowledge_accuracy (metric) | 12 | 0.1398 | 0.9394 | 0.0768 |
+| `pedagogy_benchmark` | CDPK teaching knowledge selection | 11 | 0.1348 | 1.0 | — |
+| `agieval` | overall/task/language/question_type accuracy | 5 | 0.1278 | 1.0 | 0.252 |
+| `edubench` | error_identification_correction_accuracy (metr | 12 | 0.1177 | 0.9697 | 0.1349 |
+| `mmlu_pro` | overall/category accuracy | 5 | 0.1149 | 0.8 | 0.1766 |
+| `mmtutorbench` | multimodal tutor score | 2 | 0.1137 | — | 0.2788 |
+| `edubench` | personalized_adaptation_learning_support (metr | 12 | 0.0998 | 0.8485 | 0.1711 |
+| `edubench` | scenario_element_integration (metric) | 12 | 0.0982 | 0.9313 | 0.1316 |
+| `edubench` | motivation_guidance_positive_feedback (metric) | 12 | 0.0917 | 0.8485 | 0.1327 |
+| `edubench` | reasoning_process_rigor (metric) | 12 | 0.0908 | 0.9313 | 0.0932 |
+| `mathtutorbench_socratic` | Socratic Questioning | 4 | 0.089 | 1.0 | 0.282 |
+| `edubench` | higher_order_thinking_ability_development (met | 12 | 0.0749 | 0.9697 | 0.1305 |
 | `mathtutorbench_mistake_location` | Mistake Location | 5 | 0.073 | 0.8 | 0.542 |
 | `mathtutorbench_problem_solving` | Problem Solving | 4 | 0.0705 | 1.0 | 0.3165 |
+| `edubench` | clarity_concision_inspiration (metric) | 12 | 0.0667 | 0.9697 | 0.0658 |
+| `edubench` | basic_factual_accuracy (metric) | 12 | 0.0514 | 0.9091 | 0.0735 |
 | `k12vista` | science/geo subject-chart subset score | 1 | 0.0475 | — | 0.5602 |
-| `mathvista` | task/question_type/answer_type accuracy | 1 | 0.0187 | — | 0.3472 |
-| `pedagogy_benchmark` | CDPK teaching knowledge selection | 0 | 0.0 | — | — |
-| `pedagogy_benchmark` | SEND special education needs selection | 0 | 0.0 | — | — |
+| `k12vista` | official partial-credit score (per-blank 0/1 m | 1 | 0.043 | — | 0.5 |
+| `mathvista` | task/question_type/answer_type accuracy | 1 | 0.0294 | — | 0.3542 |
+| `k12vista` | math problem-figure subset score | 1 | 0.0278 | — | 0.9668 |
 
