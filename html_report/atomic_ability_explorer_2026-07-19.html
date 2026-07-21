@@ -223,6 +223,11 @@ tbody tr{transition:background .1s}
 td.cell{white-space:nowrap}
 td.cell .mark{margin-left:3px}
 .mark{color:var(--muted); cursor:help; font-size:11px}
+/* the two benchmark-less abilities (P09/P20): present in the grid so the count
+   reads as 20, but visibly inert so they never look like a zero score */
+th.untestedcol{color:var(--muted); font-weight:520; cursor:help}
+td.cell.untestedcol{background:var(--wash)}
+td.cell.untestedcol .mark{margin-left:0; font-size:10px; letter-spacing:.02em}
 
 /* ---------- badges ---------- */
 .badge{
@@ -403,6 +408,11 @@ const benchBy = {}; D.benchmarks.forEach(b => benchBy[b.id] = b);
 const modelBy = {}; D.models.forEach(m => modelBy[m.key] = m);
 const groupLabel = {}; D.groups.forEach(g => groupLabel[g.id] = g.label);
 const coveredP = D.abilities.map(a => a.p_code).filter(p => !D.meta.uncovered_p.includes(p));
+// The full universe of atomic abilities (20). coveredP is the measurable subset;
+// allP always spans every P so column/axis counts read as the true total, with
+// the two benchmark-less abilities (P09/P20) shown as 未测 rather than dropped.
+const allP = D.abilities.map(a => a.p_code);
+const isUncovered = p => D.meta.uncovered_p.includes(p);
 
 /* --- R22 缺测替代，页面内复算 ------------------------------------------
    聚合脚本只给 5 个发布面板模型铺替代行（PANEL_MODEL_KEYS），外围模型缺格
@@ -541,28 +551,29 @@ function covBadge(m){
 
 /* ---------- charts ---------- */
 function radar(series){
-  const R = 168, cx = 250, cy = 210, N = coveredP.length;
+  const R = 168, cx = 250, cy = 210, N = allP.length;
   const ang = i => (i / N) * 2 * Math.PI - Math.PI / 2;
   const pt = (i, r) => [cx + Math.cos(ang(i)) * r, cy + Math.sin(ang(i)) * r];
   let g = '';
   for (const lvl of [2, 4, 6, 8, 10]){
-    const pts = coveredP.map((_, i) => pt(i, R * lvl / 10).map(n => n.toFixed(1)).join(',')).join(' ');
+    const pts = allP.map((_, i) => pt(i, R * lvl / 10).map(n => n.toFixed(1)).join(',')).join(' ');
     g += `<polygon points="${pts}" fill="none" stroke="var(--grid)" stroke-width="1"/>`;
   }
   g += `<text x="${cx+4}" y="${cy-R+2}" font-size="9" fill="var(--muted)">10</text>`;
-  coveredP.forEach((p, i) => {
+  allP.forEach((p, i) => {
+    const off = isUncovered(p);
     const [x, y] = pt(i, R);
     g += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--grid)" stroke-width="1"/>`;
     const [lx, ly] = pt(i, R + 26);
     const anchor = Math.abs(lx - cx) < 12 ? 'middle' : (lx > cx ? 'start' : 'end');
-    g += `<text x="${lx.toFixed(1)}" y="${(ly + 3).toFixed(1)}" text-anchor="${anchor}" font-size="10.5" fill="var(--ink-2)"
-            style="cursor:pointer" onclick="go('#/p/${p}')"><title>${esc(abilityBy[p].p_name)}</title>${p}</text>`;
+    g += `<text x="${lx.toFixed(1)}" y="${(ly + 3).toFixed(1)}" text-anchor="${anchor}" font-size="10.5" fill="${off ? 'var(--muted)' : 'var(--ink-2)'}"
+            style="cursor:pointer${off ? ';opacity:.65' : ''}" onclick="go('#/p/${p}')"><title>${esc(abilityBy[p].p_name)}${off ? '（暂无 benchmark，未测）' : ''}</title>${p}</text>`;
   });
   series.forEach((s, si) => {
     const col = `var(${SERIES[si % SERIES.length]})`;
     // Missing axes break the ring: draw only contiguous measured runs, never
     // interpolate a model's uncovered ability as if it scored there.
-    const vals = coveredP.map(p => { const r = scoreOf[s.key + '|' + p]; return r ? r.s : null; });
+    const vals = allP.map(p => { const r = scoreOf[s.key + '|' + p]; return r ? r.s : null; });
     let run = [];
     const flush = () => {
       if (run.length > 1){
@@ -587,12 +598,12 @@ function radar(series){
       const [x, y] = pt(i, R * v / 10);
       // A mostly-imputed point is not a measurement of this model - draw it
       // hollow so it never reads as one at a glance.
-      const row = scoreOf[s.key + '|' + coveredP[i]];
+      const row = scoreOf[s.key + '|' + allP[i]];
       const mostlyImputed = row && row.impw >= 0.5;
       const note = mostlyImputed ? `（其中 ${(row.impw * 100).toFixed(0)}% 为替代值，非实测）` : '';
       g += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"
               fill="${mostlyImputed ? 'var(--surface)' : col}" stroke="${col}" stroke-width="2"
-              ><title>${esc(mName(s.key))} · ${coveredP[i]} ${esc(abilityBy[coveredP[i]].p_name)}: ${fx(v)}${note}</title></circle>`;
+              ><title>${esc(mName(s.key))} · ${allP[i]} ${esc(abilityBy[allP[i]].p_name)}: ${fx(v)}${note}</title></circle>`;
     });
   });
   return `<svg viewBox="0 0 500 440" role="img" aria-label="原子能力雷达图">${g}</svg>`;
@@ -619,7 +630,9 @@ function bars(rows, maxV = 10){
 let ovSort = {key: '_avg', dir: -1};
 function viewOverview(){
   const rowsFor = list => list.map(m => {
-    const cells = coveredP.map(p => {
+    const cells = allP.map(p => {
+      if (isUncovered(p))
+        return `<td class="num cell untestedcol"><span class="mark" title="${esc(abilityBy[p].p_name)}：暂无 benchmark，全部模型均未测">未测</span></td>`;
       const r = scoreOf[m.key + '|' + p];
       return r
         ? `<td class="num cell"><span class="heat ${heatClass(r.s)}"
@@ -661,13 +674,13 @@ function viewOverview(){
         <thead><tr>
           <th class="sortable" data-k="_avg">模型</th>
           ${D.groups.map((g, i) => `<th class="num${i === D.groups.length - 1 ? ' gsep' : ''}" title="${esc(g.label)}">${g.id}</th>`).join('')}
-          ${coveredP.map(p => `<th class="num sortable" data-k="${p}" title="${esc(abilityBy[p].p_name)}">${p}</th>`).join('')}
+          ${allP.map(p => `<th class="num${isUncovered(p) ? ' untestedcol' : ' sortable'}" ${isUncovered(p) ? '' : `data-k="${p}"`} title="${esc(abilityBy[p].p_name)}${isUncovered(p) ? '（暂无 benchmark，未测）' : ''}">${p}</th>`).join('')}
         </tr></thead>
         <tbody>
-          <tr class="rowsep"><td colspan="${1 + D.groups.length + coveredP.length}">
-            发布面板 · ${D.panel.length} 个模型，${coveredP.length} 项能力都有分；缺测的格按 R22 用该格最低分顶替，徽章里的「实测 n」才是真跑过的项数</td></tr>
+          <tr class="rowsep"><td colspan="${1 + D.groups.length + allP.length}">
+            发布面板 · ${D.panel.length} 个模型 · 共 ${allP.length} 项原子能力，其中 ${coveredP.length} 项有分；${D.meta.uncovered_p.join('、')} 暂无 benchmark 记为「未测」。缺测的格按 R22 用该格最低分顶替，徽章里的「实测 n」才是真跑过的项数</td></tr>
           ${rowsFor(full)}
-          <tr class="rowsep"><td colspan="${1 + D.groups.length + coveredP.length}">
+          <tr class="rowsep"><td colspan="${1 + D.groups.length + allP.length}">
             部分覆盖 · 覆盖面差异很大，跨行比较前务必看徽章上的覆盖率</td></tr>
           ${rowsFor(partial)}
         </tbody>
@@ -711,9 +724,12 @@ function viewModel(){
   }).join('');
 
   const primary = picked[0];
-  const list = coveredP.map(p => {
-    const r = scoreOf[primary + '|' + p];
+  const list = allP.map(p => {
     const a = abilityBy[p];
+    if (isUncovered(p)) return `<div class="prow" style="opacity:.5" onclick="go('#/p/${p}')">
+      <div class="name"><b>${p} ${esc(a.p_name)}</b><span>${esc(a.definition)}</span></div>
+      <div class="val"><span class="untested">未测</span></div></div>`;
+    const r = scoreOf[primary + '|' + p];
     if (!r) return `<div class="prow" style="opacity:.45" onclick="go('#/p/${p}')">
       <div class="name"><b>${p} ${esc(a.p_name)}</b><span>${esc(a.definition)}</span></div>
       <div class="val">—</div></div>`;
@@ -726,7 +742,7 @@ function viewModel(){
 
   app.innerHTML = `
     <h2>模型视图</h2>
-    <p class="sub">最多叠加 3 个模型。部分覆盖的模型缺口处断线，不会把没测过的能力画成 0。点右侧任一能力展开它的证据构成。</p>
+    <p class="sub">雷达图共 ${allP.length} 个轴（全部原子能力）；${D.meta.uncovered_p.join('、')} 暂无 benchmark，任何模型都无数据，对应轴留空断线，不画成 0。最多叠加 3 个模型，部分覆盖的模型缺口处同样断线。点右侧任一能力展开它的证据构成。</p>
     <div class="chips" id="chips">${chips}</div>
     <div class="grid2">
       <div class="card radarwrap">
