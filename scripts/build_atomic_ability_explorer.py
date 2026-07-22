@@ -28,6 +28,7 @@ REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
 MAPPING_JSON = ROOT / "data" / "mapping_measurement_model_v6.json"
 MAPPING_DOC = ROOT / "doc" / "atomic_ability_mapping_v6_2026-07-19.md"
 PROFILE_DIR = ROOT / "doc" / "benchmark_profiles"
+ABILITY_PROFILE_DIR = ROOT / "doc" / "ability_profiles"
 OUT_PATH = ROOT / "html_report" / "atomic_ability_explorer_2026-07-19.html"
 
 GROUP_LABELS = {
@@ -39,48 +40,16 @@ GROUP_LABELS = {
 }
 GROUP_ORDER = ["SRG", "FDR", "LAD", "CLM", "CEG"]
 
-# 36 benchmark_id map onto 22 profile files (many-to-one). longtutor_* has no
-# profile yet - see LONGTUTOR_FALLBACK below.
+# Every benchmark_id now owns a profile file; the map only covers ids whose
+# filename differs. It used to fold 17 sub-task ids onto 5 family files, which
+# made a sub-task page show the whole family's task table - 8 of 9 rows about
+# some other cell - while the family's mapping notes contradicted the sub-task's
+# actual P list. mathtutorbench.md / eduguard_bench.md / mrbench.md /
+# bea2025.md / p08_selfbuilt.md stay in the archive as family background and are
+# no longer read by the build.
 PROFILE_MAP = {
-    "eduguard_sata": "eduguard_bench",
-    "eduguard_adversarial": "eduguard_bench",
-    "mrbench_judge": "mrbench",
-    "mrbench_tutor": "mrbench",
-    "bea2025_judge": "bea2025",
-    "bea2025_tutor": "bea2025",
-    "p08_calibration": "p08_selfbuilt",
-    "p08_abstention": "p08_selfbuilt",
     "mooccube_prereq": "mooccube",
 }
-for _task in (
-    "mistake_correction",
-    "mistake_location",
-    "pedagogy",
-    "pedagogy_hard",
-    "problem_solving",
-    "scaffolding",
-    "scaffolding_hard",
-    "socratic",
-    "solution_correctness",
-):
-    PROFILE_MAP[f"mathtutorbench_{_task}"] = "mathtutorbench"
-
-# The three LongTutor adapters predate the profile archive. Text is lifted from
-# the v6 mapping doc (section 3 note + the R21 facet split rationale).
-LONGTUTOR_FALLBACK = {
-    "longtutor_evidence": (
-        "在长辅导材料/多轮历史中定位证据。按 `memory_type` 拆三格计分："
-        "单记录信息提取、跨 session 推理、幻觉检查。"
-    ),
-    "longtutor_diagnosis": (
-        "从交互历史判断学生的知识状态，四分类诊断取 macro-F1。"
-        "金标为特征决策矩阵加人工修订，且类别不平衡（多数类基线 acc 0.506）。"
-    ),
-    "longtutor_teaching": (
-        "长历史条件下的教学动作选择，取 strategy_alignment 与 history_utilization 两维。"
-    ),
-}
-LONGTUTOR_NOTE = "官方仓库只有 pipeline 脚本，本仓库自行移植为可复现 adapter。"
 
 MODEL_DISPLAY = {
     "claude-sonnet-4.6": "Claude Sonnet 4.6",
@@ -175,6 +144,10 @@ def parse_profile(path: Path) -> dict[str, Any]:
     and predates R25, so live mapping is recomputed from the v6 JSON instead.
     """
     raw = path.read_text(encoding="utf-8")
+    title = ""
+    head = re.search(r"^# (.+)$", raw, re.M)
+    if head:
+        title = strip_markdown(head.group(1))
     one_liner = ""
     hit = re.search(r"\*\*一句话\*\*[:：](.+?)(?:\n\n|\n##)", raw, re.S)
     if hit:
@@ -203,7 +176,7 @@ def parse_profile(path: Path) -> dict[str, Any]:
                 bullets.append(text)
         if bullets:
             sections.append({"heading": heading, "bullets": bullets})
-    return {"one_liner": one_liner, "sections": sections, "file": path.name}
+    return {"title": title, "one_liner": one_liner, "sections": sections, "file": path.name}
 
 
 def build_payload() -> dict[str, Any]:
@@ -220,6 +193,7 @@ def build_payload() -> dict[str, Any]:
 
     # --- abilities -------------------------------------------------------
     p_group = {row["p_code"]: row["group"] for row in p_scores}
+    missing_ability_profiles = []
     abilities = []
     for ability in model_json["abilities"]:
         code = ability["p_code"]
@@ -245,6 +219,16 @@ def build_payload() -> dict[str, Any]:
                     ],
                 }
             )
+        # Reader-facing prose lives in doc/ability_profiles/<P>.md and uses the
+        # same `##` section shape as the benchmark archive, so one parser serves
+        # both. Weights are never written there - they are recomputed below.
+        profile_path = ABILITY_PROFILE_DIR / f"{code}.md"
+        if profile_path.exists():
+            profile = parse_profile(profile_path)
+            profile["missing"] = False
+        else:
+            missing_ability_profiles.append(code)
+            profile = {"title": "", "one_liner": "", "sections": [], "file": "", "missing": True}
         abilities.append(
             {
                 "p_code": code,
@@ -256,9 +240,14 @@ def build_payload() -> dict[str, Any]:
                 "coverage_gap": ability.get("coverage_gap"),
                 "single_source": ability.get("single_source"),
                 "facets": facets,
+                "profile": profile,
             }
         )
     abilities.sort(key=lambda a: a["p_code"])
+
+    if missing_ability_profiles:
+        print(f"WARNING: no ability profile for {len(missing_ability_profiles)} P: "
+              f"{', '.join(missing_ability_profiles)}")
 
     # --- benchmarks ------------------------------------------------------
     evidence_bench_ids = {row["benchmark_id"] for row in evidence}
@@ -291,16 +280,9 @@ def build_payload() -> dict[str, Any]:
                 profile_cache[stem] = parse_profile(path)
             profile = dict(profile_cache[stem])
             profile["missing"] = False
-        elif bid in LONGTUTOR_FALLBACK:
-            profile = {
-                "one_liner": LONGTUTOR_FALLBACK[bid],
-                "sections": [{"heading": "在本仓库怎么用", "bullets": [LONGTUTOR_NOTE]}],
-                "file": "",
-                "missing": True,
-            }
         else:
             missing_profiles.append(bid)
-            profile = {"one_liner": "", "sections": [], "file": "", "missing": True}
+            profile = {"title": "", "one_liner": "", "sections": [], "file": "", "missing": True}
         entry = {
             "id": bid,
             "name": meta.get("name", bid),
