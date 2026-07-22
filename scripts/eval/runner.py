@@ -124,6 +124,26 @@ def _truncate_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return safe
 
 
+def strip_image_parts(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop every ``image_url`` content part, leaving the text as-is.
+
+    Applied *after* ``build_messages`` so it covers all adapters uniformly —
+    including the eight that override ``build_messages`` (k12vista and
+    mmtutorbench among them), which a flag inside ``BenchmarkAdapter`` would
+    silently miss. Opt-in only (``--no-images``); see that flag's help text for
+    why the resulting scores are a degraded proxy and not a capability measure.
+    """
+    stripped = []
+    for message in messages:
+        content = message.get("content")
+        if isinstance(content, list):
+            parts = [p for p in content if p.get("type") != "image_url"]
+            stripped.append({**message, "content": parts})
+        else:
+            stripped.append(message)
+    return stripped
+
+
 def _predict_one(
     adapter: BenchmarkAdapter,
     item: dict[str, Any],
@@ -133,8 +153,11 @@ def _predict_one(
     retries: int,
     retry_sleep: float,
     max_tokens: int | None,
+    no_images: bool = False,
 ) -> dict[str, Any]:
     messages = adapter.build_messages(item)
+    if no_images:
+        messages = strip_image_parts(messages)
     started = time.time()
     client.reset_usage_window()
     response = ""
@@ -191,6 +214,7 @@ def run_predictions(
     rate_limit_threshold: int = 10,
     rate_limit_sleep: float = 1800.0,
     rate_limit_max_retries: int = 3,
+    no_images: bool = False,
 ) -> dict[str, dict[str, Any]]:
     # Treat errored / empty predictions as not-done so reruns retry only those.
     existing = {
@@ -210,7 +234,9 @@ def run_predictions(
         while idx < len(pending):
             item = pending[idx]
             idx += 1
-            row = _predict_one(adapter, item, client, model, timeout, retries, retry_sleep, max_tokens)
+            row = _predict_one(
+                adapter, item, client, model, timeout, retries, retry_sleep, max_tokens, no_images
+            )
             if _is_rate_limit_error(row.get("error")):
                 if guard.on_rate_limit(str(row["item_id"])):
                     pending.append(item)
@@ -234,7 +260,8 @@ def run_predictions(
                 while idx < len(pending) and len(in_flight) < concurrency:
                     item = pending[idx]
                     future = executor.submit(
-                        _predict_one, adapter, item, client, model, timeout, retries, retry_sleep, max_tokens
+                        _predict_one, adapter, item, client, model, timeout, retries, retry_sleep,
+                        max_tokens, no_images,
                     )
                     in_flight[future] = item
                     idx += 1
@@ -461,6 +488,7 @@ def run(
     item_ids: list[str] | None = None,
     item_list_info: dict[str, Any] | None = None,
     run_metadata: dict[str, Any] | None = None,
+    no_images: bool = False,
 ) -> dict[str, Any]:
     if item_ids is not None:
         # Fixed-list mode (--item-list): load everything, keep exactly the
@@ -482,8 +510,13 @@ def run(
 
     if dry_run:
         for item in items[:3]:
-            print(f"\n=== item {item['item_id']} (images={len(item.get('image_paths') or [])}) ===")
-            print(json.dumps(_truncate_messages(adapter.build_messages(item)), ensure_ascii=False, indent=2)[:2000])
+            n_images = len(item.get("image_paths") or [])
+            note = " [--no-images: withheld]" if no_images and n_images else ""
+            print(f"\n=== item {item['item_id']} (images={n_images}{note}) ===")
+            messages = adapter.build_messages(item)
+            if no_images:
+                messages = strip_image_parts(messages)
+            print(json.dumps(_truncate_messages(messages), ensure_ascii=False, indent=2)[:2000])
         return {}
 
     client = client or MiniMaxClient(model=model, timeout=timeout)
@@ -503,6 +536,7 @@ def run(
             rate_limit_threshold=rate_limit_threshold,
             rate_limit_sleep=rate_limit_sleep,
             rate_limit_max_retries=rate_limit_max_retries,
+            no_images=no_images,
         )
 
     if skip_extract:

@@ -45,6 +45,7 @@ def _write_run_start_summary(
     judge_model: str | None,
     judge_provenance: dict,
     generation_params: dict | None = None,
+    no_images: bool = False,
 ) -> dict:
     """Persist run identity before clients, datasets, or predictions can fail."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -67,12 +68,24 @@ def _write_run_start_summary(
             "use the automatic _judge-<model>/ directory or a different --out-dir"
         )
 
+    # Same hazard as mixing judges: predictions made with and without images are
+    # different measurements and must never share a predictions.jsonl cache.
+    requested_variant = "no_images" if no_images else "standard"
+    previous_variant = existing.get("input_variant")
+    if previous_variant and str(previous_variant) != requested_variant:
+        raise SystemExit(
+            f"refusing to mix input variants in {out_dir}: existing={previous_variant}, "
+            f"requested={requested_variant}; the cached predictions were made under the other "
+            "variant. Use the automatic _noimage/ directory or a different --out-dir."
+        )
+
     started_at = datetime.now(timezone.utc).isoformat()
     metadata = {
         "benchmark": benchmark,
         "model": model,
         "extractor_model": extractor_model,
         "judge_model": judge_model,
+        "input_variant": requested_variant,
         "run_status": "running",
         "started_at": started_at,
         # Recorded so a finished run can always be told apart from one made under
@@ -80,6 +93,11 @@ def _write_run_start_summary(
         "generation_params": generation_params or {},
         **judge_provenance,
     }
+    if no_images:
+        metadata["input_variant_note"] = (
+            "图片已全部withheld，仅发送文本。分数是文本降级代理值，不代表该模型的多模态能力，"
+            "也不可与标准 run 或视觉模型的成绩比较（图必需的题目在此变体下本就无解）。"
+        )
     existing.pop("completed_at", None)
     existing.update(metadata)
     tmp = path.with_suffix(".json.tmp")
@@ -172,6 +190,18 @@ def main() -> None:
             "decoding when a run must be comparable with an external greedy-decoded run."
         ),
     )
+    parser.add_argument(
+        "--no-images",
+        action="store_true",
+        help=(
+            "withhold every image from the model, sending text only. For probing a "
+            "text-only model on a multimodal benchmark (e.g. glm-5.2, which 400s on "
+            "image input). The resulting score is a DEGRADED PROXY, not a capability "
+            "measure: items whose image carries essential information become "
+            "unanswerable, so this is never comparable with a standard run nor with "
+            "a vision model's score. Output is forced into a _noimage/ directory."
+        ),
+    )
     parser.add_argument("--skip-extract", action="store_true", help="only generate predictions, no extract/score")
     parser.add_argument("--score-only", action="store_true", help="reuse existing predictions; extract + score only")
     parser.add_argument("--dry-run", action="store_true", help="print constructed messages, no API calls")
@@ -220,6 +250,25 @@ def main() -> None:
     else:
         out_dir = base_dir / model_slug(args.model)
 
+    # A no-images run must never land in the canonical result tree: its score is a
+    # degraded proxy and would be read as the model's real score. Auto-isolate the
+    # default path, and refuse an explicit --out-dir that points back into
+    # reports/eval/ without the marker.
+    if args.no_images:
+        if args.out_dir is None:
+            out_dir = base_dir / "_noimage" / out_dir.relative_to(base_dir)
+        else:
+            resolved = out_dir.resolve()
+            eval_root = (ROOT / "reports" / "eval").resolve()
+            inside_eval_tree = resolved == eval_root or eval_root in resolved.parents
+            if inside_eval_tree and "_noimage" not in resolved.parts:
+                parser.error(
+                    f"--no-images refuses to write into the canonical result tree: {out_dir}\n"
+                    "Its score is a degraded proxy and must not sit where a standard run's is read. "
+                    "Drop --out-dir to get the automatic _noimage/ path, include a _noimage segment, "
+                    "or point --out-dir outside reports/eval/."
+                )
+
     run_metadata = {}
     if not args.dry_run:
         run_metadata = _write_run_start_summary(
@@ -233,6 +282,7 @@ def main() -> None:
                 "temperature": "provider_default" if args.temperature is None else args.temperature,
                 "max_tokens": "uncapped" if args.max_tokens is None else args.max_tokens,
             },
+            no_images=args.no_images,
         )
 
     # Predictions and extraction use separate clients: the prediction model may
@@ -278,6 +328,7 @@ def main() -> None:
         item_ids=item_ids,
         item_list_info=item_list_info,
         run_metadata=run_metadata,
+        no_images=args.no_images,
     )
 
     if summary:

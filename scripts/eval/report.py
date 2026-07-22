@@ -259,6 +259,8 @@ _REPORT_CSS = """
   a { color: #3a56d4; }
   p { margin: 0 0 10px; }
   .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
   .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
   .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
   .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
@@ -347,6 +349,17 @@ def write_report(
     homepage = getattr(adapter, "homepage", "") if adapter else ""
     description = getattr(adapter, "description", "") if adapter else ""
 
+    # --- degraded-input warning (--no-images) ---
+    variant_html = ""
+    if summary.get("input_variant") == "no_images":
+        note = summary.get("input_variant_note") or "图片已 withheld，仅发送文本。"
+        variant_html = (
+            "<section class='warn'><h2>⚠ 文本降级变体（--no-images）</h2>"
+            f"<p>{esc(note)}</p>"
+            "<p class='muted'>本页所有分数仅供该模型自身的文本可解子集参考，"
+            "不得并入主结果、不得与其它模型横向比较。</p></section>"
+        )
+
     # --- benchmark intro ---
     intro_html = ""
     if description or homepage:
@@ -429,6 +442,7 @@ def write_report(
       <div class="kpi"><div class="v">{esc(fourth_text)}</div><div class="k">{esc(fourth_label)}</div></div>
     </div>
   </header>
+  {variant_html}
   {intro_html}
   {sample_html}
   {extra_html}
