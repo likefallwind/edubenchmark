@@ -46,9 +46,16 @@ from ..providers import build_client, extraction_max_tokens
 
 SRC_DIR = ROOT / "sources" / "datasets" / "k12vista"
 PROMPT_FILE = SRC_DIR / "K12_Vista" / "code" / "prompt.py"
-SAMPLE_JSONL = SRC_DIR / "K12_Vista" / "data" / "sample_v2.jsonl"
+# Which pinned sample to evaluate. Defaults to v2 (600 items, stratified over
+# type × subject) — the list every committed result was produced on, so the
+# default must never change silently. Override with K12VISTA_SAMPLE_VERSION to
+# run a different pinned list (e.g. v3 = 1,200 items, same axes and seed logic);
+# results from different sample versions are NOT comparable and must be written
+# to their own output directory.
+SAMPLE_VERSION = (os.environ.get("K12VISTA_SAMPLE_VERSION") or "v2").strip()
+SAMPLE_JSONL = SRC_DIR / "K12_Vista" / "data" / f"sample_{SAMPLE_VERSION}.jsonl"
 IMAGE_DIR = SRC_DIR / "images"
-ITEM_LIST = ROOT / "data" / "k12vista" / "item_list_v2.txt"
+ITEM_LIST = ROOT / "data" / "k12vista" / f"item_list_{SAMPLE_VERSION}.txt"
 
 JUDGE_MODEL_ENV = "K12VISTA_JUDGE_MODEL"
 
@@ -261,6 +268,9 @@ class K12VistaAdapter(BenchmarkAdapter):
             # Official K12Vista metric: mean per-blank partial credit.
             "official_score": official,
             "score_10": round(official * 10, 3),
+            # Which pinned sample this run used; results across versions are not
+            # comparable (different item lists, different denominators).
+            "sample_version": SAMPLE_VERSION,
             "n_scored": len(rows),
             "full_credit_rate": round(sum(bool(r.get("correct")) for r in rows) / len(rows), 4),
             "unparsed_rate": round(sum(bool(r.get("unparsed")) for r in rows) / len(rows), 4),
