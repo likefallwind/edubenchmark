@@ -52,6 +52,7 @@ from itertools import product
 
 from build_judge_stage1_assets import make_diagnosis, stage1_out_base
 from eval.base import prompt_sha256
+from eval.predictions_io import read_predictions
 from eval.providers import build_client
 from eval.stats import cluster_bootstrap_diff_ci, kappa_stat
 from run_judge_rubric_variants import adapter_bits, anchor_block, load_items
@@ -455,7 +456,7 @@ def cached_v1_pool_data(benchmark: str, ids: set[str]) -> tuple[dict[str, str], 
         for r in _read_jsonl(run_dir / "scored.jsonl")
         if r.get("score_status") == "scored" and "pred_label" in r and str(r["item_id"]) in ids
     }
-    raw = {str(r["item_id"]): r for r in _read_jsonl(run_dir / "predictions.jsonl") if str(r["item_id"]) in labels}
+    raw = {str(r["item_id"]): r for r in read_predictions(run_dir) if str(r["item_id"]) in labels}
     return labels, raw
 
 

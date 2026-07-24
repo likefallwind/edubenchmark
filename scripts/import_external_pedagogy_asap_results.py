@@ -19,6 +19,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
+from eval.predictions_io import write_predictions
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = ROOT / "otherbenchmark" / "benchmark_raw_results_by_model_20260717"
@@ -281,7 +283,7 @@ def import_run(source_file: Path, benchmark: str, model_name: str, output_root: 
     }
     run_dir = output_root / benchmark_id / slug
     run_dir.mkdir(parents=True, exist_ok=True)
-    write_jsonl(run_dir / "predictions.jsonl", predictions)
+    write_predictions(run_dir / "predictions.jsonl", predictions)
     write_jsonl(run_dir / "scored.jsonl", scored)
     (run_dir / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (run_dir / "report.html").write_text(render_report(summary) + "\n", encoding="utf-8")

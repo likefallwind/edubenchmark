@@ -22,6 +22,8 @@ import json
 import re
 from pathlib import Path
 
+from eval.predictions_io import predictions_exist
+
 ROOT = Path(__file__).resolve().parents[1]
 EVAL_DIR = ROOT / "reports" / "eval"
 
@@ -82,13 +84,12 @@ def scan() -> dict[str, dict[str, tuple[str, int | None, int | None]]]:
             if DATE_DIR_RE.match(mdir.name):
                 continue
             summary = mdir / "summary.json"
-            preds = mdir / "predictions.jsonl"
             if summary.exists():
                 scored, total = read_counts(summary)
                 if scored is None:
                     continue
                 row[canon(mdir.name)] = ("scored", scored, total)
-            elif preds.exists():
+            elif predictions_exist(mdir):
                 row[canon(mdir.name)] = ("predictions_only", None, None)
         if bench == "edubench":
             # The colleague-imported deepseek-v3.2-judged run under

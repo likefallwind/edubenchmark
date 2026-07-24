@@ -36,6 +36,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from eval.predictions_io import read_predictions
+
 ROOT = Path(__file__).resolve().parents[1]
 META_DIR = ROOT / "data" / "judge_meta_eval_v1"
 SLICE_DIR = META_DIR / "stage1_slices"
@@ -194,7 +196,7 @@ def build_target(benchmark: str, dim: str, judge_slug: str, out_slug: str | None
     }
     raw = {
         str(r["item_id"]): r
-        for r in _read_jsonl(run_dir / "predictions.jsonl")
+        for r in read_predictions(run_dir)
         if str(r["item_id"]) in scored
     }
 

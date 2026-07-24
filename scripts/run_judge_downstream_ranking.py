@@ -43,6 +43,7 @@ from pathlib import Path
 from typing import Any
 
 from eval.base import prompt_sha256
+from eval.predictions_io import predictions_exist, read_predictions
 from eval.benchmarks.mrbench import (
     MRBenchTutorAdapter,
     _evolved_judge_prompt,
@@ -135,7 +136,7 @@ def main() -> None:
     if args.models:
         models = [m.strip() for m in args.models.split(",") if m.strip()]
     else:
-        models = sorted(d.name for d in TUTOR_RUNS.iterdir() if (d / "predictions.jsonl").exists())
+        models = sorted(d.name for d in TUTOR_RUNS.iterdir() if predictions_exist(d))
     conv_by_id = {
         it["item_id"]: it["meta"]["conversation_history"]
         for it in MRBenchTutorAdapter().load_items()
@@ -151,7 +152,7 @@ def main() -> None:
     todo: list[tuple[str, str, str, str, str, str]] = []
     items_by_model: dict[str, list[str]] = {}
     for model in models:
-        preds = _read_jsonl(TUTOR_RUNS / model / "predictions.jsonl")
+        preds = read_predictions(TUTOR_RUNS / model)
         if args.limit:
             preds = preds[: args.limit]
         ids = []

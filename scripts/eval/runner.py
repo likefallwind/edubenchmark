@@ -26,6 +26,7 @@ from .report import (
     write_jsonl,
     write_report,
 )
+from .predictions_io import append_prediction, read_predictions, write_predictions
 
 
 def _index_by_item(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -219,7 +220,7 @@ def run_predictions(
     # Treat errored / empty predictions as not-done so reruns retry only those.
     existing = {
         k: v
-        for k, v in _index_by_item(read_jsonl(out_path)).items()
+        for k, v in _index_by_item(read_predictions(out_path)).items()
         if str(v.get("response") or "").strip() and not v.get("error") and not v.get("empty_response")
     }
     pending = [it for it in items if str(it["item_id"]) not in existing]
@@ -245,7 +246,7 @@ def run_predictions(
             else:
                 guard.reset_streak()
             rows.append(row)
-            append_jsonl(out_path, row)
+            append_prediction(out_path, row)
             completed += 1
             status = "error" if row.get("error") else ("empty" if row.get("empty_response") else "ok")
             detail = _reason(row.get("error")) if status == "error" else ""
@@ -279,11 +280,15 @@ def run_predictions(
                     else:
                         guard.reset_streak()
                     rows.append(row)
-                    append_jsonl(out_path, row)
+                    append_prediction(out_path, row)
                     completed += 1
                     status = "error" if row.get("error") else ("empty" if row.get("empty_response") else "ok")
                     detail = _reason(row.get("error")) if status == "error" else ""
                     print(f"predict {completed}/{len(pending)} item={row['item_id']} status={status}{detail}")
+    # Re-pack authoritatively: the hot loop appends to a single base file, which
+    # may exceed GitHub's 100 MB limit; write_predictions splits it into shards
+    # and consolidates any shards left by a prior finalized run.
+    write_predictions(out_path, rows)
     return _index_by_item(rows)
 
 
@@ -528,7 +533,7 @@ def run(
     extractions_path = out_dir / "extractions.jsonl"
 
     if score_only:
-        predictions = _index_by_item(read_jsonl(predictions_path))
+        predictions = _index_by_item(read_predictions(predictions_path))
     else:
         predictions = run_predictions(
             adapter, items, client, predictions_path, model,

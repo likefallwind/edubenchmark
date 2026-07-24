@@ -52,6 +52,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
+from eval.predictions_io import read_predictions
+
 ROOT = Path(__file__).resolve().parents[1]
 EVAL_ROOT = ROOT / "reports" / "eval"
 AUDIT_DIR = EVAL_ROOT / "_audit"
@@ -363,7 +365,7 @@ def audit_run(benchmark: str, model_dir: Path) -> dict[str, Any]:
             rec["findings"].append("summary.json is not valid JSON")
 
     scored = list(dedupe(read_jsonl(scored_path)).values())
-    predictions = dedupe(read_jsonl(pred_path))
+    predictions = dedupe(read_predictions(model_dir))
     extractions = dedupe(read_jsonl(ext_path))
 
     if not summary and not scored:

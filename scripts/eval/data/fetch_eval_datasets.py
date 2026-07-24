@@ -46,6 +46,12 @@ except ImportError:  # MMTutorBench / MRBench fetches do not need pandas.
 
 
 ROOT = Path(__file__).resolve().parents[3]
+
+import sys
+
+sys.path.insert(0, str(ROOT / "scripts"))
+from eval.predictions_io import predictions_exist, read_predictions  # noqa: E402
+
 HF = "https://huggingface.co/datasets"
 
 MMLU_PRO_URL = f"{HF}/TIGER-Lab/MMLU-Pro/resolve/main/data/test-00000-of-00001.parquet"
@@ -307,7 +313,7 @@ def fetch_edubench(force: bool = False) -> Path:
         ],
         "harness_prompt_set": {
             "path": str(prompt_source.relative_to(ROOT)),
-            "rows": line_count(prompt_source) if prompt_source.is_file() else 0,
+            "rows": len(read_predictions(prompt_source)) if predictions_exist(prompt_source) else 0,
             "note": (
                 "Comparable English prompt export from the colleague run; five scenarios and stable IDs. "
                 "It is not claimed to be the official 198-row human-evaluation sample."

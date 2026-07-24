@@ -25,6 +25,7 @@ from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..minimax_client import MiniMaxClient
+from ..predictions_io import predictions_exist, read_predictions
 from ..providers import (
     build_client,
     extraction_max_tokens,
@@ -459,7 +460,7 @@ class EduBenchAdapter(BenchmarkAdapter):
     language = "both"
 
     def load_items(self, limit: int | None = None, offset: int = 0) -> list[dict[str, Any]]:
-        if not PROMPT_SOURCE.is_file():
+        if not predictions_exist(PROMPT_SOURCE):
             raise SystemExit(
                 f"missing canonical EduBench prompt source {PROMPT_SOURCE}; "
                 "restore the imported EduBench artifacts before running the adapter"
@@ -467,40 +468,36 @@ class EduBenchAdapter(BenchmarkAdapter):
         items: list[dict[str, Any]] = []
         seen: set[str] = set()
         active_table = task_dimensions()
-        with PROMPT_SOURCE.open(encoding="utf-8") as handle:
-            for line_number, line in enumerate(handle, 1):
-                if not line.strip():
-                    continue
-                row = json.loads(line)
-                item_id = str(row.get("item_id") or "")
-                meta = row.get("metadata") or {}
-                lang = str(meta.get("lang") or "en")
-                if self.language != "both" and lang != self.language:
-                    continue
-                task = str(meta.get("task") or "")
-                prompt = str(meta.get("prompt") or "")
-                if not item_id or not prompt or task not in OFFICIAL_TASK_DIMENSIONS:
-                    raise SystemExit(f"invalid EduBench prompt row {PROMPT_SOURCE}:{line_number}")
-                if item_id in seen:
-                    raise SystemExit(f"duplicate EduBench item_id {item_id} in {PROMPT_SOURCE}")
-                seen.add(item_id)
-                items.append(
-                    {
-                        "item_id": item_id,
-                        "text": prompt,
-                        "image_paths": [],
-                        "gold": "continuous_rubric_score_0_to_10",
-                        "meta": {
-                            "lang": lang,
-                            "task": task,
-                            "scenario": meta.get("scenario") or TASK_NAMES[task],
-                            "subject": meta.get("subject") or "unknown",
-                            "difficulty": meta.get("difficulty") or "unknown",
-                            "applicable_dimensions": list(active_table[task]),
-                            "prompt_source": str(PROMPT_SOURCE.relative_to(ROOT)),
-                        },
-                    }
-                )
+        for row_number, row in enumerate(read_predictions(PROMPT_SOURCE), 1):
+            item_id = str(row.get("item_id") or "")
+            meta = row.get("metadata") or {}
+            lang = str(meta.get("lang") or "en")
+            if self.language != "both" and lang != self.language:
+                continue
+            task = str(meta.get("task") or "")
+            prompt = str(meta.get("prompt") or "")
+            if not item_id or not prompt or task not in OFFICIAL_TASK_DIMENSIONS:
+                raise SystemExit(f"invalid EduBench prompt row {PROMPT_SOURCE}:{row_number}")
+            if item_id in seen:
+                raise SystemExit(f"duplicate EduBench item_id {item_id} in {PROMPT_SOURCE}")
+            seen.add(item_id)
+            items.append(
+                {
+                    "item_id": item_id,
+                    "text": prompt,
+                    "image_paths": [],
+                    "gold": "continuous_rubric_score_0_to_10",
+                    "meta": {
+                        "lang": lang,
+                        "task": task,
+                        "scenario": meta.get("scenario") or TASK_NAMES[task],
+                        "subject": meta.get("subject") or "unknown",
+                        "difficulty": meta.get("difficulty") or "unknown",
+                        "applicable_dimensions": list(active_table[task]),
+                        "prompt_source": str(PROMPT_SOURCE.relative_to(ROOT)),
+                    },
+                }
+            )
         if self.language == "zh" and not items:
             raise SystemExit("the comparable 3,797-item EduBench prompt set is English-only")
         return items[offset : offset + limit if limit is not None else None]

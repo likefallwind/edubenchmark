@@ -43,6 +43,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Callable
 
+from eval.predictions_io import predictions_exist, read_predictions
 from eval.stats import (
     DEFAULT_SEED,
     agreement_stat,
@@ -135,9 +136,9 @@ def load_judge_outputs(source: str) -> tuple[dict[str, dict[str, str]], dict[str
         labels[judge] = per_item
         hashes[f"{SOURCES[source]}/{slug}/scored.jsonl"] = _sha256_file(scored_path)
         raw_map: dict[str, dict[str, Any]] = {}
-        pred_path = bench_dir / slug / "predictions.jsonl"
-        if pred_path.exists():
-            for row in _read_jsonl(pred_path):
+        pred_dir = bench_dir / slug
+        if predictions_exist(pred_dir):
+            for row in read_predictions(pred_dir):
                 entry = {"response": row.get("response")}
                 if row.get("reasoning"):
                     entry["reasoning"] = row["reasoning"]

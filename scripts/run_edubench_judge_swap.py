@@ -40,6 +40,7 @@ from statistics import fmean
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from eval.predictions_io import read_predictions  # noqa: E402
 from eval.providers import build_client, model_slug  # noqa: E402
 
 EVAL_DIR = ROOT / "reports" / "eval" / "edubench"
@@ -152,7 +153,7 @@ def build_samples() -> None:
     prompts: dict[tuple[str, str], str] = {}
     rows_by_task: dict[str, list[dict]] = defaultdict(list)
     for model in models:
-        for rec in read_jsonl(SOURCE_DIR / model / "predictions.jsonl"):
+        for rec in read_predictions(SOURCE_DIR / model):
             prompts[(rec["item_id"], model)] = (rec.get("metadata") or {}).get(
                 "prompt", ""
             )
