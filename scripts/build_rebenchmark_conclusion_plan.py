@@ -27,34 +27,34 @@ MAIN_SOURCE = "tempt/rebenchmark-summary-0701.html"
 
 DIMENSIONS: dict[str, dict[str, str]] = {
     "SRG": {
-        "zh": "符号表征与情境锚定",
-        "en": "Symbolic Representation & Grounding",
+        "zh": "任务理解与多模态交互",
+        "en": "Task Understanding and Multimodal Interaction",
         "color": "#2563eb",
-        "summary": "把指令、上下文、文本和多模态输入锚定成可推理的教育语境。",
+        "summary": "正确理解任务及其多模态信息：把指令、上下文、文本和多模态输入锚定成可推理的语境。",
     },
     "FDR": {
-        "zh": "领域形式推理与可靠执行",
-        "en": "Formal Domain Reasoning & Reliable Execution",
+        "zh": "知识推理与可靠执行",
+        "en": "Knowledge, Reasoning, and Reliable Execution",
         "color": "#d97706",
-        "summary": "调用知识、推理、校验、弃答和工具链完成可验证任务。",
+        "summary": "正确、可靠地完成复杂任务：调用知识、推理、校验、弃答和工具链完成可验证任务。",
     },
     "LAD": {
-        "zh": "学习评价与错误诊断",
-        "en": "Learning Assessment & Diagnostic Reasoning",
+        "zh": "学习诊断与教育测评",
+        "en": "Learning Diagnosis and Educational Assessment",
         "color": "#16a34a",
-        "summary": "判断作答、定位错误、归因错因，并映射 rubric 或评分标准。",
+        "summary": "诊断、评价并设计学习测评：判断作答、定位错误、归因错因，并映射 rubric 或评分标准。",
     },
     "CLM": {
-        "zh": "认知建模与教学规划",
-        "en": "Cognitive Modeling & Instructional Planning",
+        "zh": "学习者建模与适应性教学",
+        "en": "Learner Modelling and Adaptive Instruction",
         "color": "#7c3aed",
-        "summary": "估计学习者状态，选择个性化干预，规划路径并生成适配反馈。",
+        "summary": "根据学习者状态调整教学：估计学习者状态，选择个性化干预，规划路径并生成适配反馈。",
     },
     "CEG": {
-        "zh": "约束性教育生成",
-        "en": "Constrained Educational Generation",
+        "zh": "教育安全与学术规范",
+        "en": "Educational Safety and Academic Norms",
         "color": "#dc2626",
-        "summary": "在角色边界、风险识别和安全处置约束下输出教育回复。",
+        "summary": "遵守教育安全和学术规范：在角色边界、风险识别、安全处置与学术诚信约束下输出教育回复。",
     },
 }
 
@@ -1751,9 +1751,9 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}th,td{padding:9px 10p
     parts.append("</section>")
 
     parts.append("<section><div class='section-head'><div><h2>6. CLM / CEG 相关 benchmark 模型表现</h2><p class='lede'>只纳入 score P 落在 CLM/CEG 的 benchmark 结果；覆盖但不计分的支持能力只在第 3 部分矩阵中展示。数据合并 0701 参考层和本仓库 reports/eval summary。</p></div></div>")
-    parts.append("<h3>6.1 CLM · 认知建模与教学规划</h3>")
+    parts.append("<h3>6.1 CLM · 学习者建模与适应性教学</h3>")
     parts.append(render_dimension_model_benchmark_charts(clm_ceg_rows, "CLM"))
-    parts.append("<h3 style='margin-top:18px'>6.2 CEG · 约束性教育生成</h3>")
+    parts.append("<h3 style='margin-top:18px'>6.2 CEG · 教育安全与学术规范</h3>")
     parts.append(render_dimension_model_benchmark_charts(clm_ceg_rows, "CEG"))
     parts.append("</section>")
 

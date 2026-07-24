@@ -32,11 +32,11 @@ ABILITY_PROFILE_DIR = ROOT / "doc" / "ability_profiles"
 OUT_PATH = ROOT / "html_report" / "atomic_ability_explorer_2026-07-19.html"
 
 GROUP_LABELS = {
-    "SRG": "符号表征与情境锚定",
-    "FDR": "领域形式推理与可靠执行",
-    "LAD": "学习评价与错误诊断",
-    "CLM": "认知建模与教学规划",
-    "CEG": "约束性教育生成",
+    "SRG": "任务理解与多模态交互",
+    "FDR": "知识推理与可靠执行",
+    "LAD": "学习诊断与教育测评",
+    "CLM": "学习者建模与适应性教学",
+    "CEG": "教育安全与学术规范",
 }
 GROUP_ORDER = ["SRG", "FDR", "LAD", "CLM", "CEG"]
 

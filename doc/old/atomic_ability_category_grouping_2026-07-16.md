@@ -8,6 +8,20 @@
 
 这层划分继承自 `doc/atomic_ability_principle_audit_v3.md` 的两层基座(A/B 操作基座 → 基础;C/D/E 教育任务基座 → 教育),调整之处见文末。
 
+## 五类展示分组(2026-07-24 新增)
+
+两大类之下再细分为**五个展示类别**,用于能力画像的中层组织(两大类汇总 → 五类 → 20 项)。每个原子能力仍只归一个类别:
+
+| 层级 | 范围 | 中文名称 | 英文名称 | 核心关注 |
+|---|---|---|---|---|
+| 通用基础能力 | P01–P04 | 任务理解与多模态交互 | Task Understanding and Multimodal Interaction | 正确理解任务及其多模态信息 |
+| 通用基础能力 | P05–P09 | 知识推理与可靠执行 | Knowledge, Reasoning, and Reliable Execution | 正确、可靠地完成复杂任务 |
+| 教育专属能力 | P10–P12 | 学习诊断与教育测评 | Learning Diagnosis and Educational Assessment | 诊断、评价并设计学习测评 |
+| 教育专属能力 | P13–P16 | 学习者建模与适应性教学 | Learner Modelling and Adaptive Instruction | 根据学习者状态调整教学 |
+| 教育专属能力 | P17–P20 | 教育安全与学术规范 | Educational Safety and Academic Norms | 遵守教育安全和学术规范 |
+
+"通用基础能力"= 下面的模型基础能力(P01–P09),"教育专属能力"= 教育领域能力(P10–P20);五类是在这两层里再按构念细分,与下面的九子类是同一构念划分的两种粒度(五类更粗、供报告中层展示,九子类更细)。
+
 ## 划分总表
 
 ### 一、模型基础能力(9 项)

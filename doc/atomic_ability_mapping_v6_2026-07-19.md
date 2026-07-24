@@ -64,7 +64,19 @@
 | P19 | 安全处置选择 | 对风险与越界请求选择正确处置方式 |
 | P20 | 学术诚信与作答真实性判定 | 识别抄袭、代写等真实性问题 |
 
-大类划分(展示层,不进测量模型)见 `doc/atomic_ability_category_grouping_2026-07-16.md`。
+### 大类划分(展示层,不进测量模型)
+
+在 20 项原子能力之上做一层大类划分,用于报告组织与能力画像展示。**这层划分不进测量模型**——权重、facet 结构、聚合规则仍以 `data/mapping_measurement_model_v6.json` 为准,不因大类归属改变。分**两个层级、五个类别**,与上面清单的基础(P01–P09)/ 教育(P10–P20)两分完全兼容:
+
+| 层级 | 范围 | 中文名称 | 英文名称 | 核心关注 |
+|---|---|---|---|---|
+| 通用基础能力 | P01–P04 | 任务理解与多模态交互 | Task Understanding and Multimodal Interaction | 正确理解任务及其多模态信息 |
+| 通用基础能力 | P05–P09 | 知识推理与可靠执行 | Knowledge, Reasoning, and Reliable Execution | 正确、可靠地完成复杂任务 |
+| 教育专属能力 | P10–P12 | 学习诊断与教育测评 | Learning Diagnosis and Educational Assessment | 诊断、评价并设计学习测评 |
+| 教育专属能力 | P13–P16 | 学习者建模与适应性教学 | Learner Modelling and Adaptive Instruction | 根据学习者状态调整教学 |
+| 教育专属能力 | P17–P20 | 教育安全与学术规范 | Educational Safety and Academic Norms | 遵守教育安全和学术规范 |
+
+"通用基础能力"即清单里的模型基础能力(P01–P09),"教育专属能力"即教育领域能力(P10–P20);五类是在这两层里再按构念细分。与 RE_BENCHMARK_V1 的 C1–C5 主测分类是两套东西(C1–C5 按测试组织划分,本表按能力构念划分),不要混用。两层基座沿革与更早的九子类明细见 `doc/old/atomic_ability_category_grouping_2026-07-16.md`。
 
 ### 边界口径
 
