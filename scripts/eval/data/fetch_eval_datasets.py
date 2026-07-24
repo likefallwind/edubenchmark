@@ -1234,6 +1234,263 @@ def fetch_mooccube(force: bool = False) -> Path:
     return out_dir
 
 
+TUTORBENCH_REPO_ID = "ScaleAI/TutorBench"
+# severity -> rubric weight (paper Sec. 2.4: critical=+5, not_critical=+1,
+# critical_negative=-5). "deleted" rubrics are dropped (not scored).
+TUTORBENCH_SEVERITY_WEIGHT = {
+    "critical": 5,
+    "not_critical": 1,
+    "critical_negative": -5,
+}
+
+
+def _tutorbench_use_case(batch: str) -> tuple[int, str]:
+    """(use_case 1/2/3, modality 'text'|'multimodal') from the BATCH string."""
+    b = (batch or "").upper()
+    uc = 1 if "USE_CASE_1" in b else 2 if "USE_CASE_2" in b else 3 if "USE_CASE_3" in b else 0
+    modality = "multimodal" if "MULTIMODAL" in b else "text"
+    return uc, modality
+
+
+def _tutorbench_image_ext(data: bytes) -> str:
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return ".png"
+    if data[:2] == b"\xff\xd8":
+        return ".jpg"
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return ".gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return ".webp"
+    return ".png"
+
+
+def fetch_tutorbench(force: bool = False) -> Path:
+    """Materialize TutorBench (ScaleAI/TutorBench) into JSONL + extracted images.
+
+    1,473 real STEM tutoring samples across three use cases -- adaptive
+    explanation (UC1), assessment & feedback (UC2), active-learning hints (UC3),
+    each in text-only or multimodal form -- with 15k+ per-sample rubric criteria
+    (severity critical/not_critical/critical_negative). The model under test
+    generates a tutoring reply; an LLM judge rates each rubric criterion
+    pass/fail and the score is the weighted average rubric rating (paper Eq. 1).
+
+    Source parquet: https://huggingface.co/datasets/ScaleAI/TutorBench (two
+    ``data/train-*.parquet`` shards, images embedded as bytes). We extract each
+    image to ``images/<TASK_ID>.<ext>`` and flatten rubrics to
+    ``{criteria, weight, attributes}`` so the adapter needs no parquet at
+    eval time.
+    """
+    pandas = _require_pandas()
+    base = ROOT / "sources" / "datasets" / "tutorbench"
+    data_dir = base / "data"
+    images_dir = base / "images"
+    jsonl_path = base / "tutorbench.jsonl"
+    manifest_path = base / "data_manifest.json"
+    if not force and _ok(jsonl_path):
+        print(f"skip tutorbench: {jsonl_path} already exists (use --force to rebuild)")
+        return jsonl_path
+
+    shards = sorted(data_dir.glob("train-*.parquet"))
+    if not shards:
+        try:
+            from huggingface_hub import snapshot_download
+        except ImportError as exc:  # pragma: no cover - actionable hint
+            raise SystemExit(
+                "huggingface_hub is required to download TutorBench parquet shards. "
+                "Install it: pip install huggingface_hub"
+            ) from exc
+        print(f"downloading {TUTORBENCH_REPO_ID} parquet shards (~1.1 GB)...")
+        snapshot_download(
+            repo_id=TUTORBENCH_REPO_ID,
+            repo_type="dataset",
+            allow_patterns=["data/train-*.parquet"],
+            local_dir=str(base),
+        )
+        shards = sorted(data_dir.glob("train-*.parquet"))
+    if not shards:
+        raise SystemExit(f"no TutorBench parquet shards under {data_dir}")
+
+    images_dir.mkdir(parents=True, exist_ok=True)
+    frames = [pandas.read_parquet(s) for s in shards]
+    df = pandas.concat(frames, ignore_index=True)
+
+    dropped_rubrics = 0
+    n_images = 0
+    rows: list[dict[str, Any]] = []
+    for _, r in df.iterrows():
+        task_id = str(r["TASK_ID"])
+        use_case, modality = _tutorbench_use_case(str(r["BATCH"]))
+        rel_image = None
+        if modality == "multimodal":
+            img = r.get("Image")
+            data = img.get("bytes") if isinstance(img, dict) else None
+            if data:
+                ext = _tutorbench_image_ext(bytes(data))
+                out = images_dir / f"{task_id}{ext}"
+                if force or not out.exists():
+                    out.write_bytes(bytes(data))
+                rel_image = f"images/{task_id}{ext}"
+                n_images += 1
+        rubrics: list[dict[str, Any]] = []
+        for c in json.loads(r["RUBRICS"]):
+            attrs = c.get("attributes") or {}
+            severity = str(attrs.get("severity") or "").strip()
+            if severity not in TUTORBENCH_SEVERITY_WEIGHT:
+                dropped_rubrics += 1
+                continue
+            rubrics.append(
+                {
+                    "criteria": c.get("criteria"),
+                    "weight": TUTORBENCH_SEVERITY_WEIGHT[severity],
+                    "severity": severity,
+                    "eval_dimension": (attrs.get("eval_dimension") or "").strip(),
+                    "tutoring_skill": (attrs.get("tutoring_skill") or "").strip(),
+                    "explicitness": (attrs.get("explicitness") or "").strip(),
+                    "objectivity": (attrs.get("objectivity") or "").strip(),
+                }
+            )
+        rows.append(
+            {
+                "task_id": task_id,
+                "use_case": use_case,
+                "modality": modality,
+                "subject": _jsonable(r.get("SUBJECT")),
+                "prompt": _jsonable(r.get("PROMPT")),
+                "initial_explanation": _jsonable(r.get("UC1_INITIAL_EXPLANATION")) or "",
+                "follow_up_prompt": _jsonable(r.get("FOLLOW_UP_PROMPT")) or "",
+                "image": rel_image,
+                "image_url": _jsonable(r.get("IMAGE_URL")),
+                "bloom_taxonomy": _jsonable(r.get("bloom_taxonomy")),
+                "rubrics": rubrics,
+            }
+        )
+
+    with jsonl_path.open("w", encoding="utf-8") as fh:
+        for row in rows:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    from collections import Counter
+
+    manifest = {
+        "source": TUTORBENCH_REPO_ID,
+        "homepage": "https://huggingface.co/datasets/ScaleAI/TutorBench",
+        "paper": "https://arxiv.org/abs/2510.02663",
+        "n_items": len(rows),
+        "n_images": n_images,
+        "n_rubrics": sum(len(x["rubrics"]) for x in rows),
+        "dropped_rubrics_non_scored": dropped_rubrics,
+        "use_case_counts": dict(Counter(x["use_case"] for x in rows)),
+        "modality_counts": dict(Counter(x["modality"] for x in rows)),
+        "subject_counts": dict(Counter(str(x["subject"]) for x in rows)),
+        "severity_weights": TUTORBENCH_SEVERITY_WEIGHT,
+        "note": (
+            "Full public set (no Fair815 fair-subset file is shipped upstream; "
+            "the colleague's 815-sample split is not reproducible from this release)."
+        ),
+    }
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(
+        f"wrote tutorbench: {len(rows)} items ({n_images} images, "
+        f"{manifest['n_rubrics']} scored rubrics, {dropped_rubrics} non-scored dropped) -> {jsonl_path}"
+    )
+    return jsonl_path
+
+
+K12BENCH_REPO = "lhpku20010120/K12-KGraph"
+# Nine benchmark JSONL files under K12-Bench/ on the HF dataset, grouped into the
+# five task families of K12-Bench (Liang et al. 2026, arXiv:2605.09635).
+K12BENCH_FILES = {
+    "prereq": ["prereq_subtask1", "prereq_subtask2"],
+    "locate": ["locate_subtask1", "locate_subtask2"],
+    "neighbor": ["neighbor"],
+    "ground": ["ground_subtask1", "ground_subtask2"],
+    "evidence": ["evidence_subtask1", "evidence_subtask2"],
+}
+# A handful of ground_subtask1 rows embed raw LaTeX (e.g. ``\mathrm``) that is not
+# valid JSON (lone backslash escapes), so strict json.loads rejects them. Double
+# any backslash that does not begin a valid JSON escape, then re-parse.
+_BAD_ESCAPE = re.compile(r'\\(?![\\"/bfnrtu])')
+
+
+def _load_k12bench_line(line: str) -> dict[str, Any]:
+    try:
+        return json.loads(line)
+    except json.JSONDecodeError:
+        return json.loads(_BAD_ESCAPE.sub(r"\\\\", line))
+
+
+def fetch_k12bench(force: bool = False) -> Path:
+    """Download K12-Bench (Liang et al. 2026, K12-KGraph, arXiv:2605.09635).
+
+    23,640 four-option **multi-select** MCQ probing *curriculum cognition* —
+    prerequisite chains, concept taxonomy, experiment-concept links, and
+    cross-chapter positioning — derived from a curriculum-aligned knowledge graph
+    over People's Education Press K-12 textbooks (math/physics/chemistry/biology).
+    Text-only; the paper contrasts it with factual-recall exams (C-Eval/CMMLU).
+
+    Public + ungated on HuggingFace (``{repo}``, CC BY-NC-SA 4.0); the nine
+    ``K12-Bench/*.jsonl`` files map onto five task families. Each row is
+    ``{{id, question, options: {{A..D}}, answer: [letters]}}``. We re-serialize
+    every family to a clean stdlib-readable JSONL under
+    ``sources/datasets/k12bench/`` (fixing the two LaTeX-broken ground rows) and
+    tag each row with its ``task_family``/``subtask``. Rule-scored (Exact Match +
+    instance-level Macro-F1), no judge, no extraction model needed.
+    """.format(repo=K12BENCH_REPO)
+    from huggingface_hub import hf_hub_download
+
+    out_dir = ROOT / "sources" / "datasets" / "k12bench"
+    data_dir = out_dir / "data"
+    manifest_path = out_dir / "data_manifest.json"
+    if _ok(manifest_path) and not force:
+        print(f"skip k12bench: {manifest_path} already exists (use --force to re-download)")
+        return out_dir
+
+    data_dir.mkdir(parents=True, exist_ok=True)
+    family_counts: dict[str, int] = {}
+    subtask_counts: dict[str, int] = {}
+    fixed_rows = 0
+    total = 0
+    for family, stems in K12BENCH_FILES.items():
+        out_rows: list[dict[str, Any]] = []
+        for stem in stems:
+            cached = hf_hub_download(K12BENCH_REPO, f"K12-Bench/{stem}.jsonl", repo_type="dataset")
+            with open(cached, encoding="utf-8") as fh:
+                for line in fh:
+                    if not line.strip():
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        row = _load_k12bench_line(line)
+                        fixed_rows += 1
+                    row["task_family"] = family
+                    row["subtask"] = stem
+                    out_rows.append(row)
+                    subtask_counts[stem] = subtask_counts.get(stem, 0) + 1
+        family_counts[family] = len(out_rows)
+        total += len(out_rows)
+        out_path = data_dir / f"{family}.jsonl"
+        with out_path.open("w", encoding="utf-8") as fh:
+            for row in out_rows:
+                fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    manifest = {
+        "source": f"https://huggingface.co/datasets/{K12BENCH_REPO}",
+        "homepage": "https://github.com/haolpku/K12-Dataset",
+        "citation": "Liang et al. 2026, K12-KGraph: A Curriculum-Aligned Knowledge Graph for Benchmarking and Training Educational LLMs (arXiv:2605.09635)",
+        "license": "CC BY-NC-SA 4.0 (non-commercial)",
+        "task_families": family_counts,
+        "subtasks": subtask_counts,
+        "total_items": total,
+        "format": "four-option multi-select MCQ; answer is a list of option letters (1-3 correct)",
+        "scoring": "rule-based (Exact Match + instance-level Macro-F1); no LLM judge, no extraction LLM",
+        "note": f"{fixed_rows} ground_subtask1 row(s) carried invalid-JSON LaTeX escapes; repaired on import",
+    }
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"k12bench ready: {total} items across {len(family_counts)} families -> {data_dir}")
+    return out_dir
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
@@ -1252,10 +1509,12 @@ def main() -> None:
             "umwp",
             "ifeval",
             "k12vista",
+            "k12bench",
             "longtutor",
             "mooccube",
             "pedagogy_benchmark",
             "asap_2",
+            "tutorbench",
             "all",
         ],
     )
@@ -1285,6 +1544,8 @@ def main() -> None:
         fetch_ifeval(force=args.force)
     if args.benchmark in ("k12vista", "all"):
         fetch_k12vista(force=args.force)
+    if args.benchmark in ("k12bench", "all"):
+        fetch_k12bench(force=args.force)
     if args.benchmark in ("longtutor", "all"):
         fetch_longtutor(force=args.force)
     if args.benchmark in ("mooccube", "all"):
@@ -1293,6 +1554,8 @@ def main() -> None:
         fetch_pedagogy_benchmark(force=args.force)
     if args.benchmark in ("asap_2", "all"):
         fetch_asap_2(force=args.force)
+    if args.benchmark in ("tutorbench", "all"):
+        fetch_tutorbench(force=args.force)
 
 
 if __name__ == "__main__":

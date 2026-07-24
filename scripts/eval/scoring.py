@@ -141,6 +141,27 @@ def binary_prf1(targets: list[bool], preds: list[bool]) -> dict[str, float]:
     }
 
 
+def set_prf(gold: set[Any], pred: set[Any]) -> dict[str, float]:
+    """Instance-level precision/recall/F1 over label sets (multi-select MCQ).
+
+    P = |gold ∩ pred| / |pred|, R = |gold ∩ pred| / |gold|, F1 = 2PR/(P+R),
+    with ``zero_division=0``.  ``exact`` is the all-or-nothing exact-match flag
+    (pred set equals gold set).  Averaging these per-instance F1 values across
+    items yields the K12-Bench "instance-level Macro-F1"; averaging ``exact``
+    yields Exact Match.
+    """
+    inter = len(gold & pred)
+    precision = inter / len(pred) if pred else 0.0
+    recall = inter / len(gold) if gold else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+    return {
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "exact": float(gold == pred),
+    }
+
+
 def multiclass_f1(targets: list[Any], preds: list[Any]) -> dict[str, float]:
     """F1 with micro / macro / weighted averaging over single-label predictions.
 

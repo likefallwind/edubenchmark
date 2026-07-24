@@ -15,6 +15,7 @@ from .eduguard_bench import EduGuardAdversarialAdapter, EduGuardSATAAdapter
 from .edubench import EduBenchAdapter
 from .ifeval import IFEvalAdapter
 from .k12vista import K12VistaAdapter
+from .k12bench import K12BenchAdapter
 from .mathtutorbench import (
     MTBJudgeCalibration,
     MTBMistakeCorrection,
@@ -39,6 +40,7 @@ from .p07_selfcheck import P07SelfCheckAdapter
 from .p08_abstention import P08AbstentionAdapter
 from .p08_calibration import P08CalibrationAdapter
 from .sas_bench import SASBenchAdapter
+from .tutorbench import TutorBenchAdapter
 
 
 _ADAPTERS: list[type[BenchmarkAdapter]] = [
@@ -51,6 +53,8 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     IFEvalAdapter,
     # K12Vista: Chinese K12 multimodal subject reasoning (P04).
     K12VistaAdapter,
+    # K12-Bench: Chinese K12 curriculum cognition, multi-select MCQ (P15).
+    K12BenchAdapter,
     # MOOCCube: prerequisite reasoning + learning-order sorting, rule-scored (P19).
     MOOCCubePrereqAdapter,
     LongTutorEvidenceAdapter,
@@ -80,6 +84,9 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     # MMTutorBench: multimodal tutoring generation + fixed rubric judge.
     MMTutorBenchAdapter,
     MMTutorBenchJudgeCalibrationAdapter,
+    # TutorBench: real STEM tutoring (3 use cases x text/multimodal), per-rubric
+    # weighted LLM-as-judge (ARR_w); full public set, configurable judge.
+    TutorBenchAdapter,
     # P08 calibration: composite over exact-match delegates + verbalized confidence.
     P08CalibrationAdapter,
     # P08 abstention: UMWP unanswerable vs answerable, rule-scored (no judge).
