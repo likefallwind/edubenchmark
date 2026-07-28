@@ -6,7 +6,7 @@ between backends — base URL, the env var holding the API key, and the chat pat
 — so a caller only has to name a model (``--model doubao-seed-2.0-pro``) and the
 right endpoint is selected automatically.
 
-Five providers ship today:
+Six providers ship today:
 
 * ``minimax``  — the original MiniMax endpoint (``MINIMAX_API_KEY``); also the
   home of the default extractor model ``MiniMax-M2.7``.
@@ -27,6 +27,10 @@ Five providers ship today:
   at ``/chat/completions``. Registered for exactly one model, ``deepseek-v3.2``,
   and it is that model's **default** route: the official API has retired V3.2 and
   the gateway 404s it. Other ``deepseek-*`` models still go to the gateway.
+* ``silicon`` — SiliconFlow (``https://api.siliconflow.cn/v1``, key env
+  ``SILICON_API``) at ``/chat/completions``; home of the ``Qwen/*`` models and the
+  default route for that prefix. Registered for ``Qwen/Qwen3.5-4B`` and
+  ``Qwen/Qwen3-8B``; both are thinking-by-default and listed as reasoning models.
 
 Model names are matched by prefix (``resolve_provider``); unknown models fall
 back to the gateway, and every field can be overridden explicitly by the caller
@@ -147,8 +151,34 @@ ZGC = Provider(
     models=frozenset({"deepseek-v3.2", "deepseek-v3.2-think"}),
 )
 
+# SiliconFlow (``https://api.siliconflow.cn/v1``, key ``SILICON_API``). A Chinese
+# model-hosting platform serving ~91 open-weight models under vendor-prefixed ids
+# (``Qwen/...``, ``deepseek-ai/...``, ``zai-org/...``). OpenAI-compatible chat
+# completions, so the same MiniMaxClient drives it; the base URL already carries
+# ``/v1``, so the chat path is ``/chat/completions``.
+#
+# Registered for the two Qwen models in use (verified present in ``/v1/models``
+# and answered a smoke-test call on 2026-07-28). Both run with thinking enabled by
+# default and return the chain of thought in ``reasoning_content`` with only the
+# answer in ``content`` — Qwen3-8B spent 7,300 of 7,309 completion tokens on
+# reasoning for "8347*2916", so they are in ``_REASONING_MODEL_PREFIXES`` and must
+# never be capped. Expect minutes of wall clock even on trivial prompts; keep
+# concurrency modest and rely on the client's streaming stall timeout rather than
+# raising the total budget.
+#
+# To evaluate another model here (e.g. ``Qwen/Qwen3.5-27B``), add it to ``models``
+# below, and add its lowercase id to ``_REASONING_MODEL_PREFIXES`` if it thinks.
+SILICON = Provider(
+    name="silicon",
+    base_url="https://api.siliconflow.cn/v1",
+    base_url_env="SILICON_BASE_URL",
+    api_key_env="SILICON_API",
+    chat_path="/chat/completions",
+    models=frozenset({"Qwen/Qwen3.5-4B", "Qwen/Qwen3-8B"}),
+)
+
 PROVIDERS: dict[str, Provider] = {
-    p.name: p for p in (MINIMAX, GATEWAY, DEEPSEEK, LIGHTER, ZGC)
+    p.name: p for p in (MINIMAX, GATEWAY, DEEPSEEK, LIGHTER, ZGC, SILICON)
 }
 
 # Model-name prefixes -> provider name. Longest match wins, so the specific
@@ -167,6 +197,10 @@ _PREFIX_PROVIDER: list[tuple[str, str]] = [
     ("deepseek", "gateway"),
     ("deepseek-v3.2", "zgc"),
     ("gpt", "lighter"),
+    # SiliconFlow ids are vendor-prefixed (``Qwen/Qwen3-8B``). The trailing slash
+    # keeps this from swallowing a bare ``qwen-...`` name should another relay ever
+    # serve one; the gateway lists no qwen model today (checked 2026-07-28).
+    ("qwen/", "silicon"),
 ]
 
 # Provider used when no prefix matches a given model name.
@@ -223,7 +257,18 @@ def resolve_model_params(model: str, provider: str | None = None) -> dict:
 # ``reasoning_content`` and put only the bare answer in ``content``. Capping it
 # would starve the answer exactly the way it starves MiniMax-M3. The plain
 # ``deepseek-v3.2`` is *not* listed: it reasons inline in ``content`` instead.
-_REASONING_MODEL_PREFIXES: tuple[str, ...] = ("minimax-m3", "deepseek-v3.2-think")
+# The SiliconFlow Qwen models are the third case: SiliconFlow leaves
+# ``enable_thinking`` on by default for them, so both put their chain of thought in
+# ``reasoning_content`` and return only the answer in ``content`` (verified
+# 2026-07-28 — Qwen/Qwen3-8B billed 7,300 of 7,309 completion tokens as reasoning
+# on "8347*2916", Qwen/Qwen3.5-4B 4,715 total for the same prompt). Capping them
+# would starve the answer exactly as it does MiniMax-M3.
+_REASONING_MODEL_PREFIXES: tuple[str, ...] = (
+    "minimax-m3",
+    "deepseek-v3.2-think",
+    "qwen/qwen3.5-4b",
+    "qwen/qwen3-8b",
+)
 
 
 def is_reasoning_model(model: str) -> bool:
