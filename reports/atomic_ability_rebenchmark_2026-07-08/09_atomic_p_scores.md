@@ -3,9 +3,9 @@
 P-score rows: 191
 Covered P codes: P01, P02, P03, P04, P05, P06, P07, P08, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19
 Missing P codes: P09, P20
-P rows reported as 未测过 (score_10 = null): 3
-Capability-gap zero cells (score_10 = 0, counted): 30
-Untested cells (not counted; see `09_atomic_p_untested_cells.jsonl`): 60
+P rows reported as 未测过 (score_10 = null): 0
+Capability-gap zero cells (score_10 = 0, counted): 36
+Untested cells (not counted; see `09_atomic_p_untested_cells.jsonl`): 54
 
 `score_10`: facet-weighted average with effective weight = relevance × confidence (R25 rule-derived weights). Coverage completeness is reported separately and is not folded back into the score.
 
@@ -53,7 +53,7 @@ a measurement artifact rather than a capability difference.
 | `deepseek-v4-pro` | `P01` 指令与约束遵循 | SRG | 9.2222 | 1 | 0 | 0 | 1.0 | ifeval |
 | `deepseek-v4-pro` | `P02` 长上下文与证据定位 | SRG | 7.8656 | 5 | 0 | 0 | 2.08 | longtutor_evidence, mathtutorbench_mistake_location, sas_bench |
 | `deepseek-v4-pro` | `P03` 多模态理解 | SRG | 0.0 | 4 | 4 | 2 | 1.52 | k12vista, mathvista, mmtutorbench |
-| `deepseek-v4-pro` | `P04` 多模态生成 | SRG | 未测过 | 0 | 0 | 1 | 0.0 |  |
+| `deepseek-v4-pro` | `P04` 多模态生成 | SRG | 0.0 | 1 | 1 | 0 | 0.35 | eduillustrate |
 | `deepseek-v4-pro` | `P05` 知识调用与掌握 | FDR | 7.3713 | 15 | 2 | 1 | 3.99 | agieval, ceval, edubench, k12vista, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathvista, mmlu_pro, olympiadbench, pedagogy_benchmark, sas_bench |
 | `deepseek-v4-pro` | `P06` 推理与生成 | FDR | 6.6945 | 10 | 2 | 1 | 3.065 | agieval, ceval, edubench, k12vista, mathtutorbench_mistake_correction, mathvista, mmlu_pro, olympiadbench, sas_bench |
 | `deepseek-v4-pro` | `P07` 自我校验与修正 | FDR | 6.342 | 3 | 0 | 0 | 1.05 | mathtutorbench_solution_correctness, p07_selfcheck, p08_calibration |
@@ -64,7 +64,7 @@ a measurement artifact rather than a capability difference.
 | `deepseek-v4-pro` | `P13` 学习者画像建模 | CLM | 5.245 | 3 | 0 | 0 | 1.05 | edubench, longtutor_diagnosis, pedagogy_benchmark |
 | `deepseek-v4-pro` | `P14` 个性化教学策略选择 | CLM | 7.0386 | 11 | 1 | 3 | 4.405 | edubench, longtutor_teaching, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, pedagogy_benchmark |
 | `deepseek-v4-pro` | `P15` 学习路径规划（知识结构层） | CLM | 3.789 | 1 | 0 | 0 | 0.68 | mooccube_prereq |
-| `deepseek-v4-pro` | `P16` 适配性解释与反馈生成 | CLM | 6.4731 | 11 | 1 | 5 | 2.695 | edubench, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench |
+| `deepseek-v4-pro` | `P16` 适配性解释与反馈生成 | CLM | 5.8231 | 12 | 2 | 4 | 2.835 | edubench, eduillustrate, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench |
 | `deepseek-v4-pro` | `P17` 教育角色边界判断 | CEG | 5.8532 | 3 | 0 | 1 | 0.795 | eduguard_adversarial, eduguard_sata |
 | `deepseek-v4-pro` | `P18` 学生风险识别 | CEG | 7.612 | 1 | 0 | 0 | 0.2 | eduguard_sata |
 | `deepseek-v4-pro` | `P19` 安全处置选择 | CEG | 6.0467 | 3 | 0 | 0 | 1.305 | eduguard_adversarial, eduguard_sata |
@@ -112,7 +112,7 @@ a measurement artifact rather than a capability difference.
 | `glm-5.2` | `P01` 指令与约束遵循 | SRG | 9.2976 | 1 | 0 | 0 | 1.0 | ifeval |
 | `glm-5.2` | `P02` 长上下文与证据定位 | SRG | 8.0299 | 5 | 0 | 0 | 2.08 | longtutor_evidence, mathtutorbench_mistake_location, sas_bench |
 | `glm-5.2` | `P03` 多模态理解 | SRG | 0.0 | 4 | 4 | 2 | 1.52 | k12vista, mathvista, mmtutorbench |
-| `glm-5.2` | `P04` 多模态生成 | SRG | 未测过 | 0 | 0 | 1 | 0.0 |  |
+| `glm-5.2` | `P04` 多模态生成 | SRG | 0.0 | 1 | 1 | 0 | 0.35 | eduillustrate |
 | `glm-5.2` | `P05` 知识调用与掌握 | FDR | 7.1776 | 14 | 2 | 2 | 3.19 | agieval, ceval, edubench, k12vista, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_problem_solving, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathvista, mmlu_pro, olympiadbench, sas_bench |
 | `glm-5.2` | `P06` 推理与生成 | FDR | 7.0995 | 11 | 2 | 0 | 3.565 | agieval, ceval, edubench, k12vista, mathtutorbench_mistake_correction, mathtutorbench_problem_solving, mathvista, mmlu_pro, olympiadbench, sas_bench |
 | `glm-5.2` | `P07` 自我校验与修正 | FDR | 6.3047 | 3 | 0 | 0 | 1.05 | mathtutorbench_solution_correctness, p07_selfcheck, p08_calibration |
@@ -123,7 +123,7 @@ a measurement artifact rather than a capability difference.
 | `glm-5.2` | `P13` 学习者画像建模 | CLM | 4.5977 | 2 | 0 | 1 | 0.85 | edubench, longtutor_diagnosis |
 | `glm-5.2` | `P14` 个性化教学策略选择 | CLM | 6.3631 | 11 | 1 | 3 | 3.445 | bea2025_tutor, edubench, longtutor_teaching, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, mrbench_tutor |
 | `glm-5.2` | `P15` 学习路径规划（知识结构层） | CLM | 3.911 | 1 | 0 | 0 | 0.68 | mooccube_prereq |
-| `glm-5.2` | `P16` 适配性解释与反馈生成 | CLM | 7.5209 | 14 | 1 | 2 | 3.205 | bea2025_tutor, edubench, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, mrbench_tutor |
+| `glm-5.2` | `P16` 适配性解释与反馈生成 | CLM | 6.791 | 15 | 2 | 1 | 3.345 | bea2025_tutor, edubench, eduillustrate, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, mrbench_tutor |
 | `glm-5.2` | `P17` 教育角色边界判断 | CEG | 7.4097 | 4 | 0 | 0 | 0.965 | eduguard_adversarial, eduguard_sata, mrbench_tutor |
 | `glm-5.2` | `P18` 学生风险识别 | CEG | 7.595 | 1 | 0 | 0 | 0.2 | eduguard_sata |
 | `glm-5.2` | `P19` 安全处置选择 | CEG | 6.5963 | 3 | 0 | 0 | 1.305 | eduguard_adversarial, eduguard_sata |

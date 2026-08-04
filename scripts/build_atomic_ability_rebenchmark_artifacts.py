@@ -97,13 +97,17 @@ CELL_CAPABILITY_REQUIREMENTS: dict[Any, tuple[str, str]] = {
     "mathvista": ("vision", REQUIRE_ALL),
     "k12vista": ("vision", REQUIRE_ALL),
     "mmtutorbench": ("vision", REQUIRE_ALL),
+    # eduillustrate 也吃图，别被"输出 Manim 代码"骗了：230/230 道题都带 base64 题图，
+    # 生成链路在出提纲（explanation_planner.py:168/271）和写代码（code_generator.py:443/564/582）
+    # 两处都把图发给被测模型；题干文本只有 question，`img_caption` 不进 prompt，
+    # 图是图形条件的唯一来源。8 个判分维度里还有 4 个是视觉侧。
+    "eduillustrate": ("vision", REQUIRE_ALL),
     # olympiadbench 的多模态子集看着像硬门槛，其实不是：R22 的盲测对照发现看不见图的
     # deepseek-v4-pro 在该子集拿 0.658、明眼的 M3 拿 0.681——题干文本自带足够信息，
     # 盲模型照样能作答。所以这不是「能力缺失跑不了」，标 PARTIAL 走未测过；那份盲答
     # 分本身另有 BLIND_VISION_MODELS 按废分丢弃。
     "olympiadbench": ("vision", REQUIRE_PARTIAL),
-    # TutorBench Fair815 只有一部分题带图（纯文本的 qwen3.5-27B / gpt-5.5 都有真实分数）；
-    # eduillustrate 是让模型写 Manim 代码再渲染，纯文本模型照样能跑。两者都不是能力门槛。
+    # TutorBench Fair815 只有一部分题带图，纯文本的 qwen3.5-27B / gpt-5.5 都有真实分数。
     "tutorbench": ("vision", REQUIRE_PARTIAL),
 }
 

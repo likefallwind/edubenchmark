@@ -15,10 +15,10 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `deepseek-v4-flash` | LAD | 7.3197 | 3 | P10, P11, P12 |
 | `deepseek-v4-flash` | SRG | 7.74 | 1 | P02 |
 | `deepseek-v4-pro` | CEG | 6.504 | 3 | P17, P18, P19 |
-| `deepseek-v4-pro` | CLM | 5.6364 | 4 | P13, P14, P15, P16 |
+| `deepseek-v4-pro` | CLM | 5.4739 | 4 | P13, P14, P15, P16 |
 | `deepseek-v4-pro` | FDR | 7.0478 | 4 | P05, P06, P07, P08 |
 | `deepseek-v4-pro` | LAD | 7.4675 | 3 | P10, P11, P12 |
-| `deepseek-v4-pro` | SRG | 5.6959 | 3 | P01, P02, P03 |
+| `deepseek-v4-pro` | SRG | 4.272 | 4 | P01, P02, P03, P04 |
 | `doubao-seed-2-0-lite` | CEG | 6.772 | 3 | P17, P18, P19 |
 | `doubao-seed-2-0-lite` | CLM | 6.2723 | 3 | P13, P14, P16 |
 | `doubao-seed-2-0-lite` | FDR | 7.7588 | 2 | P05, P06 |
@@ -35,10 +35,10 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `glm-5.1` | LAD | 7.6377 | 3 | P10, P11, P12 |
 | `glm-5.1` | SRG | 7.8142 | 1 | P02 |
 | `glm-5.2` | CEG | 7.2003 | 3 | P17, P18, P19 |
-| `glm-5.2` | CLM | 5.5982 | 4 | P13, P14, P15, P16 |
+| `glm-5.2` | CLM | 5.4157 | 4 | P13, P14, P15, P16 |
 | `glm-5.2` | FDR | 7.0789 | 4 | P05, P06, P07, P08 |
 | `glm-5.2` | LAD | 7.8524 | 3 | P10, P11, P12 |
-| `glm-5.2` | SRG | 5.7758 | 3 | P01, P02, P03 |
+| `glm-5.2` | SRG | 4.3319 | 4 | P01, P02, P03, P04 |
 | `gpt-5.4` | CLM | 8.1389 | 2 | P13, P14 |
 | `gpt-5.4` | FDR | 6.2363 | 2 | P05, P06 |
 | `gpt-5.4` | LAD | 7.0793 | 2 | P10, P11 |
@@ -53,10 +53,10 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `kimi-k2-7-code` | CLM | 7.1796 | 1 | P16 |
 | `kimi-k2-7-code` | SRG | 7.1796 | 1 | P04 |
 | `minimax-m2.7` | CEG | 7.445 | 3 | P17, P18, P19 |
-| `minimax-m2.7` | CLM | 5.6436 | 4 | P13, P14, P15, P16 |
+| `minimax-m2.7` | CLM | 5.4767 | 4 | P13, P14, P15, P16 |
 | `minimax-m2.7` | FDR | 6.5782 | 4 | P05, P06, P07, P08 |
 | `minimax-m2.7` | LAD | 7.5604 | 3 | P10, P11, P12 |
-| `minimax-m2.7` | SRG | 5.4315 | 3 | P01, P02, P03 |
+| `minimax-m2.7` | SRG | 4.0736 | 4 | P01, P02, P03, P04 |
 | `minimax-m3` | CEG | 8.0943 | 3 | P17, P18, P19 |
 | `minimax-m3` | CLM | 5.9103 | 4 | P13, P14, P15, P16 |
 | `minimax-m3` | FDR | 7.3963 | 4 | P05, P06, P07, P08 |
