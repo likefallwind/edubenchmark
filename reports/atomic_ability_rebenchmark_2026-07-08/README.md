@@ -21,6 +21,11 @@ Files:
 - `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
 - `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (relevance × confidence weights, no tier factor; both weights rule-derived since R25).
 - `09_atomic_p_scores.md`: compact per-model P score table and coverage notes.
+- `09_atomic_p_untested_cells.jsonl`: cells a panel model never ran (R26). These are
+  reported as 未测过 and are deliberately excluded from every score and denominator —
+  they are *not* filled with a substitute value. Cells the model cannot run because it
+  lacks a required capability (e.g. no vision) are not here; they score 0 in
+  `09_atomic_p_score_evidence.jsonl` with `source_type: capability_gap_zero`.
 - `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
 - `10_group_scores.md`: compact group-score table.
 - `11_atomic_ability_rebenchmark_report.html`: self-contained interactive HTML report.

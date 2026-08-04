@@ -16,7 +16,7 @@
 | 优先继续做 | `sas_bench` SAS-Bench | ECS error-cause consistency | 5.58 | 100.00 | 100.00 | 8 | P05 0.20, P06 0.20, P10 0.80 |
 | 值得继续做 | `eduguard_adversarial` EduGuard-Bench P2 | Refusal quality distribution | 6.71 | 85.00 | 100.00 | 7 | P17 0.20, P19 0.80 |
 | 值得继续做 | `eduguard_adversarial` EduGuard-Bench P2 | Adversarial Safety ASR | 6.92 | 85.00 | 100.00 | 7 | P17 0.50, P19 0.50 |
-| 优先继续做 | `longtutor_diagnosis` LongTutor 知识状态诊断 | four-category knowledge-state diagnosis macro-F1 | 2.65 | 82.45 | 97.00 | 4 | P10 0.20, P13 0.80 |
+| 优先继续做 | `longtutor_diagnosis` LongTutor 知识状态诊断 | four-category knowledge-state diagnosis macro-F1 | 2.58 | 82.45 | 97.00 | 5 | P10 0.20, P13 0.80 |
 | 优先继续做 | `p08_calibration` P08 置信度校准 | calibration composite (CWR/AUROC) | 6.44 | 77.35 | 91.00 | 5 | P07 0.20, P08 0.80 |
 | 优先继续做 | `asap_2` ASAP 2.0 | essay holistic QWK | 5.45 | 72.00 | 72.00 | 7 | P11 0.80 |
 | 优先继续做 | `mooccube_prereq` MOOCCube 先修关系推理 | chance-corrected composite (先修选择 + 学习顺序排序) | 4.28 | 69.70 | 82.00 | 5 | P15 0.80 |
@@ -30,35 +30,35 @@
 | 优先继续做 | `edubench` EduBench | personalized_adaptation_learning_support (metric) | 6.34 | 60.78 | 71.50 | 12 | P13 0.20, P14 0.50 |
 | 重要但可降频 | `pedagogy_benchmark` Pedagogy Benchmark | CDPK teaching knowledge selection | 8.50 | 103.50 | 103.50 | 11 | P05 0.50, P14 0.80 |
 | 重要但可降频 | `pedagogy_benchmark` Pedagogy Benchmark | SEND special education needs selection | 7.88 | 99.00 | 99.00 | 11 | P05 0.50, P13 0.20, P14 0.50 |
-| 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | Mistake Location | 7.75 | 95.00 | 95.00 | 5 | P02 0.20, P10 0.80 |
+| 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | Mistake Location | 7.73 | 95.00 | 95.00 | 6 | P02 0.20, P10 0.80 |
 | 重要但可降频 | `sas_bench` SAS-Bench | CCS step scoring consistency | 7.65 | 83.00 | 83.00 | 8 | P02 0.20, P10 0.20, P11 0.50 |
-| 重要但可降频 | `mathvista` MathVista | task/question_type/answer_type accuracy | 8.41 | 78.50 | 78.50 | 1 | P03 0.50, P05 0.20, P06 0.50 |
+| 重要但可降频 | `mathvista` MathVista | task/question_type/answer_type accuracy | 8.64 | 78.50 | 78.50 | 2 | P03 0.50, P05 0.20, P06 0.50 |
 | 重要但可降频 | `sas_bench` SAS-Bench | QWK holistic total score | 8.27 | 72.00 | 72.00 | 8 | P11 0.80 |
 | 重要但可降频 | `mathtutorbench_pedagogy_hard` MathTutorBench | Pedagogy IF hard | 7.92 | 65.88 | 77.50 | 7 | P05 0.20, P14 0.50, P16 0.20 |
 | 重要但可降频 | `mathtutorbench_pedagogy` MathTutorBench | Pedagogy IF | 8.25 | 65.88 | 77.50 | 7 | P05 0.20, P14 0.50, P16 0.20 |
 | 重要但可降频 | `p08_abstention` P08 能力性弃答 | balanced abstention score | 8.90 | 64.60 | 76.00 | 5 | P08 0.80 |
-| 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | Solution Correctness | 8.68 | 62.50 | 62.50 | 5 | P07 0.20, P10 0.50 |
+| 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | Solution Correctness | 8.71 | 62.50 | 62.50 | 6 | P07 0.20, P10 0.50 |
 | 不必重点看 | `mathtutorbench_mistake_correction` MathTutorBench | Mistake Correction | 9.02 | 51.00 | 51.00 | 5 | P06 0.20, P10 0.20, P16 0.20 |
 | 不必重点看 | `eduillustrate` EduIllustrate | 8-dim 0-5 visual explanation score | 6.93 | 49.00 | 70.00 | 4 | P04 0.50, P16 0.20 |
 | 诊断保留 | `bea2025_judge` BEA 2025 Judge | judge labels: mistake/guidance/actionability | 4.96 | 45.00 | 45.00 | 6 | P11 0.50 |
 | 诊断保留 | `mrbench_judge` MRBench Judge | 8-dimension tutor response judging | 5.12 | 45.00 | 45.00 | 6 | P11 0.50 |
 | 不必重点看 | `ifeval` IFEval | prompt-level strict accuracy | 9.06 | 45.00 | 45.00 | 5 | P01 1.00 |
-| 不必重点看 | `olympiadbench` OlympiadBench | overall/subject/language/modality accuracy | 7.26 | 43.50 | 43.50 | 2 | P05 0.20, P06 0.50 |
-| 不必重点看 | `agieval` AGIEval | overall/task/language/question_type accuracy | 8.74 | 43.50 | 43.50 | 5 | P05 0.20, P06 0.50 |
-| 不必重点看 | `mathtutorbench_problem_solving` MathTutorBench | Problem Solving | 9.70 | 43.50 | 43.50 | 4 | P05 0.20, P06 0.50 |
-| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Multi-session Reasoning accuracy | 6.71 | 40.60 | 58.00 | 4 | P02 0.80 |
-| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Hallucination Check accuracy | 6.94 | 40.60 | 58.00 | 4 | P02 0.80 |
-| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Information Extraction accuracy | 9.58 | 40.60 | 58.00 | 4 | P02 0.80 |
-| 不必重点看 | `mmlu_pro` MMLU-Pro | overall/category accuracy | 8.60 | 40.50 | 40.50 | 5 | P05 0.50, P06 0.20 |
-| 不必重点看 | `ceval` C-EVAL | overall/category/subject accuracy | 9.11 | 40.50 | 40.50 | 5 | P05 0.50, P06 0.20 |
+| 不必重点看 | `olympiadbench` OlympiadBench | overall/subject/language/modality accuracy | 7.13 | 43.50 | 43.50 | 4 | P05 0.20, P06 0.50 |
+| 不必重点看 | `agieval` AGIEval | overall/task/language/question_type accuracy | 8.81 | 43.50 | 43.50 | 6 | P05 0.20, P06 0.50 |
+| 不必重点看 | `mathtutorbench_problem_solving` MathTutorBench | Problem Solving | 9.71 | 43.50 | 43.50 | 5 | P05 0.20, P06 0.50 |
+| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Multi-session Reasoning accuracy | 6.75 | 40.60 | 58.00 | 5 | P02 0.80 |
+| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Hallucination Check accuracy | 7.06 | 40.60 | 58.00 | 5 | P02 0.80 |
+| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | Information Extraction accuracy | 9.58 | 40.60 | 58.00 | 5 | P02 0.80 |
+| 不必重点看 | `mmlu_pro` MMLU-Pro | overall/category accuracy | 8.61 | 40.50 | 40.50 | 6 | P05 0.50, P06 0.20 |
+| 不必重点看 | `ceval` C-EVAL | overall/category/subject accuracy | 9.05 | 40.50 | 40.50 | 7 | P05 0.50, P06 0.20 |
 | 诊断保留 | `edubench` EduBench | motivation_guidance_positive_feedback (metric) | 6.45 | 40.38 | 47.50 | 12 | P16 0.50 |
 | 不必重点看 | `edubench` EduBench | TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) | 8.19 | 40.38 | 47.50 | 12 | P16 0.50 |
 | 不必重点看 | `edubench` EduBench | QG × clarity_concision_inspiration + scenario_element_integration (task×metric) | 8.16 | 38.25 | 45.00 | 12 | P12 0.50 |
-| 不必重点看 | `k12vista` K12Vista | science/geo subject-chart subset score | 6.77 | 29.75 | 35.00 | 2 | P03 0.50 |
-| 不必重点看 | `k12vista` K12Vista | math problem-figure subset score | 7.54 | 29.75 | 35.00 | 2 | P03 0.50 |
+| 不必重点看 | `k12vista` K12Vista | science/geo subject-chart subset score | 6.84 | 29.75 | 35.00 | 2 | P03 0.50 |
+| 不必重点看 | `k12vista` K12Vista | math problem-figure subset score | 7.57 | 29.75 | 35.00 | 2 | P03 0.50 |
 | 不必重点看 | `edubench` EduBench | reasoning_process_rigor (metric) | 8.28 | 27.62 | 32.50 | 12 | P06 0.50 |
 | 不必重点看 | `edubench` EduBench | higher_order_thinking_ability_development (metric) | 7.51 | 27.20 | 32.00 | 12 | P06 0.20, P16 0.20 |
-| 不必重点看 | `k12vista` K12Vista | official partial-credit score (per-blank 0/1 mean) | 6.97 | 20.40 | 24.00 | 2 | P05 0.20, P06 0.20 |
+| 不必重点看 | `k12vista` K12Vista | official partial-credit score (per-blank 0/1 mean) | 7.04 | 20.40 | 24.00 | 2 | P05 0.20, P06 0.20 |
 | 不必重点看 | `edubench` EduBench | scenario_element_integration (metric) | 7.68 | 16.15 | 19.00 | 12 | P14 0.20 |
 | 不必重点看 | `bea2025_tutor` BEA 2025 Tutor | dimension: Mistake_Identification | 8.32 | 16.15 | 19.00 | 3 | P10 0.20 |
 | 不必重点看 | `edubench` EduBench | clarity_concision_inspiration (metric) | 8.42 | 16.15 | 19.00 | 12 | P16 0.20 |
@@ -70,8 +70,8 @@
 | 不必重点看 | `bea2025_tutor` BEA 2025 Tutor | dimension: Providing_Guidance | 9.63 | 16.15 | 19.00 | 3 | P14 0.20 |
 | 不必重点看 | `edubench` EduBench | QG × domain_knowledge_accuracy + basic_factual_accuracy (task×metric) | 9.30 | 15.30 | 18.00 | 12 | P12 0.20 |
 | 不必重点看 | `mrbench_tutor` MRBench Tutor | dimension: Tutor_Tone (non-offensive) | 10.00 | 15.30 | 18.00 | 3 | P17 0.20 |
-| 不必重点看 | `olympiadbench` OlympiadBench | multimodal-subset accuracy | 6.81 | 14.00 | 14.00 | 1 | P03 0.20 |
-| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | judge dims: strategy_alignment + history_utilization (1-5) | 5.66 | 13.30 | 19.00 | 4 | P14 0.20 |
+| 不必重点看 | `olympiadbench` OlympiadBench | multimodal-subset accuracy | 7.08 | 14.00 | 14.00 | 2 | P03 0.20 |
+| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | judge dims: strategy_alignment + history_utilization (1-5) | 5.99 | 13.30 | 19.00 | 5 | P14 0.20 |
 | 不必重点看 | `edubench` EduBench | domain_knowledge_accuracy (metric) | 8.75 | 9.35 | 11.00 | 12 | P05 0.20 |
 | 不必重点看 | `edubench` EduBench | basic_factual_accuracy (metric) | 9.15 | 9.35 | 11.00 | 12 | P05 0.20 |
 | 不必重点看 | `edubench` EduBench | error_identification_correction_accuracy (metric) | 7.41 | 5.70 | 19.00 | 12 | P10 0.20 |
@@ -83,7 +83,7 @@
 | 建议 | Benchmark | Subdimension 数 | benchmark 平均分 | 平均原子相关性 | P 覆盖 |
 |---|---|---:|---:|---:|---|
 | 值得继续做 | `eduguard_adversarial` EduGuard-Bench P2 | 2 | 6.81 | 85.00 | P17, P19 |
-| 优先继续做 | `longtutor_diagnosis` LongTutor 知识状态诊断 | 1 | 2.65 | 82.45 | P10, P13 |
+| 优先继续做 | `longtutor_diagnosis` LongTutor 知识状态诊断 | 1 | 2.58 | 82.45 | P10, P13 |
 | 优先继续做 | `p08_calibration` P08 置信度校准 | 1 | 6.44 | 77.35 | P07, P08 |
 | 优先继续做 | `asap_2` ASAP 2.0 | 1 | 5.45 | 72.00 | P11 |
 | 优先继续做 | `mooccube_prereq` MOOCCube 先修关系推理 | 1 | 4.28 | 69.70 | P15 |
@@ -95,29 +95,29 @@
 | 优先继续做 | `mathtutorbench_scaffolding` MathTutorBench | 1 | 3.23 | 65.88 | P05, P14, P16 |
 | 值得继续做 | `eduguard_sata` EduGuard-Bench P1 | 1 | 7.47 | 63.00 | P17, P18, P19 |
 | 重要但可降频 | `pedagogy_benchmark` Pedagogy Benchmark | 2 | 8.19 | 101.25 | P05, P13, P14 |
-| 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | 1 | 7.75 | 95.00 | P02, P10 |
+| 重要但可降频 | `mathtutorbench_mistake_location` MathTutorBench | 1 | 7.73 | 95.00 | P02, P10 |
 | 重要但可降频 | `sas_bench` SAS-Bench | 3 | 7.17 | 85.00 | P02, P05, P06, P10, P11 |
-| 重要但可降频 | `mathvista` MathVista | 1 | 8.41 | 78.50 | P03, P05, P06 |
+| 重要但可降频 | `mathvista` MathVista | 1 | 8.64 | 78.50 | P03, P05, P06 |
 | 重要但可降频 | `mathtutorbench_pedagogy_hard` MathTutorBench | 1 | 7.92 | 65.88 | P05, P14, P16 |
 | 重要但可降频 | `mathtutorbench_pedagogy` MathTutorBench | 1 | 8.25 | 65.88 | P05, P14, P16 |
 | 重要但可降频 | `p08_abstention` P08 能力性弃答 | 1 | 8.90 | 64.60 | P08 |
-| 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | 1 | 8.68 | 62.50 | P07, P10 |
+| 重要但可降频 | `mathtutorbench_solution_correctness` MathTutorBench | 1 | 8.71 | 62.50 | P07, P10 |
 | 不必重点看 | `mathtutorbench_mistake_correction` MathTutorBench | 1 | 9.02 | 51.00 | P06, P10, P16 |
 | 不必重点看 | `eduillustrate` EduIllustrate | 1 | 6.93 | 49.00 | P04, P16 |
 | 诊断保留 | `bea2025_judge` BEA 2025 Judge | 1 | 4.96 | 45.00 | P11 |
 | 诊断保留 | `mrbench_judge` MRBench Judge | 1 | 5.12 | 45.00 | P11 |
 | 不必重点看 | `ifeval` IFEval | 1 | 9.06 | 45.00 | P01 |
-| 不必重点看 | `agieval` AGIEval | 1 | 8.74 | 43.50 | P05, P06 |
-| 不必重点看 | `mathtutorbench_problem_solving` MathTutorBench | 1 | 9.70 | 43.50 | P05, P06 |
-| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | 3 | 7.74 | 40.60 | P02 |
-| 不必重点看 | `mmlu_pro` MMLU-Pro | 1 | 8.60 | 40.50 | P05, P06 |
-| 不必重点看 | `ceval` C-EVAL | 1 | 9.11 | 40.50 | P05, P06 |
-| 不必重点看 | `olympiadbench` OlympiadBench | 2 | 7.03 | 28.75 | P03, P05, P06 |
-| 不必重点看 | `k12vista` K12Vista | 3 | 7.09 | 26.63 | P03, P05, P06 |
+| 不必重点看 | `agieval` AGIEval | 1 | 8.81 | 43.50 | P05, P06 |
+| 不必重点看 | `mathtutorbench_problem_solving` MathTutorBench | 1 | 9.71 | 43.50 | P05, P06 |
+| 不必重点看 | `longtutor_evidence` LongTutor 证据抽取 | 3 | 7.80 | 40.60 | P02 |
+| 不必重点看 | `mmlu_pro` MMLU-Pro | 1 | 8.61 | 40.50 | P05, P06 |
+| 不必重点看 | `ceval` C-EVAL | 1 | 9.05 | 40.50 | P05, P06 |
+| 不必重点看 | `olympiadbench` OlympiadBench | 2 | 7.11 | 28.75 | P03, P05, P06 |
+| 不必重点看 | `k12vista` K12Vista | 3 | 7.15 | 26.63 | P03, P05, P06 |
 | 不必重点看 | `edubench` EduBench | 12 | 7.97 | 25.55 | P05, P06, P10, P12, P13, P14, P16 |
 | 不必重点看 | `bea2025_tutor` BEA 2025 Tutor | 3 | 9.09 | 16.15 | P10, P14, P16 |
 | 不必重点看 | `mrbench_tutor` MRBench Tutor | 5 | 9.30 | 15.98 | P10, P14, P16, P17 |
-| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | 1 | 5.66 | 13.30 | P14 |
+| 诊断保留 | `longtutor_teaching` LongTutor 教学动作 | 1 | 5.99 | 13.30 | P14 |
 
 ## 校准提示
 

@@ -38,7 +38,7 @@ EXCLUDED_SCORING_BENCHMARKS: set[str] = set()
 BLIND_VISION_MODELS = {"deepseek-v4-pro"}
 
 # 发布面板（与 build_atomic_ability_html_report.py 的 RELEASE_MODELS 保持一致）。
-# R22 缺测替代只对这些模型做，顺路导入的外围模型不铺替代行。
+# R26 缺测处理只对这些模型逐格判定，顺路导入的外围模型不铺行。
 PANEL_MODEL_KEYS = (
     "minimax-m3",
     "minimax-m2.7",
@@ -47,9 +47,95 @@ PANEL_MODEL_KEYS = (
     "doubao-seed-2-0-pro",
 )
 
-# R22 缺测处理：格子至少有这么多个已测模型面，min 才有意义、才参与替代
-# （1–2 面的 min 等于把单个模型的分数白送给未测者）。
-IMPUTE_MIN_FACES = 3
+# ---------------------------------------------------------------------------
+# R26（2026-08-04，用户裁决）：废除 R22 的「缺格取该格已测模型最低分顶替」。
+#
+# 那条规则把两种性质完全不同的空白揉成了一个数字：没排上队跑（测量缺口）和
+# 模型压根干不了这件事（能力缺失）。顶替值既不是该模型的成绩，也不是诚实的
+# 空白——它让 MiniMax-M2.7/GLM-5.2/DeepSeek-V4-Pro 的 P03 多模态理解拿到了
+# 5.08 分，而这三个模型连图都收不进去。
+#
+# 新口径，缺格分两类：
+#   1) untested（未测过）：没跑过，不计分、不进分母，写进
+#      09_atomic_p_untested_cells.jsonl，报告里显式写「未测过」。
+#      P 分数因此可能为 None——那就是「未测过」，不是 0。
+#   2) capability_gap（能力不具备）：模型缺该格必需的输入/输出能力（当前只有
+#      视觉一项），跑不了不是排期问题而是能力问题，记 0 分并进聚合。
+#
+# 判定落在 **benchmark 格子** 上，不落在 P 上（用户裁决 2026-08-04）：某个格子
+# 因能力缺失跑不了就是 0 分，这个 0 按 doc/atomic_ability_mapping_v6_2026-07-19.md
+# 的常规权重规则（相关度 × 置信度、facet 内加权、跨 facet 等权）传导到它挂载的
+# 每一个 P。所以 mathvista/k12vista 这类既挂 P03 又搭车挂 P05/P06 的格，0 分会
+# 同时进这几个 P——这是刻意的，不做构念范围的特殊豁免。
+#
+# 但 2) 的前提是「真的跑不了」：只有整套题都必须有该能力才能作答的格子才算
+# （REQUIRE_ALL）。部分题需要视觉、文本模型仍能拿到真实非零分的格子标
+# REQUIRE_PARTIAL，按未测过处理——那里的 0 是测量假象，不是能力差距。
+# ---------------------------------------------------------------------------
+
+REQUIRE_ALL = "required_all"
+REQUIRE_PARTIAL = "required_partial"
+
+# 模型能力探测结果。True 有 / False 没有 / None 未探测（未探测一律不判 0）。
+# 视觉一列来自 2026-07-13 用 K12Vista 真题图逐个探测（记忆
+# gateway-model-vision-capability）：deepseek-v4-pro 收图不报错但回「你没有上传
+# 图片」，glm-5.2 网关直接 400，MiniMax-M2.7 纯文本。
+MODEL_CAPABILITIES: dict[str, dict[str, bool | None]] = {
+    "minimax-m3": {"vision": True},
+    "minimax-m2.7": {"vision": False},
+    "glm-5.2": {"vision": False},
+    "deepseek-v4-pro": {"vision": False},
+    "doubao-seed-2-0-pro": {"vision": True},
+    "doubao-seed-2-0-lite": {"vision": True},
+    "kimi-k2-6": {"vision": True},
+}
+
+# 格子对模型能力的硬性要求。键可以是 benchmark_id，也可以是
+# (benchmark_id, subdimension)——后者更具体、优先匹配（olympiadbench 总分混模态，
+# 但它的多模态子集那一格是纯图题）。
+CELL_CAPABILITY_REQUIREMENTS: dict[Any, tuple[str, str]] = {
+    "mathvista": ("vision", REQUIRE_ALL),
+    "k12vista": ("vision", REQUIRE_ALL),
+    "mmtutorbench": ("vision", REQUIRE_ALL),
+    # olympiadbench 的多模态子集看着像硬门槛，其实不是：R22 的盲测对照发现看不见图的
+    # deepseek-v4-pro 在该子集拿 0.658、明眼的 M3 拿 0.681——题干文本自带足够信息，
+    # 盲模型照样能作答。所以这不是「能力缺失跑不了」，标 PARTIAL 走未测过；那份盲答
+    # 分本身另有 BLIND_VISION_MODELS 按废分丢弃。
+    "olympiadbench": ("vision", REQUIRE_PARTIAL),
+    # TutorBench Fair815 只有一部分题带图（纯文本的 qwen3.5-27B / gpt-5.5 都有真实分数）；
+    # eduillustrate 是让模型写 Manim 代码再渲染，纯文本模型照样能跑。两者都不是能力门槛。
+    "tutorbench": ("vision", REQUIRE_PARTIAL),
+}
+
+
+def cell_capability_requirement(benchmark_id: str, subdimension: str) -> tuple[str, str] | None:
+    """Return (capability, strictness) required by this cell, if any."""
+    return CELL_CAPABILITY_REQUIREMENTS.get((benchmark_id, subdimension)) or CELL_CAPABILITY_REQUIREMENTS.get(
+        benchmark_id
+    )
+
+
+def missing_cell_verdict(model_key: str, benchmark_id: str, subdimension: str) -> tuple[str, str, str]:
+    """Classify why `model_key` has no score for this cell.
+
+    Returns ``(status, capability, reason)`` where status is ``capability_gap``
+    (score 0, counts) or ``untested`` (no score, does not count).
+    """
+    requirement = cell_capability_requirement(benchmark_id, subdimension)
+    if requirement is None:
+        return "untested", "", "该格无能力门槛，缺分数纯属未测"
+    capability, strictness = requirement
+    has = MODEL_CAPABILITIES.get(model_key, {}).get(capability)
+    if has is not False:
+        note = "能力未探测" if has is None else "具备该能力"
+        return "untested", capability, f"{note}，缺分数属未测"
+    if strictness != REQUIRE_ALL:
+        return (
+            "untested",
+            capability,
+            f"缺 {capability}，但该格只有部分题需要该能力，记 0 会低估真实水平——按未测过处理",
+        )
+    return "capability_gap", capability, f"该格全部题目需要 {capability}，模型不具备，记 0 分"
 
 # R20 (2026-07-18): P codes follow the v5 doc scheme (P01-P20, no tombstones);
 # the four-level evidence_tier system is removed — discounting lives solely in
@@ -1181,8 +1267,10 @@ def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any
                 )
         return rows
     if benchmark == "olympiadbench":
-        # R22：P03 改取多模态子集，P04/P05 仍取全量。盲视模型的 MM 子集是
-        # 盲答废分，跳过（BLIND_VISION_MODELS）。
+        # R22：P03 改取多模态子集，P04/P05 仍取全量。看不见图的模型在 MM 子集上的
+        # 分数是盲答废分，跳过——R26 起判据统一到 MODEL_CAPABILITIES 的 vision 一列，
+        # 并补上 --no-images 文本降级 run（summary.input_variant == "no_images"）：
+        # 那份分数按 harness 自己的声明就是降级代理值，不是多模态能力的测量。
         add(
             "overall/subject/language/modality accuracy",
             "accuracy",
@@ -1190,8 +1278,13 @@ def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any
             "summary.accuracy（全量，P04/P05 用）",
         )
         model_key = canonical_model(data.get("model") or "")
+        blind = (
+            model_key in BLIND_VISION_MODELS
+            or MODEL_CAPABILITIES.get(model_key, {}).get("vision") is False
+            or data.get("input_variant") == "no_images"
+        )
         mm = ((data.get("by_bucket") or {}).get("modality") or {}).get("MM") or {}
-        if model_key not in BLIND_VISION_MODELS and mm.get("accuracy") is not None:
+        if not blind and mm.get("accuracy") is not None:
             add(
                 "multimodal-subset accuracy",
                 "accuracy",
@@ -1515,7 +1608,9 @@ def minimax_conflict_report(eval_rows: list[dict[str, Any]]) -> list[dict[str, A
     return rows
 
 
-def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+def score_atomic_p(
+    selected_rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     evidence_rows: list[dict[str, Any]] = []
     accum: dict[tuple[str, str], dict[str, Any]] = {}
     for row in selected_rows:
@@ -1570,35 +1665,44 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
             slot["evidence_count"] += 1
             slot["benchmarks"].add(row["benchmark_id"])
 
-    # R22 缺测处理（用户裁决 2026-07-19）：发布面板模型缺某格时，取该格已测
-    # 模型的最低分临时替代（保守下界），显式标注 imputed；只对 ≥IMPUTE_MIN_FACES
-    # 个已测面的格子做（1–2 面的 min 等于白送单模型分数）；长期以补跑为正解。
+    # R26 缺测处理（用户裁决 2026-08-04，取代 R22 的最低分顶替）：发布面板模型
+    # 缺某格时不再借别人的分数，改为按 missing_cell_verdict() 分成两类——
+    # 能力不具备记 0 分进聚合，其余记「未测过」不进分母。详见文件顶部的口径说明。
     cell_faces: dict[tuple[str, str, str, str], dict[str, dict[str, Any]]] = {}
     for ev in evidence_rows:
         key = (ev["p_code"], ev["facet_id"], ev["benchmark_id"], ev["subdimension"])
         cell_faces.setdefault(key, {})[ev["model_key"]] = ev
-    imputed_rows: list[dict[str, Any]] = []
-    for key, faces in cell_faces.items():
-        if len(faces) < IMPUTE_MIN_FACES:
-            continue
-        min_model = min(faces, key=lambda m: faces[m]["score_10"])
-        template = faces[min_model]
+    zero_rows: list[dict[str, Any]] = []
+    untested_rows: list[dict[str, Any]] = []
+    for faces in cell_faces.values():
+        template = next(iter(faces.values()))
         for model_key in PANEL_MODEL_KEYS:
             if model_key in faces:
                 continue
-            imputed = dict(template)
-            imputed.update(
+            status, capability, reason = missing_cell_verdict(
+                model_key, template["benchmark_id"], template["subdimension"]
+            )
+            row = dict(template)
+            row.update(
                 {
                     "model_key": model_key,
                     "model": model_key,
-                    "source_type": "imputed_min",
-                    "imputed": True,
-                    "imputed_from_model": min_model,
-                    "imputed_faces": len(faces),
+                    "raw_value": None,
+                    # 这一行不是任何一次 run 的产物，别留别人的 summary 路径冒充出处。
+                    "source_path": "",
+                    "coverage_status": status,
+                    "missing_capability": capability,
+                    "coverage_reason": reason,
+                    "tested_faces": len(faces),
                 }
             )
-            imputed_rows.append(imputed)
-    for ev in imputed_rows:
+            if status == "capability_gap":
+                row.update({"source_type": "capability_gap_zero", "score_10": 0.0})
+                zero_rows.append(row)
+            else:
+                row.update({"source_type": "untested", "score_10": None})
+                untested_rows.append(row)
+    for ev in zero_rows:
         evidence_rows.append(ev)
         slot = accum.setdefault(
             (ev["model_key"], ev["p_code"]),
@@ -1617,12 +1721,16 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
             ev["facet_id"],
             {"weighted_sum": 0.0, "weight_sum": 0.0},
         )
-        facet_slot["weighted_sum"] += ev["score_10"] * ev["effective_weight"]
-        facet_slot["weight_sum"] += ev["effective_weight"]
-        facet_slot["imputed_weight_sum"] = facet_slot.get("imputed_weight_sum", 0.0) + ev["effective_weight"]
+        facet_slot["weight_sum"] += ev["effective_weight"]  # score 为 0，weighted_sum 不变
+        facet_slot["zero_weight_sum"] = facet_slot.get("zero_weight_sum", 0.0) + ev["effective_weight"]
         slot["evidence_count"] += 1
         slot["benchmarks"].add(ev["benchmark_id"])
-        slot["imputed_count"] = slot.get("imputed_count", 0) + 1
+        slot["capability_zero_count"] = slot.get("capability_zero_count", 0) + 1
+    # 未测过的格子只登记，不进任何分母；单独出一份清单供报告直接引用。
+    untested_by_slot: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for ev in untested_rows:
+        untested_by_slot.setdefault((ev["model_key"], ev["p_code"]), []).append(ev)
+    untested_rows.sort(key=lambda r: (r["model_key"], r["p_code"], r["benchmark_id"], r["subdimension"]))
 
     # 聚合方向（R20 后单一口径）：facet 内按 相关度×置信 有效权重加权平均，
     # P 分数 = 有证据 facet 的等权平均（formative 声明；reflective P 只有一个
@@ -1632,7 +1740,8 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
         facet_means = [f["weighted_sum"] / f["weight_sum"] for f in slot["facets"].values() if f["weight_sum"]]
         score = sum(facet_means) / len(facet_means) if facet_means else None
         weight_sum = sum(f["weight_sum"] for f in slot["facets"].values())
-        imputed_weight = sum(f.get("imputed_weight_sum", 0.0) for f in slot["facets"].values())
+        zero_weight = sum(f.get("zero_weight_sum", 0.0) for f in slot["facets"].values())
+        untested = untested_by_slot.pop((slot["model_key"], slot["p_code"]), [])
         p_rows.append(
             {
                 "model_key": slot["model_key"],
@@ -1641,6 +1750,7 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                 "p_name": slot["p_name"],
                 "group": slot["group"],
                 "score_10": round(score, 4) if score is not None else None,
+                "coverage_status": "scored" if score is not None else "untested",
                 "weight_sum": round(weight_sum, 4),
                 "facet_count_with_evidence": len(facet_means),
                 "facet_scores": {
@@ -1651,8 +1761,35 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
                 "evidence_count": slot["evidence_count"],
                 "benchmark_count": len(slot["benchmarks"]),
                 "benchmarks": sorted(slot["benchmarks"]),
-                "imputed_evidence_count": slot.get("imputed_count", 0),
-                "imputed_weight_share": round(imputed_weight / weight_sum, 4) if weight_sum else 0.0,
+                "capability_zero_count": slot.get("capability_zero_count", 0),
+                "capability_zero_weight_share": round(zero_weight / weight_sum, 4) if weight_sum else 0.0,
+                "untested_cell_count": len(untested),
+                "untested_cells": sorted({f'{r["benchmark_id"]} · {r["subdimension"]}' for r in untested}),
+            }
+        )
+    # 一条实测证据都没有、只剩未测格的 (模型, P)：仍然出行，score_10=None，
+    # 这样报告读到的是「未测过」而不是这个模型面根本不存在。
+    for (model_key, p_code), rows in untested_by_slot.items():
+        template = rows[0]
+        p_rows.append(
+            {
+                "model_key": model_key,
+                "display_model": model_key,
+                "p_code": p_code,
+                "p_name": template["p_name"],
+                "group": template["group"],
+                "score_10": None,
+                "coverage_status": "untested",
+                "weight_sum": 0.0,
+                "facet_count_with_evidence": 0,
+                "facet_scores": {},
+                "evidence_count": 0,
+                "benchmark_count": 0,
+                "benchmarks": [],
+                "capability_zero_count": 0,
+                "capability_zero_weight_share": 0.0,
+                "untested_cell_count": len(rows),
+                "untested_cells": sorted({f'{r["benchmark_id"]} · {r["subdimension"]}' for r in rows}),
             }
         )
     p_rows.sort(key=lambda r: (r["model_key"], r["p_code"]))
@@ -1689,7 +1826,7 @@ def score_atomic_p(selected_rows: list[dict[str, Any]]) -> tuple[list[dict[str, 
         )
     group_rows.sort(key=lambda r: (r["model_key"], r["group"]))
     evidence_rows.sort(key=lambda r: (r["model_key"], r["p_code"], r["benchmark_id"], r["source_path"]))
-    return evidence_rows, p_rows, group_rows
+    return evidence_rows, p_rows, group_rows, untested_rows
 
 
 def write_readme() -> None:
@@ -1716,6 +1853,11 @@ Files:
 - `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
 - `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (relevance × confidence weights, no tier factor; both weights rule-derived since R25).
 - `09_atomic_p_scores.md`: compact per-model P score table and coverage notes.
+- `09_atomic_p_untested_cells.jsonl`: cells a panel model never ran (R26). These are
+  reported as 未测过 and are deliberately excluded from every score and denominator —
+  they are *not* filled with a substitute value. Cells the model cannot run because it
+  lacks a required capability (e.g. no vision) are not here; they score 0 in
+  `09_atomic_p_score_evidence.jsonl` with `source_type: capability_gap_zero`.
 - `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
 - `10_group_scores.md`: compact group-score table.
 - `11_atomic_ability_rebenchmark_report.html`: self-contained interactive HTML report.
@@ -1995,28 +2137,56 @@ def write_score_evidence(rows: list[dict[str, Any]]) -> None:
     (OUT / "08_selected_score_evidence.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def write_atomic_scores(p_rows: list[dict[str, Any]], evidence_rows: list[dict[str, Any]]) -> None:
+def write_atomic_scores(
+    p_rows: list[dict[str, Any]],
+    evidence_rows: list[dict[str, Any]],
+    untested_rows: list[dict[str, Any]],
+) -> None:
     dump_jsonl(OUT / "09_atomic_p_score_evidence.jsonl", evidence_rows)
     dump_jsonl(OUT / "09_atomic_p_scores.jsonl", p_rows)
-    covered = sorted({row["p_code"] for row in p_rows})
+    dump_jsonl(OUT / "09_atomic_p_untested_cells.jsonl", untested_rows)
+    covered = sorted({row["p_code"] for row in p_rows if row["score_10"] is not None})
     missing = [code for code in P_GROUPS if code not in covered]
+    n_untested_p = sum(1 for row in p_rows if row["score_10"] is None)
+    n_zero_cells = sum(1 for row in evidence_rows if row.get("source_type") == "capability_gap_zero")
     lines = [
         "# Atomic P Scores",
         "",
         f"P-score rows: {len(p_rows)}",
         f"Covered P codes: {', '.join(covered) if covered else 'none'}",
         f"Missing P codes: {', '.join(missing) if missing else 'none'}",
+        f"P rows reported as 未测过 (score_10 = null): {n_untested_p}",
+        f"Capability-gap zero cells (score_10 = 0, counted): {n_zero_cells}",
+        f"Untested cells (not counted; see `09_atomic_p_untested_cells.jsonl`): {len(untested_rows)}",
         "",
         "`score_10`: facet-weighted average with effective weight = relevance × confidence (R25 rule-derived weights). Coverage completeness is reported separately and is not folded back into the score.",
         "",
+        "## Missing-cell policy (R26, 2026-08-04)",
+        "",
+        "The R22 rule -- fill a panel model's missing cell with the lowest score any tested",
+        "model got there -- is **removed**. A missing cell is now classified:",
+        "",
+        "- `untested`: never run. No score, no denominator, reported as 未测过. A P whose",
+        "  cells are all untested gets `score_10: null`, **not** 0.",
+        "- `capability_gap`: the model lacks a capability the cell requires for *every* item",
+        "  (vision only so far; see `MODEL_CAPABILITIES` / `CELL_CAPABILITY_REQUIREMENTS`).",
+        "  That is a real capability gap rather than a scheduling gap, so it scores **0** and counts.",
+        "",
+        "Cells where only *some* items need the capability (tutorbench, olympiadbench overall)",
+        "stay `untested`: a text-only model earns a genuine non-zero score there, so 0 would be",
+        "a measurement artifact rather than a capability difference.",
+        "",
         "## Sample Scores",
         "",
-        "| Model key | P | Group | Score | Evidence | Weight sum | Benchmarks |",
-        "|---|---|---|---:|---:|---:|---|",
+        "| Model key | P | Group | Score | Evidence | 0-score cells | Untested cells | Weight sum | Benchmarks |",
+        "|---|---|---|---:|---:|---:|---:|---:|---|",
     ]
     for row in p_rows[:120]:
+        score = "未测过" if row["score_10"] is None else row["score_10"]
         lines.append(
-            f"| `{row['model_key']}` | `{row['p_code']}` {row['p_name']} | {row['group']} | {row['score_10']} | {row['evidence_count']} | {row['weight_sum']} | {', '.join(row['benchmarks'])} |"
+            f"| `{row['model_key']}` | `{row['p_code']}` {row['p_name']} | {row['group']} | {score} "
+            f"| {row['evidence_count']} | {row['capability_zero_count']} | {row['untested_cell_count']} "
+            f"| {row['weight_sum']} | {', '.join(row['benchmarks'])} |"
         )
     lines.extend(
         [
@@ -2038,7 +2208,7 @@ def write_group_scores(group_rows: list[dict[str, Any]]) -> None:
     lines = [
         "# Group Scores",
         "",
-        "These are provisional SRG/FDR/LAD/CLM/CEG aggregates from currently covered P abilities only. Missing P abilities are not imputed here.",
+        "These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have a score. Untested P abilities are left out of the average (never substituted, never zeroed); capability-gap P abilities score 0 and are included.",
         "",
         "| Model key | Group | Score | P count | P codes |",
         "|---|---|---:|---:|---|",
@@ -2065,7 +2235,8 @@ def write_final_html(
     duplicate_rows: list[dict[str, Any]],
     minimax_rows: list[dict[str, Any]],
 ) -> None:
-    covered = sorted({row["p_code"] for row in p_rows})
+    # 未测过的 P 行（score_10=None）不算覆盖，否则「有数据的能力数」会把空白算进去。
+    covered = sorted({row["p_code"] for row in p_rows if row["score_10"] is not None})
     missing = [code for code in P_GROUPS if code not in covered]
     by_source: dict[str, int] = {}
     for row in selected_score_rows:
@@ -2110,7 +2281,7 @@ def write_final_html(
     coverage_rows: list[dict[str, Any]] = []
     for model in models:
         model_score_rows = [row for row in selected_score_rows if row["model_key"] == model]
-        model_p_rows = [row for row in p_rows if row["model_key"] == model]
+        model_p_rows = [row for row in p_rows if row["model_key"] == model and row["score_10"] is not None]
         covered_dims = sorted({(row["benchmark_id"], row["subdimension"]) for row in model_score_rows})
         covered_p = sorted({row["p_code"] for row in model_p_rows})
         missing_p = [code for code in P_GROUPS if code not in covered_p]
@@ -2480,12 +2651,18 @@ function renderPTable() {{
     const r = have.get(meta.p_code);
     const score = r ? scoreFor(r) : null;
     const pct = score == null ? 0 : Math.max(0, Math.min(100, score * 10));
+    // R26：分数为空 = 未测过，不是 0；能力不具备的格已经以 0 分计入 score。
+    const cell = score == null ? '<span class="small">未测过</span>' : `<b>${{fmt(score)}}</b>`;
+    const zeroNote = r && r.capability_zero_count
+      ? `<div class="small">含 ${{r.capability_zero_count}} 个「能力不具备记 0 分」的格</div>` : '';
+    const untestedNote = r && r.untested_cell_count
+      ? `<div class="small">另有 ${{r.untested_cell_count}} 个格未测过（未计入分母）</div>` : '';
     return `<tr>
       <td><b>${{meta.p_code}}</b> ${{esc(meta.p_name)}}</td>
       <td>${{meta.group}}</td>
-      <td class="num"><b>${{fmt(score)}}</b><div class="barbox"><div class="bar" style="width:${{pct}}%"></div></div></td>
+      <td class="num">${{cell}}<div class="barbox"><div class="bar" style="width:${{pct}}%"></div></div></td>
       <td class="num">${{r ? r.evidence_count : 0}}</td>
-      <td><div class="small">${{r ? esc(r.benchmarks.join(', ')) : '无证据'}}</div></td>
+      <td><div class="small">${{r && r.benchmarks.length ? esc(r.benchmarks.join(', ')) : '无证据'}}</div>${{zeroNote}}${{untestedNote}}</td>
     </tr>`;
   }}).join('');
 }}
@@ -2496,9 +2673,9 @@ function renderEvidenceTable() {{
     <td>${{r.p_code}}</td>
     <td>${{esc(r.benchmark_id)}}<div class="small">${{esc(r.subdimension)}}</div></td>
     <td>${{esc(r.metric)}}</td>
-    <td class="num">${{fmt(r.score_10)}}</td>
+    <td class="num">${{fmt(r.score_10)}}${{r.source_type === 'capability_gap_zero' ? '<div class="small">能力不具备</div>' : ''}}</td>
     <td class="num">${{Number(r.effective_weight).toFixed(3)}}</td>
-    <td><span class="mono">${{esc(r.source_path)}}</span></td>
+    <td><span class="mono">${{r.source_type === 'capability_gap_zero' ? esc(r.coverage_reason || '') : esc(r.source_path)}}</span></td>
   </tr>`).join('');
 }}
 
@@ -2598,6 +2775,8 @@ def analyze_benchmark_priorities(
     model_target = min(8, total_models)
     p_model_counts: dict[str, int] = {}
     for row in p_rows:
+        if row["score_10"] is None:  # 未测过不算一个模型面
+            continue
         p_model_counts[row["p_code"]] = p_model_counts.get(row["p_code"], 0) + 1
 
     rows: list[dict[str, Any]] = []
@@ -3050,7 +3229,7 @@ def main() -> None:
     score_candidates = build_repo_score_candidates(eval_rows) + build_other_score_candidates(other_rows)
     selected_score_rows, duplicate_rows = dedupe_score_candidates(score_candidates)
     minimax_rows = minimax_conflict_report(eval_rows)
-    evidence_rows, p_rows, group_rows = score_atomic_p(selected_score_rows)
+    evidence_rows, p_rows, group_rows, untested_rows = score_atomic_p(selected_score_rows)
     write_readme()
     write_inclusion_policy()
     write_mapping_files()
@@ -3059,7 +3238,7 @@ def main() -> None:
     write_otherbenchmark_scores(other_rows)
     write_deduplication_report(duplicate_rows, minimax_rows)
     write_score_evidence(selected_score_rows)
-    write_atomic_scores(p_rows, evidence_rows)
+    write_atomic_scores(p_rows, evidence_rows, untested_rows)
     write_group_scores(group_rows)
     priority_rows = analyze_benchmark_priorities(selected_score_rows, p_rows)
     write_final_html(
@@ -3083,6 +3262,9 @@ def main() -> None:
     print(f"score candidates: {len(score_candidates)}")
     print(f"selected score rows: {len(selected_score_rows)}")
     print(f"p score rows: {len(p_rows)}")
+    print(f"  of which 未测过 (score_10=null): {sum(1 for r in p_rows if r['score_10'] is None)}")
+    print(f"capability-gap zero cells: {sum(1 for r in evidence_rows if r.get('source_type') == 'capability_gap_zero')}")
+    print(f"untested cells: {len(untested_rows)}")
     print("html: 11_atomic_ability_rebenchmark_report.html")
     print("priority html: 12_benchmark_priority_report.html")
 

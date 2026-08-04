@@ -129,7 +129,9 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
             "s": row["s"],
             "facets": row["facets"],
             "n": row["n"],
-            "imp": row["imp"],
+            "zero": row["zero"],
+            "zerow": row["zerow"],
+            "unt": row["unt"],
             "nf": row["nf"],
             "b": row["b"],
         }
@@ -142,7 +144,7 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
     ability_rank: dict[str, list[dict[str, Any]]] = {a["p_code"]: [] for a in abilities}
     for row in source["scores"]:
         ability_rank[row["p"]].append(
-            {"m": row["m"], "s": row["s"], "imp": row["imp"], "full": row["m"] in panel}
+            {"m": row["m"], "s": row["s"], "zero": row["zero"], "full": row["m"] in panel}
         )
     for rows in ability_rank.values():
         rows.sort(key=lambda r: (-r["s"], r["m"]))
@@ -168,11 +170,13 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
     # A benchmark's headline number is the effective-weight-weighted mean of
     # its evidence rows - the same weights the P scores use, so the benchmark
     # page and the ability page cannot disagree about which model did better.
-    # Imputed rows are excluded: they are a conservative floor stamped in at
-    # aggregation time, not a measurement of this benchmark.
+    # Capability-gap zeros are excluded from a benchmark's leaderboard: the model
+    # never produced an answer there, so the 0 is a statement about the model's
+    # capability, not a measurement made on this benchmark. It still counts in the
+    # P scores, where the capability gap is exactly what is being reported.
     rows_by_bench: dict[str, list[dict[str, Any]]] = collections.defaultdict(list)
     for row in source["evidence"]:
-        if row["imp"] or row["s"] is None:
+        if row["zero"] or row["s"] is None:
             continue
         rows_by_bench[row["b"]].append(row)
 

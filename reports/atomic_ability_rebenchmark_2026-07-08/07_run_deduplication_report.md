@@ -7,8 +7,8 @@ Canonical scoring rules:
 3. For MiniMax-M3 conflicts, prefer included `minimax3/` paths and fuller-scored runs.
 4. EduGuard P2 keeps only `deepseek-v3.2` judge rows in main scoring.
 
-Duplicate score groups recorded: 64
-MiniMax-M3 path-conflict rows recorded: 17
+Duplicate score groups recorded: 73
+MiniMax-M3 path-conflict rows recorded: 24
 
 ## Duplicate Score Rows
 
@@ -36,10 +36,19 @@ MiniMax-M3 path-conflict rows recorded: 17
 | rejected | `eduguard_sata` | `glm-5.2` | otherbenchmark | 7.5950 | `otherbenchmark/eduguard_overall_report.html` |
 | selected | `eduguard_sata` | `minimax-m3` | repo_eval | 7.6940 | `reports/eval/eduguard_sata/minimax3/summary.json` |
 | rejected | `eduguard_sata` | `minimax-m3` | otherbenchmark | 7.6940 | `otherbenchmark/eduguard_overall_report.html` |
+| selected | `k12vista` | `minimax-m3` | repo_eval | 7.4059 | `reports/eval/k12vista/_sample-v3/minimax3/summary.json` |
+| rejected | `k12vista` | `minimax-m3` | repo_eval | 7.3359 | `reports/eval/k12vista/minimax3/summary.json` |
+| selected | `k12vista` | `minimax-m3` | repo_eval | 6.6730 | `reports/eval/k12vista/_sample-v3/minimax3/summary.json` |
+| rejected | `k12vista` | `minimax-m3` | repo_eval | 6.5480 | `reports/eval/k12vista/minimax3/summary.json` |
+| selected | `k12vista` | `minimax-m3` | repo_eval | 6.4061 | `reports/eval/k12vista/_sample-v3/minimax3/summary.json` |
+| rejected | `k12vista` | `minimax-m3` | repo_eval | 6.2649 | `reports/eval/k12vista/minimax3/summary.json` |
 | selected | `mathvista` | `minimax-m3` | repo_eval | 8.4089 | `reports/eval/mathvista/minimax3/summary.json` |
 | rejected | `mathvista` | `minimax-m3` | repo_eval | 8.4089 | `reports/eval/mathvista/2026-06-06/summary.json` |
 | selected | `mmlu_pro` | `minimax-m3` | repo_eval | 8.5555 | `reports/eval/mmlu_pro/minimax3/summary.json` |
 | rejected | `mmlu_pro` | `minimax-m3` | repo_eval | 8.1379 | `reports/eval/mmlu_pro/2026-06-07/summary.json` |
+| selected | `olympiadbench` | `glm-5.2` | repo_eval | 6.3518 | `reports/eval/olympiadbench/_noimage/glm-5.2/summary.json` |
+| rejected | `olympiadbench` | `glm-5.2` | repo_eval | 8.4063 | `reports/eval/olympiadbench/glm-5.2/summary.json` |
+| rejected | `olympiadbench` | `glm-5.2` | repo_eval | 6.5333 | `reports/eval/olympiadbench/_noimage/glm-5.2/_sample300_snapshot_20260722/summary.json` |
 | selected | `olympiadbench` | `minimax-m3` | repo_eval | 7.1601 | `reports/eval/olympiadbench/minimax3/summary.json` |
 | rejected | `olympiadbench` | `minimax-m3` | repo_eval | 8.9664 | `reports/eval/olympiadbench/2026-06-08/summary.json` |
 | selected | `sas_bench` | `deepseek-v4-pro` | repo_eval | 7.6629 | `reports/eval/sas_bench/deepseek-v4-pro/summary.json` |
@@ -93,12 +102,19 @@ MiniMax-M3 path-conflict rows recorded: 17
 | not_selected | `eduillustrate` | `overall_mean_judged_only` | 3.1258 | 4/5 | exclude_from_main | `reports/eval/eduillustrate/doubao-seed-2.0-pro/summary.json` |
 | not_selected | `eduillustrate` | `overall_mean_judged_only` | 3.6649 | 4/5 | exclude_from_main | `reports/eval/eduillustrate/minimax3/summary.json` |
 | not_selected | `eduillustrate` | `overall_mean_judged_only` | 3.7144 | 4/5 | exclude_from_main | `reports/eval/eduillustrate/opus-4.8/summary.json` |
+| selected | `k12vista` | `accuracy` | 0.48123436196830693 | 1199/1200 | include_candidate | `reports/eval/k12vista/_sample-v3/minimax3/summary.json` |
+| not_selected | `k12vista` | `accuracy` | 0.46488294314381273 | 598/600 | include_candidate | `reports/eval/k12vista/minimax3/summary.json` |
 | not_selected | `mathvista` | `accuracy` | 0.8408862034239678 | 993/1000 | include_candidate | `reports/eval/mathvista/2026-06-06/summary.json` |
 | selected | `mathvista` | `accuracy` | 0.8408862034239678 | 993/1000 | include_candidate | `reports/eval/mathvista/minimax3/summary.json` |
 | not_selected | `mmlu_pro` | `accuracy` | 0.8137863443319177 | 3061/12032 | include_candidate | `reports/eval/mmlu_pro/2026-06-07/summary.json` |
 | selected | `mmlu_pro` | `accuracy` | 0.8555518617021277 | 12032/12032 | include_candidate | `reports/eval/mmlu_pro/minimax3/summary.json` |
 | not_selected | `olympiadbench` | `accuracy` | 0.896640826873385 | 387/6728 | include_candidate | `reports/eval/olympiadbench/2026-06-08/summary.json` |
+| not_selected | `olympiadbench` | `unknown` | None | 0/0 | exclude_from_main | `reports/eval/olympiadbench/_mini_v1/MiniMax-M3/summary.json` |
+| not_selected | `olympiadbench` | `unknown` | None | 0/0 | exclude_from_main | `reports/eval/olympiadbench/_noimage/MiniMax-M3_uncapped_full_2026-07-23/summary.json` |
+| not_selected | `olympiadbench` | `accuracy` | None | 0/6 | exclude_from_main | `reports/eval/olympiadbench/_noimage/_minimax_verbosity_probe/summary.json` |
 | selected | `olympiadbench` | `accuracy` | 0.7160071407319251 | 6722/6728 | include_candidate | `reports/eval/olympiadbench/minimax3/summary.json` |
 | not_selected | `olympiadbench` | `accuracy` | 0.4523809523809524 | 42/6728 | exclude_from_main | `reports/eval/olympiadbench/summary.json` |
+| selected | `tutorbench` | `accuracy` | None | 1440/1473 | include_candidate | `reports/eval/tutorbench/_m3_fullset_20260723/summary.json` |
+| not_selected | `tutorbench` | `accuracy` | None | 6/6 | exclude_from_main | `reports/eval/tutorbench/minimax3/summary.json` |
 
 Full records are in `07_run_deduplication_report.jsonl`.

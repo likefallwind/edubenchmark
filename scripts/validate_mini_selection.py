@@ -336,15 +336,15 @@ def p_noise_scales(evidence_rows: list[dict[str, Any]],
             continue
         var = 0.0
         missing = 0
-        imputed_w = 0.0
+        capzero_w = 0.0
         total_w = 0.0
         for ev in evs:
             wf = facet_w.get(ev["facet_id"], 0.0)
             if not wf:
                 continue
             total_w += ev["effective_weight"]
-            if ev.get("imputed"):
-                imputed_w += ev["effective_weight"]
+            if ev.get("source_type") == "capability_gap_zero":
+                capzero_w += ev["effective_weight"]
             coef = (1.0 / n_facets) * ev["effective_weight"] / wf
             ci = cell_ci.get((ev["benchmark_id"], ev["subdimension"]))
             if ci is None:
@@ -357,7 +357,7 @@ def p_noise_scales(evidence_rows: list[dict[str, Any]],
         out[key] = {
             "noise": math.sqrt(var),
             "cells_without_ci": missing,
-            "imputed_weight_share": (imputed_w / total_w) if total_w else 0.0,
+            "capzero_weight_share": (capzero_w / total_w) if total_w else 0.0,
         }
     return out
 
@@ -473,10 +473,10 @@ def main() -> None:
     pub_cell_src = {(r["model_key"], r["benchmark_id"], r["subdimension"]): r["source_type"] for r in pub08}
 
     # ---- (0) Self-calibration: reuse score_atomic_p on the published evidence.
-    # NB: score_atomic_p returns (evidence_rows, p_rows, group_rows) -- unpacking
-    # the first slot as P rows silently yields per-cell evidence instead, which
-    # makes every P look like a single cell's score.
-    _full_evidence, full_p_rows, full_group_rows = agg.score_atomic_p(pub08)
+    # NB: score_atomic_p returns (evidence_rows, p_rows, group_rows, untested_rows)
+    # -- unpacking the first slot as P rows silently yields per-cell evidence
+    # instead, which makes every P look like a single cell's score.
+    _full_evidence, full_p_rows, full_group_rows, _full_untested = agg.score_atomic_p(pub08)
     pub_p = {(r["model_key"], r["p_code"]): r["score_10"] for r in pub09}
     recomp_p = {(r["model_key"], r["p_code"]): r["score_10"] for r in full_p_rows}
     p_selfcal_maxdiff = max(
@@ -571,8 +571,8 @@ def main() -> None:
             out.append(r2)
         return out
 
-    _fe, full_swapped_p_rows, full_swapped_group_rows = agg.score_atomic_p(swap(full_cells))
-    _mini_evidence, mini_p_rows, mini_group_rows = agg.score_atomic_p(swap(mini_cells))
+    _fe, full_swapped_p_rows, full_swapped_group_rows, _ = agg.score_atomic_p(swap(full_cells))
+    _mini_evidence, mini_p_rows, mini_group_rows, _ = agg.score_atomic_p(swap(mini_cells))
     baseline_p = {(r["model_key"], r["p_code"]): r["score_10"] for r in full_swapped_p_rows}
     mini_p = {(r["model_key"], r["p_code"]): r["score_10"] for r in mini_p_rows}
     full_group_rows = full_swapped_group_rows
@@ -707,8 +707,8 @@ def main() -> None:
 
     # ---- Criterion 3 at the P level (round-4 fix): same separable-pairs rule as
     # the cell level.  The all-pairs tau was reporting noise -- P04 scored
-    # maxDelta 0.000 yet tau 0.714, because three models carry identical imputed
-    # values and the tie was being ordered arbitrarily.
+    # maxDelta 0.000 yet tau 0.714, because three models carry identical
+    # capability-gap zeros and the tie was being ordered arbitrarily.
     global CURATED_CELLS
     CURATED_CELLS = {(c["benchmark"], c["subdimension"]) for c in ci_results}
     cell_ci_full = {(c["benchmark"], c["subdimension"]): c["ci_halfwidth_full_score10"]
@@ -725,26 +725,23 @@ def main() -> None:
         # only called separable when it clears the noisier of the two members.
         noise = max([i.get("noise", 0.0) for i in infos], default=0.0)
         tau_m, n_pairs, n_total = kendall_tau_meaningful(fv, mv, noise)
-        imp = [i.get("imputed_weight_share", 0.0) for i in infos]
-        # Missing-data substitution only ever targets the RELEASE panel
-        # (agg.PANEL_MODEL_KEYS), so rankability must be judged on those faces,
-        # not diluted by peripheral models that were never imputation targets.
-        # P03/P04 look fine at 3/10 overall but are 3/5 of the actual panel.
-        panel_shares = {mk: i.get("imputed_weight_share", 0.0)
+        imp = [i.get("capzero_weight_share", 0.0) for i in infos]
+        # 能力不具备记 0 分只对发布面板铺（agg.PANEL_MODEL_KEYS），所以可排名性
+        # 要按面板的面来判，不能被从来不参与这条规则的外围模型稀释。
+        # P03/P04 在全量 3/10 上看着还行，落到面板其实是 3/5。
+        panel_shares = {mk: i.get("capzero_weight_share", 0.0)
                         for mk, i in zip(mks, infos) if mk in agg.PANEL_MODEL_KEYS}
         p["panel_models_present"] = len(panel_shares)
-        p["panel_imputed_dominated"] = sorted(mk for mk, v in panel_shares.items() if v >= 0.5)
+        p["panel_capzero_dominated"] = sorted(mk for mk, v in panel_shares.items() if v >= 0.5)
         # Every non-zero share, named -- summary statistics hide this.
-        p["imputed_share_by_model"] = {mk: round(i.get("imputed_weight_share", 0.0), 4)
+        p["capzero_share_by_model"] = {mk: round(i.get("capzero_weight_share", 0.0), 4)
                                        for mk, i in zip(mks, infos)
-                                       if i.get("imputed_weight_share", 0.0) > 0}
-        # Faces whose P score is dominated by the aggregation's missing-data
-        # substitute (the minimum score of the models that WERE measured on that
-        # cell).  Several such faces receive byte-identical placeholder scores, so
-        # they are mutually unrankable and their absolute score is not a
-        # measurement of that model at all.  Must be named, not averaged away.
-        p["imputed_dominated_models"] = [mk for mk, i in zip(mks, infos)
-                                         if i.get("imputed_weight_share", 0.0) >= 0.5]
+                                       if i.get("capzero_weight_share", 0.0) > 0}
+        # P 分数被「能力不具备记 0 分」主导的模型面。这些面拿到的是逐字节相同的
+        # 0，彼此之间根本排不出先后，绝对分也不是在那套题上量出来的。必须点名，
+        # 不能被平均掉。（这是真实的能力差距，仍然计分——只是不能拿来排名。）
+        p["capzero_dominated_models"] = [mk for mk, i in zip(mks, infos)
+                                         if i.get("capzero_weight_share", 0.0) >= 0.5]
         p["noise_scale_score10"] = round(noise, 4)
         p["cells_without_ci"] = sum(i.get("cells_without_ci", 0) for i in infos)
         p["tau_meaningful"] = round(tau_m, 4) if tau_m is not None else None
@@ -752,9 +749,9 @@ def main() -> None:
         p["n_pairs_total"] = n_total
         p["pass_tau"] = (tau_m is None) or (tau_m >= TAU_THRESHOLD)
         p["tau_status"] = "no_separable_pairs" if tau_m is None else "computed"
-        p["max_imputed_weight_share"] = round(max(imp, default=0.0), 4)
-        p["median_imputed_weight_share"] = round(statistics.median(imp) if imp else 0.0, 4)
-        p["n_models_majority_imputed"] = sum(1 for x in imp if x >= 0.5)
+        p["max_capzero_weight_share"] = round(max(imp, default=0.0), 4)
+        p["median_capzero_weight_share"] = round(statistics.median(imp) if imp else 0.0, 4)
+        p["n_models_majority_capzero"] = sum(1 for x in imp if x >= 0.5)
         p["benchmarks"] = sorted({ev["benchmark_id"] for ev in _fe if ev["p_code"] == pc})
 
     assign_p_labels(p_results)
@@ -798,7 +795,7 @@ def assign_p_labels(p_results: list[dict[str, Any]]) -> None:
 
     Rules are applied in order and every tag records the numbers behind it.  The
     first tag is a property of the evidence base, NOT of the curation: a P whose
-    panel scores are mostly imputed placeholders, or whose only evidence is a
+    panel scores are mostly capability-gap zeros, or whose only evidence is a
     single cell shared with other Ps, cannot be ranked even on a full run, so
     labelling it is the honest action -- adding items would not help and is
     forbidden anyway.
@@ -809,15 +806,15 @@ def assign_p_labels(p_results: list[dict[str, Any]]) -> None:
         label: str | None = None
 
         # (0) Not rankable regardless of curation.
-        imputed = p.get("imputed_dominated_models") or []
-        panel_imp = p.get("panel_imputed_dominated") or []
+        imputed = p.get("capzero_dominated_models") or []
+        panel_imp = p.get("panel_capzero_dominated") or []
         n_panel = p.get("panel_models_present") or 0
         if n_panel and len(panel_imp) * 2 >= n_panel:
             label = "not_rankable_by_construction"
             reasons.append(
-                f"发布面板 {n_panel} 个模型面里有 {len(panel_imp)} 个是缺测替代值（"
+                f"发布面板 {n_panel} 个模型面里有 {len(panel_imp)} 个是「能力不具备记 0 分」（"
                 + "、".join(f"`{m}`" for m in panel_imp)
-                + "）：替代值统一取该格已测模型的最低分，这些面因此拿到完全相同的分数，"
+                + "）：这些面拿到的都是 0，彼此完全同分，"
                 "面板过半不可分辨，名次本就不存在——与精选无关，跑全量也一样")
         elif len(p["benchmarks"]) == 1:
             label = "not_rankable_by_construction"
@@ -852,7 +849,7 @@ def assign_p_labels(p_results: list[dict[str, Any]]) -> None:
         # those faces must be dropped before reading scores or ranks.
         if imputed and label != "not_rankable_by_construction":
             reasons.append(
-                f"**必须排除这 {len(imputed)} 个模型面再读分/排名**（缺测替代值，非真实测量，彼此同分）："
+                f"**必须排除这 {len(imputed)} 个模型面再读分/排名**（分数全部来自「能力不具备记 0 分」，彼此同分，排不出先后）："
                 + "、".join(f"`{m}`" for m in imputed))
 
         if p["cells_without_ci"]:
@@ -962,11 +959,11 @@ def assemble_summary(manifest, curated, cell_results, p_results, loo_results, lo
              "max_abs_delta": p["max_abs_delta"], "tau_meaningful": p.get("tau_meaningful"),
              "tau_raw": p.get("tau_raw"), "n_separable_pairs": p.get("n_separable_pairs"),
              "n_pairs_total": p.get("n_pairs_total"), "noise_scale_score10": p.get("noise_scale_score10"),
-             "median_imputed_weight_share": p.get("median_imputed_weight_share"),
-             "imputed_dominated_models": p.get("imputed_dominated_models"),
+             "median_capzero_weight_share": p.get("median_capzero_weight_share"),
+             "capzero_dominated_models": p.get("capzero_dominated_models"),
              "panel_models_present": p.get("panel_models_present"),
-             "panel_imputed_dominated": p.get("panel_imputed_dominated"),
-             "imputed_share_by_model": p.get("imputed_share_by_model"),
+             "panel_capzero_dominated": p.get("panel_capzero_dominated"),
+             "capzero_share_by_model": p.get("capzero_share_by_model"),
              "benchmarks": p.get("benchmarks")}
             for p in sorted(p_results, key=lambda x: x["p_code"])
         ],
@@ -1127,40 +1124,40 @@ def write_markdown(s: dict[str, Any]) -> None:
     lines.append("| 可用于排名 | 绝对分与名次都保真，可直接读 |")
     lines.append("| 仅可用于绝对分 | 分数可信，但可分辨的模型对里有翻转，名次要谨慎 |")
     lines.append("| 需跑全量 | 精选的绝对分就不可信，结论必须回全量 |")
-    lines.append("| 本就不可排名 | 全量也排不出（替代值主导 / 证据同源单源），与精选无关 |")
+    lines.append("| 本就不可排名 | 全量也排不出（0 分格主导 / 证据同源单源），与精选无关 |")
     lines.append("")
     order = {"rank_usable": 0, "score_only": 1, "needs_full": 2, "not_rankable_by_construction": 3}
-    lines.append("| P | 标签 | 模型数 | 面板面 | 面板中替代值面 | maxΔ | τ新 | 可分辨对 | τ旧 | 噪声尺度 | 依据 |")
+    lines.append("| P | 标签 | 模型数 | 面板面 | 面板中 0 分格主导的面 | maxΔ | τ新 | 可分辨对 | τ旧 | 噪声尺度 | 依据 |")
     lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|")
     for L in sorted(labels, key=lambda x: (order.get(x["label"], 9), x["p_code"])):
         lines.append(
-            f"| `{L['p_code']}` | **{L['label_zh']}** | {L['n_models']} | {L.get('panel_models_present')} | {len(L.get('panel_imputed_dominated') or [])} | "
+            f"| `{L['p_code']}` | **{L['label_zh']}** | {L['n_models']} | {L.get('panel_models_present')} | {len(L.get('panel_capzero_dominated') or [])} | "
             f"{L['max_abs_delta']} | "
             f"{L['tau_meaningful'] if L['tau_meaningful'] is not None else '—'} | "
             f"{L['n_separable_pairs']}/{L['n_pairs_total']} | "
             f"{L['tau_raw'] if L['tau_raw'] is not None else '—'} | {L['noise_scale_score10']} | "
             f"{'；'.join(L['reasons'])} |")
     lines.append("")
-    # ---- explicit imputed-share listing (never hide this behind a summary stat)
-    lines.append("### 替代值（imputed）占比：逐 P 逐模型列出")
+    # ---- 逐面列出 0 分格占比（永远不要藏在汇总统计后面）
+    lines.append("### 「能力不具备记 0 分」占比：逐 P 逐模型列出")
     lines.append("")
-    lines.append("聚合对发布面板缺测的格会用「该格已测模型的最低分」顶上并标 imputed。**这不是对该模型的测量**，")
-    lines.append("而且多个模型会因此拿到完全相同的分数。汇总统计（如中位数）会把这件事盖掉——3/10 个面是替代值时中位数仍是 0%——")
+    lines.append("R26 起，模型缺某格必需能力（整套题都要视觉才能作答）时该格记 0 分。这是真实能力差距、照常计分，")
+    lines.append("**但它不是在那套题上量出来的分数**，多个模型会因此拿到完全相同的 0。汇总统计（如中位数）会把这件事盖掉——")
     lines.append("所以这里逐个列出，凡占比 >0 的都点名。读 mini 面板（以及读全量面板）前，这些面必须先排除。")
     lines.append("")
     rows_imp = []
     for L in sorted(labels, key=lambda x: x["p_code"]):
-        shares = L.get("imputed_share_by_model") or {}
+        shares = L.get("capzero_share_by_model") or {}
         for mk, v in sorted(shares.items(), key=lambda kv: -kv[1]):
-            panel = "是" if mk in (L.get("panel_imputed_dominated") or []) or v >= 0.5 else ""
+            panel = "是" if mk in (L.get("panel_capzero_dominated") or []) or v >= 0.5 else ""
             rows_imp.append((L["p_code"], mk, v, panel))
     if rows_imp:
-        lines.append("| P | 模型面 | 替代值权重占比 | 该面是否已被替代值主导(≥50%) |")
+        lines.append("| P | 模型面 | 0 分格权重占比 | 该面是否已被 0 分格主导(≥50%) |")
         lines.append("|---|---|---:|---|")
         for pc, mk, v, panel in rows_imp:
             lines.append(f"| `{pc}` | `{mk}` | {v:.0%} | {panel} |")
     else:
-        lines.append("（本轮无替代值）")
+        lines.append("（本轮无「能力不具备记 0 分」的格）")
     lines.append("")
     lines.append("**P 级噪声尺度怎么来的**：把每个格的 bootstrap CI 半宽按聚合公式")
     lines.append("`P = facet 等权平均( facet 内 有效权重加权平均 )` 做一阶误差传播，")

@@ -66,7 +66,9 @@ class Checker:
 
 def validate(payload: dict[str, Any]) -> Checker:
     c = Checker()
-    p_scores = load_jsonl(REBENCH / "09_atomic_p_scores.jsonl")
+    # R26 起该文件也收录「未测过」的 P 行（score_10=None）。它们没有分数，
+    # 不进 payload，也不该进这里的任何比对——覆盖率必须按有分的行算。
+    p_scores = [r for r in load_jsonl(REBENCH / "09_atomic_p_scores.jsonl") if r["score_10"] is not None]
     evidence = load_jsonl(REBENCH / "09_atomic_p_score_evidence.jsonl")
     group_scores = load_jsonl(REBENCH / "10_group_scores.jsonl")
     explorer = load_explorer()
@@ -81,7 +83,8 @@ def validate(payload: dict[str, Any]) -> Checker:
             continue
         c.eq(f"scores/{key}/s", entry["s"], round(row["score_10"], 4))
         c.eq(f"scores/{key}/nf", entry["nf"], row["facet_count_with_evidence"])
-        c.eq(f"scores/{key}/imp", entry["imp"], row["imputed_evidence_count"])
+        c.eq(f"scores/{key}/zero", entry["zero"], row["capability_zero_count"])
+        c.eq(f"scores/{key}/unt", entry["unt"], row["untested_cell_count"])
 
     c.eq("groupScore/count", len(payload["groupScore"]), len(group_scores))
     for row in group_scores:
@@ -131,7 +134,7 @@ def validate(payload: dict[str, Any]) -> Checker:
     # --- benchmark leaderboards re-derived from evidence ------------------
     rows_by_bench = collections.defaultdict(lambda: collections.defaultdict(list))
     for row in evidence:
-        if row.get("imputed") or row.get("score_10") is None:
+        if row.get("source_type") == "capability_gap_zero" or row.get("score_10") is None:
             continue
         rows_by_bench[row["benchmark_id"]][row["model_key"]].append(row)
     for bench in payload["benchmarks"]:

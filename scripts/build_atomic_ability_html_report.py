@@ -58,8 +58,8 @@ P_DEFINITIONS = {
 P_CREDIBILITY = {
     "P01": ("可信", "直接测量,规则判分无裁判;R20 起单源(仅 ifeval)"),
     "P02": ("参考值", "直接测量但三模型区分度弱(0.79/0.81/0.79)"),
-    "P03": ("参考值", "学科图表与图文混排主格仅 1 模型面;视频/音频 facet 空白"),
-    "P04": ("参考值", "单源(eduillustrate);教育域 benchmark 代理通用生成能力,下界估计;时序/交互 facet 空白"),
+    "P03": ("参考值", "学科图表与图文混排主格仅 1 模型面;视频/音频 facet 空白;三个无视觉模型按 R26 记 0 分"),
+    "P04": ("参考值", "单源(eduillustrate);教育域 benchmark 代理通用生成能力,下界估计;时序/交互 facet 空白;5 模型里 3 个未测过"),
     "P05": ("可信·门槛", "多源成熟,但知识簇天花板,门槛性质"),
     "P06": ("可信", "多源成熟"),
     "P07": ("可信", "直接测量(两轮自查)"),
@@ -117,8 +117,15 @@ def build() -> str:
         cells_html = []
         for key, _label in RELEASE_MODELS:
             row = scores.get(key, {}).get(code)
-            if row is None:
-                cells_html.append('<td class="cell none">—</td>')
+            if row is None or row["score_10"] is None:
+                # R26：没有分数就是「未测过」，不再借别的模型的分数顶上。
+                n_untested = (row or {}).get("untested_cell_count") or 0
+                title = (
+                    f"该模型这项能力的 {n_untested} 个取分格全部未测过，没有分数"
+                    if n_untested
+                    else "该模型没有这项能力的任何证据"
+                )
+                cells_html.append(f'<td class="cell none" title="{esc(title)}">未测过</td>')
                 continue
             value = row["score_10"]
             width = max(0.0, min(100.0, value * 10))
@@ -130,10 +137,15 @@ def build() -> str:
             if partial:
                 mark = '<span class="partial" title="facet 面不齐,见脚注">◐</span>'
                 title += f'（facet {row["facet_count_with_evidence"]}/{scorable_facets[code]}）'
-            imputed_share = row.get("imputed_weight_share") or 0.0
-            if imputed_share > 0:
-                mark += '<span class="partial" title="含未测替代值,见脚注">※</span>'
-                title += f'（未测替代权重占比 {imputed_share:.0%}，缺格取已测模型最低分临时替代）'
+            zero_share = row.get("capability_zero_weight_share") or 0.0
+            if zero_share > 0:
+                mark += '<span class="partial" title="含「能力不具备记 0 分」的格,见脚注">✕</span>'
+                title += (
+                    f'（{row.get("capability_zero_count", 0)} 个格因模型不具备所需能力'
+                    f'（如视觉）计 0 分，占有效权重 {zero_share:.0%}）'
+                )
+            if row.get("untested_cell_count"):
+                title += f'（另有 {row["untested_cell_count"]} 个格未测过，未计入分母）'
             cells_html.append(
                 f'<td class="cell" title="{title}"><div class="val">{value:.2f}{mark}</div>'
                 f'<div class="track"><div class="bar" style="width:{width:.0f}%"></div></div></td>'
@@ -279,7 +291,8 @@ ol li {{ margin: 4px 0; }}
 </tbody>
 </table>
 </div>
-<p class="sub">◐ = facet 面不齐（悬停单元格看 facet 明细与缺口）；※ = 含未测替代值——该模型缺某些格子的评测，临时取该格已测模型（≥3 面）的最低分替代（保守下界，悬停看替代权重占比；长期以补跑为正解）；— = 该模型无任何该 P 的证据。GLM-5.2 的 P12 只有"知识状态估计"一个 facet（edubench 面跑的是 GLM-5.1），横向不可比。多模态类（P03/P16）仅视觉模型有分。</p>
+<p class="sub">◐ = facet 面不齐（悬停单元格看 facet 明细与缺口）；✕ = 该能力含「能力不具备记 0 分」的格——模型跑不了那套题不是因为没排上队，而是缺必需能力（当前只有视觉一项），悬停看占多少有效权重；<b>未测过</b> = 该模型这项能力的取分格一个都没跑过，<b>不给分、也不折算成 0</b>。GLM-5.2 的 P12 只有"知识状态估计"一个 facet（edubench 面跑的是 GLM-5.1），横向不可比。</p>
+<div class="note"><b>缺测口径（R26，2026-08-04）</b>：此前缺格会取"该格已测模型的最低分"顶替，那既不是这个模型的成绩、也不是诚实的空白——MiniMax-M2.7 / GLM-5.2 / DeepSeek-V4-Pro 的 P03 多模态理解因此拿到过 5.08 分，而这三个模型连图都收不进去。现在缺格分两类：<b>能力不具备</b>（整套题都要该能力才能作答，模型没有）记 <b>0 分</b>并按常规权重规则传导到它挂载的每一个能力；<b>未测过</b>（没跑过，或只有部分题需要该能力、文本模型仍能拿到真实分数）<b>不计分也不进分母</b>，逐格清单见 <span class="mono">09_atomic_p_untested_cells.jsonl</span>。</div>
 
 <h2>四、能力清单与可信度</h2>
 <div class="tablewrap">

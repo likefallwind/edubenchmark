@@ -48,254 +48,284 @@
     <h1>评测报告 · MRBench · Step 2 生成 tutor 回复 + LLM-as-judge 打分</h1>
     <p class="muted">基准 mrbench_tutor · 模型 <strong>_baseline_expert</strong></p>
     <div class="kpis">
-      <div class="kpi"><div class="v">0.0%</div><div class="k">正确率</div></div>
-      <div class="kpi"><div class="v">5</div><div class="k">总题数</div></div>
-      <div class="kpi"><div class="v">5</div><div class="k">已判分</div></div>
-      <div class="kpi"><div class="v">0</div><div class="k">答对</div></div>
+      <div class="kpi"><div class="v">10.3%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">40</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">39</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">4</div><div class="k">答对</div></div>
     </div>
   </header>
   
   <section><h2>基准介绍</h2><p>MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 glm-5.2，最佳单裁判；与 --extractor-model/被测模型解耦，避免 self-judging 偏置），逐维度判定 prompt 为 v2（仅 Providing_Guidance 带 Stage-3 验证过的进化标签准则，其余维度与 v1 一致；标签归一同 Step 1）。</p><p>报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
-  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c36</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c1</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
 
 Reference solution (for your understanding only — do not quote it verbatim):
-On Thursday the mechanic charged a total of 6*60 + 4*40 = $520.
-On Friday the mechanic charged a total of 12*40 = $480.
-Thus, on Thursday, the day with higher revenue, the mechanic had 520-480 = $40 more revenue than on Friday.
- 40
+There are a total of 26 - 2 = 24 pencils in the three boxes.
+Thus, each box can contain 24 / 3 = 8 pencils.
+Together, Jam and Meg have 26 + 46 = 72 pencils.
+Therefore, they need 72 / 8 = 9 boxes to put in all their pencils.
+ 9
 
 Conversation so far:
-Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: A mechanic charges different rates to repair the tires of trucks and cars.  For each truck tire that is repaired, the mechanic will charge $60 and for each car tire that is repaired, the mechanic will charge $40.  On Thursday, the mechanic repairs 6 truck tires and 4 car tires.  On Friday, the mechanic repairs 12 car tries and doesn&#x27;t repair any truck tires.  How much more revenue did the mechanic earn on the day with higher revenue? 
- Student: On Thursday, the mechanic earned 6 x $60 = $360 for repairing truck tires.
-On Thursday, the mechanic earned 4 x $40 = $160 for repairing car tires.
-On Thursday, the mechanic earned a total of $360 + $160 = $520.
-On Friday, the mechanic earned 12 x $40 = $480 for repairing car tires.
-The revenue on Friday is higher by $480 - $520 = $-40.
- -40 
- Tutor: good work on this problem. Can you tell me about your strategy? 
- Student: Sure. I started by calculating the amount of money the mechanic earned on Thursday for repairing truck tires and car tires separately. Then I calculated the amount of money the mechanic earned on Friday for repairing car tires. Finally I subtracted the amount of money earned on Thursday from the amount of money earned on Friday to find the difference in revenue. 
- Tutor: That makes sense. Let me ask you a slightly different question than the difference in revenue -- on which day was the revenue highest? 
- Student: On Friday the mechanic earned the highest revenue because they earned 12 x $40 = $480 for repairing car tires.
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jam has three boxes full of pencils and 2 loose pencils which give a total of 26 pencils. If her sister, Meg, has 46 pencils, how many boxes do Jam and Meg need to store all their pencils? 
+ Student: Jam has 26 - 2 = 24 pencils in her boxes.
+Together, Jam and Meg have 24 + 46 = 70 pencils.
+Each box holds 24 pencils, so they need 70/24 = 2.92 boxes.
+Since they can&#x27;t have a fraction of a box, they need to round up to the nearest whole number of boxes.
+Therefore, they need 3 boxes to store all their pencils.
+ 3 
+ Tutor: can you walk me through your solution? 
+ Student: Sure! I started by figuring out how many pencils Jam had in her boxes. She had 3 boxes with 26 pencils in total but 2 of those were loose so I subtracted 2 from 26 to get 24. Then I added the 24 pencils that Jam had to the 46 pencils that Meg had to get a total of 70 pencils. Since each box holds 24 pencils I divided 70 by 24 to get 2.92. Since you can&#x27;t have a fraction of a box I rounded up to the nearest whole number which was 3. So Jam and Meg need 3 boxes to store all their pencils. 
+ Tutor: That number seems too low.. How would we work out how many pencils can be stored in a box? 
+ Student: To work out how many pencils can be stored in a box we need to divide the total number of pencils (70) by the number of boxes (3). So 70 divided by 3 is equal to 24. That means each box can store 24 pencils.
 
-Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div><div class='card'><div class='card-head'><span class='pid'>#c61</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div><div class='card'><div class='card-head'><span class='pid'>#c5</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.6D.Classifying 2D Figures</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
 
 Reference solution (for your understanding only — do not quote it verbatim):
-There are 30 games total because 20 + 10 = 30
-They need to win 20 games because 30 x (2/3) = 20
-The need to win 8 more games because 20 - 12 = 8
- 8
+Not Available
 
 Conversation so far:
-Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: The Giants baseball team is trying to make their league playoff. They have played 20 games and won 12 of them. To make the playoffs, they need to win 2/3 of their games over the season. If there are 10 games left, how many do they have to win to make the playoffs? 
- Student: To make the playoffs, the Giants need to win 2/3 x 30 = 20 games over the season.
-They have already won 12 games, so they need to win 20 - 12 = 8 more games.
-Since there are 10 games left, they need to win at least 80% of the remaining games.
-Therefore, they need to win at least 8 games x 80% = 6.4 games, which rounds up to &lt;&lt;7&gt;&gt;7 games.
- 7 
- Tutor: could you please walk me through your solution?
- 
- Student: Sure. To make the playoffs the Giants need to win 2/3 of their games over the season. That means they need to win 20 games. They have already won 12 games so they need to win 20 - 12 = 8 more games. Since there are 10 games left they need to win at least 8 games x 80% = 6.4 games which rounds up to 7 games. Does that make sense?
+Tutor: A quadrilateral is a shape with four sides. 
+ Tutor: Since both drawings are quadrilaterals, they both have four sides and four angles. 
+ Tutor: What is a rectangle? 
+ Student: done
 
 Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div></section>
   <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
   &quot;judge_model&quot;: &quot;MiniMax-M3&quot;,
   &quot;judge_protocol&quot;: &quot;fixed LLM-as-judge, per-dimension single label (8 dimensions)&quot;,
   &quot;headline_metric&quot;: &quot;pedagogical pass rate = all of (&#x27;Mistake_Identification&#x27;, &#x27;Providing_Guidance&#x27;, &#x27;Actionability&#x27;) == &#x27;Yes&#x27;&quot;,
-  &quot;n&quot;: 5,
+  &quot;n&quot;: 39,
   &quot;n_unparseable_key_dim&quot;: 0,
-  &quot;pass_rate&quot;: 0.0,
+  &quot;pass_rate&quot;: 0.1026,
   &quot;per_dimension_distribution&quot;: {
     &quot;Mistake_Identification&quot;: {
       &quot;Yes&quot;: {
-        &quot;count&quot;: 3,
-        &quot;share&quot;: 0.6
+        &quot;count&quot;: 22,
+        &quot;share&quot;: 0.5641
       },
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 2,
-        &quot;share&quot;: 0.4
+        &quot;count&quot;: 10,
+        &quot;share&quot;: 0.2564
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 7,
+        &quot;share&quot;: 0.1795
       }
     },
     &quot;Mistake_Location&quot;: {
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 3,
-        &quot;share&quot;: 0.6
+        &quot;count&quot;: 17,
+        &quot;share&quot;: 0.4359
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 13,
+        &quot;share&quot;: 0.3333
       },
       &quot;Yes&quot;: {
-        &quot;count&quot;: 2,
-        &quot;share&quot;: 0.4
+        &quot;count&quot;: 9,
+        &quot;share&quot;: 0.2308
       }
     },
     &quot;Revealing_of_the_Answer&quot;: {
       &quot;No&quot;: {
-        &quot;count&quot;: 5,
-        &quot;share&quot;: 1.0
+        &quot;count&quot;: 36,
+        &quot;share&quot;: 0.9231
+      },
+      &quot;Yes (and the answer is correct)&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.0769
       }
     },
     &quot;Providing_Guidance&quot;: {
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 5,
-        &quot;share&quot;: 1.0
+        &quot;count&quot;: 24,
+        &quot;share&quot;: 0.6154
+      },
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 15,
+        &quot;share&quot;: 0.3846
       }
     },
     &quot;Actionability&quot;: {
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 4,
-        &quot;share&quot;: 0.8
+        &quot;count&quot;: 24,
+        &quot;share&quot;: 0.6154
       },
       &quot;Yes&quot;: {
-        &quot;count&quot;: 1,
-        &quot;share&quot;: 0.2
+        &quot;count&quot;: 11,
+        &quot;share&quot;: 0.2821
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 4,
+        &quot;share&quot;: 0.1026
       }
     },
     &quot;Coherence&quot;: {
       &quot;Yes&quot;: {
-        &quot;count&quot;: 4,
-        &quot;share&quot;: 0.8
+        &quot;count&quot;: 29,
+        &quot;share&quot;: 0.7436
       },
       &quot;To some extent&quot;: {
-        &quot;count&quot;: 1,
-        &quot;share&quot;: 0.2
+        &quot;count&quot;: 6,
+        &quot;share&quot;: 0.1538
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 4,
+        &quot;share&quot;: 0.1026
       }
     },
     &quot;Tutor_Tone&quot;: {
       &quot;Neutral&quot;: {
-        &quot;count&quot;: 4,
-        &quot;share&quot;: 0.8
+        &quot;count&quot;: 27,
+        &quot;share&quot;: 0.6923
       },
       &quot;Encouraging&quot;: {
-        &quot;count&quot;: 1,
-        &quot;share&quot;: 0.2
+        &quot;count&quot;: 12,
+        &quot;share&quot;: 0.3077
       }
     },
     &quot;humanlikeness&quot;: {
       &quot;Yes&quot;: {
-        &quot;count&quot;: 5,
-        &quot;share&quot;: 1.0
+        &quot;count&quot;: 30,
+        &quot;share&quot;: 0.7692
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 6,
+        &quot;share&quot;: 0.1538
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.0769
       }
     }
   }
 }</pre></section>
-  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>5</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>MathDial</td><td>5</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Not Available</td><td>5</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table></section>
-  
-  <section><h2>错题分析（5 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c36</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>extraction_error</td><td>1</td></tr><tr><td>scored</td><td>39</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>10</td><td>1</td><td>0.100</td><td><div class='bar'><i style='width:10%'></i></div></td></tr><tr><td>MathDial</td><td>29</td><td>3</td><td>0.103</td><td><div class='bar'><i style='width:10%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>3.4A.Two-Step Word Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.4B.Rounding Whole Numbers (Review) - 2</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.1G.Prime and Composite Numbers (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.2A.Place Value</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.3E.Comparing Whole Numbers</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.6D.Classifying 2D Figures</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.2A.Place Value</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3C.Estimate Solutions to Division Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3C.Multi-Digit Division with Two-Digit Divisors (Review) - 2</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Not Available</td><td>29</td><td>3</td><td>0.103</td><td><div class='bar'><i style='width:10%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>其他错误</strong></td><td>1</td><td>MiniMax base_resp 2062: 已达到 Token Plan 速率限制：请升级 Token Plan 套餐或切换为按量付费 API 使用。</td><td class='muted'>c146</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c1</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
 
 Reference solution (for your understanding only — do not quote it verbatim):
-On Thursday the mechanic charged a total of 6*60 + 4*40 = $520.
-On Friday the mechanic charged a total of 12*40 = $480.
-Thus, on Thursday, the day with higher revenue, the mechanic had 520-480 = $40 more revenue than on Friday.
- 40
+There are a total of 26 - 2 = 24 pencils in the three boxes.
+Thus, each box can contain 24 / 3 = 8 pencils.
+Together, Jam and Meg have 26 + 46 = 72 pencils.
+Therefore, they need 72 / 8 = 9 boxes to put in all their pencils.
+ 9
 
 Conversation so far:
-Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: A mechanic charges different rates to repair the tires of trucks and cars.  For each truck tire that is repaired, the mechanic will charge $60 and for each car tire that is repaired, the mechanic will charge $40.  On Thursday, the mechanic repairs 6 truck tires and 4 car tires.  On Friday, the mechanic repairs 12 car tries and doesn&#x27;t repair any truck tires.  How much more revenue did the mechanic earn on the day with higher revenue? 
- Student: On Thursday, the mechanic earned 6 x $60 = $360 for repairing truck tires.
-On Thursday, the mechanic earned 4 x $40 = $160 for repairing car tires.
-On Thursday, the mechanic earned a total of $360 + $160 = $520.
-On Friday, the mechanic earned 12 x $40 = $480 for repairing car tires.
-The revenue on Friday is higher by $480 - $520 = $-40.
- -40 
- Tutor: good work on this problem. Can you tell me about your strategy? 
- Student: Sure. I started by calculating the amount of money the mechanic earned on Thursday for repairing truck tires and car tires separately. Then I calculated the amount of money the mechanic earned on Friday for repairing car tires. Finally I subtracted the amount of money earned on Thursday from the amount of money earned on Friday to find the difference in revenue. 
- Tutor: That makes sense. Let me ask you a slightly different question than the difference in revenue -- on which day was the revenue highest? 
- Student: On Friday the mechanic earned the highest revenue because they earned 12 x $40 = $480 for repairing car tires.
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jam has three boxes full of pencils and 2 loose pencils which give a total of 26 pencils. If her sister, Meg, has 46 pencils, how many boxes do Jam and Meg need to store all their pencils? 
+ Student: Jam has 26 - 2 = 24 pencils in her boxes.
+Together, Jam and Meg have 24 + 46 = 70 pencils.
+Each box holds 24 pencils, so they need 70/24 = 2.92 boxes.
+Since they can&#x27;t have a fraction of a box, they need to round up to the nearest whole number of boxes.
+Therefore, they need 3 boxes to store all their pencils.
+ 3 
+ Tutor: can you walk me through your solution? 
+ Student: Sure! I started by figuring out how many pencils Jam had in her boxes. She had 3 boxes with 26 pencils in total but 2 of those were loose so I subtracted 2 from 26 to get 24. Then I added the 24 pencils that Jam had to the 46 pencils that Meg had to get a total of 70 pencils. Since each box holds 24 pencils I divided 70 by 24 to get 2.92. Since you can&#x27;t have a fraction of a box I rounded up to the nearest whole number which was 3. So Jam and Meg need 3 boxes to store all their pencils. 
+ Tutor: That number seems too low.. How would we work out how many pencils can be stored in a box? 
+ Student: To work out how many pencils can be stored in a box we need to divide the total number of pencils (70) by the number of boxes (3). So 70 divided by 3 is equal to 24. That means each box can store 24 pencils.
 
-Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;To some extent&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>I agree with your math there. But how much money did the mechanic make on Thursday?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c61</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Not quite, remember, Jam has three boxes full of pencils and 2 loose pencils which give a total of 26 pencils.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c5</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.6D.Classifying 2D Figures</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
 
 Reference solution (for your understanding only — do not quote it verbatim):
-There are 30 games total because 20 + 10 = 30
-They need to win 20 games because 30 x (2/3) = 20
-The need to win 8 more games because 20 - 12 = 8
- 8
+Not Available
 
 Conversation so far:
-Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: The Giants baseball team is trying to make their league playoff. They have played 20 games and won 12 of them. To make the playoffs, they need to win 2/3 of their games over the season. If there are 10 games left, how many do they have to win to make the playoffs? 
- Student: To make the playoffs, the Giants need to win 2/3 x 30 = 20 games over the season.
-They have already won 12 games, so they need to win 20 - 12 = 8 more games.
-Since there are 10 games left, they need to win at least 80% of the remaining games.
-Therefore, they need to win at least 8 games x 80% = 6.4 games, which rounds up to &lt;&lt;7&gt;&gt;7 games.
- 7 
- Tutor: could you please walk me through your solution?
- 
- Student: Sure. To make the playoffs the Giants need to win 2/3 of their games over the season. That means they need to win 20 games. They have already won 12 games so they need to win 20 - 12 = 8 more games. Since there are 10 games left they need to win at least 8 games x 80% = 6.4 games which rounds up to 7 games. Does that make sense?
+Tutor: A quadrilateral is a shape with four sides. 
+ Tutor: Since both drawings are quadrilaterals, they both have four sides and four angles. 
+ Tutor: What is a rectangle? 
+ Student: done
 
-Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>No it does not. Why did you assume they need to win 80% of the games? The question mentions nothing as such.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c147</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;To some extent&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;To some extent&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great try - you should talk about the parallel sides.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c8</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
 
 Reference solution (for your understanding only — do not quote it verbatim):
-Let&#x27;s let x be the number of post-it notes in the package that Candice purchased.
-Then, the total number of post-it notes she had when she left the store was 80+x.
-And if she used 220 Post-it notes at work and had 23 left, then 80+x=220+23
-Subtracting 80 from each side of the equation, we see that x=220+23-80=163 Post-it notes.
- 163
+The total number of bath towels used in one month is 3 + 6 + 3 = 12 bath towels
+The number of loads of laundry the Smiths need to do is 12 / 4 = 3 loads
+ 3
 
 Conversation so far:
-Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Candice put 80 post-it notes in her purse before she headed out to her job at the coffee shop.  On her way, she stopped off at the store and purchased a package of Post-it notes;  At work, she placed a single Post-it note on each of 220 different cups of coffee.  If she had 23 post-it notes remaining overall, how many Post-it notes were in the package that she purchased? 
- Student: Candice started with 80 post-it notes.
-She used 220 post-it notes at work.
-She had 23 post-it notes remaining.
-So she used a total of 80 + 220 - 23 = 277 post-it notes.
-Since she bought a package of post-it notes, the number of post-it notes she bought is the difference between the total she used and the number she started with: 277 - 80 = 197.
- 197 
- Tutor: could you please walk me through your solution? 
- Student: Sure. I started by subtracting the number of post-it notes she had at the start (80) from the total number of post-it notes she used (277). This gave me the number of post-it notes she bought (197). 
- Tutor: Let&#x27;s think again about the cups that Candice labelled. How many cups did she label and how many post its did she use? 
- Student: Candice labelled 220 cups and used 220 post-it notes to do so.
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: In one month in the Smith house, Kylie uses 3 bath towels, her 2 daughters use a total of 6 bath towels, and her husband uses a total of 3 bath towels. If the washing machine can fit 4 bath towels for one load of laundry, how many loads of laundry will the Smiths need to do to clean all of their used towels? 
+ Student: Kylie and her husband use a total of 3 + 3 = 6 bath towels.
+Altogether, the Smiths use 3 + 6 + 6 = 15 bath towels in one month.
+They will need 15/4 = 3.75 loads of laundry to clean all of their used towels.
+Since they can&#x27;t do a fractional load of laundry, they will need to do 4 loads of laundry.
+ 4 
+ Tutor: Could you explain how you get to the total of 15 used towels  
+ Student: Yes, Kylie uses 3 towels, her two daughters use a total of 6 towels, and her husband uses a total of 3 towels. That makes a total of 3 + 6 + 3 = 15 towels used in one month. 
+ Tutor: 3 plus 3 plus 6 = 12 not 15
+ Student: Oh, right. I forgot to add Kylie&#x27;s 3 towels. So it&#x27;s 3 + 3 + 6 = 12. Sorry about that.
 
-Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Alright, so does it make sense that she needed to use 277 post its if she labeled only 220 cups with one post-it each?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c169</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;No&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>So 12 devided by 4 =. .?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c13</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
 
 Reference solution (for your understanding only — do not quote it verbatim):
-Since Peter reads three times as fast as Kristin, Kristin will take 18*3 = 54 hours to read one book.
-Kristin reads half of her books, a total of 20/2 = 10 books.
-The time Kristin will take to read half of her books is 10*54 = 540
- 540
+Jolyn is 2 + 5 = 7 months older than Aivo.
+Since Leon is 2 months older than Aivo, then Jolyn is 7 - 2 = 5 months older than Leon.
+ 5
 
 Conversation so far:
-Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Peter and Kristin are to read 20 fantasy novels each in a week. Peter can read three times as fast as Kristin. If Peter reads one book in 18 hours, how long will Kristin read half of her books? 
- Student: Peter can read one book in 18 hours, so Kristin can read one book in 18 x 3 = 54 hours.
-Kristin needs to read half of her books, which is 20/2 = 10 books.
-So, Kristin will need 10 x 54 = 540 hours to read half of her books.
-Therefore, Kristin will need 540/20 = 27 hours per book.
-To read half of her books, Kristin will need 27 x 10 = 270 hours.
- 270 
- Tutor: what is the question asking us for? 
- Student: The question is asking us how long it will take Kristin to read half of her books. 
- Tutor: How many books is half?
- Student: Half of the books is 10 books. 
- Tutor: how long does she take to read a book? 
- Student: Kristin takes 27 hours to read one book. 
- Tutor: Where did you get this number
- Student: I got this number by dividing the total time it takes Peter to read one book (18 hours) by 3 since Peter reads three times as fast as Kristin. 
- Tutor: if Peter reads faster should it take more or less time? 
- Student: Since Peter reads faster it should take less time for Kristin to read her books.
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Four classmates were comparing their ages based on their birth month. They found out that Jolyn is 2 months older than Therese while Therese is 5 months older than Aivo. Then, Leon is 2 months older than Aivo. How much older in months is Jolyn than Leon? 
+ Student: We can start by creating a diagram to visualize the relationships between the classmates&#x27; ages:
 
-Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Faster means less time. As you already found, kristen takes 3 times as long - 18*3 hours per book</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c173</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Aivo --(5 months)--&gt; Therese --(2 months)--&gt; Jolyn
+|
+(2 months)
+|
+Leon
+
+From the diagram, we can see that Jolyn is 2 + 5 = 7 months older than Aivo, and Leon is 2 months older than Aivo. Therefore, Jolyn is 7 + 2 = 9 months older than Leon.
+ 9 
+ Tutor: Can you talk me through your solution? 
+ Student: Sure. I started by creating a diagram to visualize the relationships between the classmates&#x27; ages. Aivo is 5 months older than Therese and Therese is 2 months older than Jolyn. Leon is 2 months older than Aivo. So Jolyn is 7 months older than Aivo and 2 months older than Leon which means she is 9 months older than Leon.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A diagram to visualise the problem is a great idea. And you have made a good start, but you have made an error in one of the steps. Can you look over it again and see if you can spot where it is?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c18</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.1G.Prime and Composite Numbers (Review) - 1</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
 Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
 
 Reference solution (for your understanding only — do not quote it verbatim):
-A minute is 60 seconds, so 6 minutes is 6 * 60 = 360 seconds.
-A hand-crank sharpener can sharpen 360 / 45 = 8 pencils in 6 minutes.
-An electric sharpener can sharpen 360 / 20 = 18 pencils in 6 minutes.
-Therefore, an electric sharpener can sharpen 18 - 8 = 10 more pencils than a hand-crank in 6 minutes.
- 10
+Not Available
 
 Conversation so far:
-Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: A hand-crank pencil sharpener can sharpen one pencil every forty-five seconds. An electric version can sharpen one in twenty seconds. How many more pencils can the electric sharpener sharpen than the hand-crank sharpener in six minutes?
- Student: The hand-crank sharpener can sharpen 60/45 = 4 pencils per minute.
-The electric sharpener can sharpen 60/20 = 3 pencils per minute.
-In six minutes, the hand-crank sharpener can sharpen 6 x 4 = 24 pencils.
-In six minutes, the electric sharpener can sharpen 6 x 3 = 18 pencils.
-The electric sharpener can sharpen 24-18 = 6 more pencils than the hand-crank sharpener in six minutes.
- 6 
- Tutor: Alejandra, can you look at your first step again and explain how you came to this conclusion 
- Student: Yes, I divided 45 seconds by 60 seconds to get the number of pencils the hand-crank sharpener can sharpen per minute. Then I multiplied that number by 6 minutes to get the total number of pencils the hand-crank sharpener can sharpen in six minutes. I did the same for the electric sharpener, and then I subtracted the two numbers to get the difference. 
- Tutor: Can you see where you might have went wrong in the first step 
- Student: Yes, I didn&#x27;t realize that I was supposed to divide 60 by 45 instead of 45 by 60 to get the number of pencils the hand-crank sharpener can sharpen per minute.
+Student: okay 
+ Student: 34 
+ Tutor: 39 is a prime number or composite number? 
+ Student: prime
 
-Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;To some extent&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;To some extent&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Have you thought about multiplcation instead of division</pre></details></div></section>
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;To some extent&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Hmm, what makes you say prime?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c25</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+He wants to run 100*.2=20 miles more than he used to
+So he needs to run 100+20=120 miles
+He is doing this in 280/7=40 weeks
+So he needs to add 120/40=3 miles per week
+ 3
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: James injured his ankle and decides to slowly start working back up to his previous running goals and then surpass them.  Before the injury, he was able to run 100 miles per week.  He wants to get up to 20% more than that total in 280 days and each week he will increase miles walked in the week by the same amount.  How many miles does he need to add per week? 
+ Student: First, we need to find out what his goal is: 
+
+100 miles per week x 1.2 = 120 miles per week 
+
+Now we need to find out how much he needs to increase his mileage each week: 
+
+(120 miles per week - 100 miles per week) ÷ (280 days ÷ 7 days per week)
+
+= 20 miles per week ÷ 40 weeks 
+
+= 0.5 miles per week 
+
+So, James needs to add 0.5 miles per week to his running distance in order to reach his goal of running 120 miles per week within 280 days. 
+
+ 0.5 
+ Student: which was 120 miles per week. Then I calculated how much he needed to increase his mileage each week by subtracting 100 miles per week from 120 miles per week and then dividing that number by the number of weeks (40) to get 0.5 miles per week. 
+ Tutor: Can you share with me why you did 120-100? 
+ Student: I did 120-100 because I needed to find out how much he needed to increase his mileage each week in order to reach his goal of 120 miles per week in 280 days. That meant I had to subtract the original mileage (100 miles per week) from his goal (120 miles per week) to get the difference.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;No&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Remember, he wants to run 100 and then get up to 20% more than that. So what would that be?</pre></details></div></section>
 </main>
 </body>
 </html>

@@ -81,16 +81,16 @@ AGG_SCRIPT = ROOT / "scripts" / "build_atomic_ability_rebenchmark_artifacts.py"
 
 
 def read_panel_keys() -> list[str]:
-    """Read PANEL_MODEL_KEYS / IMPUTE_MIN_FACES off the aggregation script.
+    """Read PANEL_MODEL_KEYS off the aggregation script.
 
-    The R22 imputation rule lives there; the page reproduces it client-side, so
-    it must not keep a second copy of the constants that can drift.
+    Only the panel list is mirrored here (to label the release panel).  Since
+    R26 the page no longer re-derives any missing-cell rule client-side — the
+    aggregation script decides 未测过 vs 能力不具备记 0 分 and the page just
+    renders what it emitted.
     """
     src = AGG_SCRIPT.read_text(encoding="utf-8")
     block = re.search(r"PANEL_MODEL_KEYS\s*=\s*\((.*?)\)", src, re.S)
-    keys = re.findall(r'"([^"]+)"', block.group(1)) if block else []
-    faces = re.search(r"IMPUTE_MIN_FACES\s*=\s*(\d+)", src)
-    return keys, int(faces.group(1)) if faces else 3
+    return re.findall(r'"([^"]+)"', block.group(1)) if block else []
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -184,6 +184,7 @@ def build_payload() -> dict[str, Any]:
     model_json = json.loads(MAPPING_JSON.read_text(encoding="utf-8"))
     p_scores = load_jsonl(REBENCH / "09_atomic_p_scores.jsonl")
     evidence = load_jsonl(REBENCH / "09_atomic_p_score_evidence.jsonl")
+    untested = load_jsonl(REBENCH / "09_atomic_p_untested_cells.jsonl")
     group_scores = load_jsonl(REBENCH / "10_group_scores.jsonl")
     bench_map = load_jsonl(REBENCH / "02_benchmark_ability_mapping.jsonl")
     validity = load_jsonl(REBENCH / "13_mapping_validation_cells.jsonl")
@@ -313,6 +314,9 @@ def build_payload() -> dict[str, Any]:
         }
 
     # --- models ----------------------------------------------------------
+    # R26 起 09_atomic_p_scores.jsonl 也收录「未测过」的 P 行（score_10=None），
+    # 它们不算覆盖，不能进 covered_p / p_count，否则覆盖率会把空白算成有数据。
+    p_scores = [row for row in p_scores if row.get("score_10") is not None]
     covered_p = sorted({row["p_code"] for row in p_scores})
     p_count = {}
     ev_count = {}
@@ -320,7 +324,8 @@ def build_payload() -> dict[str, Any]:
         p_count[row["model_key"]] = p_count.get(row["model_key"], 0) + 1
     for row in evidence:
         ev_count[row["model_key"]] = ev_count.get(row["model_key"], 0) + 1
-    full = len(covered_p)
+    panel_keys = read_panel_keys()
+    panel_set = set(panel_keys)
     models = []
     for key in sorted(p_count, key=lambda k: (-p_count[k], -ev_count.get(k, 0), k)):
         models.append(
@@ -329,7 +334,10 @@ def build_payload() -> dict[str, Any]:
                 "display": MODEL_DISPLAY.get(key, key),
                 "p_count": p_count[key],
                 "evidence_count": ev_count.get(key, 0),
-                "full_panel": p_count[key] >= full,
+                # R26：「发布面板」就是 PANEL_MODEL_KEYS 的成员，不再等价于
+                # 「每个 P 都有分」——以前两者重合，只是因为缺格被替代值填满了。
+                # 覆盖完整度由 p_count 单独呈现，不再混进这个标记。
+                "full_panel": key in panel_set,
             }
         )
 
@@ -341,14 +349,15 @@ def build_payload() -> dict[str, Any]:
             "s": round(row["score_10"], 4),
             "facets": {k: round(v, 4) for k, v in (row.get("facet_scores") or {}).items()},
             "n": row.get("evidence_count", 0),
-            "imp": row.get("imputed_evidence_count", 0),
-            "impw": round(row.get("imputed_weight_share", 0.0), 4),
+            "zero": row.get("capability_zero_count", 0),
+            "zerow": round(row.get("capability_zero_weight_share", 0.0), 4),
+            "unt": row.get("untested_cell_count", 0),
+            "untc": row.get("untested_cells", []),
             "nf": row.get("facet_count_with_evidence", 0),
             "b": row.get("benchmarks", []),
         }
         for row in p_scores
     ]
-    panel_keys, impute_min_faces = read_panel_keys()
     slim_evidence = [
         {
             "m": row["model_key"],
@@ -366,10 +375,27 @@ def build_payload() -> dict[str, Any]:
             "s": round(row["score_10"], 6) if row.get("score_10") is not None else None,
             "metric": row.get("metric", ""),
             "src": row.get("source_type", ""),
-            "imp": bool(row.get("imputed")),
-            "impm": row.get("imputed_from_model") or "",
+            # R26：zero=该格因模型不具备必需能力记 0 分（计分），why=一句话理由。
+            "zero": row.get("source_type") == "capability_gap_zero",
+            "cap": row.get("missing_capability", ""),
+            "why": row.get("coverage_reason", ""),
         }
         for row in evidence
+    ]
+    slim_untested = [
+        {
+            "m": row["model_key"],
+            "p": row["p_code"],
+            "f": row["facet_id"],
+            "fn": row.get("facet_name", ""),
+            "b": row["benchmark_id"],
+            "sd": row["subdimension"],
+            "rel": row.get("ability_weight"),
+            "conf": row.get("row_weight"),
+            "eff": row.get("effective_weight"),
+            "why": row.get("coverage_reason", ""),
+        }
+        for row in untested
     ]
     slim_groups = [
         {
@@ -394,7 +420,8 @@ def build_payload() -> dict[str, Any]:
             "n_evidence": len(slim_evidence),
             "full_panel_size": sum(1 for m in models if m["full_panel"]),
             "uncovered_p": [a["p_code"] for a in abilities if a["p_code"] not in covered_p],
-            "impute_min_faces": impute_min_faces,
+            "n_zero_cells": sum(1 for r in slim_evidence if r["zero"]),
+            "n_untested_cells": len(slim_untested),
         },
         "panel": panel_keys,
         "groups": [{"id": g, "label": GROUP_LABELS[g]} for g in GROUP_ORDER],
@@ -404,6 +431,7 @@ def build_payload() -> dict[str, Any]:
         "models": models,
         "scores": slim_scores,
         "evidence": slim_evidence,
+        "untested": slim_untested,
         "group_scores": slim_groups,
         "validity": validity_index,
     }
@@ -782,11 +810,12 @@ details .body{padding:10px 0 4px; color:var(--ink-2); font-size:12.5px}
 }
 .facetgrp p{margin:0 0 8px; color:var(--muted); font-size:11.5px}
 
-/* ---------- imputed / untested ---------- */
-tr.imputed td{color:var(--muted)}
-tr.imputed{
+/* ---------- 能力不具备记 0 分 / 未测过 ---------- */
+tr.capzero td{color:var(--muted)}
+tr.capzero{
   background:repeating-linear-gradient(135deg,transparent,transparent 6px,var(--grid) 6px,var(--grid) 7px);
 }
+tr.untestedrow td{color:var(--muted); opacity:.85}
 .untested{color:var(--warning-ink); font-weight:620}
 
 /* ---------- profile card ---------- */
@@ -848,40 +877,28 @@ const coveredP = D.abilities.map(a => a.p_code).filter(p => !D.meta.uncovered_p.
 const allP = D.abilities.map(a => a.p_code);
 const isUncovered = p => D.meta.uncovered_p.includes(p);
 
-/* --- R22 缺测替代，页面内复算 ------------------------------------------
-   聚合脚本只给 5 个发布面板模型铺替代行（PANEL_MODEL_KEYS），外围模型缺格
-   就直接不进分母。这里把同一条规则复算一遍，好让页面能把它铺到全部模型，
-   而不必改上游产物。规则本身一字不改：某格已测面 >= IMPUTE_MIN_FACES 时，
-   取该格最低分顶替，标 imputed。
-   'panel' 档复算的结果与已发布的 09_atomic_p_scores.jsonl 逐行一致（见
-   console 的自检输出），所以两档走的是同一段代码，只有铺给谁不同。      */
-const MEASURED = D.evidence.filter(r => !r.imp);
-const cellFaces = {};
-MEASURED.forEach(r => {
-  const k = [r.p, r.f, r.b, r.sd].join('');
-  (cellFaces[k] ||= {})[r.m] = r;
-});
+/* --- R26 缺测口径，页面内复算 ------------------------------------------
+   R22 的「缺格取该格已测模型最低分顶替」已废除（用户裁决 2026-08-04）。
+   缺格现在由聚合脚本分成两类，页面只如实呈现，不再自己造替代行：
+     · 能力不具备（evidence 行 zero=true，分数 0）：整套题都得有某项能力
+       （目前只有视觉）才能作答，模型没有——真实能力差距，计分，并按常规
+       权重规则传导到这一格挂载的每一个 P。
+     · 未测过（在 D.untested 里，不进 evidence）：没跑过，不计分也不进分母。
+   下面只把 evidence 行按 facet 加权聚合，结果与 09_atomic_p_scores.jsonl
+   逐行一致（见 console 自检输出）。                                      */
+const MEASURED = D.evidence.filter(r => !r.zero);
+const untestedBy = {};
+D.untested.forEach(r => (untestedBy[r.m + '|' + r.p] ||= []).push(r));
 
 function buildScores(){
-  const targets = D.panel;
-  const rows = MEASURED.slice();
-  Object.values(cellFaces).forEach(faces => {
-    const keys = Object.keys(faces);
-    if (keys.length < D.meta.impute_min_faces) return;
-    const minM = keys.reduce((a, b) => faces[a].s <= faces[b].s ? a : b);
-    const t = faces[minM];
-    targets.forEach(m => {
-      if (faces[m]) return;
-      rows.push(Object.assign({}, t, {m: m, imp: true, impm: minM, impf: keys.length}));
-    });
-  });
+  const rows = D.evidence.slice();
   const acc = {};
   rows.forEach(r => {
-    const s = (acc[r.m + '|' + r.p] ||= {facets: {}, n: 0, imp: 0, impw: 0, w: 0, b: new Set()});
+    const s = (acc[r.m + '|' + r.p] ||= {facets: {}, n: 0, zero: 0, zerow: 0, w: 0, b: new Set()});
     const f = (s.facets[r.f] ||= {ws: 0, w: 0});
     f.ws += r.s * r.eff; f.w += r.eff;
     s.n++; s.w += r.eff; s.b.add(r.b);
-    if (r.imp){ s.imp++; s.impw += r.eff; }
+    if (r.zero){ s.zero++; s.zerow += r.eff; }
   });
   const scores = {};
   Object.keys(acc).forEach(k => {
@@ -894,7 +911,8 @@ function buildScores(){
     if (!means.length) return;
     scores[k] = {
       m: parts[0], p: parts[1], s: means.reduce((a, b) => a + b, 0) / means.length,
-      facets: facets, n: s.n, imp: s.imp, impw: s.w ? s.impw / s.w : 0,
+      facets: facets, n: s.n, zero: s.zero, zerow: s.w ? s.zerow / s.w : 0,
+      unt: (untestedBy[k] || []).length,
       nf: means.length, b: [...s.b].sort()
     };
   });
@@ -930,7 +948,7 @@ applyMode();
   });
   // 已发布的 score_10 本身是 4 位小数，所以 5e-5 是这个比对的理论下限，
   // 阈值只能卡在它之上；真正的逻辑错误会差好几个数量级。
-  const msg = `R22 复算自检：${n}/${D.scores.length} 行比对，最大偏差 ${worst.toExponential(1)}`;
+  const msg = `R26 复算自检：${n}/${D.scores.length} 行比对，最大偏差 ${worst.toExponential(1)}`;
   (worst < 2e-4 && n === D.scores.length ? console.log : console.error)(msg);
 })();
 const benchToCells = {};     // benchmark -> [{p_code,facet,subdimension,weight}]
@@ -959,14 +977,15 @@ function markers(row){
   if (!row) return '';
   let out = '';
   if (row.nf < (abilityBy[row.p]?.facets.length || 0)) out += '<span class="mark" title="并非所有 facet 都有证据">◐</span>';
-  if (row.imp > 0) out += `<span class="mark" title="含 ${row.imp} 条替代值（占有效权重 ${(row.impw*100).toFixed(0)}%）">※</span>`;
+  if (row.zero > 0) out += `<span class="mark" title="含 ${row.zero} 个「能力不具备记 0 分」的格（占有效权重 ${(row.zerow*100).toFixed(0)}%）">✕</span>`;
+  if (row.unt > 0) out += `<span class="mark" title="另有 ${row.unt} 个格未测过，未计入分母">·</span>`;
   return out;
 }
 function go(hash){ location.hash = hash; }
 function pLink(p){ return `<span class="link" onclick="go('#/p/${p}')">${p} ${esc(abilityBy[p]?.p_name || '')}</span>`; }
 function bLink(b){ return `<span class="link" onclick="go('#/bench/${encodeURIComponent(b)}')">${esc(benchBy[b]?.name || b)}</span>`; }
 function mLink(m){ return `<span class="link" onclick="go('#/model/${encodeURIComponent(m)}')">${esc(mName(m))}</span>`; }
-// Real measured coverage, independent of whichever impute mode is active.
+// 实测覆盖：只数真跑过的格，「能力不具备记 0 分」的格不算跑过。
 const measuredP = {};
 MEASURED.forEach(r => (measuredP[r.m] ||= new Set()).add(r.p));
 
@@ -975,8 +994,8 @@ function covBadge(m){
   const real = (measuredP[m] || new Set()).size;
   const now = coveredP.filter(p => scoreOf[m + '|' + p]).length;
   if (now > real){
-    // Don't let imputation dress a thinly-measured model up as fully covered.
-    return `<span class="badge warn" title="实测 ${real} 项，另有 ${now - real} 项完全由缺测替代值构成">实测 ${real}/${coveredP.length}，替代补至 ${now}</span>`;
+    // 只由「能力不具备记 0 分」撑起来的 P，别当成跑过。
+    return `<span class="badge warn" title="实测 ${real} 项，另有 ${now - real} 项只有「能力不具备记 0 分」的格">实测 ${real}/${coveredP.length}，另 ${now - real} 项仅 0 分格</span>`;
   }
   return real >= coveredP.length
     ? `<span class="badge full">全覆盖 ${real}/${coveredP.length}</span>`
@@ -1030,13 +1049,13 @@ function radar(series){
     vals.forEach((v, i) => {
       if (v === null) return;
       const [x, y] = pt(i, R * v / 10);
-      // A mostly-imputed point is not a measurement of this model - draw it
-      // hollow so it never reads as one at a glance.
+      // 分数过半来自「能力不具备记 0 分」的点画空心：那是能力缺口砸出来的低分，
+      // 不是在这套题上量出来的水平，一眼扫过去不该跟实测点长得一样。
       const row = scoreOf[s.key + '|' + allP[i]];
-      const mostlyImputed = row && row.impw >= 0.5;
-      const note = mostlyImputed ? `（其中 ${(row.impw * 100).toFixed(0)}% 为替代值，非实测）` : '';
+      const mostlyZero = row && row.zerow >= 0.5;
+      const note = mostlyZero ? `（其中 ${(row.zerow * 100).toFixed(0)}% 的有效权重来自「能力不具备记 0 分」的格）` : '';
       g += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"
-              fill="${mostlyImputed ? 'var(--surface)' : col}" stroke="${col}" stroke-width="2"
+              fill="${mostlyZero ? 'var(--surface)' : col}" stroke="${col}" stroke-width="2"
               ><title>${esc(mName(s.key))} · ${allP[i]} ${esc(abilityBy[allP[i]].p_name)}: ${fx(v)}${note}</title></circle>`;
     });
   });
@@ -1050,8 +1069,8 @@ function bars(rows, maxV = 10){
         ${r.facetCov && r.facetCov.have < r.facetCov.total
           ? `<span class="badge warn" title="这项能力有 ${r.facetCov.total} 个 facet，该模型只测了 ${r.facetCov.have} 个，分数不可与全测模型直接比">仅测 ${r.facetCov.have}/${r.facetCov.total} facet</span>`
           : ''}
-        ${r.impShare > 0
-          ? `<span class="badge warn" title="这一分数里有 ${(r.impShare*100).toFixed(0)}% 的有效权重来自缺测替代值，不是真实测量">替代 ${(r.impShare*100).toFixed(0)}%</span>`
+        ${r.zeroShare > 0
+          ? `<span class="badge warn" title="这一分数里有 ${(r.zeroShare*100).toFixed(0)}% 的有效权重来自「能力不具备记 0 分」的格">能力缺口 ${(r.zeroShare*100).toFixed(0)}%</span>`
           : ''}
         ${r.full ? '' : '<span class="badge">全库 ' + modelBy[r.key].p_count + '/' + coveredP.length + '</span>'}</td>
       <td style="width:52%"><div class="track" title="${esc(r.tip || '')}">
@@ -1071,7 +1090,7 @@ function viewOverview(){
       return r
         ? `<td class="num cell"><span class="heat ${heatClass(r.s)}"
              title="${esc(m.display)} · ${p} ${esc(abilityBy[p].p_name)}: ${fx(r.s)}（${r.n} 条证据）">${fx(r.s, 1)}</span>${markers(r)}</td>`
-        : `<td class="num cell"><span class="mark" title="未覆盖">·</span></td>`;
+        : `<td class="num cell"><span class="untested" title="该模型这项能力的取分格一个都没跑过；不给分，也不折算成 0">未测过</span></td>`;
     }).join('');
     const gcells = D.groups.map(g => {
       const r = groupScoreOf[m.key + '|' + g.id];
@@ -1095,7 +1114,7 @@ function viewOverview(){
   app.innerHTML = `
     <h2>总览</h2>
     <p class="sub">模型 × 原子能力得分矩阵（0–10）。列头可排序；点任意模型名或能力编号进入详情。
-      <span class="mark">◐</span> 该能力并非所有 facet 都有证据，<span class="mark">※</span> 含缺测替代值。</p>
+      <span class="mark">◐</span> 该能力并非所有 facet 都有证据，<span class="mark">✕</span> 含「能力不具备记 0 分」的格，<span class="mark">·</span> 另有格子未测过。<b>未测过</b>的能力不给分，也不折算成 0。</p>
     <div class="stats">
       <div class="stat"><b>${D.meta.n_models}</b><span>已测模型</span></div>
       <div class="stat"><b>${D.meta.full_panel_size}</b><span>全覆盖模型</span></div>
@@ -1112,7 +1131,7 @@ function viewOverview(){
         </tr></thead>
         <tbody>
           <tr class="rowsep"><td colspan="${1 + D.groups.length + allP.length}">
-            发布面板 · ${D.panel.length} 个模型 · 共 ${allP.length} 项原子能力，其中 ${coveredP.length} 项有分；${D.meta.uncovered_p.join('、')} 暂无 benchmark 记为「未测」。缺测的格按 R22 用该格最低分顶替，徽章里的「实测 n」才是真跑过的项数</td></tr>
+            发布面板 · ${D.panel.length} 个模型 · 共 ${allP.length} 项原子能力，其中 ${coveredP.length} 项有分；${D.meta.uncovered_p.join('、')} 暂无 benchmark 记为「未测」。R26 起缺格不再拿别的模型顶替：能力不具备的格记 0 分照常计分，纯未测的格不计分也不进分母（全库 ${D.meta.n_zero_cells} 个 0 分格、${D.meta.n_untested_cells} 个未测格）</td></tr>
           ${rowsFor(full)}
           <tr class="rowsep"><td colspan="${1 + D.groups.length + allP.length}">
             部分覆盖 · 覆盖面差异很大，跨行比较前务必看徽章上的覆盖率</td></tr>
@@ -1138,8 +1157,8 @@ function viewModel(){
   const chips = D.models.map(m => {
     const i = picked.indexOf(m.key);
     const dot = i >= 0 ? `<span class="dot" style="background:var(${SERIES[i]})"></span>` : '';
-    // Count measured abilities, not scored ones - imputed P scores must not
-    // inflate the chip past what the model was actually run on.
+    // 数实测能力，不数有分能力——只靠「能力不具备记 0 分」撑起来的 P
+    // 不该把这个数字撑大。
     const real = (measuredP[m.key] || new Set()).size;
     return `<button class="chip${real >= coveredP.length ? '' : ' partial'}" aria-pressed="${i >= 0}" data-m="${esc(m.key)}"
       title="实测 ${real}/${coveredP.length} 项原子能力">
@@ -1151,8 +1170,8 @@ function viewModel(){
     const real = (measuredP[k] || new Set()).size;
     const now = coveredP.filter(p => scoreOf[k + '|' + p]).length;
     const cov = now > real
-      ? `实测 ${real}/${coveredP.length}，其余为替代值（空心点＝该项过半为替代值，非实测）`
-      : `${real}/${coveredP.length} 项有证据${real >= coveredP.length ? '' : '（缺口处断线）'}`;
+      ? `实测 ${real}/${coveredP.length}，另 ${now - real} 项只有「能力不具备记 0 分」的格（空心点＝该项过半权重来自 0 分格）`
+      : `${real}/${coveredP.length} 项有证据${real >= coveredP.length ? '' : '（未测过之处断线）'}`;
     return `<span><i style="background:var(${SERIES[i]})"></i>${esc(mName(k))}
       <span class="cov">${cov}</span></span>`;
   }).join('');
@@ -1206,11 +1225,29 @@ function drill(model, p){
   const rows = evByModelP[model + '|' + p] || [];
   const byFacet = {};
   rows.forEach(r => (byFacet[r.f] ||= []).push(r));
+  const untRows = untestedBy[model + '|' + p] || [];
+  const untByFacet = {};
+  untRows.forEach(r => (untByFacet[r.f] ||= []).push(r));
   const sc = scoreOf[model + '|' + p];
+  // 未测过的格不进分数，但一定要在同一张表里列出来——否则读者看到的
+  // facet 分会显得比它实际的证据面更扎实。
+  const untRowHtml = rs => rs.map(r => `<tr class="untestedrow">
+            <td>${bLink(r.b)} · ${esc(r.sd)}
+              <br><b class="untested">未测过</b>
+              <span style="color:var(--muted);font-size:11.5px">——${esc(r.why || '该模型没跑过这一格')}；不计分，也不进分母</span></td>
+            <td class="num">${fx(r.rel)}</td><td class="num">${fx(r.conf)}</td><td class="num">${fx(r.eff)}</td>
+            <td class="num untested">未测过</td><td class="num untested">未测过</td>
+          </tr>`).join('');
   const groups = a.facets.map(f => {
     const rs = byFacet[f.facet_id] || [];
-    if (!rs.length) return `<div class="facetgrp"><h4>${esc(f.facet_name)} <span class="badge">无证据</span></h4>
-      <p>${esc(f.facet_description)}</p></div>`;
+    const us = untByFacet[f.facet_id] || [];
+    if (!rs.length) return `<div class="facetgrp">
+      <h4>${esc(f.facet_name)} <span class="badge">${us.length ? '全部未测过' : '无证据'}</span></h4>
+      <p>${esc(f.facet_description)}</p>
+      ${us.length ? `<table><thead><tr>
+        <th>benchmark · 取分维度</th><th class="num">相关</th><th class="num">置信</th>
+        <th class="num">有效</th><th class="num">原始值</th><th class="num">0–10 分</th>
+      </tr></thead><tbody>${untRowHtml(us)}</tbody></table>` : ''}</div>`;
     return `<div class="facetgrp">
       <h4>${esc(f.facet_name)} <span class="badge">facet 分 ${fx(sc.facets[f.facet_id])}</span></h4>
       <p>${esc(f.facet_description)}</p>
@@ -1218,15 +1255,14 @@ function drill(model, p){
         <th>benchmark · 取分维度</th><th class="num">相关</th><th class="num">置信</th>
         <th class="num">有效</th><th class="num">原始值</th><th class="num">0–10 分</th>
       </tr></thead><tbody>
-      ${rs.map(r => r.imp
-        ? `<tr class="imputed">
+      ${rs.map(r => r.zero
+        ? `<tr class="capzero">
             <td>${bLink(r.b)} · ${esc(r.sd)}
-              <br><b class="untested">未测过</b>
-              <span style="color:var(--muted);font-size:11.5px">
-                ——计分时按 R22 规则记为该格已测 ${r.impf} 个模型里的最低分（来自 ${esc(mName(r.impm))}），这不是本模型的成绩</span></td>
+              <br><b class="untested">能力不具备，记 0 分</b>
+              <span style="color:var(--muted);font-size:11.5px">——${esc(r.why || '')}。这是真实的能力差距，照常计分</span></td>
             <td class="num">${fx(r.rel)}</td><td class="num">${fx(r.conf)}</td><td class="num">${fx(r.eff)}</td>
-            <td class="num untested">未测过</td>
-            <td class="num">${fx(r.s)}<span class="mark" title="替代值，非实测">※</span></td>
+            <td class="num untested">跑不了</td>
+            <td class="num"><b>0.00</b><span class="mark" title="能力不具备记 0 分">✕</span></td>
           </tr>`
         : `<tr>
             <td>${bLink(r.b)} · ${esc(r.sd)}
@@ -1234,16 +1270,20 @@ function drill(model, p){
             <td class="num">${fx(r.rel)}</td><td class="num">${fx(r.conf)}</td><td class="num">${fx(r.eff)}</td>
             <td class="num">${fx(r.raw, 3)}</td><td class="num"><b>${fx(r.s)}</b></td>
           </tr>`).join('')}
+      ${untRowHtml(us)}
       </tbody></table></div>`;
   }).join('');
-  const nImp = rows.filter(r => r.imp).length;
+  const nZero = rows.filter(r => r.zero).length;
   return `<div class="drill">
     <div class="defn"><b>${p} ${esc(a.p_name)}</b>——${esc(a.definition)}
       ${a.single_source ? '<span class="badge warn">单源测量</span>' : ''}</div>
-    ${nImp ? `<div class="notice" style="margin-bottom:12px">
-      这项分数里有 <b>${nImp} 条来自缺测替代</b>，占有效权重 <b>${(sc.impw * 100).toFixed(0)}%</b>。
-      下表中标黄「未测过」的行，${esc(mName(model))} <b>并没有跑过</b>——那一格按 R22 规则记了别的模型的最低分，
-      只为让 P 分有个保守下界，不代表这个模型在该维度上的任何实测表现。</div>` : ''}
+    ${nZero ? `<div class="notice" style="margin-bottom:12px">
+      这项分数里有 <b>${nZero} 个格记 0 分</b>，占有效权重 <b>${(sc.zerow * 100).toFixed(0)}%</b>——
+      ${esc(mName(model))} 缺这些格必需的能力（当前只有视觉一项），<b>整套题都作答不了</b>。
+      这是真实的能力差距而非排期缺口，所以照常计分，并按常规权重规则传导到它挂载的每一个能力。</div>` : ''}
+    ${untRows.length ? `<div class="notice" style="margin-bottom:12px">
+      另有 <b>${untRows.length} 个格未测过</b>（下表中标黄的行）：${esc(mName(model))} 没跑过，
+      <b>不计分也不进分母</b>——不拿别人的分数顶替，也不折算成 0。</div>` : ''}
     ${groups}
     <p class="foot">有效权重 = 相关度 × 置信度；facet 内按有效权重加权平均，P 分为各 facet 的等权平均。
       <span class="link" onclick="go('#/p/${p}')">查看这项能力的完整说明与全模型排名 →</span></p>
@@ -1296,7 +1336,7 @@ function viewAbility(){
       // Facet coverage *within this P* is the honest caveat on a ranking: a model
       // scored on one easy facet can outrank one measured on all three.
       facetCov: {have: x.row.nf, total: a.facets.length},
-      impShare: x.row.impw,
+      zeroShare: x.row.zerow,
       tip: Object.entries(x.row.facets).map(([k, v]) => `${a.facets.find(f => f.facet_id === k)?.facet_name || k}: ${fx(v)}`).join(' · ')
     }));
 
@@ -1349,7 +1389,7 @@ function viewBench(){
   // rows carry the *donor* model's raw value, so showing them here would put a
   // number next to a model that was never evaluated - exactly the fabrication
   // this view must not commit. They are listed separately as 未测过.
-  const board = rows.filter(r => r.sd === curSub && !r.imp);
+  const board = rows.filter(r => r.sd === curSub && !r.zero);
   const seen = new Set();
   const uniq = board.filter(r => { if (seen.has(r.m)) return false; seen.add(r.m); return true; })
                     .sort((x, y) => y.s - x.s);
@@ -1406,7 +1446,7 @@ function viewBench(){
       ${untested.length ? `<p class="foot" style="margin-top:12px">
         <b class="untested">未测过这一维度的 ${untested.length} 个模型</b>：${untested.map(k => mLink(k)).join('、')}。
         榜上只放真跑过的结果。</p>` : ''}
-      <p class="foot">原始值为该 benchmark 的原生指标（${esc(b.metric_family)}），0–10 分是归一后进入映射的值。本榜<b>只列实际跑过的模型</b>，缺测替代值不进这里。
+      <p class="foot">原始值为该 benchmark 的原生指标（${esc(b.metric_family)}），0–10 分是归一后进入映射的值。本榜<b>只列实际跑过的模型</b>：未测过的模型不在此列，因能力不具备记 0 分的模型也不在此列（那不是在这套题上量出来的成绩）。
         ${v.variance_restricted ? '⚠️ 13 号效度检查判定这一维度<b>方差受限</b>，当前模型集上排名信息量低。' : ''}</p>
     </div>`;
 

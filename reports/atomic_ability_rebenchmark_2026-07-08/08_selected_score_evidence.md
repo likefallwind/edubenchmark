@@ -1,48 +1,48 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 388
+Canonical normalized score rows used for P scoring: 404
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
 | `otherbenchmark` | 157 |
-| `repo_eval` | 231 |
+| `repo_eval` | 247 |
 
 ## By Benchmark
 
 | Benchmark | Rows |
 |---|---:|
-| `agieval` | 5 |
+| `agieval` | 6 |
 | `asap_2` | 7 |
 | `bea2025_judge` | 6 |
 | `bea2025_tutor` | 9 |
-| `ceval` | 5 |
+| `ceval` | 7 |
 | `edubench` | 144 |
 | `eduguard_adversarial` | 14 |
 | `eduguard_sata` | 8 |
 | `eduillustrate` | 4 |
 | `ifeval` | 5 |
 | `k12vista` | 6 |
-| `longtutor_diagnosis` | 4 |
-| `longtutor_evidence` | 12 |
-| `longtutor_teaching` | 4 |
+| `longtutor_diagnosis` | 5 |
+| `longtutor_evidence` | 15 |
+| `longtutor_teaching` | 5 |
 | `mathtutorbench_mistake_correction` | 5 |
-| `mathtutorbench_mistake_location` | 5 |
+| `mathtutorbench_mistake_location` | 6 |
 | `mathtutorbench_pedagogy` | 7 |
 | `mathtutorbench_pedagogy_hard` | 7 |
-| `mathtutorbench_problem_solving` | 4 |
+| `mathtutorbench_problem_solving` | 5 |
 | `mathtutorbench_scaffolding` | 7 |
 | `mathtutorbench_scaffolding_hard` | 7 |
 | `mathtutorbench_socratic` | 4 |
-| `mathtutorbench_solution_correctness` | 5 |
-| `mathvista` | 1 |
-| `mmlu_pro` | 5 |
+| `mathtutorbench_solution_correctness` | 6 |
+| `mathvista` | 2 |
+| `mmlu_pro` | 6 |
 | `mmtutorbench` | 2 |
 | `mooccube_prereq` | 5 |
 | `mrbench_judge` | 6 |
 | `mrbench_tutor` | 15 |
-| `olympiadbench` | 3 |
+| `olympiadbench` | 6 |
 | `p07_selfcheck` | 5 |
 | `p08_abstention` | 5 |
 | `p08_calibration` | 5 |
