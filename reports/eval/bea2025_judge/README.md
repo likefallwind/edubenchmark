@@ -1,17 +1,18 @@
 # bea2025_judge — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/bea2025.md`](../../../doc/benchmark_profiles/bea2025.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-全部 run 干净。
+没有不可用的 run，但有 1 个带保留意见（caveat），引用时必须一并写出。
 
 headline 口径：recommended_judge_score = 四维 exact macro-F1 均值。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
+| `doubao-seed-2.0-pro` | — | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.0% | summary.json 比产物旧：盘上的分数跟盘上的数据对不上；一小时内还在写盘，疑似仍在跑，当前 summary 只是中间值 |
 | `MiniMax-M2.7` | 0.4960 | clean | 0.0% | 0.0% | — |
 | `deepseek-v3.2` | 0.3687 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-flash` | 0.5139 | clean | 0.0% | 0.0% | — |

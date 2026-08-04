@@ -9,6 +9,7 @@ the official ``evaluation/`` pipeline (LLM extraction + answer-type normalizatio
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter
@@ -26,6 +27,18 @@ def _load_demo_prompt() -> str:
     namespace: dict[str, Any] = {}
     exec(compile(DEMO_PROMPT_FILE.read_text(encoding="utf-8"), str(DEMO_PROMPT_FILE), "exec"), namespace)
     return str(namespace["demo_prompt"]).strip()
+
+
+# The official pipeline uses a completion endpoint, where ``Extracted answer: ``
+# is the prompt's trailing cue and the model only writes what follows. Chat
+# models sometimes restate the cue instead of continuing it; left in place it
+# makes ``normalize_extracted_answer`` return None and the item scores wrong
+# (670/1000 items in the 2026-07-26 doubao-seed-2.0-pro run).
+_ECHOED_CUE_RE = re.compile(r"^\s*[*_`]*\s*extracted\s+answer\s*[:：]\s*[*_`]*\s*", re.IGNORECASE)
+
+
+def _strip_echoed_cue(extraction: str) -> str:
+    return _ECHOED_CUE_RE.sub("", extraction or "", count=1).strip()
 
 
 class MathVistaAdapter(BenchmarkAdapter):
@@ -112,7 +125,7 @@ class MathVistaAdapter(BenchmarkAdapter):
             model=model,
             max_tokens=extraction_max_tokens(model, 1024),
         )
-        return extraction.strip()
+        return _strip_echoed_cue(extraction)
 
     def score(self, extracted: str, item: dict[str, Any]) -> dict[str, Any]:
         meta = item["meta"]

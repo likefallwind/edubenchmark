@@ -1,6 +1,6 @@
 # longtutor_evidence — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：（暂无档案；本文件的“这个评测是什么”一节即是权威描述，事实来源是 adapter 源码与 AGENTS.md）
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -12,7 +12,9 @@ headline 口径：准确率（accuracy）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `deepseek-v4-pro` | 0.7909 | clean | 0.1% | 0.0% | — |
+| `MiniMax-M2.7` | 0.7122 | clean | 0.1% | 0.0% | — |
+| `deepseek-v4-pro` | 0.7915 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.8012 | clean | 0.0% | 0.0% | — |
 | `glm-5.2` | 0.8069 | clean | 0.0% | 0.0% | — |
 | `minimax3` | 0.7872 | clean | 0.0% | 0.0% | — |
 

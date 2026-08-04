@@ -239,7 +239,14 @@ def _fail_p07(row: dict[str, Any]) -> bool:
 
 
 def _fail_blank(row: dict[str, Any]) -> bool:
-    return not str(row.get("extracted") or "").strip()
+    if not str(row.get("extracted") or "").strip():
+        return True
+    # A non-empty extraction the scorer cannot normalize is just as unusable as
+    # an empty one: normalized=None never equals gold, so the item is silently
+    # counted wrong. Blank-only detection missed 331/1000 items in the
+    # 2026-07-26 mathvista doubao-seed-2.0-pro run, where the extractor echoed
+    # the prompt's "Extracted answer: " cue in front of an otherwise good answer.
+    return "normalized" in row and row.get("normalized") is None
 
 
 def _fail_unparsed_label(row: dict[str, Any]) -> bool:
@@ -294,14 +301,14 @@ FAIL_MEANING: dict[str, str] = {
     "bea2025_judge": "the model under test produced an unparsable label (model behaviour, not infra)",
     "mathtutorbench_judge_calibration": "no A/B choice parsed from the model under test",
     "p08_calibration": "confidence not parsed -> item excluded from calibration",
-    "mmlu_pro": "blank extraction -> counted as a wrong answer",
-    "agieval": "blank extraction -> counted as a wrong answer",
-    "mathvista": "blank extraction -> counted as a wrong answer",
-    "olympiadbench": "blank extraction -> counted as a wrong answer",
-    "mathtutorbench_solution_correctness": "blank extraction -> counted as a wrong answer",
-    "mathtutorbench_mistake_location": "blank extraction -> counted as a wrong answer",
-    "mathtutorbench_mistake_correction": "blank extraction -> counted as a wrong answer",
-    "mathtutorbench_problem_solving": "blank extraction -> counted as a wrong answer",
+    "mmlu_pro": "blank or unnormalizable extraction -> counted as a wrong answer",
+    "agieval": "blank or unnormalizable extraction -> counted as a wrong answer",
+    "mathvista": "blank or unnormalizable extraction -> counted as a wrong answer",
+    "olympiadbench": "blank or unnormalizable extraction -> counted as a wrong answer",
+    "mathtutorbench_solution_correctness": "blank or unnormalizable extraction -> counted as a wrong answer",
+    "mathtutorbench_mistake_location": "blank or unnormalizable extraction -> counted as a wrong answer",
+    "mathtutorbench_mistake_correction": "blank or unnormalizable extraction -> counted as a wrong answer",
+    "mathtutorbench_problem_solving": "blank or unnormalizable extraction -> counted as a wrong answer",
 }
 
 # Detectors whose marker is a property of the model under test, not of the

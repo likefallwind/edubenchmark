@@ -1,21 +1,24 @@
 # ceval — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/ceval.md`](../../../doc/benchmark_profiles/ceval.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-没有不可用的 run，但有 1 个带保留意见（caveat），引用时必须一并写出。
+**这个 benchmark 下有 1 个 run 的分数不可用（unusable）。** 在重跑之前，不要把它们写进任何报告、聚合或映射裁决。
 
 headline 口径：准确率（accuracy）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
+| `Qwen-Qwen3.5-4B` | — | **unusable**（分数是假的，必须重跑） | 0.0% | 0.0% | 100.0% 的答题请求报错（上游限流/配额/参数错误） |
 | `glm-5.1` | 1.0000 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.0% | 冒烟样本（n=5），只能验管道，不能当分数 |
 | `MiniMax-M2.7` | 0.8744 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3-8B` | 0.8276 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-flash` | 0.9219 | clean | 0.0% | 0.1% | — |
 | `deepseek-v4-pro` | 0.9383 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.9547 | clean | 0.0% | 0.0% | — |
 | `glm-5.2` | 0.9375 | clean | 0.0% | 0.1% | — |
 | `minimax3` | 0.8834 | clean | 0.0% | 0.0% | — |
 
@@ -41,6 +44,8 @@ MODEL=<model> ./scripts/run_eval.sh ceval
 | benchmark_weight | 能力（P:权重） |
 | --- | --- |
 | 1.0 | P05 知识调用与掌握 (0.5)、P06 推理与生成 (0.2) |
+
+**这些 P 的证据因此受污染：P05、P06**。裁决前先看 [`doc/eval_artifact_audit_2026-07-14.md`](../../../doc/eval_artifact_audit_2026-07-14.md)。
 
 ---
 

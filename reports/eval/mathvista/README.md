@@ -1,6 +1,6 @@
 # mathvista — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mathvista.md`](../../../doc/benchmark_profiles/mathvista.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -12,8 +12,9 @@ headline 口径：准确率（accuracy）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `2026-06-06` | 0.8409 | clean | 0.1% | 0.7% | — |
-| `minimax3` | 0.8409 | clean | 0.1% | 0.7% | — |
+| `2026-06-06` | 0.8409 | clean | 1.1% | 0.7% | 1.1% 的题命中失败标记：判分/抽取失败 |
+| `minimax3` | 0.8409 | clean | 1.1% | 0.7% | 1.1% 的题命中失败标记：判分/抽取失败 |
+| `doubao-seed-2.0-pro` | 0.8870 | clean | 0.5% | 0.0% | 0.5% 的题命中失败标记：判分/抽取失败 |
 
 ## 二、这个评测是什么
 

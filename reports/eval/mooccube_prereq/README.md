@@ -1,19 +1,22 @@
 # mooccube_prereq — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-07-16.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mooccube.md`](../../../doc/benchmark_profiles/mooccube.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-没有不可用的 run，但有 1 个带保留意见（caveat），引用时必须一并写出。
+全部 run 干净。
 
 headline 口径：准确率（accuracy）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `glm-5.2` | — | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.0% | summary.json 比产物旧：盘上的分数跟盘上的数据对不上；一小时内还在写盘，疑似仍在跑，当前 summary 只是中间值 |
-| `minimax3` | — | no_artifacts（目录在，产物没有） | 0.0% | 0.0% | no summary.json and no scored.jsonl — nothing was produced |
+| `MiniMax-M2.7` | 0.6000 | clean | 0.0% | 0.0% | — |
+| `deepseek-v4-pro` | 0.5267 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.5800 | clean | 0.0% | 0.0% | — |
+| `glm-5.2` | 0.5333 | clean | 0.0% | 0.0% | — |
+| `minimax3` | 0.5767 | clean | 0.0% | 0.0% | — |
 
 ## 二、这个评测是什么
 
