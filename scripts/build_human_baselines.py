@@ -502,6 +502,75 @@ SELF_BUILT: dict[str, str] = {
 }
 
 
+def _paired_judge_gap(
+    benchmark: str, raw_path: Path, resp_key: str, dims, keys, norm, per_dim_norm: bool
+) -> dict[str, Any] | None:
+    """Human annotation vs our LLM judge on the *same* expert replies.
+
+    The human `pass_rate` in this file comes from human annotators; a model's
+    comes from an LLM judge. Comparing them directly is only fair if the two
+    raters agree — so re-score the identical items the `expert` baseline run
+    used and report the gap. If it is large, the benchmark's headline is partly
+    measuring the judge's stylistic preferences, not teaching quality.
+    """
+    item_list = ROOT / "reports" / "eval" / "_baseline" / benchmark / "expert" / "item_list.txt"
+    summary_path = ROOT / "reports" / "eval" / "_baseline" / benchmark / "expert" / "summary.json"
+    if not (item_list.exists() and summary_path.exists() and raw_path.exists()):
+        return None
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    if summary.get("run_status") != "complete":
+        return None
+    extra = summary.get("extra_metrics") or {}
+    wanted = set(item_list.read_text(encoding="utf-8").split())
+
+    labelled = []
+    for idx, entry in enumerate(json.loads(raw_path.read_text(encoding="utf-8"))):
+        if f"c{idx}" not in wanted:
+            continue
+        ann = ((entry.get(resp_key) or {}).get("Expert") or {}).get("annotation") or {}
+        labelled.append(
+            {d: (norm(d, str(ann.get(d, ""))) if per_dim_norm else norm(str(ann.get(d, "")))) for d in dims}
+        )
+    if not labelled:
+        return None
+    n = len(labelled)
+    human_pass = sum(1 for lab in labelled if all(lab.get(k) == "Yes" for k in keys)) / n
+
+    dist = extra.get("per_dimension_distribution") or {}
+
+    def judge_yes(dim: str):
+        cell = (dist.get(dim) or {}).get("Yes")
+        return cell.get("share") if isinstance(cell, dict) else cell
+
+    return {
+        "n_items": n,
+        "judge_model": extra.get("judge_model"),
+        "human_annotator_pass_rate": round(human_pass, 4),
+        "our_judge_pass_rate": extra.get("pass_rate"),
+        "per_key_dimension_yes_share": {
+            dim: {
+                "human_annotator": round(sum(1 for lab in labelled if lab[dim] == "Yes") / n, 4),
+                "our_judge": judge_yes(dim),
+            }
+            for dim in keys
+        },
+    }
+
+
+def judge_calibration() -> dict[str, Any]:
+    from eval.benchmarks.bea2025 import DIMENSIONS as BD, KEY_DIMENSIONS as BK, _normalize_label as bnorm
+    from eval.benchmarks.mrbench import DIMENSIONS as MD, KEY_DIMENSIONS as MK, _normalize_label as mnorm
+
+    out: dict[str, Any] = {}
+    got = _paired_judge_gap("mrbench_tutor", MRBENCH_FILE, "anno_llm_responses", MD, MK, mnorm, True)
+    if got:
+        out["mrbench_tutor"] = got
+    got = _paired_judge_gap("bea2025_tutor", BEA_DEV_FILE, "tutor_responses", BD, BK, bnorm, False)
+    if got:
+        out["bea2025_tutor"] = got
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", type=Path, default=OUT_PATH)
@@ -541,6 +610,13 @@ def main() -> int:
         "computed_from_local_data": {
             "note": COMPUTED_NOTE,
             "results": computed,
+        },
+        "judge_calibration_vs_human_annotators": {
+            "note": (
+                "同一批专家教师回复，人类标注者判 vs 我们的 LLM judge 判。"
+                "差距越大，说明该 benchmark 的 headline 越是在测「像不像 LLM 的写法」而不是教学质量。"
+            ),
+            "results": judge_calibration(),
         },
         "literature": literature,
         "no_external_human_reference": SELF_BUILT,

@@ -450,6 +450,66 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
             add(f"- **`{name}`**：{info['reason']}")
     add("")
 
+    # ---- judge validity ---------------------------------------------------
+    calib = (human_data.get("judge_calibration_vs_human_annotators") or {}).get("results") or {}
+    if calib:
+        add("## ⚠ 最重要的发现：judge 把人类专家教师排在所有模型之下")
+        add("")
+        add("这是本轮基线工作的副产品，但比任何一条地板都重要。")
+        add("")
+        add("MRBench 和 BEA 2025 的数据集里自带**真人专家教师**的回复。把这批回复原样喂给")
+        add("我们评测模型时用的那个 judge，得到的分数应该和人类标注者给同一批回复的分数接近——")
+        add("否则两把尺子就不是一回事。结果差得很远：")
+        add("")
+        add("| benchmark | 题数 | 人类标注者判专家 | 我们的 judge 判**同一批**专家 | 同一 judge 判模型 |")
+        add("|---|---|---|---|---|")
+        for name, info in sorted(calib.items()):
+            rng = observed_range(name, "extra:pass_rate")
+            model_cell = (
+                f"{_fmt(rng['min'])} – {_fmt(rng['max'])}" if rng.get("min") is not None else "—"
+            )
+            add(
+                f"| `{name}` | {info['n_items']} | **{_fmt(info['human_annotator_pass_rate'])}** | "
+                f"**{_fmt(info['our_judge_pass_rate'])}** | {model_cell} |"
+            )
+        add("")
+        add("**人类标注者认为专家教师和模型在同一水平线上（0.53–0.65 vs 0.68–0.83）；")
+        add("我们的 judge 认为专家教师（0.10–0.15）远不如模型（0.68–0.83）。**")
+        add("")
+        add("崩在哪一维，逐维看得很清楚：")
+        add("")
+        add("| benchmark | 维度 | 人类标注 | 我们的 judge | 落差 |")
+        add("|---|---|---|---|---|")
+        for name, info in sorted(calib.items()):
+            for dim, pair in info["per_key_dimension_yes_share"].items():
+                h, j = pair["human_annotator"], pair["our_judge"]
+                gap = (h - j) if (h is not None and j is not None) else None
+                mark = " ⚠" if gap is not None and gap >= 0.4 else ""
+                add(f"| `{name}` | {dim} | {_fmt(h)} | {_fmt(j)} | −{_fmt(gap)}{mark} |")
+        add("")
+        add("`Actionability` 塌得最狠（MRBench 0.85 → 0.30）。看一条真实的专家回复就明白了：")
+        add("")
+        add("> Not quite, remember, Jam has three boxes full of pencils and 2 loose pencils")
+        add("> which give a total of 26 pencils.")
+        add("")
+        add("真人教师说话短、依赖上下文，不会把「你下一步该做什么」显式写出来；")
+        add("人类标注者懂教学语境，判 Yes。LLM judge 找不到显式的行动指令，判 No。")
+        add("而模型的回复通常长、结构化、把每个 rubric 关键词都写全——正好投 judge 所好。")
+        add("")
+        add("### 这意味着什么")
+        add("")
+        add("`mrbench_tutor` / `bea2025_tutor` 的 `pass_rate`，在我们当前的 judge 下，")
+        add("**相当程度上测的是「写得像不像 LLM 式辅导」，而不是教学质量**。")
+        add("三点后果：")
+        add("")
+        add("1. **不要拿这两个 benchmark 的分数说「模型的辅导能力接近/超过人类教师」。**")
+        add("   本报告主表里那个 0.605 的人类值是人类标注者给的，与模型分不同尺，已标为 B 级。")
+        add("2. **映射受影响。** `mrbench_tutor` 的逐维 Yes 占比挂在 P13/P15/P17 上，")
+        add("   这部分分数带着同样的风格偏好。")
+        add("3. **这是可修的。** 要么换 judge 并用这批专家回复做校准（专家应当落在模型区间内），")
+        add("   要么改 rubric 让 Actionability 不再奖励显式措辞。修之前，先别把这两个分数当教学质量看。")
+        add("")
+
     # ---- human section ----------------------------------------------------
     add("## 人类表现：能查到的很少，查不到的如实留空")
     add("")

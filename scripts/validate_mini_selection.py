@@ -806,7 +806,7 @@ def assign_p_labels(p_results: list[dict[str, Any]]) -> None:
         label: str | None = None
 
         # (0) Not rankable regardless of curation.
-        imputed = p.get("capzero_dominated_models") or []
+        capzero = p.get("capzero_dominated_models") or []
         panel_imp = p.get("panel_capzero_dominated") or []
         n_panel = p.get("panel_models_present") or 0
         if n_panel and len(panel_imp) * 2 >= n_panel:
@@ -847,10 +847,10 @@ def assign_p_labels(p_results: list[dict[str, Any]]) -> None:
 
         # Mandatory caveat whenever ANY face is a placeholder, whatever the label:
         # those faces must be dropped before reading scores or ranks.
-        if imputed and label != "not_rankable_by_construction":
+        if capzero and label != "not_rankable_by_construction":
             reasons.append(
-                f"**必须排除这 {len(imputed)} 个模型面再读分/排名**（分数全部来自「能力不具备记 0 分」，彼此同分，排不出先后）："
-                + "、".join(f"`{m}`" for m in imputed))
+                f"**必须排除这 {len(capzero)} 个模型面再读分/排名**（分数全部来自「能力不具备记 0 分」，彼此同分，排不出先后）："
+                + "、".join(f"`{m}`" for m in capzero))
 
         if p["cells_without_ci"]:
             reasons.append(
