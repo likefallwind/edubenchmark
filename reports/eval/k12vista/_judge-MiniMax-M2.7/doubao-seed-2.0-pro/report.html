@@ -13,6 +13,8 @@
   a { color: #3a56d4; }
   p { margin: 0 0 10px; }
   .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
   .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
   .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
   .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
@@ -46,12 +48,13 @@
     <h1>评测报告 · K12Vista：中文 K12 多模态学科理解与推理</h1>
     <p class="muted">基准 k12vista · 模型 <strong>doubao-seed-2.0-pro</strong></p>
     <div class="kpis">
-      <div class="kpi"><div class="v">55.6%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">55.5%</div><div class="k">正确率</div></div>
       <div class="kpi"><div class="v">600</div><div class="k">总题数</div></div>
-      <div class="kpi"><div class="v">599</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">600</div><div class="k">已判分</div></div>
       <div class="kpi"><div class="v">333</div><div class="k">答对</div></div>
     </div>
   </header>
+  
   <section><h2>基准介绍</h2><p>K12Vista 是目前规模最大的中文 K12 多模态学科基准：33,660 道题，覆盖数学、物理、化学、生物、地理五个学科与小学/初中/高中三个学段，题型含选择题、填空题、问答题，每题都带一张学科图（几何图、电路图、实验装置、函数曲线、地图等），必须先看懂图才能作答。对应本仓库能力 P04（复杂多模态理解），也是中文多模态的短板补位。</p><p>本次评测使用固定抽样题单（600 题，按题型×学科-学段分层——即官方评测的汇总轴，见 data/k12vista/item_list_v2.txt），所有模型跑同一份题，保证横向可比。难度只作报告分桶：该标签为数据自带、论文未说明来源，且全量分布极偏（71.7% 难）。</p><p>提示词与判分口径均照搬官方仓库：作答走官方 directly_infer_prompt（按题型分三种），判分走官方 directly_eval_prompt——裁判逐空提取参考答案与学生答案并给 0/1，题分＝各空得分均值（多空题部分给分）。表头 accuracy 是严格全对率，官方口径的部分给分均值在 extra_metrics.official_score。</p><p>注意：官方裁判是 GPU 部署的 Qwen2.5-VL-72B / K12-PEM，本地无法复现，此处改用 API 裁判（K12VISTA_JUDGE_MODEL），rubric 文本未改但裁判模型不是官方那一个，且该裁判未经人工金标校准。</p><p class='muted'>主页：<a href='https://github.com/lichongod/K12Vista'>https://github.com/lichongod/K12Vista</a></p></section>
   <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#0025b1995413172eaadd1e6bde4ee7ce0accff43ed22fd8dc8a127935831875a</span><span class='tag'>type=问答题</span> <span class='tag'>subject=biology-g12</span> <span class='tag'>grade=g12</span> <span class='tag'>difficulty=难</span></div><div class='qtext'>问题:土壤农杆菌能将自身Ti质粒的T-DNA整合到植物染色体DNA上，诱发植物形成肿瘤。T-DNA中含有植物生长素合成酶基因（S）和细胞分裂素合成酶基因（R），如图1所示，它们的表达与否能影响相应植物激素的含量，进而调节肿瘤组织的生长与分化。基因工程常用Ti质粒作为运载体，图2表示抗虫棉培育中使用的三种限制酶A、B、C的识别序列以及Ti质粒上限制酶切割位点的分布，抗虫基因内部不含切割位点，两侧标明序列为切割区域。请分析回答下列问题：
 
@@ -73,9 +76,10 @@ $\begin{description}
   <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
   &quot;official_score&quot;: 0.7398,
   &quot;score_10&quot;: 7.398,
-  &quot;n_scored&quot;: 599,
-  &quot;full_credit_rate&quot;: 0.5559,
-  &quot;unparsed_rate&quot;: 0.0351,
+  &quot;sample_version&quot;: &quot;v2&quot;,
+  &quot;n_scored&quot;: 600,
+  &quot;full_credit_rate&quot;: 0.555,
+  &quot;unparsed_rate&quot;: 0.035,
   &quot;judge_model&quot;: &quot;MiniMax-M2.7&quot;,
   &quot;by_type&quot;: {
     &quot;填空题&quot;: {
@@ -87,8 +91,8 @@ $\begin{description}
       &quot;score&quot;: 0.7799
     },
     &quot;问答题&quot;: {
-      &quot;n&quot;: 192,
-      &quot;score&quot;: 0.7386
+      &quot;n&quot;: 193,
+      &quot;score&quot;: 0.7384
     }
   },
   &quot;by_subject&quot;: {
@@ -125,8 +129,8 @@ $\begin{description}
       &quot;score&quot;: 0.7179
     },
     &quot;math-g9&quot;: {
-      &quot;n&quot;: 52,
-      &quot;score&quot;: 0.766
+      &quot;n&quot;: 53,
+      &quot;score&quot;: 0.7646
     },
     &quot;physics-g12&quot;: {
       &quot;n&quot;: 53,
@@ -147,8 +151,8 @@ $\begin{description}
       &quot;score&quot;: 0.7179
     },
     &quot;g9&quot;: {
-      &quot;n&quot;: 278,
-      &quot;score&quot;: 0.7234
+      &quot;n&quot;: 279,
+      &quot;score&quot;: 0.7233
     }
   },
   &quot;by_difficulty&quot;: {
@@ -165,13 +169,13 @@ $\begin{description}
       &quot;score&quot;: 0.7093
     },
     &quot;难&quot;: {
-      &quot;n&quot;: 425,
-      &quot;score&quot;: 0.7405
+      &quot;n&quot;: 426,
+      &quot;score&quot;: 0.7404
     }
   }
 }</pre></section>
-  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>extraction_error</td><td>1</td></tr><tr><td>scored</td><td>599</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>填空题</td><td>198</td><td>78</td><td>0.394</td><td><div class='bar'><i style='width:39%'></i></div></td></tr><tr><td>选择题</td><td>209</td><td>163</td><td>0.780</td><td><div class='bar'><i style='width:78%'></i></div></td></tr><tr><td>问答题</td><td>192</td><td>92</td><td>0.479</td><td><div class='bar'><i style='width:48%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology-g12</td><td>54</td><td>28</td><td>0.519</td><td><div class='bar'><i style='width:52%'></i></div></td></tr><tr><td>biology-g9</td><td>54</td><td>23</td><td>0.426</td><td><div class='bar'><i style='width:43%'></i></div></td></tr><tr><td>chemistry-g12</td><td>54</td><td>30</td><td>0.556</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>chemistry-g9</td><td>54</td><td>32</td><td>0.593</td><td><div class='bar'><i style='width:59%'></i></div></td></tr><tr><td>geography-g12</td><td>54</td><td>21</td><td>0.389</td><td><div class='bar'><i style='width:39%'></i></div></td></tr><tr><td>geography-g9</td><td>54</td><td>21</td><td>0.389</td><td><div class='bar'><i style='width:39%'></i></div></td></tr><tr><td>math-g12</td><td>53</td><td>43</td><td>0.811</td><td><div class='bar'><i style='width:81%'></i></div></td></tr><tr><td>math-g6</td><td>53</td><td>34</td><td>0.642</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>math-g9</td><td>52</td><td>38</td><td>0.731</td><td><div class='bar'><i style='width:73%'></i></div></td></tr><tr><td>physics-g12</td><td>53</td><td>29</td><td>0.547</td><td><div class='bar'><i style='width:55%'></i></div></td></tr><tr><td>physics-g9</td><td>64</td><td>34</td><td>0.531</td><td><div class='bar'><i style='width:53%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 grade 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>g12</td><td>268</td><td>151</td><td>0.563</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>g6</td><td>53</td><td>34</td><td>0.642</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>g9</td><td>278</td><td>148</td><td>0.532</td><td><div class='bar'><i style='width:53%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 difficulty 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>中</td><td>31</td><td>25</td><td>0.806</td><td><div class='bar'><i style='width:81%'></i></div></td></tr><tr><td>较易</td><td>11</td><td>8</td><td>0.727</td><td><div class='bar'><i style='width:73%'></i></div></td></tr><tr><td>较难</td><td>132</td><td>87</td><td>0.659</td><td><div class='bar'><i style='width:66%'></i></div></td></tr><tr><td>难</td><td>425</td><td>213</td><td>0.501</td><td><div class='bar'><i style='width:50%'></i></div></td></tr></tbody></table></section>
-  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>其他错误</strong></td><td>1</td><td>MiniMax base_resp 1000: unknown error, 500</td><td class='muted'>413f24dec29f2d190e6b305aa588ae793bd22a9b51235a3dcf7594ee2a98fbda</td></tr></tbody></table></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>600</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>填空题</td><td>198</td><td>78</td><td>0.394</td><td><div class='bar'><i style='width:39%'></i></div></td></tr><tr><td>选择题</td><td>209</td><td>163</td><td>0.780</td><td><div class='bar'><i style='width:78%'></i></div></td></tr><tr><td>问答题</td><td>193</td><td>92</td><td>0.477</td><td><div class='bar'><i style='width:48%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology-g12</td><td>54</td><td>28</td><td>0.519</td><td><div class='bar'><i style='width:52%'></i></div></td></tr><tr><td>biology-g9</td><td>54</td><td>23</td><td>0.426</td><td><div class='bar'><i style='width:43%'></i></div></td></tr><tr><td>chemistry-g12</td><td>54</td><td>30</td><td>0.556</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>chemistry-g9</td><td>54</td><td>32</td><td>0.593</td><td><div class='bar'><i style='width:59%'></i></div></td></tr><tr><td>geography-g12</td><td>54</td><td>21</td><td>0.389</td><td><div class='bar'><i style='width:39%'></i></div></td></tr><tr><td>geography-g9</td><td>54</td><td>21</td><td>0.389</td><td><div class='bar'><i style='width:39%'></i></div></td></tr><tr><td>math-g12</td><td>53</td><td>43</td><td>0.811</td><td><div class='bar'><i style='width:81%'></i></div></td></tr><tr><td>math-g6</td><td>53</td><td>34</td><td>0.642</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>math-g9</td><td>53</td><td>38</td><td>0.717</td><td><div class='bar'><i style='width:72%'></i></div></td></tr><tr><td>physics-g12</td><td>53</td><td>29</td><td>0.547</td><td><div class='bar'><i style='width:55%'></i></div></td></tr><tr><td>physics-g9</td><td>64</td><td>34</td><td>0.531</td><td><div class='bar'><i style='width:53%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 grade 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>g12</td><td>268</td><td>151</td><td>0.563</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>g6</td><td>53</td><td>34</td><td>0.642</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>g9</td><td>279</td><td>148</td><td>0.530</td><td><div class='bar'><i style='width:53%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 difficulty 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>中</td><td>31</td><td>25</td><td>0.806</td><td><div class='bar'><i style='width:81%'></i></div></td></tr><tr><td>较易</td><td>11</td><td>8</td><td>0.727</td><td><div class='bar'><i style='width:73%'></i></div></td></tr><tr><td>较难</td><td>132</td><td>87</td><td>0.659</td><td><div class='bar'><i style='width:66%'></i></div></td></tr><tr><td>难</td><td>426</td><td>213</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr></tbody></table></section>
+  
   <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#0025b1995413172eaadd1e6bde4ee7ce0accff43ed22fd8dc8a127935831875a</span><span class='tag'>type=问答题</span> <span class='tag'>subject=biology-g12</span> <span class='tag'>grade=g12</span> <span class='tag'>difficulty=难</span></div><div class='qtext'>问题:土壤农杆菌能将自身Ti质粒的T-DNA整合到植物染色体DNA上，诱发植物形成肿瘤。T-DNA中含有植物生长素合成酶基因（S）和细胞分裂素合成酶基因（R），如图1所示，它们的表达与否能影响相应植物激素的含量，进而调节肿瘤组织的生长与分化。基因工程常用Ti质粒作为运载体，图2表示抗虫棉培育中使用的三种限制酶A、B、C的识别序列以及Ti质粒上限制酶切割位点的分布，抗虫基因内部不含切割位点，两侧标明序列为切割区域。请分析回答下列问题：
 
 
