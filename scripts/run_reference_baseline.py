@@ -116,7 +116,30 @@ def _echo_text(item: dict[str, Any]) -> str:
     return tail or "Let's look at what you just said again."
 
 
+def _random_text(item: dict[str, Any]) -> str:
+    """Uniform random tokens — the literal analogue of ticking a random box.
+
+    On a multiple-choice item "guess at random" means sampling the answer space
+    uniformly.  The answer space of a generation task is token sequences, so its
+    uniform sample is gibberish.  Feeding that to the real judge is what turns
+    "the expected score of filling in nonsense" from an argument into a number.
+
+    Seeded per item so the run is reproducible.
+    """
+    import random as _random
+    import string
+
+    rng = _random.Random(f"{SEED}:{item['item_id']}")
+    alphabet = string.ascii_lowercase + "  "
+    words = [
+        "".join(rng.choice(alphabet) for _ in range(rng.randint(2, 9))).strip()
+        for _ in range(rng.randint(30, 70))
+    ]
+    return " ".join(w for w in words if w)
+
+
 VARIANTS = {
+    "random": lambda item, ref: _random_text(item),
     "refusal": lambda item, ref: REFUSAL_TEXT,
     "echo": lambda item, ref: _echo_text(item),
     "generic": lambda item, ref: GENERIC_TEXT,
@@ -124,7 +147,7 @@ VARIANTS = {
     "novice": lambda item, ref: ref.get(str(item["item_id"]), ""),
 }
 
-DEGENERATE = ("refusal", "echo", "generic")
+DEGENERATE = ("random", "refusal", "echo", "generic")
 REFERENCE = ("expert", "novice")
 
 
@@ -145,10 +168,17 @@ def _judge_of_existing_run(benchmark: str, model_slug: str | None) -> str | None
     if model_slug:
         candidates = [base / model_slug]
     else:
-        candidates = [p for p in base.iterdir() if p.is_dir()]
-        for judge_dir in [p for p in candidates if p.name.startswith("_judge-")]:
-            candidates += [p for p in judge_dir.iterdir() if p.is_dir()]
-    best: tuple[int, str] | None = None
+        # Neither "prefer the plain directory" nor "take the biggest single run"
+        # is reliable: EduBench keeps its real 12-model set under
+        # _judge-deepseek-v3.2/ with only a 5-item smoke run in the plain dir,
+        # while K12Vista's _judge-MiniMax-M2.7/ re-scoring happens to be 2 items
+        # larger than the canonical run. So vote by total evidence instead —
+        # the judge that produced the bulk of the scored rows.
+        candidates = [p for p in base.iterdir() if p.is_dir() and p.name != "_baseline"]
+        for sub in list(candidates):
+            if sub.name.startswith("_"):
+                candidates += [p for p in sub.iterdir() if p.is_dir()]
+    weight: dict[str, int] = {}
     for cand in candidates:
         path = cand / "summary.json"
         if not path.exists():
@@ -168,10 +198,10 @@ def _judge_of_existing_run(benchmark: str, model_slug: str | None) -> str | None
             judge = summary["extra_metrics"].get("judge_model")
         if not judge:
             continue
-        scored = int(summary.get("scored") or 0)
-        if best is None or scored > best[0]:
-            best = (scored, str(judge))
-    return best[1] if best else None
+        weight[str(judge)] = weight.get(str(judge), 0) + int(summary.get("scored") or 0)
+    if not weight:
+        return None
+    return max(weight, key=lambda k: weight[k])
 
 
 def _select_items(adapter, limit: int) -> list[dict[str, Any]]:

@@ -122,6 +122,35 @@ def observed_range(benchmark: str, headline: str) -> dict[str, Any]:
     }
 
 
+def _runs_below(benchmark: str, headline: str, floor: float) -> list[tuple[str, float]]:
+    """Comparable finished runs scoring at or under the floor, worst first."""
+    base = EVAL_DIR / benchmark
+    if not base.is_dir() or headline in LOWER_IS_BETTER:
+        return []
+    rng = observed_range(benchmark, headline)
+    if rng.get("n_items") is None:
+        return []
+    out: list[tuple[str, float]] = []
+    for child in sorted(base.iterdir()):
+        if not child.is_dir() or child.name.startswith("_") or DATE_DIR.match(child.name):
+            continue
+        path = child / "summary.json"
+        if not path.exists():
+            continue
+        try:
+            summary = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        if summary.get("run_status") == "running":
+            continue
+        if int(summary.get("scored") or 0) < COVERAGE_FLOOR * rng["n_items"]:
+            continue
+        value = _headline_of(summary, headline)
+        if value is not None and value < floor:
+            out.append((str(summary.get("model") or child.name), value))
+    return sorted(out, key=lambda r: r[1])
+
+
 def l3_results() -> dict[str, dict[str, Any]]:
     """Degenerate / human-reference runs produced by run_reference_baseline.py."""
     out: dict[str, dict[str, Any]] = {}
@@ -199,6 +228,12 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
     add("`人类` = 文献或数据集自带的人类参照（分级见下）；`实跑` = 已完成 run 的区间。")
     add("**同一行内所有数字都是该 benchmark headline 的原始标度**，跨行不可比。")
     add("")
+    add("空格的含义要分清（见文末「为什么有些 benchmark 没有随机分」）：")
+    add("")
+    add("- **`n/a`** = 该层在这个 benchmark 上**没有定义**，不是没算。")
+    add("- **`待跑`** = 需要 API 的 L3 还没跑到这一行。")
+    add("- **`—`** = 该层不适用（例如 judge 类任务本来就没有 L1/L2）。")
+    add("")
     add("| benchmark | headline | 题数 | L1 随机 | L2 平凡策略 | L3 退化 | 人类 | 实跑区间 |")
     add("|---|---|---|---|---|---|---|---|")
 
@@ -217,10 +252,19 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
         n_items = _fmt((sim or {}).get("n_items"))
 
         l1 = l2 = "—"
+        # A judge-scored generation task still has a knowable floor: the bottom
+        # of the rating scale. Surface it in the L1 column rather than leaving
+        # the cell blank — "random gibberish scores 1.0, not 0" is exactly the
+        # number a reader needs before subtracting a floor from a model score.
+        if jud and jud.get("scale_floor") is not None:
+            l1 = f"{_fmt(jud['scale_floor'])} (刻度下限)"
         if sim:
             policies = sim.get("policies") or {}
             uniform = policies.get("uniform_random") or {}
-            l1 = _fmt(uniform.get("headline_mean"))
+            # No uniform_random policy means uniform sampling is undefined for
+            # this answer space (open-ended numeric/symbolic, rule checker,
+            # composite metric) — not that the computation was skipped.
+            l1 = _fmt(uniform.get("headline_mean")) if uniform else "n/a"
             others = {
                 k: v.get("headline_mean")
                 for k, v in policies.items()
@@ -236,7 +280,7 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
                 best = max(named, key=lambda k: named[k])
                 l2 = f"{_fmt(named[best])} ({best})"
 
-        l3cell = "—"
+        l3cell = "待跑" if name in (random_data.get("judge_only") or {}) else "—"
         variants = l3.get(name) or {}
         degenerate = {
             v: _headline_of(
@@ -341,13 +385,26 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
     add("| benchmark | 最强平凡策略 | 地板 | 实跑最低 | 实跑最高 | 地板占比 | 地板以上的有效区间 |")
     add("|---|---|---|---|---|---|---|")
     rows: list[tuple] = []
+    # Simulated floors and closed-form floors are the same kind of claim, so the
+    # "how much of the score is free" table must cover both — otherwise the
+    # pairwise-comparison tasks, whose 0.5 floor is the most consequential one in
+    # the whole set, silently drop out.
+    floor_sources: list[tuple[str, str, dict[str, float]]] = []
     for name, sim in (random_data.get("simulated") or {}).items():
         pol = sim.get("policies") or {}
         vals = {k: v.get("headline_mean") for k, v in pol.items() if v.get("headline_mean") is not None}
-        if not vals:
-            continue
+        if vals:
+            floor_sources.append((name, sim["headline"], vals))
+    for name, ana in (random_data.get("analytic_only") or {}).items():
+        vals = {
+            k: v["value"] for k, v in (ana.get("floors") or {}).items() if v.get("value") is not None
+        }
+        if vals:
+            floor_sources.append((name, ana["headline"], vals))
+
+    for name, headline, vals in floor_sources:
         best = max(vals, key=lambda k: vals[k])
-        rng = observed_range(name, sim["headline"])
+        rng = observed_range(name, headline)
         if rng.get("max") is None or rng["max"] <= 0:
             continue
         share = vals[best] / rng["max"]
@@ -359,12 +416,32 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
             f"**{share:.0%}** | {_fmt(hi - floor)} |"
         )
     add("")
-    below = [(n, f, lo) for n, _, f, lo, _, _ in rows if lo is not None and lo < f]
-    if below:
-        add("**有模型实际低于平凡策略**（分数本身说明该模型在这个任务上没有可用信号）：")
-        for name, floor, lo in below:
-            add(f"- `{name}`：最低实跑 {_fmt(lo)} < 平凡策略 {_fmt(floor)}")
+    add("### 3b. 跌破地板的：这些分数说明模型在该任务上没有可用信号")
+    add("")
+    any_below = False
+    for name, headline, vals in sorted(floor_sources):
+        best = max(vals, key=lambda k: vals[k])
+        floor = vals[best]
+        runs = _runs_below(name, headline, floor)
+        if not runs:
+            continue
+        any_below = True
+        rng = observed_range(name, headline)
+        add(
+            f"**`{name}`**（地板 {_fmt(floor)}，策略 `{best}`）—— "
+            f"{len(runs)}/{rng.get('n_models', '?')} 个模型跌破："
+        )
+        for model, value in runs:
+            add(f"- {model}: {_fmt(value)}")
         add("")
+    if not any_below:
+        add("（暂无）")
+        add("")
+    add("`mathtutorbench_scaffolding` 这一条尤其要读懂：它的 headline 是**与金标教师回应的成对胜率**，")
+    add("0.5 就是「与专家教师打平」。跌破 0.5 不是「分数偏低」，而是**在搭脚手架这件事上确实不如人类教师**。")
+    add("对照 `mathtutorbench_pedagogy`（同样的比法、同样的 0.5 锚）七个模型全部在 0.66–0.87：")
+    add("**这两个任务的结论方向是相反的**，而只看原始分会以为都是「有的高有的低」。")
+    add("")
 
     add("### 4. 地板在另一头 / 指标本身无区分度")
     add("")
@@ -440,6 +517,59 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
         add("**读法**：`generic` 这一行最关键。它完全没有解题内容，只有教学腔。")
         add("它拿到的分就是该 judge 奖励「形式」而非「实质」的部分，必须从模型分里扣掉再看差距。")
         add("")
+
+    add("## 为什么有些 benchmark 没有随机分")
+    add("")
+    add("主表里的空格几乎都不是「没算」，而是**均匀随机在那种题型上没有定义**。四类：")
+    add("")
+    add("### A. judge 打分的生成题——随机的对应物是乱码，得实测")
+    add("")
+    add("模型要写一段话，不存在「选项」可以抽。但**期望仍然是有的**：生成任务的答案空间就是")
+    add("token 序列，在它上面均匀抽样就是乱码。所以「瞎填能得几分」= 把乱码喂给真实 judge 看它给几分，")
+    add("对应 L3 的 **`random`** 变体。")
+    add("")
+    add("两点要注意：")
+    add("")
+    add("1. **不是所有都归零。** 打分量表自带下限，乱码也拿得到。EduBench 是 1-10 量表，")
+    add("   下限就是 **1.0**；拿模型的 8.0 直接当「比 0 高 8 分」会把差距高估整整一分。")
+    add("   下表的「刻度下限」列就是这个数。")
+    add("2. **有一个可能是负的。** TutorBench 的 rubric 含 −5 权重项，乱码的期望**低于 0**。")
+    add("")
+    add("| benchmark | 刻度下限 | 说明 |")
+    add("|---|---|---|")
+    for name, info in sorted((random_data.get("judge_only") or {}).items()):
+        floor = info.get("scale_floor")
+        add(f"| `{name}` | {_fmt(floor) if floor is not None else '需实测'} | {info.get('reason', '')} |")
+    add("")
+    add("### B. 地板是代数推出来的，模拟没有意义")
+    add("")
+    for name, info in sorted((random_data.get("analytic_only") or {}).items()):
+        floors = info.get("floors") or {}
+        first = next((v for v in floors.values() if v.get("value") is not None), None)
+        derivation = (first or {}).get("derivation", "")
+        add(f"- `{name}` — {derivation}")
+    add("")
+    add("### C. 答案空间是开放的，「均匀」无从定义")
+    add("")
+    add("填任意实数或 LaTeX 表达式的题，在实数上均匀抽样的命中概率测度为 0。")
+    add("这类改用更严的替代策略——按数据集真实答案分布猜（`prior_random`），")
+    add("即「瞎猜的上界」；规则校验类则用一段与题无关的通用文本。")
+    add("")
+    for name, sim in sorted((random_data.get("simulated") or {}).items()):
+        policies = sim.get("policies") or {}
+        if "uniform_random" in policies:
+            continue
+        used = ", ".join(
+            f"`{k}`={_fmt(v.get('headline_mean'))}" for k, v in policies.items()
+        )
+        add(f"- `{name}` — 替代策略：{used}")
+        add(f"  - {sim.get('note', '')}")
+    add("")
+    add("### D. 反过来的一个")
+    add("")
+    add("- `mooccube_prereq` — 唯一自带 chance correction 的 benchmark，")
+    add("  随机作答的 `score_10` 已经被扣到接近 0，不存在比它更高的平凡策略，所以 L2 空着。")
+    add("")
 
     add("## 未覆盖 / 待办")
     add("")

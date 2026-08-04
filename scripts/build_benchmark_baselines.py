@@ -117,32 +117,50 @@ class Spec:
 # Benchmarks whose score() consumes a judge verdict rather than a parseable
 # answer: uniform random is undefined and the only meaningful floor is a
 # degenerate generation scored by the real judge (layer L3).
+#   name: (headline, scale_floor, reason)
+#
+# ``scale_floor`` is the score an arbitrarily bad reply cannot go below — the
+# bottom of the rating scale itself. It is NOT always 0: EduBench's judge rates
+# 1-10, so pure gibberish still scores 1.0, and any "how far above chance is
+# this model" arithmetic that assumes 0 overstates the gap by a whole point.
+# ``None`` means the floor depends on the judge's behaviour rather than the
+# scale, and only the measured L3 `random` variant can supply it.
 JUDGE_ONLY = {
-    "edubench": ("extra:overall.mean_overall_score", "12 维 1-10 量表由固定 judge 打分；量表下限是 1 不是 0"),
-    "mmtutorbench": ("extra:average_total_score_0_to_6", "6 个二元 rubric 由固定 judge 打分"),
-    "tutorbench": ("extra:arr_w_x100", "加权 rubric judge，ARR_w 可为负"),
-    "k12vista": ("extra:official_score", "逐空 0/1 由 judge 判定"),
-    "mrbench_tutor": ("extra:pass_rate", "生成 + 固定 judge 打 8 维标签"),
-    "bea2025_tutor": ("extra:pass_rate", "生成 + 固定 judge 打 4 维标签"),
+    "edubench": (
+        "extra:overall.mean_overall_score",
+        1.0,
+        "12 维 1-10 量表由固定 judge 打分。乱码的期望是刻度下限 1.0，不是 0",
+    ),
+    "mmtutorbench": ("extra:average_total_score_0_to_6", 0.0, "6 个二元 rubric 由固定 judge 打分，全 0 即 0/6"),
+    "tutorbench": (
+        "extra:arr_w_x100",
+        None,
+        "加权 rubric（critical +5 / not_critical +1 / critical_negative −5），"
+        "ARR_w 可为负，故乱码的期望**低于** 0，只能实测",
+    ),
+    "k12vista": ("extra:official_score", 0.0, "逐空 0/1 由 judge 判定；其中的选择题子集会给随机作答少量命中"),
+    "mrbench_tutor": ("extra:pass_rate", 0.0, "生成 + 固定 judge 打 8 维标签，pass 要求三个关键维度全 Yes"),
+    "bea2025_tutor": ("extra:pass_rate", 0.0, "生成 + 固定 judge 打 4 维标签，同上"),
     "longtutor_teaching": (
         "accuracy",
-        "judge 打 4 维 1-5 分。⚠ 其 accuracy 只是「四个分数都成功解析且非 0」，"
-        "实跑 0.999-1.000，是解析成功率不是能力分，不可用于比较模型",
+        None,
+        "judge 打 4 维 1-5 分（刻度下限 1，归一时按 (raw−1)/4 已扣掉）。"
+        "⚠ 其 accuracy 只是「四个分数都成功解析且非 0」，实跑 0.999-1.000，"
+        "是解析成功率不是能力分，不可用于比较模型",
     ),
-    "longtutor_evidence": ("accuracy", "judge 判语义等价 CORRECT/INCORRECT"),
+    "longtutor_evidence": ("accuracy", 0.0, "judge 判语义等价 CORRECT/INCORRECT，乱码必判 INCORRECT"),
     "eduguard_adversarial": (
         "extra:overall.asr",
-        "⚠ 越狱攻击成功与否由内容决定，无 chance level；地板在另一头——全部拒答 = ASR 0 = 满分",
+        None,
+        "⚠ 越狱攻击成功与否由内容决定，无 chance level；地板在另一头——全部拒答 = ASR 0 = 满分。"
+        "乱码既非越狱成功也非合格拒答，落点只能实测",
     ),
-    "mathtutorbench_pedagogy": ("extra:win_rate", "与金标教师回应成对比较，随机 judge 给 win_rate 0.5 / strict_win_rate 0.25"),
-    "mathtutorbench_pedagogy_hard": ("extra:win_rate", "同 mathtutorbench_pedagogy"),
-    "mathtutorbench_scaffolding": ("extra:win_rate", "同 mathtutorbench_pedagogy"),
-    "mathtutorbench_scaffolding_hard": ("extra:win_rate", "同 mathtutorbench_pedagogy"),
-    "mmtutorbench_judge_calibration": (None, "无公开人类金标，adapter 本身不产出题目"),
+    "mmtutorbench_judge_calibration": (None, None, "无公开人类金标，adapter 本身不产出题目"),
     # Not a BenchmarkAdapter: it has its own pipeline in
     # scripts/eval/build_eduillustrate_report.py, so get_adapter() cannot reach it.
     "eduillustrate": (
         "extra:overall_mean_all_items",
+        0.0,
         "8 维 0-5 Likert 由 judge 打分；独立管线（scripts/eval/build_eduillustrate_report.py），不在 adapter 注册表里",
     ),
 }
@@ -566,7 +584,7 @@ SPECS: dict[str, Spec] = {
         headline="accuracy",
         context=_gold_counter,
         policies={"prior_random": p_int_prior},
-        note="同上。",
+        note="开放数值答案，随机 ≈ 0；prior_random 是「按答案先验瞎猜」的上界。",
     ),
     "mooccube_prereq": Spec(
         headline="extra:score_10",
@@ -638,7 +656,8 @@ ANALYTIC_ONLY: dict[str, dict[str, Any]] = {
                 "derivation": "随机改答案时 fix_rate≈chance、break_rate≈1−chance，分数远低于 5.0",
             },
         },
-        "note": "⚠ 地板是 5.0/10 而不是 0，且与第一轮正确率解耦。实跑值 5.7-7.1，离平凡策略很近。",
+        # 实跑区间由 build_baseline_report.py 从 reports/eval 现算，不在这里写死。
+        "note": "⚠ 地板是 5.0/10 而不是 0，且与第一轮正确率解耦。实测所有模型都紧贴这条线。",
     },
     "p08_calibration": {
         "headline": "extra:score_10",
@@ -652,7 +671,7 @@ ANALYTIC_ONLY: dict[str, dict[str, Any]] = {
                 ),
             }
         },
-        "note": "⚠ 地板 5.0/10。实跑值 4.9-7.0，有模型低于平凡策略。",
+        "note": "⚠ 地板 5.0/10，与答题正确率解耦。",
     },
     "sas_bench": {
         "headline": "extra:overall.qwk",
@@ -664,6 +683,38 @@ ANALYTIC_ONLY: dict[str, dict[str, Any]] = {
         },
         "note": "0-100 标度，故随机基线为 0（分）。structured exact match 的 accuracy 随机 ≈ 0。",
     },
+    # Pairwise comparison against a gold teacher reply, judged in both orders.
+    # Uniform random IS well defined here — a judge choosing at random picks the
+    # generated reply half the time — so these belong with the closed forms, not
+    # with the "no chance level" group.
+    **{
+        task: {
+            "headline": "extra:win_rate",
+            "floors": {
+                "random_judge": {
+                    "value": 0.5,
+                    "derivation": (
+                        "与金标教师回应成对比较，位置交换两轮取平均。"
+                        "随机选择时 win_score 期望 = 0.5（(0,1) 与 (1,0) 各 1/4，平局 0.5 占 1/2）"
+                    ),
+                },
+                "random_judge_strict": {
+                    "value": 0.25,
+                    "derivation": "strict_win_rate = share(win_score > 0.5) = 1/4",
+                },
+            },
+            "note": (
+                "⚠ win_rate 0.5 的含义是「与专家教师打平」，既是随机地板也是人类锚。"
+                "低于 0.5 才说明比金标教师差。"
+            ),
+        }
+        for task in (
+            "mathtutorbench_pedagogy",
+            "mathtutorbench_pedagogy_hard",
+            "mathtutorbench_scaffolding",
+            "mathtutorbench_scaffolding_hard",
+        )
+    },
     "mathtutorbench_socratic": {
         "headline": "extra:avg_bleu",
         "floors": {
@@ -672,7 +723,7 @@ ANALYTIC_ONLY: dict[str, dict[str, Any]] = {
                 "derivation": "与参考问句的 sentence-BLEU，随机文本期望 ≈ 0",
             }
         },
-        "note": "correct = bleu ≥ 0.5 只是粗代理；实跑 avg_bleu 0.045-0.135，本身就贴近地板。",
+        "note": "correct = bleu ≥ 0.5 只是粗代理，headline 看 avg_bleu；人类改述同样拿不到高 BLEU，该指标没有有意义的上限。",
     },
 }
 
@@ -919,8 +970,13 @@ def main() -> int:
         "simulated": results,
         "analytic_only": ANALYTIC_ONLY,
         "judge_only": {
-            name: {"headline": headline, "reason": reason, "floor": "requires_degenerate_run"}
-            for name, (headline, reason) in JUDGE_ONLY.items()
+            name: {
+                "headline": headline,
+                "scale_floor": scale_floor,
+                "reason": reason,
+                "floor": "requires_degenerate_run",
+            }
+            for name, (headline, scale_floor, reason) in JUDGE_ONLY.items()
         },
         "skipped": skipped,
         "assertion_failures": failures,

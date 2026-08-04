@@ -1032,7 +1032,7 @@
       "n_simulated": 1002,
       "headline": "accuracy",
       "trials": 60,
-      "note": "同上。",
+      "note": "开放数值答案，随机 ≈ 0；prior_random 是「按答案先验瞎猜」的上界。",
       "policies": {
         "prior_random": {
           "trials": 60,
@@ -1621,7 +1621,7 @@
           "derivation": "随机改答案时 fix_rate≈chance、break_rate≈1−chance，分数远低于 5.0"
         }
       },
-      "note": "⚠ 地板是 5.0/10 而不是 0，且与第一轮正确率解耦。实跑值 5.7-7.1，离平凡策略很近。"
+      "note": "⚠ 地板是 5.0/10 而不是 0，且与第一轮正确率解耦。实测所有模型都紧贴这条线。"
     },
     "p08_calibration": {
       "headline": "extra:score_10",
@@ -1631,7 +1631,7 @@
           "derivation": "score_10 = 10×[0.5×(1−CWR@90) + 0.5×AUROC]；从不给出 ≥90 的置信度时 CWR 未定义而退化为 10×AUROC，随机置信度 AUROC=0.5 → 5.0"
         }
       },
-      "note": "⚠ 地板 5.0/10。实跑值 4.9-7.0，有模型低于平凡策略。"
+      "note": "⚠ 地板 5.0/10，与答题正确率解耦。"
     },
     "sas_bench": {
       "headline": "extra:overall.qwk",
@@ -1643,6 +1643,62 @@
       },
       "note": "0-100 标度，故随机基线为 0（分）。structured exact match 的 accuracy 随机 ≈ 0。"
     },
+    "mathtutorbench_pedagogy": {
+      "headline": "extra:win_rate",
+      "floors": {
+        "random_judge": {
+          "value": 0.5,
+          "derivation": "与金标教师回应成对比较，位置交换两轮取平均。随机选择时 win_score 期望 = 0.5（(0,1) 与 (1,0) 各 1/4，平局 0.5 占 1/2）"
+        },
+        "random_judge_strict": {
+          "value": 0.25,
+          "derivation": "strict_win_rate = share(win_score > 0.5) = 1/4"
+        }
+      },
+      "note": "⚠ win_rate 0.5 的含义是「与专家教师打平」，既是随机地板也是人类锚。低于 0.5 才说明比金标教师差。"
+    },
+    "mathtutorbench_pedagogy_hard": {
+      "headline": "extra:win_rate",
+      "floors": {
+        "random_judge": {
+          "value": 0.5,
+          "derivation": "与金标教师回应成对比较，位置交换两轮取平均。随机选择时 win_score 期望 = 0.5（(0,1) 与 (1,0) 各 1/4，平局 0.5 占 1/2）"
+        },
+        "random_judge_strict": {
+          "value": 0.25,
+          "derivation": "strict_win_rate = share(win_score > 0.5) = 1/4"
+        }
+      },
+      "note": "⚠ win_rate 0.5 的含义是「与专家教师打平」，既是随机地板也是人类锚。低于 0.5 才说明比金标教师差。"
+    },
+    "mathtutorbench_scaffolding": {
+      "headline": "extra:win_rate",
+      "floors": {
+        "random_judge": {
+          "value": 0.5,
+          "derivation": "与金标教师回应成对比较，位置交换两轮取平均。随机选择时 win_score 期望 = 0.5（(0,1) 与 (1,0) 各 1/4，平局 0.5 占 1/2）"
+        },
+        "random_judge_strict": {
+          "value": 0.25,
+          "derivation": "strict_win_rate = share(win_score > 0.5) = 1/4"
+        }
+      },
+      "note": "⚠ win_rate 0.5 的含义是「与专家教师打平」，既是随机地板也是人类锚。低于 0.5 才说明比金标教师差。"
+    },
+    "mathtutorbench_scaffolding_hard": {
+      "headline": "extra:win_rate",
+      "floors": {
+        "random_judge": {
+          "value": 0.5,
+          "derivation": "与金标教师回应成对比较，位置交换两轮取平均。随机选择时 win_score 期望 = 0.5（(0,1) 与 (1,0) 各 1/4，平局 0.5 占 1/2）"
+        },
+        "random_judge_strict": {
+          "value": 0.25,
+          "derivation": "strict_win_rate = share(win_score > 0.5) = 1/4"
+        }
+      },
+      "note": "⚠ win_rate 0.5 的含义是「与专家教师打平」，既是随机地板也是人类锚。低于 0.5 才说明比金标教师差。"
+    },
     "mathtutorbench_socratic": {
       "headline": "extra:avg_bleu",
       "floors": {
@@ -1651,82 +1707,73 @@
           "derivation": "与参考问句的 sentence-BLEU，随机文本期望 ≈ 0"
         }
       },
-      "note": "correct = bleu ≥ 0.5 只是粗代理；实跑 avg_bleu 0.045-0.135，本身就贴近地板。"
+      "note": "correct = bleu ≥ 0.5 只是粗代理，headline 看 avg_bleu；人类改述同样拿不到高 BLEU，该指标没有有意义的上限。"
     }
   },
   "judge_only": {
     "edubench": {
       "headline": "extra:overall.mean_overall_score",
-      "reason": "12 维 1-10 量表由固定 judge 打分；量表下限是 1 不是 0",
+      "scale_floor": 1.0,
+      "reason": "12 维 1-10 量表由固定 judge 打分。乱码的期望是刻度下限 1.0，不是 0",
       "floor": "requires_degenerate_run"
     },
     "mmtutorbench": {
       "headline": "extra:average_total_score_0_to_6",
-      "reason": "6 个二元 rubric 由固定 judge 打分",
+      "scale_floor": 0.0,
+      "reason": "6 个二元 rubric 由固定 judge 打分，全 0 即 0/6",
       "floor": "requires_degenerate_run"
     },
     "tutorbench": {
       "headline": "extra:arr_w_x100",
-      "reason": "加权 rubric judge，ARR_w 可为负",
+      "scale_floor": null,
+      "reason": "加权 rubric（critical +5 / not_critical +1 / critical_negative −5），ARR_w 可为负，故乱码的期望**低于** 0，只能实测",
       "floor": "requires_degenerate_run"
     },
     "k12vista": {
       "headline": "extra:official_score",
-      "reason": "逐空 0/1 由 judge 判定",
+      "scale_floor": 0.0,
+      "reason": "逐空 0/1 由 judge 判定；其中的选择题子集会给随机作答少量命中",
       "floor": "requires_degenerate_run"
     },
     "mrbench_tutor": {
       "headline": "extra:pass_rate",
-      "reason": "生成 + 固定 judge 打 8 维标签",
+      "scale_floor": 0.0,
+      "reason": "生成 + 固定 judge 打 8 维标签，pass 要求三个关键维度全 Yes",
       "floor": "requires_degenerate_run"
     },
     "bea2025_tutor": {
       "headline": "extra:pass_rate",
-      "reason": "生成 + 固定 judge 打 4 维标签",
+      "scale_floor": 0.0,
+      "reason": "生成 + 固定 judge 打 4 维标签，同上",
       "floor": "requires_degenerate_run"
     },
     "longtutor_teaching": {
       "headline": "accuracy",
-      "reason": "judge 打 4 维 1-5 分。⚠ 其 accuracy 只是「四个分数都成功解析且非 0」，实跑 0.999-1.000，是解析成功率不是能力分，不可用于比较模型",
+      "scale_floor": null,
+      "reason": "judge 打 4 维 1-5 分（刻度下限 1，归一时按 (raw−1)/4 已扣掉）。⚠ 其 accuracy 只是「四个分数都成功解析且非 0」，实跑 0.999-1.000，是解析成功率不是能力分，不可用于比较模型",
       "floor": "requires_degenerate_run"
     },
     "longtutor_evidence": {
       "headline": "accuracy",
-      "reason": "judge 判语义等价 CORRECT/INCORRECT",
+      "scale_floor": 0.0,
+      "reason": "judge 判语义等价 CORRECT/INCORRECT，乱码必判 INCORRECT",
       "floor": "requires_degenerate_run"
     },
     "eduguard_adversarial": {
       "headline": "extra:overall.asr",
-      "reason": "⚠ 越狱攻击成功与否由内容决定，无 chance level；地板在另一头——全部拒答 = ASR 0 = 满分",
-      "floor": "requires_degenerate_run"
-    },
-    "mathtutorbench_pedagogy": {
-      "headline": "extra:win_rate",
-      "reason": "与金标教师回应成对比较，随机 judge 给 win_rate 0.5 / strict_win_rate 0.25",
-      "floor": "requires_degenerate_run"
-    },
-    "mathtutorbench_pedagogy_hard": {
-      "headline": "extra:win_rate",
-      "reason": "同 mathtutorbench_pedagogy",
-      "floor": "requires_degenerate_run"
-    },
-    "mathtutorbench_scaffolding": {
-      "headline": "extra:win_rate",
-      "reason": "同 mathtutorbench_pedagogy",
-      "floor": "requires_degenerate_run"
-    },
-    "mathtutorbench_scaffolding_hard": {
-      "headline": "extra:win_rate",
-      "reason": "同 mathtutorbench_pedagogy",
+      "scale_floor": null,
+      "reason": "⚠ 越狱攻击成功与否由内容决定，无 chance level；地板在另一头——全部拒答 = ASR 0 = 满分。乱码既非越狱成功也非合格拒答，落点只能实测",
       "floor": "requires_degenerate_run"
     },
     "mmtutorbench_judge_calibration": {
       "headline": null,
+      "scale_floor": null,
       "reason": "无公开人类金标，adapter 本身不产出题目",
       "floor": "requires_degenerate_run"
     },
     "eduillustrate": {
       "headline": "extra:overall_mean_all_items",
+      "scale_floor": 0.0,
       "reason": "8 维 0-5 Likert 由 judge 打分；独立管线（scripts/eval/build_eduillustrate_report.py），不在 adapter 注册表里",
       "floor": "requires_degenerate_run"
     }
