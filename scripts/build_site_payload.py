@@ -124,19 +124,40 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
         )
 
     # --- scores / groupScore / abilityRank --------------------------------
-    scores = {
-        f"{row['m']}|{row['p']}": {
+    # R26 gives a missing cell one of two verdicts, and the site has to name the
+    # cell to explain either one, so both are listed per (model, P) rather than
+    # only counted: `zc` = capability-gap zeros (scored 0, counted, `cap` says
+    # which capability the model lacks), `uc` = untested (no score, no
+    # denominator). The counts `zero` / `unt` stay as the cheap read. Each entry
+    # carries its facet id, because the same cell can be mounted on two facets of
+    # one P and the site marks cells inside their facet.
+    zero_cells: dict[str, list[dict[str, Any]]] = collections.defaultdict(list)
+    for row in source["evidence"]:
+        if row["zero"]:
+            zero_cells[f"{row['m']}|{row['p']}"].append(
+                {"f": row["f"], "b": row["b"], "sd": row["sd"], "cap": row["cap"]}
+            )
+    untested_cells: dict[str, list[dict[str, Any]]] = collections.defaultdict(list)
+    for row in source["untested"]:
+        untested_cells[f"{row['m']}|{row['p']}"].append(
+            {"f": row["f"], "b": row["b"], "sd": row["sd"]}
+        )
+
+    scores = {}
+    for row in source["scores"]:
+        key = f"{row['m']}|{row['p']}"
+        scores[key] = {
             "s": row["s"],
             "facets": row["facets"],
             "n": row["n"],
             "zero": row["zero"],
             "zerow": row["zerow"],
+            "zc": sorted(zero_cells.get(key, []), key=lambda c: (c["b"], c["sd"], c["f"])),
             "unt": row["unt"],
+            "uc": sorted(untested_cells.get(key, []), key=lambda c: (c["b"], c["sd"], c["f"])),
             "nf": row["nf"],
             "b": row["b"],
         }
-        for row in source["scores"]
-    }
     group_score = {f"{row['m']}|{row['g']}": row["s"] for row in source["group_scores"]}
 
     # Every P gets a key, including the two with no benchmark yet - the site

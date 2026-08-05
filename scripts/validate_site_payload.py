@@ -85,6 +85,15 @@ def validate(payload: dict[str, Any]) -> Checker:
         c.eq(f"scores/{key}/nf", entry["nf"], row["facet_count_with_evidence"])
         c.eq(f"scores/{key}/zero", entry["zero"], row["capability_zero_count"])
         c.eq(f"scores/{key}/unt", entry["unt"], row["untested_cell_count"])
+        # The cell lists are what the site names on screen, so they must match
+        # the counts they sit next to and the source's own untested inventory.
+        c.eq(f"scores/{key}/zc", len(entry["zc"]), row["capability_zero_count"])
+        c.eq(f"scores/{key}/uc", len(entry["uc"]), row["untested_cell_count"])
+        c.eq(
+            f"scores/{key}/uc/cells",
+            sorted({f'{cell["b"]} · {cell["sd"]}' for cell in entry["uc"]}),
+            sorted(row["untested_cells"]),
+        )
 
     c.eq("groupScore/count", len(payload["groupScore"]), len(group_scores))
     for row in group_scores:

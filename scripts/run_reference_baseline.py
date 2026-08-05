@@ -145,10 +145,27 @@ VARIANTS = {
     "generic": lambda item, ref: GENERIC_TEXT,
     "expert": lambda item, ref: ref.get(str(item["item_id"]), ""),
     "novice": lambda item, ref: ref.get(str(item["item_id"]), ""),
+    # The dataset's own 2024-era LLM tutors, run through the same pipeline.
+    # Without these you cannot tell "our 2026 models really are better than the
+    # human expert" apart from "the judge likes something about how they write":
+    # the expert scores low, but so might Sonnet, and only putting all three on
+    # one ruler separates capability from judge preference.
+    "sonnet": lambda item, ref: ref.get(str(item["item_id"]), ""),
+    "gpt4": lambda item, ref: ref.get(str(item["item_id"]), ""),
+    "llama31405b": lambda item, ref: ref.get(str(item["item_id"]), ""),
 }
 
 DEGENERATE = ("random", "refusal", "echo", "generic")
-REFERENCE = ("expert", "novice")
+REFERENCE = ("expert", "novice", "sonnet", "gpt4", "llama31405b")
+
+# variant name -> the tutor key used inside the raw dataset files
+REFERENCE_TUTOR_KEY = {
+    "expert": "Expert",
+    "novice": "Novice",
+    "sonnet": "Sonnet",
+    "gpt4": "GPT4",
+    "llama31405b": "Llama31405B",
+}
 
 
 # --------------------------------------------------------------------------
@@ -232,9 +249,10 @@ def run_variant(
         if loader is None:
             print(f"  SKIP {benchmark}/{variant}: 该 benchmark 没有自带人类参照回复")
             return 0
-        reference = loader(variant.capitalize())
+        tutor_key = REFERENCE_TUTOR_KEY[variant]
+        reference = loader(tutor_key)
         if not reference:
-            print(f"  SKIP {benchmark}/{variant}: 数据集里没有 {variant.capitalize()} 条目")
+            print(f"  SKIP {benchmark}/{variant}: 数据集里没有 {tutor_key} 条目")
             return 0
 
     items = _select_items(adapter, limit)

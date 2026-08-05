@@ -38,7 +38,7 @@
 | `agieval` | `accuracy` | 7272 | 0.1737 | 0.2057 (single_letter_random) | — | 0.67 (B) | 0.8112 – 0.9204 (6 模型) |
 | `asap_2` | `extra:overall.qwk` | 7421 | 0.008 | 0.0008 (prior_random) | — | — | 0.4726 – 0.6106 (11 模型) |
 | `bea2025_judge` | `extra:recommended_judge_score` | 9904 | 0.2952 | 0.3345 (prior_random) | — | — | 0.3687 – 0.5488 (6 模型) |
-| `bea2025_tutor` | `extra:pass_rate` | — | 0 (刻度下限) | — | 0 (echo) | 0.5233 (B) / 同 judge 0.15 | 0.7133 – 0.82 (3 模型) |
+| `bea2025_tutor` | `extra:pass_rate` | — | 0 (刻度下限) | — | 0 (echo) | 0.5233 (B) | 0.7133 – 0.82 (3 模型) |
 | `ceval` | `accuracy` | 1346 | 0.2515 | 0.2623 (majority_constant) | — | — | 0.8276 – 0.9547 (7 模型) |
 | `edubench` | `extra:overall.mean_overall_score` | — | 1 (刻度下限) | — | 3.1104 (generic) | 无 | 7.4702 – 8.4796 (12 模型) |
 | `eduguard_adversarial` | `extra:overall.asr` | — | — | — | 0 (random) | — | 0.0038 – 0.6241 (16 模型) ↓越低越好 |
@@ -46,7 +46,7 @@
 | `eduillustrate` | `extra:overall_mean_all_items` | — | 0 (刻度下限) | — | 待跑 | 无 | — |
 | `ifeval` | `extra:prompt_strict_accuracy` | 541 | n/a | 0.0555 (generic_text) | — | — | 0.8741 – 0.9298 (5 模型) |
 | `k12bench` | `accuracy` | 23640 | 0.0669 | 0.2066 (majority_constant) | — | — | 0.5001 – 0.5001 (1 模型) |
-| `k12vista` | `extra:official_score` | — | 0 (刻度下限) | — | 0 (_stale_judge-MiniMax-M2.7_random) | — | 0.6548 – 0.7398 (2 模型) |
+| `k12vista` | `extra:official_score` | — | 0 (刻度下限) | — | 0 (random) | — | 0.6548 – 0.7398 (2 模型) |
 | `longtutor_diagnosis` | `extra:f1_macro` | 1001 | 0.2262 | 0.2483 (prior_random) | — | 无 | 0.1967 – 0.3158 (5 模型) |
 | `longtutor_evidence` | `accuracy` | — | 0 (刻度下限) | — | 0 (random) | 无 | 0.7122 – 0.8069 (5 模型) |
 | `longtutor_teaching` | `accuracy` | — | — | — | 待跑 | 无 | 0.999 – 1 (5 模型) |
@@ -66,7 +66,7 @@
 | `mmtutorbench_judge_calibration` | `—` | — | — | — | 待跑 | 无 | — |
 | `mooccube_prereq` | `extra:score_10` | 300 | 0.1029 | — | — | 无 | 3.789 – 4.76 (5 模型) |
 | `mrbench_judge` | `extra:macro_over_dimensions.f1_macro` | 13240 | 0.2688 | 0.3337 (prior_random) | — | — | 0.4109 – 0.5615 (6 模型) |
-| `mrbench_tutor` | `extra:pass_rate` | — | 0 (刻度下限) | — | 0 (echo) | 0.605 (B) / 同 judge 0.1 | 0.68 – 0.83 (3 模型) |
+| `mrbench_tutor` | `extra:pass_rate` | — | 0 (刻度下限) | — | 0 (echo) | 0.605 (B) | 0.68 – 0.83 (3 模型) |
 | `olympiadbench` | `accuracy` | 6728 | n/a | 0.0033 (random_number) | — | — | 0.716 – 0.7662 (3 模型) |
 | `p07_selfcheck` | `extra:score_10` | — | — | 5 (never_change) | — | 无 | 5.019 – 5.572 (5 模型) |
 | `p08_abstention` | `extra:score_10` | 5200 | n/a | 5 (always_abstain) | — | 无 | 8.62 – 9.12 (5 模型) |
@@ -164,54 +164,77 @@
 - **`longtutor_teaching`**：judge 打 4 维 1-5 分（刻度下限 1，归一时按 (raw−1)/4 已扣掉）。⚠ 其 accuracy 只是「四个分数都成功解析且非 0」，实跑 0.999-1.000，是解析成功率不是能力分，不可用于比较模型
 - **`eduguard_adversarial`**：⚠ 越狱攻击成功与否由内容决定，无 chance level；地板在另一头——全部拒答 = ASR 0 = 满分。乱码既非越狱成功也非合格拒答，落点只能实测
 
-## ⚠ 最重要的发现：judge 把人类专家教师排在所有模型之下
+## ⚠ mrbench_tutor / bea2025_tutor 的 prompt 把评分表告诉了模型
 
-这是本轮基线工作的副产品，但比任何一条地板都重要。
+这条是查「人类专家为什么分这么低」时挖出来的，属于 harness 缺陷，不是模型或 judge 的问题。
 
-MRBench 和 BEA 2025 的数据集里自带**真人专家教师**的回复。把这批回复原样喂给
-我们评测模型时用的那个 judge，得到的分数应该和人类标注者给同一批回复的分数接近——
-否则两把尺子就不是一回事。结果差得很远：
+**我们给被测模型的 prompt，逐条罗列了 judge 要打的维度**：
 
-| benchmark | 题数 | 人类标注者判专家 | 我们的 judge 判**同一批**专家 | 同一 judge 判模型 |
+| prompt 里的指令 | judge 的评分维度 |
+|---|---|
+| identify and locate any mistake the student made | Mistake_Identification + Mistake_Location |
+| give a helpful hint or explanation | Providing_Guidance |
+| make the next step clear | **Actionability** |
+| Do NOT reveal the final answer outright | Revealing_of_the_Answer |
+| encouraging | Tutor_Tone |
+| natural | Humanlikeness |
+
+bea2025_tutor 的四条指令同样 1:1 对上它的四个维度。MRBench 版还额外把
+**参考解法（Reference solution）**放进了 prompt。
+
+也就是说：**模型被明确告知了评分标准，还拿到了答案**。
+数据集里的人类专家教师和那 8 个 2024 年 LLM，写回复时两样都没有。
+
+### 后果
+
+这解释了下面这组数为什么会长这样——不需要引入「judge 有偏见」之类的假设：
+
+（专家同尺复评正在重跑，数字待补；`reports/eval/_baseline/*/expert/` 完成后重跑本脚本。）
+
+典型分歧长这样（MRBench，学生上一轮已自己纠正了错误）：
+
+> **专家教师的回复**：So 12 devided by 4 =. .?
+>
+> 人类标注 `Mistake_Identification` = **Yes**（错误学生已自纠，教师正确识别并推进下一步）
+> 我们的 judge = **No**（这句话里找不到任何指出错误的表述）
+
+### 对照：judge 对所有 tutor 都比人类标注者严
+
+顺带排除掉「judge 专门针对人类」这个可能。`mrbench_judge` 的既有 run 里，
+同一个模型已经把全部 9 个 tutor 的回复对着人类金标判过一遍（免费的大样本）：
+
+| tutor | 词数中位 | 人类判 pass | judge 判 pass | 差 |
 |---|---|---|---|---|
-| `bea2025_tutor` | 40 | **0.525** | **0.15** | 0.7133 – 0.82 |
-| `mrbench_tutor` | 40 | **0.65** | **0.1** | 0.68 – 0.83 |
+| `Novice` ←人类 | 5 | 0 | 0.0182 | +0.018 |
+| `Expert` ←人类 | 16 | 0.605 | 0.175 | -0.430 |
+| `Phi3` | 20 | 0.06 | 0.04 | -0.020 |
+| `Mistral` | 24 | 0.515 | 0.18 | -0.335 |
+| `Gemini` | 24 | 0.5 | 0.095 | -0.405 |
+| `Sonnet` | 26 | 0.54 | 0.09 | -0.450 |
+| `Llama318B` | 36 | 0.2412 | 0.0704 | -0.171 |
+| `GPT4` | 36 | 0.42 | 0.28 | -0.140 |
+| `Llama31405B` | 43 | 0.635 | 0.305 | -0.330 |
 
-**人类标注者认为专家教师和模型在同一水平线上（0.53–0.65 vs 0.68–0.83）；
-我们的 judge 认为专家教师（0.10–0.15）远不如模型（0.68–0.83）。**
+- judge 对**每一个** tutor 都比人类标注者严，Sonnet 的 −0.450 比人类专家的 −0.430 还狠。
+- 回复长度与该落差的相关只有 **r = -0.26**，n=9，不显著。
+- 这 9 个 tutor 的回复**都不是用我们的 prompt 生成的**，所以它们全部落在 0.02–0.31，
+  而吃了我们 prompt 的模型落在 0.68–0.83 —— 与上面的泄题解释一致。
 
-崩在哪一维，逐维看得很清楚：
+> 口径说明：mrbench_judge 用 v1 rubric，mrbench_tutor 用 v2；绝对值不可互换，方向与排序可比
 
-| benchmark | 维度 | 人类标注 | 我们的 judge | 落差 |
-|---|---|---|---|---|
-| `bea2025_tutor` | Mistake_Identification | 0.875 | 0.475 | −0.4 ⚠ |
-| `bea2025_tutor` | Providing_Guidance | 0.65 | 0.575 | −0.075 |
-| `bea2025_tutor` | Actionability | 0.7 | 0.425 | −0.275 |
-| `mrbench_tutor` | Mistake_Identification | 0.775 | 0.55 | −0.225 |
-| `mrbench_tutor` | Providing_Guidance | 0.725 | 0.375 | −0.35 |
-| `mrbench_tutor` | Actionability | 0.85 | 0.3 | −0.55 ⚠ |
+### 结论与待办
 
-`Actionability` 塌得最狠（MRBench 0.85 → 0.30）。看一条真实的专家回复就明白了：
+1. **`pass_rate` 不能当「辅导能力」的绝对值用，更不能拿来和人类教师比。**
+   模型手里有评分表和答案，人类专家两样都没有。主表里那个人类值已标为 B 级，
+   同尺复评下的 0.10–0.15 也同样不能单独拿出来说事——**两个数都不构成对比**。
+2. **模型之间横向比仍然有效**：所有被测模型吃的是同一个 prompt。
+3. **映射要留意。** `mrbench_tutor` 的逐维 Yes 占比挂在 P13/P15/P17 上，
+   这几个 P 的绝对值含有「照着指令写」的成分。
 
-> Not quite, remember, Jam has three boxes full of pencils and 2 loose pencils
-> which give a total of 26 pencils.
-
-真人教师说话短、依赖上下文，不会把「你下一步该做什么」显式写出来；
-人类标注者懂教学语境，判 Yes。LLM judge 找不到显式的行动指令，判 No。
-而模型的回复通常长、结构化、把每个 rubric 关键词都写全——正好投 judge 所好。
-
-### 这意味着什么
-
-`mrbench_tutor` / `bea2025_tutor` 的 `pass_rate`，在我们当前的 judge 下，
-**相当程度上测的是「写得像不像 LLM 式辅导」，而不是教学质量**。
-三点后果：
-
-1. **不要拿这两个 benchmark 的分数说「模型的辅导能力接近/超过人类教师」。**
-   本报告主表里那个 0.605 的人类值是人类标注者给的，与模型分不同尺，已标为 B 级。
-2. **映射受影响。** `mrbench_tutor` 的逐维 Yes 占比挂在 P13/P15/P17 上，
-   这部分分数带着同样的风格偏好。
-3. **这是可修的。** 要么换 judge 并用这批专家回复做校准（专家应当落在模型区间内），
-   要么改 rubric 让 Actionability 不再奖励显式措辞。修之前，先别把这两个分数当教学质量看。
+**决定性实验（未做）**：用一个不罗列评分维度、不给参考解法的中性 prompt，
+让同一个现代模型重跑一遍。若 pass_rate 显著回落到人类专家那一档，
+就确认是 prompt 泄题；若基本不变，则说明确实是能力差距。
+在这个实验出结果前，不要去改 judge 或 rubric——问题大概率不在那边。
 
 ## 人类表现：能查到的很少，查不到的如实留空
 
@@ -261,17 +284,15 @@ MRBench 和 BEA 2025 的数据集里自带**真人专家教师**的回复。把�
 | benchmark | 变体 | 层 | 题数 | headline | judge |
 |---|---|---|---|---|---|
 | `bea2025_tutor` | echo | L3_degenerate | 40 | 0 | MiniMax-M3 |
-| `bea2025_tutor` | expert | L3_reference | 40 | 0.15 | MiniMax-M3 |
 | `bea2025_tutor` | generic | L3_degenerate | 40 | 0 | MiniMax-M3 |
 | `bea2025_tutor` | novice | L3_reference | 12 ⚠<20，样本过小，仅表示管线跑通 | 0.0833 | MiniMax-M3 |
 | `bea2025_tutor` | random | L3_degenerate | 37 | 0 | MiniMax-M3 |
 | `bea2025_tutor` | refusal | L3_degenerate | 37 | 0 | MiniMax-M3 |
-| `edubench` | echo | L3_degenerate | 40 | — | deepseek-v3.2 |
-| `edubench` | generic | L3_degenerate | 40 | — | deepseek-v3.2 |
-| `edubench` | random | L3_degenerate | 40 | — | deepseek-v3.2 |
-| `edubench` | refusal | L3_degenerate | 40 | — | deepseek-v3.2 |
+| `edubench` | echo | L3_degenerate | 40 | 1.2396 | deepseek-v3.2 |
+| `edubench` | generic | L3_degenerate | 40 | 3.1104 | deepseek-v3.2 |
+| `edubench` | random | L3_degenerate | 40 | 1 | deepseek-v3.2 |
+| `edubench` | refusal | L3_degenerate | 40 | 1.5042 | deepseek-v3.2 |
 | `eduguard_adversarial` | random | L3_degenerate | 40 | 0 | MiniMax-M3 |
-| `k12vista` | _stale_judge-MiniMax-M2.7_random | L3_degenerate | 38 | 0 | MiniMax-M2.7 |
 | `k12vista` | random | L3_degenerate | 40 | 0 | MiniMax-M3 |
 | `longtutor_evidence` | random | L3_degenerate | 38 | 0 | MiniMax-M3 |
 | `mmtutorbench` | echo | L3_degenerate | 40 | 0.05 | MiniMax-M3 |
@@ -279,7 +300,6 @@ MRBench 和 BEA 2025 的数据集里自带**真人专家教师**的回复。把�
 | `mmtutorbench` | random | L3_degenerate | 40 | 0 | MiniMax-M3 |
 | `mmtutorbench` | refusal | L3_degenerate | 40 | 0.2083 | MiniMax-M3 |
 | `mrbench_tutor` | echo | L3_degenerate | 37 | 0 | MiniMax-M3 |
-| `mrbench_tutor` | expert | L3_reference | 40 | 0.1 | MiniMax-M3 |
 | `mrbench_tutor` | generic | L3_degenerate | 40 | 0 | MiniMax-M3 |
 | `mrbench_tutor` | novice | L3_reference | 11 ⚠<20，样本过小，仅表示管线跑通 | 0 | MiniMax-M3 |
 | `mrbench_tutor` | random | L3_degenerate | 32 | 0 | MiniMax-M3 |

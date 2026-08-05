@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import statistics
 import sys
 from pathlib import Path
 from typing import Any
@@ -557,6 +558,87 @@ def _paired_judge_gap(
     }
 
 
+def cross_tutor_gap(judge_run: str = "minimax3") -> dict[str, Any] | None:
+    """Judge-vs-human gap for every tutor in MRBench, not just the human expert.
+
+    Free: `mrbench_judge` already had the model label all 1,655 (response x
+    dimension) pairs against the human gold, covering all nine tutors. Reading
+    it back tells us whether the judge is uniquely harsh on the *human* expert
+    (a style bias) or merely stricter than human annotators across the board.
+    It is the latter — which is why the "the judge prefers verbose LLM prose"
+    reading does not survive contact with the data.
+
+    Caveat: mrbench_judge uses the v1 rubric prompt while mrbench_tutor uses the
+    evolved v2 one, so the absolute pass rates here are not interchangeable with
+    the tutor runs; the per-tutor *ordering* and the sign of the gap are.
+    """
+    import math
+
+    path = ROOT / "reports" / "eval" / "mrbench_judge" / judge_run / "scored.jsonl"
+    if not (path.exists() and MRBENCH_FILE.exists()):
+        return None
+    from eval.benchmarks.mrbench import KEY_DIMENSIONS
+
+    by_tutor: dict[str, dict[str, dict[str, tuple]]] = {}
+    with path.open(encoding="utf-8") as fh:
+        for line in fh:
+            row = json.loads(line)
+            if row.get("score_status") != "scored":
+                continue
+            parts = str(row["item_id"]).split("-")
+            if len(parts) < 3:
+                continue
+            conv, tutor, dim = parts[0], "-".join(parts[1:-1]), parts[-1]
+            by_tutor.setdefault(tutor, {}).setdefault(conv, {})[dim] = (
+                row.get("pred_label"),
+                row.get("gold_label"),
+            )
+
+    lengths: dict[str, list[int]] = {}
+    for entry in json.loads(MRBENCH_FILE.read_text(encoding="utf-8")):
+        for tutor, payload in (entry.get("anno_llm_responses") or {}).items():
+            text = str((payload or {}).get("response") or "").strip()
+            if text:
+                lengths.setdefault(tutor, []).append(len(text.split()))
+
+    results: dict[str, Any] = {}
+    for tutor, convs in by_tutor.items():
+        usable = [d for d in convs.values() if all(k in d for k in KEY_DIMENSIONS)]
+        if len(usable) < 20:
+            continue
+        n = len(usable)
+        human = sum(1 for d in usable if all(d[k][1] == "Yes" for k in KEY_DIMENSIONS)) / n
+        judge = sum(1 for d in usable if all(d[k][0] == "Yes" for k in KEY_DIMENSIONS)) / n
+        words = lengths.get(tutor) or [0]
+        results[tutor] = {
+            "n": n,
+            "median_words": statistics.median(words),
+            "human_annotator_pass_rate": round(human, 4),
+            "judge_pass_rate": round(judge, 4),
+            "gap": round(judge - human, 4),
+        }
+
+    xs = [v["median_words"] for v in results.values()]
+    ys = [v["gap"] for v in results.values()]
+    corr = None
+    if len(xs) > 2:
+        mx, my = statistics.mean(xs), statistics.mean(ys)
+        den = math.sqrt(sum((a - mx) ** 2 for a in xs) * sum((b - my) ** 2 for b in ys))
+        if den:
+            corr = round(sum((a - mx) * (b - my) for a, b in zip(xs, ys)) / den, 3)
+
+    return {
+        "judge_model_run": judge_run,
+        "prompt_caveat": "mrbench_judge 用 v1 rubric，mrbench_tutor 用 v2；绝对值不可互换，方向与排序可比",
+        "per_tutor": dict(sorted(results.items(), key=lambda kv: kv[1]["median_words"])),
+        "length_vs_gap_pearson_r": corr,
+        "reading": (
+            "judge 对所有 tutor 都比人类标注者严（gap 普遍为负），并非只针对人类专家；"
+            "长度与 gap 的相关很弱且方向与「judge 偏好冗长」假说相反，该假说不成立。"
+        ),
+    }
+
+
 def judge_calibration() -> dict[str, Any]:
     from eval.benchmarks.bea2025 import DIMENSIONS as BD, KEY_DIMENSIONS as BK, _normalize_label as bnorm
     from eval.benchmarks.mrbench import DIMENSIONS as MD, KEY_DIMENSIONS as MK, _normalize_label as mnorm
@@ -617,6 +699,7 @@ def main() -> int:
                 "差距越大，说明该 benchmark 的 headline 越是在测「像不像 LLM 的写法」而不是教学质量。"
             ),
             "results": judge_calibration(),
+            "cross_tutor_control": cross_tutor_gap(),
         },
         "literature": literature,
         "no_external_human_reference": SELF_BUILT,

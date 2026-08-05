@@ -160,6 +160,10 @@ def l3_results() -> dict[str, dict[str, Any]]:
         if not bench_dir.is_dir():
             continue
         for var_dir in sorted(bench_dir.iterdir()):
+            # `_stale_*` holds runs superseded by a judge/config fix; they are
+            # kept on disk for comparison but must never enter the tables.
+            if not var_dir.is_dir() or var_dir.name.startswith("_"):
+                continue
             summary_path = var_dir / "summary.json"
             meta_path = var_dir / "baseline_meta.json"
             if not summary_path.exists():
@@ -187,7 +191,9 @@ def _fmt(value: Any, digits: int = 4) -> str:
     if value is None:
         return "—"
     if isinstance(value, float):
-        return f"{value:.{digits}f}".rstrip("0").rstrip(".")
+        text = f"{value:.{digits}f}"
+        # Only trim a fractional tail — rstrip("0") on "20" would yield "2".
+        return text.rstrip("0").rstrip(".") if "." in text else text
     return str(value)
 
 
@@ -451,63 +457,110 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
     add("")
 
     # ---- judge validity ---------------------------------------------------
-    calib = (human_data.get("judge_calibration_vs_human_annotators") or {}).get("results") or {}
-    if calib:
-        add("## ⚠ 最重要的发现：judge 把人类专家教师排在所有模型之下")
+    calib_block = human_data.get("judge_calibration_vs_human_annotators") or {}
+    calib = calib_block.get("results") or {}
+    ctrl = calib_block.get("cross_tutor_control")
+    # The prompt-leak finding is a static property of the adapter, so it is
+    # reported unconditionally — unlike the paired numbers, which are suppressed
+    # while a baseline run is mid-flight.
+    if True:
+        add("## ⚠ mrbench_tutor / bea2025_tutor 的 prompt 把评分表告诉了模型")
         add("")
-        add("这是本轮基线工作的副产品，但比任何一条地板都重要。")
+        add("这条是查「人类专家为什么分这么低」时挖出来的，属于 harness 缺陷，不是模型或 judge 的问题。")
         add("")
-        add("MRBench 和 BEA 2025 的数据集里自带**真人专家教师**的回复。把这批回复原样喂给")
-        add("我们评测模型时用的那个 judge，得到的分数应该和人类标注者给同一批回复的分数接近——")
-        add("否则两把尺子就不是一回事。结果差得很远：")
+        add("**我们给被测模型的 prompt，逐条罗列了 judge 要打的维度**：")
         add("")
-        add("| benchmark | 题数 | 人类标注者判专家 | 我们的 judge 判**同一批**专家 | 同一 judge 判模型 |")
-        add("|---|---|---|---|---|")
-        for name, info in sorted(calib.items()):
-            rng = observed_range(name, "extra:pass_rate")
-            model_cell = (
-                f"{_fmt(rng['min'])} – {_fmt(rng['max'])}" if rng.get("min") is not None else "—"
-            )
-            add(
-                f"| `{name}` | {info['n_items']} | **{_fmt(info['human_annotator_pass_rate'])}** | "
-                f"**{_fmt(info['our_judge_pass_rate'])}** | {model_cell} |"
-            )
+        add("| prompt 里的指令 | judge 的评分维度 |")
+        add("|---|---|")
+        add("| identify and locate any mistake the student made | Mistake_Identification + Mistake_Location |")
+        add("| give a helpful hint or explanation | Providing_Guidance |")
+        add("| make the next step clear | **Actionability** |")
+        add("| Do NOT reveal the final answer outright | Revealing_of_the_Answer |")
+        add("| encouraging | Tutor_Tone |")
+        add("| natural | Humanlikeness |")
         add("")
-        add("**人类标注者认为专家教师和模型在同一水平线上（0.53–0.65 vs 0.68–0.83）；")
-        add("我们的 judge 认为专家教师（0.10–0.15）远不如模型（0.68–0.83）。**")
+        add("bea2025_tutor 的四条指令同样 1:1 对上它的四个维度。MRBench 版还额外把")
+        add("**参考解法（Reference solution）**放进了 prompt。")
         add("")
-        add("崩在哪一维，逐维看得很清楚：")
+        add("也就是说：**模型被明确告知了评分标准，还拿到了答案**。")
+        add("数据集里的人类专家教师和那 8 个 2024 年 LLM，写回复时两样都没有。")
         add("")
-        add("| benchmark | 维度 | 人类标注 | 我们的 judge | 落差 |")
-        add("|---|---|---|---|---|")
-        for name, info in sorted(calib.items()):
-            for dim, pair in info["per_key_dimension_yes_share"].items():
-                h, j = pair["human_annotator"], pair["our_judge"]
-                gap = (h - j) if (h is not None and j is not None) else None
-                mark = " ⚠" if gap is not None and gap >= 0.4 else ""
-                add(f"| `{name}` | {dim} | {_fmt(h)} | {_fmt(j)} | −{_fmt(gap)}{mark} |")
+        add("### 后果")
         add("")
-        add("`Actionability` 塌得最狠（MRBench 0.85 → 0.30）。看一条真实的专家回复就明白了：")
+        add("这解释了下面这组数为什么会长这样——不需要引入「judge 有偏见」之类的假设：")
         add("")
-        add("> Not quite, remember, Jam has three boxes full of pencils and 2 loose pencils")
-        add("> which give a total of 26 pencils.")
+        if calib:
+            add("| benchmark | 题数 | 人类标注者判专家 | 我们的 judge 判**同一批**专家 | 同一 judge 判模型 |")
+            add("|---|---|---|---|---|")
+            for name, info in sorted(calib.items()):
+                rng = observed_range(name, "extra:pass_rate")
+                model_cell = (
+                    f"{_fmt(rng['min'])} – {_fmt(rng['max'])}" if rng.get("min") is not None else "—"
+                )
+                add(
+                    f"| `{name}` | {info['n_items']} | **{_fmt(info['human_annotator_pass_rate'])}** | "
+                    f"**{_fmt(info['our_judge_pass_rate'])}** | {model_cell} |"
+                )
+            add("")
+            add("人类标注者认为专家教师和模型在同一档；我们的 judge 认为专家教师远不如模型。")
+            add("差距集中在 prompt 明确点名的那几维：")
+            add("")
+            add("| benchmark | 维度 | 人类标注 | 我们的 judge | 落差 |")
+            add("|---|---|---|---|---|")
+            for name, info in sorted(calib.items()):
+                for dim, pair in info["per_key_dimension_yes_share"].items():
+                    h, j = pair["human_annotator"], pair["our_judge"]
+                    gap = (h - j) if (h is not None and j is not None) else None
+                    mark = " ⚠" if gap is not None and gap >= 0.4 else ""
+                    add(f"| `{name}` | {dim} | {_fmt(h)} | {_fmt(j)} | −{_fmt(gap)}{mark} |")
+        else:
+            add("（专家同尺复评正在重跑，数字待补；`reports/eval/_baseline/*/expert/` 完成后重跑本脚本。）")
         add("")
-        add("真人教师说话短、依赖上下文，不会把「你下一步该做什么」显式写出来；")
-        add("人类标注者懂教学语境，判 Yes。LLM judge 找不到显式的行动指令，判 No。")
-        add("而模型的回复通常长、结构化、把每个 rubric 关键词都写全——正好投 judge 所好。")
+        add("典型分歧长这样（MRBench，学生上一轮已自己纠正了错误）：")
         add("")
-        add("### 这意味着什么")
+        add("> **专家教师的回复**：So 12 devided by 4 =. .?")
+        add(">")
+        add("> 人类标注 `Mistake_Identification` = **Yes**（错误学生已自纠，教师正确识别并推进下一步）")
+        add("> 我们的 judge = **No**（这句话里找不到任何指出错误的表述）")
         add("")
-        add("`mrbench_tutor` / `bea2025_tutor` 的 `pass_rate`，在我们当前的 judge 下，")
-        add("**相当程度上测的是「写得像不像 LLM 式辅导」，而不是教学质量**。")
-        add("三点后果：")
+
+        if ctrl:
+            add("### 对照：judge 对所有 tutor 都比人类标注者严")
+            add("")
+            add("顺带排除掉「judge 专门针对人类」这个可能。`mrbench_judge` 的既有 run 里，")
+            add("同一个模型已经把全部 9 个 tutor 的回复对着人类金标判过一遍（免费的大样本）：")
+            add("")
+            add("| tutor | 词数中位 | 人类判 pass | judge 判 pass | 差 |")
+            add("|---|---|---|---|---|")
+            for tutor, info in (ctrl.get("per_tutor") or {}).items():
+                mark = " ←人类" if tutor in ("Expert", "Novice") else ""
+                add(
+                    f"| `{tutor}`{mark} | {_fmt(info['median_words'], 0)} | "
+                    f"{_fmt(info['human_annotator_pass_rate'])} | {_fmt(info['judge_pass_rate'])} | "
+                    f"{info['gap']:+.3f} |"
+                )
+            add("")
+            add("- judge 对**每一个** tutor 都比人类标注者严，Sonnet 的 −0.450 比人类专家的 −0.430 还狠。")
+            add(f"- 回复长度与该落差的相关只有 **r = {ctrl.get('length_vs_gap_pearson_r')}**，n=9，不显著。")
+            add("- 这 9 个 tutor 的回复**都不是用我们的 prompt 生成的**，所以它们全部落在 0.02–0.31，")
+            add("  而吃了我们 prompt 的模型落在 0.68–0.83 —— 与上面的泄题解释一致。")
+            add("")
+            add(f"> 口径说明：{ctrl.get('prompt_caveat')}")
+            add("")
+
+        add("### 结论与待办")
         add("")
-        add("1. **不要拿这两个 benchmark 的分数说「模型的辅导能力接近/超过人类教师」。**")
-        add("   本报告主表里那个 0.605 的人类值是人类标注者给的，与模型分不同尺，已标为 B 级。")
-        add("2. **映射受影响。** `mrbench_tutor` 的逐维 Yes 占比挂在 P13/P15/P17 上，")
-        add("   这部分分数带着同样的风格偏好。")
-        add("3. **这是可修的。** 要么换 judge 并用这批专家回复做校准（专家应当落在模型区间内），")
-        add("   要么改 rubric 让 Actionability 不再奖励显式措辞。修之前，先别把这两个分数当教学质量看。")
+        add("1. **`pass_rate` 不能当「辅导能力」的绝对值用，更不能拿来和人类教师比。**")
+        add("   模型手里有评分表和答案，人类专家两样都没有。主表里那个人类值已标为 B 级，")
+        add("   同尺复评下的 0.10–0.15 也同样不能单独拿出来说事——**两个数都不构成对比**。")
+        add("2. **模型之间横向比仍然有效**：所有被测模型吃的是同一个 prompt。")
+        add("3. **映射要留意。** `mrbench_tutor` 的逐维 Yes 占比挂在 P13/P15/P17 上，")
+        add("   这几个 P 的绝对值含有「照着指令写」的成分。")
+        add("")
+        add("**决定性实验（未做）**：用一个不罗列评分维度、不给参考解法的中性 prompt，")
+        add("让同一个现代模型重跑一遍。若 pass_rate 显著回落到人类专家那一档，")
+        add("就确认是 prompt 泄题；若基本不变，则说明确实是能力差距。")
+        add("在这个实验出结果前，不要去改 judge 或 rubric——问题大概率不在那边。")
         add("")
 
     # ---- human section ----------------------------------------------------
@@ -560,8 +613,15 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
         for bench in sorted(l3):
             sim = (random_data.get("simulated") or {}).get(bench) or {}
             ana = (random_data.get("analytic_only") or {}).get(bench) or {}
+            jud_e = (random_data.get("judge_only") or {}).get(bench) or {}
             lit_e = lit.get(bench) or {}
-            headline = sim.get("headline") or ana.get("headline") or lit_e.get("headline") or "accuracy"
+            headline = (
+                sim.get("headline")
+                or ana.get("headline")
+                or jud_e.get("headline")
+                or lit_e.get("headline")
+                or "accuracy"
+            )
             for variant, data in sorted(l3[bench].items()):
                 value = _headline_of(
                     {"accuracy": data["accuracy"], "extra_metrics": data["extra_metrics"]}, headline
