@@ -187,6 +187,38 @@ def l3_results() -> dict[str, dict[str, Any]]:
     return out
 
 
+def _l1_cell(block: dict[str, Any], variants: dict[str, Any], headline: str) -> str:
+    """The L1 cell, resolved from the baseline JSON's per-benchmark `l1` block.
+
+    Three provenances read differently and the cell says which: a simulated
+    draw prints bare, a closed form is marked 推导, and a generation task's
+    uniform draw is the measured L3 `random` gibberish. `n/a` is reserved for
+    "uniform sampling is undefined here", never for "not computed yet".
+    """
+    if not block:
+        return "—"
+    if not block.get("defined", True):
+        return "n/a"
+    source = str(block.get("source") or "")
+    value, suffix = block.get("value"), ""
+    if source == "L3:random":
+        run = (variants or {}).get("random")
+        if not run or run.get("underpowered"):
+            return "待跑"
+        value = _headline_of(
+            {"accuracy": run["accuracy"], "extra_metrics": run["extra_metrics"]}, headline
+        )
+        suffix = " (乱码实测)"
+    elif source == "analytic":
+        suffix = " (推导)"
+    if value is None:
+        return "待跑" if source == "L3:random" else "n/a"
+    cell = _fmt(value) + suffix
+    if block.get("direction") == "lower_is_better" or block.get("caveat"):
+        cell += f" ⚠{block.get('caveat') or '满分方向'}"
+    return cell
+
+
 def _fmt(value: Any, digits: int = 4) -> str:
     if value is None:
         return "—"
@@ -216,7 +248,17 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
     add("|---|---|---|")
     add("| **L1 均匀随机** | 在题目自身答案空间上均匀抽样 | 选项数固定、类别均衡的选择题 |")
     add("| **L2 平凡策略** | 与题目内容无关的最优常数策略（按先验猜 / 全选多数类 / 从不改答案 / 全部弃答） | 类别不平衡的分类题、复合指标、量表打分 |")
-    add("| **L3 退化回答** | 一段与题无关的回复交给真实 judge 打分 | judge 打分的生成类任务（均匀随机无定义） |")
+    add("| **L3 退化回答** | 一段与题无关的回复交给真实 judge 打分 | judge 打分的生成类任务 |")
+    add("")
+    add("**L1 几乎总是有定义的，只是它的形状随答案空间变。** 早先的表把 L1 一律理解成")
+    add("「名叫 `uniform_random` 的那个策略」，对三分之一的 benchmark 是错的：")
+    add("`p08_abstention` 的均匀抽样是 `coin_flip`（4.99，不是 0），成对比较任务的是随机 judge（0.5），")
+    add("生成任务的则是乱码——也就是 L3 的 `random` 变体本身。现在每个 benchmark 在")
+    add("`benchmark_baselines_v1.json` 里都带一个 `l1` 块写明它的 L1 是哪个数、怎么来的，")
+    add("主表的 L1 列直接读它，三种来源分别标注：不带后缀=模拟，`(推导)`=闭式，`(乱码实测)`=经 judge 实测。")
+    add("")
+    add("真正没有 L1 的只剩一个：`mmtutorbench_judge_calibration`——它没有公开人类金标，")
+    add("adapter 本身不产出题目，没有可抽样的答案空间。表里记 `n/a`。")
     add("")
     add("方法上没有手推公式，而是**用真实的 `adapter.score()` 和 `extra_summary()` 跑合成答案**，")
     add("这样 RFS 的部分分、macro-F1、QWK 都走的是和正式评测同一条代码路径。")
@@ -234,11 +276,12 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
     add("`人类` = 文献或数据集自带的人类参照（分级见下）；`实跑` = 已完成 run 的区间。")
     add("**同一行内所有数字都是该 benchmark headline 的原始标度**，跨行不可比。")
     add("")
-    add("空格的含义要分清（见文末「为什么有些 benchmark 没有随机分」）：")
+    add("空格的含义要分清（见文末「L1 的三种来源」）：")
     add("")
     add("- **`n/a`** = 该层在这个 benchmark 上**没有定义**，不是没算。")
-    add("- **`待跑`** = 需要 API 的 L3 还没跑到这一行。")
-    add("- **`—`** = 该层不适用（例如 judge 类任务本来就没有 L1/L2）。")
+    add("- **`待跑`** = 需要 API 的实测还没跑到这一行（L1 列出现它，说明该 benchmark 的 L1 就是 L3 的乱码变体）。")
+    add("- **`—`** = 该层不适用（judge 类任务没有 L2，规则判分类任务没有 L3）。")
+    add("- **`⚠满分方向`** = 该 headline 越低越好，这个数落在满分那一头，**不是地板**。")
     add("")
     add("| benchmark | headline | 题数 | L1 随机 | L2 平凡策略 | L3 退化 | 人类 | 实跑区间 |")
     add("|---|---|---|---|---|---|---|---|")
@@ -257,37 +300,34 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
         headline = (sim or ana or jud or {}).get("headline") or "—"
         n_items = _fmt((sim or {}).get("n_items"))
 
-        l1 = l2 = "—"
-        # A judge-scored generation task still has a knowable floor: the bottom
-        # of the rating scale. Surface it in the L1 column rather than leaving
-        # the cell blank — "random gibberish scores 1.0, not 0" is exactly the
-        # number a reader needs before subtracting a floor from a model score.
-        if jud and jud.get("scale_floor") is not None:
-            l1 = f"{_fmt(jud['scale_floor'])} (刻度下限)"
-        if sim:
-            policies = sim.get("policies") or {}
-            uniform = policies.get("uniform_random") or {}
-            # No uniform_random policy means uniform sampling is undefined for
-            # this answer space (open-ended numeric/symbolic, rule checker,
-            # composite metric) — not that the computation was skipped.
-            l1 = _fmt(uniform.get("headline_mean")) if uniform else "n/a"
-            others = {
-                k: v.get("headline_mean")
-                for k, v in policies.items()
-                if k != "uniform_random" and v.get("headline_mean") is not None
-            }
-            if others:
-                best = max(others, key=lambda k: others[k])
-                l2 = f"{_fmt(others[best])} ({best})"
-        elif ana:
-            floors = ana.get("floors") or {}
-            named = {k: v.get("value") for k, v in floors.items() if v.get("value") is not None}
-            if named:
-                best = max(named, key=lambda k: named[k])
-                l2 = f"{_fmt(named[best])} ({best})"
+        variants = l3.get(name) or {}
+        # Which number is L1 comes from the data's own `l1` block, never from
+        # whether a policy happens to be named uniform_random — that guess was
+        # wrong for a third of the set (p08_abstention's uniform draw is
+        # coin_flip; a generation task's is the L3 `random` gibberish).
+        block = (sim or {}).get("l1") or (ana or {}).get("l1") or (jud or {}).get("l1") or {}
+        l1 = _l1_cell(block, variants, headline)
+        l1_policy = block.get("source", "").split(":", 1)[-1] if block.get("source", "").startswith("simulated") else None
+
+        # L2 candidates: every simulated policy that is not the L1 draw, plus
+        # any closed-form floor. p07/p08_calibration carry both at once.
+        l2 = "—"
+        candidates: dict[str, float] = {}
+        for key, entry in ((sim or {}).get("policies") or {}).items():
+            if key != l1_policy and entry.get("headline_mean") is not None:
+                candidates[key] = entry["headline_mean"]
+        for key, info in ((ana or {}).get("floors") or {}).items():
+            # Skip the floor that *is* this benchmark's L1, and any floor that
+            # scores a different statistic than the headline.
+            if key == block.get("floor_key") or info.get("metric"):
+                continue
+            if info.get("value") is not None:
+                candidates[key] = info["value"]
+        if candidates:
+            best = max(candidates, key=lambda k: candidates[k])
+            l2 = f"{_fmt(candidates[best])} ({best})"
 
         l3cell = "待跑" if name in (random_data.get("judge_only") or {}) else "—"
-        variants = l3.get(name) or {}
         degenerate = {
             v: _headline_of(
                 {"accuracy": d["accuracy"], "extra_metrics": d["extra_metrics"]}, headline
@@ -363,6 +403,18 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
     add("**p07_selfcheck 尤其值得停下来看**：它衡量的是「自我复查能不能改对而不改坏」，")
     add("而全部模型都挤在 5.0 这条「从不改答案」的线附近。这不是分数低，是这个指标目前几乎没测出东西。")
     add("")
+    add("这三个的 **L1 和 L2 分得很开**，别把 5.0 当成随机分：")
+    add("")
+    for name in ("p07_selfcheck", "p08_calibration", "p08_abstention"):
+        sim = (random_data.get("simulated") or {}).get(name) or {}
+        block = sim.get("l1") or {}
+        if block.get("value") is None:
+            continue
+        add(f"- `{name}` — L1 均匀乱答 = **{_fmt(block['value'], 3)}**，L2 最优平凡策略 = **5.0**。{sim.get('note', '')}")
+    add("")
+    add("换句话说，一个真去瞎猜的模型在 `p07_selfcheck` 上只有 1.85 分，而一个干脆不复查的模型白拿 5.0——")
+    add("**这个指标奖励的是「别动」，不是「会查」**，实跑区间紧贴 5.0 正是这个原因。")
+    add("")
 
     add("### 2. 类别不平衡的判分任务：多数类基线远高于随机")
     add("")
@@ -395,18 +447,27 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
     # "how much of the score is free" table must cover both — otherwise the
     # pairwise-comparison tasks, whose 0.5 floor is the most consequential one in
     # the whole set, silently drop out.
-    floor_sources: list[tuple[str, str, dict[str, float]]] = []
+    # p07_selfcheck / p08_calibration have a simulated L1 *and* a closed-form L2,
+    # so accumulate per benchmark rather than appending twice — two rows for one
+    # benchmark, disagreeing on the floor, is exactly what this table must not do.
+    merged: dict[str, tuple[str, dict[str, float]]] = {}
     for name, sim in (random_data.get("simulated") or {}).items():
         pol = sim.get("policies") or {}
         vals = {k: v.get("headline_mean") for k, v in pol.items() if v.get("headline_mean") is not None}
         if vals:
-            floor_sources.append((name, sim["headline"], vals))
+            merged[name] = (sim["headline"], vals)
     for name, ana in (random_data.get("analytic_only") or {}).items():
         vals = {
-            k: v["value"] for k, v in (ana.get("floors") or {}).items() if v.get("value") is not None
+            k: v["value"]
+            for k, v in (ana.get("floors") or {}).items()
+            if v.get("value") is not None and not v.get("metric")
         }
         if vals:
-            floor_sources.append((name, ana["headline"], vals))
+            headline, prev = merged.get(name, (ana["headline"], {}))
+            merged[name] = (headline, {**prev, **vals})
+    floor_sources: list[tuple[str, str, dict[str, float]]] = [
+        (name, headline, vals) for name, (headline, vals) in merged.items()
+    ]
 
     for name, headline, vals in floor_sources:
         best = max(vals, key=lambda k: vals[k])
@@ -638,57 +699,88 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
         add("它拿到的分就是该 judge 奖励「形式」而非「实质」的部分，必须从模型分里扣掉再看差距。")
         add("")
 
-    add("## 为什么有些 benchmark 没有随机分")
+    add("## L1 的三种来源")
     add("")
-    add("主表里的空格几乎都不是「没算」，而是**均匀随机在那种题型上没有定义**。四类：")
+    add("「均匀随机能得多少分」对每个 benchmark 都成立，只是**均匀抽样抽的是什么**不一样，")
+    add("所以这个数有三种来法。主表的 L1 列按来源标注，下面逐类列全。")
     add("")
-    add("### A. judge 打分的生成题——随机的对应物是乱码，得实测")
+
+    def _by_source(kind: str) -> list[tuple[str, dict, dict]]:
+        rows = []
+        for section in ("simulated", "analytic_only", "judge_only"):
+            for nm, info in (random_data.get(section) or {}).items():
+                block = info.get("l1") or {}
+                if block.get("source") == kind and block.get("defined", True):
+                    rows.append((nm, block, info))
+        return sorted(rows)
+
+    add("### A. 模拟——答案空间可以枚举，直接抽")
     add("")
-    add("模型要写一段话，不存在「选项」可以抽。但**期望仍然是有的**：生成任务的答案空间就是")
-    add("token 序列，在它上面均匀抽样就是乱码。所以「瞎填能得几分」= 把乱码喂给真实 judge 看它给几分，")
-    add("对应 L3 的 **`random`** 变体。")
+    add("选项、标签、步号、评分档位这些都能列举，于是用真实的 `adapter.score()` 跑合成答案。")
+    add("注意抽的不总是「选项字母」：")
+    add("")
+    for nm, block, info in [r for r in _by_source("simulated:coin_flip") + _by_source("simulated:random_text")]:
+        add(f"- `{nm}` — L1 = **{_fmt(block.get('value'))}**（策略 `{block['source'].split(':')[1]}`）。{info.get('note', '')}")
+    add("")
+    add("其余模拟类的 L1 就是 `uniform_random` 策略本身，数值见主表。")
+    add("")
+
+    add("### B. 推导——均匀抽样的期望可以证明，模拟只会添噪声")
+    add("")
+    for nm, block, _ in _by_source("analytic"):
+        add(f"- `{nm}` — L1 = **{_fmt(block.get('value'))}**：{block.get('derivation', '')}")
+    add("")
+    add("这一类里 `mathtutorbench` 的四个成对比较任务最容易读错：**0.5 既是随机地板也是人类锚**，")
+    add("含义是「与专家教师打平」，低于 0.5 才说明比金标教师差。")
+    add("")
+
+    add("### C. 实测——生成任务的均匀抽样就是乱码，只能喂给真实 judge")
+    add("")
+    add("模型要写一段话，不存在「选项」可以抽，但答案空间仍然是 token 序列，")
+    add("在它上面均匀抽样就是乱码。所以这类的 L1 = L3 的 **`random`** 变体，是同一个数。")
+    add("")
+    add("两个例外不必实测，标 `(推导)`：`eduillustrate` 交付的是 Manim 代码，乱码编译不过，")
+    add("八个维度全 0；`longtutor_teaching` 的 headline 是解析成功率，乱码同样拿 1.0。")
     add("")
     add("两点要注意：")
     add("")
     add("1. **不是所有都归零。** 打分量表自带下限，乱码也拿得到。EduBench 是 1-10 量表，")
     add("   下限就是 **1.0**；拿模型的 8.0 直接当「比 0 高 8 分」会把差距高估整整一分。")
-    add("   下表的「刻度下限」列就是这个数。")
-    add("2. **有一个可能是负的。** TutorBench 的 rubric 含 −5 权重项，乱码的期望**低于 0**。")
+    add("2. **有一个理论上可以为负。** TutorBench 的 rubric 含 −5 权重项，所以刻度下限无法先验给出。")
+    add("   实测乱码是 **+2.54**——judge 并没有触发那些扣分项，乱码只是拿不到分，不是被扣分。")
     add("")
-    add("| benchmark | 刻度下限 | 说明 |")
-    add("|---|---|---|")
+    add("| benchmark | L1（乱码实测） | 刻度下限 | 说明 |")
+    add("|---|---|---|---|")
     for name, info in sorted((random_data.get("judge_only") or {}).items()):
+        block = info.get("l1") or {}
+        if not block.get("defined", True):
+            continue  # listed under D instead
         floor = info.get("scale_floor")
-        add(f"| `{name}` | {_fmt(floor) if floor is not None else '需实测'} | {info.get('reason', '')} |")
-    add("")
-    add("### B. 地板是代数推出来的，模拟没有意义")
-    add("")
-    for name, info in sorted((random_data.get("analytic_only") or {}).items()):
-        floors = info.get("floors") or {}
-        first = next((v for v in floors.values() if v.get("value") is not None), None)
-        derivation = (first or {}).get("derivation", "")
-        add(f"- `{name}` — {derivation}")
-    add("")
-    add("### C. 答案空间是开放的，「均匀」无从定义")
-    add("")
-    add("填任意实数或 LaTeX 表达式的题，在实数上均匀抽样的命中概率测度为 0。")
-    add("这类改用更严的替代策略——按数据集真实答案分布猜（`prior_random`），")
-    add("即「瞎猜的上界」；规则校验类则用一段与题无关的通用文本。")
-    add("")
-    for name, sim in sorted((random_data.get("simulated") or {}).items()):
-        policies = sim.get("policies") or {}
-        if "uniform_random" in policies:
-            continue
-        used = ", ".join(
-            f"`{k}`={_fmt(v.get('headline_mean'))}" for k, v in policies.items()
+        headline = info.get("headline") or "—"
+        # The column header already says 乱码实测; repeating it in every cell
+        # just makes the table wider.
+        measured = _l1_cell(block, l3.get(name) or {}, headline).replace(" (乱码实测)", "")
+        add(
+            f"| `{name}` | {measured} | {_fmt(floor) if floor is not None else '需实测'} "
+            f"| {info.get('reason', '')} |"
         )
-        add(f"- `{name}` — 替代策略：{used}")
-        add(f"  - {sim.get('note', '')}")
     add("")
-    add("### D. 反过来的一个")
+
+    add("### D. 唯一真的没有 L1 的")
+    add("")
+    for section in ("simulated", "analytic_only", "judge_only"):
+        for nm, info in sorted((random_data.get(section) or {}).items()):
+            block = info.get("l1") or {}
+            if not block.get("defined", True):
+                add(f"- `{nm}` — {block.get('derivation', '')}")
+    add("")
+
+    add("### E. 反过来的两个")
     add("")
     add("- `mooccube_prereq` — 唯一自带 chance correction 的 benchmark，")
     add("  随机作答的 `score_10` 已经被扣到接近 0，不存在比它更高的平凡策略，所以 L2 空着。")
+    add("- `ifeval` — **L1 高于 L2**：乱码（0.118）比一段像样的散文（0.056）更能满足")
+    add("  「全小写 / 不许出现逗号 / 字数下限」这类纯形式约束。这里最强的与题无关策略就是乱码本身。")
     add("")
 
     add("## 未覆盖 / 待办")
@@ -697,9 +789,31 @@ def build(random_data: dict, human_data: dict, l3: dict) -> str:
     if skipped:
         for name, reason in skipped.items():
             add(f"- `{name}`：{reason}")
-    add("- L3 只跑了部分 benchmark。其余 judge 打分的生成类任务见 "
-        "`data/benchmark_baselines_v1.json` → `judge_only`，用 "
-        "`scripts/run_reference_baseline.py` 逐个补。")
+    # Spell out which benchmark is missing which variant: "L3 只跑了部分" gave no
+    # way to tell a missing L1 (the `random` variant) from a missing extra angle.
+    degenerate_variants = ("random", "refusal", "echo", "generic")
+    no_l1, partial = [], []
+    for name, info in sorted((random_data.get("judge_only") or {}).items()):
+        block = info.get("l1") or {}
+        if not block.get("defined", True):
+            continue
+        have = {v for v in degenerate_variants if v in (l3.get(name) or {})}
+        # Only a benchmark whose L1 *is* the gibberish run is missing an L1 when
+        # that run is absent; the two with a derived L1 just lack the extra L3
+        # angles, which is a much smaller gap.
+        if "random" not in have and block.get("source") == "L3:random":
+            no_l1.append(name)
+        missing = [v for v in degenerate_variants if v not in have]
+        if have and missing:
+            partial.append((name, missing))
+    if no_l1:
+        add(f"- **这些 benchmark 连 L1 都还没有**（它们的 L1 就是 L3 的 `random` 变体）："
+            f"{'、'.join('`' + n + '`' for n in no_l1)}。跑 "
+            "`scripts/run_reference_baseline.py --benchmark <名> --variant random` 即可补上。")
+    for name, missing in partial:
+        add(f"- `{name}` 的退化四件套只跑了 {4 - len(missing)}/4，缺 "
+            f"{'、'.join('`' + m + '`' for m in missing)}。")
+    add("- L3 的每个变体默认只跑 40 题（`--limit`），是量级参考而非精确值。")
     add("- 本报告**不改**聚合脚本的归一化。给 P01–P20 做 chance correction 会让分数与 R25 不可比，")
     add("  那是独立决策；`benchmark_baselines_v1.json` 的字段已为此留好接口。")
     add("")

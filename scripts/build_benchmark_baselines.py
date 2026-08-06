@@ -33,6 +33,7 @@ import argparse
 import json
 import random
 import statistics
+import string
 import sys
 from collections import Counter
 from pathlib import Path
@@ -103,6 +104,7 @@ class Spec:
         trials: int | None = None,
         note: str = "",
         analytic: Callable[[list[dict]], dict] | None = None,
+        item_list: Path | None = None,
     ) -> None:
         self.headline = headline
         self.policies = policies
@@ -112,6 +114,10 @@ class Spec:
         self.trials = trials
         self.note = note
         self.analytic = analytic
+        # Benchmarks the real runs pin to a fixed item list must be simulated on
+        # that same list, or the floor answers a different question than the
+        # scores it is meant to anchor.
+        self.item_list = item_list
 
 
 # Benchmarks whose score() consumes a judge verdict rather than a parseable
@@ -136,17 +142,23 @@ JUDGE_ONLY = {
         "extra:arr_w_x100",
         None,
         "加权 rubric（critical +5 / not_critical +1 / critical_negative −5），"
-        "ARR_w 可为负，故乱码的期望**低于** 0，只能实测",
+        "ARR_w 理论上可为负，所以刻度下限无法先验给出，只能实测。"
+        "实测乱码落在 +2.54：judge 并没有触发那些 −5 的 critical_negative 项，"
+        "乱码只是拿不到分而不是被扣分",
     ),
     "k12vista": ("extra:official_score", 0.0, "逐空 0/1 由 judge 判定；其中的选择题子集会给随机作答少量命中"),
     "mrbench_tutor": ("extra:pass_rate", 0.0, "生成 + 固定 judge 打 8 维标签，pass 要求三个关键维度全 Yes"),
     "bea2025_tutor": ("extra:pass_rate", 0.0, "生成 + 固定 judge 打 4 维标签，同上"),
+    # headline 原本是 accuracy，但那是 judge 输出的解析成功率而非能力分：score() 里
+    # 四维都被 clamp 进 [1,5]，只有 judge 的 JSON 解析不出来才记 0，所以乱码同样得 1.0。
+    # 改用四维均值，与聚合管线实际取用的 judge_scores 同源。adapter 的 correct 保持
+    # 原样——audit_eval_artifacts.py 拿它当 judge 解析故障的探针，那个用法是成立的。
     "longtutor_teaching": (
-        "accuracy",
-        None,
-        "judge 打 4 维 1-5 分（刻度下限 1，归一时按 (raw−1)/4 已扣掉）。"
-        "⚠ 其 accuracy 只是「四个分数都成功解析且非 0」，实跑 0.999-1.000，"
-        "是解析成功率不是能力分，不可用于比较模型",
+        "extra:judge_scores.average",
+        1.0,
+        "judge 打 4 维 1-5 分，刻度下限 1（归一时按 (raw−1)/4 扣掉）。"
+        "⚠ 不要用它的 accuracy：那只是「四个分数都成功解析且非 0」，实跑 0.999-1.000，"
+        "1001 题里唯一那次失败是 judge 把 appropriateness 拼成了 appropriance",
     ),
     "longtutor_evidence": ("accuracy", 0.0, "judge 判语义等价 CORRECT/INCORRECT，乱码必判 INCORRECT"),
     "eduguard_adversarial": (
@@ -407,8 +419,56 @@ def p_text_empty(item: dict, rng: random.Random, ctx: dict) -> str:
     return ""
 
 
+def p_text_random(item: dict, rng: random.Random, ctx: dict) -> str:
+    """Uniform random tokens — the L1 sample for a free-text answer space.
+
+    Same recipe as ``run_reference_baseline._random_text`` so the simulated and
+    the judge-scored halves of L1 mean the same thing.
+    """
+    alphabet = string.ascii_lowercase + "  "
+    words = [
+        "".join(rng.choice(alphabet) for _ in range(rng.randint(2, 9))).strip()
+        for _ in range(rng.randint(30, 70))
+    ]
+    return " ".join(w for w in words if w)
+
+
 def p_boxed_prior(item: dict, rng: random.Random, ctx: dict) -> str:
     return "\\boxed{" + str(rng.randint(0, 100)) + "}"
+
+
+# ---- p07 / p08_calibration (delegate composites) ---------------------------
+
+# Both adapters wrap the same four exact-match delegates and their ``score()``
+# consumes a JSON envelope, so L1 is simulable: sample each delegate's own
+# answer space uniformly and pack the envelope the runner would have built.
+
+
+def _delegate_uniform(orig: dict, src: str, rng: random.Random) -> str:
+    if src == "ceval":
+        return "ABCD"[rng.randrange(4)]
+    if src == "mmlu_pro":
+        return LETTERS[rng.randrange(_mcq_k(orig))]
+    if src == "agieval":
+        return p_agieval_uniform(orig, rng, {})
+    # mtb_problem_solving: open numeric answer, uniform over the reals never
+    # lands on gold — a random integer is the closest realizable draw.
+    return str(rng.randint(0, 999))
+
+
+def p_p08_calib_uniform(item: dict, rng: random.Random, ctx: dict) -> str:
+    meta = item["meta"]
+    answer = _delegate_uniform(meta["delegate_item"], meta["source_benchmark"], rng)
+    return json.dumps({"a": answer, "c": rng.randint(0, 100)}, ensure_ascii=False)
+
+
+def p_p07_uniform(item: dict, rng: random.Random, ctx: dict) -> str:
+    meta = item["meta"]
+    src, orig = meta["source_benchmark"], meta["delegate_item"]
+    return json.dumps(
+        {"r1": _delegate_uniform(orig, src, rng), "r2": _delegate_uniform(orig, src, rng)},
+        ensure_ascii=False,
+    )
 
 
 # --------------------------------------------------------------------------
@@ -608,11 +668,18 @@ SPECS: dict[str, Spec] = {
     "ifeval": Spec(
         headline="extra:prompt_strict_accuracy",
         policies={
+            "random_text": p_text_random,
             "generic_text": p_text_generic,
             "empty": p_text_empty,
         },
         deterministic=("generic_text", "empty"),
-        note="规则校验器，无随机可言；用一段与题无关的通用文本量出「形式合格但内容无关」的地板。",
+        trials=10,
+        note=(
+            "答案空间是自由文本，其均匀抽样就是随机 token，所以 L1 是能测的。"
+            "⚠ 实测 random_text(0.118) 反而高于 generic_text(0.056)——纯形式约束"
+            "（全小写、不许出现逗号、字数下限）乱码全中，而一段像样的中文/英文散文会违反，"
+            "所以这里最强的「与题无关策略」就是乱码本身，L1 高于 L2。"
+        ),
     ),
     "p08_abstention": Spec(
         headline="extra:score_10",
@@ -636,6 +703,31 @@ SPECS: dict[str, Spec] = {
         trials=1,
         note="开放数值/符号答案，随机 ≈ 0。sympy 判定很慢，只在 300 题样本上做经验确认。",
     ),
+    # p07 / p08_calibration are composites over the same four exact-match
+    # delegates. Their *trivial-strategy* floors are closed forms (below, in
+    # ANALYTIC_ONLY), but L1 is not: sampling both rounds / the confidence
+    # uniformly is a real draw the delegates can score, and the answer it gives
+    # — 10x the delegate mix's chance level — is not the 0 you would guess.
+    "p07_selfcheck": Spec(
+        headline="extra:score_10",
+        policies={"uniform_random": p_p07_uniform},
+        item_list=ROOT / "data" / "p08_calibration" / "item_list_v1.txt",
+        note=(
+            "两轮都均匀乱答：fix_rate 与 break_rate 同时趋近 chance 与 1−chance，"
+            "score_10 收敛到 10×chance，远低于 never_change 的 5.0。"
+        ),
+    ),
+    "p08_calibration": Spec(
+        headline="extra:score_10",
+        policies={"uniform_random": p_p08_calib_uniform},
+        item_list=ROOT / "data" / "p08_calibration" / "item_list_v1.txt",
+        note=(
+            "答案与置信度都均匀随机：AUROC 回到 0.5，固定贡献 2.5 分；"
+            "CWR@90 不是 1——均匀置信度把约一成题推过 90 分线，其中仍有 chance 比例答对，"
+            "CWR 落在 0.84 左右，另一半再给约 0.8 分。合计 3.3，"
+            "既不是 0 也不到 never_high_confidence 的 5.0。"
+        ),
+    ),
 }
 
 
@@ -651,12 +743,9 @@ ANALYTIC_ONLY: dict[str, dict[str, Any]] = {
                     "一个从不修改答案的模型 fix_rate=0、break_rate=0 → 10×0.5 = 5.0"
                 ),
             },
-            "always_rewrite_randomly": {
-                "value": None,
-                "derivation": "随机改答案时 fix_rate≈chance、break_rate≈1−chance，分数远低于 5.0",
-            },
         },
         # 实跑区间由 build_baseline_report.py 从 reports/eval 现算，不在这里写死。
+        # L1（两轮都乱答）以前挂在这里且值为 None，现在改由 SPECS 实测，见上。
         "note": "⚠ 地板是 5.0/10 而不是 0，且与第一轮正确率解耦。实测所有模型都紧贴这条线。",
     },
     "p08_calibration": {
@@ -675,11 +764,18 @@ ANALYTIC_ONLY: dict[str, dict[str, Any]] = {
     },
     "sas_bench": {
         "headline": "extra:overall.qwk",
+        # Split L1 from L2 even though both are 0: they are different claims
+        # (uniform draw vs. best constant strategy) that happen to coincide,
+        # and collapsing them hides that the coincidence is what QWK guarantees.
         "floors": {
-            "random_or_constant_rating": {
+            "random_rating": {
                 "value": 0.0,
-                "derivation": "QWK/CCS/ECS 都是 chance-corrected 一致性统计量，随机与常数评分的期望都是 0",
-            }
+                "derivation": "QWK/CCS/ECS 都是 chance-corrected 一致性统计量，随机评分的期望是 0",
+            },
+            "constant_rating": {
+                "value": 0.0,
+                "derivation": "同理，恒定给同一个分数的评分者与人类的一致性也是 0",
+            },
         },
         "note": "0-100 标度，故随机基线为 0（分）。structured exact match 的 accuracy 随机 ≈ 0。",
     },
@@ -700,6 +796,9 @@ ANALYTIC_ONLY: dict[str, dict[str, Any]] = {
                 },
                 "random_judge_strict": {
                     "value": 0.25,
+                    # Scores a different statistic than the headline, so it must
+                    # never be picked as this benchmark's floor.
+                    "metric": "extra:strict_win_rate",
                     "derivation": "strict_win_rate = share(win_score > 0.5) = 1/4",
                 },
             },
@@ -726,6 +825,140 @@ ANALYTIC_ONLY: dict[str, dict[str, Any]] = {
         "note": "correct = bleu ≥ 0.5 只是粗代理，headline 看 avg_bleu；人类改述同样拿不到高 BLEU，该指标没有有意义的上限。",
     },
 }
+
+
+# --------------------------------------------------------------------------
+# which number is L1
+# --------------------------------------------------------------------------
+
+# Headlines where a *lower* score is the good direction. An L1 of 0 on one of
+# these is the ceiling, not the floor, and must never be read as "random does
+# badly here".
+LOWER_IS_BETTER = {"extra:overall.asr"}
+
+# L1 is "uniform over the item's own answer space". Which concrete number that
+# is varies by how the answer space is shaped, and reading it off the policy
+# named `uniform_random` was wrong for a third of the set: p08_abstention's
+# uniform draw is `coin_flip`, the pairwise-comparison tasks derive theirs, and
+# a generation task's uniform draw is gibberish — i.e. the L3 `random` variant.
+# This table says, per benchmark, where the L1 number comes from. Absent entries
+# default to the simulated policy `uniform_random`.
+#
+#   {"policy": name}                 -> simulated, read that policy's headline
+#   {"value": x, "derivation": ...}  -> closed form, uniform sampling has a
+#                                       provable expectation and simulating it
+#                                       would only add noise
+#   {"source": "L3:random"}          -> measured by run_reference_baseline.py;
+#                                       resolved at report time from
+#                                       reports/eval/_baseline/<b>/random/
+#   {"defined": False, ...}          -> genuinely undefined, not skipped
+_OPEN_SPACE = (
+    "答案是任意实数或 LaTeX 表达式，在其上均匀抽样命中 gold 的概率测度为 0。"
+    "prior_random（按数据集答案分布猜）是更强的替代策略，不是 L1。"
+)
+
+L1_SOURCE: dict[str, dict[str, Any]] = {
+    "p08_abstention": {"policy": "coin_flip"},
+    "ifeval": {"policy": "random_text"},
+    "olympiadbench": {"value": 0.0, "derivation": _OPEN_SPACE},
+    "mathtutorbench_problem_solving": {"value": 0.0, "derivation": _OPEN_SPACE},
+    "mathtutorbench_mistake_correction": {"value": 0.0, "derivation": _OPEN_SPACE},
+    "sas_bench": {
+        "value": 0.0,
+        "floor_key": "random_rating",
+        "derivation": "QWK/CCS/ECS 都是 chance-corrected 一致性统计量，随机评分的期望恒为 0",
+    },
+    "mathtutorbench_socratic": {
+        "value": 0.0,
+        "floor_key": "random_text",
+        "derivation": "与参考问句的 sentence-BLEU，随机文本的期望 ≈ 0",
+    },
+    **{
+        task: {
+            "value": 0.5,
+            "floor_key": "random_judge",
+            "derivation": (
+                "答案空间是「二选一」而不是自由文本：随机 judge 有一半概率选中被测回复，"
+                "位置交换两轮取平均后 win_score 期望 = 0.5"
+            ),
+        }
+        for task in (
+            "mathtutorbench_pedagogy",
+            "mathtutorbench_pedagogy_hard",
+            "mathtutorbench_scaffolding",
+            "mathtutorbench_scaffolding_hard",
+        )
+    },
+    **{
+        name: {
+            "source": "L3:random",
+            "derivation": (
+                "生成任务的答案空间是 token 序列，其均匀抽样就是乱码；"
+                "该乱码交给真实 judge 打出的分即本 benchmark 的 L1，由 L3 的 random 变体实测"
+            ),
+        }
+        for name in JUDGE_ONLY
+        if name != "mmtutorbench_judge_calibration"
+    },
+    "mmtutorbench_judge_calibration": {
+        "defined": False,
+        "derivation": "无公开人类金标，adapter 本身不产出题目，没有可抽样的答案空间",
+    },
+    # Two of the judge-scored set do not need the API run: their floor follows
+    # from what the judge is asked to emit.
+    "eduillustrate": {
+        "value": 0.0,
+        "derivation": (
+            "被测模型交付的是 Manim 代码，乱码不可能编译通过，8 个 0-5 Likert 维度全部记 0。"
+            "刻度下限与随机期望在这里重合，不必实测"
+        ),
+    },
+    "longtutor_teaching": {
+        "value": 1.0,
+        "derivation": (
+            "四维 1-5 量表的刻度下限。judge prompt 明确写 “Score from 1 to 5”，"
+            "score() 又把每维 clamp 进 [1,5]，所以乱码最低也只能落在 1.0（归一后为 0）。"
+            "实跑约 3.9。"
+            "⚠ 旧 headline 是 accuracy，那是 all(scores.values())——只有 judge 的 JSON "
+            "解析失败才记 0，乱码同样拿 1.0 满分；1001 题里唯一那次失败是 judge 把 "
+            "appropriateness 拼成了 appropriance。聚合管线取的一直是 judge_scores，未受影响"
+        ),
+    },
+}
+
+
+def _l1_block(name: str, headline: str | None, policies: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The `l1` field written next to every benchmark, whatever section it is in."""
+    spec = L1_SOURCE.get(name, {"policy": "uniform_random"})
+    block: dict[str, Any] = {"defined": spec.get("defined", True)}
+    if "policy" in spec:
+        entry = (policies or {}).get(spec["policy"]) or {}
+        block["source"] = f"simulated:{spec['policy']}"
+        block["value"] = entry.get("headline_mean")
+        if not entry:
+            block["defined"] = False
+            block["derivation"] = f"策略 {spec['policy']} 未产出（benchmark 被跳过）"
+    elif "source" in spec:
+        block["source"] = spec["source"]
+        block["value"] = None  # resolved from reports/eval/_baseline at report time
+    else:
+        block["source"] = "analytic"
+        block["value"] = spec.get("value")
+        # Names the `floors` entry this L1 came from, so the report can leave it
+        # out of the L2 candidates instead of printing one number in both columns.
+        if spec.get("floor_key"):
+            block["floor_key"] = spec["floor_key"]
+    if spec.get("derivation"):
+        block["derivation"] = spec["derivation"]
+    if headline in LOWER_IS_BETTER:
+        block["direction"] = "lower_is_better"
+        block["direction_note"] = "headline 越低越好，这个 L1 落在满分那一头，不是地板"
+    # A headline can land at the ceiling for a reason other than its direction —
+    # longtutor_teaching's accuracy is a parse-success rate, so gibberish scores
+    # 1.0 too. Same warning marker, different cause.
+    if spec.get("caveat"):
+        block["caveat"] = spec["caveat"]
+    return block
 
 
 def _sata_closed_form(items: list[dict]) -> dict:
@@ -797,6 +1030,15 @@ def _auto_trials(n_items: int) -> int:
 def run_benchmark(name: str, spec: Spec, verbose: bool = True) -> dict[str, Any]:
     adapter = get_adapter(name)
     items = adapter.load_items()
+    if spec.item_list:
+        wanted = {
+            line.strip()
+            for line in spec.item_list.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")
+        }
+        items = [it for it in items if str(it["item_id"]) in wanted]
+        if not items:
+            raise SystemExit(f"item_list {spec.item_list} 与 {name} 的题目 id 无交集")
     n_full = len(items)
     if spec.sample and n_full > spec.sample:
         rng = random.Random(SEED)
@@ -881,6 +1123,17 @@ ASSERTIONS: list[tuple[str, str, str, float, float]] = [
     ("p08_abstention", "always_abstain", "headline_mean", 5.0, 0.001),
     ("p08_abstention", "always_answer", "headline_mean", 5.0, 0.60),
     ("mooccube_prereq", "uniform_random", "headline_mean", 0.0, 0.35),
+    # p08_abstention's uniform draw is coin_flip, and this headline is constant
+    # under any content-independent strategy — that is the whole warning.
+    ("p08_abstention", "coin_flip", "headline_mean", 5.0, 0.10),
+    # AUROC of a random confidence is 0.5, worth a flat 2.5 points. The other
+    # half is 5x(1-CWR@90), and CWR is not 1: a uniform confidence puts ~10% of
+    # items over the threshold and the delegate mix's chance level (~0.16) still
+    # gets some of those right, so CWR lands near 0.84 and the term pays ~0.8.
+    # Nowhere near 0, and nowhere near the 5.0 trivial-strategy floor either.
+    ("p08_calibration", "uniform_random", "headline_mean", 3.32, 0.45),
+    # 10 x the delegate mix's chance level, not 0.
+    ("p07_selfcheck", "uniform_random", "headline_mean", 1.85, 0.60),
 ]
 
 
@@ -907,7 +1160,24 @@ def check_assertions(results: dict[str, Any], scope: set[str] | None = None) -> 
 # --------------------------------------------------------------------------
 
 
+def _pin_langdetect() -> None:
+    """Make IFEval's language checks reproducible.
+
+    The vendored official checker calls ``langdetect.detect`` unseeded, so the
+    ifeval floor drifted by ~0.0006 between otherwise identical runs — enough to
+    make this "idempotent" script rewrite its own output every time. Seeding the
+    factory costs nothing and only affects this process.
+    """
+    try:
+        import langdetect
+
+        langdetect.DetectorFactory.seed = 0
+    except ImportError:
+        pass
+
+
 def main() -> int:
+    _pin_langdetect()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--benchmark", action="append", help="只跑指定 benchmark（可重复）")
     ap.add_argument("--validate-only", action="store_true", help="跑回归断言，不写文件")
@@ -954,6 +1224,26 @@ def main() -> int:
         print(f"\n{len(ASSERTIONS) - len(failures)}/{len(ASSERTIONS)} 断言通过")
         return 1 if failures else 0
 
+    for name, entry in results.items():
+        entry["l1"] = _l1_block(name, entry.get("headline"), entry.get("policies"))
+    # p07_selfcheck / p08_calibration keep their closed-form L2 floors here but
+    # their L1 is simulated, so it lives in `simulated` — emitting a second l1
+    # block here would only give readers two places to disagree.
+    analytic = {
+        name: info if name in results else {**info, "l1": _l1_block(name, info.get("headline"))}
+        for name, info in ANALYTIC_ONLY.items()
+    }
+    judge = {
+        name: {
+            "headline": headline,
+            "scale_floor": scale_floor,
+            "reason": reason,
+            "floor": "requires_degenerate_run",
+            "l1": _l1_block(name, headline),
+        }
+        for name, (headline, scale_floor, reason) in JUDGE_ONLY.items()
+    }
+
     payload = {
         "version": "v1",
         "generated_by": "scripts/build_benchmark_baselines.py",
@@ -964,20 +1254,18 @@ def main() -> int:
                 "L2_trivial_strategy": "与题目内容无关的最优常数策略（prior_random / majority_constant / always_* ）",
                 "L3_degenerate_reply": "退化生成交给真实 judge 打分，见 scripts/run_degenerate_baseline.py",
             },
+            "l1_field": (
+                "每个 benchmark 都带一个 l1 块，说明它的 L1 是哪个数、怎么来的："
+                "source=simulated:<policy> 直接读该策略；source=analytic 是闭式；"
+                "source=L3:random 由 reports/eval/_baseline/<b>/random/ 实测，写报告时解析；"
+                "defined=false 才是真的没有定义。别再靠 policy 名叫不叫 uniform_random 来判断。"
+            ),
             "headline": "'accuracy' 或 'extra:<dotted path into summary.json 的 extra_metrics>'",
             "warning": "L1 对约一半 benchmark 不是真正的地板，读 L2 与 note 字段。",
         },
         "simulated": results,
-        "analytic_only": ANALYTIC_ONLY,
-        "judge_only": {
-            name: {
-                "headline": headline,
-                "scale_floor": scale_floor,
-                "reason": reason,
-                "floor": "requires_degenerate_run",
-            }
-            for name, (headline, scale_floor, reason) in JUDGE_ONLY.items()
-        },
+        "analytic_only": analytic,
+        "judge_only": judge,
         "skipped": skipped,
         "assertion_failures": failures,
     }
