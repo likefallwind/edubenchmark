@@ -14,6 +14,11 @@ The website consumes a flatter, lookup-friendly shape than the explorer page:
     groupScore  dict "<model_key>|<group>"  -> float
     abilityRank dict "<p_code>"             -> models ranked desc
     benchmarks  profile prose + the per-model leaderboard already joined in
+    floor       the L1 (all-random) floor, per ability / benchmark / cell
+
+The floor block is the one thing here that does not come from the explorer: it
+is rebuilt by calling `build_l1_floor_profile` (same aggregation chain, no API
+calls, ~40 ms) so it can never drift from `data/benchmark_baselines_v1.json`.
 
 Usage:
     python scripts/build_site_payload.py [--out ../agenticeducontinnum/data/agentic.json]
@@ -34,15 +39,21 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 EXPLORER = ROOT / "scripts" / "build_atomic_ability_explorer.py"
+FLOOR = ROOT / "scripts" / "build_l1_floor_profile.py"
+BASELINES = ROOT / "data" / "benchmark_baselines_v1.json"
 DEFAULT_OUT = ROOT.parent / "agenticeducontinnum" / "data" / "agentic.json"
 
 
-def load_explorer():
-    """Import the explorer module by path (its filename is not importable)."""
-    spec = importlib.util.spec_from_file_location("_explorer", EXPLORER)
+def load_script(path: Path, name: str):
+    """Import a build script by path (their filenames are not importable)."""
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def load_explorer():
+    return load_script(EXPLORER, "_explorer")
 
 
 def cell_weights(evidence: list[dict[str, Any]]) -> dict[tuple[str, str, str, str], dict[str, Any]]:
@@ -60,6 +71,79 @@ def cell_weights(evidence: list[dict[str, Any]]) -> dict[tuple[str, str, str, st
             {"rel": row["rel"], "conf": row["conf"], "eff": row["eff"]},
         )
     return out
+
+
+def build_floor() -> dict[str, Any]:
+    """The L1 floor — what a model that answers everything at random scores.
+
+    Three levels, because the site quotes a score at three levels: per ability
+    (the floor under a P score), per benchmark (the floor under a benchmark
+    leaderboard) and per cell (the floor under one subdimension, which is where
+    the number actually comes from). The benchmark figure is the same
+    effective-weight-weighted mean of evidence rows the real leaderboard uses,
+    so a floor and a model score on the same page are computed identically and
+    can be read against each other.
+
+    This is *not* a chance correction: nothing subtracts the floor from a
+    published score. It ships alongside so a reader can see how much of a score
+    was free.
+    """
+    floor = load_script(FLOOR, "_l1_floor")
+    baselines = json.loads(BASELINES.read_text(encoding="utf-8"))
+    cells, problems = floor.floor_cells(baselines)
+    if not cells:
+        raise SystemExit(f"floor: no cells computed from {BASELINES}")
+    evidence, p_rows, _groups, _untested = floor.agg.score_atomic_p(cells)
+    # score_atomic_p also emits R26 capability-gap rows for the real panel
+    # models; only the synthetic floor model belongs here.
+    evidence = [r for r in evidence if r["model_key"] == floor.FLOOR_MODEL]
+    p_rows = [r for r in p_rows if r["model_key"] == floor.FLOOR_MODEL]
+
+    by_bench: dict[str, list[dict[str, Any]]] = collections.defaultdict(list)
+    for row in evidence:
+        by_bench[row["benchmark_id"]].append(row)
+
+    per_p = {
+        row["p_code"]: round(row["score_10"], 4)
+        for row in p_rows
+        if row["score_10"] is not None
+    }
+    return {
+        "p": per_p,
+        # Comparable to a model's `overall`, which is the same plain mean over
+        # the same abilities - a full-panel model covers exactly these.
+        "overall": round(statistics.fmean(per_p.values()), 4),
+        "bench": {
+            bench: round(
+                sum(r["score_10"] * r["effective_weight"] for r in rows)
+                / sum(r["effective_weight"] for r in rows),
+                4,
+            )
+            for bench, rows in by_bench.items()
+        },
+        # `v` is the metric's own raw value (an accuracy, a share, a QWK), kept
+        # because "chance = 0.25" explains a 2.5 far better than the 2.5 does.
+        # `src` says how it was obtained: simulated:<policy> | L3:random | analytic.
+        "cell": {
+            f'{c["benchmark_id"]}|{c["subdimension"]}': {
+                "s": round(c["score_10"], 4),
+                "v": c["raw_value"],
+                "src": c["l1_source"],
+            }
+            for c in cells
+        },
+        "meta": {
+            "layer": "L1",
+            "n_cells": len(cells),
+            "n_benchmarks": len(by_bench),
+            "source": "data/benchmark_baselines_v1.json",
+            "report": "reports/atomic_ability_l1_floor/04_l1_floor_report.md",
+            # Benchmarks whose L1 is undefined or unbuildable: they carry no
+            # floor entry, and the site has to render that as unknown rather
+            # than as zero.
+            "undefined": problems,
+        },
+    }
 
 
 def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
@@ -248,6 +332,7 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
         "abilityRank": ability_rank,
         "benchmarks": benchmarks,
         "panel": source["panel"],
+        "floor": build_floor(),
     }
 
 
@@ -276,6 +361,13 @@ def main() -> None:
         f"/{meta['n_abilities_total']} abilities · {meta['n_benchmarks']} benchmarks "
         f"· {meta['n_evidence']} evidence rows"
     )
+    floor = payload["floor"]
+    print(
+        f"  L1 floor: {len(floor['p'])} abilities · {floor['meta']['n_benchmarks']} benchmarks "
+        f"· {floor['meta']['n_cells']} cells"
+    )
+    for problem in floor["meta"]["undefined"]:
+        print(f"  ! floor: {problem}")
 
 
 if __name__ == "__main__":

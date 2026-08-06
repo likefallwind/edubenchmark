@@ -28,6 +28,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
+FLOOR_DIR = ROOT / "reports" / "atomic_ability_l1_floor"
 EXPLORER = ROOT / "scripts" / "build_atomic_ability_explorer.py"
 TOL = 1e-6
 
@@ -224,6 +225,78 @@ def validate(payload: dict[str, Any]) -> Checker:
         c.true(f"abilityRank/{p_code}: not sorted", order == sorted(order, reverse=True))
     for p_code in payload["meta"]["uncovered_p"]:
         c.eq(f"abilityRank/{p_code}: should be empty", len(payload["abilityRank"][p_code]), 0)
+
+    # --- L1 floor re-derived from the floor artifacts ---------------------
+    # `build_site_payload` recomputes the floor from the baseline JSON; this
+    # side reads the committed `reports/atomic_ability_l1_floor/*.jsonl`
+    # instead, so the two only agree when the report has been regenerated
+    # against the same baselines. A mismatch here means: rerun
+    # `scripts/build_l1_floor_profile.py`.
+    floor = payload.get("floor")
+    c.true("floor: missing from payload", isinstance(floor, dict))
+    if isinstance(floor, dict):
+        floor_cells = load_jsonl(FLOOR_DIR / "01_l1_floor_cells.jsonl")
+        floor_evidence = load_jsonl(FLOOR_DIR / "02_l1_floor_evidence.jsonl")
+        floor_p = load_jsonl(FLOOR_DIR / "03_l1_floor_p_scores.jsonl")
+
+        c.eq("floor/p/count", len(floor["p"]), len([r for r in floor_p if r["score_10"] is not None]))
+        for row in floor_p:
+            if row["score_10"] is None:
+                continue
+            c.eq(f"floor/p/{row['p_code']}", floor["p"].get(row["p_code"]), round(row["score_10"], 4))
+
+        c.eq(
+            "floor/overall",
+            floor["overall"],
+            round(
+                statistics.fmean(
+                    round(r["score_10"], 4) for r in floor_p if r["score_10"] is not None
+                ),
+                4,
+            ),
+        )
+
+        c.eq("floor/cell/count", len(floor["cell"]), len(floor_cells))
+        for row in floor_cells:
+            key = f"{row['benchmark_id']}|{row['subdimension']}"
+            entry = floor["cell"].get(key)
+            if entry is None:
+                c.errors.append(f"floor/cell/{key}: missing")
+                continue
+            c.eq(f"floor/cell/{key}/s", entry["s"], round(row["score_10"], 4))
+            c.eq(f"floor/cell/{key}/v", entry["v"], row["raw_value"])
+            c.eq(f"floor/cell/{key}/src", entry["src"], row["l1_source"])
+
+        # Benchmark floors use the same weighted mean as the real leaderboards -
+        # the two numbers sit on the same bar on screen, so they must be built
+        # the same way.
+        floor_by_bench = collections.defaultdict(list)
+        for row in floor_evidence:
+            floor_by_bench[row["benchmark_id"]].append(row)
+        c.eq("floor/bench/count", len(floor["bench"]), len(floor_by_bench))
+        for bench, rows in floor_by_bench.items():
+            want = sum(r["score_10"] * r["effective_weight"] for r in rows) / sum(
+                r["effective_weight"] for r in rows
+            )
+            c.eq(f"floor/bench/{bench}", floor["bench"].get(bench), round(want, 4))
+
+        # Referential closure: a floor may be missing (an undefined L1), but it
+        # must never name an ability, benchmark or cell the site does not have.
+        site_cells = {
+            (cell["b"], cell["sd"])
+            for ability in payload["abilities"]
+            for facet in ability["facets"]
+            for cell in facet["cells"]
+        }
+        for p_code in floor["p"]:
+            c.true(f"floor/p/{p_code}: unknown ability", p_code in p_codes)
+        for bench in floor["bench"]:
+            c.true(f"floor/bench/{bench}: unknown benchmark", bench in bench_id_set)
+        for key in floor["cell"]:
+            bench, _, sub = key.partition("|")
+            c.true(f"floor/cell/{key}: not a scored cell", (bench, sub) in site_cells)
+        c.eq("floor/meta/n_cells", floor["meta"]["n_cells"], len(floor["cell"]))
+        c.eq("floor/meta/n_benchmarks", floor["meta"]["n_benchmarks"], len(floor["bench"]))
 
     # --- meta counts ------------------------------------------------------
     meta = payload["meta"]
