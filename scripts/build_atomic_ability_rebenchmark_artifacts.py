@@ -88,6 +88,13 @@ MODEL_CAPABILITIES: dict[str, dict[str, bool | None]] = {
     "doubao-seed-2-0-pro": {"vision": True},
     "doubao-seed-2-0-lite": {"vision": True},
     "kimi-k2-6": {"vision": True},
+    # 2026-08-10 实测自建 vLLM 部署（记忆 vllm-selfhosted-qwen35-4b）：架构是
+    # Qwen3_5ForConditionalGeneration，带 vision_config，vLLM 启动日志确认视觉塔已加载
+    # （MMEncoderAttention + 16384 token 编码器缓存）。两张自造数字图 7492/3185 都读对，
+    # mathvista 走 harness 三题全部 status=ok 且 prompt_tokens 随图大小变化。
+    "qwen-qwen3-5-4b": {"vision": True},
+    # Qwen3-8B 是纯文本模型：SiliconFlow 喂图直接返回 code 20041 The model is not a VLM。
+    "qwen-qwen3-8b": {"vision": False},
 }
 
 # 格子对模型能力的硬性要求。键可以是 benchmark_id，也可以是

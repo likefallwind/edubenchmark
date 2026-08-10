@@ -6,7 +6,7 @@ between backends — base URL, the env var holding the API key, and the chat pat
 — so a caller only has to name a model (``--model doubao-seed-2.0-pro``) and the
 right endpoint is selected automatically.
 
-Six providers ship today:
+Seven providers ship today:
 
 * ``minimax``  — the original MiniMax endpoint (``MINIMAX_API_KEY``); also the
   home of the default extractor model ``MiniMax-M2.7``.
@@ -28,9 +28,12 @@ Six providers ship today:
   and it is that model's **default** route: the official API has retired V3.2 and
   the gateway 404s it. Other ``deepseek-*`` models still go to the gateway.
 * ``silicon`` — SiliconFlow (``https://api.siliconflow.cn/v1``, key env
-  ``SILICON_API``) at ``/chat/completions``; home of the ``Qwen/*`` models and the
-  default route for that prefix. Registered for ``Qwen/Qwen3.5-4B`` and
-  ``Qwen/Qwen3-8B``; both are thinking-by-default and listed as reasoning models.
+  ``SILICON_API``) at ``/chat/completions``; default route for the ``Qwen/``
+  prefix. Registered for ``Qwen/Qwen3-8B`` only — ``Qwen/Qwen3.5-4B`` moved to
+  the self-hosted ``vllm`` provider (see below).
+* ``vllm``    — a self-hosted vLLM OpenAI-compatible server, **no auth**. Serves
+  ``Qwen/Qwen3.5-4B`` and is that model's route (a longer prefix than
+  ``qwen/``, so it beats silicon).
 
 Model names are matched by prefix (``resolve_provider``); unknown models fall
 back to the gateway, and every field can be overridden explicitly by the caller
@@ -63,6 +66,12 @@ class Provider:
     # its catalogue is not pinned down. When set, ``build_client`` rejects other
     # models up front instead of letting a typo become a 404 mid-run.
     models: frozenset[str] | None = None
+    # False for backends that accept unauthenticated requests (a self-hosted
+    # vLLM started without ``--api-key``). ``build_client`` then tolerates an
+    # unset key env instead of raising, and sends a placeholder bearer token —
+    # such servers ignore the header entirely. Setting the env var still works
+    # and takes precedence, so turning auth on later needs no code change.
+    api_key_required: bool = True
 
     def resolved_base_url(self) -> str:
         if self.base_url_env:
@@ -157,14 +166,20 @@ ZGC = Provider(
 # completions, so the same MiniMaxClient drives it; the base URL already carries
 # ``/v1``, so the chat path is ``/chat/completions``.
 #
-# Registered for the two Qwen models in use (verified present in ``/v1/models``
-# and answered a smoke-test call on 2026-07-28). Both run with thinking enabled by
-# default and return the chain of thought in ``reasoning_content`` with only the
-# answer in ``content`` — Qwen3-8B spent 7,300 of 7,309 completion tokens on
-# reasoning for "8347*2916", so they are in ``_REASONING_MODEL_PREFIXES`` and must
-# never be capped. Expect minutes of wall clock even on trivial prompts; keep
-# concurrency modest and rely on the client's streaming stall timeout rather than
-# raising the total budget.
+# Registered for ``Qwen/Qwen3-8B`` (verified present in ``/v1/models`` and
+# answered a smoke-test call on 2026-07-28). It runs with thinking enabled by
+# default and returns the chain of thought in ``reasoning_content`` with only the
+# answer in ``content`` — it spent 7,300 of 7,309 completion tokens on reasoning
+# for "8347*2916", so it is in ``_REASONING_MODEL_PREFIXES`` and must never be
+# capped. Expect minutes of wall clock even on trivial prompts; keep concurrency
+# modest and rely on the client's streaming stall timeout rather than raising the
+# total budget.
+#
+# ``Qwen/Qwen3.5-4B`` used to be registered here too. It was moved to the
+# self-hosted ``VLLM`` provider on 2026-08-10 by decision — that model is served
+# only from our own deployment from now on. The two backends are **not**
+# interchangeable for that model (different CoT surface, different context
+# window); see the VLLM comment.
 #
 # To evaluate another model here (e.g. ``Qwen/Qwen3.5-27B``), add it to ``models``
 # below, and add its lowercase id to ``_REASONING_MODEL_PREFIXES`` if it thinks.
@@ -174,11 +189,81 @@ SILICON = Provider(
     base_url_env="SILICON_BASE_URL",
     api_key_env="SILICON_API",
     chat_path="/chat/completions",
-    models=frozenset({"Qwen/Qwen3.5-4B", "Qwen/Qwen3-8B"}),
+    models=frozenset({"Qwen/Qwen3-8B"}),
+)
+
+# Self-hosted vLLM OpenAI-compatible server (probed 2026-08-10), the sole route
+# for ``Qwen/Qwen3.5-4B``. Started by ``start_vllm_server.sh`` on the GPU box as
+# ``vllm serve <local snapshot> --host 0.0.0.0 --port 8000 --served-model-name
+# Qwen/Qwen3.5-4B --max-model-len 4096``.
+#
+# **Reaching it.** The public endpoint below works directly — no tunnel needed.
+# It did not at first: vLLM was started on container port 8000 while the platform
+# (a k8s pod; the public IP is NAT in front of it) maps public 63550 to container
+# port **3631**, so the public port answered with a RST. Proven by parking a
+# throwaway ``http.server`` on 3631 and watching ``:63550`` serve its file, then
+# fixed by pointing ``--port`` at 3631 in ``start_vllm_server.sh``. The mapping
+# lives outside the container and cannot be changed from inside, so **the server
+# must listen on 3631** — starting it anywhere else silently loses public access.
+# Do not be misled by the host's public 8000: that is a *different* container
+# running an sglang video model.
+#
+# ``scripts/vllm_tunnel.sh`` (SSH local forward to the container) remains as a
+# fallback for when the public route is down; point ``VLLM_BASE_URL`` at it.
+#
+# **Concurrency: use ``--concurrency 64``** (decided 2026-08-10 from the sweep in
+# ``scripts/bench_vllm_concurrency.py``; A100-80GB, ``--max-num-seqs 128``). Output
+# throughput scales 959 -> 1796 -> 3025 -> 4618 -> 5512 -> 5587 tok/s at 8 / 16 /
+# 32 / 64 / 96 / 128 concurrent, i.e. marginal gain falls to 1.17x for 48->64,
+# 1.19x for 64->96 and **1.01x for 96->128**. The plateau is GPU compute
+# saturation, not the ``max-num-seqs`` ceiling: per-stream speed falls 120 -> 57
+# tok/s exactly mirroring it, ``Waiting`` stayed 0 throughout, and TTFT rose
+# smoothly (0.16 -> 1.23s p95) instead of stepping the way queueing would. 64 is
+# the knee; above 96 is waste. Drop to 32 if anyone is using the service
+# interactively at the same time — per-stream speed there is still ~80% of solo.
+#
+# **No auth**: the server is started without ``--api-key``, so ``api_key_required``
+# is False and a placeholder bearer token is sent. Set ``VLLM_API_KEY`` if auth is
+# ever turned on.
+#
+# **Server-side history.** The first deployment ran with ``--max-model-len 4096``
+# and no ``--reasoning-parser``, which made 27% of a 30-item mmlu_pro sample
+# truncate mid-think (every one of them stopped at exactly 4,096 total tokens) and
+# put the raw ``<think>...</think>`` block in ``content``. Both were fixed
+# server-side on 2026-08-10: the window is now **65536** and ``--reasoning-parser
+# qwen3`` splits the trace out. Re-verified after the fix — 0 truncations, no
+# ``<think>`` in ``content``, completion length now reaching 5,453 tokens where the
+# old ceiling clipped it at 3,963. Runs made before that fix are not usable.
+#
+# Thinking is on by default and needs no request param. The trace arrives in the
+# bare ``reasoning`` field rather than ``reasoning_content``; ``minimax_client``
+# reads both, so nothing to do.
+#
+# A third defect, ``<|im_end|>`` leaking into ``content`` (every reply ended
+# ``...The answer is (H)<|im_end|>``), was fixed the same day. The model snapshot
+# had been downloaded incompletely — **``tokenizer_config.json``,
+# ``chat_template.jinja``, ``vocab.json`` and ``merges.txt`` were all absent**, so
+# vLLM had no ``eos_token`` declaration and fell back to ``config.json``'s
+# ``eos_token_id: 248044`` (``<|endoftext|>``) while the token that actually ends a
+# chat turn is ``<|im_end|>``. The missing chat template is also why one had to be
+# hand-written. Note Qwen3.5-4B genuinely ships **no** ``generation_config.json``
+# upstream, and its odd ``model.safetensors-0000N-of-00002`` filenames are upstream
+# too — neither is a symptom. Fixed by fetching the four files at the pinned
+# revision and dropping ``--chat-template`` from the start script so the official
+# template loads (it defaults thinking on and, unlike the hand-written one, keeps
+# reasoning history across turns).
+VLLM = Provider(
+    name="vllm",
+    base_url="http://115.190.90.101:63550/v1",
+    base_url_env="VLLM_BASE_URL",
+    api_key_env="VLLM_API_KEY",
+    chat_path="/chat/completions",
+    models=frozenset({"Qwen/Qwen3.5-4B"}),
+    api_key_required=False,
 )
 
 PROVIDERS: dict[str, Provider] = {
-    p.name: p for p in (MINIMAX, GATEWAY, DEEPSEEK, LIGHTER, ZGC, SILICON)
+    p.name: p for p in (MINIMAX, GATEWAY, DEEPSEEK, LIGHTER, ZGC, SILICON, VLLM)
 }
 
 # Model-name prefixes -> provider name. Longest match wins, so the specific
@@ -201,6 +286,9 @@ _PREFIX_PROVIDER: list[tuple[str, str]] = [
     # keeps this from swallowing a bare ``qwen-...`` name should another relay ever
     # serve one; the gateway lists no qwen model today (checked 2026-07-28).
     ("qwen/", "silicon"),
+    # Longer than ``qwen/``, so longest-match sends this one model to our own
+    # vLLM box while every other ``Qwen/*`` id still goes to SiliconFlow.
+    ("qwen/qwen3.5-4b", "vllm"),
 ]
 
 # Provider used when no prefix matches a given model name.
@@ -257,12 +345,16 @@ def resolve_model_params(model: str, provider: str | None = None) -> dict:
 # ``reasoning_content`` and put only the bare answer in ``content``. Capping it
 # would starve the answer exactly the way it starves MiniMax-M3. The plain
 # ``deepseek-v3.2`` is *not* listed: it reasons inline in ``content`` instead.
-# The SiliconFlow Qwen models are the third case: SiliconFlow leaves
-# ``enable_thinking`` on by default for them, so both put their chain of thought in
-# ``reasoning_content`` and return only the answer in ``content`` (verified
-# 2026-07-28 — Qwen/Qwen3-8B billed 7,300 of 7,309 completion tokens as reasoning
-# on "8347*2916", Qwen/Qwen3.5-4B 4,715 total for the same prompt). Capping them
-# would starve the answer exactly as it does MiniMax-M3.
+# The Qwen models are the third case. ``Qwen/Qwen3-8B`` on SiliconFlow has
+# ``enable_thinking`` on by default and puts its chain of thought in
+# ``reasoning_content``, returning only the answer in ``content`` (verified
+# 2026-07-28 — 7,300 of 7,309 completion tokens billed as reasoning on
+# "8347*2916"). ``Qwen/Qwen3.5-4B`` on our own vLLM box thinks just as hard but
+# emits the trace **inline in ``content``** as ``<think>...</think>``, because that
+# server runs without ``--reasoning-parser`` (verified 2026-08-10: 3,806 completion
+# tokens on the same prompt, answer only after ``</think>``). Either way the
+# visible answer arrives last, so capping would truncate it exactly as it does
+# MiniMax-M3 — and on the 4B the 4,096-token window is already the binding limit.
 _REASONING_MODEL_PREFIXES: tuple[str, ...] = (
     "minimax-m3",
     "deepseek-v3.2-think",
@@ -357,10 +449,15 @@ def build_client(
     key_env = api_key_env or prov.api_key_env
     api_key = os.environ.get(key_env)
     if not api_key:
-        raise RuntimeError(
-            f"environment variable {key_env} is not set "
-            f"(needed for model {model!r} via provider {prov.name!r})"
-        )
+        # Providers that declare ``api_key_required=False`` (self-hosted vLLM
+        # started without ``--api-key``) accept anything in the Authorization
+        # header, so a missing env var is not an error there.
+        if prov.api_key_required:
+            raise RuntimeError(
+                f"environment variable {key_env} is not set "
+                f"(needed for model {model!r} via provider {prov.name!r})"
+            )
+        api_key = "EMPTY"
     params = (
         resolve_model_params(model, prov.name) if extra_params is None else extra_params
     )
