@@ -7,6 +7,12 @@
 #   MODEL=doubao-seed-2.0-pro ./scripts/run_eval.sh ...                # 换被测模型
 #   EXTRACTOR_MODEL=MiniMax-M2.7 ./scripts/run_eval.sh ...             # 换答案抽取模型(全局，与被测无关)
 #   JUDGE_MODEL=glm-5.1 ./scripts/run_eval.sh eduguard_adversarial     # 换对抗 LLM-as-judge(与被测无关)
+# 并发与阶段(被测模型和抽取/裁判往往打不同的后端,配额天差地别,所以两个旋钮分开):
+#   CONCURRENCY=64 EXTRACT_CONCURRENCY=4 ./scripts/run_eval.sh ...     # 被测 64 路,抽取/裁判 4 路
+#   PHASE=predict CONCURRENCY=64 ./scripts/run_eval.sh ...             # 只出预测,不抽取不判分
+#   PHASE=score EXTRACT_CONCURRENCY=4 ./scripts/run_eval.sh ...        # 复用已有预测,只抽取+判分
+#   两者可同时开两个后台任务:predict 在前面全速跑,score 跟在后面吃已完成的预测,
+#   这样被测模型不必等第三方配额。断点续跑安全:两个阶段的产物都按 item_id 去重。
 # MathTutorBench (C4 过程评分/反馈质量, eth-lre/mathtutorbench): 先物化数据(一次性)
 #     python scripts/eval/data/fetch_eval_datasets.py --benchmark mathtutorbench
 #   闭式任务(无 judge,官方判分): mathtutorbench_{problem_solving,socratic,solution_correctness,mistake_location,mistake_correction}
@@ -94,6 +100,23 @@ fi
 
 LIMIT="${LIMIT:-0}"
 CONCURRENCY="${CONCURRENCY:-4}"       # 被测模型调用并发数
+# 抽取/裁判阶段的并发。默认回落到 CONCURRENCY(保持历史行为不变)。
+# 单独调低它,是因为抽取和裁判往往打的是配额受限的第三方(MiniMax 共享 Token Plan
+# 一般只扛得住个位数并发),而被测模型可能跑在自建机器上、并发可以开到几十。
+# 这两件事本来就是 eval_benchmark.py 的两个独立参数,历史上只是被本脚本焊死成了一个。
+#   CONCURRENCY=64 EXTRACT_CONCURRENCY=4 ./scripts/run_eval.sh ...
+EXTRACT_CONCURRENCY="${EXTRACT_CONCURRENCY:-$CONCURRENCY}"
+# 阶段开关。三个阶段本来就是串行且可断点续跑的(predictions.jsonl / extractions.jsonl
+# 都按 item_id 去重),拆开跑可以让 GPU 不必等第三方配额:
+#   PHASE=predict  只出预测(--skip-extract),被测模型全速跑完所有 benchmark
+#   PHASE=score    复用已有预测,只做抽取+裁判+判分(--score-only),慢慢磨
+#   PHASE 不设     维持历史行为:一个 benchmark 内部三阶段一路跑完
+# 典型用法是开两个后台任务,predict 在前面跑、score 跟在后面吃已完成的预测。
+PHASE="${PHASE:-}"
+case "$PHASE" in
+  ""|predict|score) ;;
+  *) echo "[run_eval] PHASE 只能是 predict / score / 空,收到:$PHASE" >&2; exit 2 ;;
+esac
 MODEL="${MODEL:-MiniMax-M3}"                       # 被测模型
 EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M2.7}" # 答案抽取模型(全局；便宜即可，与被测模型无关)
 JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/MathTutorBench/MRBench/BEA2025/MMTutorBench;与被测/抽取模型解耦)
@@ -153,6 +176,22 @@ run_eval_py() {
     args+=(--out-dir "$out")
     [[ -n "${DRY_RUN:-}" ]] && args+=(--dry-run)
   fi
+  # 阶段开关:在唯一出口注入,覆盖全部 benchmark,不必逐个分支改。
+  # olympiadbench 那个分支自己就传了 --skip-extract / --score-only(它本来就是两段式,
+  # 判分要切 uv 环境),所以这里先查重,已经有的就不再追加。
+  # 效果是 olympiadbench 实际豁免于 PHASE,两趟都照跑——这是可以接受的:它的判分是本地
+  # sympy 符号比对(AutoScoringJudge),不调任何 LLM、不吃配额,放在哪个阶段都无所谓。
+  if [[ -n "$PHASE" ]]; then
+    local has_phase_flag=""
+    local a
+    for a in ${args[@]+"${args[@]}"}; do
+      [[ "$a" == "--skip-extract" || "$a" == "--score-only" ]] && has_phase_flag=1 && break
+    done
+    if [[ -z "$has_phase_flag" ]]; then
+      [[ "$PHASE" == "predict" ]] && args+=(--skip-extract)
+      [[ "$PHASE" == "score" ]] && args+=(--score-only)
+    fi
+  fi
   ${RUN_PREFIX[@]+"${RUN_PREFIX[@]}"} python scripts/eval_benchmark.py ${args[@]+"${args[@]}"}
 }
 
@@ -179,7 +218,7 @@ for b in $BENCHMARKS; do
       # 两阶段 LLM-as-judge (每阶段 BoN=3 投票)。judge 经 EDUGUARD_JUDGE_MODEL 固定、与被测/抽取模型解耦。
       EDUGUARD_JUDGE_MODEL="$JUDGE_MODEL" \
       run_eval_py eduguard_adversarial --benchmark eduguard_adversarial --model "$MODEL" \
-        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     eduguard_sata)
       # 规则评分，默认中英双语都跑 (--language en|zh|both)
@@ -190,28 +229,28 @@ for b in $BENCHMARKS; do
       # 裁判经 MATHTUTORBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦，替代官方需 GPU 的 1.5B 偏好奖励模型。
       MATHTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
       run_eval_py "$b" --benchmark "$b" --model "$MODEL" \
-        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     mrbench_tutor)
       # Step 2 生成+裁判打分：被测模型生成 tutor 回复，固定裁判逐 8 维打标。
       # 裁判经 MRBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦；每条 item 裁判扇出 8 个维度，故抬高抽取并发。
       MRBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
       run_eval_py mrbench_tutor --benchmark mrbench_tutor --model "$MODEL" \
-        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     bea2025_tutor)
       # Step 2 生成+裁判打分：被测模型生成 tutor 回复，固定裁判逐 4 个 BEA 维度打标。
       # extractor 与 judge 保持独立；judge 由 BEA2025_JUDGE_MODEL 的专用 client 调用。
       BEA2025_JUDGE_MODEL="$JUDGE_MODEL" \
       run_eval_py bea2025_tutor --benchmark bea2025_tutor --model "$MODEL" \
-        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     mmtutorbench)
       # 多图输入(previous images + current image)生成 tutoring 回复；固定 rubric judge 打 6 个 0/1 维度。
       # extractor 与 judge 保持独立；judge 由 MMTUTORBENCH_JUDGE_MODEL 的专用 client 调用。
       MMTUTORBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
       run_eval_py mmtutorbench --benchmark mmtutorbench --model "$MODEL" \
-        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     edubench)
       # 与已导入的 3,797 题结果保持相同题单和默认裁判。extractor-model 直接设为
@@ -219,7 +258,7 @@ for b in $BENCHMARKS; do
       EDUBENCH_JUDGE_MODEL="${EDUBENCH_JUDGE_MODEL:-deepseek-v3.2}" \
       run_eval_py edubench --benchmark edubench --model "$MODEL" \
         --extractor-model "${EDUBENCH_JUDGE_MODEL:-deepseek-v3.2}" \
-        --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     p08_abstention)
       # P08 能力性弃答：UMWP 不可答/可答混合，规则判分（无裁判、抽取不调用 LLM）。
@@ -243,7 +282,7 @@ for b in $BENCHMARKS; do
       # （默认跟随 EXTRACTOR_MODEL），与被测模型解耦；被测模型必须是视觉模型。
       K12VISTA_JUDGE_MODEL="${K12VISTA_JUDGE_MODEL:-$JUDGE_MODEL}" \
       run_eval_py k12vista --benchmark k12vista --model "$MODEL" \
-        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" --limit "$LIMIT"
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     mooccube_prereq)
       # MOOCCube 先修关系推理（P19 路径规划的知识结构基础）；100% 规则判分，无裁判、无抽取模型。
@@ -261,11 +300,16 @@ for b in $BENCHMARKS; do
       #   MODEL=MiniMax-M3 ./scripts/run_eval.sh p07_selfcheck
       ITEM_LIST="${ITEM_LIST:-data/p08_calibration/item_list_v1.txt}"
       P07_EXTRACTOR_MODEL="${P07_EXTRACTOR_MODEL:-$MODEL}"
+      # p07 的 extract 阶段不消耗第三方配额,所以它跟随 CONCURRENCY 而非 EXTRACT_CONCURRENCY:
+      # 第二轮自查调的是被测模型(P07_EXTRACTOR_MODEL 默认就是 $MODEL),答案抽取则全靠各
+      # delegate 的正则——四个 delegate 里 agieval/ceval/mtb_problem_solving 根本不调 LLM,
+      # 只有 mmlu_pro 有兜底,而实测五个历史跑分两轮合计的兜底触发率是 0%。
+      P07_EXTRACT_CONCURRENCY="${P07_EXTRACT_CONCURRENCY:-$CONCURRENCY}"
       # 第二轮复查发生在 extract 阶段，所以 --extract-concurrency 必须跟着给：
       # 它默认是 1，漏传的话第二轮会单线程爬（550 题要跑一整天）。
       run_eval_py p07_selfcheck --benchmark p07_selfcheck --model "$MODEL" \
         --extractor-model "$P07_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" \
-        --extract-concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
+        --extract-concurrency "$P07_EXTRACT_CONCURRENCY" --item-list "$ITEM_LIST"
       ;;
     p08_calibration)
       # P08 置信校准：跑固定难度分层 item_list（非 --limit；先用 build_p08_item_list.py 生成）。
@@ -281,7 +325,7 @@ for b in $BENCHMARKS; do
     longtutor_evidence|longtutor_teaching)
       run_eval_py "$b" --benchmark "$b" --limit "$LIMIT" \
         --model "$MODEL" --extractor-model "$JUDGE_MODEL" \
-        --concurrency "$CONCURRENCY" --extract-concurrency "$CONCURRENCY" ${COMMON_ARGS[@]+"${COMMON_ARGS[@]}"}
+        --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" ${COMMON_ARGS[@]+"${COMMON_ARGS[@]}"}
       ;;
     longtutor_diagnosis)
       run_eval_py "$b" --benchmark "$b" --limit "$LIMIT" \
