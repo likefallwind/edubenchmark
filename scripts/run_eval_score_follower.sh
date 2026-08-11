@@ -23,6 +23,20 @@ SLUG="$(python3 -c "import sys;sys.path.insert(0,'scripts');from eval.providers 
 echo "[follower] model=$MODEL slug=$SLUG 待处理: $*"
 
 # 预测可能分片(predictions.jsonl / predictions.part2.jsonl ...),要全部计入。
+#
+# 目录并不总是 reports/eval/<benchmark>/<slug>:edubench 会按裁判分目录,预测落在
+# reports/eval/edubench/_judge-deepseek-v3.2/<slug>/。只认默认目录会永远数到 0,
+# 一直等到 MAX_WAIT_HOURS 超时,把后面所有 benchmark 的判分全堵住。
+# 所以默认目录没有预测时,回落到 _judge-*/<slug>/ 找。
+predictions_dir() {
+  local b="$1" d="reports/eval/$b/$SLUG" c
+  compgen -G "$d/predictions*.jsonl" >/dev/null && { echo "$d"; return; }
+  for c in "reports/eval/$b"/_judge-*/"$SLUG"; do
+    compgen -G "$c/predictions*.jsonl" >/dev/null && { echo "$c"; return; }
+  done
+  echo "$d"
+}
+
 count_predictions() {
   local dir="$1" total=0 f
   for f in "$dir"/predictions*.jsonl; do
@@ -32,10 +46,10 @@ count_predictions() {
 }
 
 for b in "$@"; do
-  dir="reports/eval/$b/$SLUG"
   echo "[follower] === $b: 等待预测就绪 ==="
   stable=0; last=-1; waited=0; ready=0
   while (( waited < MAX_WAIT_HOURS * 3600 )); do
+    dir="$(predictions_dir "$b")"   # 每轮重解析:目录要等预测开跑才出现
     n=$(count_predictions "$dir")
     if (( n > 0 && n == last )); then
       stable=$(( stable + 1 ))
