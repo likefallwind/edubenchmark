@@ -44,8 +44,10 @@
 #     LIMIT=20 MODEL=MiniMax-M3 ./scripts/run_eval.sh mmtutorbench_judge_calibration
 # EduBench (3,797 个可比英文 prompt；12 维 0-10 连续分，非 accuracy):
 #     LIMIT=5 MODEL=<model> ./scripts/run_eval.sh edubench
-#   默认沿用已有 11 个模型的 deepseek-v3.2 裁判；替换裁判会自动隔离输出目录：
-#     EDUBENCH_JUDGE_MODEL=MiniMax-M3 LIMIT=5 MODEL=<model> ./scripts/run_eval.sh edubench
+#   默认裁判 MiniMax-M3，落在 reports/eval/edubench/<model>/；换裁判会自动隔离目录。
+#   已导入的 11 个模型用的是 deepseek-v3.2(在 _judge-deepseek-v3.2/)，跟默认跑法不可比；
+#   ZGC 中转 2026-08-11 起会 200 返回被污染的内容，恢复后才可用这条复现：
+#     EDUBENCH_JUDGE_MODEL=deepseek-v3.2 LIMIT=5 MODEL=<model> ./scripts/run_eval.sh edubench
 # Pedagogy Benchmark (教师资格考试的教学法知识 MCQ, AI-for-Education/pedagogy-benchmark): 先物化数据(一次性)
 #     python scripts/eval/data/fetch_eval_datasets.py --benchmark pedagogy_benchmark
 #   数据集是 gated: 先在 HF 数据集页接受条款,并 export HF_TOKEN=<read token>
@@ -253,11 +255,11 @@ for b in $BENCHMARKS; do
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     edubench)
-      # 与已导入的 3,797 题结果保持相同题单和默认裁判。extractor-model 直接设为
-      # judge，确保裁判 token usage 被通用 runner 正确记录。
-      EDUBENCH_JUDGE_MODEL="${EDUBENCH_JUDGE_MODEL:-deepseek-v3.2}" \
+      # 与已导入的 3,797 题结果保持相同题单；裁判默认值跟 adapter 走(现为 MiniMax-M3)。
+      # extractor-model 直接设为 judge，确保裁判 token usage 被通用 runner 正确记录。
+      EDUBENCH_JUDGE_MODEL="${EDUBENCH_JUDGE_MODEL:-MiniMax-M3}" \
       run_eval_py edubench --benchmark edubench --model "$MODEL" \
-        --extractor-model "${EDUBENCH_JUDGE_MODEL:-deepseek-v3.2}" \
+        --extractor-model "${EDUBENCH_JUDGE_MODEL:-MiniMax-M3}" \
         --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     p08_abstention)

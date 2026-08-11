@@ -35,11 +35,20 @@ from ..providers import (
 
 
 HOMEPAGE = "https://github.com/ybai-nlp/EduBench"
-# The 11 imported runs were all judged by deepseek-v3.2 (via the ZGC relay), and a
+# The 11 imported runs were all judged by deepseek-v3.2 through the ZGC relay, and a
 # judge swap changes most dimension scores (see scripts/run_edubench_judge_swap.py),
-# so the judge is pinned here to stay comparable with them. This default is local to
-# the EduBench adapter; every other benchmark keeps its own DEFAULT_JUDGE_MODEL.
-DEFAULT_JUDGE_MODEL = "deepseek-v3.2"
+# so that judge used to be the default here to stay comparable with them.
+#
+# It stopped being usable on 2026-08-11: the relay returns HTTP 200 with random
+# tokens spliced into the JSON it was asked to emit — `"instruction_following": 打卡`
+# / `Photon` / `корегт` — and asking it to echo `{"a": 3, "b": 7, "c": 5}` comes back
+# as `{"a": 3, "b":与合作方取得联系"}`. Short replies are unaffected, so a one-line
+# health probe does not reveal it. New runs therefore judge with MiniMax-M3 and land
+# in reports/eval/edubench/<model>/, which is what CLAUDE.md already documents as the
+# standard layout. Their scores are NOT comparable with the imported
+# _judge-deepseek-v3.2/ set; set EDUBENCH_JUDGE_MODEL=deepseek-v3.2 to reproduce
+# those once the relay recovers (verify with a long-output echo probe first).
+DEFAULT_JUDGE_MODEL = "MiniMax-M3"
 JUDGE_MODEL_ENV = "EDUBENCH_JUDGE_MODEL"
 
 # Judging is greedy so a rerun reproduces its own scores; the imported runs were
