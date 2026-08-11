@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_tutor</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 2 生成 tutor 回复 + LLM-as-judge 打分</h1>
+    <p class="muted">基准 mrbench_tutor · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">74.5%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">149</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  
+  <section><h2>基准介绍</h2><p>MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 glm-5.2，最佳单裁判；与 --extractor-model/被测模型解耦，避免 self-judging 偏置），逐维度判定 prompt 为 v2（仅 Providing_Guidance 带 Stage-3 验证过的进化标签准则，其余维度与 v1 一致；标签归一同 Step 1）。</p><p>报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c0</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Elliott took half of his steps on his school journey, which was 10,000 steps / 2 = 5,000 steps.
+Adding this to his short walk means he has taken 5,000 + 1,000 = 6,000 steps.
+He only has 2,000 steps left, which means that during the day, he has taken 10,000 goal steps – 2,000 remaining steps = 8,000 steps.
+The difference between these is therefore the steps he took during his jog, which was 8,000 total steps – 6,000 steps on his school walks and short walks = 2,000 steps.
+ 2000
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div><div class='card'><div class='card-head'><span class='pid'>#c1</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+There are a total of 26 - 2 = 24 pencils in the three boxes.
+Thus, each box can contain 24 / 3 = 8 pencils.
+Together, Jam and Meg have 26 + 46 = 72 pencils.
+Therefore, they need 72 / 8 = 9 boxes to put in all their pencils.
+ 9
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jam has three boxes full of pencils and 2 loose pencils which give a total of 26 pencils. If her sister, Meg, has 46 pencils, how many boxes do Jam and Meg need to store all their pencils? 
+ Student: Jam has 26 - 2 = 24 pencils in her boxes.
+Together, Jam and Meg have 24 + 46 = 70 pencils.
+Each box holds 24 pencils, so they need 70/24 = 2.92 boxes.
+Since they can&#x27;t have a fraction of a box, they need to round up to the nearest whole number of boxes.
+Therefore, they need 3 boxes to store all their pencils.
+ 3 
+ Tutor: can you walk me through your solution? 
+ Student: Sure! I started by figuring out how many pencils Jam had in her boxes. She had 3 boxes with 26 pencils in total but 2 of those were loose so I subtracted 2 from 26 to get 24. Then I added the 24 pencils that Jam had to the 46 pencils that Meg had to get a total of 70 pencils. Since each box holds 24 pencils I divided 70 by 24 to get 2.92. Since you can&#x27;t have a fraction of a box I rounded up to the nearest whole number which was 3. So Jam and Meg need 3 boxes to store all their pencils. 
+ Tutor: That number seems too low.. How would we work out how many pencils can be stored in a box? 
+ Student: To work out how many pencils can be stored in a box we need to divide the total number of pencils (70) by the number of boxes (3). So 70 divided by 3 is equal to 24. That means each box can store 24 pencils.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;judge_model&quot;: &quot;MiniMax-M3&quot;,
+  &quot;judge_protocol&quot;: &quot;fixed LLM-as-judge, per-dimension single label (8 dimensions)&quot;,
+  &quot;headline_metric&quot;: &quot;pedagogical pass rate = all of (&#x27;Mistake_Identification&#x27;, &#x27;Providing_Guidance&#x27;, &#x27;Actionability&#x27;) == &#x27;Yes&#x27;&quot;,
+  &quot;n&quot;: 200,
+  &quot;n_unparseable_key_dim&quot;: 0,
+  &quot;pass_rate&quot;: 0.745,
+  &quot;per_dimension_distribution&quot;: {
+    &quot;Mistake_Identification&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 187,
+        &quot;share&quot;: 0.935
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 8,
+        &quot;share&quot;: 0.04
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 5,
+        &quot;share&quot;: 0.025
+      }
+    },
+    &quot;Mistake_Location&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 144,
+        &quot;share&quot;: 0.72
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 42,
+        &quot;share&quot;: 0.21
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 14,
+        &quot;share&quot;: 0.07
+      }
+    },
+    &quot;Revealing_of_the_Answer&quot;: {
+      &quot;No&quot;: {
+        &quot;count&quot;: 138,
+        &quot;share&quot;: 0.69
+      },
+      &quot;Yes (and the answer is correct)&quot;: {
+        &quot;count&quot;: 60,
+        &quot;share&quot;: 0.3
+      },
+      &quot;Yes (but the answer is incorrect)&quot;: {
+        &quot;count&quot;: 2,
+        &quot;share&quot;: 0.01
+      }
+    },
+    &quot;Providing_Guidance&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 179,
+        &quot;share&quot;: 0.895
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 19,
+        &quot;share&quot;: 0.095
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 2,
+        &quot;share&quot;: 0.01
+      }
+    },
+    &quot;Actionability&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 171,
+        &quot;share&quot;: 0.855
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 29,
+        &quot;share&quot;: 0.145
+      }
+    },
+    &quot;Coherence&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 190,
+        &quot;share&quot;: 0.95
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 8,
+        &quot;share&quot;: 0.04
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 2,
+        &quot;share&quot;: 0.01
+      }
+    },
+    &quot;Tutor_Tone&quot;: {
+      &quot;Encouraging&quot;: {
+        &quot;count&quot;: 133,
+        &quot;share&quot;: 0.665
+      },
+      &quot;Neutral&quot;: {
+        &quot;count&quot;: 67,
+        &quot;share&quot;: 0.335
+      }
+    },
+    &quot;humanlikeness&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 177,
+        &quot;share&quot;: 0.885
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 23,
+        &quot;share&quot;: 0.115
+      }
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>200</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>55</td><td>39</td><td>0.709</td><td><div class='bar'><i style='width:71%'></i></div></td></tr><tr><td>MathDial</td><td>145</td><td>110</td><td>0.759</td><td><div class='bar'><i style='width:76%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>2.4B.Addition and Subtraction Within 100</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2.8A.2- and 3-Dimensional Shapes</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>2.9A.Length Problems (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>2.9A.Measuring Length</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.1G.Shapes and Area</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.2B.Multiples of Ten</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.3E.Bar Graphs</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4A.Two-Step Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4B.Rounding Whole Numbers (Review) - 2</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.5D.Unknown Numbers in Division</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.6B.Quadrilaterals (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.1A.Converting Units of Measure (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.1G.Prime and Composite Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.2A.Place Value</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.2C.Multiplicative Comparisons</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>4.3E.Comparing Whole Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.3E.Dividing Using Equations</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Addition and Subtraction Word Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.4A.Subtracting Multi-Digit Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4G.Dividing with Remainders</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.5A.Geometric Lines</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.6D.Classifying 2D Figures</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>4.7A.Measuring Angles</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 2</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>5.1A.Multiplying Whole Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.2A.Place Value</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.2C.Rounding Decimal Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>5.3C.Estimate Solutions to Division Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3C.Multi-Digit Division with Two-Digit Divisors (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3L.Word Problems with Fractions (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.4A.Simple Expressions</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.4E.Simple Expression</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>5.4H.Volume of Composite Rectangular Prisms (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Line Plots with Fractions (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Metric Conversions and Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions Word Problems (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.4F.Applying Ratios: Speed</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.8B.Areas of Triangles</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.8D.Areas by Decomposition</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Not Available</td><td>145</td><td>110</td><td>0.759</td><td><div class='bar'><i style='width:76%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c3</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+There are a total of 26 - 2 = 24 pencils in the three boxes.
+Thus, each box can contain 24 / 3 = 8 pencils.
+Together, Jam and Meg have 26 + 46 = 72 pencils.
+Therefore, they need 72 / 8 = 9 boxes to put in all their pencils.
+ 9
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jam has three boxes full of pencils and 2 loose pencils which give a total of 26 pencils. If her sister, Meg, has 46 pencils, how many boxes do Jam and Meg need to store all their pencils? 
+ Student: Jam has 26 - 2 = 24 pencils in her boxes.
+Together, Jam and Meg have 24 + 46 = 70 pencils.
+Each box holds 24 pencils, so they need 70/24 = 2.92 boxes.
+Since they can&#x27;t have a fraction of a box, they need to round up to the nearest whole number of boxes.
+Therefore, they need 3 boxes to store all their pencils.
+ 3 
+ Tutor: How many pencils are there total? 
+ Student: There are 70 pencils total.
+ Tutor: Don&#x27;t forget the loose pencils. 
+ Student: Oh, right. There are 70 pencils total, including the 2 loose pencils. 
+ Tutor: How many pencils does Meg have? 
+ Student: Meg has 46 pencils.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;Yes (and the answer is correct)&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;To some extent&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Meg has 46 pencils, which is correct! However, we need to add all 26 of Jam&#x27;s pencils for the total. Also, since 24 pencils are distributed among 3 boxes, let&#x27;s figure out the capacity of one box first.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c5</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.6D.Classifying 2D Figures</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: A quadrilateral is a shape with four sides. 
+ Tutor: Since both drawings are quadrilaterals, they both have four sides and four angles. 
+ Tutor: What is a rectangle? 
+ Student: done
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;To some extent&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>It looks like you&#x27;ve marked that as done without describing the shape. Could you tell me what specific feature, like its angles, makes it unique compared to other quadrilaterals? We want to confirm your understanding before moving on.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c9</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: Do you understand that step?
+ Tutor: Next, we have to multiply 6 and 26. 
+ Tutor: What is the product of 26 and 6? 
+ Student: 4
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>It looks like that answer is a bit too small! Let&#x27;s work through the numbers step by step, starting with the ones digit. What is 6 times 6 equal to?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c10</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.4G.Dividing with Remainders</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: Consider the first digit in the given number. 
+ Tutor: How many times 4 go in 6?
+ Tutor: Have you learned multiplication tables? 
+ Student: 6
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Wait, since 4 multiplied by 6 is 24, that is larger than 6, so the answer isn&#x27;t 6. We need to find a number in the multiplication table where 4 goes into 6. How many 4s can actually fit inside 6?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c13</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Jolyn is 2 + 5 = 7 months older than Aivo.
+Since Leon is 2 months older than Aivo, then Jolyn is 7 - 2 = 5 months older than Leon.
+ 5
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Four classmates were comparing their ages based on their birth month. They found out that Jolyn is 2 months older than Therese while Therese is 5 months older than Aivo. Then, Leon is 2 months older than Aivo. How much older in months is Jolyn than Leon? 
+ Student: We can start by creating a diagram to visualize the relationships between the classmates&#x27; ages:
+
+Aivo --(5 months)--&gt; Therese --(2 months)--&gt; Jolyn
+|
+(2 months)
+|
+Leon
+
+From the diagram, we can see that Jolyn is 2 + 5 = 7 months older than Aivo, and Leon is 2 months older than Aivo. Therefore, Jolyn is 7 + 2 = 9 months older than Leon.
+ 9 
+ Tutor: Can you talk me through your solution? 
+ Student: Sure. I started by creating a diagram to visualize the relationships between the classmates&#x27; ages. Aivo is 5 months older than Therese and Therese is 2 months older than Jolyn. Leon is 2 months older than Aivo. So Jolyn is 7 months older than Aivo and 2 months older than Leon which means she is 9 months older than Leon.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;Yes (and the answer is correct)&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;To some extent&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>You did a great job visualizing the relationships! However, since Leon is also older than Aivo, he is connected to the same starting point as Jolyn. Instead of adding their distances, you should subtract Leon&#x27;s offset from Jolyn&#x27;s to find the total difference. Think about using subtraction to correct your result of 9.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c16</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+She got 5 gift cards because 50 / 10 = 5
+She got 15 thank you cards because 5 / (1/3) = 15
+She has 50 students because 15 / .3 = 50
+ 50
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Ms. Jones got thank you cards from 30% of her class. 1/3 of these contained a gift card for $10. If she got $50 in gift cards, how many Students were in her class?
+ Student: Let x be the total number of Students in Ms. Jones&#x27; class.
+30% of the class is 0.3x.
+So, she got thank you cards from 0.3x Students.
+1/3 of these cards contained a $10 gift card, so the total amount of money she received is (0.3x)(1/3)($10) = $50.
+Simplifying the equation, we get:
+0.1x = $50
+Dividing both sides by 0.1, we get:
+x = 500
+Therefore, there were 500 Students in Ms. Jones&#x27; class.
+ 500 
+ Tutor: can you tell me how you got your answer? 
+ Student: Sure I used the equation 0.1x = $50 and then divided both sides by 0.1 to get x = 500. So I concluded that there were 500 Students in Ms. Jones&#x27; class.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;To some extent&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;To some extent&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>You correctly calculated the proportion of students, but you dropped the multiplication by $10 when simplifying your equation. Just remember to multiply 0.1 by 10 to account for the value of each gift card, which changes the main number for x. Update your equation with this full value and solve again!</pre></details></div></section>
+</main>
+</body>
+</html>
