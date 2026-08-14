@@ -57,6 +57,8 @@ For runner or prompt changes, run a small sample first and write outputs to `rep
 
 Commit history uses short imperative summaries such as `Add ...`, `Update ...`, `Remove ...`, and `Refactor ...`. Keep commits scoped to one research artifact or script change. Pull requests should list changed reports/data, commands run, regenerated files, and known limitations such as proxy substitutions, judge-required tasks, or missing multimodal assets.
 
+**Enable the repo hooks once per clone:** `git config core.hooksPath .githooks`. `core.hooksPath` is local config and does not travel with a clone, so this is opt-in per checkout. `.githooks/pre-commit` refuses to commit any file over 95 MB — GitHub hard-rejects blobs over 100 MB, and once one is in a commit the push fails even after a later commit shrinks the file, since push uploads every object in the history being sent. Recovering from that always means rewriting history. The usual source is `git add -A` sweeping in an eval run that is still in flight; wait for the run to finish or pack it by hand with `python3 scripts/eval/predictions_io.py <run_dir>`. Bypass with `git commit --no-verify` when you mean it.
+
 ## Security & Configuration Tips
 
 Use environment variables for credentials such as `MINIMAX_API_KEY`. Treat Kaggle, Hugging Face gated datasets, Google Drive links, and manual-access resources as external dependencies; document access state in manifests instead of embedding private files.
