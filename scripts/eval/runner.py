@@ -285,8 +285,8 @@ def run_predictions(
                     status = "error" if row.get("error") else ("empty" if row.get("empty_response") else "ok")
                     detail = _reason(row.get("error")) if status == "error" else ""
                     print(f"predict {completed}/{len(pending)} item={row['item_id']} status={status}{detail}")
-    # Re-pack authoritatively: the hot loop appends to a single base file, which
-    # may exceed GitHub's 100 MB limit; write_predictions splits it into shards
+    # Re-pack authoritatively: the hot loop rolls shards as it appends, so each
+    # one already fits GitHub's 100 MB limit; write_predictions evens them out
     # and consolidates any shards left by a prior finalized run.
     write_predictions(out_path, rows)
     return _index_by_item(rows)
