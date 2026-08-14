@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_tutor</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 2 生成 tutor 回复 + LLM-as-judge 打分</h1>
+    <p class="muted">基准 mrbench_tutor · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">90.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">20</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">20</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">18</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  
+  <section><h2>基准介绍</h2><p>MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 glm-5.2，最佳单裁判；与 --extractor-model/被测模型解耦，避免 self-judging 偏置），逐维度判定 prompt 为 v2（仅 Providing_Guidance 带 Stage-3 验证过的进化标签准则，其余维度与 v1 一致；标签归一同 Step 1）。</p><p>报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c0</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Elliott took half of his steps on his school journey, which was 10,000 steps / 2 = 5,000 steps.
+Adding this to his short walk means he has taken 5,000 + 1,000 = 6,000 steps.
+He only has 2,000 steps left, which means that during the day, he has taken 10,000 goal steps – 2,000 remaining steps = 8,000 steps.
+The difference between these is therefore the steps he took during his jog, which was 8,000 total steps – 6,000 steps on his school walks and short walks = 2,000 steps.
+ 2000
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div><div class='card'><div class='card-head'><span class='pid'>#c1</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+There are a total of 26 - 2 = 24 pencils in the three boxes.
+Thus, each box can contain 24 / 3 = 8 pencils.
+Together, Jam and Meg have 26 + 46 = 72 pencils.
+Therefore, they need 72 / 8 = 9 boxes to put in all their pencils.
+ 9
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jam has three boxes full of pencils and 2 loose pencils which give a total of 26 pencils. If her sister, Meg, has 46 pencils, how many boxes do Jam and Meg need to store all their pencils? 
+ Student: Jam has 26 - 2 = 24 pencils in her boxes.
+Together, Jam and Meg have 24 + 46 = 70 pencils.
+Each box holds 24 pencils, so they need 70/24 = 2.92 boxes.
+Since they can&#x27;t have a fraction of a box, they need to round up to the nearest whole number of boxes.
+Therefore, they need 3 boxes to store all their pencils.
+ 3 
+ Tutor: can you walk me through your solution? 
+ Student: Sure! I started by figuring out how many pencils Jam had in her boxes. She had 3 boxes with 26 pencils in total but 2 of those were loose so I subtracted 2 from 26 to get 24. Then I added the 24 pencils that Jam had to the 46 pencils that Meg had to get a total of 70 pencils. Since each box holds 24 pencils I divided 70 by 24 to get 2.92. Since you can&#x27;t have a fraction of a box I rounded up to the nearest whole number which was 3. So Jam and Meg need 3 boxes to store all their pencils. 
+ Tutor: That number seems too low.. How would we work out how many pencils can be stored in a box? 
+ Student: To work out how many pencils can be stored in a box we need to divide the total number of pencils (70) by the number of boxes (3). So 70 divided by 3 is equal to 24. That means each box can store 24 pencils.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;,
+  &quot;judge_protocol&quot;: &quot;fixed LLM-as-judge, per-dimension single label (8 dimensions)&quot;,
+  &quot;headline_metric&quot;: &quot;pedagogical pass rate = all of (&#x27;Mistake_Identification&#x27;, &#x27;Providing_Guidance&#x27;, &#x27;Actionability&#x27;) == &#x27;Yes&#x27;&quot;,
+  &quot;n&quot;: 20,
+  &quot;n_unparseable_key_dim&quot;: 0,
+  &quot;pass_rate&quot;: 0.9,
+  &quot;per_dimension_distribution&quot;: {
+    &quot;Mistake_Identification&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 19,
+        &quot;share&quot;: 0.95
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.05
+      }
+    },
+    &quot;Mistake_Location&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 16,
+        &quot;share&quot;: 0.8
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.15
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.05
+      }
+    },
+    &quot;Revealing_of_the_Answer&quot;: {
+      &quot;No&quot;: {
+        &quot;count&quot;: 20,
+        &quot;share&quot;: 1.0
+      }
+    },
+    &quot;Providing_Guidance&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 19,
+        &quot;share&quot;: 0.95
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.05
+      }
+    },
+    &quot;Actionability&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 20,
+        &quot;share&quot;: 1.0
+      }
+    },
+    &quot;Coherence&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 19,
+        &quot;share&quot;: 0.95
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.05
+      }
+    },
+    &quot;Tutor_Tone&quot;: {
+      &quot;Encouraging&quot;: {
+        &quot;count&quot;: 20,
+        &quot;share&quot;: 1.0
+      }
+    },
+    &quot;humanlikeness&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 20,
+        &quot;share&quot;: 1.0
+      }
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>20</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>9</td><td>9</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>MathDial</td><td>11</td><td>9</td><td>0.818</td><td><div class='bar'><i style='width:82%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>4.1G.Prime and Composite Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4G.Dividing with Remainders</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.5A.Geometric Lines</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.6D.Classifying 2D Figures</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.4E.Simple Expression</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Metric Conversions and Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Not Available</td><td>11</td><td>9</td><td>0.818</td><td><div class='bar'><i style='width:82%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（2 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c4</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+She got 5 gift cards because 50 / 10 = 5
+She got 15 thank you cards because 5 / (1/3) = 15
+She has 50 students because 15 / .3 = 50
+ 50
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Ms. Jones got thank you cards from 30% of her class. 1/3 of these contained a gift card for $10. If she got $50 in gift cards, how many Students were in her class?
+ Student: Let x be the total number of Students in Ms. Jones&#x27; class.
+30% of the class is 0.3x.
+So, she got thank you cards from 0.3x Students.
+1/3 of these cards contained a $10 gift card, so the total amount of money she received is (0.3x)(1/3)($10) = $50.
+Simplifying the equation, we get:
+0.1x = $50
+Dividing both sides by 0.1, we get:
+x = 500
+Therefore, there were 500 Students in Ms. Jones&#x27; class.
+ 500 
+ Tutor: can you tell me how you got your answer? 
+ Student: Sure I used the equation 0.1x = $50 and then divided both sides by 0.1 to get x = 500. So I concluded that there were 500 Students in Ms. Jones&#x27; class. 
+ Tutor: Let&#x27;s try a different strategy to answer.  If Ms Jones got $50 in gift cards and these were in $10 increments how many gift cards did she get? 
+ Student: She got 5 gift cards since $50 divided by $10 is equal to 5.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;No&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great work getting that right! Those 5 gift cards are 1/3 of all the thank you cards Ms. Jones received, so can you find how many total thank you cards she got?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c12</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+He made $150 selling the cards because 100 + 50 = 150
+He sold 100 cards because 150 / 1.5 = 100
+The cards he sold were 2/3 of his collection because 1 - (1/3) = 2/3
+He started with 150 cards because 100 / (2/3) = 150
+ 150
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Kenny is selling his Pokemon cards to buy a ticket to an amusement park, which costs $100. He has a collection of cards and plans to sell them for $1.5 each. He keeps 1/3 of them and gets to go to the amusement park with $50 in spending cash. How many cards did he start with? 
+ Student: Let x be the total number of cards Kenny started with.
+He kept 1/3 of them, so he sold 2/3 of them, which is 2/3x.
+He sold them for $1.5 each, so he earned 1.5(2/3x) = 3x/2 dollars.
+He wants to end up with $50 spending cash, so he needs to earn $100 + $50 = $150 in total.
+Therefore, 3x/2 = $150.
+Solving for x, we get x = 100.
+Kenny started with 100 cards.
+ 100 
+ Tutor: can you explain your working?
+ Student: Sure. I started by letting x be the total number of cards Kenny started with. Then I realized that he kept 1/3 of them so he sold 2/3 of them which is 2/3x. Since he sold them for $1.5 each he earned 1.5(2/3x) = 3x/2 dollars. I then realized that he wanted to end up with $50 spending cash so he needed to earn $100 + $50 = $150 in total. Therefore 3x/2 = $150. From there I solved for x and got x = 100. This meant that Kenny started with 100 cards. 
+ Tutor: OK I think there is an easier approach. How much money did he make in total? 
+ Student: He made 3x/2 dollars in total. 
+ Tutor: He made $150 because $100 + $50 = $150 
+ Student: Yes that&#x27;s right. So 3x/2 = $150 and solving for x we get x = 100. This means that Kenny started with 100 cards.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great job confirming total earnings are $150! Let&#x27;s double-check your calculation of 1.5 times (2/3)x—remember 1.5 equals 3/2, so try multiplying those two fractions first to simplify. What do you get when you do that?</pre></details></div></section>
+</main>
+</body>
+</html>

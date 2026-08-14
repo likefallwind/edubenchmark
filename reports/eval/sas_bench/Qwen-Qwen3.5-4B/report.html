@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · sas_bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · SAS-Bench · 高考短答案整体、分步与错因评分</h1>
+    <p class="muted">基准 sas_bench · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">8.9%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">4109</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">4100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">366</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  
+  <section><h2>基准介绍</h2><p>SAS-Bench 包含 9 学科、12 个学科×题型子任务、1,030 道高考题和 4,109 条专家标注作答。被测模型扮演阅卷评分器，输入题目、参考答案、解析、评分细则、学生逐步作答和允许的错因类型，输出总分、逐步得分和逐步错因。</p><p>官方原生指标是 QWK（整体总分一致性）、CCS（整体+步骤联合一致性）和 ECS（按低/中/高作答质量分层的错因分布一致性）。三项均先在每个子任务上计算，再对已有子任务做不加权宏平均；它们是群体一致性统计量，不是逐题 accuracy。</p><p class='muted'>主页：<a href='https://github.com/PKU-DAIR/SAS-Bench'>https://github.com/PKU-DAIR/SAS-Bench</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_0</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+为了解这个问题，我们需要先根据重力对小球的影响来解题。
+首先，小球 $\mathrm{A}$ 从某高度释放，开始下落。根据能量守恒，${\mathrm{A}}$ 触碰地面的速度 $v_A = \sqrt{2gH}$（其中 $H$ 是释放高度，$g$ 是重力加速度）。这个速度在碰撞后变为向上的速度，假设小球 A 和地面发生弹性碰撞后，向上的速度不变即为 $v_A = \sqrt{2gH}$。因此在距离释放点 $H$ 下方的位置，小球 A 的速度仍为 $v_A$。
+小球 $\mathrm{B}$ 从静止释放，经过高度 $H$ 的下落时间 $t$ 可得：
+$$H = \frac{1}{2} g t^2 \Rightarrow t = \sqrt{\frac{2H}{g}}.$$
+在这个时间内，$B$ 达到的速度为：
+$$v_B = g t = g \sqrt{\frac{2H}{g}} = \sqrt{2gH}.$$
+
+## Step 1
+我们现在遇到了两个小球的质量与速度：
+- 小球 A 的质量为 $m_A$，速度为 $v_A = \sqrt{2gH}$。
+- 小球 B 的质量为 $m_B$，速度为 $v_B = \sqrt{2gH}$。
+由于碰撞是完全弹性的，根据动量守恒和能量守恒：
+1. 动量守恒：
+$$m_A v_A + m_B v_B = m_A v_A&#x27; + m_B v_B&#x27;,$$
+
+## Step 2
+
+
+## Step 3
+由于碰撞是完全弹性的，根据动量守恒和能量守恒：
+1. 动量守恒：
+$$m_A v_A + m_B v_B = m_A v_A&#x27; + m_B v_B&#x27;,$$
+2. 能量守恒：
+$$\frac{1}{2} m_A v_A^2 + \frac{1}{2} m_B v_B^2 = \frac{1}{2} m_A (v_A&#x27;)^2 + \frac{1}{2} m_B (v_B&#x27;)^2.$$
+
+## Step 4
+在碰撞后，$\mathrm{B}$ 的最终速度 $v_B&#x27;$ 可以由一维弹性碰撞公式得出：
+$$v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} v_A + \frac{(2 m_B)}{(m_A + m_B)} v_B.$$
+
+## Step 5
+代入 $v_A = \sqrt{2gH}$ 和 $v_B = \sqrt{2gH}$，得到：
+$$v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} + \frac{(2 m_B)}{(m_A + m_B)} \sqrt{2gH} = \frac{(m_A + m_B)}{(m_A + m_B)} \sqrt{2gH} = \sqrt{2gH}.$$
+
+## Step 6
+因此，小球 B 在碰撞后的速度与前完全相同，继续以$\sqrt{2gH}$ 向上运动。
+此时，$B$ 达到的最大高度 $H_{max}$ 为：
+$$H_{max} = H + \frac{(v_B&#x27;)^2}{2g} = H + \frac{2gH}{2g} = H + H = 2H.$$
+所以小球 B 上升的最大高度为 $\mathbf{2H}$.
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>10</div></div><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_1</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+在这个问题中，小球 A 和 B 分别从某高度释放，且 A 的质量大于 B 的质量。在小球 A 下落到距离 H 的位置时，与正在下落的小球 B 碰撞。我们需要计算小球 B 碰撞后上升的最大高度。
+首先，根据题意，小球 A 自由下落的速度可由以下公式得到：
+$$ v_A = \sqrt{2gH} $$
+这里 H 是小球 A 的释放高度，g 是重力加速度。
+小球 B 也是从静止开始自由下落的，在 H 高度时的速度可以用相同的公式得出：
+$$ v_B = \sqrt{2gH} $$
+
+## Step 1
+当小球 A 和小球 B 在高度 H 的地方发生碰撞时，由于小球 A 的质量大于小球 B，我们可以使用弹性碰撞的公式来计算碰撞后的速度。根据一维弹性碰撞的结果：
+$$ v_A&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} v_A + \frac{(2m_B)}{(m_A + m_B)} v_B $$
+
+## Step 2
+$$ v_B&#x27; = \frac{(2m_A)}{(m_A + m_B)} v_A - \frac{(m_A - m_B)}{(m_A + m_B)} v_B $$
+
+## Step 3
+由于 v_A 和 v_B 都为 $\sqrt{2gH}$，将其代入 $v_B&#x27;$ 的公式，我们有：
+$$ v_B&#x27; = \frac{(2m_A)}{(m_A + m_B)} \sqrt{2gH} - \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} $$
+
+## Step 4
+简化后：
+$$ v_B&#x27; = \sqrt{2gH} \left( \frac{(2m_A) - (m_A - m_B)}{(m_A + m_B)} \right) $$
+$$ = \sqrt{2gH} \left( \frac{(m_A + m_B)}{(m_A + m_B)} \right) = \sqrt{2gH} $$
+
+## Step 5
+我们可以看到，$v_B&#x27;$ 的值恰好与$v_B$相同，意味着小球 B 在碰撞后依然以速度 $\sqrt{2gH}$向上运动。
+小球 B 达到的最大高度 H_max 通过以下公式求得：
+$$ H_{max} = \frac{(v_B&#x27;)^2}{2g} $$
+将 $v_B&#x27;$ 代入得：
+$$ H_{max} = \frac{(\sqrt{2gH})^2}{2g} = \frac{2gH}{2g} = H $$
+因此，小球 B 上升的最大高度是 $\mathbf{H}$。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>6</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;QWK/CCS/ECS are population agreement statistics against human expert labels on a 0-100 scale, not per-item accuracy. The generic accuracy field is strict structured exact match and is diagnostic only.&quot;,
+  &quot;headline_metric&quot;: &quot;unweighted mean of each available per-subtask metric&quot;,
+  &quot;overall&quot;: {
+    &quot;qwk&quot;: 81.95708290048924,
+    &quot;ccs&quot;: 72.74797861205026,
+    &quot;ecs&quot;: 38.47679923284701
+  },
+  &quot;overall_ecs_breakdown&quot;: {
+    &quot;ecs_low&quot;: 49.453461010940934,
+    &quot;ecs_medium&quot;: 28.696859101626178,
+    &quot;ecs_high&quot;: 37.28007758597389
+  },
+  &quot;by_task&quot;: {
+    &quot;0_Physics_ShortAns&quot;: {
+      &quot;n&quot;: 120,
+      &quot;qwk&quot;: 56.996088294208015,
+      &quot;ccs&quot;: 43.284992408361,
+      &quot;ecs&quot;: -9.704562915326859,
+      &quot;ecs_low&quot;: -11.59542071304897,
+      &quot;ecs_medium&quot;: -26.089696604360178,
+      &quot;ecs_high&quot;: 8.571428571428571
+    },
+    &quot;1_History_ShortAns&quot;: {
+      &quot;n&quot;: 639,
+      &quot;qwk&quot;: 87.06182647631726,
+      &quot;ccs&quot;: 80.39513674576388,
+      &quot;ecs&quot;: 40.0,
+      &quot;ecs_low&quot;: 90.0,
+      &quot;ecs_medium&quot;: -20.0,
+      &quot;ecs_high&quot;: 50.0
+    },
+    &quot;2_Physics_Choice&quot;: {
+      &quot;n&quot;: 110,
+      &quot;qwk&quot;: 77.43259085580304,
+      &quot;ccs&quot;: 74.59596493081229,
+      &quot;ecs&quot;: 28.86751345948129,
+      &quot;ecs_low&quot;: 86.60254037844388,
+      &quot;ecs_medium&quot;: 50.0,
+      &quot;ecs_high&quot;: -50.0
+    },
+    &quot;3_Geography_ShortAns&quot;: {
+      &quot;n&quot;: 140,
+      &quot;qwk&quot;: 80.1113569500839,
+      &quot;ccs&quot;: 75.00713622324437,
+      &quot;ecs&quot;: 16.618075486532554,
+      &quot;ecs_low&quot;: 20.0,
+      &quot;ecs_medium&quot;: -57.35393346764044,
+      &quot;ecs_high&quot;: 87.2081599272381
+    },
+    &quot;4_Biology_gapfilling&quot;: {
+      &quot;n&quot;: 575,
+      &quot;qwk&quot;: 94.03843132530194,
+      &quot;ccs&quot;: 72.28625427256074,
+      &quot;ecs&quot;: 39.5738592760275,
+      &quot;ecs_low&quot;: 32.142857142857146,
+      &quot;ecs_medium&quot;: 28.57142857142857,
+      &quot;ecs_high&quot;: 58.00729211379678
+    },
+    &quot;5_Chinese_gapfilling&quot;: {
+      &quot;n&quot;: 139,
+      &quot;qwk&quot;: 93.3167721772578,
+      &quot;ccs&quot;: 90.95948853744434,
+      &quot;ecs&quot;: 50.0,
+      &quot;ecs_low&quot;: 50.0,
+      &quot;ecs_medium&quot;: 50.0,
+      &quot;ecs_high&quot;: 50.0
+    },
+    &quot;6_Chinese_ShortAns&quot;: {
+      &quot;n&quot;: 618,
+      &quot;qwk&quot;: 84.23351489577237,
+      &quot;ccs&quot;: 71.44981239941373,
+      &quot;ecs&quot;: 43.33333333333333,
+      &quot;ecs_low&quot;: 30.0,
+      &quot;ecs_medium&quot;: 30.0,
+      &quot;ecs_high&quot;: 70.0
+    },
+    &quot;7_Math_ShortAns&quot;: {
+      &quot;n&quot;: 796,
+      &quot;qwk&quot;: 74.99788190331746,
+      &quot;ccs&quot;: 60.168525393793246,
+      &quot;ecs&quot;: 70.0,
+      &quot;ecs_low&quot;: 70.0,
+      &quot;ecs_medium&quot;: 80.0,
+      &quot;ecs_high&quot;: 60.0
+    },
+    &quot;8_Political_ShortAns&quot;: {
+      &quot;n&quot;: 240,
+      &quot;qwk&quot;: 81.95630658700196,
+      &quot;ccs&quot;: 73.43045672791587,
+      &quot;ecs&quot;: 53.333333333333336,
+      &quot;ecs_low&quot;: 40.0,
+      &quot;ecs_medium&quot;: 80.0,
+      &quot;ecs_high&quot;: 40.0
+    },
+    &quot;9_English_gapfilling&quot;: {
+      &quot;n&quot;: 244,
+      &quot;qwk&quot;: 76.28657816264824,
+      &quot;ccs&quot;: 71.51810492711863,
+      &quot;ecs&quot;: 57.67586846292695,
+      &quot;ecs_low&quot;: 52.72012675161055,
+      &quot;ecs_medium&quot;: 73.64081197050363,
+      &quot;ecs_high&quot;: 46.666666666666664
+    },
+    &quot;10_Math_gapfilling&quot;: {
+      &quot;n&quot;: 429,
+      &quot;qwk&quot;: 93.4166973151894,
+      &quot;ccs&quot;: 93.00364241834001,
+      &quot;ecs&quot;: 18.060037008427965,
+      &quot;ecs_low&quot;: 80.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: -25.81988897471611
+    },
+    &quot;11_Chemistry_gapfilling&quot;: {
+      &quot;n&quot;: 50,
+      &quot;qwk&quot;: 83.63694986296952,
+      &quot;ccs&quot;: 66.87622835983508,
+      &quot;ecs&quot;: 53.96413334942797,
+      &quot;ecs_low&quot;: 53.57142857142857,
+      &quot;ecs_medium&quot;: 55.593698749582586,
+      &quot;ecs_high&quot;: 52.72727272727272
+    }
+  },
+  &quot;audit&quot;: {
+    &quot;metric_protocol&quot;: &quot;in-repo standard-library port of PKU-DAIR/SAS-Bench&quot;,
+    &quot;prompt_version&quot;: &quot;official-zero-shot-v1&quot;,
+    &quot;prompt_sha256&quot;: &quot;702fd877f91c881a037e78713a2846c232980961546b6aaf8d7c5415ae9ed410&quot;,
+    &quot;scored_rows&quot;: 4100,
+    &quot;tasks_present&quot;: 12,
+    &quot;step_count_mismatches&quot;: 393,
+    &quot;unknown_error_labels_dropped&quot;: 297
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>extraction_error</td><td>9</td></tr><tr><td>scored</td><td>4100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>0_Physics_ShortAns</td><td>120</td><td>2</td><td>0.017</td><td><div class='bar'><i style='width:2%'></i></div></td></tr><tr><td>10_Math_gapfilling</td><td>429</td><td>246</td><td>0.573</td><td><div class='bar'><i style='width:57%'></i></div></td></tr><tr><td>11_Chemistry_gapfilling</td><td>50</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>1_History_ShortAns</td><td>639</td><td>16</td><td>0.025</td><td><div class='bar'><i style='width:3%'></i></div></td></tr><tr><td>2_Physics_Choice</td><td>110</td><td>5</td><td>0.045</td><td><div class='bar'><i style='width:5%'></i></div></td></tr><tr><td>3_Geography_ShortAns</td><td>140</td><td>1</td><td>0.007</td><td><div class='bar'><i style='width:1%'></i></div></td></tr><tr><td>4_Biology_gapfilling</td><td>575</td><td>16</td><td>0.028</td><td><div class='bar'><i style='width:3%'></i></div></td></tr><tr><td>5_Chinese_gapfilling</td><td>139</td><td>53</td><td>0.381</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>6_Chinese_ShortAns</td><td>618</td><td>23</td><td>0.037</td><td><div class='bar'><i style='width:4%'></i></div></td></tr><tr><td>7_Math_ShortAns</td><td>796</td><td>4</td><td>0.005</td><td><div class='bar'><i style='width:1%'></i></div></td></tr><tr><td>8_Political_ShortAns</td><td>240</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>9_English_gapfilling</td><td>244</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Biology</td><td>575</td><td>16</td><td>0.028</td><td><div class='bar'><i style='width:3%'></i></div></td></tr><tr><td>Chemistry</td><td>50</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Chinese</td><td>757</td><td>76</td><td>0.100</td><td><div class='bar'><i style='width:10%'></i></div></td></tr><tr><td>English</td><td>244</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Geography</td><td>140</td><td>1</td><td>0.007</td><td><div class='bar'><i style='width:1%'></i></div></td></tr><tr><td>History</td><td>639</td><td>16</td><td>0.025</td><td><div class='bar'><i style='width:3%'></i></div></td></tr><tr><td>Math</td><td>1225</td><td>250</td><td>0.204</td><td><div class='bar'><i style='width:20%'></i></div></td></tr><tr><td>Physics</td><td>230</td><td>7</td><td>0.030</td><td><div class='bar'><i style='width:3%'></i></div></td></tr><tr><td>Political</td><td>240</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Choice</td><td>110</td><td>5</td><td>0.045</td><td><div class='bar'><i style='width:5%'></i></div></td></tr><tr><td>ShortAns</td><td>2553</td><td>46</td><td>0.018</td><td><div class='bar'><i style='width:2%'></i></div></td></tr><tr><td>gapfilling</td><td>1437</td><td>315</td><td>0.219</td><td><div class='bar'><i style='width:22%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（9 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>其他错误</strong></td><td>9</td><td>invalid grading JSON</td><td class='muted'>History_ShortAns_493, Biology_gapfilling_29, Math_ShortAns_97, Math_ShortAns_122, Math_ShortAns_166, Math_ShortAns_263, Math_ShortAns_528, English_gapfilling_83, Math_gapfilling_51</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_0</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (18 分) 小球 $\mathrm{A}$ 和 $\mathrm{B}$ 的质量分别为 $\mathrm{m}_{\mathrm{A}}$ 和 $\mathrm{m}_{\mathrm{B}}$, 且 $\mathrm{m}_{\mathrm{A}}&gt;\mathrm{m}_{\mathrm{B}}$. 在某高度处将 $\mathrm{A}$ 和 $\mathrm{B}$ 先后从静止释放. 小球 $\mathrm{A}$ 与水平地面碰撞后向上弹回, 在释放处的下方 与释放处距离为 $\mathrm{H}$ 的地方恰好与正在下落的小球 $\mathrm{B}$ 发生正碰. 设所有碰撞都 是弹性的, 碰撞时间极短. 求小球 $\mathrm{A} 、 \mathrm{~B}$ 碰撞后 $\mathrm{B}$ 上升的最大高度.
+
+- 题目分值：18
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：$B$ 上升的最大高度是 $\left(\frac{3 m_{\hat{A}}-m_{B}}{m_{\hat{A}}+m_{B}}\right)^{2} H$.
+
+- 解析说明：解: 小球 $\mathrm{A}$ 与地面的碰撞是弹性的, 而且 $\mathrm{AB}$ 都是从同一高度释放的, 所以 $\mathrm{AB}$ 碰撞前的速度大小相等设为 $\mathrm{v}_{0}$,
+
+根据机械能守恒有 $\mathrm{m}_{\mathrm{A}} \mathrm{gH}=\frac{1}{2} \mathrm{~m}_{\mathrm{A}} \mathrm{v}_{0}^{2}$
+
+化简得 $\mathrm{v}_{0}=\sqrt{2 \mathrm{gH}}(1)$
+
+设 $A 、 B$ 碰撞后的速度分别为 $v_{A}$ 和 $v_{B}$, 以坚直向上为速度的正方向, 根据 $\mathrm{A} 、 \mathrm{~B}$ 组成的系统动量守恒和动能守恒得
+
+$$
+\begin{aligned}
+&amp; m_{A} v_{0}-m_{B} v_{0}=m_{A} v_{A}+m_{B} v_{B}(2) \\
+&amp; \frac{1}{2} m_{A} v_{0}^{2}+\frac{1}{2} m_{B} v_{0}^{2}=\frac{1}{2} m_{A} v_{A}^{2}+\frac{1}{2} m_{B} v_{B}^{2}(3)
+\end{aligned}
+$$
+
+联立(2)(3)化简得 $\quad v_{B}=\frac{3 m_{A}-m_{B}}{m_{A}+m_{B}} v_{0}$ (4)
+
+设小球 $\mathrm{B}$ 能够上升的最大高度为 $\mathrm{h}$,
+
+由运动学公式得 $\quad \mathrm{h}=\frac{\mathrm{v}_{\mathrm{B}}^{2}}{2 \mathrm{~g}}{ }_{0}(5)$
+
+联立(1)(4)(5)化简得 $\mathrm{h}=\left(\frac{3 m_{\dot{A}}-m_{B}}{m_{\dot{A}}+m_{B}}\right)^{2} H$
+
+- 学生作答：## Step 0
+为了解这个问题，我们需要先根据重力对小球的影响来解题。
+首先，小球 $\mathrm{A}$ 从某高度释放，开始下落。根据能量守恒，${\mathrm{A}}$ 触碰地面的速度 $v_A = \sqrt{2gH}$（其中 $H$ 是释放高度，$g$ 是重力加速度）。这个速度在碰撞后变为向上的速度，假设小球 A 和地面发生弹性碰撞后，向上的速度不变即为 $v_A = \sqrt{2gH}$。因此在距离释放点 $H$ 下方的位置，小球 A 的速度仍为 $v_A$。
+小球 $\mathrm{B}$ 从静止释放，经过高度 $H$ 的下落时间 $t$ 可得：
+$$H = \frac{1}{2} g t^2 \Rightarrow t = \sqrt{\frac{2H}{g}}.$$
+在这个时间内，$B$ 达到的速度为：
+$$v_B = g t = g \sqrt{\frac{2H}{g}} = \sqrt{2gH}.$$
+
+## Step 1
+我们现在遇到了两个小球的质量与速度：
+- 小球 A 的质量为 $m_A$，速度为 $v_A = \sqrt{2gH}$。
+- 小球 B 的质量为 $m_B$，速度为 $v_B = \sqrt{2gH}$。
+由于碰撞是完全弹性的，根据动量守恒和能量守恒：
+1. 动量守恒：
+$$m_A v_A + m_B v_B = m_A v_A&#x27; + m_B v_B&#x27;,$$
+
+## Step 2
+
+
+## Step 3
+由于碰撞是完全弹性的，根据动量守恒和能量守恒：
+1. 动量守恒：
+$$m_A v_A + m_B v_B = m_A v_A&#x27; + m_B v_B&#x27;,$$
+2. 能量守恒：
+$$\frac{1}{2} m_A v_A^2 + \frac{1}{2} m_B v_B^2 = \frac{1}{2} m_A (v_A&#x27;)^2 + \frac{1}{2} m_B (v_B&#x27;)^2.$$
+
+## Step 4
+在碰撞后，$\mathrm{B}$ 的最终速度 $v_B&#x27;$ 可以由一维弹性碰撞公式得出：
+$$v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} v_A + \frac{(2 m_B)}{(m_A + m_B)} v_B.$$
+
+## Step 5
+代入 $v_A = \sqrt{2gH}$ 和 $v_B = \sqrt{2gH}$，得到：
+$$v_B&#x27; = \frac{(m_A - m_B)}{(m_A + m_B)} \sqrt{2gH} + \frac{(2 m_B)}{(m_A + m_B)} \sqrt{2gH} = \frac{(m_A + m_B)}{(m_A + m_B)} \sqrt{2gH} = \sqrt{2gH}.$$
+
+## Step 6
+因此，小球 B 在碰撞后的速度与前完全相同，继续以$\sqrt{2gH}$ 向上运动。
+此时，$B$ 达到的最大高度 $H_{max}$ 为：
+$$H_{max} = H + \frac{(v_B&#x27;)^2}{2g} = H + \frac{2gH}{2g} = H + H = 2H.$$
+所以小球 B 上升的最大高度为 $\mathbf{2H}$.
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 18, &quot;pred_score&quot;: 12, &quot;steps&quot;: [{&quot;step_score&quot;: 4, &quot;errors&quot;: []}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;, &quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;]}, {&quot;step_score&quot;: 3, &quot;errors&quot;: []}, {&quot;step_score&quot;: 1, &quot;errors&quot;: []}, {&quot;step_score&quot;: 3, &quot;errors&quot;: []}], &quot;reported_step_count&quot;: 7, &quot;unknown_errors&quot;: [&quot;计算错误&quot;]}</div><div class='ans'><span class='lbl'>归一化</span>12</div><div class='ans gold'><span class='lbl'>正确答案</span>10</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 18,
+  &quot;pred_score&quot;: 12,
+  &quot;steps&quot;: [
+    {&quot;step_score&quot;: 4, &quot;errors&quot;: []},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;, &quot;忽视题目条件&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;]},
+    {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;]},
+    {&quot;step_score&quot;: 3, &quot;errors&quot;: []},
+    {&quot;step_score&quot;: 1, &quot;errors&quot;: [&quot;计算错误&quot;]},
+    {&quot;step_score&quot;: 3, &quot;errors&quot;: []}
+  ]
+}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#History_ShortAns_0</span><span class='tag'>task=1_History_ShortAns</span> <span class='tag'>subject=History</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+历史简答题评分标准分为两类：1）主观题采用踩点计分制，根据参考答案要点给分，同时须结合题目要求评估是否联系实际作答；2）开放题采用综合评价制，首先判定答题方向是否正确（方向性错误不得分），其次考察内容是否存在偏题、脱离实际等问题。两类题型均须确保评分过程严格遵循&#x27;给分有理、扣分有据&#x27;的原则。
+
+【评估材料】
+- 试题内容：14．（ 20分）历史上重大改革回眸  
+    材料一  
+    乾元元年（ 758），盐铁铸钱使第五琦初变盐法，就山海井灶近利之地，置
+盐院。游民业盐者为亭户，免杂徭。盗鬻者论以法。及琦为诸州榷盐铁使，
+尽榷天下盐，斗加时价百钱而出之，为钱一百一十。 ﹣﹣《新唐书）  
+    材料二  
+    刘晏改革榷盐法，调整官营与私商、盐户的关系。在产盐乡 “因旧监置吏 ”，
+收亭户之盐 ，转卖给商人经销 。其余州县不设盐官 ，在较远州县设置 “常平盐
+”，“官收厚利而人不知责 ”。刘晏改革是以官商分利代替官方专利 ，促进了盐
+业的发展 ，大大增加了盐税收入 。刘晏始榷盐时 ，盐利年收入 40万缗，其后
+，达600万缗， “天下之赋，盐利过半 ”。﹣﹣摘编自白寿彝总主编《中国通
+史》  
+（1）根据材料一、二，指出第五琦和刘晏所推行的榷盐法的不同之处。  
+ 
+ 
+ 
+ 
+（2）根据材料二，说明刘晏改革榷盐法的意义。
+
+- 题目分值：20
+- 错因类型：[&quot;作答不完整或有遗漏&quot;, &quot;材料提取不充分&quot;, &quot;史实错误&quot;, &quot;未联系实际进行作答&quot;, &quot;答案片面化&quot;]
+- 标准答案：（1）不同之处，第五琦：官营专卖，官府专利，强行加之。  
+              刘晏：官署民产商销，官商分利：设常平盐。  
+（2）促进盐业发展：增加政府财政收入：利商，便民；有助于社会稳定。
+
+- 解析说明：第（ 1）问，依据材料信息回答，在对材料信息整合、归纳的基础上回
+答即可。  
+第（ 2）问，意义材料已经有了详细的概述，根据材料，在对材料信息整合、归
+纳的基础上回答即可。
+
+- 学生作答：## Step 0
+（1）第五琦和刘晏所推行的榷盐法的不同之处在于，第五琦主要是把盐的销售权完全交给官府，只有通过官府才能获取盐，而刘晏则是允许私商和个人盐户参与销售，这样使得盐的流通更加自由化。第五琦的做法注重于对盐的严格管理，而刘晏则是为了促进市场经济，所以他采取了宽松的政策。
+
+## Step 1
+（2）刘晏改革榷盐法的意义在于，通过集中的官营盐业来控制盐的质量和价格，虽然看似是为了提升税收，但实际上是增加了百姓的负担，让他们更依赖于官府。因此，这一改革并不真正有利于盐业的发展，而是让政府获得了更多的收益，百姓却没有实质性的好处。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 20, &quot;pred_score&quot;: 11, &quot;steps&quot;: [{&quot;step_score&quot;: 9, &quot;errors&quot;: [&quot;材料提取不充分&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;史实错误&quot;]}], &quot;reported_step_count&quot;: 2, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>11</div><div class='ans gold'><span class='lbl'>正确答案</span>10</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 20,
+  &quot;pred_score&quot;: 11,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 9,
+      &quot;errors&quot;: [&quot;材料提取不充分&quot;]
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [&quot;史实错误&quot;]
+    }
+  ]
+}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Physics_Choice_0</span><span class='tag'>task=2_Physics_Choice</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=Choice</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+多选题部分采用严格扣分制——完全答错得0分；漏答多项得2分；仅漏答一项得50%分数（如满分5分则得3分）；全部答对得满分。填空题（满分5分）评分标准：答对部分内容得3分，完全正确得满分。主要扣分原因为概念理解模糊导致的答题错误。
+
+【评估材料】
+- 试题内容：13. 对于一定量的理想气体, 下列说法正确的是（）
+A. 若气体的压强和体积都不变, 其内能也一定不变
+B. 若气体的内能不变, 其状态也一定不变
+C. 若气体的温度随时间不断升高, 其压强也一定不断增大
+D. 气体温度每升高 $1 \mathrm{~K}$ 所吸收的热量与气体经历的过程有关
+E. 当气体温度升高时, 气体的内能一定增大 
+- 题目分值：6
+- 错因类型：[&quot;概念模糊&quot;, &quot;计算错误或单位混乱&quot;, &quot;忽视限制条件与特殊情形&quot;, &quot;过于依赖公式&quot;]
+- 标准答案：ADE
+
+- 解析说明：解：A、由理想气体的状态方程可知, 若气体的压强和体积都不变, 则 其温度不变，其内能也一定不变，故 $\mathrm{A}$ 正确;
+
+B、若气体的内能不变, 则气体的温度不变, 气体的压强与体积可能发生变化, 气体的状态可能变化, 故 B 错误;
+
+C、由理想气体的状态方程可知, 若气体的温度 $\mathrm{T}$ 随时间升高, 体积同时变大, 其压强可能不变，故 $\mathrm{C}$ 错误;
+
+D、气体绝热压缩或膨胀时, 气体不吸热也不放热, 气体内能发生变化, 温度升 高或降低, 在非绝热过程中, 气体内能变化, 要吸收或放出热量, 由此可知 气体温度每升高 $1 \mathrm{~K}$ 所吸收的热量与气体经历的过程有关, 故 D 正确;
+
+E、理想气体内能由温度决定, 当气体温度升高时, 气体的内能一定增, 故 E 正 确;
+
+- 学生作答：## Step 0
+ACD
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 6, &quot;pred_score&quot;: 3, &quot;steps&quot;: [{&quot;step_score&quot;: 3, &quot;errors&quot;: [&quot;概念模糊&quot;]}], &quot;reported_step_count&quot;: 1, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>3</div><div class='ans gold'><span class='lbl'>正确答案</span>0</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 6,
+  &quot;pred_score&quot;: 3,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: [
+        &quot;概念模糊&quot;
+      ]
+    }
+  ]
+}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Geography_ShortAns_0</span><span class='tag'>task=3_Geography_ShortAns</span> <span class='tag'>subject=Geography</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+首先根据该题总分给每个答题步骤分配分值，地理简答题主要是知识应用和开放拓展性题目。对于知识应用题目，首先看回答与题目要求是否相符，比如回答不利影响时答案是有利则给0分，其次看答案分析是否与所学知识匹配，是否有因果错乱出现，按点给分，答到某点给相应分数，其余没分。开放性题目例如设计产品或活动等只要符合当地情形言之有理即可给分。
+
+【评估材料】
+- 试题内容：16．甘肃民勤是我国沙尘暴多发地区之一． 1998～2006年间平均每年发生沙尘
+暴11次．分析甘肃民勤春季沙尘暴频发的地理因素．
+
+- 题目分值：10
+- 错因类型：[&quot;作答不完整或有遗漏&quot;, &quot;材料提取不充分&quot;, &quot;未运用原理或运用错误、知识点混淆&quot;, &quot;答案片面化&quot;, &quot;忽视区域特征&quot;]
+- 标准答案：民勤周围沙漠广布（沙源丰富）（植被少），春季升温快、降水少 ，
+地表干燥，易起沙；气旋与冷空气活动频繁（恰位于寒  潮南下的路径上），
+多大风天气．受地形影响（狭管效应），地面风速增强．
+
+- 解析说明：解：春季沙尘暴频发的原因与气候（气温高，降水少 ），地形和人为原
+因等密切相关．
+
+- 学生作答：## Step 0
+甘肃民勤春季沙尘暴频发的原因主要是由于该地区的降水量十分充足，平均在500mm以上，这种高降水量使得植被覆盖率较高，从而能够有效减少沙尘暴的发生。同时，民勤地区的气温普遍较低，春季平均气温在10℃左右，有利于土壤保持湿润，进一步降低了沙尘暴的发生概率。此外，民勤地形平坦，没有太多的山脉阻挡风力，因此大风也不会造成沙尘暴的影响。综上所述，民勤春季沙尘暴并不是一个常见现象。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 10, &quot;pred_score&quot;: 0, &quot;steps&quot;: [{&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;未运用原理或运用错误、知识点混淆&quot;, &quot;忽视区域特征&quot;]}], &quot;reported_step_count&quot;: 1, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>0</div><div class='ans gold'><span class='lbl'>正确答案</span>0</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+&quot;total&quot;: 10,
+&quot;pred_score&quot;: 0,
+&quot;steps&quot;: [
+{
+&quot;step_score&quot;: 0,
+&quot;errors&quot;: [
+&quot;未运用原理或运用错误、知识点混淆&quot;,
+&quot;忽视区域特征&quot;
+]
+}
+]
+}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Biology_gapfilling_0</span><span class='tag'>task=4_Biology_gapfilling</span> <span class='tag'>subject=Biology</span> <span class='tag'>question_type=gapfilling</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+首先根据该题总分为每个空分配分值，一般而言每个空1分，若有“原因”、“理由”等较长回答的空可能分配2~3分，涉及到实验设计的，酌情增加分数分配，确保每个空的分值之和等于总分。如果该空与标准答案完全一致则该空给满分，不一致则该空给0分，对于分值较大的实验设计或原理分析题，部分回答正确可以酌情给部分分（例如满分3分，回答的内容正确但不完整可以给1分或者2分）。
+
+【评估材料】
+- 试题内容：7．（ 9分）将同种大鼠分为 A、B两组， A组大鼠除去淋巴细胞后，产生抗体
+的能力丧失 ：从B组大鼠中获得淋巴细胞并转移到 A组大鼠后， 发现 A组大
+鼠能够重新获得产生抗体的能力。请回答：  
+（1）上述实验可以说明 　   　是免疫反应所需的细胞。  
+（2）为了证明接受了淋巴细胞的 A组大鼠重新获得了产生抗体的能力， 需要给
+A组大鼠注射 　   　，然后检测相应的抗体。  
+（3）动物体内能产生特异性抗体的细胞称为 　   　。在抗体，溶菌酶、淋巴因
+子和编码抗体的基因这四种物质中不属于免疫活性物质是 　   　。在吞噬细
+胞、淋巴细胞和红细胞这三类细胞中不属于免疫细胞的 　   　。
+
+- 题目分值：9
+- 错因类型：[&quot;概念混淆&quot;, &quot;术语使用不准确&quot;, &quot;过程描述不准确&quot;, &quot;未正确分析实验现象&quot;, &quot;图表信息提取错误&quot;, &quot;逻辑推理错误&quot;, &quot;单位或数据错误&quot;]
+- 标准答案：（1）淋巴细胞（ 或B淋巴细胞）
+（2）抗原
+（3）浆细胞（ 或效应 B淋巴细胞）      编码抗体的基因      红细胞
+
+- 解析说明：解：（ 1）除去淋巴细胞不能产生抗体，移入淋巴细胞后重新获得产生
+抗体的能力，说明淋巴细胞是机体进行免疫反应所需的细胞。  
+（2）只有在抗原的刺激下，通过体液免疫形成的浆细胞才能产生抗体。  
+（3）在体液免疫中，抗体是由浆细胞（ 效应 B淋巴细胞 ）产生并分泌的。免疫
+系统的组成中，免疫活性物质包括抗体、溶菌酶、淋巴因子等，免疫细胞包
+括吞噬细胞和淋巴细胞。编码抗体的基因和红细胞不属于免疫系统的组成。
+
+- 学生作答：## Step 0
+（1）抗原
+
+## Step 1
+（2）溶菌酶
+
+## Step 2
+（3）转移细胞；淋巴因子；红细胞
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 9, &quot;pred_score&quot;: 1, &quot;steps&quot;: [{&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;概念混淆&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;概念混淆&quot;]}, {&quot;step_score&quot;: 1, &quot;errors&quot;: [&quot;术语使用不准确&quot;, &quot;概念混淆&quot;]}], &quot;reported_step_count&quot;: 3, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>1</div><div class='ans gold'><span class='lbl'>正确答案</span>1</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 9,
+  &quot;pred_score&quot;: 1,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [&quot;概念混淆&quot;]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [&quot;概念混淆&quot;]
+    },
+    {
+      &quot;step_score&quot;: 1,
+      &quot;errors&quot;: [&quot;术语使用不准确&quot;, &quot;概念混淆&quot;]
+    }
+  ]
+}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Chinese_gapfilling_0</span><span class='tag'>task=5_Chinese_gapfilling</span> <span class='tag'>subject=Chinese</span> <span class='tag'>question_type=gapfilling</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+每个空缺处各1分，共计6个填空项。评分要求：填空内容与标准答案完全一致（包括标点符号）得1分；出现错别字、漏字/多字、语序错误或语义偏差等情况均不得分。评分以填空句的完整性为准，不接受部分得分。
+
+【评估材料】
+- 试题内容：名篇名句默写（ 6分）  
+4．（ 6分）补写出下列名篇名句中的空缺部分。  
+（1）故木受绳则直，[请补充1]，君子博学而日参省乎己，[请补充2] （《荀子 •劝
+学》）  
+（2）千里马常有，[请补充3]。故虽有名马，祗辱于奴隶人之手，[请补充4]，不以
+千里称也。（韩愈《杂说（四）》）  
+（3）莫笑农家腊酒浑[请补充5]。山重水复疑无路，[请补充6]。（陆游《游山西
+村》）
+
+- 题目分值：6
+- 错因类型：[&quot;错字&quot;, &quot;错句&quot;, &quot;留空&quot;]
+- 标准答案：（1）金就砺则利    则知明而行无过矣
+（2）而伯乐不常有     骈死于槽枥之间
+（3）丰年留客足鸡豚     柳暗花明又一村
+
+- 解析说明：
+
+- 学生作答：## Step 0
+（1）金就砺则利   则知明而行无过矣
+
+## Step 1
+（2）而伯乐不常有  骈死于槽枥之间
+
+## Step 2
+（3）丰年留客足鸡豚  柳暗花明又一村
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 6, &quot;pred_score&quot;: 6, &quot;steps&quot;: [{&quot;step_score&quot;: 2, &quot;errors&quot;: []}, {&quot;step_score&quot;: 2, &quot;errors&quot;: []}, {&quot;step_score&quot;: 2, &quot;errors&quot;: []}], &quot;reported_step_count&quot;: 3, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>6</div><div class='ans gold'><span class='lbl'>正确答案</span>6</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>{
+  &quot;total&quot;: 6,
+  &quot;pred_score&quot;: 6,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: []
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: []
+    }
+  ]
+}</pre></details></div></section>
+</main>
+</body>
+</html>

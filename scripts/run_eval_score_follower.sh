@@ -45,13 +45,23 @@ count_predictions() {
   echo "$total"
 }
 
+# 行数稳定还不够:断点续跑时 predict 进程要先加载题目(大 benchmark 要几分钟),
+# 这期间上一轮留下的 predictions 文件一动不动,看着就像"跑完了"。follower 一旦
+# 抢先判分,predict 收尾时会拿它启动时读到的(空的)抽取状态把 scored.jsonl /
+# summary.json / report.html 重写成全 no_extraction 的空壳——抽取白跑,结果被覆盖。
+# (2026-08-13 mmlu_pro 实际踩过一次。)所以再加一条:该 benchmark 的 predict 进程
+# 还活着就不算就绪。
+predict_running() {
+  pgrep -f "eval_benchmark.py --benchmark $1 .*--skip-extract" >/dev/null
+}
+
 for b in "$@"; do
   echo "[follower] === $b: 等待预测就绪 ==="
   stable=0; last=-1; waited=0; ready=0
   while (( waited < MAX_WAIT_HOURS * 3600 )); do
     dir="$(predictions_dir "$b")"   # 每轮重解析:目录要等预测开跑才出现
     n=$(count_predictions "$dir")
-    if (( n > 0 && n == last )); then
+    if (( n > 0 && n == last )) && ! predict_running "$b"; then
       stable=$(( stable + 1 ))
       (( stable >= STABLE_POLLS )) && { ready=1; break; }
     else

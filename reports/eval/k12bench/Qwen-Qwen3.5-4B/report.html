@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · k12bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · K12-Bench：课程认知（知识结构层，多选题）</h1>
+    <p class="muted">基准 k12bench · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">52.5%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">23640</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">23640</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">12406</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  
+  <section><h2>基准介绍</h2><p>K12-Bench（Liang et al. 2026, arXiv:2605.09635）是从人教版 K-12 数理化生教材构建的课程对齐知识图谱派生出的 23,640 道四选多选题，考察“课程认知”——先修链、概念分类、实验-概念链、跨章定位等课程知识结构；论文明确将其与 C-Eval/CMMLU 的事实召回区分开。对应本仓库 P15（学习路径规划·知识结构层）。</p><p>五个任务族：prereq（先修闭包+直接后继）、locate（跨章首次出现+章节先修）、neighbor（概念分类/相关）、ground（概念↔习题）、evidence（概念↔实验验证链）。纯文本、无图。</p><p>规则判分、无 LLM 裁判：每题标准答案是一组选项字母，按 instance-level 精确率/召回率/F1（集合交并）与 Exact Match 计分。报告顶栏“正确率”为 Exact Match（整题全对才算对）；面板挂载的分级指标 instance-level Macro-F1 见 summary.json 的 extra_metrics（总体 + 分任务族）。</p><p class='muted'>主页：<a href='https://github.com/haolpku/K12-Dataset'>https://github.com/haolpku/K12-Dataset</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#prereq::subtask1::biology_7a_rjb_cpt13</span><span class='tag'>task_family=prereq</span> <span class='tag'>subject=biology</span></div><div class='qtext'>要掌握生物中的【生物与非生物的区分】，应先具备哪些前置知识？
+A. 生物的共同特征
+B. 生物与环境的关系（初步认识）
+C. 生物圈
+D. 生物多样性（初步认识）
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div><div class='card'><div class='card-head'><span class='pid'>#locate::subtask1::biology_7a_rjb_cpt4</span><span class='tag'>task_family=locate</span> <span class='tag'>subject=biology</span></div><div class='qtext'>学生第一次学习生物中的【光合作用】是在以下哪个章节？
+A. 第一章 认识生物
+B. 第四章 绿色植物是生物圈中有机物的制造者
+C. 第四节 光合作用与能量转化
+D. 第五章 绿色植物与生物圈中的碳-氧平衡
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;headline accuracy = Exact Match; macro_f1 = instance-level Macro-F1 (the panel-mounted metric)&quot;,
+  &quot;mounted_on&quot;: &quot;P15 学习路径规划（知识结构层）&quot;,
+  &quot;overall&quot;: {
+    &quot;n&quot;: 23640,
+    &quot;exact_match&quot;: 0.5248,
+    &quot;macro_f1&quot;: 0.7173,
+    &quot;precision&quot;: 0.6851,
+    &quot;recall&quot;: 0.8161
+  },
+  &quot;task_family=prereq&quot;: {
+    &quot;n&quot;: 5417,
+    &quot;exact_match&quot;: 0.3485,
+    &quot;macro_f1&quot;: 0.6393,
+    &quot;precision&quot;: 0.6006,
+    &quot;recall&quot;: 0.7681,
+    &quot;p15_relevance_weight&quot;: 1.0
+  },
+  &quot;task_family=locate&quot;: {
+    &quot;n&quot;: 8624,
+    &quot;exact_match&quot;: 0.7372,
+    &quot;macro_f1&quot;: 0.746,
+    &quot;precision&quot;: 0.7459,
+    &quot;recall&quot;: 0.7484,
+    &quot;p15_relevance_weight&quot;: 0.8
+  },
+  &quot;task_family=neighbor&quot;: {
+    &quot;n&quot;: 4358,
+    &quot;exact_match&quot;: 0.2779,
+    &quot;macro_f1&quot;: 0.6957,
+    &quot;precision&quot;: 0.5997,
+    &quot;recall&quot;: 0.9594,
+    &quot;p15_relevance_weight&quot;: 0.5
+  },
+  &quot;task_family=ground&quot;: {
+    &quot;n&quot;: 3850,
+    &quot;exact_match&quot;: 0.5475,
+    &quot;macro_f1&quot;: 0.7446,
+    &quot;precision&quot;: 0.7183,
+    &quot;recall&quot;: 0.8335,
+    &quot;p15_relevance_weight&quot;: 0.5
+  },
+  &quot;task_family=evidence&quot;: {
+    &quot;n&quot;: 1391,
+    &quot;exact_match&quot;: 0.6046,
+    &quot;macro_f1&quot;: 0.8354,
+    &quot;precision&quot;: 0.8129,
+    &quot;recall&quot;: 0.9251,
+    &quot;p15_relevance_weight&quot;: 0.5
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>23640</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>evidence</td><td>1391</td><td>841</td><td>0.605</td><td><div class='bar'><i style='width:60%'></i></div></td></tr><tr><td>ground</td><td>3850</td><td>2108</td><td>0.548</td><td><div class='bar'><i style='width:55%'></i></div></td></tr><tr><td>locate</td><td>8624</td><td>6358</td><td>0.737</td><td><div class='bar'><i style='width:74%'></i></div></td></tr><tr><td>neighbor</td><td>4358</td><td>1211</td><td>0.278</td><td><div class='bar'><i style='width:28%'></i></div></td></tr><tr><td>prereq</td><td>5417</td><td>1888</td><td>0.349</td><td><div class='bar'><i style='width:35%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology</td><td>5382</td><td>2880</td><td>0.535</td><td><div class='bar'><i style='width:54%'></i></div></td></tr><tr><td>chemistry</td><td>8594</td><td>4358</td><td>0.507</td><td><div class='bar'><i style='width:51%'></i></div></td></tr><tr><td>math</td><td>5381</td><td>2913</td><td>0.541</td><td><div class='bar'><i style='width:54%'></i></div></td></tr><tr><td>physics</td><td>4283</td><td>2255</td><td>0.527</td><td><div class='bar'><i style='width:53%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#locate::subtask1::biology_7a_rjb_cpt4</span><span class='tag'>task_family=locate</span> <span class='tag'>subject=biology</span></div><div class='qtext'>学生第一次学习生物中的【光合作用】是在以下哪个章节？
+A. 第一章 认识生物
+B. 第四章 绿色植物是生物圈中有机物的制造者
+C. 第四节 光合作用与能量转化
+D. 第五章 绿色植物与生物圈中的碳-氧平衡
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#neighbor::biology_7a_rjb_cpt2</span><span class='tag'>task_family=neighbor</span> <span class='tag'>subject=biology</span></div><div class='qtext'>以下哪些概念与生物中的【生物的共同特征】直接相关（包括分类关系或紧密关联）？
+A. 繁殖
+B. 生物与非生物的区分
+C. 生物与环境的关系（初步认识）
+D. 生长
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,B,C,D</div><div class='ans'><span class='lbl'>归一化</span>A,B,C,D</div><div class='ans gold'><span class='lbl'>正确答案</span>A,D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A, B, C, D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#evidence::subtask1::biology_7a_rjb_cpt14</span><span class='tag'>task_family=evidence</span> <span class='tag'>subject=biology</span></div><div class='qtext'>围绕生物中的【生物多样性（初步认识）】，教材安排了哪些验证实验？
+A. 探究光照对鼠妇分布的影响（明暗对照实验）
+B. 探究植物对空气湿度的影响
+C. 观察种子的结构
+D. 调查校园、公园或农田的生物种类
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,D</div><div class='ans'><span class='lbl'>归一化</span>A,D</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A,D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#prereq::subtask1::biology_7a_rjb_skl3</span><span class='tag'>task_family=prereq</span> <span class='tag'>subject=biology</span></div><div class='qtext'>在学习生物中的【归类（分类）】之前，需要学习哪些知识？
+A. 调查校园、公园或农田的生物种类
+B. 观察比较（找相同点与不同点）
+C. 科学记录与整理分析
+D. 调查法（科学调查）
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,B,C,D</div><div class='ans'><span class='lbl'>归一化</span>A,B,C,D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A, B, C, D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#neighbor::biology_7a_rjb_cpt3</span><span class='tag'>task_family=neighbor</span> <span class='tag'>subject=biology</span></div><div class='qtext'>以下哪些概念与生物中的【营养（生物的生活需要营养）】直接相关（包括分类关系或紧密关联）？
+A. 生物与环境的关系（初步认识）
+B. 生物多样性（初步认识）
+C. 生物的共同特征
+D. 生物
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C,D</div><div class='ans'><span class='lbl'>归一化</span>C,D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C,D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#evidence::subtask1::biology_7a_rjb_cpt15</span><span class='tag'>task_family=evidence</span> <span class='tag'>subject=biology</span></div><div class='qtext'>围绕生物中的【生物与环境的关系（初步认识）】，教材安排了哪些验证实验？
+A. 探究植物对空气湿度的影响
+B. 调查校园、公园或农田的生物种类
+C. 探究光照对鼠妇分布的影响（明暗对照实验）
+D. 探究种子萌发的环境条件（四瓶对照实验）
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,C,D</div><div class='ans'><span class='lbl'>归一化</span>A,C,D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A,C,D</pre></details></div></section>
+</main>
+</body>
+</html>
