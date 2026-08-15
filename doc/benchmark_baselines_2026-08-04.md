@@ -46,45 +46,45 @@ adapter 本身不产出题目，没有可抽样的答案空间。表里记 `n/a`
 
 | benchmark | headline | 题数 | L1 随机 | L2 平凡策略 | L3 退化 | 人类 | 实跑区间 |
 |---|---|---|---|---|---|---|---|
-| `agieval` | `accuracy` | 7272 | 0.1737 | 0.2057 (single_letter_random) | — | 0.67 (B) | 0.8112 – 0.9204 (6 模型) |
-| `asap_2` | `extra:overall.qwk` | 7421 | 0.008 | 0.0008 (prior_random) | — | — | 0.4726 – 0.6106 (11 模型) |
+| `agieval` | `accuracy` | 7272 | 0.1737 | 0.2057 (single_letter_random) | — | 0.67 (B) | 0.8112 – 0.9204 (7 模型) |
+| `asap_2` | `extra:overall.qwk` | 7421 | 0.008 | 0.0008 (prior_random) | — | — | 0.4091 – 0.6106 (12 模型) |
 | `bea2025_judge` | `extra:recommended_judge_score` | 9904 | 0.2952 | 0.3345 (prior_random) | — | — | 0.3687 – 0.5488 (7 模型) |
-| `bea2025_tutor` | `extra:pass_rate` | — | 0 (乱码实测) | — | 0 (echo) | 0.5233 (B) / 同 judge 0.1601 | 0.7133 – 0.8233 (4 模型) |
-| `ceval` | `accuracy` | 1346 | 0.2515 | 0.2623 (majority_constant) | — | — | 0.8276 – 0.9547 (7 模型) |
-| `edubench` | `extra:overall.mean_overall_score` | — | 1 (乱码实测) | — | 3.1104 (generic) | 无 | 7.4702 – 8.4796 (12 模型) |
-| `eduguard_adversarial` | `extra:overall.asr` | — | 0 (乱码实测) ⚠满分方向 | — | 0 (random) | — | 0.0038 – 0.6241 (16 模型) ↓越低越好 |
-| `eduguard_sata` | `extra:overall.rfs` | 5270 | 0.1002 | 0.2509 (single_letter_random) | — | — | 0.6934 – 0.7694 (7 模型) |
+| `bea2025_tutor` | `extra:pass_rate` | — | 0 (乱码实测) | — | 0 (echo) | 0.5233 (B) / 同 judge 0.1601 | 0.7133 – 0.9189 (9 模型) |
+| `ceval` | `accuracy` | 1346 | 0.2515 | 0.2623 (majority_constant) | — | — | 0.8276 – 0.9547 (8 模型) |
+| `edubench` | `extra:overall.mean_overall_score` | — | 1 (乱码实测) | — | 3.1104 (generic) | — | 7.2624 – 8.719 (18 模型) |
+| `eduguard_adversarial` | `extra:overall.asr` | — | 0 (乱码实测) ⚠满分方向 | — | 0 (random) | — | 0.0038 – 0.6241 (22 模型) ↓越低越好 |
+| `eduguard_sata` | `extra:overall.rfs` | 5270 | 0.1002 | 0.2509 (single_letter_random) | — | — | 0.6934 – 0.7694 (8 模型) |
 | `eduillustrate` | `extra:overall_mean_all_items` | — | 0 (推导) | — | 待跑 | 无 | — |
-| `ifeval` | `extra:prompt_strict_accuracy` | 541 | 0.1183 | 0.0555 (generic_text) | — | — | 0.8741 – 0.9298 (5 模型) |
-| `k12bench` | `accuracy` | 23640 | 0.0669 | 0.2066 (majority_constant) | — | — | 0.5001 – 0.5001 (1 模型) |
-| `k12vista` | `extra:official_score` | — | 0 (乱码实测) | — | 0 (random) | — | 0.6548 – 0.7398 (2 模型) |
-| `longtutor_diagnosis` | `extra:f1_macro` | 1001 | 0.2262 | 0.2483 (prior_random) | — | 无 | 0.1967 – 0.3158 (5 模型) |
-| `longtutor_evidence` | `accuracy` | — | 0 (乱码实测) | — | 0 (random) | 无 | 0.7122 – 0.8069 (5 模型) |
-| `longtutor_teaching` | `extra:judge_scores.average` | — | 1 (推导) | — | 待跑 | 无 | 3.038 – 4.234 (5 模型) |
+| `ifeval` | `extra:prompt_strict_accuracy` | 541 | 0.1183 | 0.0555 (generic_text) | — | — | 0.8741 – 0.9298 (6 模型) |
+| `k12bench` | `accuracy` | 23640 | 0.0669 | 0.2066 (majority_constant) | — | — | 0.5001 – 0.5718 (3 模型) |
+| `k12vista` | `extra:official_score` | — | 0 (乱码实测) | — | 0 (random) | — | 0.5405 – 0.7398 (3 模型) |
+| `longtutor_diagnosis` | `extra:f1_macro` | 1001 | 0.2262 | 0.2483 (prior_random) | — | 无 | 0.1542 – 0.3158 (6 模型) |
+| `longtutor_evidence` | `accuracy` | — | 0 (乱码实测) | — | 0 (random) | 无 | 0.7122 – 0.8069 (6 模型) |
+| `longtutor_teaching` | `extra:judge_scores.average` | — | 1 (推导) | — | 待跑 | 无 | 3.038 – 4.234 (6 模型) |
 | `mathtutorbench_judge_calibration` | `accuracy` | 964 | 0.4998 | 0.5 (always_a) | — | 无 | 0.8102 – 0.8444 (7 模型) |
 | `mathtutorbench_mistake_correction` | `accuracy` | 1002 | 0 (推导) | 0.0141 (prior_random) | — | 无 | 0.8603 – 0.9421 (6 模型) |
 | `mathtutorbench_mistake_location` | `extra:f1_micro` | 2004 | 0.0996 | 0.5 (always_zero) | — | 无 | 0.763 – 0.7919 (6 模型) |
-| `mathtutorbench_pedagogy` | `extra:win_rate` | — | 0.5 (推导) | — | — | 无 | 0.7448 – 0.867 (7 模型) |
-| `mathtutorbench_pedagogy_hard` | `extra:win_rate` | — | 0.5 (推导) | — | — | 无 | 0.6621 – 0.8639 (7 模型) |
+| `mathtutorbench_pedagogy` | `extra:win_rate` | — | 0.5 (推导) | — | — | 无 | 0.7396 – 0.9052 (13 模型) |
+| `mathtutorbench_pedagogy_hard` | `extra:win_rate` | — | 0.5 (推导) | — | — | 无 | 0.6284 – 0.8853 (13 模型) |
 | `mathtutorbench_problem_solving` | `accuracy` | 1319 | 0 (推导) | 0.0111 (prior_random) | — | 无 | 0.9545 – 0.9803 (5 模型) |
-| `mathtutorbench_scaffolding` | `extra:win_rate` | — | 0.5 (推导) | — | — | 无 | 0.1426 – 0.5948 (7 模型) |
-| `mathtutorbench_scaffolding_hard` | `extra:win_rate` | — | 0.5 (推导) | — | — | 无 | 0.13 – 0.5612 (7 模型) |
+| `mathtutorbench_scaffolding` | `extra:win_rate` | — | 0.5 (推导) | — | — | 无 | 0.1426 – 0.6191 (13 模型) |
+| `mathtutorbench_scaffolding_hard` | `extra:win_rate` | — | 0.5 (推导) | — | — | 无 | 0.1239 – 0.5933 (13 模型) |
 | `mathtutorbench_socratic` | `extra:avg_bleu` | — | 0 (推导) | — | — | 无 | 0.2131 – 0.2976 (5 模型) |
 | `mathtutorbench_solution_correctness` | `extra:f1` | 2004 | 0.4996 | 0.6667 (always_yes) | — | 无 | 0.8567 – 0.8952 (6 模型) |
-| `mathvista` | `accuracy` | 1000 | 0.1792 | 0.1991 (prior_random) | — | 0.603 (A) | 0.8409 – 0.887 (2 模型) |
-| `mmlu_pro` | `accuracy` | 12032 | 0.1113 | 0.1166 (majority_constant) | — | — | 0.8273 – 0.8827 (6 模型) |
-| `mmtutorbench` | `extra:average_total_score_0_to_6` | — | 0 (乱码实测) | — | 0.75 (generic) | 5.85 (B) | 3.4447 – 4.5584 (2 模型) |
+| `mathvista` | `accuracy` | 1000 | 0.1792 | 0.1991 (prior_random) | — | 0.603 (A) | 0.834 – 0.887 (3 模型) |
+| `mmlu_pro` | `accuracy` | 12032 | 0.1113 | 0.1166 (majority_constant) | — | — | 0.791 – 0.8827 (7 模型) |
+| `mmtutorbench` | `extra:average_total_score_0_to_6` | — | 0 (乱码实测) | — | 0.75 (generic) | 5.85 (B) | 3.4447 – 4.7675 (5 模型) |
 | `mmtutorbench_judge_calibration` | `—` | — | n/a | — | 待跑 | 无 | — |
-| `mooccube_prereq` | `extra:score_10` | 300 | 0.1029 | — | — | 无 | 3.789 – 4.76 (5 模型) |
-| `mrbench_judge` | `extra:macro_over_dimensions.f1_macro` | 13240 | 0.2688 | 0.3337 (prior_random) | — | — | 0.4109 – 0.5615 (6 模型) |
-| `mrbench_tutor` | `extra:pass_rate` | — | 0 (乱码实测) | — | 0 (echo) | 0.605 (B) / 同 judge 0.1637 | 0.68 – 0.83 (3 模型) |
-| `olympiadbench` | `accuracy` | 6728 | 0 (推导) | 0.0033 (random_number) | — | — | 0.716 – 0.7662 (3 模型) |
-| `p07_selfcheck` | `extra:score_10` | 550 | 1.8518 | 5 (never_change) | — | 无 | 5.019 – 5.572 (5 模型) |
-| `p08_abstention` | `extra:score_10` | 5200 | 4.9906 | 5 (always_abstain) | — | 无 | 8.62 – 9.12 (5 模型) |
-| `p08_calibration` | `extra:score_10` | 550 | 3.3248 | 5 (never_high_confidence) | — | 无 | 5.574 – 6.754 (5 模型) |
-| `pedagogy_benchmark` | `accuracy` | 1119 | 0.2499 | 0.2931 (majority_constant) | — | — | 0.6935 – 0.8901 (11 模型) |
-| `sas_bench` | `extra:overall.qwk` | — | 0 (推导) | 0 (constant_rating) | — | — | 79.0429 – 86.7666 (8 模型) |
-| `tutorbench` | `extra:arr_w_x100` | — | 2.54 (乱码实测) | — | 2.54 (random) | — | 54.1 – 54.1 (1 模型) |
+| `mooccube_prereq` | `extra:score_10` | 300 | 0.1029 | — | — | 无 | 1.229 – 4.76 (6 模型) |
+| `mrbench_judge` | `extra:macro_over_dimensions.f1_macro` | 13240 | 0.2688 | 0.3337 (prior_random) | — | — | 0.4109 – 0.5615 (8 模型) |
+| `mrbench_tutor` | `extra:pass_rate` | — | 0 (乱码实测) | — | 0 (echo) | 0.605 (B) / 同 judge 0.1637 | 0.68 – 0.9293 (8 模型) |
+| `olympiadbench` | `accuracy` | 6728 | 0 (推导) | 0.0033 (random_number) | — | — | 0.716 – 0.7662 (4 模型) |
+| `p07_selfcheck` | `extra:score_10` | 550 | 1.8518 | 5 (never_change) | — | 无 | 4.928 – 5.572 (6 模型) |
+| `p08_abstention` | `extra:score_10` | 5200 | 4.9906 | 5 (always_abstain) | — | 0.9316 (B) | 8.62 – 9.32 (6 模型) |
+| `p08_calibration` | `extra:score_10` | 550 | 3.3248 | 5 (never_high_confidence) | — | 无 | 5.574 – 6.754 (6 模型) |
+| `pedagogy_benchmark` | `accuracy` | 1119 | 0.2499 | 0.2931 (majority_constant) | — | — | 0.6935 – 0.8901 (12 模型) |
+| `sas_bench` | `extra:overall.qwk` | — | 0 (推导) | 0 (constant_rating) | — | — | 79.0429 – 86.7666 (9 模型) |
+| `tutorbench` | `extra:arr_w_x100` | — | 2.54 (乱码实测) | — | 2.54 (random) | — | 56.18 – 67.5 (4 模型) |
 
 ## 解读警告（读分数前先看这一节）
 
@@ -96,9 +96,9 @@ adapter 本身不产出题目，没有可抽样的答案空间。表里记 `n/a`
   这个 headline 对任何常数策略都恒等于 5.0，超过 5 才说明真的在区分可答/不可答。
 
 对照实跑值（同为 `score_10`）：
-- `p07_selfcheck`：5.019 – 5.572（5 模型）——最低的 doubao-seed-2.0-pro 只比平凡策略高 0.019 分。
-- `p08_calibration`：5.574 – 6.754（5 模型）——最低的 MiniMax-M2.7 只比平凡策略高 0.574 分。
-- `p08_abstention`：8.62 – 9.12（5 模型）——最低的 MiniMax-M2.7 只比平凡策略高 3.62 分。
+- `p07_selfcheck`：4.928 – 5.572（6 模型）——最低的 Qwen/Qwen3.5-4B **低于**平凡策略 0.072 分。
+- `p08_calibration`：5.574 – 6.754（6 模型）——最低的 MiniMax-M2.7 只比平凡策略高 0.574 分。
+- `p08_abstention`：8.62 – 9.32（6 模型）——最低的 MiniMax-M2.7 只比平凡策略高 3.62 分。
 
 **p07_selfcheck 尤其值得停下来看**：它衡量的是「自我复查能不能改对而不改坏」，
 而全部模型都挤在 5.0 这条「从不改答案」的线附近。这不是分数低，是这个指标目前几乎没测出东西。
@@ -134,45 +134,51 @@ adapter 本身不产出题目，没有可抽样的答案空间。表里记 `n/a`
 
 | benchmark | 最强平凡策略 | 地板 | 实跑最低 | 实跑最高 | 地板占比 | 地板以上的有效区间 |
 |---|---|---|---|---|---|---|
-| `p07_selfcheck` | `never_change` | 5 | 5.019 | 5.572 | **90%** | 0.572 |
-| `mathtutorbench_scaffolding_hard` | `random_judge` | 0.5 | 0.13 | 0.5612 | **89%** | 0.0612 |
-| `mathtutorbench_scaffolding` | `random_judge` | 0.5 | 0.1426 | 0.5948 | **84%** | 0.0948 |
-| `longtutor_diagnosis` | `prior_random` | 0.2483 | 0.1967 | 0.3158 | **79%** | 0.0675 |
+| `p07_selfcheck` | `never_change` | 5 | 4.928 | 5.572 | **90%** | 0.572 |
+| `mathtutorbench_scaffolding_hard` | `random_judge` | 0.5 | 0.1239 | 0.5933 | **84%** | 0.0933 |
+| `mathtutorbench_scaffolding` | `random_judge` | 0.5 | 0.1426 | 0.6191 | **81%** | 0.1191 |
+| `longtutor_diagnosis` | `prior_random` | 0.2483 | 0.1542 | 0.3158 | **79%** | 0.0675 |
 | `mathtutorbench_solution_correctness` | `always_yes` | 0.6667 | 0.8567 | 0.8952 | **74%** | 0.2285 |
 | `p08_calibration` | `never_high_confidence` | 5 | 5.574 | 6.754 | **74%** | 1.754 |
 | `mathtutorbench_mistake_location` | `always_zero` | 0.5 | 0.763 | 0.7919 | **63%** | 0.2919 |
 | `bea2025_judge` | `prior_random` | 0.3345 | 0.3687 | 0.5488 | **61%** | 0.2143 |
 | `mrbench_judge` | `prior_random` | 0.3337 | 0.4109 | 0.5615 | **59%** | 0.2278 |
 | `mathtutorbench_judge_calibration` | `always_a` | 0.5 | 0.8102 | 0.8444 | **59%** | 0.3444 |
-| `mathtutorbench_pedagogy_hard` | `random_judge` | 0.5 | 0.6621 | 0.8639 | **58%** | 0.3639 |
-| `mathtutorbench_pedagogy` | `random_judge` | 0.5 | 0.7448 | 0.867 | **58%** | 0.367 |
-| `p08_abstention` | `always_abstain` | 5 | 8.62 | 9.12 | **55%** | 4.12 |
-| `k12bench` | `majority_constant` | 0.2066 | 0.5001 | 0.5001 | **41%** | 0.2935 |
+| `mathtutorbench_pedagogy_hard` | `random_judge` | 0.5 | 0.6284 | 0.8853 | **56%** | 0.3853 |
+| `mathtutorbench_pedagogy` | `random_judge` | 0.5 | 0.7396 | 0.9052 | **55%** | 0.4052 |
+| `p08_abstention` | `always_abstain` | 5 | 8.62 | 9.32 | **54%** | 4.32 |
+| `k12bench` | `majority_constant` | 0.2066 | 0.5001 | 0.5718 | **36%** | 0.3652 |
 | `pedagogy_benchmark` | `majority_constant` | 0.2931 | 0.6935 | 0.8901 | **33%** | 0.597 |
 | `eduguard_sata` | `single_letter_random` | 0.2509 | 0.6934 | 0.7694 | **33%** | 0.5185 |
 | `ceval` | `majority_constant` | 0.2623 | 0.8276 | 0.9547 | **27%** | 0.6924 |
 
 ### 3b. 跌破地板的：这些分数说明模型在该任务上没有可用信号
 
-**`longtutor_diagnosis`**（地板 0.2483，策略 `prior_random`）—— 3/5 个模型跌破：
+**`longtutor_diagnosis`**（地板 0.2483，策略 `prior_random`）—— 4/6 个模型跌破：
+- Qwen/Qwen3.5-4B: 0.1542
 - MiniMax-M2.7: 0.1967
 - glm-5.2: 0.2314
 - doubao-seed-2.0-pro: 0.2338
 
-**`mathtutorbench_scaffolding`**（地板 0.5，策略 `random_judge`）—— 5/7 个模型跌破：
+**`mathtutorbench_scaffolding`**（地板 0.5，策略 `random_judge`）—— 6/13 个模型跌破：
 - MiniMax-M2.7: 0.1426
 - deepseek-v4-flash: 0.15
+- Qwen/Qwen3.5-4B: 0.2422
 - doubao-seed-2.0-lite: 0.2537
 - MiniMax-M3: 0.2713
 - doubao-seed-2.0-pro: 0.3496
 
-**`mathtutorbench_scaffolding_hard`**（地板 0.5，策略 `random_judge`）—— 6/7 个模型跌破：
+**`mathtutorbench_scaffolding_hard`**（地板 0.5，策略 `random_judge`）—— 7/13 个模型跌破：
 - MiniMax-M2.7: 0.13
 - deepseek-v4-flash: 0.1667
 - doubao-seed-2.0-lite: 0.204
+- Qwen/Qwen3.5-4B: 0.2187
 - MiniMax-M3: 0.2248
 - doubao-seed-2.0-pro: 0.3425
 - deepseek-v4-pro: 0.4128
+
+**`p07_selfcheck`**（地板 5，策略 `never_change`）—— 1/6 个模型跌破：
+- Qwen/Qwen3.5-4B: 4.928
 
 `mathtutorbench_scaffolding` 这一条尤其要读懂：它的 headline 是**与金标教师回应的成对胜率**，
 0.5 就是「与专家教师打平」。跌破 0.5 不是「分数偏低」，而是**在搭脚手架这件事上确实不如人类教师**。
@@ -209,7 +215,22 @@ bea2025_tutor 的四条指令同样 1:1 对上它的四个维度。MRBench 版�
 
 这解释了下面这组数为什么会长这样——不需要引入「judge 有偏见」之类的假设：
 
-（专家同尺复评正在重跑，数字待补；`reports/eval/_baseline/*/expert/` 完成后重跑本脚本。）
+| benchmark | 题数 | 人类标注者判专家 | 我们的 judge 判**同一批**专家 | 同一 judge 判模型 |
+|---|---|---|---|---|
+| `bea2025_tutor` | 300 | **0.5233** | **0.1601** | 0.7133 – 0.9189 |
+| `mrbench_tutor` | 200 | **0.605** | **0.1637** | 0.68 – 0.9293 |
+
+人类标注者认为专家教师和模型在同一档；我们的 judge 认为专家教师远不如模型。
+差距集中在 prompt 明确点名的那几维：
+
+| benchmark | 维度 | 人类标注 | 我们的 judge | 落差 |
+|---|---|---|---|---|
+| `bea2025_tutor` | Mistake_Identification | 0.75 | 0.4769 | −0.2731 |
+| `bea2025_tutor` | Providing_Guidance | 0.6833 | 0.5694 | −0.1139 |
+| `bea2025_tutor` | Actionability | 0.8033 | 0.4306 | −0.3727 |
+| `mrbench_tutor` | Mistake_Identification | 0.81 | 0.5965 | −0.2135 |
+| `mrbench_tutor` | Providing_Guidance | 0.72 | 0.5322 | −0.1878 |
+| `mrbench_tutor` | Actionability | 0.82 | 0.345 | −0.475 ⚠ |
 
 典型分歧长这样（MRBench，学生上一轮已自己纠正了错误）：
 
@@ -258,7 +279,7 @@ bea2025_tutor 的四条指令同样 1:1 对上它的四个维度。MRBench 版�
 
 ## 人类表现：能查到的很少，查不到的如实留空
 
-5/19 个 benchmark 有可用的人类数值，另有 20 个属自建或无外部人类参照。分级分布：{'A': 1, 'B': 4, 'null': 14}。
+6/21 个 benchmark 有可用的人类数值，另有 18 个属自建或无外部人类参照。分级分布：{'A': 1, 'B': 5, 'null': 15}。
 
 | 分级 | 含义 |
 |---|---|
@@ -271,19 +292,21 @@ bea2025_tutor 的四条指令同样 1:1 对上它的四个维度。MRBench 版�
 
 | benchmark | 人类值 | 分级 | 来源 | 关键限制 |
 |---|---|---|---|---|
-| `agieval` | 0.67 | B | AGIEval (NAACL 2024 Findings), arXiv:2304.06364；仓库 data/exhaustive_2026-05-13/results.jsonl 已收录 | 论文只对 LSAT / SAT / Gaokao 这些真人考试子集给出人类分，而我们跑的 7,272 题还包含 MATH(1,000) 等无人类分的任务，所以 0.670 不能直接和我们的总 accuracy 并列，只能逐 task 对齐后使用。 |
+| `agieval` | 0.67 | B | AGIEval (NAACL 2024 Findings), arXiv:2304.06364；仓库 data/exhaustive_2026-05-13/results.jsonl 已收录 | 0.670 是论文自己列的总均值，不要拿它和我们的总 accuracy 并列——我们跑的 7,272 题里 MATH(1,000) 没有人类分。论文对其余 20 个子任务逐个给了人类均分与前 1% 分（见 per_task），按我们的题数加权重算才是可比的口径，那条路径由 build_human_baseline_report.py 完成。 |
 | `bea2025_tutor` | 0.5233 | B | 本地 mrbench_v3_devset.json 自带的 Expert 教师回复 + 人类标注 | 由本地数据集自带的 Expert / Novice 人类教师回复 + 人类标注金标算出，用的是 adapter 自己的标签归一与 KEY_DIMENSIONS 判定，因此与我们的 pass_rate 同口径同题集。唯一的口径差：这里的标签来自人类标注者，我们模型的标签来自 LLM judge。跑 scripts/run_reference_baseline.py --variant expert 用同一个 judge 复评后才严格可比。 |
-| `mathvista` | 0.603 | A | MathVista (ICLR 2024), arXiv:2310.02255；官方 repo lupantech/MathVista 榜单 | 论文的人类评测就在 testmini 1,000 题上做，与我们的评测集完全一致。 |
+| `mathvista` | 0.603 | A | MathVista (ICLR 2024), arXiv:2310.02255；官方 repo lupantech/MathVista 榜单 | 论文的人类评测就在 testmini 1,000 题上做，与我们的评测集完全一致。论文另给 5 类任务与 7 类技能的人类拆分（见 per_task）；任务维度与我们的 by_bucket.task 同名可直接对齐，技能维度我们还没建 bucket。读拆分时记住标注协议：每人 20 分钟做 5 题，几何题的 48.4% 是没时间算，不是算不出。 |
 | `mmtutorbench` | 5.85 | B | MMTutorBench (ACL 2026), arXiv:2510.23477 | 两处不可比：(1) 人类只在 66 题子集上评，我们跑 770 行；(2) 人类回复由论文的 GPT-o4-mini rubric judge 打分，我们的固定 judge 是 MiniMax-M3。judge 不同会整体平移分数，跨 judge 直接比会误判。 |
 | `mrbench_tutor` | 0.605 | B | 本地 MRBench_V2.json 自带的 Expert 教师回复 + 人类标注 | 由本地数据集自带的 Expert / Novice 人类教师回复 + 人类标注金标算出，用的是 adapter 自己的标签归一与 KEY_DIMENSIONS 判定，因此与我们的 pass_rate 同口径同题集。唯一的口径差：这里的标签来自人类标注者，我们模型的标签来自 LLM judge。跑 scripts/run_reference_baseline.py --variant expert 用同一个 judge 复评后才严格可比。 |
+| `p08_abstention` | 0.9316 | B | UMWP / Benchmarking Hallucination in LLMs based on Unanswerable Math Word Problem (LREC-COLING 2024), arXiv:2403.03558 | ⚠ 这个数不在 headline 的标度上。我们的 score_10 是仓库自建复合指标，对任何与题无关的策略都恒等于 5.0，没有人类对照概念；但题源 UMWP 的原生指标（以「不可答」为正类的 F1）我们本来就在算，字段是 extra_metrics.abstention_f1，可以直接对上人类的 93.16%。口径差：论文用 instruction 输入形式，等于提前告诉受试者存在不可答题；我们的 prompt 故意不提示（提示了会诱发全弃答），所以我们这边更难，差距可能被高估。另：人类只做了按类别分层抽的 200 题，我们跑 5,200 题全量。 |
 
 ### 查过但没有的（附证据，不必重查）
 
 | benchmark | 查了什么 | 结论 |
 |---|---|---|
 | `asap_2` | ASAP 2.0 corpus paper (Crossley et al., Assessing Writing, 2025) | 已查 GitHub README 与语料论文页：README 未给一致性数字，论文 403。 |
-| `bea2025_judge` | Findings of the BEA 2025 Shared Task, arXiv:2507.10579 | 已查 Findings 论文：给出各赛道最佳系统分与参赛规模，未给人类基线。 |
+| `bea2025_judge` | Findings of the BEA 2025 Shared Task, arXiv:2507.10579 | 已查 Findings 论文：给出标注者一致性、各赛道最佳系统分与参赛规模，未给人类判分基线。 |
 | `ceval` | C-Eval (NeurIPS 2023 D&B), arXiv:2305.08322 | 已查论文与 NeurIPS 版：无 human 行。 |
+| `edubench` | EduBench (arXiv:2505.16160), github.com/ybai-nlp/EduBench | 已查论文正文与 Table 5：给出人类评测规模、Kendall's W 与「高约 1 分」的结论，无人类得分行。 |
 | `eduguard_adversarial` | EduGuardBench, arXiv:2511.06890 | 已查论文：给出 judge 校准 kappa，无人类 ASR。 |
 | `eduguard_sata` | EduGuardBench, arXiv:2511.06890 | 已查论文：只有 judge 与人类的校准 kappa，无人类作答分。 |
 | `ifeval` | IFEval, Google Research | 论文无人类实验；此处只记构造性上限。 |
@@ -292,7 +315,7 @@ bea2025_tutor 的四条指令同样 1:1 对上它的四个维度。MRBench 版�
 | `mmlu_pro` | MMLU-Pro (NeurIPS 2024 D&B) | 已查论文：无 human 行；MMLU 的 89.8% 出自 arXiv:2009.03300，属另一 benchmark。 |
 | `mrbench_judge` | Unifying AI Tutor Evaluation / MRBench, arXiv:2412.09416 | 论文正文给出总体 kappa 0.71 与试点 Fleiss 0.65，未按维度拆分。 |
 | `olympiadbench` | OlympiadBench (ACL 2024), arXiv:2402.14008 | 已查 arXiv:2402.14008 摘要与正文：无人类基线，仅有定性表述。 |
-| `pedagogy_benchmark` | Benchmarking the Pedagogical Knowledge of LLMs, arXiv:2506.18710 | 已查论文：给出人群均分约 50%，同时明确声明 question-level human results are not available。 |
+| `pedagogy_benchmark` | Benchmarking the Pedagogical Knowledge of LLMs, arXiv:2506.18710 | 已查论文正文：给出人群均分约 50% 及其推导方式，同时明确声明无题级人类结果。 |
 | `sas_bench` | SAS-Bench, arXiv:2505.07247 | 已查 arXiv:2505.07247 全文：明确无 inter-annotator agreement 数字。 |
 | `tutorbench` | TutorBench (Scale AI), arXiv:2510.02663 | 已查论文：只有 judge-人类一致性与模型分，无人类作答分。 |
 
