@@ -31,8 +31,12 @@ from concurrent.futures import ThreadPoolExecutor
 sys.path.insert(0, "/home/likefallwind/code/edubenchmark/scripts")
 from eval.benchmarks import get_adapter  # noqa: E402
 
-BASE = "http://115.190.90.101:63550/v1/chat/completions"
-MODEL = "Qwen/Qwen3.5-4B"
+import os
+
+# 换模型压测时用环境变量覆盖, 不要改这里的默认值:
+#   MODEL=Qwen/Qwen3.8-27B python3 scripts/bench_vllm_concurrency.py 192 4,8,16,32,48,64
+BASE = os.environ.get("VLLM_BENCH_BASE", "http://115.190.90.101:63550/v1/chat/completions")
+MODEL = os.environ.get("MODEL", "Qwen/Qwen3.5-4B")
 
 
 def build_prompts(n: int) -> list[list[dict]]:

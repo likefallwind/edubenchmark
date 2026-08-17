@@ -184,3 +184,17 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: Eedi 干扰项-误概念数据测干扰项设计;难度定标可用真实作答通过率校验自建;目标对齐需含课标标注的题库。
   Related capabilities: P23; LAD
   Source: doc/atomic_ability_mapping_final_2026-07-15.md 裁决记录 R19
+
+## OlympiadBench 分母裁剪与聚合覆盖率门槛缺失 - 2026-08-16
+
+- Gap: `no_prediction` 从分母剔除,导致 olympiadbench 的 accuracy 在不同模型间按不同分母计算,而聚合脚本没有覆盖率门槛把这类 run 拦下来。实测同一 benchmark 六个 run 的覆盖率:doubao-seed-2.0-pro 6728/6728(acc 0.766)、minimax3 6722/6728(0.716)、deepseek-v4-pro 6685/6728(0.736)、Qwen3.5-4B 6616/6728(0.717)、**glm-5.2 仅 2673/6728 = 39.7%(acc 0.841)**。glm-5.2 的高分完全来自分母:它是纯文本模型,4,055 道 `OE_MM_*` 多模态题被 API 以 `400 InvalidParameter: Model only support text input` 全量拒绝(2026-07-21 已记录在 CLAUDE.md),剩下的纯文本子集恰是相对容易的那批。
+  Product reason: 0.841 排在全量作答的 doubao(0.766)之上,任何按 P 分排名的结论都会把"拒答了 60% 题"读成"能力更强"。
+  Suggested data/eval: `scripts/build_atomic_ability_rebenchmark_artifacts.py` 的 include 判据(约 1180-1196 行)目前只有绝对数量门槛(`scored < 100` 或 `total < 100` 排除),**没有 `scored/total` 覆盖率门槛**;建议补一条覆盖率下限(可参照 `build_baseline_report.COVERAGE_FLOOR` 的 0.9 口径),低于线的 run 标 `exclude_from_main` 并在 reasons 里记明覆盖率。注意 P03 那一格已经处理过了——olympiadbench 的多模态子集格子按 `MODEL_CAPABILITIES[...]["vision"] is False` 跳过盲模型——**但 `overall/subject/language/modality accuracy` 那一行是无条件 `add` 的,P04/P05 照单全收**,所以补门槛要落在 include 判据上而不是那一格。
+  Related capabilities: P04, P05, P03
+  Source: 2026-08-16 Qwen3.5-4B 全量跑完后的收尾核查
+
+- Gap: Qwen3.5-4B 有 118 道题因思考发散撞满 vLLM `--max-model-len 65536` 而回复为空(olympiadbench 112、agieval 4、mmlu_pro 1、tutorbench 1),全部 `attempts=3`、每次烧掉约 65,000 completion token、`content` 空,被剔出分母。被剔掉的恰是模型想到失控的最难题,olympiadbench 的 0.717 因此偏乐观。
+  Product reason: 上下文预算耗尽和"答错"是两种不同的失败,前者按现在的口径不进分母,等于免费豁免最难的题。
+  Suggested data/eval: 短期在报告里注明"1.7% 最难项因上下文耗尽未计入";若要真正测到,需把 max-model-len 提向模型原生的 262,144,代价是显存与吞吐(单题实测已出现 2.4 小时、reasoning 29 万字符的情形),性价比低。同类现象在其他自建推理模型上会复现,不是 Qwen 专有。
+  Related capabilities: P04, P05
+  Source: 2026-08-16 Qwen3.5-4B 全量跑完后的收尾核查

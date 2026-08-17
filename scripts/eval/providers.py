@@ -252,13 +252,40 @@ SILICON = Provider(
 # revision and dropping ``--chat-template`` from the start script so the official
 # template loads (it defaults thinking on and, unlike the hand-written one, keeps
 # reasoning history across turns).
+# **Second model on this box: ``Qwen/Qwen3.8-27B``** (added 2026-08-17; ModelScope
+# ``Qwen/Qwen3.8-27B`` at ``/vepfs-mlp2/mlp-public/100143/models/Qwen3.8-27B``,
+# started by ``start_vllm_qwen38_27b.sh`` — same mandatory container port 3631,
+# ``--max-model-len 32768``, ``--reasoning-parser qwen3``). Only one model is
+# served at a time; check ``/v1/models`` before assuming which is loaded. It is a
+# reasoning model (trace in the bare ``reasoning`` field) and multimodal.
+#
+# **Concurrency: use ``--concurrency 32``** (decided 2026-08-17). Unlike the 4B,
+# the binding constraint here is the **KV pool, not compute and not
+# ``--max-num-seqs 128``** (which is unreachable). Weights take 51.7 GiB, leaving a
+# 16.39 GiB / 249,036-slot KV pool, and one sequence costs **2,250 slots fixed +
+# 1 per token** — the fixed part is the per-sequence state of the 48 linear-
+# attention layers (only 16 of 64 layers are full attention, 64 KiB/token), which
+# does not shrink with length. So the seat count is a function of request length:
+#
+#     seats = 249,036 / (2250 + prompt+output tokens)
+#     1k -> 76,  2k -> 59,  4k -> 40,  8k -> 24,  16k -> 14,  32k -> 7
+#
+# Measured output throughput on ~780-token requests: 54.7 / 111.1 / 211.1 / 390.0
+# / 656.4 / 841.4 / 1019.9 tok/s at 2 / 4 / 8 / 16 / 32 / 48 / 64 concurrent, then
+# **96 and 128 are identical** (1083 tok/s, 181.4 vs 181.5 s wall) because both get
+# clamped to ~85 running sequences and the surplus just queues — TTFT p95 blows up
+# from 4 s to 38-42 s while throughput does not move. **Over-subscription does not
+# error, it queues**, so size the concurrency against the expected request length.
+# 32 is the chosen default: 64% of peak throughput, TTFT p95 2.1 s, ``Waiting``
+# zero throughout, and enough headroom for requests up to ~5.5k tokens. Tasks with
+# longer requests should be run at a lower concurrency, per the table above.
 VLLM = Provider(
     name="vllm",
     base_url="http://115.190.90.101:63550/v1",
     base_url_env="VLLM_BASE_URL",
     api_key_env="VLLM_API_KEY",
     chat_path="/chat/completions",
-    models=frozenset({"Qwen/Qwen3.5-4B"}),
+    models=frozenset({"Qwen/Qwen3.5-4B", "Qwen/Qwen3.8-27B"}),
     api_key_required=False,
 )
 
@@ -286,9 +313,10 @@ _PREFIX_PROVIDER: list[tuple[str, str]] = [
     # keeps this from swallowing a bare ``qwen-...`` name should another relay ever
     # serve one; the gateway lists no qwen model today (checked 2026-07-28).
     ("qwen/", "silicon"),
-    # Longer than ``qwen/``, so longest-match sends this one model to our own
+    # Longer than ``qwen/``, so longest-match sends these two models to our own
     # vLLM box while every other ``Qwen/*`` id still goes to SiliconFlow.
     ("qwen/qwen3.5-4b", "vllm"),
+    ("qwen/qwen3.8-27b", "vllm"),
 ]
 
 # Provider used when no prefix matches a given model name.
@@ -359,6 +387,7 @@ _REASONING_MODEL_PREFIXES: tuple[str, ...] = (
     "minimax-m3",
     "deepseek-v3.2-think",
     "qwen/qwen3.5-4b",
+    "qwen/qwen3.8-27b",
     "qwen/qwen3-8b",
 )
 

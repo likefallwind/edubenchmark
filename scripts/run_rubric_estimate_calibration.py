@@ -259,29 +259,51 @@ def main() -> int:
     out_dir = args.out_dir or (OUT_ROOT / args.benchmark)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Each estimator call costs ~2-3 minutes of reasoning latency, so a full run
+    # is hours long and a mid-run kill must not lose everything: flush the
+    # per-item rows and a partial summary after every condition.
+    estimates_path = out_dir / "estimates.jsonl"
+    estimates_path.write_text("", encoding="utf-8")
     conditions: list[dict[str, Any]] = []
+    total_conditions = len(estimators) * 2
     for estimator in estimators:
         for persona in ("expert", "novice"):
-            print(f"[run] {estimator} / {persona} / {len(items)} items / conc={args.concurrency}")
+            print(
+                f"[run {len(conditions) + 1}/{total_conditions}] {estimator} / {persona} / "
+                f"{len(items)} items / conc={args.concurrency}",
+                flush=True,
+            )
             result = run_condition(
                 items, dimensions, estimator, persona, args.concurrency, not args.no_images
             )
+            with estimates_path.open("a", encoding="utf-8") as fh:
+                for row in result.pop("rows", []):
+                    fh.write(
+                        json.dumps(
+                            {"estimator": estimator, "condition": persona, **row}, ensure_ascii=False
+                        )
+                        + "\n"
+                    )
             print(
                 f"       n={result.get('n')} failed={result.get('n_failed')} "
-                f"predicted={result.get('predicted_headline')}"
+                f"predicted={result.get('predicted_headline')}",
+                flush=True,
             )
             conditions.append(result)
-
-    with (out_dir / "estimates.jsonl").open("w", encoding="utf-8") as fh:
-        for cond in conditions:
-            for row in cond.pop("rows", []):
-                fh.write(
-                    json.dumps(
-                        {"estimator": cond["estimator"], "condition": cond["condition"], **row},
-                        ensure_ascii=False,
-                    )
-                    + "\n"
+            (out_dir / "summary.partial.json").write_text(
+                json.dumps(
+                    {
+                        "run_status": "running",
+                        "completed_conditions": len(conditions),
+                        "total_conditions": total_conditions,
+                        "conditions": conditions,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
                 )
+                + "\n",
+                encoding="utf-8",
+            )
 
     scale = float(truth["scale_max"])
     experts = [c for c in conditions if c["condition"] == "expert" and c.get("n")]
@@ -335,9 +357,11 @@ def main() -> int:
         "verdict": verdict,
         "verdict_reason": why,
     }
+    summary["run_status"] = "complete"
     (out_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    (out_dir / "summary.partial.json").unlink(missing_ok=True)
     print(f"\nwrote {out_dir}/summary.json")
     print(f"  真值 {truth['human_value']} / {scale}")
     for cond in conditions:
