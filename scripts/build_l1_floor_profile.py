@@ -42,7 +42,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import build_atomic_ability_rebenchmark_artifacts as agg  # noqa: E402
 
 BASELINE_PATH = ROOT / "data" / "benchmark_baselines_v1.json"
-PANEL_SCORES = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08" / "09_atomic_p_scores.jsonl"
+PANEL_SCORES = ROOT / "reports" / "atomic_ability_rebenchmark" / "09_atomic_p_scores.jsonl"
 L3_DIR = ROOT / "reports" / "eval" / "_baseline"
 OUT = ROOT / "reports" / "atomic_ability_l1_floor"
 

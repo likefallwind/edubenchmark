@@ -1,11 +1,11 @@
 # Atomic P Scores
 
-P-score rows: 191
+P-score rows: 209
 Covered P codes: P01, P02, P03, P04, P05, P06, P07, P08, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19
 Missing P codes: P09, P20
 P rows reported as 未测过 (score_10 = null): 0
 Capability-gap zero cells (score_10 = 0, counted): 36
-Untested cells (not counted; see `09_atomic_p_untested_cells.jsonl`): 54
+Untested cells (not counted; see `09_atomic_p_untested_cells.jsonl`): 47
 
 `score_10`: facet-weighted average with effective weight = relevance × confidence (R25 rule-derived weights). Coverage completeness is reported separately and is not folded back into the score.
 
@@ -68,33 +68,33 @@ a measurement artifact rather than a capability difference.
 | `deepseek-v4-pro` | `P17` 教育角色边界判断 | CEG | 5.8532 | 3 | 0 | 1 | 0.795 | eduguard_adversarial, eduguard_sata |
 | `deepseek-v4-pro` | `P18` 学生风险识别 | CEG | 7.612 | 1 | 0 | 0 | 0.2 | eduguard_sata |
 | `deepseek-v4-pro` | `P19` 安全处置选择 | CEG | 6.0467 | 3 | 0 | 0 | 1.305 | eduguard_adversarial, eduguard_sata |
-| `doubao-seed-2-0-lite` | `P04` 多模态生成 | SRG | 6.777 | 1 | 0 | 0 | 0.35 | eduillustrate |
+| `doubao-seed-2-0-lite` | `P04` 多模态生成 | SRG | 5.3038 | 1 | 0 | 0 | 0.35 | eduillustrate |
 | `doubao-seed-2-0-lite` | `P05` 知识调用与掌握 | FDR | 7.202 | 6 | 0 | 0 | 1.02 | edubench, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard |
 | `doubao-seed-2-0-lite` | `P06` 推理与生成 | FDR | 8.3156 | 2 | 0 | 0 | 0.595 | edubench |
 | `doubao-seed-2-0-lite` | `P10` 错误诊断 | LAD | 6.3803 | 1 | 0 | 0 | 0.06 | edubench |
 | `doubao-seed-2-0-lite` | `P12` 命题与作业设计 | LAD | 8.4848 | 2 | 0 | 0 | 0.595 | edubench |
 | `doubao-seed-2-0-lite` | `P13` 学习者画像建模 | CLM | 6.3047 | 1 | 0 | 0 | 0.17 | edubench |
 | `doubao-seed-2-0-lite` | `P14` 个性化教学策略选择 | CLM | 5.664 | 6 | 0 | 0 | 2.295 | edubench, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard |
-| `doubao-seed-2-0-lite` | `P16` 适配性解释与反馈生成 | CLM | 6.8483 | 9 | 0 | 0 | 2.01 | edubench, eduillustrate, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard |
+| `doubao-seed-2-0-lite` | `P16` 适配性解释与反馈生成 | CLM | 6.7266 | 9 | 0 | 0 | 2.01 | edubench, eduillustrate, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard |
 | `doubao-seed-2-0-lite` | `P17` 教育角色边界判断 | CEG | 6.3566 | 3 | 0 | 0 | 0.795 | eduguard_adversarial, eduguard_sata |
 | `doubao-seed-2-0-lite` | `P18` 学生风险识别 | CEG | 7.3 | 1 | 0 | 0 | 0.2 | eduguard_sata |
 | `doubao-seed-2-0-lite` | `P19` 安全处置选择 | CEG | 6.6595 | 3 | 0 | 0 | 1.305 | eduguard_adversarial, eduguard_sata |
 | `doubao-seed-2-0-pro` | `P01` 指令与约束遵循 | SRG | 8.9464 | 1 | 0 | 0 | 1.0 | ifeval |
 | `doubao-seed-2-0-pro` | `P02` 长上下文与证据定位 | SRG | 7.9358 | 5 | 0 | 0 | 2.08 | longtutor_evidence, mathtutorbench_mistake_location, sas_bench |
 | `doubao-seed-2-0-pro` | `P03` 多模态理解 | SRG | 7.6821 | 5 | 0 | 1 | 1.72 | k12vista, mathvista, mmtutorbench, olympiadbench |
-| `doubao-seed-2-0-pro` | `P04` 多模态生成 | SRG | 7.411 | 1 | 0 | 0 | 0.35 | eduillustrate |
+| `doubao-seed-2-0-pro` | `P04` 多模态生成 | SRG | 6.6376 | 1 | 0 | 0 | 0.35 | eduillustrate |
 | `doubao-seed-2-0-pro` | `P05` 知识调用与掌握 | FDR | 8.1093 | 16 | 0 | 0 | 4.19 | agieval, ceval, edubench, k12vista, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_problem_solving, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathvista, mmlu_pro, olympiadbench, pedagogy_benchmark, sas_bench |
-| `doubao-seed-2-0-pro` | `P06` 推理与生成 | FDR | 8.4498 | 10 | 0 | 1 | 3.365 | agieval, ceval, edubench, k12vista, mathtutorbench_problem_solving, mathvista, mmlu_pro, olympiadbench, sas_bench |
+| `doubao-seed-2-0-pro` | `P06` 推理与生成 | FDR | 8.5831 | 11 | 0 | 0 | 3.565 | agieval, ceval, edubench, k12vista, mathtutorbench_mistake_correction, mathtutorbench_problem_solving, mathvista, mmlu_pro, olympiadbench, sas_bench |
 | `doubao-seed-2-0-pro` | `P07` 自我校验与修正 | FDR | 6.026 | 3 | 0 | 0 | 1.05 | mathtutorbench_solution_correctness, p07_selfcheck, p08_calibration |
 | `doubao-seed-2-0-pro` | `P08` 置信度校准与弃答 | FDR | 7.6935 | 3 | 0 | 0 | 1.53 | p07_selfcheck, p08_abstention, p08_calibration |
-| `doubao-seed-2-0-pro` | `P10` 错误诊断 | LAD | 7.2709 | 6 | 0 | 3 | 2.53 | edubench, longtutor_diagnosis, mathtutorbench_mistake_location, mathtutorbench_solution_correctness, sas_bench |
-| `doubao-seed-2-0-pro` | `P11` 主观题评价能力 | LAD | 7.9089 | 2 | 0 | 3 | 1.3 | sas_bench |
+| `doubao-seed-2-0-pro` | `P10` 错误诊断 | LAD | 7.7212 | 9 | 0 | 0 | 3.07 | bea2025_tutor, edubench, longtutor_diagnosis, mathtutorbench_mistake_correction, mathtutorbench_mistake_location, mathtutorbench_solution_correctness, mrbench_tutor, sas_bench |
+| `doubao-seed-2-0-pro` | `P11` 主观题评价能力 | LAD | 7.179 | 4 | 0 | 1 | 2.3 | bea2025_judge, mrbench_judge, sas_bench |
 | `doubao-seed-2-0-pro` | `P12` 命题与作业设计 | LAD | 8.2344 | 2 | 0 | 0 | 0.595 | edubench |
 | `doubao-seed-2-0-pro` | `P13` 学习者画像建模 | CLM | 4.8701 | 3 | 0 | 0 | 1.05 | edubench, longtutor_diagnosis, pedagogy_benchmark |
-| `doubao-seed-2-0-pro` | `P14` 个性化教学策略选择 | CLM | 7.4955 | 10 | 0 | 4 | 3.905 | edubench, longtutor_teaching, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mmtutorbench, pedagogy_benchmark |
+| `doubao-seed-2-0-pro` | `P14` 个性化教学策略选择 | CLM | 7.3963 | 13 | 0 | 1 | 4.745 | bea2025_tutor, edubench, longtutor_teaching, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, mrbench_tutor, pedagogy_benchmark |
 | `doubao-seed-2-0-pro` | `P15` 学习路径规划（知识结构层） | CLM | 4.486 | 1 | 0 | 0 | 0.68 | mooccube_prereq |
-| `doubao-seed-2-0-pro` | `P16` 适配性解释与反馈生成 | CLM | 7.298 | 10 | 0 | 6 | 2.435 | edubench, eduillustrate, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mmtutorbench |
-| `doubao-seed-2-0-pro` | `P17` 教育角色边界判断 | CEG | 6.1316 | 3 | 0 | 1 | 0.795 | eduguard_adversarial, eduguard_sata |
+| `doubao-seed-2-0-pro` | `P16` 适配性解释与反馈生成 | CLM | 7.6659 | 15 | 0 | 1 | 3.345 | bea2025_tutor, edubench, eduillustrate, mathtutorbench_mistake_correction, mathtutorbench_pedagogy, mathtutorbench_pedagogy_hard, mathtutorbench_scaffolding, mathtutorbench_scaffolding_hard, mathtutorbench_socratic, mmtutorbench, mrbench_tutor |
+| `doubao-seed-2-0-pro` | `P17` 教育角色边界判断 | CEG | 6.7266 | 4 | 0 | 0 | 0.965 | eduguard_adversarial, eduguard_sata, mrbench_tutor |
 | `doubao-seed-2-0-pro` | `P18` 学生风险识别 | CEG | 7.618 | 1 | 0 | 0 | 0.2 | eduguard_sata |
 | `doubao-seed-2-0-pro` | `P19` 安全处置选择 | CEG | 6.5183 | 3 | 0 | 0 | 1.305 | eduguard_adversarial, eduguard_sata |
 | `glm-5.1` | `P02` 长上下文与证据定位 | SRG | 7.8142 | 1 | 0 | 0 | 0.2 | sas_bench |

@@ -43,7 +43,7 @@ import statistics
 from collections import defaultdict
 from pathlib import Path
 
-DEFAULT_REBENCH_DIR = Path("reports/atomic_ability_rebenchmark_2026-07-08")
+DEFAULT_REBENCH_DIR = Path("reports/atomic_ability_rebenchmark")
 DEFAULT_MEASUREMENT_MODEL = Path("data/mapping_measurement_model_v6.json")
 
 EVIDENCE_NAME = "08_selected_score_evidence.jsonl"

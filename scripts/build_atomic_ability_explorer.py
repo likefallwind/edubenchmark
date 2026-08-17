@@ -12,7 +12,7 @@ single self-contained HTML page with four cross-linked views:
                 and the per-subdimension model leaderboard
 
 No scores are recomputed here - this is a presentation layer over
-`reports/atomic_ability_rebenchmark_2026-07-08/`. Idempotent: rerunning
+`reports/atomic_ability_rebenchmark/`. Idempotent: rerunning
 overwrites the output byte-for-byte.
 """
 
@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
-REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
+REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark"
 MAPPING_JSON = ROOT / "data" / "mapping_measurement_model_v6.json"
 MAPPING_DOC = ROOT / "doc" / "atomic_ability_mapping_v6_2026-07-19.md"
 PROFILE_DIR = ROOT / "doc" / "benchmark_profiles"
@@ -39,6 +39,18 @@ GROUP_LABELS = {
     "CEG": "教育安全与学术规范",
 }
 GROUP_ORDER = ["SRG", "FDR", "LAD", "CLM", "CEG"]
+
+# The two tiers above the five groups. Source of truth is
+# `doc/atomic_ability_mapping_v6_2026-07-19.md` §大类划分 - a presentation-layer
+# split that does **not** enter the measurement model: weights, facet structure
+# and aggregation are unchanged by it. This only makes that table machine
+# readable so the website can section by it. No tier-level score exists.
+TIER_LABELS = {
+    "BASE": "通用基础能力",
+    "EDU": "教育专属能力",
+}
+TIER_ORDER = ["BASE", "EDU"]
+GROUP_TIER = {"SRG": "BASE", "FDR": "BASE", "LAD": "EDU", "CLM": "EDU", "CEG": "EDU"}
 
 # Every benchmark_id now owns a profile file; the map only covers ids whose
 # filename differs. It used to fold 17 sub-task ids onto 5 family files, which
@@ -67,6 +79,12 @@ MODEL_DISPLAY = {
     "kimi-k2-7-code": "Kimi-K2.7-Code",
     "minimax-m2.7": "MiniMax-M2.7",
     "minimax-m3": "MiniMax-M3",
+    # Self-hosted vLLM runs. Their keys come from the run directory name
+    # (`Qwen/Qwen3.5-4B` -> `qwen-qwen3-5-4b`), so they carry the vendor prefix
+    # the API-routed models do not. Missing entries fall back to the raw key
+    # silently, which is how these two shipped a slug as a display name.
+    "qwen-qwen3-5-4b": "Qwen3.5-4B",
+    "qwen-qwen3-8b": "Qwen3-8B",
     "qwen3-14b": "Qwen3-14B",
     "qwen3-5-122b-a10b": "Qwen3.5-122B-A10B",
     "qwen3-5-27b": "Qwen3.5-27B",
@@ -424,7 +442,12 @@ def build_payload() -> dict[str, Any]:
             "n_untested_cells": len(slim_untested),
         },
         "panel": panel_keys,
-        "groups": [{"id": g, "label": GROUP_LABELS[g]} for g in GROUP_ORDER],
+        # Membership lives on the group only (`tier`), never mirrored back into
+        # `tiers` - one place to read it, one place to get it wrong.
+        "tiers": [{"id": t, "label": TIER_LABELS[t]} for t in TIER_ORDER],
+        "groups": [
+            {"id": g, "label": GROUP_LABELS[g], "tier": GROUP_TIER[g]} for g in GROUP_ORDER
+        ],
         "abilities": abilities,
         "boundaries": boundaries,
         "benchmarks": benchmarks,

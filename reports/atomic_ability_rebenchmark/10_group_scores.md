@@ -20,15 +20,15 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `deepseek-v4-pro` | LAD | 7.4675 | 3 | P10, P11, P12 |
 | `deepseek-v4-pro` | SRG | 4.272 | 4 | P01, P02, P03, P04 |
 | `doubao-seed-2-0-lite` | CEG | 6.772 | 3 | P17, P18, P19 |
-| `doubao-seed-2-0-lite` | CLM | 6.2723 | 3 | P13, P14, P16 |
+| `doubao-seed-2-0-lite` | CLM | 6.2318 | 3 | P13, P14, P16 |
 | `doubao-seed-2-0-lite` | FDR | 7.7588 | 2 | P05, P06 |
 | `doubao-seed-2-0-lite` | LAD | 7.4325 | 2 | P10, P12 |
-| `doubao-seed-2-0-lite` | SRG | 6.777 | 1 | P04 |
-| `doubao-seed-2-0-pro` | CEG | 6.756 | 3 | P17, P18, P19 |
-| `doubao-seed-2-0-pro` | CLM | 6.0374 | 4 | P13, P14, P15, P16 |
-| `doubao-seed-2-0-pro` | FDR | 7.5697 | 4 | P05, P06, P07, P08 |
-| `doubao-seed-2-0-pro` | LAD | 7.8047 | 3 | P10, P11, P12 |
-| `doubao-seed-2-0-pro` | SRG | 7.9938 | 4 | P01, P02, P03, P04 |
+| `doubao-seed-2-0-lite` | SRG | 5.3038 | 1 | P04 |
+| `doubao-seed-2-0-pro` | CEG | 6.9543 | 3 | P17, P18, P19 |
+| `doubao-seed-2-0-pro` | CLM | 6.1046 | 4 | P13, P14, P15, P16 |
+| `doubao-seed-2-0-pro` | FDR | 7.603 | 4 | P05, P06, P07, P08 |
+| `doubao-seed-2-0-pro` | LAD | 7.7115 | 3 | P10, P11, P12 |
+| `doubao-seed-2-0-pro` | SRG | 7.8005 | 4 | P01, P02, P03, P04 |
 | `glm-5.1` | CEG | 8.0019 | 3 | P17, P18, P19 |
 | `glm-5.1` | CLM | 7.325 | 3 | P13, P14, P16 |
 | `glm-5.1` | FDR | 7.663 | 2 | P05, P06 |
@@ -50,18 +50,23 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `kimi-k2-6` | FDR | 7.5466 | 2 | P05, P06 |
 | `kimi-k2-6` | LAD | 7.4929 | 3 | P10, P11, P12 |
 | `kimi-k2-6` | SRG | 7.3299 | 1 | P02 |
-| `kimi-k2-7-code` | CLM | 7.1796 | 1 | P16 |
-| `kimi-k2-7-code` | SRG | 7.1796 | 1 | P04 |
+| `kimi-k2-7-code` | CLM | 7.1484 | 1 | P16 |
+| `kimi-k2-7-code` | SRG | 7.1484 | 1 | P04 |
 | `minimax-m2.7` | CEG | 7.445 | 3 | P17, P18, P19 |
-| `minimax-m2.7` | CLM | 5.4767 | 4 | P13, P14, P15, P16 |
-| `minimax-m2.7` | FDR | 6.5782 | 4 | P05, P06, P07, P08 |
-| `minimax-m2.7` | LAD | 7.5604 | 3 | P10, P11, P12 |
+| `minimax-m2.7` | CLM | 5.4997 | 4 | P13, P14, P15, P16 |
+| `minimax-m2.7` | FDR | 6.5873 | 4 | P05, P06, P07, P08 |
+| `minimax-m2.7` | LAD | 7.5709 | 3 | P10, P11, P12 |
 | `minimax-m2.7` | SRG | 4.0736 | 4 | P01, P02, P03, P04 |
 | `minimax-m3` | CEG | 8.0943 | 3 | P17, P18, P19 |
 | `minimax-m3` | CLM | 5.9103 | 4 | P13, P14, P15, P16 |
 | `minimax-m3` | FDR | 7.3963 | 4 | P05, P06, P07, P08 |
 | `minimax-m3` | LAD | 7.8006 | 3 | P10, P11, P12 |
 | `minimax-m3` | SRG | 7.3752 | 4 | P01, P02, P03, P04 |
+| `qwen-qwen3-5-4b` | CEG | 7.9733 | 3 | P17, P18, P19 |
+| `qwen-qwen3-5-4b` | CLM | 4.4401 | 4 | P13, P14, P15, P16 |
+| `qwen-qwen3-5-4b` | FDR | 6.923 | 4 | P05, P06, P07, P08 |
+| `qwen-qwen3-5-4b` | LAD | 7.3624 | 3 | P10, P11, P12 |
+| `qwen-qwen3-5-4b` | SRG | 6.0293 | 4 | P01, P02, P03, P04 |
 | `qwen-qwen3-8b` | FDR | 8.2764 | 2 | P05, P06 |
 | `qwen3-14b` | CLM | 6.1376 | 3 | P13, P14, P16 |
 | `qwen3-14b` | FDR | 7.4599 | 2 | P05, P06 |

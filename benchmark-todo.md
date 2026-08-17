@@ -89,7 +89,7 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Product reason: 如果继续把分析精力放在 MMLU/C-EVAL/AGIEval 等门槛项，会高估“会答题”对真实教育产品的解释力，并低估 P16/P17/P18/P22 等教育残余能力缺口。
   Suggested data/eval: 优先补齐 MMTutorBench、MathTutorBench scaffolding/hard、EduGuard refusal-quality、Pedagogy CDPK/SEND 分项和 TutorBench/BEA tutor 的多模型主跑；基础考试类保留为低频 gate。
   Related capabilities: P03, P05, P16, P17, P18, P20, P22; SRG/FDR/CLM/CEG
-  Source report: reports/atomic_ability_rebenchmark_2026-07-08/12_benchmark_priority_report.html
+  Source report: reports/atomic_ability_rebenchmark/12_benchmark_priority_report.html
 
 ## Construct review gap sweep - 2026-07-11
 
@@ -198,3 +198,17 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: 短期在报告里注明"1.7% 最难项因上下文耗尽未计入";若要真正测到,需把 max-model-len 提向模型原生的 262,144,代价是显存与吞吐(单题实测已出现 2.4 小时、reasoning 29 万字符的情形),性价比低。同类现象在其他自建推理模型上会复现,不是 Qwen 专有。
   Related capabilities: P04, P05
   Source: 2026-08-16 Qwen3.5-4B 全量跑完后的收尾核查
+
+## 裁判口径未落地到取分：同一 benchmark 内模型间混判 - 2026-08-17
+
+- Gap: 三种裁判逻辑（①按论文/meta-eval 最优裁判 ②全部 MiniMax-M3 ③全部 deepseek-v4-flash）目前只体现在"跑评测时选了谁"，**没有传导到聚合取分**。`scripts/build_atomic_ability_rebenchmark_artifacts.py` 的 `candidate_rank()` 按 `(source_type, 遗留的 minimax3 路径加分, scored, total, 路径字符串)` 排序，完全不看裁判是谁。实测 **54 个格子**有两个裁判的 run 在竞争，谁被选中是排序副作用：`mrbench_tutor` 上 doubao-seed-2.0-pro 取了 deepseek-v4-flash 的分（10.00）而其余三个模型取的是 MiniMax-M3 的分（9.15–9.35）；`bea2025_tutor` 上正好相反，只有 MiniMax-M2.7 取了 v4-flash。
+  Product reason: 同一个 benchmark 内部不同模型被不同裁判打分，横向排名不成立——而横向排名正是 P01–P20 画像的全部用途。
+  Suggested data/eval: 加一张 per-benchmark 裁判钉选表（`BENCHMARK_JUDGE_POLICY`），让 `candidate_rank` 优先命中钉选裁判、并对"钉选裁判缺该模型"的情况显式报缺而不是回退到别的裁判。取分格已于 2026-08-17 补上 `judge_model` 字段（`09_atomic_p_score_evidence.jsonl`）与 P 级 `judge_models` 汇总（`09_atomic_p_scores.jsonl`），钉选表可直接建在这个字段上。用户裁决 2026-08-17：现阶段先混着用、标注清楚即可，切分清楚留到后面。
+  Related capabilities: 全部 judge 判分的 P（P10/P11/P12/P13/P14/P16/P17）
+  Source: 2026-08-17 Qwen3.5-4B 原子能力总分核查
+
+- Gap: 两个"统一裁判"的 sweep 都没跑完，而且 deepseek-v4-flash 从未进过人工锚定的 meta-eval。按 (benchmark × 面板5模型 + Qwen3.5-4B) = 90 个组合统计：统一 MiniMax-M3 缺 33/90（主要是 edubench×5、eduguard_adversarial×5 面板模型没有 M3 判分），统一 deepseek-v4-flash 缺 48/90（**Qwen3.5-4B 15/15 全缺**，k12vista/eduillustrate/longtutor_* 全员为零）。`reports/eval/_judge_jury/jury_report.md` 对人工标注算过 macro kappa：mrbench 上 glm-5.2 0.438 > deepseek-v4-pro 0.417 > **MiniMax-M3 0.354（最差）**；bea2025 上 glm-5.2 0.406 > v4-pro 0.388 > **M3 0.335（最差）**；mathtutorbench 上 glm-5.2 0.692 ≈ M3 0.675 > v4-pro 0.608。deepseek-v4-flash 不在这个研究里，没有任何人工锚定证据。
+  Product reason: 选"统一 M3"等于在 mrbench/bea2025 两个教学核心 benchmark 上主动选了实测最不像人的裁判；选"统一 v4-flash"则是在选一个没验证过的裁判，且成本最高。
+  Suggested data/eval: 若要走逻辑③（论文/最优裁判），mathtutorbench 四个任务已齐（M3，6 模型全覆盖，零成本）；mrbench_tutor/bea2025_tutor 需换 glm-5.2 并全员重判（各 6 次，预测有缓存）。edubench 的论文口径裁判 deepseek-v3.2 走的是已确认会污染输出的 ZGC 路由，这条路实际已关闭，需另定 edubench 的钉选裁判。补 deepseek-v4-flash 进 meta-eval 也是前置项。
+  Related capabilities: P10, P11, P12, P13, P14, P16, P17
+  Source: 2026-08-17 Qwen3.5-4B 原子能力总分核查

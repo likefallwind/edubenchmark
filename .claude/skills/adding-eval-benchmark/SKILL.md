@@ -53,7 +53,7 @@ Use the miniconda python for all fetch/eval commands (pandas/datasets live there
 **Gate: after the smoke test, show the user the smoke results and confirm they look good before running anything at scale.** Do not proceed on assumption.
 
 1. **Run 1–3 models full** into the standard tree `reports/eval/<name>/<model-slug>/` (no `--limit`, or `--limit 0`). MiniMax-M3 first; add 1–2 more faces if the user wants them (this also gives the curated set its ≥3-face difficulty signal later). Watch for provider/vision constraints per `CLAUDE.md`.
-2. **Mount into the panel** (only if the user wants it on the P01–P20 radar): now apply the staged **`doc/tochange/<benchmark>.md`** recommendation into `data/mapping_measurement_model_v6.json` + a `BENCHMARK_META` entry, snapshot `reports/atomic_ability_rebenchmark_2026-07-08/` to `*_vN_snapshot_YYYYMMDD/`, then rerun the 4-step aggregation pipeline (CLAUDE.md). Cells match by **exact `subdimension` string** — a rename silently drops the cell. Once applied, you may clear/mark the `doc/tochange/<benchmark>.md` entry as done.
+2. **Mount into the panel** (only if the user wants it on the P01–P20 radar): now apply the staged **`doc/tochange/<benchmark>.md`** recommendation into `data/mapping_measurement_model_v6.json` + a `BENCHMARK_META` entry, snapshot `reports/atomic_ability_rebenchmark/` to `*_vN_snapshot_YYYYMMDD/`, then rerun the 4-step aggregation pipeline (CLAUDE.md). Cells match by **exact `subdimension` string** — a rename silently drops the cell. Once applied, you may clear/mark the `doc/tochange/<benchmark>.md` entry as done.
 
 ## Stage 4 — Curated (精选) set (ask the user; optional)
 

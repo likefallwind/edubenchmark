@@ -85,12 +85,12 @@ Pipeline (run in this order; all idempotent):
 
 ```bash
 python3 scripts/build_edubench_metric_summaries.py            # edubench metric-level means + tmg_pcc_composite / qg_composite
-python3 scripts/build_atomic_ability_rebenchmark_artifacts.py # aggregation → reports/atomic_ability_rebenchmark_2026-07-08/
+python3 scripts/build_atomic_ability_rebenchmark_artifacts.py # aggregation → reports/atomic_ability_rebenchmark/
 python3 scripts/build_mapping_validation.py                   # 13号 validity check (same output dir)
 python3 scripts/build_atomic_ability_html_report.py           # html_report/atomic_ability_benchmark_v6_report_2026-07-18.html
 ```
 
-Gotchas: the aggregation matches cells by **exact `subdimension` string** — renaming a cell in the JSON without updating score producers silently drops it (check the removed/added cell diff of `09_atomic_p_score_evidence.jsonl` against the previous snapshot after any mapping change). mrbench_tutor `Tutor_Tone` is one annotation consumed as two statistics (`(non-offensive)` → P17, `(encouraging share)` → P15) — not double counting. Before rerunning after a mapping revision, snapshot `reports/atomic_ability_rebenchmark_2026-07-08/` to `*_vN_snapshot_YYYYMMDD/`. The category grouping (`doc/atomic_ability_category_grouping_2026-07-16.md`) is presentation-layer only.
+Gotchas: the aggregation matches cells by **exact `subdimension` string** — renaming a cell in the JSON without updating score producers silently drops it (check the removed/added cell diff of `09_atomic_p_score_evidence.jsonl` against the previous snapshot after any mapping change). mrbench_tutor `Tutor_Tone` is one annotation consumed as two statistics (`(non-offensive)` → P17, `(encouraging share)` → P15) — not double counting. Before rerunning after a mapping revision, snapshot `reports/atomic_ability_rebenchmark/` to `*_vN_snapshot_YYYYMMDD/`. The category grouping (`doc/atomic_ability_category_grouping_2026-07-16.md`) is presentation-layer only. Its current form — two tiers (通用基础能力 P01–P09 / 教育专属能力 P10–P20) over the five groups — is adjudicated in `doc/atomic_ability_mapping_v6_2026-07-19.md` §大类划分 and is now emitted to the website as `agentic.json`'s `tiers` + `groups[].tier`; the labels live in `TIER_LABELS` / `GROUP_TIER` next to `GROUP_LABELS` in `scripts/build_atomic_ability_explorer.py`. Presentation-layer means there is no tier-level score anywhere — do not add one here or downstream.
 
 ## Common commands
 

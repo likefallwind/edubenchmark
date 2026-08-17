@@ -261,7 +261,7 @@ P01/P03/P04/P07/P08/P13/P15/P16/P18 变动 ≤0.08。发布面板排名有 **3 �
 
 ### 落地步骤（裁决完成后一批执行）
 
-1. 快照 `reports/atomic_ability_rebenchmark_2026-07-08/` → `*_v6r24_snapshot_YYYYMMDD/`；
+1. 快照 `reports/atomic_ability_rebenchmark/` → `*_v6r24_snapshot_YYYYMMDD/`；
 2. 改 `data/mapping_measurement_model_v6.json` 全部 cell weight（机械值 + 必裁/抽查修正），`schema_notes` 记五档制；
 3. 改聚合脚本 `BENCHMARK_META`：`default_benchmark_weight` 按规则值，删除除 error_identification 例外之外的全部 `benchmark_weight_overrides`，规则本身写进注释；
 4. final 文档记 R25（含两张规则表 + 逐基准分类表 + 例外清单），标注 **分数不可跨 R25 比较**；

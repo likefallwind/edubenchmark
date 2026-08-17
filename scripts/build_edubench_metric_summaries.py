@@ -60,11 +60,51 @@ COMPOSITES = (
 )
 
 
-def model_dirs() -> list[Path]:
-    return sorted(
-        p for p in SOURCE_DIR.iterdir()
-        if p.is_dir() and (p / "scored.jsonl").exists()
-    )
+def judge_of(mdir: Path) -> str:
+    """Who judged this run. summary.json's top-level field is authoritative;
+    the colleague's imported dirs predate that field and are all deepseek-v3.2."""
+    summary = mdir / "summary.json"
+    if summary.exists():
+        try:
+            judge = json.loads(summary.read_text(encoding="utf-8")).get("judge_model")
+        except json.JSONDecodeError:
+            judge = None
+        if judge:
+            return str(judge).split(" ")[0]
+    if SOURCE_DIR in mdir.parents:
+        return "deepseek-v3.2"
+    return "unknown"
+
+
+def model_dirs() -> list[tuple[Path, str]]:
+    """All EduBench runs with per-item judge scores, as (dir, judge).
+
+    Two locations, deliberately both:
+    - ``_judge-deepseek-v3.2/``: the colleague's 12-model run (论文口径裁判).
+    - ``reports/eval/edubench/<model>/``: 新标准跑分，裁判 MiniMax-M3。
+
+    2026-08-17：原来只扫前者，于是 harness 自己跑的模型在 edubench 上永远零证据
+    ——Qwen3.5-4B 的好跑分（M3 判，3,795 题）在顶层，而它在 `_judge-deepseek-v3.2/`
+    下那份是 v3.2 中继故障期的废跑（scored=0），两头落空，P12 出题能力整个没分。
+    裁判混用是已知的、当前接受的口径（用户裁决 2026-08-17：现阶段先混着用，
+    但必须标注清楚），所以每行都带上 `judge`，下游取分把它写进 notes。
+
+    优先级：``_judge-deepseek-v3.2/`` 在前，顶层在后。同名模型两处都有时（glm-5.2、
+    Qwen3.5-4B），调用方按「先产出行的那份胜出」去重——**不能按目录名去重**，因为
+    `_judge-deepseek-v3.2/Qwen-Qwen3.5-4B` 是个 scored=0 的废跑，按名字挡掉顶层那份
+    就会把这个模型的 edubench 证据全部抹掉。
+    """
+    dirs: list[tuple[Path, str]] = []
+    for p in sorted(SOURCE_DIR.iterdir()) if SOURCE_DIR.exists() else []:
+        if p.is_dir() and (p / "scored.jsonl").exists():
+            dirs.append((p, judge_of(p)))
+    for p in sorted(EDUBENCH_DIR.iterdir()):
+        if not p.is_dir() or p.name.startswith("_"):
+            continue
+        if not (p / "scored.jsonl").exists():
+            continue
+        dirs.append((p, judge_of(p)))
+    return dirs
 
 
 def stats(values: list[float]) -> dict[str, float | int]:
@@ -76,8 +116,12 @@ def stats(values: list[float]) -> dict[str, float | int]:
 
 def main() -> None:
     rows: list[dict] = []
-    for mdir in model_dirs():
+    emitted: dict[str, str] = {}  # model -> judge，先产出行的那份胜出
+    for mdir, judge in model_dirs():
         model = mdir.name
+        if model in emitted:
+            print(f"{model}: 跳过 {mdir.relative_to(EDUBENCH_DIR)}（已有 judge={emitted[model]} 的判分）")
+            continue
         by_cell: dict[tuple[str, str], list[float]] = {}
         composite_values: dict[str, list[float]] = {name: [] for name, _, _, _ in COMPOSITES}
         n_items = 0
@@ -110,12 +154,16 @@ def main() -> None:
                     if pair:
                         composite_values[name].append(sum(pair) / len(pair))
         for (task, metric), values in sorted(by_cell.items()):
-            rows.append({"model": model, "task": task, "metric": metric, **stats(values)})
+            rows.append({"model": model, "judge": judge, "task": task, "metric": metric, **stats(values)})
         for name, task_label, _, _ in COMPOSITES:
             if composite_values[name]:
-                rows.append({"model": model, "task": task_label, "metric": name, **stats(composite_values[name])})
+                rows.append(
+                    {"model": model, "judge": judge, "task": task_label, "metric": name, **stats(composite_values[name])}
+                )
+        if by_cell:
+            emitted[model] = judge
         counts = " ".join(f"{name}_n={len(composite_values[name])}" for name, _, _, _ in COMPOSITES)
-        print(f"{model}: items={n_items} cells={len(by_cell)} {counts}")
+        print(f"{model}: judge={judge} items={n_items} cells={len(by_cell)} {counts}")
 
     OUT_DIR.mkdir(exist_ok=True)
     out = OUT_DIR / "task_metric_means.jsonl"

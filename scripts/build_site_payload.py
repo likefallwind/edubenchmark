@@ -12,6 +12,8 @@ The website consumes a flatter, lookup-friendly shape than the explorer page:
 
     scores      dict "<model_key>|<p_code>" -> score record
     groupScore  dict "<model_key>|<group>"  -> float
+    tiers       the two presentation-layer tiers above the five groups; the
+                membership is on `groups[].tier`, and no tier carries a score
     abilityRank dict "<p_code>"             -> models ranked desc
     benchmarks  profile prose + the per-model leaderboard already joined in
     floor       the L1 (all-random) floor, per ability / benchmark / cell
@@ -323,6 +325,7 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "meta": source["meta"],
+        "tiers": source["tiers"],
         "groups": source["groups"],
         "abilities": abilities,
         "boundaries": source["boundaries"],

@@ -22,7 +22,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
+OUT = ROOT / "reports" / "atomic_ability_rebenchmark"
 EVAL_DIR = ROOT / "reports" / "eval"
 OTHER_DIR = ROOT / "otherbenchmark"
 
@@ -45,6 +45,9 @@ PANEL_MODEL_KEYS = (
     "deepseek-v4-pro",
     "glm-5.2",
     "doubao-seed-2-0-pro",
+    # 2026-08-17 加入发布面板（与 RELEASE_MODELS 同步）。vision=True，所以不会
+    # 产生 capability_gap 零分格，缺的格子一律记 untested。
+    "qwen-qwen3-5-4b",
 )
 
 # ---------------------------------------------------------------------------
@@ -735,6 +738,7 @@ def add_score(
     value: float,
     notes: str = "",
     score_role: str = "scoring_candidate",
+    judge_model: str = "rule_or_unknown",
 ) -> None:
     rows.append(
         {
@@ -747,6 +751,7 @@ def add_score(
             "raw_value": value,
             "notes": notes,
             "score_role": score_role,
+            "judge_model": judge_model,
         }
     )
 
@@ -834,7 +839,11 @@ def parse_edubench_metric_scores(rows: list[dict[str, Any]]) -> None:
                 model=row["model"],
                 metric="likert_0_to_10",
                 value=float(row["mean"]),
-                notes=f"题级均值 n={row['n']} sd={row['sd']}；裁判 deepseek-v3.2（同事原始判分）",
+                notes=(
+                    f"题级均值 n={row['n']} sd={row['sd']}；裁判 {row.get('judge', 'deepseek-v3.2')}"
+                    + ("（同事原始判分，论文口径）" if row.get("judge", "deepseek-v3.2") == "deepseek-v3.2" else "")
+                ),
+                judge_model=row.get("judge", "deepseek-v3.2"),
             )
 
 
@@ -1138,6 +1147,9 @@ def extract_primary_metric(summary: dict[str, Any]) -> tuple[str, float | None]:
         return "rfs", overall.get("rfs")
     if "pass_rate" in extra:
         return "pass_rate", extra.get("pass_rate")
+    if "overall_mean_all_items" in summary:
+        # 渲染/执行失败的题按 0 分计入分母（用户裁决 2026-08-17，见 eduillustrate 分支）。
+        return "overall_mean_all_items", summary.get("overall_mean_all_items")
     if "overall_mean_judged_only" in summary:
         return "overall_mean_judged_only", summary.get("overall_mean_judged_only")
     if "accuracy" in summary:
@@ -1159,6 +1171,13 @@ def inventory_eval_runs() -> list[dict[str, Any]]:
         model = data.get("model") or ""
         scored = data.get("scored") or data.get("judged") or 0
         total = data.get("total_items") or 0
+        if benchmark == "eduillustrate":
+            # 2026-08-17 用户裁决：渲染失败不是「没测到」，是这道题拿 0 分——模型
+            # 写不出跑得通的 Manim 代码本身就是被测能力的一部分。所以样本量按
+            # total_items（230）算，不按 judged 算，否则渲染失败越多反而越容易被
+            # 「样本不足 100」挡掉，失败率高的模型直接从 P04 消失。
+            # Qwen3.5-4B 就是这么丢的：230 题里 138 题渲染失败，judged 只剩 92。
+            scored = total or scored
         primary_metric, primary_value = extract_primary_metric(data)
 
         include = True
@@ -1166,6 +1185,15 @@ def inventory_eval_runs() -> list[dict[str, Any]]:
         if "_judge_rubric" in parts or "_judge_jury" in parts:
             include = False
             reasons.append("rubric_or_jury_meta_experiment")
+        if "_baseline" in parts:
+            # reports/eval/_baseline/ 装的是地板与人类锚（run_reference_baseline.py）：
+            # refusal/echo/generic/random 是退化回复，expert/novice/gpt4/sonnet/
+            # llama31405b 是数据集自带的人类或外部模型回复。它们都不是被测模型，
+            # 归宿是 doc/benchmark_baselines_*.md 和 doc/benchmark_human_baselines_*.md。
+            # 之前只是靠「题量不足 100」把退化基线挡在外面，expert 那几个满量的
+            # 已经漏进面板当模型行了——按目录显式排除。
+            include = False
+            reasons.append("reference_baseline_not_a_model")
         if "selfjudge_backup_20260616_100151" in parts:
             include = False
             reasons.append("backup_duplicate")
@@ -1344,22 +1372,37 @@ def repo_metric_rows(benchmark: str, data: dict[str, Any]) -> list[dict[str, Any
         categories = (data.get("by_bucket") or {}).get("category") or {}
         if (data.get("scored") or 0) < 600 or len(categories) < 8:
             return rows
-        send = categories.get("CDPK_send") or {}
-        cdpk_total = sum(v.get("total", 0) for k, v in categories.items() if k != "CDPK_send")
-        cdpk_correct = sum(v.get("correct", 0) for k, v in categories.items() if k != "CDPK_send")
-        if cdpk_total:
+        # 优先走 by_bucket.task 的 cdpk/send 两桶：导入版和 harness 自跑版都有它，
+        # 且切分口径完全一致（899/220）。category 桶两边命名不同——同事导入版是
+        # CDPK_send/CDPK_maths…，harness 适配器发的是 HF 原始类名 SEND/Maths…
+        # （COLLEAGUE_CATEGORY_KEYS 只用在 item_id 上，没落到 bucket）。原来只认
+        # CDPK_send，harness 跑出来的模型会静默丢掉 SEND 格，而且 SEND 的题会被
+        # 算进 CDPK 格里污染分母。
+        tasks = (data.get("by_bucket") or {}).get("task") or {}
+        cdpk = tasks.get("cdpk") or {}
+        send = tasks.get("send") or {}
+        source_note = "by_bucket.task"
+        if not (cdpk.get("total") and send.get("total")):
+            send = categories.get("CDPK_send") or categories.get("SEND") or {}
+            send_keys = {"CDPK_send", "SEND"}
+            cdpk = {
+                "total": sum(v.get("total", 0) for k, v in categories.items() if k not in send_keys),
+                "correct": sum(v.get("correct", 0) for k, v in categories.items() if k not in send_keys),
+            }
+            source_note = "by_bucket.category 除 SEND 外 7 类合并"
+        if cdpk.get("total"):
             add(
                 "CDPK teaching knowledge selection",
                 "accuracy",
-                cdpk_correct / cdpk_total,
-                f"by_bucket.category 除 CDPK_send 外 7 类合并（{cdpk_total} 题）",
+                (cdpk.get("correct") or 0) / cdpk["total"],
+                f"{source_note}（{cdpk['total']} 题）",
             )
         if send.get("total"):
             add(
                 "SEND special education needs selection",
                 "accuracy",
                 (send.get("correct") or 0) / send["total"],
-                f"by_bucket.category.CDPK_send（{send['total']} 题）",
+                f"{source_note} SEND（{send['total']} 题）",
             )
         return rows
     if benchmark == "sas_bench":
@@ -1429,7 +1472,12 @@ def _repo_single_metric(benchmark, data, extra, single):
             "extra_metrics.macro_over_dimensions.f1_macro（8 维 macro-F1 的跨维均值）",
         )
     if benchmark == "eduillustrate":
-        return single("likert_0_to_5", data.get("overall_mean_judged_only"), "overall_mean_judged_only")
+        # 取 all_items 而不是 judged_only（用户裁决 2026-08-17）：渲染失败计 0 分入分母。
+        # judged_only 会把「代码跑不通」洗成缺测，等于奖励生成不出可执行产物的模型。
+        value = data.get("overall_mean_all_items")
+        if value is None:
+            value = data.get("overall_mean_judged_only")
+        return single("likert_0_to_5", value, "overall_mean_all_items（渲染失败按 0 分计入 230 题分母）")
     if benchmark == "mmtutorbench":
         return single("score_0_to_6", extra.get("paper_weighted_score_0_to_6"), "extra_metrics.paper_weighted_score_0_to_6")
     if benchmark == "mathtutorbench_solution_correctness":
@@ -1457,6 +1505,43 @@ def _repo_single_metric(benchmark, data, extra, single):
     }:
         return single("composite_0_to_10", extra.get("score_10"), "extra_metrics.score_10")
     return []
+
+
+_JUDGE_CACHE: dict[str, str] = {}
+
+
+def resolve_judge_model(run_dir: Path, data: dict[str, Any]) -> str:
+    """Who judged this run.
+
+    `summary.json` 的顶层 `judge_model` 是后加的字段，早期跑分没有它——但逐题
+    `extractions.jsonl` 里一直写着 `judge_model`，那才是权威来源。别看目录名猜：
+    `mrbench_tutor/minimax3/` 是「被测模型叫 minimax3」，跟裁判是谁无关。
+
+    返回 `"rule"` 表示这个 benchmark 不用裁判（规则判分），`"unknown"` 表示查不到。
+    """
+    key = run_dir.as_posix()
+    if key in _JUDGE_CACHE:
+        return _JUDGE_CACHE[key]
+    judge = data.get("judge_model")
+    if not judge:
+        extractions = run_dir / "extractions.jsonl"
+        if extractions.exists():
+            with extractions.open(encoding="utf-8") as fh:
+                for index, line in enumerate(fh):
+                    if index > 50:
+                        break
+                    try:
+                        extracted = json.loads(json.loads(line).get("extracted") or "{}")
+                    except (json.JSONDecodeError, TypeError):
+                        continue
+                    if isinstance(extracted, dict) and extracted.get("judge_model"):
+                        judge = extracted["judge_model"]
+                        break
+    if not judge and "_judge-deepseek-v3.2" in key:
+        judge = "deepseek-v3.2"
+    judge = str(judge).split(" ")[0] if judge else "rule_or_unknown"
+    _JUDGE_CACHE[key] = judge
+    return judge
 
 
 def build_repo_score_candidates(eval_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1497,6 +1582,7 @@ def build_repo_score_candidates(eval_rows: list[dict[str, Any]]) -> list[dict[st
                     "score_10": max(0.0, min(10.0, score_10)),
                     "score_role": "scoring_candidate",
                     "notes": metric_row["note"],
+                    "judge_model": resolve_judge_model(path.parent, data),
                     "total_items": inv["total_items"],
                     "scored": inv["scored"],
                 }
@@ -1530,6 +1616,7 @@ def build_other_score_candidates(other_rows: list[dict[str, Any]]) -> list[dict[
                 "score_10": max(0.0, min(10.0, score_10)),
                 "score_role": row["score_role"],
                 "notes": row.get("notes", ""),
+                "judge_model": row.get("judge_model", "rule_or_unknown"),
                 "total_items": None,
                 "scored": None,
             }
@@ -1649,6 +1736,7 @@ def score_atomic_p(
                 "metric": row["metric"],
                 "raw_value": row["raw_value"],
                 "score_10": row["score_10"],
+                "judge_model": row.get("judge_model", "rule_or_unknown"),
                 "row_weight": mapping["default_benchmark_weight"],
                 "ability_weight": ability["weight"],
                 "effective_weight": raw_weight,
@@ -1665,6 +1753,7 @@ def score_atomic_p(
                     "facets": {},
                     "evidence_count": 0,
                     "benchmarks": set(),
+                    "judges": set(),
                 },
             )
             facet_slot = slot["facets"].setdefault(
@@ -1675,6 +1764,9 @@ def score_atomic_p(
             facet_slot["weight_sum"] += raw_weight
             slot["evidence_count"] += 1
             slot["benchmarks"].add(row["benchmark_id"])
+            judge = row.get("judge_model") or ""
+            if judge and judge != "rule_or_unknown":
+                slot["judges"].add(judge)
 
     # R26 缺测处理（用户裁决 2026-08-04，取代 R22 的最低分顶替）：发布面板模型
     # 缺某格时不再借别人的分数，改为按 missing_cell_verdict() 分成两类——
@@ -1699,8 +1791,10 @@ def score_atomic_p(
                     "model_key": model_key,
                     "model": model_key,
                     "raw_value": None,
-                    # 这一行不是任何一次 run 的产物，别留别人的 summary 路径冒充出处。
+                    # 这一行不是任何一次 run 的产物，别留别人的 summary 路径冒充出处，
+                    # 裁判同理——模板行的 judge_model 是别的模型那次跑分的裁判。
                     "source_path": "",
+                    "judge_model": "",
                     "coverage_status": status,
                     "missing_capability": capability,
                     "coverage_reason": reason,
@@ -1726,6 +1820,7 @@ def score_atomic_p(
                 "facets": {},
                 "evidence_count": 0,
                 "benchmarks": set(),
+                "judges": set(),
             },
         )
         facet_slot = slot["facets"].setdefault(
@@ -1772,6 +1867,9 @@ def score_atomic_p(
                 "evidence_count": slot["evidence_count"],
                 "benchmark_count": len(slot["benchmarks"]),
                 "benchmarks": sorted(slot["benchmarks"]),
+                # 判分模型清单（用户裁决 2026-08-17：裁判现阶段混用，但必须标注）。
+                # 空 = 这个 P 的取分格全是规则判分，不经裁判。
+                "judge_models": sorted(slot.get("judges") or ()),
                 "capability_zero_count": slot.get("capability_zero_count", 0),
                 "capability_zero_weight_share": round(zero_weight / weight_sum, 4) if weight_sum else 0.0,
                 "untested_cell_count": len(untested),
@@ -2529,7 +2627,7 @@ footer {{ color:var(--muted); font-size:12px; padding:22px 0 6px; }}
   </section>
 
   <footer>
-    本报告由 <span class="mono">reports/atomic_ability_rebenchmark_2026-07-08/</span> 中间产物生成；生成脚本：<span class="mono">scripts/build_atomic_ability_rebenchmark_artifacts.py</span>。
+    本报告由 <span class="mono">reports/atomic_ability_rebenchmark/</span> 中间产物生成；生成脚本：<span class="mono">scripts/build_atomic_ability_rebenchmark_artifacts.py</span>。
   </footer>
 </main>
 

@@ -1,53 +1,53 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 404
+Canonical normalized score rows used for P scoring: 474
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
-| `otherbenchmark` | 157 |
-| `repo_eval` | 247 |
+| `otherbenchmark` | 169 |
+| `repo_eval` | 305 |
 
 ## By Benchmark
 
 | Benchmark | Rows |
 |---|---:|
-| `agieval` | 6 |
+| `agieval` | 7 |
 | `asap_2` | 7 |
-| `bea2025_judge` | 6 |
-| `bea2025_tutor` | 9 |
-| `ceval` | 7 |
-| `edubench` | 144 |
+| `bea2025_judge` | 8 |
+| `bea2025_tutor` | 15 |
+| `ceval` | 8 |
+| `edubench` | 156 |
 | `eduguard_adversarial` | 14 |
-| `eduguard_sata` | 8 |
-| `eduillustrate` | 4 |
-| `ifeval` | 5 |
-| `k12vista` | 6 |
-| `longtutor_diagnosis` | 5 |
-| `longtutor_evidence` | 15 |
-| `longtutor_teaching` | 5 |
-| `mathtutorbench_mistake_correction` | 5 |
-| `mathtutorbench_mistake_location` | 6 |
-| `mathtutorbench_pedagogy` | 7 |
-| `mathtutorbench_pedagogy_hard` | 7 |
-| `mathtutorbench_problem_solving` | 5 |
-| `mathtutorbench_scaffolding` | 7 |
-| `mathtutorbench_scaffolding_hard` | 7 |
-| `mathtutorbench_socratic` | 4 |
-| `mathtutorbench_solution_correctness` | 6 |
-| `mathvista` | 2 |
-| `mmlu_pro` | 6 |
-| `mmtutorbench` | 2 |
-| `mooccube_prereq` | 5 |
-| `mrbench_judge` | 6 |
-| `mrbench_tutor` | 15 |
-| `olympiadbench` | 6 |
-| `p07_selfcheck` | 5 |
-| `p08_abstention` | 5 |
-| `p08_calibration` | 5 |
-| `pedagogy_benchmark` | 22 |
-| `sas_bench` | 24 |
+| `eduguard_sata` | 9 |
+| `eduillustrate` | 5 |
+| `ifeval` | 6 |
+| `k12vista` | 9 |
+| `longtutor_diagnosis` | 6 |
+| `longtutor_evidence` | 18 |
+| `longtutor_teaching` | 6 |
+| `mathtutorbench_mistake_correction` | 7 |
+| `mathtutorbench_mistake_location` | 7 |
+| `mathtutorbench_pedagogy` | 8 |
+| `mathtutorbench_pedagogy_hard` | 8 |
+| `mathtutorbench_problem_solving` | 6 |
+| `mathtutorbench_scaffolding` | 8 |
+| `mathtutorbench_scaffolding_hard` | 8 |
+| `mathtutorbench_socratic` | 6 |
+| `mathtutorbench_solution_correctness` | 7 |
+| `mathvista` | 3 |
+| `mmlu_pro` | 7 |
+| `mmtutorbench` | 3 |
+| `mooccube_prereq` | 6 |
+| `mrbench_judge` | 8 |
+| `mrbench_tutor` | 25 |
+| `olympiadbench` | 8 |
+| `p07_selfcheck` | 6 |
+| `p08_abstention` | 6 |
+| `p08_calibration` | 6 |
+| `pedagogy_benchmark` | 24 |
+| `sas_bench` | 27 |
 | `tutorbench` | 6 |
 
 ## Sample Rows

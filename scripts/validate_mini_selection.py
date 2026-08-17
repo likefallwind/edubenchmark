@@ -44,7 +44,7 @@ import build_mini_selection_v1 as bm  # noqa: E402
 from eval.benchmarks import get_adapter  # noqa: E402
 from eval.report import build_summary  # noqa: E402
 
-REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
+REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark"
 OUT_DIR = ROOT / "reports" / "mini_selection_v1"
 
 SELFCAL_TOL = 0.01       # counts as reproducing the published number

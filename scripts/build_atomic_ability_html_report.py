@@ -7,8 +7,8 @@ rerunning; never hand-edit the output.
 
 Inputs:
 - data/mapping_measurement_model_v6.json
-- reports/atomic_ability_rebenchmark_2026-07-08/09_atomic_p_scores.jsonl
-- reports/atomic_ability_rebenchmark_2026-07-08/13_mapping_validation_cells.jsonl
+- reports/atomic_ability_rebenchmark/09_atomic_p_scores.jsonl
+- reports/atomic_ability_rebenchmark/13_mapping_validation_cells.jsonl
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ART = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
+ART = ROOT / "reports" / "atomic_ability_rebenchmark"
 OUT_DIR = ROOT / "html_report"
 OUT = OUT_DIR / "atomic_ability_benchmark_v6_report_2026-07-18.html"
 
@@ -29,6 +29,11 @@ RELEASE_MODELS = [
     ("deepseek-v4-pro", "DeepSeek-V4-Pro"),
     ("glm-5.2", "GLM-5.2"),
     ("doubao-seed-2-0-pro", "Doubao-Seed-2.0-Pro"),
+    # 2026-08-17 加入：自建 vLLM 部署的 Qwen3.5-4B，20 项里测到 18 项，覆盖度与
+    # 面板同级。它的 judge 判分格一律 MiniMax-M3——除 edubench 外与面板主流裁判
+    # 一致，edubench 面板用的是论文口径的 deepseek-v3.2，那几格跨裁判不严格可比
+    # （逐格裁判见 09_atomic_p_score_evidence.jsonl 的 judge_model 字段）。
+    ("qwen-qwen3-5-4b", "Qwen3.5-4B"),
 ]
 
 P_DEFINITIONS = {
@@ -345,7 +350,7 @@ ol li {{ margin: 4px 0; }}
 </ul>
 
 <footer>
-数据源：<span class="mono">reports/atomic_ability_rebenchmark_2026-07-08/</span>（09 分数、10 证据、13 效度）·
+数据源：<span class="mono">reports/atomic_ability_rebenchmark/</span>（09 分数、10 证据、13 效度）·
 映射定稿 <span class="mono">doc/atomic_ability_mapping_final_2026-07-15.md</span> ·
 测量模型 <span class="mono">data/mapping_measurement_model_v6.json</span>。
 分数为研究层原始口径，用户版报告（每 P 一分 + 三档可信度 + 产品语言）随 M4 交付。

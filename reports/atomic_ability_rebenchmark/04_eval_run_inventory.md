@@ -1,54 +1,54 @@
 # Eval Run Inventory
 
-Total summary files scanned: 335
-Included candidates: 211
-Excluded from main: 124
+Total summary files scanned: 434
+Included candidates: 294
+Excluded from main: 140
 
 | Benchmark | Include candidates | Excluded |
 |---|---:|---:|
 | `_judge_jury` | 0 | 1 |
 | `_judge_rubric` | 0 | 18 |
-| `agieval` | 7 | 0 |
-| `asap_2` | 11 | 1 |
+| `agieval` | 8 | 0 |
+| `asap_2` | 12 | 1 |
 | `bea2025` | 0 | 14 |
-| `bea2025_judge` | 6 | 1 |
-| `bea2025_tutor` | 3 | 2 |
-| `ceval` | 7 | 2 |
-| `edubench` | 12 | 6 |
-| `eduguard_adversarial` | 7 | 12 |
-| `eduguard_sata` | 8 | 1 |
-| `eduillustrate` | 4 | 5 |
-| `ifeval` | 5 | 0 |
-| `k12bench` | 1 | 0 |
-| `k12vista` | 3 | 2 |
-| `longtutor_diagnosis` | 5 | 0 |
-| `longtutor_evidence` | 5 | 1 |
-| `longtutor_teaching` | 5 | 0 |
-| `mathtutorbench_judge_calibration` | 0 | 6 |
-| `mathtutorbench_mistake_correction` | 5 | 0 |
-| `mathtutorbench_mistake_location` | 6 | 0 |
-| `mathtutorbench_pedagogy` | 7 | 0 |
-| `mathtutorbench_pedagogy_hard` | 7 | 0 |
-| `mathtutorbench_problem_solving` | 5 | 0 |
-| `mathtutorbench_scaffolding` | 7 | 0 |
-| `mathtutorbench_scaffolding_hard` | 7 | 0 |
-| `mathtutorbench_socratic` | 4 | 0 |
-| `mathtutorbench_solution_correctness` | 6 | 0 |
-| `mathvista` | 3 | 0 |
-| `mmlu_pro` | 7 | 4 |
-| `mmtutorbench` | 2 | 4 |
+| `bea2025_judge` | 8 | 0 |
+| `bea2025_tutor` | 9 | 6 |
+| `ceval` | 8 | 2 |
+| `edubench` | 20 | 6 |
+| `eduguard_adversarial` | 7 | 18 |
+| `eduguard_sata` | 9 | 1 |
+| `eduillustrate` | 5 | 5 |
+| `ifeval` | 6 | 0 |
+| `k12bench` | 3 | 0 |
+| `k12vista` | 4 | 2 |
+| `longtutor_diagnosis` | 6 | 0 |
+| `longtutor_evidence` | 6 | 1 |
+| `longtutor_teaching` | 6 | 0 |
+| `mathtutorbench_judge_calibration` | 0 | 8 |
+| `mathtutorbench_mistake_correction` | 7 | 0 |
+| `mathtutorbench_mistake_location` | 7 | 0 |
+| `mathtutorbench_pedagogy` | 13 | 0 |
+| `mathtutorbench_pedagogy_hard` | 13 | 0 |
+| `mathtutorbench_problem_solving` | 6 | 0 |
+| `mathtutorbench_scaffolding` | 13 | 0 |
+| `mathtutorbench_scaffolding_hard` | 13 | 0 |
+| `mathtutorbench_socratic` | 6 | 0 |
+| `mathtutorbench_solution_correctness` | 7 | 0 |
+| `mathvista` | 4 | 0 |
+| `mmlu_pro` | 8 | 4 |
+| `mmtutorbench` | 5 | 5 |
 | `mmtutorbench_judge_calibration` | 0 | 1 |
-| `mooccube_prereq` | 5 | 0 |
+| `mooccube_prereq` | 6 | 0 |
 | `mrbench` | 0 | 30 |
-| `mrbench_judge` | 6 | 0 |
-| `mrbench_tutor` | 3 | 6 |
-| `olympiadbench` | 7 | 4 |
-| `p07_selfcheck` | 5 | 0 |
-| `p08_abstention` | 5 | 0 |
-| `p08_calibration` | 5 | 0 |
-| `pedagogy_benchmark` | 11 | 1 |
-| `sas_bench` | 8 | 0 |
-| `tutorbench` | 1 | 2 |
+| `mrbench_judge` | 8 | 0 |
+| `mrbench_tutor` | 9 | 9 |
+| `olympiadbench` | 8 | 4 |
+| `p07_selfcheck` | 6 | 0 |
+| `p08_abstention` | 6 | 0 |
+| `p08_calibration` | 6 | 0 |
+| `pedagogy_benchmark` | 12 | 1 |
+| `sas_bench` | 9 | 0 |
+| `tutorbench` | 5 | 3 |
 
 Detailed per-run records are in `04_eval_run_inventory.jsonl`.
 

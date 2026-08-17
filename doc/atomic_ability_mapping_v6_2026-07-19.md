@@ -2,7 +2,7 @@
 
 本文档是**当前状态的干净快照**:原子能力清单、每个能力的定义与 facet、映射到哪些 benchmark 的哪些维度、相关度与置信权重多少、测量成熟度如何,以及创新点和未完成事项。不含历史沿革与裁决过程——那些在 `doc/atomic_ability_mapping_final_2026-07-15.md`(裁决记录 R1–R25)里。
 
-机器可读版(单一事实源):`data/mapping_measurement_model_v6.json`。本文档所有表格由该 JSON 与聚合脚本 `BENCHMARK_META` 逐格核对生成(2026-07-19,**R25 后**;权重列由脚本按 JSON 重算写入,104 格全覆盖),分数区间取自 `reports/atomic_ability_rebenchmark_2026-07-08/09_atomic_p_score_evidence.jsonl`。如有出入以 JSON 为准。
+机器可读版(单一事实源):`data/mapping_measurement_model_v6.json`。本文档所有表格由该 JSON 与聚合脚本 `BENCHMARK_META` 逐格核对生成(2026-07-19,**R25 后**;权重列由脚本按 JSON 重算写入,104 格全覆盖),分数区间取自 `reports/atomic_ability_rebenchmark/09_atomic_p_score_evidence.jsonl`。如有出入以 JSON 为准。
 
 > **⚠️ 编号已两度迁移。** 现行是 **R24 编号**。历史注记里的 P 号有两套旧方案:pre-R20(P01–P23 带墓碑,仍是 JSON 与本仓库各文档 **rationale 正文**里在用的方案,也是 `scripts/build_rebenchmark_conclusion_plan.py` 在用的方案)、R20(文档方案 P01–P20)。**两张对照表在 final 文档的 R20 与 R24 记录里**,R24 那张同时写在 JSON 的 `schema_notes.numbering_R24`。rationale 正文刻意从未机械替换——编号混在散文里,正则必误伤。**benchmark 名 `p07_selfcheck` / `p08_calibration` / `p08_abstention` 沿用 pre-R20 旧号起名,不要按名字推 P 号**(改名重构已列 TODO)。
 
@@ -148,10 +148,12 @@ facet 定义:**图示与示意图生成**——生成示意图、几何图、学
 
 | facet | benchmark · 取分维度 | 相关 | 置信 | 有效 | 分数 | 面 |
 |---|---|---|---|---|---|---|
-| 图示与示意图生成 | eduillustrate · 8-dim 0-5 visual explanation score | 0.5 | 0.7 | 0.35 | 6.35–7.41 | 7(3) |
+| 图示与示意图生成 | eduillustrate · 8-dim 0-5 visual explanation score | 0.5 | 0.7 | 0.35 | 1.04–7.15 | 8(3) |
 | 时序与交互产物生成 | —— 空白 —— | | | | | |
 
 eduillustrate 的 8 维 = 文本侧(正确性/逻辑/易懂/图文协同)+ 视觉侧(图题匹配/排版/元素布局/视觉一致),聚合取总均分。**不按这 8 维拆 facet**——同一道题会落进两个 facet,违反边界可判规则。
+
+**2026-08-17 口径修订(用户裁决):取分从 `overall_mean_judged_only` 改为 `overall_mean_all_items`,渲染失败按 0 分计入 230 题分母**,纳入门槛的样本量也按 total_items 而非 judged 判定。理由:写不出跑得通的 Manim 代码不是"这道题没测到",而是这道题的产物生成失败——judged_only 把执行失败洗成缺测,等于奖励生成不出可执行产物的模型,且渲染失败越多越容易被"样本不足 100"整个挡出 P04。Qwen3.5-4B 就是这么丢的:230 题里 138 题渲染失败,judged 只剩 92,该模型此前在 P04 完全不出现;改口径后得 1.04(judged_only 口径下是 2.60,虚高 2.5 倍)。**P04 分数不与本次修订之前的构建可比**:doubao-lite 6.78→5.30、doubao-pro 7.41→6.64、kimi-k2.7-code 7.18→7.15,MiniMax-M3 零渲染失败故不变。
 
 **证据局限(必须随分数呈现)**:eduillustrate 是教育域 benchmark,单独承担一个基础能力构念偏窄——用教学场景样本推断通用生成能力,是**下界代理而非通用测量**。通用图像/图表生成 benchmark 列入待补,`single_source` 标记保留。
 
@@ -353,7 +355,7 @@ facet 定义:**内容性讲解与纠错反馈**——对学生作答/提问的�
 | 语气、情感与动机支持 | edubench · motivation_guidance_positive_feedback | 0.5 | 0.85 | 0.425 | 6.12–6.92 | 12 |
 |  | mrbench_tutor · Tutor_Tone(鼓励占比) | 0.2 | 0.85 | 0.17 | 9.15–9.60 | 5(2) |
 | 教学产物生成 | edubench · TMG/PCC × 清晰启发 + 情景元素(task×metric) | 0.5 | 0.85 | 0.425 | 7.13–8.85 | 12 |
-|  | eduillustrate · 8-dim 0-5 visual explanation score | 0.2 | 0.7 | 0.14 | 6.35–7.41 | 7(3) |
+|  | eduillustrate · 8-dim 0-5 visual explanation score | 0.2 | 0.7 | 0.14 | 1.04–7.15 | 8(3) |
 
 R19 把对话侧拆成三 facet:语气支持独立(冷冰冰讲对 vs 温暖鼓励地讲对可独立失败,且有干净指标);概念讲解与纠错合并(最重的 tutorbench/mmtutorbench 整体分拆不出讲解/纠错,强行四分会让最厚证据悬空)。
 

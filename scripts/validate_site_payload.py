@@ -2,7 +2,7 @@
 """Validate a generated `agentic.json` against the rebenchmark artifacts.
 
 `build_site_payload.py` reshapes; this script independently re-derives every
-number straight from `reports/atomic_ability_rebenchmark_2026-07-08/*.jsonl`
+number straight from `reports/atomic_ability_rebenchmark/*.jsonl`
 and refuses anything that disagrees. It also checks the payload is internally
 closed - no chart can reference a model, ability or benchmark that is not in
 the file - so a stale or half-synced payload fails here rather than showing up
@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
-REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark_2026-07-08"
+REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark"
 FLOOR_DIR = ROOT / "reports" / "atomic_ability_l1_floor"
 EXPLORER = ROOT / "scripts" / "build_atomic_ability_explorer.py"
 TOL = 1e-6
@@ -166,6 +166,30 @@ def validate(payload: dict[str, Any]) -> Checker:
     bench_id_set = set(bench_ids)
     p_codes = {a["p_code"] for a in payload["abilities"]}
     group_ids = {g["id"] for g in payload["groups"]}
+
+    # --- the tier layer above the groups ---------------------------------
+    # Presentation-only: it carries no score, so there is nothing here to
+    # re-derive from the artifacts - what has to hold is that it is a clean
+    # partition of the groups and that the two orderings agree, because the
+    # site renders tiers in `tiers` order and fills each from `groups` order.
+    tiers = payload["tiers"]
+    c.true("tiers: empty", bool(tiers))
+    tier_ids = [t["id"] for t in tiers]
+    c.eq("tiers: duplicate id", len(set(tier_ids)), len(tier_ids))
+    for tier in tiers:
+        c.true(f"tiers/{tier['id']}: empty id or label", bool(tier["id"]) and bool(tier["label"]))
+    blocks: list[str] = []
+    for group in payload["groups"]:
+        tier = group.get("tier")
+        c.true(f"groups/{group['id']}: unknown tier {tier!r}", tier in set(tier_ids))
+        if not blocks or blocks[-1] != tier:
+            blocks.append(tier)
+    # Collapsing the group list to its runs of `tier` must reproduce `tiers`
+    # exactly: that catches an interleaved group (a run repeating), a tier with
+    # no groups, and a tier order that disagrees with the group order - each of
+    # which would put a group under the wrong heading on the site. Every group
+    # carries exactly one `tier`, so coverage and disjointness come for free.
+    c.eq("groups: tier blocks do not match tiers", blocks, tier_ids)
     # Cell weights are re-read straight from the evidence rows: the payload must
     # never invent a weight the aggregator did not stamp.
     ev_weights = {}

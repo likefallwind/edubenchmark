@@ -42,7 +42,7 @@ MODEL=<model> ./scripts/run_eval.sh mathtutorbench_judge_calibration
 
 ## 三、当前映射（M3 裁决相关）
 
-`reports/atomic_ability_rebenchmark_2026-07-08/02_benchmark_ability_mapping.jsonl` 里没有这个 benchmark 的条目——它当前**不进能力雷达**。
+`reports/atomic_ability_rebenchmark/02_benchmark_ability_mapping.jsonl` 里没有这个 benchmark 的条目——它当前**不进能力雷达**。
 
 ---
 
