@@ -110,8 +110,21 @@ def build_floor() -> dict[str, Any]:
         for row in p_rows
         if row["score_10"] is not None
     }
+    # The same floor under the text-only board. It has to be recomputed with the
+    # same mask, not reused from `overall`: that one averages 18 abilities and
+    # this one 16, so quoting `overall` next to a text-only score would put two
+    # different denominators on the same bar.
+    text_p_rows = [
+        r for r in floor.agg.score_atomic_p(cells, skip_cell=floor.agg.requires_vision)[1]
+        if r["model_key"] == floor.FLOOR_MODEL and r["score_10"] is not None
+    ]
     return {
         "p": per_p,
+        "overallText": (
+            round(statistics.fmean(r["score_10"] for r in text_p_rows), 4)
+            if text_p_rows
+            else None
+        ),
         # Comparable to a model's `overall`, which is the same plain mean over
         # the same abilities - a full-panel model covers exactly these.
         "overall": round(statistics.fmean(per_p.values()), 4),
@@ -245,6 +258,9 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
             "b": row["b"],
         }
     group_score = {f"{row['m']}|{row['g']}": row["s"] for row in source["group_scores"]}
+    # 纯文本口径的群组分，键同形。别把它和 `groupScore` 放进同一张表比大小：
+    # 同一个 group id 在两个口径下覆盖的 P 不一样（SRG 少了 P03/P04）。
+    group_score_text = {f"{row['m']}|{row['g']}": row["s"] for row in source["group_scores_text"]}
 
     # Every P gets a key, including the two with no benchmark yet - the site
     # reads `abilityRank[p_code]` unguarded to show the "N models" count.
@@ -268,6 +284,13 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
             "overall": statistics.fmean(by_model[m["key"]]),
             "n_ability": m["p_count"],
             "n_evidence": m["evidence_count"],
+            # 模态三态：true 实测有视觉 / false 实测没有 / null 从没探测过。
+            # null 不是 false——网站要能说「未探测」，不能替源头下结论。
+            "vision": m["vision"],
+            # 纯文本口径的综合分（屏蔽由视觉定义的取分维度后重算）。和 `overall`
+            # 不同底，两个数字永远不要相减或混排。
+            "overallText": m["text_score"],
+            "n_ability_text": m["text_p_count"],
         }
         for m in source["models"]
     ]
@@ -332,6 +355,7 @@ def build_site_payload(source: dict[str, Any]) -> dict[str, Any]:
         "models": models,
         "scores": scores,
         "groupScore": group_score,
+        "groupScoreText": group_score_text,
         "abilityRank": ability_rank,
         "benchmarks": benchmarks,
         "panel": source["panel"],

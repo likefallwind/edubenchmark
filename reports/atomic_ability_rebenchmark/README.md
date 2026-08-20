@@ -28,6 +28,13 @@ Files:
   `09_atomic_p_score_evidence.jsonl` with `source_type: capability_gap_zero`.
 - `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
 - `10_group_scores.md`: compact group-score table.
+- `09_atomic_p_scores_text_only.jsonl` / `09_atomic_p_score_evidence_text_only.jsonl` /
+  `10_group_scores_text_only.jsonl` / `09_atomic_p_scores_text_only.md`: the **text-only
+  board**. Same aggregation chain, same weights; the only difference is that cells whose
+  measurement is defined by vision (`requires_vision()`) are dropped whole — not zeroed,
+  not marked untested, simply outside that pass's denominator. This is what makes a
+  text-only model and a multimodal model comparable on one scale. The main files above are
+  untouched by it.
 - `11_atomic_ability_rebenchmark_report.html`: self-contained interactive HTML report.
 - `12_benchmark_priority_analysis.jsonl`: benchmark/subdimension priority analysis for deciding what to keep, downweight, or skip.
 - `12_benchmark_priority_report.html`: self-contained HTML triage report for benchmark portfolio decisions.

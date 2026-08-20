@@ -18,12 +18,18 @@ overwrites the output byte-for-byte.
 
 from __future__ import annotations
 
+import collections
 import json
 import re
+import statistics
+import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import build_atomic_ability_rebenchmark_artifacts as agg  # noqa: E402
 REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark"
 MAPPING_JSON = ROOT / "data" / "mapping_measurement_model_v6.json"
 MAPPING_DOC = ROOT / "doc" / "atomic_ability_mapping_v6_2026-07-19.md"
@@ -95,20 +101,30 @@ MODEL_DISPLAY = {
 }
 
 
-AGG_SCRIPT = ROOT / "scripts" / "build_atomic_ability_rebenchmark_artifacts.py"
-
-
 def read_panel_keys() -> list[str]:
-    """Read PANEL_MODEL_KEYS off the aggregation script.
+    """The release panel, read off the aggregation module.
 
-    Only the panel list is mirrored here (to label the release panel).  Since
-    R26 the page no longer re-derives any missing-cell rule client-side — the
-    aggregation script decides 未测过 vs 能力不具备记 0 分 and the page just
+    Only the panel list and the capability probes are mirrored here (to label
+    the release panel and to say which modality board a model belongs on).
+    Since R26 the page no longer re-derives any missing-cell rule client-side —
+    the aggregation script decides 未测过 vs 能力不具备记 0 分 and the page just
     renders what it emitted.
+
+    This used to regex the tuple out of the script's source. Reading the module
+    is the same fact with none of the brittleness, and `MODEL_CAPABILITIES` —
+    a dict with comments between its entries — is not something to regex at all.
     """
-    src = AGG_SCRIPT.read_text(encoding="utf-8")
-    block = re.search(r"PANEL_MODEL_KEYS\s*=\s*\((.*?)\)", src, re.S)
-    return re.findall(r'"([^"]+)"', block.group(1)) if block else []
+    return list(agg.PANEL_MODEL_KEYS)
+
+
+def read_model_capabilities() -> dict[str, dict[str, bool | None]]:
+    """Per-model capability probes (`vision` only, so far).
+
+    Missing key means never probed, and that is **not** the same as False —
+    keep it as None all the way to the page so it can say 未探测 rather than
+    claiming the model has no vision.
+    """
+    return dict(agg.MODEL_CAPABILITIES)
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -204,6 +220,9 @@ def build_payload() -> dict[str, Any]:
     evidence = load_jsonl(REBENCH / "09_atomic_p_score_evidence.jsonl")
     untested = load_jsonl(REBENCH / "09_atomic_p_untested_cells.jsonl")
     group_scores = load_jsonl(REBENCH / "10_group_scores.jsonl")
+    # 纯文本口径：同一条聚合链路屏蔽掉由视觉定义的取分维度后跑出来的第二套分。
+    text_p_scores = load_jsonl(REBENCH / "09_atomic_p_scores_text_only.jsonl")
+    text_group_scores = load_jsonl(REBENCH / "10_group_scores_text_only.jsonl")
     bench_map = load_jsonl(REBENCH / "02_benchmark_ability_mapping.jsonl")
     validity = load_jsonl(REBENCH / "13_mapping_validation_cells.jsonl")
 
@@ -344,12 +363,25 @@ def build_payload() -> dict[str, Any]:
         ev_count[row["model_key"]] = ev_count.get(row["model_key"], 0) + 1
     panel_keys = read_panel_keys()
     panel_set = set(panel_keys)
+    caps = read_model_capabilities()
+    text_p = collections.defaultdict(list)
+    for row in text_p_scores:
+        if row.get("score_10") is not None:
+            text_p[row["model_key"]].append(row["score_10"])
     models = []
     for key in sorted(p_count, key=lambda k: (-p_count[k], -ev_count.get(k, 0), k)):
+        text_scores = text_p.get(key, [])
         models.append(
             {
                 "key": key,
                 "display": MODEL_DISPLAY.get(key, key),
+                # 三态，别塌成两态：True 实测有视觉、False 实测没有、None 从没探测过。
+                # 把 None 当成 False 就是把「没查过」说成「确认没有」。
+                "vision": caps.get(key, {}).get("vision"),
+                # 纯文本口径的分：屏蔽视觉格后的 P 分均值，和上面的 p_count 不同底，
+                # 所以项数单独给一个。
+                "text_score": statistics.fmean(text_scores) if text_scores else None,
+                "text_p_count": len(text_scores),
                 "p_count": p_count[key],
                 "evidence_count": ev_count.get(key, 0),
                 # R26：「发布面板」就是 PANEL_MODEL_KEYS 的成员，不再等价于
@@ -425,6 +457,12 @@ def build_payload() -> dict[str, Any]:
         }
         for row in group_scores
     ]
+    # 纯文本口径的群组分。SRG 在这个口径下只剩 P01/P02（P03/P04 的格全被屏蔽），
+    # 所以它和主口径的 SRG 不是同一个东西，页面上两者绝不能混排。
+    slim_groups_text = [
+        {"m": row["model_key"], "g": row["group"], "s": round(row["score_10"], 4)}
+        for row in text_group_scores
+    ]
 
     payload = {
         "meta": {
@@ -440,6 +478,15 @@ def build_payload() -> dict[str, Any]:
             "uncovered_p": [a["p_code"] for a in abilities if a["p_code"] not in covered_p],
             "n_zero_cells": sum(1 for r in slim_evidence if r["zero"]),
             "n_untested_cells": len(slim_untested),
+            # 纯文本口径：同一条聚合链路，屏蔽由视觉定义的取分维度后的第二套分。
+            # 它是「同一把尺子」而不是「扣掉视觉分」——被屏蔽的格整格不进分母，
+            # 对多模态和纯文本模型一视同仁。
+            "text_only": {
+                "n_abilities": len({r["p_code"] for r in text_p_scores if r.get("score_10") is not None}),
+                "masked_cells": [
+                    {"b": b, "sd": sd} for b, sd in agg.masked_cells()
+                ],
+            },
         },
         "panel": panel_keys,
         # Membership lives on the group only (`tier`), never mirrored back into
@@ -456,6 +503,7 @@ def build_payload() -> dict[str, Any]:
         "evidence": slim_evidence,
         "untested": slim_untested,
         "group_scores": slim_groups,
+        "group_scores_text": slim_groups_text,
         "validity": validity_index,
     }
     return payload

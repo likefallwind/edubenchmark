@@ -115,6 +115,78 @@ def validate(payload: dict[str, Any]) -> Checker:
         c.eq(f"models/{key}/full", model["full"], key in set(payload["panel"]))
     c.eq("meta/n_evidence", payload["meta"]["n_evidence"], len(evidence))
 
+    # --- the text-only board ----------------------------------------------
+    # Re-derived from its own artifact, exactly like the main board is: the
+    # payload must not be the only place these numbers exist.
+    text_p = [
+        r for r in load_jsonl(REBENCH / "09_atomic_p_scores_text_only.jsonl")
+        if r["score_10"] is not None
+    ]
+    text_by_model = collections.defaultdict(list)
+    for row in text_p:
+        text_by_model[row["model_key"]].append(round(row["score_10"], 4))
+    for model in payload["models"]:
+        key = model["key"]
+        got = text_by_model.get(key, [])
+        c.eq(
+            f"models/{key}/overallText",
+            model["overallText"],
+            statistics.fmean(got) if got else None,
+        )
+        c.eq(f"models/{key}/n_ability_text", model["n_ability_text"], len(got))
+        # Three states. `None` means never probed and must survive as null — a
+        # payload that turned it into False would be claiming the model has no
+        # vision, which is a different (and unevidenced) statement.
+        c.true(
+            f"models/{key}/vision: not tri-state ({model['vision']!r})",
+            model["vision"] in (True, False, None),
+        )
+        c.eq(
+            f"models/{key}/vision",
+            model["vision"],
+            explorer.agg.MODEL_CAPABILITIES.get(key, {}).get("vision"),
+        )
+    # The whole point of this board is one yardstick, so every panel model has
+    # to be scored over the *same* abilities. If a future panel member is short
+    # a non-visual ability this fires, and it should: the board would be
+    # comparing models over different denominators without saying so.
+    panel_text_sets = {
+        m["key"]: frozenset(r["p_code"] for r in text_p if r["model_key"] == m["key"])
+        for m in payload["models"] if m["full"]
+    }
+    c.eq(
+        "models: panel models scored over different abilities on the text board "
+        f"({ {k: len(v) for k, v in panel_text_sets.items()} })",
+        len(set(panel_text_sets.values())),
+        1,
+    )
+    text_groups = load_jsonl(REBENCH / "10_group_scores_text_only.jsonl")
+    c.eq("groupScoreText/count", len(payload["groupScoreText"]), len(text_groups))
+    for row in text_groups:
+        gkey = f"{row['model_key']}|{row['group']}"
+        c.eq(f"groupScoreText/{gkey}", payload["groupScoreText"].get(gkey), round(row["score_10"], 4))
+    masked = {(cell["b"], cell["sd"]) for cell in payload["meta"]["text_only"]["masked_cells"]}
+    c.eq("meta/text_only/masked_cells", masked, set(explorer.agg.masked_cells()))
+    c.true("meta/text_only/masked_cells: empty", bool(masked))
+    c.eq(
+        "meta/text_only/n_abilities",
+        payload["meta"]["text_only"]["n_abilities"],
+        len({r["p_code"] for r in text_p}),
+    )
+    # A masked cell must leave no trace in the text-only evidence: if one shows
+    # up there the mask was applied after aggregation, not before, and the
+    # scores are the wrong ones.
+    text_ev = load_jsonl(REBENCH / "09_atomic_p_score_evidence_text_only.jsonl")
+    leaked = {(r["benchmark_id"], r["subdimension"]) for r in text_ev} & masked
+    c.eq(f"text-only evidence: masked cells leaked through {sorted(leaked)}", leaked, set())
+    # And no capability-gap zeros can survive there: the cells that could gate
+    # on vision are gone, so nothing is left to be gated on.
+    c.eq(
+        "text-only evidence: capability-gap zeros should not exist",
+        sum(1 for r in text_ev if r.get("source_type") == "capability_gap_zero"),
+        0,
+    )
+
     # --- panel ------------------------------------------------------------
     model_keys = {m["key"] for m in payload["models"]}
     for key in payload["panel"]:

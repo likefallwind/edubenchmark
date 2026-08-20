@@ -1,7 +1,7 @@
 # Eval Run Inventory
 
-Total summary files scanned: 434
-Included candidates: 294
+Total summary files scanned: 435
+Included candidates: 295
 Excluded from main: 140
 
 | Benchmark | Include candidates | Excluded |
@@ -36,7 +36,7 @@ Excluded from main: 140
 | `mathtutorbench_solution_correctness` | 7 | 0 |
 | `mathvista` | 4 | 0 |
 | `mmlu_pro` | 8 | 4 |
-| `mmtutorbench` | 5 | 5 |
+| `mmtutorbench` | 5 | 6 |
 | `mmtutorbench_judge_calibration` | 0 | 1 |
 | `mooccube_prereq` | 6 | 0 |
 | `mrbench` | 0 | 30 |
@@ -48,7 +48,7 @@ Excluded from main: 140
 | `p08_calibration` | 6 | 0 |
 | `pedagogy_benchmark` | 12 | 1 |
 | `sas_bench` | 9 | 0 |
-| `tutorbench` | 5 | 3 |
+| `tutorbench` | 6 | 2 |
 
 Detailed per-run records are in `04_eval_run_inventory.jsonl`.
 

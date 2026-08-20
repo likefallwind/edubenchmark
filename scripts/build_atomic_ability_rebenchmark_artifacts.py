@@ -17,6 +17,7 @@ import html
 import json
 import re
 import statistics
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -112,14 +113,35 @@ CELL_CAPABILITY_REQUIREMENTS: dict[Any, tuple[str, str]] = {
     # 两处都把图发给被测模型；题干文本只有 question，`img_caption` 不进 prompt，
     # 图是图形条件的唯一来源。8 个判分维度里还有 4 个是视觉侧。
     "eduillustrate": ("vision", REQUIRE_ALL),
+    # 下面两条从 benchmark 级细到取分维度级。原来挂在 benchmark 上时，olympiadbench 的
+    # overall 那一格（P05/P06，纯文本模型有真实分数）也被连坐标成「需要视觉」。对
+    # missing_cell_verdict 无害——PARTIAL 本来就走 untested——但那份要求是虚的，而
+    # 纯文本口径的掩码要按「这一格量的东西依不依赖视觉」来取，虚的要求会把非视觉格
+    # 一起屏蔽掉。所以这里只标真正由视觉定义的那些格。
+    #
     # olympiadbench 的多模态子集看着像硬门槛，其实不是：R22 的盲测对照发现看不见图的
     # deepseek-v4-pro 在该子集拿 0.658、明眼的 M3 拿 0.681——题干文本自带足够信息，
     # 盲模型照样能作答。所以这不是「能力缺失跑不了」，标 PARTIAL 走未测过；那份盲答
-    # 分本身另有 BLIND_VISION_MODELS 按废分丢弃。
-    "olympiadbench": ("vision", REQUIRE_PARTIAL),
-    # TutorBench Fair815 只有一部分题带图，纯文本的 qwen3.5-27B / gpt-5.5 都有真实分数。
-    "tutorbench": ("vision", REQUIRE_PARTIAL),
+    # 分本身另有 BLIND_VISION_MODELS 按废分丢弃。但这一格的题集是按「带图」选出来的，
+    # 纯文本口径要屏蔽它。
+    ("olympiadbench", "multimodal-subset accuracy"): ("vision", REQUIRE_PARTIAL),
+    # TutorBench Fair815 只有一部分题带图，纯文本的 qwen3.5-27B / gpt-5.5 都有真实分数，
+    # 所以是 PARTIAL 不是 ALL。但图题和非图题揉在同一个分里拆不开，纯文本口径下留着它
+    # 就等于把「看得见图」的加成算进去，所以照样屏蔽。
+    ("tutorbench", "Fair815 multimodal tutor quality"): ("vision", REQUIRE_PARTIAL),
 }
+
+
+def requires_vision(benchmark_id: str, subdimension: str) -> bool:
+    """这一格量的东西是否由视觉定义（题集按「带图」选出，或整格都要读图）。
+
+    与 `missing_cell_verdict` 的判据不同，别混起来：那个问的是「这个**模型**能不能
+    作答」（只有 REQUIRE_ALL 且模型确实没有该能力才记 0 分），这个问的是「这一**格**
+    测的东西离了视觉还成不成立」，两种严格度都算。前者用来判缺格，后者用来给纯文本
+    口径做掩码。
+    """
+    requirement = cell_capability_requirement(benchmark_id, subdimension)
+    return requirement is not None and requirement[0] == "vision"
 
 
 def cell_capability_requirement(benchmark_id: str, subdimension: str) -> tuple[str, str] | None:
@@ -1708,11 +1730,24 @@ def minimax_conflict_report(eval_rows: list[dict[str, Any]]) -> list[dict[str, A
 
 def score_atomic_p(
     selected_rows: list[dict[str, Any]],
+    skip_cell: Callable[[str, str], bool] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """聚合到 P 分。`skip_cell(benchmark_id, subdimension)` 为真的格整格不参与。
+
+    「整格不参与」是字面意思：那一格既不产出证据行，也不会被下面的缺测补齐扫到，
+    所以既不记 0 也不记未测，而是根本不进这一轮的可测量范围（分母）。纯文本口径就
+    是拿 `requires_vision` 当 skip_cell 跑同一条链路——**不是**第二套聚合逻辑，
+    权重、facet 等权、benchmark 加权全部原样复用。
+
+    别把它换成「记 0」：那等于断言被屏蔽模型不具备该能力（对多模态模型是假的），
+    而且死重会随着多模态 benchmark 增多而单调增长，跨轮次分数就不可比了。
+    """
     evidence_rows: list[dict[str, Any]] = []
     accum: dict[tuple[str, str], dict[str, Any]] = {}
     for row in selected_rows:
         if row["benchmark_id"] in EXCLUDED_SCORING_BENCHMARKS:
+            continue
+        if skip_cell is not None and skip_cell(row["benchmark_id"], row["subdimension"]):
             continue
         mapping = find_mapping(row["benchmark_id"], subdimension=row["subdimension"], metric=row["metric"])
         if mapping is None:
@@ -1969,6 +2004,13 @@ Files:
   `09_atomic_p_score_evidence.jsonl` with `source_type: capability_gap_zero`.
 - `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
 - `10_group_scores.md`: compact group-score table.
+- `09_atomic_p_scores_text_only.jsonl` / `09_atomic_p_score_evidence_text_only.jsonl` /
+  `10_group_scores_text_only.jsonl` / `09_atomic_p_scores_text_only.md`: the **text-only
+  board**. Same aggregation chain, same weights; the only difference is that cells whose
+  measurement is defined by vision (`requires_vision()`) are dropped whole — not zeroed,
+  not marked untested, simply outside that pass's denominator. This is what makes a
+  text-only model and a multimodal model comparable on one scale. The main files above are
+  untouched by it.
 - `11_atomic_ability_rebenchmark_report.html`: self-contained interactive HTML report.
 - `12_benchmark_priority_analysis.jsonl`: benchmark/subdimension priority analysis for deciding what to keep, downweight, or skip.
 - `12_benchmark_priority_report.html`: self-contained HTML triage report for benchmark portfolio decisions.
@@ -2244,6 +2286,82 @@ def write_score_evidence(rows: list[dict[str, Any]]) -> None:
     lines.append("")
     lines.append("Full selected rows are in `08_selected_score_evidence.jsonl`.")
     (OUT / "08_selected_score_evidence.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_text_only_scores(
+    p_rows: list[dict[str, Any]],
+    evidence_rows: list[dict[str, Any]],
+    group_rows: list[dict[str, Any]],
+) -> None:
+    """纯文本口径的平行产物：同一条聚合链路，屏蔽掉由视觉定义的取分维度。
+
+    单独成文件而不是往 09/10 里加一列 `board`：那几个文件有一堆下游消费者
+    （build_atomic_ability_explorer / build_l1_floor_profile / validate_site_payload /
+    validate_mini_selection）都按「一行 = 一个 (模型, P)」读，行数翻倍会静默改变它们的
+    结果。平行文件让现行口径的读者一个字都不用改。
+    """
+    dump_jsonl(OUT / "09_atomic_p_score_evidence_text_only.jsonl", evidence_rows)
+    dump_jsonl(OUT / "09_atomic_p_scores_text_only.jsonl", p_rows)
+    dump_jsonl(OUT / "10_group_scores_text_only.jsonl", group_rows)
+    masked = masked_cells()
+    covered = sorted({row["p_code"] for row in p_rows if row["score_10"] is not None})
+    per_model = panel_overall_scores(p_rows)
+    lines = [
+        "# Atomic P Scores — 纯文本口径 (text-only board)",
+        "",
+        "跟 `09_atomic_p_scores.jsonl` 走的是**同一条**聚合链路（同样的 relevance ×",
+        "confidence 权重、facet 等权、benchmark 加权），唯一差别是：由视觉定义的取分维度",
+        "整格不参与——既不产出证据行，也不记 0、不记未测，而是根本不进这一轮的分母。",
+        "",
+        "这样做是为了让纯文本模型和多模态模型能放在同一把尺子上比。**不要**改成「记 0」：",
+        "那等于断言多模态模型不具备视觉（假的），而且死重会随着多模态 benchmark 增多而",
+        "单调增长，跨轮次的分数就不再可比。",
+        "",
+        f"被屏蔽的取分维度：{len(masked)} 个",
+        "",
+        "| benchmark | subdimension |",
+        "|---|---|",
+        *[f"| `{b}` | {sd} |" for b, sd in masked],
+        "",
+        "判据是 `requires_vision()`，读的是 `CELL_CAPABILITY_REQUIREMENTS`——跟",
+        "`missing_cell_verdict()` 同一张表但**不同的问题**：那个问「这个模型能不能作答」",
+        "（只有 REQUIRE_ALL 才记 0 分），这个问「这一格测的东西离了视觉还成不成立」",
+        "（两种严格度都算）。加新的多模态 benchmark 时只需在那张表登记一笔，两边同时生效。",
+        "",
+        f"P-score rows: {len(p_rows)}",
+        f"Covered P codes: {', '.join(covered) if covered else 'none'}",
+        f"Capability-gap zero cells: {sum(1 for r in evidence_rows if r.get('source_type') == 'capability_gap_zero')}"
+        " （应为 0：视觉格已整格移除，没有能力门槛可言）",
+        "",
+        "## 面板模型综合分（该口径下已测 P 的平均）",
+        "",
+        "| model | 综合分 | 已测能力项 |",
+        "|---|---:|---:|",
+        *[f"| `{m}` | {s:.4f} | {n} |" for m, s, n in per_model],
+    ]
+    (OUT / "09_atomic_p_scores_text_only.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def masked_cells() -> list[tuple[str, str]]:
+    """(benchmark_id, subdimension) pairs the text-only board drops, from the mapping."""
+    out = set()
+    for mapping in MAPPINGS:
+        bid, sub = mapping["benchmark_id"], mapping.get("subdimension", "")
+        if requires_vision(bid, sub):
+            out.add((bid, sub))
+    return sorted(out)
+
+
+def panel_overall_scores(p_rows: list[dict[str, Any]]) -> list[tuple[str, float, int]]:
+    """面板模型在给定 P 行集合上的综合分，按分降序。"""
+    by: dict[str, list[float]] = {}
+    for row in p_rows:
+        if row["model_key"] in PANEL_MODEL_KEYS and row["score_10"] is not None:
+            by.setdefault(row["model_key"], []).append(row["score_10"])
+    return sorted(
+        ((m, statistics.fmean(v), len(v)) for m, v in by.items()),
+        key=lambda t: (-t[1], t[0]),
+    )
 
 
 def write_atomic_scores(
@@ -3339,6 +3457,11 @@ def main() -> None:
     selected_score_rows, duplicate_rows = dedupe_score_candidates(score_candidates)
     minimax_rows = minimax_conflict_report(eval_rows)
     evidence_rows, p_rows, group_rows, untested_rows = score_atomic_p(selected_score_rows)
+    # 纯文本口径：同一条链路再跑一遍，屏蔽由视觉定义的取分维度。两路输出各自成文件，
+    # 现行口径的产物一个字节都不受影响。
+    text_evidence, text_p, text_groups, _text_untested = score_atomic_p(
+        selected_score_rows, skip_cell=requires_vision
+    )
     write_readme()
     write_inclusion_policy()
     write_mapping_files()
@@ -3349,6 +3472,7 @@ def main() -> None:
     write_score_evidence(selected_score_rows)
     write_atomic_scores(p_rows, evidence_rows, untested_rows)
     write_group_scores(group_rows)
+    write_text_only_scores(text_p, text_evidence, text_groups)
     priority_rows = analyze_benchmark_priorities(selected_score_rows, p_rows)
     write_final_html(
         eval_rows=eval_rows,
