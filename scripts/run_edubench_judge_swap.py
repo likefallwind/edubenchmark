@@ -2,7 +2,7 @@
 """M2 judge-swap experiment for EduBench (mapping validation plan §2.5).
 
 The original EduBench run
-(reports/eval/edubench/_judge-deepseek-v3.2/) was judged once by deepseek-v3.2.
+(reports/eval/edubench/judge-deepseek-v3.2/) was judged once by deepseek-v3.2.
 This script re-judges a stratified sample of the *same*
 responses with second/third judges and measures inter-judge agreement, to
 decide whether cross-family low correlations reflect real construct
@@ -41,10 +41,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from eval.predictions_io import read_predictions  # noqa: E402
+from eval.judge_dirs import find_judge_dir  # noqa: E402
 from eval.providers import build_client, model_slug  # noqa: E402
 
 EVAL_DIR = ROOT / "reports" / "eval" / "edubench"
-SOURCE_DIR = EVAL_DIR / "_judge-deepseek-v3.2"
+SOURCE_DIR = find_judge_dir(EVAL_DIR, "deepseek-v3.2")
 OUT_DIR = EVAL_DIR / "_judge_swap"
 TASKS = ["IP", "PCC", "PLS", "QG", "TMG"]
 PER_TASK = 50

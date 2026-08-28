@@ -9,9 +9,9 @@
   - k12vista / longtutor_* 的判官跟随 ``--extractor-model``，换它会连带改变抽取
     行为，性质不纯。用户 2026-08-13 裁定：**只换 judge，不换 extractor**，故排除。
 
-隔离：输出一律落在 ``reports/eval/<benchmark>/_judge-deepseek-v4-flash/<model-slug>/``。
+隔离：输出一律落在 ``reports/eval/<benchmark>/judge-deepseek-v4-flash/<model-slug>/``。
 这是 ``eval_benchmark.py`` 在判官 != canonical 时自动选的路径（沿用现有
-``_judge-deepseek-v3.2/`` 命名），本脚本额外断言一次，确保绝不写回原目录。
+``judge-deepseek-v3.2/`` 命名），本脚本额外断言一次，确保绝不写回原目录。
 
 预测搬运：``runner.py`` 从 ``out_dir/predictions.jsonl`` 读预测，新目录是空的，所以
 每格先把权威源目录的预测复制过去（含分片，并按 item_id 去重——历史重跑在
@@ -36,10 +36,11 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from eval.predictions_io import read_predictions, write_predictions  # noqa: E402
+from eval.judge_dirs import is_judge_dir, judge_dir_name  # noqa: E402
 from eval.providers import model_slug  # noqa: E402
 
 JUDGE = "deepseek-v4-flash"
-JUDGE_DIR = f"_judge-{model_slug(JUDGE)}"
+JUDGE_DIR = judge_dir_name(JUDGE)
 
 # 每个适配器读自己的判官环境变量，名字不统一，逐个对。
 JUDGE_ENV = {
@@ -77,8 +78,8 @@ def canonical_model(model: str) -> str:
 def discover_cells() -> list[dict]:
     """找出每个 (benchmark, 面板模型) 的权威预测源目录。
 
-    权威 = 去重后 item_id 最多的那份。判官目录（_judge-*）也纳入扫描：edubench 的
-    面板结果就全在 _judge-deepseek-v3.2/ 下。本判官自己的输出目录要排除，否则
+    权威 = 去重后 item_id 最多的那份。判官目录（judge-*）也纳入扫描：edubench 的
+    面板结果就全在 judge-deepseek-v3.2/ 下。本判官自己的输出目录要排除，否则
     第二次运行会拿自己的结果当源。
     """
     cells: list[dict] = []

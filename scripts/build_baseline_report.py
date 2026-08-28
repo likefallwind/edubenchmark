@@ -28,7 +28,13 @@ import re
 from pathlib import Path
 from typing import Any
 
+import sys
+
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from eval.judge_dirs import is_judge_dir  # noqa: E402
+
 EVAL_DIR = ROOT / "reports" / "eval"
 BASELINE_DIR = EVAL_DIR / "_baseline"
 RANDOM_PATH = ROOT / "data" / "benchmark_baselines_v1.json"
@@ -72,10 +78,10 @@ def observed_range(benchmark: str, headline: str) -> dict[str, Any]:
         return {}
     runs: list[tuple[str, int, float]] = []
     excluded: list[str] = []
-    # EduBench's real results live one level down under _judge-deepseek-v3.2/,
-    # not directly under the benchmark dir, so descend into _judge-* too.
+    # EduBench's real results live one level down under judge-deepseek-v3.2/,
+    # not directly under the benchmark dir, so descend into judge-* too.
     children = [c for c in base.iterdir() if c.is_dir()]
-    for judge_dir in [c for c in children if c.name.startswith("_judge-")]:
+    for judge_dir in [c for c in children if is_judge_dir(c.name)]:
         children += [c for c in judge_dir.iterdir() if c.is_dir()]
     for child in sorted(children, key=lambda p: p.name):
         if not child.is_dir() or child.name.startswith("_") or DATE_DIR.match(child.name):

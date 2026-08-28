@@ -52,6 +52,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
+from eval.judge_dirs import is_judge_dir  # noqa: E402
 from eval.predictions_io import read_predictions
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -599,7 +600,7 @@ def audit_generation_stage(
     EduEquity splits generation and judging into two runners, so
     ``reports/eval/eduequity/<model>/`` legitimately holds ``predictions.jsonl``
     + ``generation_summary.json`` and no ``summary.json`` — the scores live one
-    level over in ``_judge-<judge>/<model>/``, which ``collect_runs`` skips
+    level over in ``judge-<judge>/<model>/``, which ``collect_runs`` skips
     because it starts with an underscore. Without this branch the generic path
     reads that as "nothing was produced", which is wrong and hides the thing
     actually worth checking here: whether generation finished. A half-finished
@@ -628,7 +629,7 @@ def audit_generation_stage(
     )
     rec["findings"].append(
         f"prediction-only stage dir: {successful}/{expected} prompts generated; "
-        f"scores live in {rec['benchmark']}/_judge-<judge>/{rec['model']}/"
+        f"scores live in {rec['benchmark']}/judge-<judge>/{rec['model']}/"
     )
     if gen.get("run_status") != "complete" or successful != expected:
         rec["findings"].append(
@@ -767,6 +768,13 @@ def cross_model_flags(records: list[dict[str, Any]]) -> None:
                 rec["verdict"] = "caveat"
 
 
+def _has_run_artifacts(d: Path) -> bool:
+    return any(
+        (d / name).exists()
+        for name in ("summary.json", "generation_summary.json", "scored.jsonl", "predictions.jsonl")
+    )
+
+
 def collect_runs(only: str | None) -> list[tuple[str, Path]]:
     runs: list[tuple[str, Path]] = []
     for bench_dir in sorted(EVAL_ROOT.iterdir()):
@@ -774,7 +782,24 @@ def collect_runs(only: str | None) -> list[tuple[str, Path]]:
             continue
         if only and bench_dir.name != only:
             continue
-        model_dirs = [d for d in sorted(bench_dir.iterdir()) if d.is_dir() and not d.name.startswith("_")]
+        # 判分要裁判的 benchmark 把结果放在 judge-<judge>/<model>/ 下（默认裁判也有
+        # 自己的目录），规则判分的仍是 <benchmark>/<model>/。两种都要审计——漏掉
+        # 前者就等于所有换裁判的跑分从不被体检。
+        model_dirs: list[Path] = []
+        for child in sorted(bench_dir.iterdir()):
+            if not child.is_dir():
+                continue
+            if is_judge_dir(child.name):
+                model_dirs += [d for d in sorted(child.iterdir()) if d.is_dir()]
+            elif not child.name.startswith("_"):
+                model_dirs.append(child)
+        # 只装着子目录、自己没有任何跑分产物的中间目录（例如自判备份的父目录）不是
+        # 一次跑分，不该被报成「什么都没产出」。
+        model_dirs = [
+            d
+            for d in model_dirs
+            if _has_run_artifacts(d) or not any(c.is_dir() for c in d.iterdir())
+        ]
         if not model_dirs:
             runs.append((bench_dir.name, bench_dir))  # benchmark with no runs at all
             continue

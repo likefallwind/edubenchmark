@@ -15,11 +15,16 @@ import json
 import math
 import re
 from collections import defaultdict
+import sys
 from pathlib import Path
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from eval.judge_dirs import judge_of_dir  # noqa: E402
+from eval.providers import model_slug  # noqa: E402
 DEFAULT_OUTPUT = ROOT / "tempt" / "rebenchmark-conclusion-plan-0706.html"
 ATOMIC_DOC = ROOT / "doc" / "atomic_ability_principle_audit_v3.md"
 MAIN_SOURCE = "tempt/rebenchmark-summary-0701.html"
@@ -898,6 +903,10 @@ def row_from_summary(path: Path, summary: dict[str, Any]) -> dict[str, Any] | No
     return row
 
 
+# 结论计划取分只认这个裁判（见 collect_summary_rows 里的说明）。
+PRIMARY_JUDGE = "MiniMax-M3"
+
+
 def collect_summary_rows(eval_dir: Path, *, minimax_m3_only: bool = False, primary_minimax_display: bool = False) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for path in sorted(eval_dir.glob("**/summary.json")):
@@ -907,6 +916,14 @@ def collect_summary_rows(eval_dir: Path, *, minimax_m3_only: bool = False, prima
         if is_historical_or_backup(rel):
             continue
         if any(part.startswith("_") for part in rel.parts[2:-1]):
+            continue
+        # 判分要裁判的 benchmark 现在一律落在 judge-<judge>/ 下（默认裁判也有目录）。
+        # 这份结论计划每个 benchmark 只能有一行，所以只认主裁判那一份——迁移前
+        # 「裸目录=主裁判、judge-* 被下划线挡掉」就是这个效果，这里把它显式写出来。
+        # 换统一裁判时改这一个常量，别再靠目录名的下划线。
+        judge_dirs = [judge_of_dir(part) for part in rel.parts[2:-1]]
+        judge_dirs = [j for j in judge_dirs if j is not None]
+        if judge_dirs and judge_dirs[-1] != model_slug(PRIMARY_JUDGE):
             continue
         summary = load_json(path)
         if not summary:

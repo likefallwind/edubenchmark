@@ -24,7 +24,12 @@ from pathlib import Path
 
 from eval.predictions_io import predictions_exist
 
+import sys
+
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from eval.judge_dirs import is_judge_dir  # noqa: E402
 EVAL_DIR = ROOT / "reports" / "eval"
 
 SKIP_TOP_DIRS = {"_aggregate", "_audit", "_judge_jury", "_judge_rubric"}
@@ -78,40 +83,32 @@ def scan() -> dict[str, dict[str, tuple[str, int | None, int | None]]]:
             continue
         bench = bdir.name
         row: dict[str, tuple[str, int | None, int | None]] = {}
-        for mdir in sorted(bdir.iterdir()):
-            if not mdir.is_dir() or mdir.name.startswith("_"):
+        # 判分要裁判的 benchmark 结果在 judge-<judge>/<model>/ 下，规则判分的仍是
+        # <benchmark>/<model>/。同一个模型被多个裁判判过时，这张表只是「跑没跑过、
+        # 跑了多少题」的进度表，不比分数，所以取题量最大的那次做代表。
+        mdirs: list[Path] = []
+        for child in sorted(bdir.iterdir()):
+            if not child.is_dir():
                 continue
+            if is_judge_dir(child.name):
+                mdirs += [d for d in sorted(child.iterdir()) if d.is_dir()]
+            elif not child.name.startswith("_"):
+                mdirs.append(child)
+        for mdir in mdirs:
             if DATE_DIR_RE.match(mdir.name):
                 continue
+            key = canon(mdir.name)
             summary = mdir / "summary.json"
             if summary.exists():
                 scored, total = read_counts(summary)
                 if scored is None:
                     continue
-                row[canon(mdir.name)] = ("scored", scored, total)
-            elif predictions_exist(mdir):
-                row[canon(mdir.name)] = ("predictions_only", None, None)
-        if bench == "edubench":
-            # The colleague-imported deepseek-v3.2-judged run under
-            # _judge-deepseek-v3.2/<model>/ is the only full-scale (3797-item)
-            # edubench data on disk today; bare reports/eval/edubench/<model>/
-            # dirs are small smoke tests. Merge it in as the primary count,
-            # matching the convention the 2026-07-17 report used.
-            judge_dir = bdir / "_judge-deepseek-v3.2"
-            if judge_dir.is_dir():
-                for mdir in sorted(judge_dir.iterdir()):
-                    if not mdir.is_dir():
-                        continue
-                    summary = mdir / "summary.json"
-                    if not summary.exists():
-                        continue
-                    scored, total = read_counts(summary)
-                    if scored is None:
-                        continue
-                    key = canon(mdir.name)
-                    existing = row.get(key)
-                    if existing is None or (existing[2] or 0) < (total or 0):
-                        row[key] = ("scored", scored, total)
+                prev = row.get(key)
+                if prev and prev[0] == "scored" and (prev[1] or 0) >= scored:
+                    continue
+                row[key] = ("scored", scored, total)
+            elif predictions_exist(mdir) and key not in row:
+                row[key] = ("predictions_only", None, None)
         if row:
             matrix[bench] = row
     return matrix
@@ -189,9 +186,9 @@ def main() -> None:
 - `-/-` 表示该模型在该评测下尚无 `summary.json`，也无 `predictions.jsonl` 产出（含内容为空的占位目录）。
 - `predictions only` 表示仅有 `predictions.jsonl`，无 `summary.json`。
 - `x/y` 表示 `summary.json` 中 `scored`（或 `judged`）与 `total_items`（或 `total`）比对。
-- 统计口径：按本仓库内 `reports/eval/*/*/summary.json`（或 `predictions.jsonl`）可见产物直接统计；跳过 `_` 前缀的裁判/分析/归档子目录（如 `_judge-*`、`_stale`、`_analysis`）以及早期无模型名的日期目录（`2026-06-0x/`，模型身份不明）。
+- 统计口径：按本仓库内 `reports/eval/*/*/summary.json`（或 `predictions.jsonl`）可见产物直接统计；跳过 `_` 前缀的裁判/分析/归档子目录（如 `judge-*`、`_stale`、`_analysis`）以及早期无模型名的日期目录（`2026-06-0x/`，模型身份不明）。
 - 前 5 列是当前的核心全量模型面（见 `doc/roadmap_to_convincing_eval_2026-07-12.md` "主测 5 个模型"）：MiniMax-M3、MiniMax-M2.7、deepseek-v4-pro、glm-5.2、doubao-seed-2.0-pro。
-- `edubench` 行是例外：`reports/eval/edubench/<model>/` 下目前只有零星 smoke 测试（如 glm-5.2 的 5/5），真正的全量 3797 题数据在 `_judge-deepseek-v3.2/<model>/`（colleague 导入、裁判为 deepseek-v3.2），本表按历史口径把它合并进对应模型列展示。
+- `edubench` 行是例外：`reports/eval/edubench/<model>/` 下目前只有零星 smoke 测试（如 glm-5.2 的 5/5），真正的全量 3797 题数据在 `judge-deepseek-v3.2/<model>/`（colleague 导入、裁判为 deepseek-v3.2），本表按历史口径把它合并进对应模型列展示。
 
 ## 主表
 

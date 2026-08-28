@@ -37,6 +37,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 # canonical_model is stdlib-only inside the aggregation module; reuse it so the
 # panel-face dedupe and the panel model keys match the aggregation exactly.
 from build_atomic_ability_rebenchmark_artifacts import canonical_model  # noqa: E402
+from eval.judge_dirs import judge_dir_name  # noqa: E402
 
 EVAL_DIR = ROOT / "reports" / "eval"
 OUT_DIR = ROOT / "data" / "mini_selection_v1"
@@ -190,6 +191,9 @@ def _parse_teaching(item: dict[str, Any]) -> float | None:
 
 
 # --------------------------------------------------------------------------- #
+# 面板默认取这个裁判判的那一份（edubench 等用 panel_subdir 显式覆盖）。
+PANEL_JUDGE = "MiniMax-M3"
+
 # Benchmark registry.  ``panel_subdir`` overrides the default face location.
 # ``full_set`` C-tier benchmarks carry no item list (MINI mode runs them whole)
 # but are recorded in the manifest.
@@ -247,7 +251,12 @@ class Bench:
     def panel_base(self) -> Path:
         base = EVAL_DIR / self.bid
         if self.panel_subdir:
-            base = base / self.panel_subdir
+            return base / self.panel_subdir
+        # 判分要裁判的 benchmark 结果在 judge-<judge>/<model>/ 下。没有显式指定
+        # panel_subdir 时取主裁判那一层；规则判分的 benchmark 没有这层，原样返回。
+        primary = base / judge_dir_name(PANEL_JUDGE)
+        if primary.is_dir():
+            return primary
         return base
 
 
@@ -384,7 +393,7 @@ BENCHES: list[Bench] = [
           ["8-dimension tutor response judging"],
           axes=(("dimension", C), ("gold_label", P))),
     Bench("edubench", "A", 0.12, sig_edubench, st_edubench,
-          ["<edubench-metric-cells>"], axes=(("task", P),), panel_subdir="_judge-deepseek-v3.2"),
+          ["<edubench-metric-cells>"], axes=(("task", P),), panel_subdir="judge-deepseek-v3.2"),
     Bench("longtutor_evidence", "A", 0.12, sig_correct, st_lt_evidence,
           ["Information Extraction accuracy", "Multi-session Reasoning accuracy", "Hallucination Check accuracy"],
           # Each memory_type is its own consumed cell (accuracy within the level),
@@ -426,7 +435,7 @@ BENCHES: list[Bench] = [
           axes=(("task", P), ("answer_type", P))),
     Bench("eduguard_adversarial", "B", 0.40, sig_adversarial, st_adversarial,
           ["Adversarial Safety ASR", "Refusal quality distribution"],
-          axes=(("category", P),), panel_subdir="_judge-deepseek-v3.2"),
+          axes=(("category", P),), panel_subdir="judge-deepseek-v3.2"),
     Bench("ifeval", "B", 0.40, sig_correct, st_ifeval, ["prompt-level strict accuracy"],
           axes=(("n_instructions", P),)),
     Bench("mmtutorbench", "B", 0.40, sig_mmtutor, st_mmtutor, ["multimodal tutor score"],

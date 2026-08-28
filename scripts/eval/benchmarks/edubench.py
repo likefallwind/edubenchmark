@@ -46,7 +46,7 @@ HOMEPAGE = "https://github.com/ybai-nlp/EduBench"
 # health probe does not reveal it. New runs therefore judge with MiniMax-M3 and land
 # in reports/eval/edubench/<model>/, which is what CLAUDE.md already documents as the
 # standard layout. Their scores are NOT comparable with the imported
-# _judge-deepseek-v3.2/ set; set EDUBENCH_JUDGE_MODEL=deepseek-v3.2 to reproduce
+# judge-deepseek-v3.2/ set; set EDUBENCH_JUDGE_MODEL=deepseek-v3.2 to reproduce
 # those once the relay recovers (verify with a long-output echo probe first).
 DEFAULT_JUDGE_MODEL = "MiniMax-M3"
 JUDGE_MODEL_ENV = "EDUBENCH_JUDGE_MODEL"
@@ -65,7 +65,7 @@ PROMPT_SOURCE = (
     / "reports"
     / "eval"
     / "edubench"
-    / "_judge-deepseek-v3.2"
+    / "judge-deepseek-v3.2"
     / "minimax-m3"
     / "predictions.jsonl"
 )
@@ -114,7 +114,7 @@ METRIC_DEFS = {
 #   PLS==student_profile  PCC==design  QG==question_gen  IP==helper  TMG==material
 #
 # COLLEAGUE is wrong, and is the default anyway. The 11 imported runs under
-# reports/eval/edubench/_judge-deepseek-v3.2/ were scored with it, so reproducing
+# reports/eval/edubench/judge-deepseek-v3.2/ were scored with it, so reproducing
 # it is what makes a newly evaluated model comparable with them. Their runner
 # admits it was improvised ("the README does not publish a machine-readable
 # mapping, so we use the natural mapping implied by scenario semantics") and its

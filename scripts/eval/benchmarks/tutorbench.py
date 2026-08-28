@@ -235,7 +235,6 @@ class TutorBenchAdapter(BenchmarkAdapter):
     name = "tutorbench"
     title = "TutorBench · Real STEM Tutoring (rubric LLM-as-judge)"
     homepage = HOMEPAGE
-    canonical_judge_model = DEFAULT_JUDGE_MODEL
     description = (
         "TutorBench (ScaleAI) evaluates LLM tutoring on real STEM tasks across three "
         "use cases -- adaptive explanation, assessment & feedback, and active-learning "

@@ -45,7 +45,7 @@
 # EduBench (3,797 个可比英文 prompt；12 维 0-10 连续分，非 accuracy):
 #     LIMIT=5 MODEL=<model> ./scripts/run_eval.sh edubench
 #   默认裁判 MiniMax-M3，落在 reports/eval/edubench/<model>/；换裁判会自动隔离目录。
-#   已导入的 11 个模型用的是 deepseek-v3.2(在 _judge-deepseek-v3.2/)，跟默认跑法不可比；
+#   已导入的 11 个模型用的是 deepseek-v3.2(在 judge-deepseek-v3.2/)，跟默认跑法不可比；
 #   ZGC 中转 2026-08-11 起会 200 返回被污染的内容，恢复后才可用这条复现：
 #     EDUBENCH_JUDGE_MODEL=deepseek-v3.2 LIMIT=5 MODEL=<model> ./scripts/run_eval.sh edubench
 # Pedagogy Benchmark (教师资格考试的教学法知识 MCQ, AI-for-Education/pedagogy-benchmark): 先物化数据(一次性)
@@ -80,7 +80,7 @@
 #     MODEL=glm-5.2 ./scripts/run_eval.sh eduequity                                   # 全量
 #   PHASE=predict/score 同样生效(生成与裁判本来就是两个独立脚本、各自断点续跑)。
 #   裁判默认 MiniMax-M3(交付指南里的 deepseek-v3.2 因 zgc 中转会 200 返回污染内容而弃用)。
-#   结果:reports/eval/eduequity/<model>/ 与 reports/eval/eduequity/_judge-<judge>/<model>/。
+#   结果:reports/eval/eduequity/<model>/ 与 reports/eval/eduequity/judge-<judge>/<model>/。
 # 语言:eduguard_sata 默认中英双语都跑(--language both)。单语言是该评测独有的刻意选项,
 #   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
 #     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0
@@ -340,7 +340,7 @@ for b in $BENCHMARKS; do
       # 它不走 eval_benchmark.py:一个评分单元由「同一题、仅身份不同」的两次生成构成,
       # BenchmarkAdapter 的一题一次调用结构容纳不下,故保留交付的两个独立 runner。
       #   阶段一 run_eduequity_generation.py -> reports/eval/eduequity/<model>/predictions.jsonl
-      #   阶段二 run_eduequity_judge.py       -> reports/eval/eduequity/_judge-<judge>/<model>/
+      #   阶段二 run_eduequity_judge.py       -> reports/eval/eduequity/judge-<judge>/<model>/
       # LIMIT 在这里的单位是「配对数」而不是题数(LIMIT=0 或不设 = 全量 400 对);
       # 冒烟先跑 LIMIT=3。裁判由 JUDGE_MODEL 固定,与被测模型解耦。
       if [[ -n "$MINI" ]]; then

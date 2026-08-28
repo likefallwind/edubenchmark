@@ -22,7 +22,13 @@ import json
 from pathlib import Path
 from typing import Any
 
+import sys
+
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from eval.judge_dirs import is_judge_dir  # noqa: E402
+
 AGGREGATE_DIRNAME = "_aggregate"
 
 
@@ -54,9 +60,9 @@ def collect(eval_dir: Path) -> dict[str, list[dict[str, Any]]]:
         if home:
             summaries.append(home)
         # Per-model subdirs, including alternate-judge namespaces following the
-        # established ``_judge-<judge>/<tested-model>`` convention.
+        # established ``judge-<judge>/<tested-model>`` convention.
         candidates = [p for p in bench_dir.iterdir() if p.is_dir()]
-        for judge_dir in sorted(p for p in candidates if p.name.startswith("_judge-")):
+        for judge_dir in sorted(p for p in candidates if is_judge_dir(p.name)):
             candidates.extend(p for p in judge_dir.iterdir() if p.is_dir())
         for sub in sorted(candidates):
             sub_summary = _load_summary(sub / "summary.json")

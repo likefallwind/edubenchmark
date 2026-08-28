@@ -1225,7 +1225,9 @@ def inventory_eval_runs() -> list[dict[str, Any]]:
         if benchmark in EXCLUDED_SCORING_BENCHMARKS:
             include = False
             reasons.append("user_excluded_judge_task")
-        if benchmark == "eduguard_adversarial" and "_judge-deepseek-v3.2" not in rel:
+        # P2 的映射口径只认历史主裁判 deepseek-v3.2 的那批跑分。判据是跑分自己
+        # 记录的 judge_model，不是目录名——目录改名不该动摇取分口径。
+        if benchmark == "eduguard_adversarial" and resolve_judge_model(path.parent, data) != "deepseek-v3.2":
             include = False
             reasons.append("eduguard_p2_non_primary_judge")
         observed_items = scored or total
@@ -1559,7 +1561,7 @@ def resolve_judge_model(run_dir: Path, data: dict[str, Any]) -> str:
                     if isinstance(extracted, dict) and extracted.get("judge_model"):
                         judge = extracted["judge_model"]
                         break
-    if not judge and "_judge-deepseek-v3.2" in key:
+    if not judge and ("judge-deepseek-v3.2" in key or "_judge-deepseek-v3.2" in key):
         judge = "deepseek-v3.2"
     judge = str(judge).split(" ")[0] if judge else "rule_or_unknown"
     _JUDGE_CACHE[key] = judge
@@ -1646,13 +1648,21 @@ def build_other_score_candidates(other_rows: list[dict[str, Any]]) -> list[dict[
     return rows
 
 
-def candidate_rank(row: dict[str, Any]) -> tuple[int, int, int, int, str]:
+# 同一个模型被多个裁判判过时，取这个裁判那一份。写死一个常量是有意的：在这之前
+# 选谁完全由 candidate_rank 末尾的路径字典序决定（reverse=True，所以"目录名最大的
+# 赢"），minimax-m2.7 的 4 个格子就是这么在无人决定的情况下取到 deepseek-v4-flash
+# 判的那份的。换统一裁判时改这里。
+PRIMARY_JUDGE = "MiniMax-M3"
+
+
+def candidate_rank(row: dict[str, Any]) -> tuple[int, int, int, int, int, str]:
     path = row["source_path"]
     source_rank = 2 if row["source_type"] == "repo_eval" else 1
     minimax_rank = 1 if "/minimax3/" in path or path.endswith("/minimax3/summary.json") else 0
     scored = int(row.get("scored") or 0)
     total = int(row.get("total_items") or 0)
-    return (source_rank, minimax_rank, scored, total, path)
+    judge_rank = 1 if str(row.get("judge_model") or "") == PRIMARY_JUDGE else 0
+    return (source_rank, minimax_rank, scored, total, judge_rank, path)
 
 
 def dedupe_score_candidates(candidates: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:

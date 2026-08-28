@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Item-level analysis of EduBench judge dimension scores.
 
-Reads reports/eval/edubench/_judge-deepseek-v3.2/<model>/scored.jsonl
+Reads reports/eval/edubench/judge-deepseek-v3.2/<model>/scored.jsonl
 (11 models x 3,797 items x
 12 judge metrics) and produces evidence for mapping v2 (R1/R13):
 
@@ -23,11 +23,16 @@ import json
 import math
 from collections import defaultdict
 from pathlib import Path
+import sys
 from statistics import fmean, stdev
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from eval.judge_dirs import find_judge_dir  # noqa: E402
+
 EVAL_DIR = ROOT / "reports" / "eval" / "edubench"
-SOURCE_DIR = EVAL_DIR / "_judge-deepseek-v3.2"
+SOURCE_DIR = find_judge_dir(EVAL_DIR, "deepseek-v3.2")
 OUT_DIR = EVAL_DIR / "_analysis"
 
 METRICS = [
@@ -286,7 +291,7 @@ def main() -> None:
         "# EduBench 逐题级指标分析（2026-07-12）",
         "",
         f"数据：{len(models)} 个模型 × 每模型 {len(per_model[models[0]])} 题 × 12 个裁判指标（裁判 deepseek-v3.2）。",
-        "来源 `reports/eval/edubench/_judge-deepseek-v3.2/<model>/scored.jsonl`，脚本 `scripts/analyze_edubench_item_level.py`。",
+        "来源 `reports/eval/edubench/judge-deepseek-v3.2/<model>/scored.jsonl`，脚本 `scripts/analyze_edubench_item_level.py`。",
         "",
         "## 任务分布",
         "",

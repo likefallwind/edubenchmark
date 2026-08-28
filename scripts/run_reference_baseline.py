@@ -50,6 +50,7 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from eval.judge_dirs import is_judge_dir  # noqa: E402
 from eval.benchmarks import get_adapter  # noqa: E402
 from eval.predictions_io import write_predictions  # noqa: E402
 
@@ -176,7 +177,7 @@ def _judge_of_existing_run(benchmark: str, model_slug: str | None) -> str | None
 
     Picks the *largest finished* run, not the first one on disk: several
     benchmarks keep a handful-of-items smoke run beside the full ones (and
-    EduBench's real 12-model set lives under ``_judge-deepseek-v3.2/``), so
+    EduBench's real 12-model set lives under ``judge-deepseek-v3.2/``), so
     taking whatever sorts first reads the judge off the wrong run.
     """
     base = ROOT / "reports" / "eval" / benchmark
@@ -187,13 +188,13 @@ def _judge_of_existing_run(benchmark: str, model_slug: str | None) -> str | None
     else:
         # Neither "prefer the plain directory" nor "take the biggest single run"
         # is reliable: EduBench keeps its real 12-model set under
-        # _judge-deepseek-v3.2/ with only a 5-item smoke run in the plain dir,
-        # while K12Vista's _judge-MiniMax-M2.7/ re-scoring happens to be 2 items
+        # judge-deepseek-v3.2/ with only a 5-item smoke run in the plain dir,
+        # while K12Vista's judge-MiniMax-M2.7/ re-scoring happens to be 2 items
         # larger than the canonical run. So vote by total evidence instead —
         # the judge that produced the bulk of the scored rows.
         candidates = [p for p in base.iterdir() if p.is_dir() and p.name != "_baseline"]
         for sub in list(candidates):
-            if sub.name.startswith("_"):
+            if sub.name.startswith("_") or is_judge_dir(sub.name):
                 candidates += [p for p in sub.iterdir() if p.is_dir()]
     weight: dict[str, int] = {}
     for cand in candidates:

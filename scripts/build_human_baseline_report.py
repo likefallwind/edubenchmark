@@ -18,7 +18,7 @@ Inputs:
 Writes `doc/benchmark_human_baselines_2026-08-15.md`. Idempotent.
 
 Run-hygiene rules (coverage floor, date-dir and `_`-prefix skipping, descending
-into `_judge-*`) are imported from `build_baseline_report` rather than
+into `judge-*`) are imported from `build_baseline_report` rather than
 reimplemented, so the two reports can never disagree about which runs count.
 """
 
@@ -33,6 +33,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from eval.judge_dirs import is_judge_dir  # noqa: E402
 from build_baseline_report import (  # noqa: E402
     COVERAGE_FLOOR,
     DATE_DIR,
@@ -69,7 +70,7 @@ def run_values(benchmark: str, metric: str) -> list[tuple[str, float]]:
     if not base.is_dir():
         return []
     children = [c for c in base.iterdir() if c.is_dir()]
-    for judge_dir in [c for c in children if c.name.startswith("_judge-")]:
+    for judge_dir in [c for c in children if is_judge_dir(c.name)]:
         children += [c for c in judge_dir.iterdir() if c.is_dir()]
 
     runs: list[tuple[str, int, float]] = []

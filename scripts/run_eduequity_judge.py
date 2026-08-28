@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from eval.minimax_client import MiniMaxClient
+from eval.judge_dirs import judge_dir_name
 from eval.providers import PROVIDERS, build_client, model_slug, resolve_provider
 from eval.report import append_jsonl, read_jsonl, write_jsonl
 
@@ -710,7 +711,7 @@ def run_target_model(
         pairs,
         expected_model=target_model,
     )
-    out_dir = output_root / f"_judge-{model_slug(judge_model)}" / model_slug(target_model)
+    out_dir = output_root / judge_dir_name(judge_model) / model_slug(target_model)
     judgments_path = out_dir / "pairwise_judgments.jsonl"
     summary_path = out_dir / "summary.json"
 

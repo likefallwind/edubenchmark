@@ -27,11 +27,11 @@ echo "[follower] model=$MODEL slug=$SLUG 待处理: $*"
 # 目录并不总是 reports/eval/<benchmark>/<slug>:edubench 会按裁判分目录,预测落在
 # reports/eval/edubench/_judge-deepseek-v3.2/<slug>/。只认默认目录会永远数到 0,
 # 一直等到 MAX_WAIT_HOURS 超时,把后面所有 benchmark 的判分全堵住。
-# 所以默认目录没有预测时,回落到 _judge-*/<slug>/ 找。
+# 所以默认目录没有预测时,回落到 judge-*/<slug>/ 找(兼容旧的 _judge-*/)。
 predictions_dir() {
   local b="$1" d="reports/eval/$b/$SLUG" c
   compgen -G "$d/predictions*.jsonl" >/dev/null && { echo "$d"; return; }
-  for c in "reports/eval/$b"/_judge-*/"$SLUG"; do
+  for c in "reports/eval/$b"/judge-*/"$SLUG" "reports/eval/$b"/_judge-*/"$SLUG"; do
     compgen -G "$c/predictions*.jsonl" >/dev/null && { echo "$c"; return; }
   done
   echo "$d"

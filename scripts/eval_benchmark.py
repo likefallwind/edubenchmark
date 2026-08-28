@@ -28,12 +28,12 @@ from pathlib import Path
 
 from eval.benchmarks import available_benchmarks, get_adapter
 from eval.minimax_client import DEFAULT_MODEL
+from eval.judge_dirs import judge_dir_name
 from eval.providers import PROVIDERS, build_client, model_slug
 from eval.runner import run
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CANONICAL_JUDGE_MODEL = "MiniMax-M3"
 
 
 def _write_run_start_summary(
@@ -65,7 +65,7 @@ def _write_run_start_summary(
     if previous_judge and judge_model and str(previous_judge) != str(judge_model):
         raise SystemExit(
             f"refusing to mix judge models in {out_dir}: existing={previous_judge}, requested={judge_model}; "
-            "use the automatic _judge-<model>/ directory or a different --out-dir"
+            "每个裁判有自己的 judge-<judge>/ 目录；换裁判请让它自动分目录，或指定别的 --out-dir"
         )
 
     # Same hazard as mixing judges: predictions made with and without images are
@@ -237,16 +237,15 @@ def main() -> None:
     extractor_model = args.extractor_model
     judge_model = adapter.resolved_judge_model(extractor_model)
 
-    # The benchmark's canonical judge uses the ordinary model directory;
-    # alternate judges get their own namespace so scoring caches and summaries
-    # can never overwrite one another. Most adapters inherit MiniMax-M3, while
-    # an adapter may name its established historical judge explicitly.
+    # Every judge gets its own namespace, the default one included: with several
+    # judges in rotation a bare <model>/ directory would be unreadable without
+    # knowing which judge was default when the run was made. Rule-scored
+    # benchmarks have no judge and keep the plain <benchmark>/<model>/ shape.
     base_dir = ROOT / "reports" / "eval" / args.benchmark
-    canonical_judge = adapter.canonical_judge_model or CANONICAL_JUDGE_MODEL
     if args.out_dir is not None:
         out_dir = args.out_dir
-    elif judge_model and model_slug(judge_model) != model_slug(canonical_judge):
-        out_dir = base_dir / f"_judge-{model_slug(judge_model)}" / model_slug(args.model)
+    elif judge_model:
+        out_dir = base_dir / judge_dir_name(judge_model) / model_slug(args.model)
     else:
         out_dir = base_dir / model_slug(args.model)
 
