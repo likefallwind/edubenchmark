@@ -249,6 +249,28 @@ def main() -> None:
     else:
         out_dir = base_dir / model_slug(args.model)
 
+    # --out-dir must not be a way to drop a judged run into the canonical result
+    # tree without naming its judge: the whole point of judge-<judge>/ is that a
+    # path can be read without knowing which judge was default that week.
+    # Isolation trees (_baseline, _noimage, _smoke, _judge_rubric, ...) keep their
+    # leading underscore and are exempt — they are already outside the model
+    # tables, and run_reference_baseline.py legitimately writes into _baseline/.
+    if args.out_dir is not None and judge_model:
+        resolved = out_dir.resolve()
+        eval_root = (ROOT / "reports" / "eval").resolve()
+        inside_eval_tree = resolved == eval_root or eval_root in resolved.parents
+        rel_parts = resolved.parts[len(eval_root.parts):] if inside_eval_tree else ()
+        isolated = any(part.startswith("_") for part in rel_parts)
+        named = any(part.startswith("judge-") for part in rel_parts)
+        if inside_eval_tree and not isolated and not named:
+            parser.error(
+                f"--out-dir would hide the judge of a judged run: {out_dir}\n"
+                f"This benchmark is scored by {judge_model}, so its results belong in "
+                f"reports/eval/{args.benchmark}/{judge_dir_name(judge_model)}/<model>/. "
+                "Drop --out-dir to get that path, include a judge-<judge> segment, use an "
+                "underscore-prefixed isolation dir, or point --out-dir outside reports/eval/."
+            )
+
     # A no-images run must never land in the canonical result tree: its score is a
     # degraded proxy and would be read as the model's real score. Auto-isolate the
     # default path, and refuse an explicit --out-dir that points back into
