@@ -445,6 +445,7 @@ def build_client(
     *,
     provider: str | None = None,
     base_url: str | None = None,
+    api_key: str | None = None,
     api_key_env: str | None = None,
     chat_path: str | None = None,
     extra_params: dict | None = None,
@@ -452,12 +453,18 @@ def build_client(
 ) -> MiniMaxClient:
     """Construct a client for ``model`` against its resolved provider.
 
-    Explicit ``provider`` / ``base_url`` / ``api_key_env`` / ``chat_path`` args
-    override the auto-resolved provider (escape hatch for models not in the
-    prefix table). Default per-model request params (``resolve_model_params``,
-    e.g. ``gpt-5.5``'s ``reasoning_effort: medium``) are applied unless
-    ``extra_params`` is given explicitly. Raises a clear error if the key env var
-    is unset.
+    Explicit ``provider`` / ``base_url`` / ``api_key`` / ``api_key_env`` /
+    ``chat_path`` args override the auto-resolved provider (escape hatch for
+    models not in the prefix table). Default per-model request params
+    (``resolve_model_params``, e.g. ``gpt-5.5``'s ``reasoning_effort: medium``)
+    are applied unless ``extra_params`` is given explicitly. Raises a clear error
+    if the key env var is unset.
+
+    ``api_key`` is a literal key handed in at the call site (the ``--api-key``
+    flag on the EduEquity runners). Env vars remain the norm and the default —
+    this only exists so a runner can accept a key for a one-off run without
+    exporting it. When given it wins over ``api_key_env``/the provider's env var,
+    and it is never persisted into any artifact.
 
     ``temperature`` is merged on top of the resolved params rather than replacing
     them, so pinning a sampling temperature never drops a per-model workaround
@@ -476,7 +483,7 @@ def build_client(
     url = base_url or prov.resolved_base_url()
     path = chat_path or prov.chat_path
     key_env = api_key_env or prov.api_key_env
-    api_key = os.environ.get(key_env)
+    api_key = api_key or os.environ.get(key_env)
     if not api_key:
         # Providers that declare ``api_key_required=False`` (self-hosted vLLM
         # started without ``--api-key``) accept anything in the Authorization

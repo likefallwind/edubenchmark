@@ -71,6 +71,16 @@
 #   解析失败时重问被测模型(复刻同事 --bad-format-retries,默认 2 次;仅本 benchmark 内生效):
 #     ASAP_BAD_FORMAT_RETRIES=0 ...   # 关掉
 #   全量单模型约合数十美元,不要默认跑全量。ASAP 2.0 无官方 LLM 协议,QWK 不等同官方排行榜成绩。
+# EduEquity (教育公平反事实成对评测;数据已在 data/eduequity/,无需 fetch):
+#   100 道身份中立种子题 × 性别/民族/城乡/经济四类身份 = 400 个 A/B 配对 / 800 条 prompt。
+#   两阶段:被测模型对 800 条 prompt 各生成一次,再由裁判成对比较同一题的两侧回答,
+#   在四个 0-10 维度上判定身份是否造成不当的教育服务差异(越高越公平)。
+#   LIMIT 在这里的单位是「配对数」而非题数,LIMIT=0 或不设 = 全量 400 对:
+#     LIMIT=3 MODEL=glm-5.2 JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh eduequity   # 冒烟
+#     MODEL=glm-5.2 ./scripts/run_eval.sh eduequity                                   # 全量
+#   PHASE=predict/score 同样生效(生成与裁判本来就是两个独立脚本、各自断点续跑)。
+#   裁判默认 MiniMax-M3(交付指南里的 deepseek-v3.2 因 zgc 中转会 200 返回污染内容而弃用)。
+#   结果:reports/eval/eduequity/<model>/ 与 reports/eval/eduequity/_judge-<judge>/<model>/。
 # 语言:eduguard_sata 默认中英双语都跑(--language both)。单语言是该评测独有的刻意选项,
 #   本脚本不提供旋钮(其它 benchmark 无此概念),需要时直接调底层工具:
 #     python scripts/eval_benchmark.py --benchmark eduguard_sata --model "$MODEL" --language en --limit 0
@@ -235,7 +245,8 @@ for b in $BENCHMARKS; do
       ;;
     mrbench_tutor)
       # Step 2 生成+裁判打分：被测模型生成 tutor 回复，固定裁判逐 8 维打标。
-      # 裁判经 MRBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦；每条 item 裁判扇出 8 个维度，故抬高抽取并发。
+      # 裁判经 MRBENCH_JUDGE_MODEL 固定、与被测/抽取模型解耦；每条 item 的 8 个维度按顺序判，
+      # 所以 EXTRACT_CONCURRENCY 就是打到裁判的真实并发，不再乘 8。
       MRBENCH_JUDGE_MODEL="$JUDGE_MODEL" \
       run_eval_py mrbench_tutor --benchmark mrbench_tutor --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
@@ -323,6 +334,43 @@ for b in $BENCHMARKS; do
       P08_EXTRACTOR_MODEL="${P08_EXTRACTOR_MODEL:-$MODEL}"
       run_eval_py p08_calibration --benchmark p08_calibration --model "$MODEL" \
         --extractor-model "$P08_EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --item-list "$ITEM_LIST"
+      ;;
+    eduequity)
+      # EduEquity 教育公平反事实成对评测(400 对 / 800 prompt)。
+      # 它不走 eval_benchmark.py:一个评分单元由「同一题、仅身份不同」的两次生成构成,
+      # BenchmarkAdapter 的一题一次调用结构容纳不下,故保留交付的两个独立 runner。
+      #   阶段一 run_eduequity_generation.py -> reports/eval/eduequity/<model>/predictions.jsonl
+      #   阶段二 run_eduequity_judge.py       -> reports/eval/eduequity/_judge-<judge>/<model>/
+      # LIMIT 在这里的单位是「配对数」而不是题数(LIMIT=0 或不设 = 全量 400 对);
+      # 冒烟先跑 LIMIT=3。裁判由 JUDGE_MODEL 固定,与被测模型解耦。
+      if [[ -n "$MINI" ]]; then
+        echo "[run_eval] eduequity 不支持 MINI 精选题集(题单按 pair 组织,与 --item-list 不同构),跳过" >&2
+        continue
+      fi
+      # 抽样跑隔离到 _smoke/ 子树,有两个理由,都是踩过的:
+      #  1. 生成阶段把「本次选了哪些 sample_id」哈希进 generation_summary.json,选题不同就
+      #     拒绝往同一目录追加(refusing to mix incompatible predictions)。冒烟若占了正式
+      #     目录,之后的全量跑会被这条保护直接挡掉,只能手工删目录。
+      #  2. 3 对的分数不该混进 aggregate/audit 冒充结果。_smoke 以下划线开头,
+      #     collect_runs / collect 都会跳过,与 _noimage、MINI 独立结果树是同一套做法。
+      EQ_ARGS=()
+      EQ_ROOT="reports/eval/eduequity"
+      if [[ "$LIMIT" != "0" ]]; then
+        EQ_ARGS+=(--limit-pairs "$LIMIT")
+        EQ_ROOT="reports/eval/eduequity/_smoke"
+        echo "[run_eval] eduequity LIMIT=$LIMIT 是抽样冒烟(单位=配对数),结果隔离到 $EQ_ROOT/;"
+        echo "[run_eval]   正式结果请用 LIMIT=0(全量 400 对),会写进 reports/eval/eduequity/。"
+      fi
+      if [[ "$PHASE" != "score" ]]; then
+        python scripts/run_eduequity_generation.py --models "$MODEL" --output-root "$EQ_ROOT" \
+          --concurrency "$CONCURRENCY" ${EQ_ARGS[@]+"${EQ_ARGS[@]}"}
+      fi
+      if [[ "$PHASE" != "predict" ]]; then
+        EDUEQUITY_JUDGE_MODEL="$JUDGE_MODEL" \
+        python scripts/run_eduequity_judge.py --models "$MODEL" --judge-model "$JUDGE_MODEL" \
+          --output-root "$EQ_ROOT" \
+          --concurrency "$EXTRACT_CONCURRENCY" ${EQ_ARGS[@]+"${EQ_ARGS[@]}"}
+      fi
       ;;
     longtutor_evidence|longtutor_teaching)
       run_eval_py "$b" --benchmark "$b" --limit "$LIMIT" \

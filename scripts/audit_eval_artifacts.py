@@ -375,6 +375,9 @@ def audit_run(benchmark: str, model_dir: Path) -> dict[str, Any]:
     predictions = dedupe(read_predictions(model_dir))
     extractions = dedupe(read_jsonl(ext_path))
 
+    if not summary and (model_dir / "generation_summary.json").exists():
+        return audit_generation_stage(rec, model_dir, predictions)
+
     if not summary and not scored:
         rec["verdict"] = "no_artifacts"
         rec["findings"].append("no summary.json and no scored.jsonl — nothing was produced")
@@ -585,6 +588,56 @@ def audit_run(benchmark: str, model_dir: Path) -> dict[str, Any]:
         escalate("caveat")
 
     rec["verdict"] = verdict
+    return rec
+
+
+def audit_generation_stage(
+    rec: dict[str, Any], model_dir: Path, predictions: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    """Audit a prediction-only stage dir of a two-stage benchmark (EduEquity).
+
+    EduEquity splits generation and judging into two runners, so
+    ``reports/eval/eduequity/<model>/`` legitimately holds ``predictions.jsonl``
+    + ``generation_summary.json`` and no ``summary.json`` — the scores live one
+    level over in ``_judge-<judge>/<model>/``, which ``collect_runs`` skips
+    because it starts with an underscore. Without this branch the generic path
+    reads that as "nothing was produced", which is wrong and hides the thing
+    actually worth checking here: whether generation finished. A half-finished
+    generation is exactly what silently truncates the judged pair set later.
+    """
+    try:
+        gen = json.loads((model_dir / "generation_summary.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        rec["verdict"] = "no_artifacts"
+        rec["findings"].append("generation_summary.json is unreadable")
+        return rec
+
+    expected = int(gen.get("selected_prompts") or 0)
+    successful = int(gen.get("successful_prompts") or 0)
+    empty = int(gen.get("empty_prompts") or 0)
+    errors = int(gen.get("error_prompts") or 0)
+    missing = int(gen.get("missing_prompts") or 0)
+    rec.update(
+        topology="generation_stage",
+        n_expected=expected,
+        n_scored=len(predictions),
+        n_graded=successful,
+        headline=None,
+        judge_usage_observable=False,
+        not_scored_rate=_rate(expected - successful, expected),
+    )
+    rec["findings"].append(
+        f"prediction-only stage dir: {successful}/{expected} prompts generated; "
+        f"scores live in {rec['benchmark']}/_judge-<judge>/{rec['model']}/"
+    )
+    if gen.get("run_status") != "complete" or successful != expected:
+        rec["findings"].append(
+            f"generation incomplete (empty={empty} errors={errors} missing={missing}) — "
+            "any judge run over this dir scores a truncated pair set"
+        )
+        rec["verdict"] = (
+            "unusable" if rec["not_scored_rate"] >= UNUSABLE_RATE else "caveat"
+        )
     return rec
 
 

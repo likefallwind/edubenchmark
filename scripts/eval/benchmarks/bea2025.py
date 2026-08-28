@@ -18,7 +18,6 @@ import os
 import re
 import time
 from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
@@ -407,8 +406,11 @@ class BEA2025TutorAdapter(BenchmarkAdapter):
         conv = item["meta"]["conversation_history"]
         generated = (response or "").strip()
         dims = list(DIMENSIONS)
-        with ThreadPoolExecutor(max_workers=len(dims)) as pool:
-            raws = list(pool.map(lambda d: _judge_one(judge_client, judge_model, d, conv, generated), dims))
+        # Sequential on purpose: the runner already parallelises across items via
+        # --extract-concurrency, so fanning the 4 dimensions out in parallel here
+        # would multiply the real judge concurrency by 4 and trip the judge API's
+        # rate limit. Same reasoning as mrbench_tutor.
+        raws = [_judge_one(judge_client, judge_model, d, conv, generated) for d in dims]
         # Store the judge's raw reply per dimension; parsing happens in score().
         result = {dim: raw for dim, raw in zip(dims, raws)}
         result["judge_model"] = judge_model
