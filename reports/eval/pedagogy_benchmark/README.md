@@ -1,6 +1,6 @@
 # pedagogy_benchmark — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：（暂无档案；本文件的“这个评测是什么”一节即是权威描述，事实来源是 adapter 源码与 AGENTS.md）
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -16,6 +16,8 @@ headline 口径：准确率（accuracy）。
 | `gpt-4o` | — | no_artifacts（目录在，产物没有） | 0.0% | 0.0% | no summary.json and no scored.jsonl — nothing was produced |
 | `DeepSeek-R1-0528-Qwen3-8B` | 0.6935 | clean | 0.0% | 0.0% | — |
 | `MiniMax-M2.7` | 0.8248 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.5-4B` | 0.7507 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 0.8660 | clean | 0.0% | 0.0% | — |
 | `claude-sonnet-4-6` | 0.8490 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-flash` | 0.8570 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-pro` | 0.8534 | clean | 0.0% | 0.0% | — |

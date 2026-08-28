@@ -1,6 +1,6 @@
 # p08_calibration — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/p08_selfbuilt.md`](../../../doc/benchmark_profiles/p08_selfbuilt.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -12,8 +12,10 @@ headline 口径：准确率（accuracy）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
+| `Qwen-Qwen3.5-4B` | 0.5436 | clean | 0.9% | 0.0% | 0.9% 的题命中失败标记：置信度没解析出来，该题被踢出校准指标 |
 | `minimax3` | 0.5873 | clean | 0.9% | 0.0% | 0.9% 的题命中失败标记：置信度没解析出来，该题被踢出校准指标 |
 | `MiniMax-M2.7` | 0.4909 | clean | 0.7% | 0.0% | 0.7% 的题命中失败标记：置信度没解析出来，该题被踢出校准指标 |
+| `Qwen-Qwen3.8-27B` | 0.6642 | clean | 0.0% | 0.9% | — |
 | `deepseek-v4-pro` | 0.6812 | clean | 0.0% | 0.2% | — |
 | `doubao-seed-2.0-pro` | 0.6964 | clean | 0.0% | 0.0% | — |
 | `glm-5.2` | 0.6673 | clean | 0.0% | 0.0% | — |

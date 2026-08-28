@@ -1,18 +1,22 @@
 # mmtutorbench — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mmtutorbench.md`](../../../doc/benchmark_profiles/mmtutorbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-全部 run 干净。
+没有不可用的 run，但有 1 个带保留意见（caveat），引用时必须一并写出。
 
 headline 口径：六维 rubric 平均总分（0-6）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
+| `Qwen-Qwen3.5-4B` | 3.6609 | caveat（可用，但必须带着下面的保留意见一起引用） | 2.7% | 0.0% | 2.7% 的题命中失败标记：rubric 解析不全，总分记 None |
+| `Qwen-Qwen3.8-27B` | 4.1170 | clean | 0.1% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 4.7675 | clean | 0.0% | 0.0% | — |
 | `doubao-seed-2.0-pro` | 4.5584 | clean | 0.0% | 0.0% | — |
+| `minimax3` | 3.5033 | clean | 0.0% | 0.1% | — |
 | `minimax3` | 3.4447 | clean | 0.0% | 0.1% | — |
 
 ## 二、这个评测是什么

@@ -1,6 +1,6 @@
 # mathtutorbench_mistake_correction — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mathtutorbench.md`](../../../doc/benchmark_profiles/mathtutorbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -14,8 +14,11 @@ headline 口径：准确率（accuracy）。
 | --- | --- | --- | --- | --- | --- |
 | `glm-5.2` | 0.9371 | clean | 0.1% | 0.1% | — |
 | `MiniMax-M2.7` | 0.8603 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.5-4B` | 0.8802 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 0.9331 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-flash` | 0.9172 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-pro` | 0.9202 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.9421 | clean | 0.0% | 0.0% | — |
 | `minimax3` | 0.8733 | clean | 0.0% | 0.0% | — |
 
 ## 二、这个评测是什么

@@ -1,6 +1,6 @@
 # p07_selfcheck — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/p07_selfcheck.md`](../../../doc/benchmark_profiles/p07_selfcheck.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -13,6 +13,8 @@ headline 口径：score_10 = 10×[0.5×fix_rate + 0.5×(1−break_rate)]（0-10�
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
 | `MiniMax-M2.7` | 5.1450 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.5-4B` | 4.9280 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 5.0030 | clean | 0.0% | 0.9% | — |
 | `deepseek-v4-pro` | 5.5720 | clean | 0.0% | 0.7% | — |
 | `doubao-seed-2.0-pro` | 5.0190 | clean | 0.0% | 0.0% | — |
 | `glm-5.2` | 5.4600 | clean | 0.0% | 0.0% | — |

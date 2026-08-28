@@ -1,6 +1,6 @@
 # agieval — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/agieval.md`](../../../doc/benchmark_profiles/agieval.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -17,6 +17,8 @@ headline 口径：准确率（accuracy）。
 | `doubao-seed-2.0-pro` | 0.9204 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.0% | summary.json 比产物旧：盘上的分数跟盘上的数据对不上 |
 | `glm-5.2` | 0.9055 | clean | 0.0% | 0.7% | — |
 | `deepseek-v4-pro` | 0.9020 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.5-4B` | 0.8305 | clean | 0.0% | 0.1% | — |
+| `Qwen-Qwen3.8-27B` | 0.8913 | clean | 0.0% | 0.1% | — |
 | `deepseek-v4-flash` | 0.8937 | clean | 0.0% | 0.0% | — |
 | `minimax3` | 0.8561 | clean | 0.0% | 0.1% | — |
 

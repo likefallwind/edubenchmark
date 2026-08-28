@@ -65,9 +65,9 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | doubao-seed-2.0-pro | 82.3% | 300/300 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M3 | 82.0% | 300/300 | MiniMax-M3 | MiniMax-M3 |
 | glm-5.2 | 81.0% | 300/300 | MiniMax-M3 | MiniMax-M3 |
+| Qwen/Qwen3.8-27B | 78.7% | 300/300 | MiniMax-M2.7 | MiniMax-M3 |
 | Qwen/Qwen3.5-4B | 73.3% | 300/300 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M2.7 | 71.3% | 300/300 | MiniMax-M3 | MiniMax-M3 |
-| Qwen/Qwen3.8-27B | n/a | 0/300 | MiniMax-M2.7 | MiniMax-M3 |
 
 ## ceval
 
@@ -88,8 +88,6 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 
 | Model | Accuracy | Scored/Total | Extractor | Judge | mean_overall_score | mean_scenario_score |
 | --- | --- | --- | --- | --- | --- | --- |
-| Qwen/Qwen3.5-4B | n/a | 3795/3797 | MiniMax-M3 | MiniMax-M3 | 7.262 | 7.373 |
-| Qwen/Qwen3.8-27B | n/a | 3794/3797 | MiniMax-M3 | MiniMax-M3 | 7.732 | 7.840 |
 | Qwen/Qwen3.5-4B | n/a | 0/3797 | deepseek-v3.2 | deepseek-v3.2 | — | — |
 | claude-sonnet-4-6 | n/a | 3797/3797 | — | deepseek-v3.2 | 8.112 | 8.814 |
 | deepseek-v4-flash | n/a | 3797/3797 | — | deepseek-v3.2 | 8.154 | 8.781 |
@@ -108,7 +106,20 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | glm-5.2 | n/a | 3797/3797 | MiniMax-M2.7 | deepseek-v4-flash | 8.577 | 8.863 |
 | minimax-m2.7 | n/a | 3797/3797 | MiniMax-M2.7 | deepseek-v4-flash | 8.570 | 8.807 |
 | minimax-m3 | n/a | 3796/3797 | MiniMax-M2.7 | deepseek-v4-flash | 8.719 | 9.021 |
+| Qwen/Qwen3.5-4B | n/a | 3795/3797 | MiniMax-M3 | MiniMax-M3 | 7.262 | 7.373 |
+| Qwen/Qwen3.8-27B | n/a | 3794/3797 | MiniMax-M3 | MiniMax-M3 | 7.732 | 7.840 |
 | glm-5.2 | n/a | 5/5 | MiniMax-M3 | MiniMax-M3 | 8.067 | 8.600 |
+
+## eduequity
+
+| Model | Accuracy | Scored/Total | Extractor | Judge | both_invalid_rate | dim_development_opportunity_parity | dim_instructional_standard_parity | dim_respect_and_non_stereotyping | dim_support_quality_parity | eduequity_score | hard_fail_rate | judge_error_rate |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| MiniMax-M2.7 | n/a | 400/400 | — | MiniMax-M3 | 0.000 | 6.950 | 7.325 | 8.045 | 7.048 | 7.101 | 0.055 | 0.000 |
+| deepseek-v4-pro | n/a | 400/400 | — | MiniMax-M3 | 0.000 | 7.490 | 7.810 | 8.357 | 7.580 | 7.643 | 0.037 | 0.000 |
+| doubao-seed-2.0-lite | n/a | 397/400 | — | MiniMax-M3 | 0.000 | 7.489 | 7.806 | 8.224 | 7.788 | 7.651 | 0.040 | 0.007 |
+| doubao-seed-2.1-turbo | n/a | 399/400 | — | MiniMax-M3 | 0.000 | 7.266 | 7.624 | 7.724 | 7.576 | 7.351 | 0.043 | 0.003 |
+| glm-5.2 | n/a | 400/400 | — | MiniMax-M3 | 0.000 | 7.072 | 7.555 | 7.765 | 7.412 | 7.204 | 0.055 | 0.000 |
+| MiniMax-M3 | n/a | 400/400 | — | MiniMax-M3 | 0.000 | 6.933 | 7.370 | 7.705 | 7.340 | 7.111 | 0.052 | 0.000 |
 
 ## eduguard_adversarial
 
@@ -124,6 +135,7 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | MiniMax-M3 | 91.8% | 801/801 | MiniMax-M2.7 | deepseek-v3.2 | 0.082 | 66 | 801 |
 | glm-5.1 | 90.0% | 772/801 | MiniMax-M2.7 | MiniMax-M3 | 0.095 | 73 | 768 |
 | Qwen/Qwen3.5-4B | 89.6% | 800/801 | MiniMax-M2.7 | MiniMax-M3 | 0.104 | 83 | 800 |
+| Qwen/Qwen3.8-27B | 85.0% | 801/801 | MiniMax-M2.7 | MiniMax-M3 | 0.150 | 120 | 801 |
 | kimi-k2.6 | 83.6% | 801/801 | MiniMax-M2.7 | MiniMax-M3 | 0.143 | 112 | 782 |
 | glm-5.2 | 79.6% | 798/801 | MiniMax-M2.7 | deepseek-v4-flash | 0.204 | 163 | 798 |
 | glm-5.2 | 79.2% | 801/801 | MiniMax-M2.7 | MiniMax-M3 | 0.207 | 166 | 800 |
@@ -136,7 +148,6 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | deepseek-v4-pro | 41.8% | 801/801 | MiniMax-M2.7 | deepseek-v4-flash | 0.582 | 466 | 801 |
 | doubao-seed-2.0-pro | 39.7% | 801/801 | MiniMax-M2.7 | deepseek-v3.2 | 0.603 | 482 | 800 |
 | deepseek-v4-pro | 37.5% | 801/801 | MiniMax-M2.7 | deepseek-v3.2 | 0.624 | 498 | 798 |
-| Qwen/Qwen3.8-27B | n/a | 0/801 | MiniMax-M2.7 | MiniMax-M3 | — | — | 0 |
 
 ## eduguard_sata
 
@@ -194,37 +205,37 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 
 | Model | Accuracy | Scored/Total | Extractor | Judge |
 | --- | --- | --- | --- | --- |
+| Qwen/Qwen3.8-27B | 46.1% | 1000/1001 | MiniMax-M3 | — |
 | deepseek-v4-pro | 43.7% | 1001/1001 | MiniMax-M3 | — |
 | MiniMax-M3 | 41.6% | 1001/1001 | MiniMax-M3 | — |
 | doubao-seed-2.0-pro | 37.7% | 1001/1001 | MiniMax-M3 | — |
 | glm-5.2 | 35.0% | 1001/1001 | MiniMax-M3 | — |
 | Qwen/Qwen3.5-4B | 29.3% | 1001/1001 | MiniMax-M3 | — |
 | MiniMax-M2.7 | 27.9% | 1001/1001 | MiniMax-M3 | — |
-| Qwen/Qwen3.8-27B | n/a | 0/1001 | MiniMax-M3 | — |
 
 ## longtutor_evidence
 
 | Model | Accuracy | Scored/Total | Extractor | Judge |
 | --- | --- | --- | --- | --- |
 | glm-5.2 | 80.7% | 3003/3003 | MiniMax-M3 | MiniMax-M3 |
+| Qwen/Qwen3.8-27B | 80.3% | 3001/3003 | MiniMax-M3 | MiniMax-M3 |
 | doubao-seed-2.0-pro | 80.1% | 3003/3003 | MiniMax-M3 | MiniMax-M3 |
 | Qwen/Qwen3.5-4B | 79.3% | 3003/3003 | MiniMax-M3 | MiniMax-M3 |
 | deepseek-v4-pro | 79.2% | 3003/3003 | MiniMax-M3 | MiniMax-M3 |
 | MiniMax-M3 | 78.7% | 3003/3003 | MiniMax-M3 | MiniMax-M3 |
 | MiniMax-M2.7 | 71.2% | 3002/3003 | MiniMax-M3 | MiniMax-M3 |
-| Qwen/Qwen3.8-27B | n/a | 0/3003 | MiniMax-M3 | MiniMax-M3 |
 
 ## longtutor_teaching
 
 | Model | Accuracy | Scored/Total | Extractor | Judge |
 | --- | --- | --- | --- | --- |
 | MiniMax-M2.7 | 100.0% | 1001/1001 | MiniMax-M3 | MiniMax-M3 |
+| Qwen/Qwen3.8-27B | 100.0% | 1001/1001 | MiniMax-M3 | MiniMax-M3 |
 | deepseek-v4-pro | 100.0% | 1001/1001 | MiniMax-M3 | MiniMax-M3 |
 | glm-5.2 | 100.0% | 1001/1001 | MiniMax-M3 | MiniMax-M3 |
 | doubao-seed-2.0-pro | 99.9% | 1001/1001 | MiniMax-M3 | MiniMax-M3 |
 | MiniMax-M3 | 99.9% | 1001/1001 | MiniMax-M3 | MiniMax-M3 |
 | Qwen/Qwen3.5-4B | 99.4% | 1001/1001 | MiniMax-M3 | MiniMax-M3 |
-| Qwen/Qwen3.8-27B | n/a | 0/1001 | MiniMax-M3 | MiniMax-M3 |
 
 ## mathtutorbench_judge_calibration
 
@@ -297,12 +308,12 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | glm-5.2 | 77.7% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M3 | 74.6% | 327/327 | MiniMax-M2.7 | deepseek-v4-flash |
 | MiniMax-M3 | 73.4% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
+| Qwen/Qwen3.8-27B | 73.1% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | doubao-seed-2.0-lite | 67.3% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | deepseek-v4-flash | 63.3% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M2.7 | 61.5% | 327/327 | MiniMax-M2.7 | deepseek-v4-flash |
 | MiniMax-M2.7 | 59.0% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | Qwen/Qwen3.5-4B | 52.9% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
-| Qwen/Qwen3.8-27B | n/a | 0/327 | MiniMax-M2.7 | MiniMax-M3 |
 
 ## mathtutorbench_problem_solving
 
@@ -329,7 +340,7 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | MiniMax-M3 | 23.0% | 1150/1150 | MiniMax-M2.7 | deepseek-v4-flash |
 | MiniMax-M3 | 23.0% | 1150/1150 | MiniMax-M2.7 | MiniMax-M3 |
 | doubao-seed-2.0-lite | 20.3% | 1150/1150 | MiniMax-M2.7 | MiniMax-M3 |
-| Qwen/Qwen3.8-27B | 19.3% | 1127/1150 | MiniMax-M2.7 | MiniMax-M3 |
+| Qwen/Qwen3.8-27B | 19.4% | 1150/1150 | MiniMax-M2.7 | MiniMax-M3 |
 | Qwen/Qwen3.5-4B | 17.5% | 1150/1150 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M2.7 | 12.0% | 1150/1150 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M2.7 | 11.3% | 1150/1150 | MiniMax-M2.7 | deepseek-v4-flash |
@@ -345,6 +356,7 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | deepseek-v4-pro | 35.8% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | doubao-seed-2.0-pro | 31.5% | 327/327 | MiniMax-M2.7 | deepseek-v4-flash |
 | doubao-seed-2.0-pro | 27.8% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
+| Qwen/Qwen3.8-27B | 20.2% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M3 | 19.0% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M3 | 17.1% | 327/327 | MiniMax-M2.7 | deepseek-v4-flash |
 | doubao-seed-2.0-lite | 15.0% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
@@ -352,7 +364,6 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | deepseek-v4-flash | 12.8% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M2.7 | 10.1% | 327/327 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M2.7 | 9.8% | 327/327 | MiniMax-M2.7 | deepseek-v4-flash |
-| Qwen/Qwen3.8-27B | n/a | 0/327 | MiniMax-M2.7 | MiniMax-M3 |
 
 ## mathtutorbench_socratic
 
@@ -457,11 +468,11 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 | doubao-seed-2.0-pro | 89.8% | 186/200 | MiniMax-M2.7 | deepseek-v4-flash |
 | MiniMax-M2.7 | 84.8% | 184/200 | MiniMax-M2.7 | deepseek-v4-flash |
 | MiniMax-M3 | 83.0% | 200/200 | MiniMax-M2.7 | MiniMax-M3 |
+| Qwen/Qwen3.8-27B | 79.5% | 200/200 | MiniMax-M2.7 | MiniMax-M3 |
 | glm-5.2 | 79.5% | 200/200 | MiniMax-M2.7 | MiniMax-M3 |
 | Qwen/Qwen3.5-4B | 74.5% | 200/200 | MiniMax-M2.7 | MiniMax-M3 |
 | doubao-seed-2.0-pro | 73.4% | 177/200 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M2.7 | 68.0% | 200/200 | MiniMax-M2.7 | MiniMax-M3 |
-| Qwen/Qwen3.8-27B | n/a | 0/200 | MiniMax-M2.7 | MiniMax-M3 |
 
 ## olympiadbench
 
@@ -549,10 +560,10 @@ Per-benchmark, side-by-side. Accuracy is **not** comparable across benchmarks an
 
 | Model | Accuracy | Scored/Total | Extractor | Judge |
 | --- | --- | --- | --- | --- |
-| Qwen/Qwen3.5-4B | n/a | 1472/1473 | MiniMax-M2.7 | MiniMax-M3 |
-| Qwen/Qwen3.8-27B | n/a | 1471/1473 | MiniMax-M2.7 | MiniMax-M3 |
 | doubao-seed-2.0-pro | n/a | 1442/1473 | MiniMax-M2.7 | deepseek-v4-flash |
 | MiniMax-M3 | n/a | 1440/1473 | MiniMax-M2.7 | deepseek-v4-flash |
+| Qwen/Qwen3.5-4B | n/a | 1472/1473 | MiniMax-M2.7 | MiniMax-M3 |
+| Qwen/Qwen3.8-27B | n/a | 1471/1473 | MiniMax-M2.7 | MiniMax-M3 |
 | doubao-seed-2.0-pro | n/a | 1442/1473 | MiniMax-M2.7 | MiniMax-M3 |
 | MiniMax-M3 | n/a | 6/6 | MiniMax-M2.7 | MiniMax-M3 |
 

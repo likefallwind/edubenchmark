@@ -1,26 +1,24 @@
 # ifeval — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/ifeval.md`](../../../doc/benchmark_profiles/ifeval.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
 ## 一、健康状况（坏消息在前）
 
-没有不可用的 run，但有 5 个带保留意见（caveat），引用时必须一并写出。
+全部 run 干净。
 
 headline 口径：准确率（accuracy）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `MiniMax-M2.7` | 0.9108 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.5% | variance_restricted（low_variance）：跨模型均值 0.9063 / 标准差 0.02 |
-| `deepseek-v4-pro` | 0.9222 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.2% | variance_restricted（low_variance）：跨模型均值 0.9063 / 标准差 0.02 |
-| `doubao-seed-2.0-pro` | 0.8946 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.0% | variance_restricted（low_variance）：跨模型均值 0.9063 / 标准差 0.02 |
-| `glm-5.2` | 0.9298 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.0% | variance_restricted（low_variance）：跨模型均值 0.9063 / 标准差 0.02 |
-| `minimax3` | 0.8741 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.2% | variance_restricted（low_variance）：跨模型均值 0.9063 / 标准差 0.02 |
-
-### 区分度
-
-`variance_restricted`（low_variance）：跨 5 个模型的 headline 均值 0.9063、标准差 0.02。口径与 13 号映射效度检查一致：**区分度受限的格子不得驱动映射裁决**。
+| `MiniMax-M2.7` | 0.9108 | clean | 0.0% | 0.5% | — |
+| `Qwen-Qwen3.5-4B` | 0.9113 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 0.9445 | clean | 0.0% | 0.0% | — |
+| `deepseek-v4-pro` | 0.9222 | clean | 0.0% | 0.2% | — |
+| `doubao-seed-2.0-pro` | 0.8946 | clean | 0.0% | 0.0% | — |
+| `glm-5.2` | 0.9298 | clean | 0.0% | 0.0% | — |
+| `minimax3` | 0.8741 | clean | 0.0% | 0.2% | — |
 
 ## 二、这个评测是什么
 

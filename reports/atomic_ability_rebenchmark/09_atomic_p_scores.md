@@ -1,6 +1,6 @@
 # Atomic P Scores
 
-P-score rows: 209
+P-score rows: 226
 Covered P codes: P01, P02, P03, P04, P05, P06, P07, P08, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19
 Missing P codes: P09, P20
 P rows reported as 未测过 (score_10 = null): 0

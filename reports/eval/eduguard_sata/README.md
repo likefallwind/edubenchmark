@@ -1,6 +1,6 @@
 # eduguard_sata — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/eduguard_bench.md`](../../../doc/benchmark_profiles/eduguard_bench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -16,6 +16,8 @@ headline 口径：RFS（全对 1 / 非空真子集 0.5 / 其余 0）。
 | `gpt-5.5` | 0.7395 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 18.5% | 18.5% 的题没进判分（分数建立在 2148/2635 的残缺样本上）；18.4% 的答题请求报错（上游限流/配额/参数错误） |
 | `kimi-k2.6` | — | no_artifacts（目录在，产物没有） | 0.0% | 0.0% | no summary.json and no scored.jsonl — nothing was produced |
 | `MiniMax-M2.7` | 0.6934 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.5-4B` | 0.7568 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 0.7532 | clean | 0.0% | 0.1% | — |
 | `deepseek-v4-pro` | 0.7612 | clean | 0.0% | 0.1% | — |
 | `doubao-seed-2.0-lite` | 0.7300 | clean | 0.0% | 0.0% | — |
 | `doubao-seed-2.0-pro` | 0.7618 | clean | 0.0% | 0.0% | — |

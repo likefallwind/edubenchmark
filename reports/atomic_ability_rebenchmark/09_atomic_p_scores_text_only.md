@@ -26,7 +26,7 @@ confidence 权重、facet 等权、benchmark 加权），唯一差别是：由�
 （只有 REQUIRE_ALL 才记 0 分），这个问「这一格测的东西离了视觉还成不成立」
 （两种严格度都算）。加新的多模态 benchmark 时只需在那张表登记一笔，两边同时生效。
 
-P-score rows: 179
+P-score rows: 195
 Covered P codes: P01, P02, P05, P06, P07, P08, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19
 Capability-gap zero cells: 0 （应为 0：视觉格已整格移除，没有能力门槛可言）
 
@@ -37,6 +37,6 @@ Capability-gap zero cells: 0 （应为 0：视觉格已整格移除，没有能�
 | `minimax-m3` | 7.3708 | 16 |
 | `doubao-seed-2-0-pro` | 7.2455 | 16 |
 | `glm-5.2` | 7.2350 | 16 |
-| `minimax-m2.7` | 7.0601 | 16 |
+| `minimax-m2.7` | 7.0493 | 16 |
 | `deepseek-v4-pro` | 7.0286 | 16 |
 | `qwen-qwen3-5-4b` | 6.8141 | 16 |

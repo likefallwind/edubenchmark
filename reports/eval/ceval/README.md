@@ -1,6 +1,6 @@
 # ceval — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/ceval.md`](../../../doc/benchmark_profiles/ceval.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -12,10 +12,12 @@ headline 口径：准确率（accuracy）。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `Qwen-Qwen3.5-4B` | — | **unusable**（分数是假的，必须重跑） | 0.0% | 0.0% | 100.0% 的答题请求报错（上游限流/配额/参数错误） |
+| `Qwen-Qwen3.5-4B.siliconflow-stale-20260728` | — | **unusable**（分数是假的，必须重跑） | 0.0% | 0.0% | 100.0% 的答题请求报错（上游限流/配额/参数错误） |
 | `glm-5.1` | 1.0000 | caveat（可用，但必须带着下面的保留意见一起引用） | 0.0% | 0.0% | 冒烟样本（n=5），只能验管道，不能当分数 |
 | `MiniMax-M2.7` | 0.8744 | clean | 0.0% | 0.0% | — |
 | `Qwen-Qwen3-8B` | 0.8276 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.5-4B` | 0.8358 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 0.9026 | clean | 0.0% | 0.1% | — |
 | `deepseek-v4-flash` | 0.9219 | clean | 0.0% | 0.1% | — |
 | `deepseek-v4-pro` | 0.9383 | clean | 0.0% | 0.0% | — |
 | `doubao-seed-2.0-pro` | 0.9547 | clean | 0.0% | 0.0% | — |

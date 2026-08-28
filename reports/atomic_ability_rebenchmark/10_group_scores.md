@@ -53,9 +53,9 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `kimi-k2-7-code` | CLM | 7.1484 | 1 | P16 |
 | `kimi-k2-7-code` | SRG | 7.1484 | 1 | P04 |
 | `minimax-m2.7` | CEG | 7.445 | 3 | P17, P18, P19 |
-| `minimax-m2.7` | CLM | 5.4997 | 4 | P13, P14, P15, P16 |
-| `minimax-m2.7` | FDR | 6.5873 | 4 | P05, P06, P07, P08 |
-| `minimax-m2.7` | LAD | 7.5709 | 3 | P10, P11, P12 |
+| `minimax-m2.7` | CLM | 5.4767 | 4 | P13, P14, P15, P16 |
+| `minimax-m2.7` | FDR | 6.5782 | 4 | P05, P06, P07, P08 |
+| `minimax-m2.7` | LAD | 7.5604 | 3 | P10, P11, P12 |
 | `minimax-m2.7` | SRG | 4.0736 | 4 | P01, P02, P03, P04 |
 | `minimax-m3` | CEG | 8.0943 | 3 | P17, P18, P19 |
 | `minimax-m3` | CLM | 5.9103 | 4 | P13, P14, P15, P16 |
@@ -67,6 +67,11 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `qwen-qwen3-5-4b` | FDR | 6.923 | 4 | P05, P06, P07, P08 |
 | `qwen-qwen3-5-4b` | LAD | 7.3624 | 3 | P10, P11, P12 |
 | `qwen-qwen3-5-4b` | SRG | 6.0293 | 4 | P01, P02, P03, P04 |
+| `qwen-qwen3-8-27b` | CEG | 7.9433 | 3 | P17, P18, P19 |
+| `qwen-qwen3-8-27b` | CLM | 6.3228 | 4 | P13, P14, P15, P16 |
+| `qwen-qwen3-8-27b` | FDR | 7.4166 | 4 | P05, P06, P07, P08 |
+| `qwen-qwen3-8-27b` | LAD | 7.7021 | 3 | P10, P11, P12 |
+| `qwen-qwen3-8-27b` | SRG | 8.2355 | 3 | P01, P02, P03 |
 | `qwen-qwen3-8b` | FDR | 8.2764 | 2 | P05, P06 |
 | `qwen3-14b` | CLM | 6.1376 | 3 | P13, P14, P16 |
 | `qwen3-14b` | FDR | 7.4599 | 2 | P05, P06 |

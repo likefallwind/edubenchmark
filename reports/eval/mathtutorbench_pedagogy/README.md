@@ -1,6 +1,6 @@
 # mathtutorbench_pedagogy — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mathtutorbench.md`](../../../doc/benchmark_profiles/mathtutorbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -14,10 +14,17 @@ headline 口径：胜率（对金标 tutor 回复）。
 | --- | --- | --- | --- | --- | --- |
 | `doubao-seed-2.0-lite` | 0.7522 | caveat（可用，但必须带着下面的保留意见一起引用） | 8.8% | 0.0% | 8.8% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输；8.8% 的抽取/判分行带 error；summary.json 比产物旧：盘上的分数跟盘上的数据对不上 |
 | `deepseek-v4-flash` | 0.7096 | caveat（可用，但必须带着下面的保留意见一起引用） | 3.6% | 0.0% | 3.6% 的题命中失败标记：两次成对投票都失败，win_score=None，被当成输；3.6% 的抽取/判分行带 error；summary.json 比产物旧：盘上的分数跟盘上的数据对不上 |
+| `MiniMax-M2.7` | 0.7357 | clean | 0.0% | 0.0% | — |
 | `MiniMax-M2.7` | 0.6904 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.5-4B` | 0.6487 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 0.7826 | clean | 0.0% | 0.0% | — |
+| `deepseek-v4-pro` | 0.8296 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-pro` | 0.7983 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.8661 | clean | 0.0% | 0.0% | — |
 | `doubao-seed-2.0-pro` | 0.8252 | clean | 0.0% | 0.0% | — |
+| `glm-5.2` | 0.8530 | clean | 0.0% | 0.0% | — |
 | `glm-5.2` | 0.8139 | clean | 0.0% | 0.0% | — |
+| `minimax3` | 0.8139 | clean | 0.0% | 0.0% | — |
 | `minimax3` | 0.7930 | clean | 0.0% | 0.0% | — |
 
 ### 已定位的 bug（根因 + 修法）

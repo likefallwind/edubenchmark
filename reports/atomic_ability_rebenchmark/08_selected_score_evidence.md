@@ -1,53 +1,53 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 474
+Canonical normalized score rows used for P scoring: 531
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
-| `otherbenchmark` | 169 |
-| `repo_eval` | 305 |
+| `otherbenchmark` | 181 |
+| `repo_eval` | 350 |
 
 ## By Benchmark
 
 | Benchmark | Rows |
 |---|---:|
-| `agieval` | 7 |
+| `agieval` | 8 |
 | `asap_2` | 7 |
-| `bea2025_judge` | 8 |
-| `bea2025_tutor` | 15 |
-| `ceval` | 8 |
-| `edubench` | 156 |
+| `bea2025_judge` | 9 |
+| `bea2025_tutor` | 18 |
+| `ceval` | 9 |
+| `edubench` | 168 |
 | `eduguard_adversarial` | 14 |
-| `eduguard_sata` | 9 |
+| `eduguard_sata` | 10 |
 | `eduillustrate` | 5 |
-| `ifeval` | 6 |
-| `k12vista` | 9 |
-| `longtutor_diagnosis` | 6 |
-| `longtutor_evidence` | 18 |
-| `longtutor_teaching` | 6 |
-| `mathtutorbench_mistake_correction` | 7 |
-| `mathtutorbench_mistake_location` | 7 |
-| `mathtutorbench_pedagogy` | 8 |
-| `mathtutorbench_pedagogy_hard` | 8 |
-| `mathtutorbench_problem_solving` | 6 |
-| `mathtutorbench_scaffolding` | 8 |
-| `mathtutorbench_scaffolding_hard` | 8 |
-| `mathtutorbench_socratic` | 6 |
-| `mathtutorbench_solution_correctness` | 7 |
-| `mathvista` | 3 |
-| `mmlu_pro` | 7 |
-| `mmtutorbench` | 3 |
-| `mooccube_prereq` | 6 |
-| `mrbench_judge` | 8 |
-| `mrbench_tutor` | 25 |
-| `olympiadbench` | 8 |
-| `p07_selfcheck` | 6 |
-| `p08_abstention` | 6 |
-| `p08_calibration` | 6 |
-| `pedagogy_benchmark` | 24 |
-| `sas_bench` | 27 |
+| `ifeval` | 7 |
+| `k12vista` | 12 |
+| `longtutor_diagnosis` | 7 |
+| `longtutor_evidence` | 21 |
+| `longtutor_teaching` | 7 |
+| `mathtutorbench_mistake_correction` | 8 |
+| `mathtutorbench_mistake_location` | 8 |
+| `mathtutorbench_pedagogy` | 9 |
+| `mathtutorbench_pedagogy_hard` | 9 |
+| `mathtutorbench_problem_solving` | 7 |
+| `mathtutorbench_scaffolding` | 9 |
+| `mathtutorbench_scaffolding_hard` | 9 |
+| `mathtutorbench_socratic` | 7 |
+| `mathtutorbench_solution_correctness` | 8 |
+| `mathvista` | 4 |
+| `mmlu_pro` | 8 |
+| `mmtutorbench` | 4 |
+| `mooccube_prereq` | 7 |
+| `mrbench_judge` | 9 |
+| `mrbench_tutor` | 30 |
+| `olympiadbench` | 10 |
+| `p07_selfcheck` | 7 |
+| `p08_abstention` | 7 |
+| `p08_calibration` | 7 |
+| `pedagogy_benchmark` | 26 |
+| `sas_bench` | 30 |
 | `tutorbench` | 6 |
 
 ## Sample Rows
@@ -91,11 +91,11 @@ Canonical normalized score rows used for P scoring: 474
 | `edubench` | `deepseek-v4-flash` | `likert_0_to_10` | 7.4643 | 7.4643 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `mathtutorbench_mistake_correction` | `deepseek-v4-flash` | `accuracy` | 0.9171656686626747 | 9.1717 | `reports/eval/mathtutorbench_mistake_correction/deepseek-v4-flash/summary.json` |
 | `mathtutorbench_mistake_location` | `deepseek-v4-flash` | `accuracy_or_f1` | 0.774 | 7.7400 | `reports/eval/mathtutorbench_mistake_location/deepseek-v4-flash/summary.json` |
-| `mathtutorbench_pedagogy` | `deepseek-v4-flash` | `win_rate_or_accuracy` | 0.7712 | 7.7120 | `reports/eval/mathtutorbench_pedagogy/deepseek-v4-flash/summary.json` |
-| `mathtutorbench_pedagogy_hard` | `deepseek-v4-flash` | `win_rate_or_accuracy` | 0.7365 | 7.3650 | `reports/eval/mathtutorbench_pedagogy_hard/deepseek-v4-flash/summary.json` |
+| `mathtutorbench_pedagogy` | `deepseek-v4-flash` | `win_rate_or_accuracy` | 0.7712 | 7.7120 | `reports/eval/mathtutorbench_pedagogy/judge-minimax3/deepseek-v4-flash/summary.json` |
+| `mathtutorbench_pedagogy_hard` | `deepseek-v4-flash` | `win_rate_or_accuracy` | 0.7365 | 7.3650 | `reports/eval/mathtutorbench_pedagogy_hard/judge-minimax3/deepseek-v4-flash/summary.json` |
 | `mathtutorbench_problem_solving` | `deepseek-v4-flash` | `accuracy` | 0.9742228961334344 | 9.7422 | `reports/eval/mathtutorbench_problem_solving/deepseek-v4-flash/summary.json` |
-| `mathtutorbench_scaffolding` | `deepseek-v4-flash` | `win_rate_or_accuracy` | 0.15 | 1.5000 | `reports/eval/mathtutorbench_scaffolding/deepseek-v4-flash/summary.json` |
-| `mathtutorbench_scaffolding_hard` | `deepseek-v4-flash` | `win_rate_or_accuracy` | 0.1667 | 1.6670 | `reports/eval/mathtutorbench_scaffolding_hard/deepseek-v4-flash/summary.json` |
+| `mathtutorbench_scaffolding` | `deepseek-v4-flash` | `win_rate_or_accuracy` | 0.15 | 1.5000 | `reports/eval/mathtutorbench_scaffolding/judge-minimax3/deepseek-v4-flash/summary.json` |
+| `mathtutorbench_scaffolding_hard` | `deepseek-v4-flash` | `win_rate_or_accuracy` | 0.1667 | 1.6670 | `reports/eval/mathtutorbench_scaffolding_hard/judge-minimax3/deepseek-v4-flash/summary.json` |
 | `mathtutorbench_solution_correctness` | `deepseek-v4-flash` | `accuracy_or_f1` | 0.8567 | 8.5670 | `reports/eval/mathtutorbench_solution_correctness/deepseek-v4-flash/summary.json` |
 | `mmlu_pro` | `deepseek-v4-flash` | `accuracy` | 0.8590799434323267 | 8.5908 | `reports/eval/mmlu_pro/deepseek-v4-flash/summary.json` |
 | `mrbench_judge` | `deepseek-v4-flash` | `accuracy` | 0.5134 | 5.1340 | `reports/eval/mrbench_judge/deepseek-v4-flash/summary.json` |
@@ -117,21 +117,21 @@ Canonical normalized score rows used for P scoring: 474
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 6.4385 | 6.4385 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.9357 | 7.9357 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.1691 | 8.1691 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `eduguard_adversarial` | `deepseek-v4-pro` | `asr_0_to_1_lower_better` | 0.6241 | 3.7590 | `reports/eval/eduguard_adversarial/_judge-deepseek-v3.2/deepseek-v4-pro/summary.json` |
-| `eduguard_adversarial` | `deepseek-v4-pro` | `share_0_to_1` | 0.4933 | 4.9330 | `reports/eval/eduguard_adversarial/_judge-deepseek-v3.2/deepseek-v4-pro/summary.json` |
+| `eduguard_adversarial` | `deepseek-v4-pro` | `asr_0_to_1_lower_better` | 0.6241 | 3.7590 | `reports/eval/eduguard_adversarial/judge-deepseek-v3.2/deepseek-v4-pro/summary.json` |
+| `eduguard_adversarial` | `deepseek-v4-pro` | `share_0_to_1` | 0.4933 | 4.9330 | `reports/eval/eduguard_adversarial/judge-deepseek-v3.2/deepseek-v4-pro/summary.json` |
 | `eduguard_sata` | `deepseek-v4-pro` | `rfs_0_to_1` | 0.7612 | 7.6120 | `reports/eval/eduguard_sata/deepseek-v4-pro/summary.json` |
 | `ifeval` | `deepseek-v4-pro` | `accuracy` | 0.9222222222222223 | 9.2222 | `reports/eval/ifeval/deepseek-v4-pro/summary.json` |
 | `longtutor_diagnosis` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.3158242873546295 | 3.1582 | `reports/eval/longtutor_diagnosis/deepseek-v4-pro/summary.json` |
-| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.7082917082917083 | 7.0829 | `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json` |
-| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.9690309690309691 | 9.6903 | `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json` |
-| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.6973026973026973 | 6.9730 | `reports/eval/longtutor_evidence/deepseek-v4-pro/summary.json` |
-| `longtutor_teaching` | `deepseek-v4-pro` | `likert_1_to_5` | 3.6079999999999997 | 6.5200 | `reports/eval/longtutor_teaching/deepseek-v4-pro/summary.json` |
+| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.7082917082917083 | 7.0829 | `reports/eval/longtutor_evidence/judge-minimax3/deepseek-v4-pro/summary.json` |
+| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.9690309690309691 | 9.6903 | `reports/eval/longtutor_evidence/judge-minimax3/deepseek-v4-pro/summary.json` |
+| `longtutor_evidence` | `deepseek-v4-pro` | `accuracy` | 0.6973026973026973 | 6.9730 | `reports/eval/longtutor_evidence/judge-minimax3/deepseek-v4-pro/summary.json` |
+| `longtutor_teaching` | `deepseek-v4-pro` | `likert_1_to_5` | 3.6079999999999997 | 6.5200 | `reports/eval/longtutor_teaching/judge-minimax3/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_mistake_correction` | `deepseek-v4-pro` | `accuracy` | 0.9201596806387226 | 9.2016 | `reports/eval/mathtutorbench_mistake_correction/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_mistake_location` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.765 | 7.6500 | `reports/eval/mathtutorbench_mistake_location/deepseek-v4-pro/summary.json` |
-| `mathtutorbench_pedagogy` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.8396 | 8.3960 | `reports/eval/mathtutorbench_pedagogy/deepseek-v4-pro/summary.json` |
-| `mathtutorbench_pedagogy_hard` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.8532 | 8.5320 | `reports/eval/mathtutorbench_pedagogy_hard/deepseek-v4-pro/summary.json` |
-| `mathtutorbench_scaffolding` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.5004 | 5.0040 | `reports/eval/mathtutorbench_scaffolding/deepseek-v4-pro/summary.json` |
-| `mathtutorbench_scaffolding_hard` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.4128 | 4.1280 | `reports/eval/mathtutorbench_scaffolding_hard/deepseek-v4-pro/summary.json` |
+| `mathtutorbench_pedagogy` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.8396 | 8.3960 | `reports/eval/mathtutorbench_pedagogy/judge-minimax3/deepseek-v4-pro/summary.json` |
+| `mathtutorbench_pedagogy_hard` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.8532 | 8.5320 | `reports/eval/mathtutorbench_pedagogy_hard/judge-minimax3/deepseek-v4-pro/summary.json` |
+| `mathtutorbench_scaffolding` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.5004 | 5.0040 | `reports/eval/mathtutorbench_scaffolding/judge-minimax3/deepseek-v4-pro/summary.json` |
+| `mathtutorbench_scaffolding_hard` | `deepseek-v4-pro` | `win_rate_or_accuracy` | 0.4128 | 4.1280 | `reports/eval/mathtutorbench_scaffolding_hard/judge-minimax3/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_socratic` | `deepseek-v4-pro` | `bleu_0_to_1` | 0.2838 | 2.8380 | `reports/eval/mathtutorbench_socratic/deepseek-v4-pro/summary.json` |
 | `mathtutorbench_solution_correctness` | `deepseek-v4-pro` | `accuracy_or_f1` | 0.8621 | 8.6210 | `reports/eval/mathtutorbench_solution_correctness/deepseek-v4-pro/summary.json` |
 

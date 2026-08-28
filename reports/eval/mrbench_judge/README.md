@@ -1,6 +1,6 @@
 # mrbench_judge — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mrbench.md`](../../../doc/benchmark_profiles/mrbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -12,10 +12,13 @@ headline 口径：跟人类金标的整体一致率。
 
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
+| `Qwen-Qwen3.5-4B` | 0.6792 | clean | 0.0% | 0.0% | — |
 | `MiniMax-M2.7` | 0.7008 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 0.6757 | clean | 0.0% | 0.0% | — |
 | `deepseek-v3.2` | 0.5149 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-flash` | 0.7014 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-pro` | 0.7190 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.7069 | clean | 0.0% | 0.0% | — |
 | `glm-5.2` | 0.7086 | clean | 0.0% | 0.0% | — |
 | `minimax3` | 0.6529 | clean | 0.0% | 0.0% | — |
 

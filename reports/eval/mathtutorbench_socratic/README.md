@@ -1,6 +1,6 @@
 # mathtutorbench_socratic — 评测产物说明
 
-> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-04.jsonl`）。**不要手改**：改脚本后重跑。
+> 由 `scripts/build_eval_readmes.py` 生成（审计快照 `_audit/audit_2026-08-28.jsonl`）。**不要手改**：改脚本后重跑。
 > 综述档案（这个 benchmark 是什么，给人读）：[`doc/benchmark_profiles/mathtutorbench.md`](../../../doc/benchmark_profiles/mathtutorbench.md)
 > 本文件是给“要用这个分数的人”读的操作性病历：**分数能不能用、哪里坏了、要不要重跑**。
 
@@ -13,7 +13,10 @@ headline 口径：best-match SacreBLEU（0-1）。
 | 模型 | headline | 审计判决 | 判分/抽取失败率 | 未判分率 | 说明 |
 | --- | --- | --- | --- | --- | --- |
 | `MiniMax-M2.7` | 0.2131 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.5-4B` | 0.2502 | clean | 0.0% | 0.0% | — |
+| `Qwen-Qwen3.8-27B` | 0.3226 | clean | 0.0% | 0.0% | — |
 | `deepseek-v4-pro` | 0.2838 | clean | 0.0% | 0.0% | — |
+| `doubao-seed-2.0-pro` | 0.2963 | clean | 0.0% | 0.0% | — |
 | `glm-5.2` | 0.2976 | clean | 0.0% | 0.0% | — |
 | `minimax3` | 0.2960 | clean | 0.0% | 0.0% | — |
 
