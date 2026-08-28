@@ -10,7 +10,7 @@
 ## 数据
 
 - 官方发布覆盖 4,000+ 教育场景上下文；论文的人类/模型一致性实验使用 198 条中英 sampled data。
-- 本仓库可比题单为 **3,797 条英文有效样本 × 11 个既有模型**，prompt、item_id 与 responses 已规范化到 `reports/eval/edubench/_judge-deepseek-v3.2/<model>/`。
+- 本仓库可比题单为 **3,797 条英文有效样本 × 11 个既有模型**，prompt、item_id 与 responses 已规范化到 `reports/eval/edubench/judge-deepseek-v3.2/<model>/`。
 
 ## 任务与判分
 
@@ -19,8 +19,8 @@
 
 ## 在本仓库怎么用
 
-- 原始数据已到位（2026-07-12）：`reports/eval/edubench/_judge-deepseek-v3.2/<model>/`，11 模型 × 3,797 题（IP 1253 / QG 1266 / TMG 578 / PLS 448 / PCC 252，**只有这 5 个生成/支持类任务，没有 EC/QA/AG/ES**），逐题 12 指标分，裁判 deepseek-v3.2。导入脚本 `scripts/import_edubench_results.py`（源目录只读）。
-- 原生 harness adapter：`scripts/eval/benchmarks/edubench.py`；复用同一 3,797 条 prompt/item_id，默认 MiniMax-M3 固定裁判，输出标准 `predictions.jsonl` / `extractions.jsonl` / `scored.jsonl` / `summary.json` / `report.html`。非 MiniMax-M3 裁判统一隔离到 `_judge-<judge>/<model>/`。
+- 原始数据已到位（2026-07-12）：`reports/eval/edubench/judge-deepseek-v3.2/<model>/`，11 模型 × 3,797 题（IP 1253 / QG 1266 / TMG 578 / PLS 448 / PCC 252，**只有这 5 个生成/支持类任务，没有 EC/QA/AG/ES**），逐题 12 指标分，裁判 deepseek-v3.2。导入脚本 `scripts/import_edubench_results.py`（源目录只读）。
+- 原生 harness adapter：`scripts/eval/benchmarks/edubench.py`；复用同一 3,797 条 prompt/item_id，默认 MiniMax-M3 固定裁判，输出标准 `predictions.jsonl` / `extractions.jsonl` / `scored.jsonl` / `summary.json` / `report.html`。非 MiniMax-M3 裁判统一隔离到 `judge-<judge>/<model>/`。
 - 同事的精确 judge prompt 没有随原始产物交付，官方仓库也未提供可直接执行的完整裁判代码；adapter 的 prompt 依据论文 12 维定义和官方动态指标分配重建。题单与裁判身份可比，但不能宣称是旧协议的逐字节复放。
 - 逐题级分析：`scripts/analyze_edubench_item_level.py` → `reports/eval/edubench/_analysis/`；换裁判实验：`scripts/run_edubench_judge_swap.py` → `reports/eval/edubench/_judge_swap/`。
 
