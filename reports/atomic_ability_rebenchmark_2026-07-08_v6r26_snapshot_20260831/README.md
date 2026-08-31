@@ -1,0 +1,45 @@
+# Atomic Ability Rebenchmark Artifacts
+
+Date: 2026-07-08
+
+This directory stores the auditable intermediate artifacts for rebuilding the
+education rebenchmark around `doc/atomic_ability_principle_audit_v3.md`.
+
+Files:
+
+- `01_inclusion_policy.md`: what is included/excluded from the main scoring layer.
+- `02_benchmark_ability_mapping.jsonl`: machine-readable benchmark/subdimension to P01-P22 mapping.
+- `02_benchmark_ability_mapping.md`: human-readable mapping table for review.
+- `03_metric_normalization.md`: normalization and aggregation rules before any radar chart.
+- `04_eval_run_inventory.jsonl`: current `reports/eval/**/summary.json` inventory with inclusion flags.
+- `04_eval_run_inventory.md`: compact inventory summary.
+- `05_otherbenchmark_score_inventory.jsonl`: parsed score rows from `otherbenchmark/`.
+- `05_otherbenchmark_score_inventory.md`: compact parsed-score summary.
+- `06_open_calibration_questions.md`: remaining decisions that should be reviewed before final HTML scoring.
+- `07_run_deduplication_report.jsonl`: duplicate/canonical scoring decisions.
+- `07_run_deduplication_report.md`: human-readable duplicate/canonical scoring decisions.
+- `08_selected_score_evidence.jsonl`: canonical normalized benchmark score rows used for P scoring.
+- `09_atomic_p_scores.jsonl`: per-model P01-P20 scores (relevance × confidence weights, no tier factor; both weights rule-derived since R25).
+- `09_atomic_p_scores.md`: compact per-model P score table and coverage notes.
+- `09_atomic_p_untested_cells.jsonl`: cells a panel model never ran (R26). These are
+  reported as 未测过 and are deliberately excluded from every score and denominator —
+  they are *not* filled with a substitute value. Cells the model cannot run because it
+  lacks a required capability (e.g. no vision) are not here; they score 0 in
+  `09_atomic_p_score_evidence.jsonl` with `source_type: capability_gap_zero`.
+- `10_group_scores.jsonl`: SRG/FDR/LAD/CLM/CEG aggregate scores from available P scores.
+- `10_group_scores.md`: compact group-score table.
+- `09_atomic_p_scores_text_only.jsonl` / `09_atomic_p_score_evidence_text_only.jsonl` /
+  `10_group_scores_text_only.jsonl` / `09_atomic_p_scores_text_only.md`: the **text-only
+  board**. Same aggregation chain, same weights; the only difference is that cells whose
+  measurement is defined by vision (`requires_vision()`) are dropped whole — not zeroed,
+  not marked untested, simply outside that pass's denominator. This is what makes a
+  text-only model and a multimodal model comparable on one scale. The main files above are
+  untouched by it.
+- `11_atomic_ability_rebenchmark_report.html`: self-contained interactive HTML report.
+- `12_benchmark_priority_analysis.jsonl`: benchmark/subdimension priority analysis for deciding what to keep, downweight, or skip.
+- `12_benchmark_priority_report.html`: self-contained HTML triage report for benchmark portfolio decisions.
+- `12_benchmark_portfolio_review.md`: Markdown-first two-indicator benchmark review table.
+
+The final HTML should be generated only after the mapping and inclusion policy
+are calibrated. Small-sample runs and judge-calibration runs are excluded from
+the main scoring layer by default.

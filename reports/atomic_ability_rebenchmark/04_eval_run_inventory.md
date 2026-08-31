@@ -1,8 +1,8 @@
 # Eval Run Inventory
 
-Total summary files scanned: 476
-Included candidates: 334
-Excluded from main: 142
+Total summary files scanned: 527
+Included candidates: 382
+Excluded from main: 145
 
 | Benchmark | Include candidates | Excluded |
 |---|---:|---:|
@@ -12,44 +12,44 @@ Excluded from main: 142
 | `asap_2` | 13 | 1 |
 | `bea2025` | 0 | 14 |
 | `bea2025_judge` | 9 | 0 |
-| `bea2025_tutor` | 10 | 6 |
+| `bea2025_tutor` | 14 | 6 |
 | `ceval` | 9 | 2 |
-| `edubench` | 20 | 6 |
-| `eduequity` | 6 | 1 |
-| `eduguard_adversarial` | 7 | 19 |
+| `edubench` | 23 | 7 |
+| `eduequity` | 12 | 1 |
+| `eduguard_adversarial` | 7 | 21 |
 | `eduguard_sata` | 10 | 1 |
-| `eduillustrate` | 5 | 5 |
+| `eduillustrate` | 6 | 5 |
 | `ifeval` | 7 | 0 |
 | `k12bench` | 4 | 0 |
-| `k12vista` | 5 | 2 |
+| `k12vista` | 9 | 2 |
 | `longtutor_diagnosis` | 7 | 0 |
-| `longtutor_evidence` | 7 | 1 |
-| `longtutor_teaching` | 7 | 0 |
+| `longtutor_evidence` | 14 | 1 |
+| `longtutor_teaching` | 14 | 0 |
 | `mathtutorbench_judge_calibration` | 0 | 9 |
 | `mathtutorbench_mistake_correction` | 8 | 0 |
 | `mathtutorbench_mistake_location` | 8 | 0 |
-| `mathtutorbench_pedagogy` | 14 | 0 |
-| `mathtutorbench_pedagogy_hard` | 14 | 0 |
+| `mathtutorbench_pedagogy` | 16 | 0 |
+| `mathtutorbench_pedagogy_hard` | 16 | 0 |
 | `mathtutorbench_problem_solving` | 7 | 0 |
-| `mathtutorbench_scaffolding` | 14 | 0 |
-| `mathtutorbench_scaffolding_hard` | 14 | 0 |
+| `mathtutorbench_scaffolding` | 16 | 0 |
+| `mathtutorbench_scaffolding_hard` | 16 | 0 |
 | `mathtutorbench_socratic` | 7 | 0 |
 | `mathtutorbench_solution_correctness` | 8 | 0 |
 | `mathvista` | 5 | 0 |
 | `mmlu_pro` | 9 | 4 |
-| `mmtutorbench` | 6 | 5 |
+| `mmtutorbench` | 8 | 5 |
 | `mmtutorbench_judge_calibration` | 0 | 1 |
 | `mooccube_prereq` | 7 | 0 |
 | `mrbench` | 0 | 30 |
 | `mrbench_judge` | 9 | 0 |
-| `mrbench_tutor` | 10 | 9 |
+| `mrbench_tutor` | 14 | 9 |
 | `olympiadbench` | 9 | 4 |
 | `p07_selfcheck` | 7 | 0 |
 | `p08_abstention` | 7 | 0 |
 | `p08_calibration` | 7 | 0 |
 | `pedagogy_benchmark` | 13 | 1 |
 | `sas_bench` | 10 | 0 |
-| `tutorbench` | 6 | 2 |
+| `tutorbench` | 8 | 2 |
 
 Detailed per-run records are in `04_eval_run_inventory.jsonl`.
 

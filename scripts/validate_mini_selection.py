@@ -476,7 +476,7 @@ def main() -> None:
     # NB: score_atomic_p returns (evidence_rows, p_rows, group_rows, untested_rows)
     # -- unpacking the first slot as P rows silently yields per-cell evidence
     # instead, which makes every P look like a single cell's score.
-    _full_evidence, full_p_rows, full_group_rows, _full_untested = agg.score_atomic_p(pub08)
+    _full_evidence, full_p_rows, full_group_rows, _full_untested, _full_incap = agg.score_atomic_p(pub08)
     pub_p = {(r["model_key"], r["p_code"]): r["score_10"] for r in pub09}
     recomp_p = {(r["model_key"], r["p_code"]): r["score_10"] for r in full_p_rows}
     p_selfcal_maxdiff = max(
@@ -571,8 +571,8 @@ def main() -> None:
             out.append(r2)
         return out
 
-    _fe, full_swapped_p_rows, full_swapped_group_rows, _ = agg.score_atomic_p(swap(full_cells))
-    _mini_evidence, mini_p_rows, mini_group_rows, _ = agg.score_atomic_p(swap(mini_cells))
+    _fe, full_swapped_p_rows, full_swapped_group_rows, _, _ = agg.score_atomic_p(swap(full_cells))
+    _mini_evidence, mini_p_rows, mini_group_rows, _, _ = agg.score_atomic_p(swap(mini_cells))
     baseline_p = {(r["model_key"], r["p_code"]): r["score_10"] for r in full_swapped_p_rows}
     mini_p = {(r["model_key"], r["p_code"]): r["score_10"] for r in mini_p_rows}
     full_group_rows = full_swapped_group_rows

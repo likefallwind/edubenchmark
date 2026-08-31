@@ -17,12 +17,17 @@ import html
 import json
 import re
 import statistics
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from eval.judge_dirs import judge_of_dir  # noqa: E402
+from eval.providers import model_slug  # noqa: E402
+
+
 OUT = ROOT / "reports" / "atomic_ability_rebenchmark"
 EVAL_DIR = ROOT / "reports" / "eval"
 OTHER_DIR = ROOT / "otherbenchmark"
@@ -49,6 +54,10 @@ PANEL_MODEL_KEYS = (
     # 2026-08-17 加入发布面板（与 RELEASE_MODELS 同步）。vision=True，所以不会
     # 产生 capability_gap 零分格，缺的格子一律记 untested。
     "qwen-qwen3-5-4b",
+    # 2026-08-31 加入发布面板。判官类 benchmark 上 MiniMax-M3 判了 13/13、
+    # deepseek-v4-flash 判了 12/13（缺的 eduillustrate 是该判官判不了，不是没跑），
+    # 覆盖度与面板同级。vision=True，不产生 capability_gap 零分格。
+    "qwen-qwen3-8-27b",
 )
 
 # ---------------------------------------------------------------------------
@@ -77,6 +86,41 @@ PANEL_MODEL_KEYS = (
 # REQUIRE_PARTIAL，按未测过处理——那里的 0 是测量假象，不是能力差距。
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# 判官能力（R27，2026-08-31）。被测模型缺能力和**判官**缺能力是两回事，R26 只有前者。
+#
+# 能力只有一项：多模态。判官要读图才能判的格子，纯文本判官判不了——这不是"没排上队
+# 跑"（untested，跑一下就有），是永远跑不出来。混为一谈会让一个已经判完所有能判的格子
+# 的判官被永久报成"缺 N 格"。
+#
+# 判官的规范标识是**模型名**（`MiniMax-M3`），不是目录 slug（`minimax3`）；两者只有
+# M3 一个不一致（_SLUG_ALIASES 全表就这一条），兜底解析必须反查回模型名，否则同一个
+# 判官会裂成两个身份。
+JUDGE_HAS_VISION: dict[str, bool] = {
+    "MiniMax-M3": True,
+    "doubao-seed-2.0-pro": True,
+    "doubao-seed-2.0-lite": True,
+    "claude-opus-4-8": True,
+    "deepseek-v4-flash": False,
+}
+
+# 判官必须读图的 benchmark。实测只有 eduillustrate 一个：它 8 个判分维度里 5 个是视觉的
+# （diagram_match / text_diagram_synergy / layout_and_visual_clarity /
+# element_layout_quality / visual_consistency），判的是渲染出来的图。
+#
+# k12vista 和 mmtutorbench 看着像多模态其实不是——图只发给**被测模型**，判官侧
+# extract_answer 里没有任何 image 代码，收的是纯文本。反证：deepseek-v4-flash judged
+# 两者各 4 个模型全部满量、分数分布正常。
+VISION_JUDGE_BENCHMARKS = {"eduillustrate"}
+
+
+def judge_can_score(judge_model: str, benchmark_id: str) -> bool:
+    """这个判官判不判得了这个 benchmark。未登记的判官一律当作能判（不凭空判缺）。"""
+    if benchmark_id not in VISION_JUDGE_BENCHMARKS:
+        return True
+    return JUDGE_HAS_VISION.get(judge_model) is not False
+
+
 REQUIRE_ALL = "required_all"
 REQUIRE_PARTIAL = "required_partial"
 
@@ -99,6 +143,9 @@ MODEL_CAPABILITIES: dict[str, dict[str, bool | None]] = {
     "qwen-qwen3-5-4b": {"vision": True},
     # Qwen3-8B 是纯文本模型：SiliconFlow 喂图直接返回 code 20041 The model is not a VLM。
     "qwen-qwen3-8b": {"vision": False},
+    # mathvista 1000/1000 全量跑通、准确率 0.861，k12vista 0.557、mmtutorbench 0.399，
+    # 都是真读图才可能的分数。
+    "qwen-qwen3-8-27b": {"vision": True},
 }
 
 # 格子对模型能力的硬性要求。键可以是 benchmark_id，也可以是
@@ -151,12 +198,27 @@ def cell_capability_requirement(benchmark_id: str, subdimension: str) -> tuple[s
     )
 
 
-def missing_cell_verdict(model_key: str, benchmark_id: str, subdimension: str) -> tuple[str, str, str]:
+def missing_cell_verdict(
+    model_key: str,
+    benchmark_id: str,
+    subdimension: str,
+    judge_model: str | None = None,
+) -> tuple[str, str, str]:
     """Classify why `model_key` has no score for this cell.
 
     Returns ``(status, capability, reason)`` where status is ``capability_gap``
-    (score 0, counts) or ``untested`` (no score, does not count).
+    (score 0, counts), ``judge_incapable`` (no score, leaves this judge's
+    denominator) or ``untested`` (no score, does not count).
+
+    判官先问：判官判不了的格子,轮不到问模型能不能作答。这一档不是"没跑"——再跑
+    多少次也出不来,所以它从**该判官的**分母里扣掉,而不是记成待办。
     """
+    if judge_model and not judge_can_score(judge_model, benchmark_id):
+        return (
+            "judge_incapable",
+            "vision",
+            f"判官 {judge_model} 不具备多模态能力,判不了该格(需读图打分),不计入该判官的分母",
+        )
     requirement = cell_capability_requirement(benchmark_id, subdimension)
     if requirement is None:
         return "untested", "", "该格无能力门槛，缺分数纯属未测"
@@ -1534,6 +1596,21 @@ def _repo_single_metric(benchmark, data, extra, single):
 _JUDGE_CACHE: dict[str, str] = {}
 
 
+# 目录 slug -> 规范判官名。_SLUG_ALIASES 全表只有 MiniMax-M3 一条不一致,但兜底若
+# 直接用 slug,同一个判官会在 judge-minimax3/ 与其他跑分之间裂成 `minimax3` 和
+# `MiniMax-M3` 两个身份,完整性核对会同时报两个都不满。
+_JUDGE_SLUG_TO_NAME = {model_slug(name): name for name in JUDGE_HAS_VISION}
+
+
+def _judge_from_path(run_dir: Path) -> str:
+    """从 `judge-<slug>/` 路径段反查规范判官名;不是判官命名空间则返回空串。"""
+    for part in run_dir.parts:
+        slug = judge_of_dir(part)
+        if slug:
+            return _JUDGE_SLUG_TO_NAME.get(slug, slug)
+    return ""
+
+
 def resolve_judge_model(run_dir: Path, data: dict[str, Any]) -> str:
     """Who judged this run.
 
@@ -1561,8 +1638,29 @@ def resolve_judge_model(run_dir: Path, data: dict[str, Any]) -> str:
                     if isinstance(extracted, dict) and extracted.get("judge_model"):
                         judge = extracted["judge_model"]
                         break
-    if not judge and ("judge-deepseek-v3.2" in key or "_judge-deepseek-v3.2" in key):
-        judge = "deepseek-v3.2"
+    # R27：scored.jsonl 也是权威来源。mathtutorbench_scaffolding 的一批跑分把逐题
+    # judge_model 写在这里而不是 extractions.jsonl，之前整批解析不出判官。
+    if not judge:
+        scored = run_dir / "scored.jsonl"
+        if scored.exists():
+            with scored.open(encoding="utf-8") as fh:
+                for index, line in enumerate(fh):
+                    if index > 50:
+                        break
+                    try:
+                        row = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(row, dict) and row.get("judge_model"):
+                        judge = row["judge_model"]
+                        break
+    # R27：目录名兜底。这里原本只硬编码认 judge-deepseek-v3.2 一个判官,其余判官的
+    # 跑分只要产物里没写字段就整批解析不出来(eduguard_adversarial 有 5 个面板模型
+    # 正是这样)。推广成通用规则是安全的:只认 `judge-` 前缀的那一段路径,不认任意目录
+    # 名——文档字符串警告的 `mrbench_tutor/minimax3/` 里 minimax3 是**被测模型**,
+    # 它不带 judge- 前缀,不会被误认。
+    if not judge:
+        judge = _judge_from_path(run_dir)
     judge = str(judge).split(" ")[0] if judge else "rule_or_unknown"
     _JUDGE_CACHE[key] = judge
     return judge
@@ -1648,27 +1746,39 @@ def build_other_score_candidates(other_rows: list[dict[str, Any]]) -> list[dict[
     return rows
 
 
-# 同一个模型被多个裁判判过时，取这个裁判那一份。写死一个常量是有意的：在这之前
-# 选谁完全由 candidate_rank 末尾的路径字典序决定（reverse=True，所以"目录名最大的
-# 赢"），minimax-m2.7 的 4 个格子就是这么在无人决定的情况下取到 deepseek-v4-flash
-# 判的那份的。换统一裁判时改这里。
+# 默认判官视图。R27 之前这是"同一格被多个判官判过时取谁"的选举结果——而那场选举
+# 里 `scored` 排在判官偏好前面，所以哪个判官解析成功率高就赢，doubao-seed-2.0-pro
+# 的画像因此混进了 5 个 deepseek-v4-flash 判的格（186 > 177）。判官进取分键之后不
+# 再有跨判官竞争,这个常量降级成"主产物展示哪个判官的视图"。
 PRIMARY_JUDGE = "MiniMax-M3"
 
 
-def candidate_rank(row: dict[str, Any]) -> tuple[int, int, int, int, int, str]:
+def candidate_rank(row: dict[str, Any]) -> tuple[int, int, int, str]:
+    """同一 (格, 模型, 指标, **判官**) 下有多份跑分时取谁。
+
+    判官已经进了去重键，所以这里只在**同一个判官**的多份跑分之间排序，
+    judge_rank 那一档随之删除——留着会让人以为跨判官还在竞争。
+    """
     path = row["source_path"]
     source_rank = 2 if row["source_type"] == "repo_eval" else 1
-    minimax_rank = 1 if "/minimax3/" in path or path.endswith("/minimax3/summary.json") else 0
     scored = int(row.get("scored") or 0)
     total = int(row.get("total_items") or 0)
-    judge_rank = 1 if str(row.get("judge_model") or "") == PRIMARY_JUDGE else 0
-    return (source_rank, minimax_rank, scored, total, judge_rank, path)
+    return (source_rank, scored, total, path)
 
 
 def dedupe_score_candidates(candidates: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    grouped: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    grouped: dict[tuple[str, str, str, str, str], list[dict[str, Any]]] = {}
     for row in candidates:
-        key = (row["benchmark_id"], row["subdimension"], row["model_key"], row["metric"])
+        # R27：判官进键。此前同一格被两个判官判过只能活一份,另一份连同它的分数被丢弃,
+        # 于是"换判官看分数"在产物层面根本不可能。规则判分的格 judge_model 恒为
+        # rule_or_unknown,键里多这一维不会把它们拆开。
+        key = (
+            row["benchmark_id"],
+            row["subdimension"],
+            row["model_key"],
+            row["metric"],
+            str(row.get("judge_model") or "rule_or_unknown"),
+        )
         grouped.setdefault(key, []).append(row)
 
     selected: list[dict[str, Any]] = []
@@ -1687,6 +1797,7 @@ def dedupe_score_candidates(candidates: list[dict[str, Any]]) -> tuple[list[dict
                         "subdimension": key[1],
                         "model_key": key[2],
                         "metric": key[3],
+                        "judge_model": key[4],
                         "status": "selected" if row is chosen_row else "rejected",
                         "source_type": row["source_type"],
                         "source_path": row["source_path"],
@@ -1738,9 +1849,37 @@ def minimax_conflict_report(eval_rows: list[dict[str, Any]]) -> list[dict[str, A
     return rows
 
 
+RULE_SCORED = "rule_or_unknown"
+
+
+def judges_in_rotation(selected_rows: list[dict[str, Any]]) -> list[str]:
+    """产出过取分行的判官,按覆盖格数降序。规则判分不是判官。"""
+    counts: dict[str, int] = {}
+    for row in selected_rows:
+        judge = str(row.get("judge_model") or RULE_SCORED)
+        if judge != RULE_SCORED:
+            counts[judge] = counts.get(judge, 0) + 1
+    return sorted(counts, key=lambda j: (-counts[j], j))
+
+
+def judge_view_rows(selected_rows: list[dict[str, Any]], judge_model: str) -> list[dict[str, Any]]:
+    """一个判官的视图:它判的那些格 + 全部规则判分格。
+
+    规则判分的 22 个 benchmark 判官无关,所有判官视图共用同一份分——**不按判官复制**,
+    复制既让产物膨胀,又暗示它们会因判官而异。
+    """
+    out = []
+    for row in selected_rows:
+        judge = str(row.get("judge_model") or RULE_SCORED)
+        if judge == RULE_SCORED or judge == judge_model:
+            out.append(row)
+    return out
+
+
 def score_atomic_p(
     selected_rows: list[dict[str, Any]],
     skip_cell: Callable[[str, str], bool] | None = None,
+    judge_model: str | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """聚合到 P 分。`skip_cell(benchmark_id, subdimension)` 为真的格整格不参与。
 
@@ -1782,6 +1921,10 @@ def score_atomic_p(
                 "raw_value": row["raw_value"],
                 "score_10": row["score_10"],
                 "judge_model": row.get("judge_model", "rule_or_unknown"),
+                # 判官就是被测模型本人。多判官的意义正是防"模型给自己打分打高",
+                # 所以这一格必须标出来——不能因为自评就剔除(剔了该判官视图就不完整),
+                # 但展示时要提示。
+                "self_judged": canonical_model(str(row.get("judge_model") or "")) == row["model_key"],
                 "row_weight": mapping["default_benchmark_weight"],
                 "ability_weight": ability["weight"],
                 "effective_weight": raw_weight,
@@ -1822,13 +1965,14 @@ def score_atomic_p(
         cell_faces.setdefault(key, {})[ev["model_key"]] = ev
     zero_rows: list[dict[str, Any]] = []
     untested_rows: list[dict[str, Any]] = []
+    incapable_rows: list[dict[str, Any]] = []
     for faces in cell_faces.values():
         template = next(iter(faces.values()))
         for model_key in PANEL_MODEL_KEYS:
             if model_key in faces:
                 continue
             status, capability, reason = missing_cell_verdict(
-                model_key, template["benchmark_id"], template["subdimension"]
+                model_key, template["benchmark_id"], template["subdimension"], judge_model
             )
             row = dict(template)
             row.update(
@@ -1849,6 +1993,11 @@ def score_atomic_p(
             if status == "capability_gap":
                 row.update({"source_type": "capability_gap_zero", "score_10": 0.0})
                 zero_rows.append(row)
+            elif status == "judge_incapable":
+                # 判官判不了:不计分、不进分母、也**不是**待办。跟 untested 分开登记,
+                # 否则报告会写成"未测过",让人以为再跑一次就有了。
+                row.update({"source_type": "judge_incapable", "score_10": None})
+                incapable_rows.append(row)
             else:
                 row.update({"source_type": "untested", "score_10": None})
                 untested_rows.append(row)
@@ -1881,6 +2030,9 @@ def score_atomic_p(
     untested_by_slot: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for ev in untested_rows:
         untested_by_slot.setdefault((ev["model_key"], ev["p_code"]), []).append(ev)
+    incapable_by_slot: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for ev in incapable_rows:
+        incapable_by_slot.setdefault((ev["model_key"], ev["p_code"]), []).append(ev)
     untested_rows.sort(key=lambda r: (r["model_key"], r["p_code"], r["benchmark_id"], r["subdimension"]))
 
     # 聚合方向（R20 后单一口径）：facet 内按 相关度×置信 有效权重加权平均，
@@ -1919,6 +2071,17 @@ def score_atomic_p(
                 "capability_zero_weight_share": round(zero_weight / weight_sum, 4) if weight_sum else 0.0,
                 "untested_cell_count": len(untested),
                 "untested_cells": sorted({f'{r["benchmark_id"]} · {r["subdimension"]}' for r in untested}),
+                "judge_incapable_cell_count": len(incapable_by_slot.get((slot["model_key"], slot["p_code"]), [])),
+                "judge_incapable_cells": sorted(
+                    {
+                        f'{r["benchmark_id"]} · {r["subdimension"]}'
+                        for r in incapable_by_slot.get((slot["model_key"], slot["p_code"]), [])
+                    }
+                ),
+                "self_judged_cell_count": sum(
+                    1 for ev in evidence_rows
+                    if ev["model_key"] == slot["model_key"] and ev["p_code"] == slot["p_code"] and ev.get("self_judged")
+                ),
             }
         )
     # 一条实测证据都没有、只剩未测格的 (模型, P)：仍然出行，score_10=None，
@@ -1980,7 +2143,136 @@ def score_atomic_p(
         )
     group_rows.sort(key=lambda r: (r["model_key"], r["group"]))
     evidence_rows.sort(key=lambda r: (r["model_key"], r["p_code"], r["benchmark_id"], r["source_path"]))
-    return evidence_rows, p_rows, group_rows, untested_rows
+    return evidence_rows, p_rows, group_rows, untested_rows, incapable_rows
+
+
+def build_judge_views(selected_score_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """每个判官一套完整结果 + 它的覆盖度。
+
+    完整性的分母是**判官相关**的：判官读不了图就判不了 eduillustrate,那 4 格从它的
+    分母里扣掉,不是记成待办(R27)。判据是**取分行存在**——即已经过 dedupe 与
+    "样本<100"地板筛选的行,不是"目录存在"。目录里躺一份 5 条的冒烟,覆盖度检查会
+    当成已覆盖,取分时又被地板剔掉,两头不认,格子就这么静默漏掉。
+    """
+    judged_cells: set[tuple[str, str]] = set()
+    for row in selected_score_rows:
+        if str(row.get("judge_model") or RULE_SCORED) != RULE_SCORED:
+            judged_cells.add((row["benchmark_id"], row["subdimension"]))
+
+    views: list[dict[str, Any]] = []
+    for judge in judges_in_rotation(selected_score_rows):
+        rows = judge_view_rows(selected_score_rows, judge)
+        evidence, p_rows, group_rows, untested, incapable = score_atomic_p(rows, judge_model=judge)
+        have = {
+            (r["benchmark_id"], r["subdimension"], r["model_key"])
+            for r in rows
+            if str(r.get("judge_model") or RULE_SCORED) == judge
+        }
+        reachable: set[tuple[str, str, str]] = set()
+        for benchmark_id, subdimension in judged_cells:
+            if not judge_can_score(judge, benchmark_id):
+                continue
+            # 映射口径把 eduguard_adversarial(P2)锁死在历史主裁判 deepseek-v3.2 上:
+            # 别的判官判了也不取分(见 inventory 的 eduguard_p2_non_primary_judge)。
+            # 那它对别的判官就不可达,不能算进分母,否则每个判官都永远缺这一片。
+            if benchmark_id == "eduguard_adversarial" and judge != "deepseek-v3.2":
+                continue
+            for model_key in PANEL_MODEL_KEYS:
+                status, _cap, _why = missing_cell_verdict(model_key, benchmark_id, subdimension)
+                if status == "capability_gap":
+                    continue  # 被测模型做不了,任何判官都补不上
+                reachable.add((benchmark_id, subdimension, model_key))
+        missing = sorted(reachable - have)
+        views.append(
+            {
+                "judge": judge,
+                "covered": len(reachable & have),
+                "reachable": len(reachable),
+                "complete": not missing,
+                "missing": [
+                    {"benchmark_id": b, "subdimension": d, "model_key": m} for b, d, m in missing
+                ],
+                "incapable_benchmarks": sorted(
+                    {b for b, _d in judged_cells if not judge_can_score(judge, b)}
+                ),
+                "self_judged_cells": sum(1 for e in evidence if e.get("self_judged")),
+                "p_rows": p_rows,
+                "group_rows": group_rows,
+                "evidence": evidence,
+                "untested": untested,
+                "incapable": incapable,
+            }
+        )
+    return views
+
+
+def write_judge_views(views: list[dict[str, Any]], primary_incapable: list[dict[str, Any]]) -> None:
+    """判官视图产物。主产物(09/10)是 PRIMARY_JUDGE 的视图,这里是全部判官各一份。"""
+    out = OUT / "14_judge_views"
+    out.mkdir(parents=True, exist_ok=True)
+    dump_jsonl(OUT / "09_atomic_p_judge_incapable_cells.jsonl", primary_incapable)
+    index: list[dict[str, Any]] = []
+    for view in views:
+        slug = model_slug(view["judge"])
+        dump_jsonl(out / f"09_atomic_p_scores__{slug}.jsonl", view["p_rows"])
+        dump_jsonl(out / f"09_atomic_p_score_evidence__{slug}.jsonl", view["evidence"])
+        dump_jsonl(out / f"10_group_scores__{slug}.jsonl", view["group_rows"])
+        dump_jsonl(out / f"09_atomic_p_untested_cells__{slug}.jsonl", view["untested"])
+        dump_jsonl(out / f"09_atomic_p_judge_incapable_cells__{slug}.jsonl", view["incapable"])
+        index.append(
+            {
+                "judge": view["judge"],
+                "slug": slug,
+                "covered": view["covered"],
+                "reachable": view["reachable"],
+                "complete": view["complete"],
+                "missing_count": len(view["missing"]),
+                "missing": view["missing"][:200],
+                "incapable_benchmarks": view["incapable_benchmarks"],
+                "self_judged_cells": view["self_judged_cells"],
+                "is_primary": view["judge"] == PRIMARY_JUDGE,
+            }
+        )
+    (out / "index.json").write_text(
+        json.dumps({"primary_judge": PRIMARY_JUDGE, "views": index}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    lines = [
+        "# Judge Views",
+        "",
+        "一个判官一套完整结果。评测场切判官时,读的是这里。",
+        "",
+        f"主产物(`09_*` / `10_*`)是 **{PRIMARY_JUDGE}** 的视图。",
+        "",
+        "完整性的分母**按判官算**:判官读不了图就判不了 eduillustrate,那些格从它的分母里",
+        "扣掉(`judge_incapable`),不是待办。判据是取分行存在,不是目录存在——目录里的冒烟",
+        "跑分会被「样本<100」地板剔掉,只看目录会把它误判成已覆盖。",
+        "",
+        "| 判官 | 覆盖 | 可达 | 状态 | 判不了的 benchmark | 自评格 |",
+        "|---|---:|---:|---|---|---:|",
+    ]
+    for row in index:
+        state = "✅ 完整" if row["complete"] else f"缺 {row['missing_count']}"
+        mark = " (主)" if row["is_primary"] else ""
+        inc = ", ".join(row["incapable_benchmarks"]) or "—"
+        lines.append(
+            f"| `{row['judge']}`{mark} | {row['covered']} | {row['reachable']} | {state} | {inc} | {row['self_judged_cells']} |"
+        )
+    lines += [
+        "",
+        "**自评格**:判官就是被测模型本人。多判官的意义正是防「模型给自己打分打高」,",
+        "所以自评格必须标出来(证据行的 `self_judged`),但不能剔除——剔了该判官的视图就不完整。",
+        "",
+    ]
+    for row in index:
+        if row["complete"]:
+            continue
+        lines.append(f"## `{row['judge']}` 还缺 {row['missing_count']} 格")
+        lines.append("")
+        for m in row["missing"][:40]:
+            lines.append(f"- {m['benchmark_id']} · {m['subdimension']} · {m['model_key']}")
+        lines.append("")
+    (out / "index.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_readme() -> None:
@@ -3466,12 +3758,20 @@ def main() -> None:
     score_candidates = build_repo_score_candidates(eval_rows) + build_other_score_candidates(other_rows)
     selected_score_rows, duplicate_rows = dedupe_score_candidates(score_candidates)
     minimax_rows = minimax_conflict_report(eval_rows)
-    evidence_rows, p_rows, group_rows, untested_rows = score_atomic_p(selected_score_rows)
+    # R27：主产物是**判官纯净**的 PRIMARY_JUDGE 视图。此前主产物按格逐个挑判官,
+    # 而挑选规则里 scored 排在判官偏好前面,doubao-seed-2.0-pro 因此混进了 5 个
+    # deepseek-v4-flash 判的格——一个模型的画像横跨两个判官,别的模型没有,不可比。
+    primary_rows = judge_view_rows(selected_score_rows, PRIMARY_JUDGE)
+    evidence_rows, p_rows, group_rows, untested_rows, incapable_rows = score_atomic_p(
+        primary_rows, judge_model=PRIMARY_JUDGE
+    )
     # 纯文本口径：同一条链路再跑一遍，屏蔽由视觉定义的取分维度。两路输出各自成文件，
     # 现行口径的产物一个字节都不受影响。
-    text_evidence, text_p, text_groups, _text_untested = score_atomic_p(
-        selected_score_rows, skip_cell=requires_vision
+    text_evidence, text_p, text_groups, _text_untested, _text_incapable = score_atomic_p(
+        primary_rows, skip_cell=requires_vision, judge_model=PRIMARY_JUDGE
     )
+    # 每个判官一套完整结果。判官视图 = 它判过的格 + 全部规则判分格(判官无关,共用)。
+    judge_views = build_judge_views(selected_score_rows)
     write_readme()
     write_inclusion_policy()
     write_mapping_files()
@@ -3482,6 +3782,7 @@ def main() -> None:
     write_score_evidence(selected_score_rows)
     write_atomic_scores(p_rows, evidence_rows, untested_rows)
     write_group_scores(group_rows)
+    write_judge_views(judge_views, incapable_rows)
     write_text_only_scores(text_p, text_evidence, text_groups)
     priority_rows = analyze_benchmark_priorities(selected_score_rows, p_rows)
     write_final_html(
@@ -3508,6 +3809,11 @@ def main() -> None:
     print(f"  of which 未测过 (score_10=null): {sum(1 for r in p_rows if r['score_10'] is None)}")
     print(f"capability-gap zero cells: {sum(1 for r in evidence_rows if r.get('source_type') == 'capability_gap_zero')}")
     print(f"untested cells: {len(untested_rows)}")
+    print(f"judge-incapable cells (primary view): {len(incapable_rows)}")
+    print(f"judge views: {', '.join(v['judge'] for v in judge_views)}")
+    for view in judge_views:
+        flag = "完整" if view["complete"] else f"缺 {len(view['missing'])}"
+        print(f"  {view['judge']:22} {view['covered']}/{view['reachable']} {flag}")
     print("html: 11_atomic_ability_rebenchmark_report.html")
     print("priority html: 12_benchmark_priority_report.html")
 

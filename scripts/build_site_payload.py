@@ -95,7 +95,7 @@ def build_floor() -> dict[str, Any]:
     cells, problems = floor.floor_cells(baselines)
     if not cells:
         raise SystemExit(f"floor: no cells computed from {BASELINES}")
-    evidence, p_rows, _groups, _untested = floor.agg.score_atomic_p(cells)
+    evidence, p_rows, _groups, _untested, _incapable = floor.agg.score_atomic_p(cells)
     # score_atomic_p also emits R26 capability-gap rows for the real panel
     # models; only the synthetic floor model belongs here.
     evidence = [r for r in evidence if r["model_key"] == floor.FLOOR_MODEL]

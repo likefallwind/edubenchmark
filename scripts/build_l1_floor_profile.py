@@ -571,7 +571,7 @@ def main() -> int:
         print("没有算出任何格子，检查基线 JSON", file=sys.stderr)
         return 1
 
-    evidence_rows, p_rows, _group_rows, _untested = agg.score_atomic_p(cells)
+    evidence_rows, p_rows, _group_rows, _untested, _incapable = agg.score_atomic_p(cells)
     # score_atomic_p also emits R26 capability-gap rows for the published panel
     # models; the floor profile is only about the synthetic one.
     p_rows = [r for r in p_rows if r["model_key"] == FLOOR_MODEL]

@@ -125,11 +125,15 @@ def stats(values: list[float]) -> dict[str, float | int]:
 
 def main() -> None:
     rows: list[dict] = []
-    emitted: dict[str, str] = {}  # model -> judge，先产出行的那份胜出
+    # R27：键从 model 改成 (model, judge)。原来按模型去重、"先产出行的那份胜出",
+    # 于是同一模型被多个判官判过时只有一份能出行——判官在下游进了取分键也没用,
+    # 上游根本不喂第二份。判官视图要求每个判官各自完整,所以这里必须全量产出。
+    # `by_cell` 非空才认领这一档保持不变:它挡的是 scored=0 的废跑,与判官无关。
+    emitted: dict[tuple[str, str], bool] = {}
     for mdir, judge in model_dirs():
         model = mdir.name
-        if model in emitted:
-            print(f"{model}: 跳过 {mdir.relative_to(EDUBENCH_DIR)}（已有 judge={emitted[model]} 的判分）")
+        if (model, judge) in emitted:
+            print(f"{model}: 跳过 {mdir.relative_to(EDUBENCH_DIR)}（judge={judge} 已产出）")
             continue
         by_cell: dict[tuple[str, str], list[float]] = {}
         composite_values: dict[str, list[float]] = {name: [] for name, _, _, _ in COMPOSITES}
@@ -170,7 +174,7 @@ def main() -> None:
                     {"model": model, "judge": judge, "task": task_label, "metric": name, **stats(composite_values[name])}
                 )
         if by_cell:
-            emitted[model] = judge
+            emitted[(model, judge)] = True
         counts = " ".join(f"{name}_n={len(composite_values[name])}" for name, _, _, _ in COMPOSITES)
         print(f"{model}: judge={judge} items={n_items} cells={len(by_cell)} {counts}")
 
