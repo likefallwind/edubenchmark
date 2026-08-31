@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_tutor</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 2 生成 tutor 回复 + LLM-as-judge 打分</h1>
+    <p class="muted">基准 mrbench_tutor · 模型 <strong>deepseek-v4-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">86.4%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">199</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">172</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  
+  <section><h2>基准介绍</h2><p>MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 glm-5.2，最佳单裁判；与 --extractor-model/被测模型解耦，避免 self-judging 偏置），逐维度判定 prompt 为 v2（仅 Providing_Guidance 带 Stage-3 验证过的进化标签准则，其余维度与 v1 一致；标签归一同 Step 1）。</p><p>报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c0</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Elliott took half of his steps on his school journey, which was 10,000 steps / 2 = 5,000 steps.
+Adding this to his short walk means he has taken 5,000 + 1,000 = 6,000 steps.
+He only has 2,000 steps left, which means that during the day, he has taken 10,000 goal steps – 2,000 remaining steps = 8,000 steps.
+The difference between these is therefore the steps he took during his jog, which was 8,000 total steps – 6,000 steps on his school walks and short walks = 2,000 steps.
+ 2000
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div><div class='card'><div class='card-head'><span class='pid'>#c1</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+There are a total of 26 - 2 = 24 pencils in the three boxes.
+Thus, each box can contain 24 / 3 = 8 pencils.
+Together, Jam and Meg have 26 + 46 = 72 pencils.
+Therefore, they need 72 / 8 = 9 boxes to put in all their pencils.
+ 9
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jam has three boxes full of pencils and 2 loose pencils which give a total of 26 pencils. If her sister, Meg, has 46 pencils, how many boxes do Jam and Meg need to store all their pencils? 
+ Student: Jam has 26 - 2 = 24 pencils in her boxes.
+Together, Jam and Meg have 24 + 46 = 70 pencils.
+Each box holds 24 pencils, so they need 70/24 = 2.92 boxes.
+Since they can&#x27;t have a fraction of a box, they need to round up to the nearest whole number of boxes.
+Therefore, they need 3 boxes to store all their pencils.
+ 3 
+ Tutor: can you walk me through your solution? 
+ Student: Sure! I started by figuring out how many pencils Jam had in her boxes. She had 3 boxes with 26 pencils in total but 2 of those were loose so I subtracted 2 from 26 to get 24. Then I added the 24 pencils that Jam had to the 46 pencils that Meg had to get a total of 70 pencils. Since each box holds 24 pencils I divided 70 by 24 to get 2.92. Since you can&#x27;t have a fraction of a box I rounded up to the nearest whole number which was 3. So Jam and Meg need 3 boxes to store all their pencils. 
+ Tutor: That number seems too low.. How would we work out how many pencils can be stored in a box? 
+ Student: To work out how many pencils can be stored in a box we need to divide the total number of pencils (70) by the number of boxes (3). So 70 divided by 3 is equal to 24. That means each box can store 24 pencils.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;judge_model&quot;: &quot;MiniMax-M3&quot;,
+  &quot;judge_protocol&quot;: &quot;fixed LLM-as-judge, per-dimension single label (8 dimensions)&quot;,
+  &quot;headline_metric&quot;: &quot;pedagogical pass rate = all of (&#x27;Mistake_Identification&#x27;, &#x27;Providing_Guidance&#x27;, &#x27;Actionability&#x27;) == &#x27;Yes&#x27;&quot;,
+  &quot;n&quot;: 199,
+  &quot;n_unparseable_key_dim&quot;: 0,
+  &quot;pass_rate&quot;: 0.8643,
+  &quot;per_dimension_distribution&quot;: {
+    &quot;Mistake_Identification&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 192,
+        &quot;share&quot;: 0.9648
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 4,
+        &quot;share&quot;: 0.0201
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.0151
+      }
+    },
+    &quot;Mistake_Location&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 152,
+        &quot;share&quot;: 0.7638
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 42,
+        &quot;share&quot;: 0.2111
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 5,
+        &quot;share&quot;: 0.0251
+      }
+    },
+    &quot;Revealing_of_the_Answer&quot;: {
+      &quot;No&quot;: {
+        &quot;count&quot;: 174,
+        &quot;share&quot;: 0.8744
+      },
+      &quot;Yes (and the answer is correct)&quot;: {
+        &quot;count&quot;: 25,
+        &quot;share&quot;: 0.1256
+      }
+    },
+    &quot;Providing_Guidance&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 188,
+        &quot;share&quot;: 0.9447
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 11,
+        &quot;share&quot;: 0.0553
+      }
+    },
+    &quot;Actionability&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 187,
+        &quot;share&quot;: 0.9397
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 12,
+        &quot;share&quot;: 0.0603
+      }
+    },
+    &quot;Coherence&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 193,
+        &quot;share&quot;: 0.9698
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.0151
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.0151
+      }
+    },
+    &quot;Tutor_Tone&quot;: {
+      &quot;Encouraging&quot;: {
+        &quot;count&quot;: 131,
+        &quot;share&quot;: 0.6583
+      },
+      &quot;Neutral&quot;: {
+        &quot;count&quot;: 68,
+        &quot;share&quot;: 0.3417
+      }
+    },
+    &quot;humanlikeness&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 192,
+        &quot;share&quot;: 0.9648
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 7,
+        &quot;share&quot;: 0.0352
+      }
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>extraction_error</td><td>1</td></tr><tr><td>scored</td><td>199</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>55</td><td>49</td><td>0.891</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>MathDial</td><td>144</td><td>123</td><td>0.854</td><td><div class='bar'><i style='width:85%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>2.4B.Addition and Subtraction Within 100</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>2.8A.2- and 3-Dimensional Shapes</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>2.9A.Length Problems (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>2.9A.Measuring Length</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.1G.Shapes and Area</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.2B.Multiples of Ten</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.3E.Bar Graphs</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4A.Two-Step Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4B.Rounding Whole Numbers (Review) - 2</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.5D.Unknown Numbers in Division</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.6B.Quadrilaterals (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.1A.Converting Units of Measure (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.1G.Prime and Composite Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.2A.Place Value</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>4.2C.Multiplicative Comparisons</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.3E.Comparing Whole Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.3E.Dividing Using Equations</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Addition and Subtraction Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Subtracting Multi-Digit Numbers (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4G.Dividing with Remainders</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.5A.Geometric Lines</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.6D.Classifying 2D Figures</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.7A.Measuring Angles</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 2</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.1A.Multiplying Whole Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.2A.Place Value</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.2C.Rounding Decimal Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>5.3C.Estimate Solutions to Division Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3C.Multi-Digit Division with Two-Digit Divisors (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3L.Word Problems with Fractions (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.4A.Simple Expressions</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.4E.Simple Expression</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.4H.Volume of Composite Rectangular Prisms (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Line Plots with Fractions (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.7A.Metric Conversions and Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions Word Problems (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.4F.Applying Ratios: Speed</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.8B.Areas of Triangles</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.8D.Areas by Decomposition</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Not Available</td><td>144</td><td>123</td><td>0.854</td><td><div class='bar'><i style='width:85%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>其他错误</strong></td><td>1</td><td>MiniMax base_resp 2062: 已达到 Token Plan 速率限制：请升级 Token Plan 套餐或切换为按量付费 API 使用。</td><td class='muted'>c46</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c9</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: Do you understand that step?
+ Tutor: Next, we have to multiply 6 and 26. 
+ Tutor: What is the product of 26 and 6? 
+ Student: 4
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Not quite—4 might be part of the answer, but we need the full product. Break 26 into \(20 + 6\): what is \(6 \times 20\), and what is \(6 \times 6\)?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c20</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+If you buy 18 units, the percentage of the total price drops to 100% - 20% = 80%
+If 80% is equal to $500, then 100% is equals 100%/80% * $500 = $625
+ 625
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: You can lower the price by 20% if you buy more than fifteen units of iPhone cases. If you pay $500 to buy 18 units, what is the original price? 
+ Student: First, let&#x27;s find the price per unit after the 20% discount:
+If the original price is x, then the discounted price is 0.8x (since 20% off is the same as multiplying by 0.8). We know that this discounted price is what we paid for 18 units, so:
+
+18(0.8x) = 500
+
+Simplifying this equation:
+
+14.4x = 500
+
+x = 34.72 (rounded to two decimal places)
+
+Therefore, the original price per unit was $34.72.
+ 34.72 
+ Tutor: can you talk me through your solution? 
+ Tutor: Hi Student can you talk me through your solution? 
+ Student: Sure! I started by finding the price per unit after the 20% discount. I knew that the original price was x so I multiplied it by 0.8 to get the discounted price. Then I knew that this discounted price was what we paid for 18 units so I set up an equation with 18 multiplied by 0.8x equal to 500. After simplifying the equation I got x = 34.72 which is the original price per unit. 
+ Tutor: Ok let&#x27;s start with the first step. How much is 80% of the total cost? 
+ Student: 80% of the total cost is 0.8x. So if the original price is x then the discounted price is 0.8x. 
+ Tutor: let&#x27;s focus on the overall amount rather than the unit amount 
+ Student: Sure. We know that the total amount paid for 18 units was $500. So I set up an equation with 18 multiplied by 0.8x equal to 500. After simplifying the equation I got x = 34.72 which is the original price for the total amount.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;To some extent&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Careful — your equation is mixing per-unit and total amounts. Since $500 is the total paid after the discount, let \(x\) be the original total price for 18 units, so the discounted total is \(0.8x = 500\). Try solving that for \(x\).</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c22</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Let&#x27;s let x be the number of post-it notes in the package that Candice purchased.
+Then, the total number of post-it notes she had when she left the store was 80+x.
+And if she used 220 Post-it notes at work and had 23 left, then 80+x=220+23
+Subtracting 80 from each side of the equation, we see that x=220+23-80=163 Post-it notes.
+ 163
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Candice put 80 post-it notes in her purse before she headed out to her job at the coffee shop.  On her way, she stopped off at the store and purchased a package of Post-it notes;  At work, she placed a single Post-it note on each of 220 different cups of coffee.  If she had 23 post-it notes remaining overall, how many Post-it notes were in the package that she purchased? 
+ Student: Candice started with 80 post-it notes.
+She used 220 post-it notes at work.
+She had 23 post-it notes remaining.
+So she used a total of 80 + 220 - 23 = 277 post-it notes.
+Since she bought a package of post-it notes, the number of post-it notes she bought is the difference between the total she used and the number she started with: 277 - 80 = 197.
+ 197 
+ Student : the number of post-it notes I bought is the difference between the total I used and the number I started with: 277 - 80 = 197. 
+ Tutor: ok lets have a look at this step by step     she started with 80 notes and also bought a pack on her way to work.   So 80 + x             She used 220 on cups and had 23 remaining 
+ Student: Right so 80 + x = 220 + 23. Solving for x we get x = 117. So she bought 117 post-it notes. 
+ Tutor: we know that she used 220 and had 23 left over so our calculation would be 220+23 = 
+ Student: That&#x27;s correct 220 + 23 = 243. So she used 243 post-it notes and since she started with 80 she bought a package of 117 post-it notes.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>You’re very close! You correctly found \(220 + 23 = 243\), so your equation is
+
+\[
+80 + x = 243.
+\]
+
+Now double-check the subtraction: what is \(243 - 80\)? That will give you \(x\).</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c25</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+He wants to run 100*.2=20 miles more than he used to
+So he needs to run 100+20=120 miles
+He is doing this in 280/7=40 weeks
+So he needs to add 120/40=3 miles per week
+ 3
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: James injured his ankle and decides to slowly start working back up to his previous running goals and then surpass them.  Before the injury, he was able to run 100 miles per week.  He wants to get up to 20% more than that total in 280 days and each week he will increase miles walked in the week by the same amount.  How many miles does he need to add per week? 
+ Student: First, we need to find out what his goal is: 
+
+100 miles per week x 1.2 = 120 miles per week 
+
+Now we need to find out how much he needs to increase his mileage each week: 
+
+(120 miles per week - 100 miles per week) ÷ (280 days ÷ 7 days per week)
+
+= 20 miles per week ÷ 40 weeks 
+
+= 0.5 miles per week 
+
+So, James needs to add 0.5 miles per week to his running distance in order to reach his goal of running 120 miles per week within 280 days. 
+
+ 0.5 
+ Student: which was 120 miles per week. Then I calculated how much he needed to increase his mileage each week by subtracting 100 miles per week from 120 miles per week and then dividing that number by the number of weeks (40) to get 0.5 miles per week. 
+ Tutor: Can you share with me why you did 120-100? 
+ Student: I did 120-100 because I needed to find out how much he needed to increase his mileage each week in order to reach his goal of 120 miles per week in 280 days. That meant I had to subtract the original mileage (100 miles per week) from his goal (120 miles per week) to get the difference.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;To some extent&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Your target of 120 miles/week and 40 weeks are correct. The subtle issue is the starting point: subtracting 100 assumes he is already running 100 miles/week right after the injury, but he’s building back up from 0. So what total change in weekly mileage does he actually need over those 40 weeks?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c27</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=5.3C.Estimate Solutions to Division Problems</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: So we can round off the numbers. 
+ Tutor: How can we round the number 17 to the nearest ten? 
+ Tutor: Do you need any help? 
+ Student: you turn the 1 into a 2????
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;No&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;Yes (and the answer is correct)&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Yes—you’re on the right track! Since 17 is closer to 20 than to 10, we round the tens digit up from 1 to 2. Now what happens to the 7 in the ones place?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c31</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Jace drives a total of 4+9 = 13 hours.
+Jace will travel 60*13 = 780 miles.
+ 780
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jace drives 60 miles per hour. If Jace drives for 4 hours straight, take a 30-minute break, and then drives for another 9 hours straight, how many miles will he travel? 
+ Student: In 4 hours, Jace will travel 60 x 4 = 240 miles.
+After the break, Jace will travel for another 9 hours, which is a total of 4 + 9 = 13 hours.
+In 13 hours, Jace will travel 60 x 13 = 780 miles.
+Therefore, Jace will travel 240 + 780 = 1020 miles. 
+ 1020 
+ Tutor: you have made an error in your solution to this problem.  Please can you talk me through your thinking. 
+ Student: Sure I thought that in 4 hours Jace would travel 60 x 4 = 240 miles and then after the break he would travel for another 9 hours which is a total of 4 + 9 = 13 hours. So I thought he would travel 60 x 13 = 780 miles. So I added the two together to get 240 + 780 = 1020 miles. 
+ Tutor: When you added 4 to 9 what did the total relate to? 
+ Student: The total of 4 + 9 related to the total amount of hours Jace drove. 
+ Tutor: So 13 x 60 is the whole journey? 
+ Student: Yes 13 x 60 is the total amount of miles Jace traveled for the whole journey. 
+ Tutor: Can you see where your mistake lies? 
+ Student: Yes I made a mistake by adding the 4 hours and the 9 hours together when I should have multiplied them together to get the total miles traveled.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;Yes (and the answer is correct)&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Neutral&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Actually, adding 4 and 9 to get 13 total driving hours was correct. Your mistake was adding the first 240 miles again: 60 × 13 = 780 miles already includes the first 4 hours and the last 9 hours.</pre></details></div></section>
+</main>
+</body>
+</html>
