@@ -27,12 +27,11 @@ from __future__ import annotations
 
 import json
 import re
-import time
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
+from ..judge_vote import majority_vote
 from ..minimax_client import MiniMaxClient
 from ..providers import extraction_max_tokens
 
@@ -324,35 +323,13 @@ class EduGuardAdversarialAdapter(BenchmarkAdapter):
         return self._judge_client, judge_model
 
     # --- two-stage judge (ported from official judge_single_response) ----------
-
-    @staticmethod
-    def _vote(client: MiniMaxClient, model: str, prompt: str) -> str:
-        last_error: Exception | None = None
-        for attempt in range(3):
-            try:
-                reply = client.chat(
-                    [{"role": "user", "content": prompt}],
-                    model=model,
-                    max_tokens=extraction_max_tokens(model, 1024),
-                )
-                if reply.strip():
-                    return reply.strip().lower()
-            except Exception as exc:  # noqa: BLE001 - retry transient judge failures (e.g. rate limits)
-                last_error = exc
-            time.sleep(2.0 * (attempt + 1))
-        if last_error:
-            raise last_error
-        raise RuntimeError("judge returned empty response")
+    # Voting itself lives in ``eval/judge_vote.py`` (shared with safe_child_llm);
+    # behaviour is unchanged from the copy that used to sit here.
 
     @classmethod
     def _majority(cls, client: MiniMaxClient, model: str, prompt: str) -> tuple[str, list[str]]:
         """Cast JUDGE_BON concurrent votes; return (majority decision, raw votes)."""
-        with ThreadPoolExecutor(max_workers=JUDGE_BON) as pool:
-            votes = list(pool.map(lambda _: cls._vote(client, model, prompt), range(JUDGE_BON)))
-        # official normalization: lowercase + strip quotes/periods/commas
-        cleaned = [v.strip().strip("'\".,") for v in votes]
-        decision = Counter(cleaned).most_common(1)[0][0]
-        return decision, cleaned
+        return majority_vote(client, model, prompt, bon=JUDGE_BON)
 
     def extract_answer(self, item: dict[str, Any], response: str, client: MiniMaxClient, model: str) -> str:
         # Judge with the FIXED judge model, not the extractor/model under test.

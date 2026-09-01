@@ -38,9 +38,16 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Related capabilities: D16, D17, D18; S5.
   Source report: reports/re_benchmark_v1/RE_BENCHMARK_V1_RESEARCH_REPORT.md
 
-- Gap: Youth safety data for minors is incomplete locally.
+- Gap: Youth safety data for minors is partially filled (2026-08-31).
   Product reason: education products serving minors need child/youth-specific safety checks beyond generic classroom safety.
-  Suggested data/eval: acquire Safe-Child-LLM; monitor YouthSafe/YAIR, SproutBench, and CASTLE releases; build localized red-team set.
+  Done: Safe-Child-LLM (arXiv 2506.13510, CC0) 已接入 per-benchmark 框架 —— adapter `safe_child_llm`，200 条
+    儿童/青少年红队 prompt（6_12 与 13_17 各 100），双标签 LLM-as-judge（二元有害性 §3.2 + 0-5 行为标签
+    Table 2），取数见 `fetch_eval_datasets.py --benchmark safe_child_llm`。
+  Residual gap: (a) 公开发布的 xlsx 里人工标注列全空（实测 0 非空），论文 Table 3-6 的金标未发布，
+    因此做不了 judge calibration 变体，我们的分是替换协议而非论文口径复现；(b) 论文 five-round 生成 +
+    Cronbach's α 未移植（单轮），拿不到一致性统计量；(c) 仍无中文本地化未成年人红队集；
+    (d) YouthSafe/YAIR、SproutBench、CASTLE 仍待观察；(e) 尚未挂载到 P01-P20 面板，
+    挂载建议存档在 `doc/tochange/safe_child_llm.md`，待决。
   Related capabilities: D21, D24; S7.
   Source report: reports/re_benchmark_v1/RE_BENCHMARK_V1_RESEARCH_REPORT.md
 

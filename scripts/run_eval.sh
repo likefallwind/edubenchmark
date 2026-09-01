@@ -7,6 +7,9 @@
 #   MODEL=doubao-seed-2.0-pro ./scripts/run_eval.sh ...                # 换被测模型
 #   EXTRACTOR_MODEL=MiniMax-M2.7 ./scripts/run_eval.sh ...             # 换答案抽取模型(全局，与被测无关)
 #   JUDGE_MODEL=glm-5.1 ./scripts/run_eval.sh eduguard_adversarial     # 换对抗 LLM-as-judge(与被测无关)
+#
+#   Safe-Child-LLM 未成年人安全(200 题, 二元有害性 + 0-5 行为标签, 判官各投 3 票):
+#     LIMIT=6 MODEL=deepseek-v4-flash JUDGE_MODEL=MiniMax-M3 ./scripts/run_eval.sh safe_child_llm
 # 并发与阶段(被测模型和抽取/裁判往往打不同的后端,配额天差地别,所以两个旋钮分开):
 #   CONCURRENCY=64 EXTRACT_CONCURRENCY=4 ./scripts/run_eval.sh ...     # 被测 64 路,抽取/裁判 4 路
 #   PHASE=predict CONCURRENCY=64 ./scripts/run_eval.sh ...             # 只出预测,不抽取不判分
@@ -131,7 +134,7 @@ case "$PHASE" in
 esac
 MODEL="${MODEL:-MiniMax-M3}"                       # 被测模型
 EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M2.7}" # 答案抽取模型(全局；便宜即可，与被测模型无关)
-JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/MathTutorBench/MRBench/BEA2025/MMTutorBench;与被测/抽取模型解耦)
+JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/Safe-Child-LLM/MathTutorBench/MRBench/BEA2025/MMTutorBench;与被测/抽取模型解耦)
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
 # ---------------------------------------------------------------------------
@@ -230,6 +233,13 @@ for b in $BENCHMARKS; do
       # 两阶段 LLM-as-judge (每阶段 BoN=3 投票)。judge 经 EDUGUARD_JUDGE_MODEL 固定、与被测/抽取模型解耦。
       EDUGUARD_JUDGE_MODEL="$JUDGE_MODEL" \
       run_eval_py eduguard_adversarial --benchmark eduguard_adversarial --model "$MODEL" \
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
+      ;;
+    safe_child_llm)
+      # 双标签 LLM-as-judge（二元有害性 + 0-5 行为标签，各 BoN=3 投票）。
+      # judge 经 SAFECHILD_JUDGE_MODEL 固定、与被测/抽取模型解耦。
+      SAFECHILD_JUDGE_MODEL="$JUDGE_MODEL" \
+      run_eval_py safe_child_llm --benchmark safe_child_llm --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     eduguard_sata)

@@ -11,6 +11,9 @@ Outputs (under ``sources/datasets/``, gitignored):
                    (Hothan/OlympiadBench, OE open-ended configs only; TP proofs skipped)
   - EduGuardBench: ``eduguard_bench/data/{satas,adversarial}.jsonl``
                    (converted from the local repo clone's Dataset/*.xlsx; no download)
+  - Safe-Child-LLM: ``safe_child_llm/data/prompts.jsonl`` + ``data_manifest.json``
+                   (200 CC0 prompts from the two assets/*_ChildSafeLLM.xlsx workbooks;
+                    the released label columns are empty - see the manifest's evidence_gap)
   - BEA 2025:      ``bea2025/mrbench_v3_{devset,testset}.json``
                    (BEA shared task dev has 4-dimension human annotations; test is unlabeled)
   - MMTutorBench:  ``mmtutorbench/mmtutorbench.jsonl`` + ``mmtutorbench/keyframes/*``
@@ -533,6 +536,209 @@ def fetch_eduguard_bench(force: bool = False) -> Path:
 
 def _ok(path: Path) -> bool:
     return path.exists() and path.stat().st_size > 0
+
+
+# ---------------------------------------------------------------------------
+# Safe-Child-LLM (arXiv 2506.13510)
+# ---------------------------------------------------------------------------
+
+SAFE_CHILD_LLM_BASE = (
+    "https://raw.githubusercontent.com/The-Responsible-AI-Initiative/"
+    "Safe_Child_LLM_Evaluation/main/assets/"
+)
+# One workbook per developmental stage; 100 adversarial prompts each.
+SAFE_CHILD_LLM_FILES = {
+    "6_12": "6_12_ChildSafeLLM.xlsx",
+    "13_17": "13_17_ChildSafeLLM.xlsx",
+}
+
+_XLSX_NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+_XLSX_REL_NS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
+
+
+def _read_xlsx_rows(path: Path) -> list[dict[str, str]]:
+    """Read the first worksheet of an xlsx into header-keyed dicts, stdlib only.
+
+    An xlsx is a zip of XML parts, so ``zipfile`` + ``ElementTree`` is enough and
+    avoids adding an openpyxl dependency for two 25 KB files. Cells are matched
+    to headers by the *column letter* of their ``r`` reference, so absent cells
+    (which xlsx omits entirely) become empty strings rather than shifting the row.
+    """
+    import xml.etree.ElementTree as ET
+    import zipfile
+
+    with zipfile.ZipFile(path) as zf:
+        shared: list[str] = []
+        if "xl/sharedStrings.xml" in zf.namelist():
+            for si in ET.fromstring(zf.read("xl/sharedStrings.xml")):
+                shared.append("".join(t.text or "" for t in si.iter(_XLSX_NS + "t")))
+
+        # Resolve the first sheet through the workbook relationships rather than
+        # assuming ``xl/worksheets/sheet1.xml``.
+        workbook = ET.fromstring(zf.read("xl/workbook.xml"))
+        sheet = next(workbook.iter(_XLSX_NS + "sheet"))
+        rel_id = sheet.get(_XLSX_REL_NS + "id")
+        target = "xl/worksheets/sheet1.xml"
+        rels = ET.fromstring(zf.read("xl/_rels/workbook.xml.rels"))
+        for rel in rels:
+            if rel.get("Id") == rel_id:
+                dest = rel.get("Target") or ""
+                target = dest[1:] if dest.startswith("/") else f"xl/{dest.lstrip('/')}"
+                break
+        sheet_xml = ET.fromstring(zf.read(target))
+
+    def cell_text(cell: ET.Element) -> str:
+        kind = cell.get("t")
+        if kind == "inlineStr":
+            return "".join(t.text or "" for t in cell.iter(_XLSX_NS + "t"))
+        value = cell.find(_XLSX_NS + "v")
+        if value is None or value.text is None:
+            return ""
+        if kind == "s":
+            return shared[int(value.text)]
+        return value.text
+
+    def column_of(ref: str | None) -> str:
+        return "".join(ch for ch in (ref or "") if ch.isalpha())
+
+    xml_rows = list(sheet_xml.iter(_XLSX_NS + "row"))
+    if not xml_rows:
+        return []
+    header = {column_of(c.get("r")): cell_text(c).strip() for c in xml_rows[0]}
+    rows: list[dict[str, str]] = []
+    for xml_row in xml_rows[1:]:
+        row = {name: "" for name in header.values() if name}
+        for cell in xml_row:
+            name = header.get(column_of(cell.get("r")))
+            if name:
+                row[name] = cell_text(cell).strip()
+        rows.append(row)
+    return rows
+
+
+def fetch_safe_child_llm(force: bool = False) -> Path:
+    """Download and flatten the Safe-Child-LLM prompt sets (CC0 1.0).
+
+    Safe-Child-LLM (arXiv 2506.13510) ships two workbooks under ``assets/``, one
+    per developmental stage (children 7-12, adolescents 13-17), each holding 100
+    adversarial prompts with a category and the red-team corpus they came from.
+
+    The released workbooks also declare per-model ``*_response`` / ``*_harmful``
+    / ``*_action`` columns, but every one of those cells is **empty** in the
+    public release - the human annotations behind the paper's tables were not
+    published. The manifest records the measured non-empty count per column so
+    this evidence gap is asserted from the files rather than from memory (and so
+    it self-corrects if upstream ever fills them in).
+    """
+    base = ROOT / "sources" / "datasets" / "safe_child_llm"
+    assets_dir = base / "assets"
+    out_dir = base / "data"
+    prompts_out = out_dir / "prompts.jsonl"
+    manifest_out = base / "data_manifest.json"
+    if not force and _ok(prompts_out) and _ok(manifest_out):
+        print(f"skip safe_child_llm: outputs already in {out_dir} (use --force to rebuild)")
+        return out_dir
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    records: list[dict[str, Any]] = []
+    per_group: dict[str, Any] = {}
+
+    for age_group, filename in SAFE_CHILD_LLM_FILES.items():
+        xlsx_path = assets_dir / filename
+        _download_file(SAFE_CHILD_LLM_BASE + quote(filename), xlsx_path, force=force)
+        rows = _read_xlsx_rows(xlsx_path)
+        if not rows:
+            raise SystemExit(f"safe_child_llm: no data rows parsed from {xlsx_path}")
+
+        # The two workbooks order their columns differently (6_12 is
+        # category,source; 13_17 is source,category), so always read by header
+        # name -- never by position.
+        for row in rows:
+            query = (row.get("query") or "").strip()
+            if not query:
+                raise SystemExit(f"safe_child_llm: empty query in {filename} at Index={row.get('Index')!r}")
+            index = int(str(row["Index"]).strip())
+            records.append(
+                {
+                    "item_id": f"{age_group}-{index:03d}",
+                    "age_group": age_group,
+                    "index": index,
+                    "category": (row.get("category") or "").strip(),
+                    "source": (row.get("source") or "").strip(),
+                    "query": query,
+                }
+            )
+
+        label_columns = sorted(
+            name
+            for name in rows[0]
+            if name.endswith(("_response", "_harmful", "_action"))
+        )
+        per_group[age_group] = {
+            "file": filename,
+            "rows": len(rows),
+            "categories": _count_values(rows, "category"),
+            "sources": _count_values(rows, "source"),
+            "label_columns": label_columns,
+            "label_columns_non_empty": {
+                name: sum(1 for r in rows if (r.get(name) or "").strip()) for name in label_columns
+            },
+        }
+
+    with prompts_out.open("w", encoding="utf-8") as fh:
+        for rec in records:
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    print(f"wrote {len(records)} rows -> {prompts_out}")
+
+    annotated = sum(
+        n
+        for group in per_group.values()
+        for n in group["label_columns_non_empty"].values()
+    )
+    manifest = {
+        "benchmark": "safe_child_llm",
+        "title": "Safe-Child-LLM: A Developmental Benchmark for Evaluating LLM Safety in Child-LLM Interactions",
+        "paper": "https://arxiv.org/abs/2506.13510",
+        "homepage": "https://github.com/The-Responsible-AI-Initiative/Safe_Child_LLM_Evaluation",
+        "dataverse": "https://doi.org/10.7910/DVN/MRZGNB",
+        "license": "CC0 1.0",
+        "source_status": "local_ready",
+        "total_prompts": len(records),
+        "per_age_group": per_group,
+        "human_annotations_available": annotated > 0,
+        "evidence_gap": (
+            "公开发布的两个 xlsx 只有 prompt 侧的 Index/category/source/query；每个模型的 "
+            "*_response / *_harmful / *_action 列全部为空（见 label_columns_non_empty），"
+            "即论文 Table 3-6 背后的人工标注未随数据发布。因此本仓库无法做 judge calibration "
+            "变体，评分改用移植论文 Table 2 口径的 LLM-as-judge，属于协议替换而非复现。"
+        ),
+        "category_scheme_note": (
+            "发布版用的是较粗的类目（6_12 共 8 类、13_17 共 9 类），与论文 Table 1 的 13 类"
+            "细分口径对不上（Table 1 的 6-12 列加总只有 92，另有 Self-Harm / Sexual Content / "
+            "Substance Use / Hateful or Manipulative Speech 等类在发布版中被并入更粗的类目）。"
+            "上面的 categories 是实测分布；不要声称复现 Table 1。"
+        ),
+        "protocol_deviations": [
+            "论文标注为人工，本仓库改用 LLM-as-judge（论文未给判官口径，投票策略为工程选择）",
+            "论文 five-round 生成 + Cronbach's alpha 未移植，本仓库单轮，拿不到跨轮一致性",
+            "论文 temperature=0 无法复现：minimax_client.chat() 不传 temperature，走 provider 默认",
+        ],
+        "official_scoring_not_ported": (
+            "官方 kidsafellm/analysis/{category_acc,level_acc}.py 用关键词正则判拒答/违规，"
+            "与论文 Table 2 的 0-5 action 口径无关，不移植。"
+        ),
+    }
+    manifest_out.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote manifest -> {manifest_out} (human annotations available: {annotated > 0})")
+    return out_dir
+
+
+def _count_values(rows: list[dict[str, str]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        value = (row.get(key) or "").strip()
+        counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])))
 
 
 MRBENCH_URL = (
@@ -1506,6 +1712,7 @@ def main() -> None:
             "mmlu_pro",
             "olympiadbench",
             "eduguard_bench",
+            "safe_child_llm",
             "mathtutorbench",
             "ceval",
             "mrbench",
@@ -1532,6 +1739,8 @@ def main() -> None:
         fetch_olympiadbench(force=args.force)
     if args.benchmark in ("eduguard_bench", "all"):
         fetch_eduguard_bench(force=args.force)
+    if args.benchmark in ("safe_child_llm", "all"):
+        fetch_safe_child_llm(force=args.force)
     if args.benchmark in ("mathtutorbench", "all"):
         fetch_mathtutorbench(force=args.force)
     if args.benchmark in ("ceval", "all"):
