@@ -1,11 +1,31 @@
 # AI-教育 Benchmark 评测仓库
 
-本仓库做两件事:
+本仓库包含四个相互关联的层次:
 
-1. **跑评测** —— 一套可扩展的逐 benchmark 评测框架(`scripts/eval/`),针对 API 模型(默认 MiniMax-M3)在单个 benchmark 上打分:加载题目 → 调模型(支持文本+图像)→ LLM 抽取答案 → 判分 → 出 HTML 报告。这是当前最活跃的部分。
-2. **建证据库与规格** —— AI-教育领域 benchmark / 指标 / 公开结果 / 数据可获得性的调研证据库,以及一版可追溯到题目出处的「原子能力-评价标准-题目」benchmark 规格(D01–D24 / S1–S8)。
+1. **逐 benchmark 评测** —— `scripts/eval/` 提供可扩展的评测框架：加载题目 → 调模型（文本或图像）→ 抽取/裁判 → 判分 → 报告。
+2. **评测证据** —— `reports/eval/` 保存按 benchmark、裁判和被测模型区分的逐题证据与汇总。
+3. **当前能力画像** —— 将可用评测映射为 P01–P20 原子能力，并生成可审计的模型画像。
+4. **历史规格与证据库** —— 保留 D01–D24 / S1–S8、RE_BENCHMARK_V1 和调研证据等版本化资产。
 
-> 默认语言:报告与内容用中文,脚本与代码用英文。贡献规范见 [`AGENTS.md`](./AGENTS.md),给 AI 助手的工作约定见 [`CLAUDE.md`](./CLAUDE.md)。
+> 默认语言：报告与内容用中文，脚本与代码用英文。贡献规范见 [`AGENTS.md`](./AGENTS.md)，目录规则见 [`doc/repository_layout.md`](./doc/repository_layout.md)，当前数据流见 [`doc/current_architecture.md`](./doc/current_architecture.md)，Claude Code 入口见 [`CLAUDE.md`](./CLAUDE.md)。
+
+---
+
+## 仓库地图
+
+| 路径 | 主要内容 |
+|---|---|
+| `data/` | 仓库内机器可读规范、映射、manifest 和固定题单 |
+| `doc/` | 方法、benchmark/能力档案、运行说明和历史文档 |
+| `scripts/` | 构建、评测、导入、分析和报告脚本 |
+| `reports/` | 评测证据、生成报告和方法快照 |
+| `sources/` | 外部数据集、论文、网页和原始材料 |
+| `tests/` | 离线回归与契约测试 |
+| `eval/`、`logs/` | 本地运行控制、队列状态和日志，不是正式评分事实来源 |
+| `skills/` | 本仓库发布的 Agent skill |
+
+完整的放置规则和 `scripts/eval` / `reports/eval` / `eval` 三者区别见
+[`doc/repository_layout.md`](./doc/repository_layout.md)。
 
 ---
 
@@ -20,7 +40,7 @@ export MINIMAX_API_KEY=...                       # 必需
 export MINIMAX_BASE_URL=https://api.minimaxi.com/v1   # 可选,默认即此
 ```
 
-无第三方依赖,标准库即可跑(OlympiadBench 判分例外,见下)。
+核心运行器以标准库为主；部分 benchmark 有自己的可选依赖和隔离环境，见下方专项说明及对应 benchmark profile。
 
 ### 2. 一键评测(推荐)
 
@@ -94,15 +114,31 @@ python scripts/eval_benchmark.py --benchmark mmlu_pro --model MiniMax-M3 --concu
 
 ### 4. 输出位置
 
-每个 benchmark 固定输出到 `reports/eval/<benchmark>/`:
+规则判分和 LLM 裁判判分使用不同路径：
 
-- `predictions.jsonl` —— 模型原始回答(真实进度看这个,别看 `eval.log`)
+```text
+# 规则判分
+reports/eval/<benchmark>/<model-slug>/
+
+# LLM 裁判判分
+reports/eval/<benchmark>/judge-<judge-slug>/<model-slug>/
+```
+
+每个标准运行目录通常包含：
+
+- `predictions.jsonl` / `predictions.partN.jsonl` —— 模型原始回答和滚动分片
 - `extractions.jsonl` —— 抽取出的答案
 - `scored.jsonl` —— 逐题判分
 - `summary.json` —— 汇总(总数/正确数/准确率,按桶分组)
 - `report.html` —— 可读报告
 
-### 已支持的 benchmark
+`summary.json` 是完成状态和汇总指标的事实来源。只有 predictions、日志或后台进程，不能说明一次评测已经完整判分。
+
+### 常用 benchmark
+
+下表是常用入口，不是完整注册表。当前支持的 benchmark 名称以
+`scripts/eval/benchmarks/__init__.py` 和
+`python scripts/eval_benchmark.py --help` 为准。
 
 | 名称 | 能力 | 题型 / 判分 |
 |---|---|---|
@@ -146,6 +182,9 @@ python scripts/eval_benchmark.py --benchmark mmlu_pro --model MiniMax-M3 --concu
 ### 支持的模型 / provider
 
 `--model`(以及 `--extractor-model` / `JUDGE_MODEL`)按**模型名前缀**自动路由到对应后端,无需改代码——provider 注册表在 `scripts/eval/providers.py`。当前支持:
+
+下表只列常见远端入口；模型 allowlist、专用路由和自托管 provider 以
+`scripts/eval/providers.py` 为准，避免从过时文档推断当前路由。
 
 | provider | 模型名 | 所需环境变量 | 端点 |
 |---|---|---|---|
@@ -196,7 +235,7 @@ scripts/
 
 ---
 
-## 三套产物 / 重新生成
+## 版本化规格与能力画像
 
 所有 `scripts/build_*.py` 都是**幂等**的:读 taxonomy/源 JSON → 构造题 → 打分 → 覆盖输出。**不要手改生成文件,改脚本再重跑。**
 
@@ -204,13 +243,16 @@ scripts/
 |---|---|---|
 | **Benchmark v1**(`*_2026_05_18`):8 尺度 / 24 能力 / 84 标准 / 840 题 | `python scripts/build_benchmark_v1_2026_05_18.py` | `--validate-only` → `criteria=84 items=840 manifest=88` |
 | **调研证据库**(`exhaustive_2026-05-13`) | `python3 scripts/build_exhaustive_2026_05_13.py` | `benchmarks=78 metrics=165 results=1616` |
-| **RE_BENCHMARK_V1**(五大类 C1–C5 + 试点包) | `python scripts/build_re_benchmark_v1.py` | 见 `re_benchmark_v1.md` |
+| **RE_BENCHMARK_V1**(五大类 C1–C5 + 试点包) | `python scripts/build_re_benchmark_v1.py` | 见 `data/re_benchmark_v1/README.md` |
+| **当前 P01–P20 能力画像** | 见 [`doc/current_architecture.md`](./doc/current_architecture.md) 的五步管线 | `reports/atomic_ability_rebenchmark/` + mapping validation |
 
-阅读入口:
+当前阅读入口：
 
-- [`AI_EDU_BENCHMARK_V1.md`](./AI_EDU_BENCHMARK_V1.md) —— v1 主入口(S1–S8 / D01–D24 / 评价标准)
-- [`ai_edu_benchmark_v1_questions.json`](./ai_edu_benchmark_v1_questions.json) —— 题目索引,每题带 `source_file` + `source_row_or_key`
-- [`re_benchmark_v1.md`](./re_benchmark_v1.md) —— 五大类主测组合口径
+- [`doc/atomic_ability_mapping_v6_2026-07-19.md`](./doc/atomic_ability_mapping_v6_2026-07-19.md) —— 当前 P01–P20 可读映射
+- [`data/mapping_measurement_model_v6.json`](./data/mapping_measurement_model_v6.json) —— 当前能力映射机器事实源
+- [`reports/atomic_ability_rebenchmark/README.md`](./reports/atomic_ability_rebenchmark/README.md) —— 当前能力画像产物说明
+- [`data/benchmark_v1_2026-05-18/`](./data/benchmark_v1_2026-05-18/) 与 [`ai_edu_benchmark_v1_questions.json`](./ai_edu_benchmark_v1_questions.json) —— 历史 Benchmark v1 资产和题目索引
+- [`data/re_benchmark_v1/README.md`](./data/re_benchmark_v1/README.md) —— RE_BENCHMARK_V1 资产入口
 - [`reports/2026-05-13/`](./reports/2026-05-13/) —— 统一框架、benchmark catalog、调研报告
 - [`data/benchmark_metric_dimensions_2026-05-12.json`](./data/benchmark_metric_dimensions_2026-05-12.json) / [`indicators`](./data/benchmark_metric_indicators_2026-05-12.json) —— D01–D24 能力与指标定义(两套 build 脚本共用)
 
@@ -236,7 +278,7 @@ FAILED_ONLY=1 COMMAND_TIMEOUT=300 ./scripts/download_all_datasets.sh
 
 ## EduBench Assistant Skill
 
-[`skills/edubenchassistant/SKILL.md`](./skills/edubenchassistant/SKILL.md) 是一个面向 Agent 的 skill:给定一个 AI-教育应用/产品/场景,它基于本仓库证据库推荐应关注的 D01–D24 能力与 S1–S8 尺度、相似的已有 benchmark、原生指标/公开结果/数据可用性、以及安全/污染/rubric 关注点,最终输出 HTML 报告到 `reports/edubenchassistant/`。新发现的评测缺口记入 `benchmark-todo.md`。
+[`skills/edubenchassistant/SKILL.md`](./skills/edubenchassistant/SKILL.md) 是一个面向 Agent 的场景评测建议 skill。它使用本仓库的历史 D01–D24 / S1–S8 证据库推荐相关能力、已有 benchmark、原生指标、数据可用性和安全/rubric 关注点；它不是当前 P01–P20 模型画像聚合器。输出写入 `reports/edubenchassistant/`，新发现的评测缺口记入 `benchmark-todo.md`。
 
 ```bash
 # 本地安装
@@ -250,7 +292,7 @@ npx skills add likefallwind/edubenchmark@edubenchassistant -g -y
 
 ## 解读须知(guardrails)
 
-- **不要把不同 benchmark 的原始分数直接平均**;先映射到 D01–D24 能力,再形成能力画像。
+- **不要把不同 benchmark 的原始分数直接平均**；当前模型画像必须通过正式 P01–P20 measurement model 聚合。历史 D01–D24 / S1–S8 报告按其原版本解读，不要静默换算。
 - 通用知识类 benchmark 只是**门槛项**,不能证明教学能力。教育核心能力在于错因诊断、脚手架、反馈质量、个性化、多模态 grounding、安全边界和真实学习效果。
 - **裁判与被测分离**:对外报告的模型对比中,LLM 裁判不得是被测集合的成员;无法避免时,用两个不同家族的裁判各跑一遍并同时报告两套数字。裁判的选择依据是人类金标校准(`data/judge_meta_eval_v1/` + `reports/eval/_judge_jury/`),不是名气。
 - 公开 benchmark 对长期学习效果、教师采纳、师生机协同和中文本地教育安全的覆盖仍不足。

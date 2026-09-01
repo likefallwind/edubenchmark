@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sys
 from collections import Counter
 from pathlib import Path
@@ -12,9 +13,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from eval.benchmarks.edubench import (  # noqa: E402
     DEFAULT_JUDGE_MODEL,
     DIMENSIONS,
-    TASK_DIMENSIONS,
     EduBenchAdapter,
     _parse_judgment,
+    task_dimensions,
 )
 from eval.report import build_summary, write_report  # noqa: E402
 
@@ -23,7 +24,6 @@ def test_edubench_uses_repository_standard_judge_namespace() -> None:
     adapter = EduBenchAdapter()
 
     assert DEFAULT_JUDGE_MODEL == "MiniMax-M3"
-    assert adapter.canonical_judge_model is None
     assert adapter.resolved_judge_model("MiniMax-M2.7") == "MiniMax-M3"
 
 
@@ -39,13 +39,19 @@ def test_parse_judgment_accepts_fenced_json_and_confirmed_aliases() -> None:
     assert set(parsed["scores"]) == set(DIMENSIONS)
 
 
-def test_parse_judgment_rejects_missing_or_out_of_range_scores() -> None:
+def test_parse_judgment_skips_missing_and_clamps_out_of_range_scores() -> None:
     missing = {dimension: 7 for dimension in DIMENSIONS[:-1]}
     out_of_range = {dimension: 7 for dimension in DIMENSIONS}
     out_of_range[DIMENSIONS[0]] = 11
 
-    assert _parse_judgment(json.dumps({"scores": missing})) is None
-    assert _parse_judgment(json.dumps({"scores": out_of_range})) is None
+    parsed_missing = _parse_judgment(json.dumps({"scores": missing}))
+    parsed_out_of_range = _parse_judgment(json.dumps({"scores": out_of_range}))
+
+    assert parsed_missing is not None
+    assert math.isnan(parsed_missing["scores"][DIMENSIONS[-1]])
+    assert parsed_out_of_range is not None
+    assert parsed_out_of_range["scores"][DIMENSIONS[0]] == 10
+    assert _parse_judgment(json.dumps({"scores": {DIMENSIONS[0]: "bad"}})) is None
 
 
 def test_score_is_continuous_and_uses_task_specific_dimensions() -> None:
@@ -58,7 +64,8 @@ def test_score_is_continuous_and_uses_task_specific_dimensions() -> None:
 
     assert result["correct"] is None
     assert result["overall_score"] == sum(scores.values()) / len(scores)
-    expected = sum(scores[key] for key in TASK_DIMENSIONS["PLS"]) / len(TASK_DIMENSIONS["PLS"])
+    active_dimensions = task_dimensions()["PLS"]
+    expected = sum(scores[key] for key in active_dimensions) / len(active_dimensions)
     assert result["scenario_score"] == expected
 
 

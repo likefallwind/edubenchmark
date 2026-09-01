@@ -2,7 +2,11 @@
 
 ## Project Structure & Module Organization
 
-This repository is a research and benchmark-specification workspace for AI education evaluation. Root Markdown/HTML files such as `AI_EDU_BENCHMARK_V1.md`, `re_benchmark_v1.md`, and `edu_benchmark_survey.md` are human-readable entry points. Machine-readable assets live under `data/`; RE_BENCHMARK_V1 assets live in `data/re_benchmark_v1/`. Generated reports belong in `reports/`, with RE reports in `reports/re_benchmark_v1/`. Small prompt/model experiments should go under `reports/re_benchmark_v1/experiments/<experiment_name>/`. Generation and runner code belongs in `scripts/`. Downloaded datasets belong in `sources/datasets/` and should not be committed.
+This repository is a research and benchmark-specification workspace for AI education evaluation. `README.md` is the public entry point. The complete directory contract is in `doc/repository_layout.md`, and the current data flow is in `doc/current_architecture.md`.
+
+Machine-readable specifications, mappings, manifests, and fixed item lists live under `data/`. Human-authored methodology and profiles live under `doc/`. Generation, evaluation, and reporting code belongs in `scripts/`; the reusable per-benchmark framework is under `scripts/eval/`. Generated reports and evaluation evidence belong in `reports/`. Downloaded datasets belong in `sources/datasets/` and should not be committed. Local run-control files belong in `eval/` or `logs/`, never in `scripts/eval/` or as substitutes for `reports/eval/**/summary.json`.
+
+For evaluation output paths, rule-scored runs use `reports/eval/<benchmark>/<model-slug>/`, while LLM-judged runs use `reports/eval/<benchmark>/judge-<judge-slug>/<model-slug>/`. Underscore-prefixed evaluation subtrees are isolated support or noncanonical artifacts. Preserve dated and R-series snapshots; they are method-history evidence, not naming clutter.
 
 ## Build, Test, and Development Commands
 
@@ -44,14 +48,14 @@ Use Python 3, four-space indentation, and standard-library-first implementations
 
 ## Testing Guidelines
 
-There is no dedicated test suite yet. Use script-level validation and syntax checks:
+The regression suite is currently small, so combine pytest with relevant script-level validation:
 
 ```bash
-python -m py_compile scripts/*.py
+pytest -q tests
 python scripts/build_benchmark_v1_2026_05_18.py --validate-only
 ```
 
-For runner or prompt changes, run a small sample first and write outputs to `reports/re_benchmark_v1/experiments/<name>/`. Preserve raw `predictions.jsonl`, `run_summary.json`, and `scored_items.jsonl`.
+For runner or prompt changes, use `--dry-run` before any API call, then run the smallest meaningful smoke sample. RE_BENCHMARK_V1 prompt/model experiments belong in `reports/re_benchmark_v1/experiments/<name>/`; per-benchmark harness smoke runs must use their workflow's isolated output path and must not overwrite canonical full results. Preserve the evidence files required by that workflow.
 
 ## Commit & Pull Request Guidelines
 
@@ -105,9 +109,9 @@ MODEL=MiniMax-M3 JUDGE_MODEL=MiniMax-M3 LIMIT=5 ./scripts/run_eval.sh \
 Outputs follow the standard layout:
 
 ```text
-reports/eval/longtutor_evidence/minimax3/
+reports/eval/longtutor_evidence/judge-minimax3/minimax3/
 reports/eval/longtutor_diagnosis/minimax3/
-reports/eval/longtutor_teaching/minimax3/
+reports/eval/longtutor_teaching/judge-minimax3/minimax3/
 ```
 
 Do not average the three tasks into one score. Report Evidence semantic accuracy

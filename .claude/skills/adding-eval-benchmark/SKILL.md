@@ -9,7 +9,7 @@ description: Use when the user gives a benchmark's paper or GitHub/HuggingFace U
 
 Turn a benchmark (paper / GitHub / HF URL) into a runnable adapter in `scripts/eval/`, and — if the user wants — into the P01–P20 atomic-ability panel. **The work is five stages separated by user-confirmation gates. Never skip a gate; never jump ahead of a "no".** Stages 2+ only start after the user approves the recommendation from Stage 1.
 
-Read `CLAUDE.md` (the eval-framework section) and `AGENTS.md` before touching code — this skill orchestrates that infrastructure, it does not replace it.
+Read `AGENTS.md`, `doc/repository_layout.md`, and `doc/current_architecture.md` before touching code. `CLAUDE.md` is the concise Claude Code entry point. This skill orchestrates that infrastructure; it does not replace it.
 
 ```
 Stage 1  RESEARCH & RECOMMEND  ──gate──▶  Stage 2  IMPLEMENT + SMOKE TEST
@@ -46,13 +46,13 @@ Use the miniconda python for all fetch/eval commands (pandas/datasets live there
    python scripts/eval_benchmark.py --benchmark <name> --limit 3 --model MiniMax-M3 --dry-run
    LIMIT=5 MODEL=MiniMax-M3 ./scripts/run_eval.sh <name>
    ```
-   Confirm `predictions.jsonl` / `extractions.jsonl` / `scored.jsonl` / `summary.json` / `report.html` under `reports/eval/<name>/minimax3/` look sane. `python -m py_compile scripts/eval/benchmarks/<name>.py`.
+   Confirm `predictions.jsonl` / `extractions.jsonl` / `scored.jsonl` / `summary.json` / `report.html` look sane. Rule-scored runs use `reports/eval/<name>/minimax3/`; judged runs use `reports/eval/<name>/judge-<judge-slug>/minimax3/`. Run `python -m py_compile scripts/eval/benchmarks/<name>.py`.
 
 ## Stage 3 — Full eval (1–3 models) + mount (after smoke; confirm first)
 
 **Gate: after the smoke test, show the user the smoke results and confirm they look good before running anything at scale.** Do not proceed on assumption.
 
-1. **Run 1–3 models full** into the standard tree `reports/eval/<name>/<model-slug>/` (no `--limit`, or `--limit 0`). MiniMax-M3 first; add 1–2 more faces if the user wants them (this also gives the curated set its ≥3-face difficulty signal later). Watch for provider/vision constraints per `CLAUDE.md`.
+1. **Run 1–3 models full** into the standard tree (no `--limit`, or `--limit 0`): `reports/eval/<name>/<model-slug>/` for rule-scored tasks, or `reports/eval/<name>/judge-<judge-slug>/<model-slug>/` for judged tasks. MiniMax-M3 first; add 1–2 more faces if the user wants them (this also gives the curated set its ≥3-face difficulty signal later). Verify provider and vision constraints against `scripts/eval/providers.py` and the relevant benchmark profile.
 2. **Mount into the panel** (only if the user wants it on the P01–P20 radar): now apply the staged **`doc/tochange/<benchmark>.md`** recommendation into `data/mapping_measurement_model_v6.json` + a `BENCHMARK_META` entry, snapshot `reports/atomic_ability_rebenchmark/` to `*_vN_snapshot_YYYYMMDD/`, then rerun the 4-step aggregation pipeline (CLAUDE.md). Cells match by **exact `subdimension` string** — a rename silently drops the cell. Once applied, you may clear/mark the `doc/tochange/<benchmark>.md` entry as done.
 
 ## Stage 4 — Curated (精选) set (ask the user; optional)
