@@ -10,56 +10,13 @@
 
 | 判官 | 覆盖 | 可达 | 状态 | 判不了的 benchmark | 自评格 |
 |---|---:|---:|---|---|---:|
+| `MiniMax-M3` (主) | 216 | 216 | ✅ 完整 | — | 47 |
 | `deepseek-v4-flash` | 212 | 212 | ✅ 完整 | eduillustrate | 0 |
-| `MiniMax-M3` (主) | 165 | 216 | 缺 51 | — | 59 |
 | `deepseek-v3.2` | 68 | 230 | 缺 162 | — | 0 |
 | `MiniMax-M2.7` | 3 | 216 | 缺 213 | — | 0 |
 
 **自评格**:判官就是被测模型本人。多判官的意义正是防「模型给自己打分打高」,
 所以自评格必须标出来(证据行的 `self_judged`),但不能剔除——剔了该判官的视图就不完整。
-
-## `MiniMax-M3` 还缺 51 格
-
-- edubench · QG × clarity_concision_inspiration + scenario_element_integration (task×metric) · deepseek-v4-pro
-- edubench · QG × clarity_concision_inspiration + scenario_element_integration (task×metric) · doubao-seed-2-0-pro
-- edubench · QG × clarity_concision_inspiration + scenario_element_integration (task×metric) · glm-5.2
-- edubench · QG × clarity_concision_inspiration + scenario_element_integration (task×metric) · minimax-m2.7
-- edubench · QG × domain_knowledge_accuracy + basic_factual_accuracy (task×metric) · deepseek-v4-pro
-- edubench · QG × domain_knowledge_accuracy + basic_factual_accuracy (task×metric) · doubao-seed-2-0-pro
-- edubench · QG × domain_knowledge_accuracy + basic_factual_accuracy (task×metric) · glm-5.2
-- edubench · QG × domain_knowledge_accuracy + basic_factual_accuracy (task×metric) · minimax-m2.7
-- edubench · TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) · deepseek-v4-pro
-- edubench · TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) · doubao-seed-2-0-pro
-- edubench · TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) · glm-5.2
-- edubench · TMG/PCC × clarity_concision_inspiration + scenario_element_integration (task×metric) · minimax-m2.7
-- edubench · basic_factual_accuracy (metric) · deepseek-v4-pro
-- edubench · basic_factual_accuracy (metric) · doubao-seed-2-0-pro
-- edubench · basic_factual_accuracy (metric) · glm-5.2
-- edubench · basic_factual_accuracy (metric) · minimax-m2.7
-- edubench · clarity_concision_inspiration (metric) · deepseek-v4-pro
-- edubench · clarity_concision_inspiration (metric) · doubao-seed-2-0-pro
-- edubench · clarity_concision_inspiration (metric) · glm-5.2
-- edubench · clarity_concision_inspiration (metric) · minimax-m2.7
-- edubench · domain_knowledge_accuracy (metric) · deepseek-v4-pro
-- edubench · domain_knowledge_accuracy (metric) · doubao-seed-2-0-pro
-- edubench · domain_knowledge_accuracy (metric) · glm-5.2
-- edubench · domain_knowledge_accuracy (metric) · minimax-m2.7
-- edubench · error_identification_correction_accuracy (metric) · deepseek-v4-pro
-- edubench · error_identification_correction_accuracy (metric) · doubao-seed-2-0-pro
-- edubench · error_identification_correction_accuracy (metric) · glm-5.2
-- edubench · error_identification_correction_accuracy (metric) · minimax-m2.7
-- edubench · higher_order_thinking_ability_development (metric) · deepseek-v4-pro
-- edubench · higher_order_thinking_ability_development (metric) · doubao-seed-2-0-pro
-- edubench · higher_order_thinking_ability_development (metric) · glm-5.2
-- edubench · higher_order_thinking_ability_development (metric) · minimax-m2.7
-- edubench · motivation_guidance_positive_feedback (metric) · deepseek-v4-pro
-- edubench · motivation_guidance_positive_feedback (metric) · doubao-seed-2-0-pro
-- edubench · motivation_guidance_positive_feedback (metric) · glm-5.2
-- edubench · motivation_guidance_positive_feedback (metric) · minimax-m2.7
-- edubench · personalized_adaptation_learning_support (metric) · deepseek-v4-pro
-- edubench · personalized_adaptation_learning_support (metric) · doubao-seed-2-0-pro
-- edubench · personalized_adaptation_learning_support (metric) · glm-5.2
-- edubench · personalized_adaptation_learning_support (metric) · minimax-m2.7
 
 ## `deepseek-v3.2` 还缺 162 格
 

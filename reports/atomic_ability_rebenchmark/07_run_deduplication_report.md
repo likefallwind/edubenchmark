@@ -8,7 +8,7 @@ Canonical scoring rules:
 4. EduGuard P2 keeps only `deepseek-v3.2` judge rows in main scoring.
 
 Duplicate score groups recorded: 63
-MiniMax-M3 path-conflict rows recorded: 50
+MiniMax-M3 path-conflict rows recorded: 51
 
 ## Duplicate Score Rows
 
@@ -129,8 +129,9 @@ MiniMax-M3 path-conflict rows recorded: 50
 | not_selected | `olympiadbench` | `accuracy` | None | 0/6 | exclude_from_main | `reports/eval/olympiadbench/_noimage/_minimax_verbosity_probe/summary.json` |
 | not_selected | `olympiadbench` | `accuracy` | 0.4523809523809524 | 42/6728 | exclude_from_main | `reports/eval/olympiadbench/_stale/minimax3_partial-20260616/summary.json` |
 | selected | `olympiadbench` | `accuracy` | 0.7160071407319251 | 6722/6728 | include_candidate | `reports/eval/olympiadbench/minimax3/summary.json` |
-| selected | `tutorbench` | `accuracy` | None | 1440/1473 | include_candidate | `reports/eval/tutorbench/judge-deepseek-v4-flash/minimax3/summary.json` |
-| not_selected | `tutorbench` | `accuracy` | None | 1440/1473 | include_candidate | `reports/eval/tutorbench/judge-minimax3/_m3_fullset_20260723/summary.json` |
-| not_selected | `tutorbench` | `accuracy` | None | 6/6 | exclude_from_main | `reports/eval/tutorbench/judge-minimax3/minimax3/summary.json` |
+| not_selected | `safe_child_llm` | `accuracy` | 0.98 | 200/200 | include_candidate | `reports/eval/safe_child_llm/judge-deepseek-v4-flash/minimax3/summary.json` |
+| selected | `safe_child_llm` | `accuracy` | 0.975 | 200/200 | include_candidate | `reports/eval/safe_child_llm/judge-minimax3/minimax3/summary.json` |
+| not_selected | `tutorbench` | `accuracy` | None | 1440/1473 | include_candidate | `reports/eval/tutorbench/judge-deepseek-v4-flash/minimax3/summary.json` |
+| selected | `tutorbench` | `accuracy` | None | 1440/1473 | include_candidate | `reports/eval/tutorbench/judge-minimax3/minimax3/summary.json` |
 
 Full records are in `07_run_deduplication_report.jsonl`.

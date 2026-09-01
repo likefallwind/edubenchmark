@@ -15,28 +15,28 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `deepseek-v4-flash` | LAD | 6.8001 | 2 | P10, P11 |
 | `deepseek-v4-flash` | SRG | 7.74 | 1 | P02 |
 | `deepseek-v4-pro` | CEG | 6.6251 | 3 | P17, P18, P19 |
-| `deepseek-v4-pro` | CLM | 5.139 | 4 | P13, P14, P15, P16 |
-| `deepseek-v4-pro` | FDR | 7.0189 | 4 | P05, P06, P07, P08 |
-| `deepseek-v4-pro` | LAD | 7.0709 | 2 | P10, P11 |
+| `deepseek-v4-pro` | CLM | 5.6328 | 4 | P13, P14, P15, P16 |
+| `deepseek-v4-pro` | FDR | 7.0524 | 4 | P05, P06, P07, P08 |
+| `deepseek-v4-pro` | LAD | 7.3939 | 3 | P10, P11, P12 |
 | `deepseek-v4-pro` | SRG | 4.272 | 4 | P01, P02, P03, P04 |
 | `doubao-seed-2-0-lite` | CEG | 6.4967 | 3 | P17, P18, P19 |
 | `doubao-seed-2-0-lite` | CLM | 5.3137 | 2 | P14, P16 |
 | `doubao-seed-2-0-lite` | FDR | 5.317 | 1 | P05 |
 | `doubao-seed-2-0-lite` | SRG | 5.3038 | 1 | P04 |
 | `doubao-seed-2-0-pro` | CEG | 6.6891 | 3 | P17, P18, P19 |
-| `doubao-seed-2-0-pro` | CLM | 6.2437 | 4 | P13, P14, P15, P16 |
-| `doubao-seed-2-0-pro` | FDR | 7.5301 | 4 | P05, P06, P07, P08 |
-| `doubao-seed-2-0-pro` | LAD | 7.4482 | 2 | P10, P11 |
-| `doubao-seed-2-0-pro` | SRG | 7.8845 | 4 | P01, P02, P03, P04 |
+| `doubao-seed-2-0-pro` | CLM | 6.2099 | 4 | P13, P14, P15, P16 |
+| `doubao-seed-2-0-pro` | FDR | 7.574 | 4 | P05, P06, P07, P08 |
+| `doubao-seed-2-0-pro` | LAD | 7.7223 | 3 | P10, P11, P12 |
+| `doubao-seed-2-0-pro` | SRG | 7.8429 | 4 | P01, P02, P03, P04 |
 | `glm-5.1` | CEG | 7.632 | 3 | P17, P18, P19 |
 | `glm-5.1` | CLM | 8.5461 | 2 | P13, P14 |
 | `glm-5.1` | FDR | 6.853 | 2 | P05, P06 |
 | `glm-5.1` | LAD | 7.2323 | 2 | P10, P11 |
 | `glm-5.1` | SRG | 7.8142 | 1 | P02 |
 | `glm-5.2` | CEG | 7.5824 | 3 | P17, P18, P19 |
-| `glm-5.2` | CLM | 4.3461 | 4 | P13, P14, P15, P16 |
-| `glm-5.2` | FDR | 6.8711 | 4 | P05, P06, P07, P08 |
-| `glm-5.2` | LAD | 7.4211 | 2 | P10, P11 |
+| `glm-5.2` | CLM | 5.4178 | 4 | P13, P14, P15, P16 |
+| `glm-5.2` | FDR | 7.0071 | 4 | P05, P06, P07, P08 |
+| `glm-5.2` | LAD | 7.7035 | 3 | P10, P11, P12 |
 | `glm-5.2` | SRG | 4.3319 | 4 | P01, P02, P03, P04 |
 | `gpt-5.4` | CLM | 8.1389 | 2 | P13, P14 |
 | `gpt-5.4` | FDR | 6.2363 | 2 | P05, P06 |
@@ -52,9 +52,9 @@ These are provisional SRG/FDR/LAD/CLM/CEG aggregates from P abilities that have 
 | `kimi-k2-7-code` | CLM | 7.1484 | 1 | P16 |
 | `kimi-k2-7-code` | SRG | 7.1484 | 1 | P04 |
 | `minimax-m2.7` | CEG | 7.445 | 3 | P17, P18, P19 |
-| `minimax-m2.7` | CLM | 5.0492 | 4 | P13, P14, P15, P16 |
-| `minimax-m2.7` | FDR | 6.4654 | 4 | P05, P06, P07, P08 |
-| `minimax-m2.7` | LAD | 6.8203 | 2 | P10, P11 |
+| `minimax-m2.7` | CLM | 5.4845 | 4 | P13, P14, P15, P16 |
+| `minimax-m2.7` | FDR | 6.5505 | 4 | P05, P06, P07, P08 |
+| `minimax-m2.7` | LAD | 7.2615 | 3 | P10, P11, P12 |
 | `minimax-m2.7` | SRG | 4.0736 | 4 | P01, P02, P03, P04 |
 | `minimax-m3` | CEG | 8.2284 | 3 | P17, P18, P19 |
 | `minimax-m3` | CLM | 6.0685 | 4 | P13, P14, P15, P16 |

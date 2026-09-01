@@ -36,8 +36,8 @@ Capability-gap zero cells: 0 （应为 0：视觉格已整格移除，没有能�
 |---|---:|---:|
 | `qwen-qwen3-8-27b` | 7.4634 | 16 |
 | `minimax-m3` | 7.4289 | 16 |
-| `doubao-seed-2-0-pro` | 7.1622 | 15 |
-| `glm-5.2` | 7.0221 | 15 |
-| `deepseek-v4-pro` | 6.9932 | 15 |
-| `minimax-m2.7` | 6.9038 | 15 |
+| `glm-5.2` | 7.2574 | 16 |
+| `doubao-seed-2-0-pro` | 7.2131 | 16 |
+| `deepseek-v4-pro` | 7.0763 | 16 |
+| `minimax-m2.7` | 6.9889 | 16 |
 | `qwen-qwen3-5-4b` | 6.8141 | 16 |

@@ -1,13 +1,13 @@
 # Otherbenchmark Score Inventory
 
-Parsed score rows: 529
+Parsed score rows: 589
 
 ## By Score Role
 
 | Role | Rows |
 |---|---:|
 | `legacy_context` | 157 |
-| `scoring_candidate` | 372 |
+| `scoring_candidate` | 432 |
 
 `scoring_candidate` rows are eligible for the P-score layer. `legacy_context` rows are stored for audit only.
 
@@ -16,7 +16,7 @@ Parsed score rows: 529
 | Benchmark | Rows |
 |---|---:|
 | `asap_2` | 7 |
-| `edubench` | 396 |
+| `edubench` | 456 |
 | `eduguard_adversarial` | 24 |
 | `eduguard_sata` | 13 |
 | `legacy_radar_0701` | 40 |
@@ -31,7 +31,7 @@ Parsed score rows: 529
 | `accuracy_percent` | 7 |
 | `asr_0_to_1_lower_better` | 24 |
 | `legacy_axis_0_to_100` | 40 |
-| `likert_0_to_10` | 330 |
+| `likert_0_to_10` | 390 |
 | `mean_0_to_10` | 66 |
 | `qwk_0_to_100` | 19 |
 | `rfs_0_to_1` | 6 |

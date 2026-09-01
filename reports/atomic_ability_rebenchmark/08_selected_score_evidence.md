@@ -1,13 +1,13 @@
 # Selected Score Evidence
 
-Canonical normalized score rows used for P scoring: 769
+Canonical normalized score rows used for P scoring: 820
 
 ## By Source
 
 | Source | Rows |
 |---|---:|
-| `otherbenchmark` | 282 |
-| `repo_eval` | 487 |
+| `otherbenchmark` | 330 |
+| `repo_eval` | 490 |
 
 ## By Benchmark
 
@@ -18,12 +18,12 @@ Canonical normalized score rows used for P scoring: 769
 | `bea2025_judge` | 9 |
 | `bea2025_tutor` | 42 |
 | `ceval` | 9 |
-| `edubench` | 264 |
+| `edubench` | 312 |
 | `eduguard_adversarial` | 19 |
 | `eduguard_sata` | 10 |
 | `eduillustrate` | 6 |
 | `ifeval` | 7 |
-| `k12vista` | 24 |
+| `k12vista` | 27 |
 | `longtutor_diagnosis` | 7 |
 | `longtutor_evidence` | 42 |
 | `longtutor_teaching` | 14 |
@@ -111,28 +111,28 @@ Canonical normalized score rows used for P scoring: 769
 | `bea2025_tutor` | `deepseek-v4-pro` | `share_0_to_1` | 0.9933 | 9.9330 | `reports/eval/bea2025_tutor/judge-deepseek-v4-flash/deepseek-v4-pro/summary.json` |
 | `bea2025_tutor` | `deepseek-v4-pro` | `share_0_to_1` | 0.9767 | 9.7670 | `reports/eval/bea2025_tutor/judge-minimax3/deepseek-v4-pro/summary.json` |
 | `ceval` | `deepseek-v4-pro` | `accuracy` | 0.9383358098068351 | 9.3834 | `reports/eval/ceval/deepseek-v4-pro/summary.json` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.7855 | 7.7855 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.3472 | 8.3472 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.6398 | 8.6398 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.6793 | 8.6793 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.7062 | 8.7062 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 9.7449 | 9.7449 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.081 | 8.0810 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.8699 | 7.8699 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.5098 | 8.5098 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 9.0222 | 9.0222 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.7588 | 8.7588 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 9.7472 | 9.7472 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.8095 | 7.8095 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.1962 | 8.1962 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.482 | 8.4820 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.4238 | 8.4238 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.2236 | 8.2236 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 9.4554 | 9.4554 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 6.8675 | 6.8675 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.9613 | 8.9613 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.8541 | 7.8541 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
+| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.1696 | 7.1696 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 | `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.0345 | 7.0345 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.658 | 7.6580 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 6.4398 | 6.4398 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 6.6497 | 6.6497 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 6.4385 | 6.4385 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 6.5516 | 6.5516 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 7.9357 | 7.9357 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 9.097 | 9.0970 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
-| `edubench` | `deepseek-v4-pro` | `likert_0_to_10` | 8.1691 | 8.1691 | `reports/eval/edubench/_metrics/task_metric_means.jsonl` |
 
 Full selected rows are in `08_selected_score_evidence.jsonl`.

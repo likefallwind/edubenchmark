@@ -2036,6 +2036,13 @@ def score_atomic_p(
                     # 裁判同理——模板行的 judge_model 是别的模型那次跑分的裁判。
                     "source_path": "",
                     "judge_model": "",
+                    # 同理必须显式清掉：`dict(template)` 会把模板那个模型的自评标记也
+                    # 抄过来，于是一个没有任何判官参与的合成行会自称「判官即被测模型
+                    # 本人」。模板是 `cell_faces` 里第一张面孔，谁排第一取决于证据行的
+                    # 插入顺序，所以这个数还会随着别处补跑无声地变（补齐 edubench 后
+                    # 主视图的自评格从 59 跳到 47，跳的全是这种合成行）。而自评格数正是
+                    # 「留多判官防模型给自己打高分」的读数，不能由字典顺序决定。
+                    "self_judged": False,
                     "coverage_status": status,
                     "missing_capability": capability,
                     "coverage_reason": reason,
