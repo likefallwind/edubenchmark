@@ -49,6 +49,12 @@ class Checker:
     def __init__(self) -> None:
         self.errors: list[str] = []
         self.checks = 0
+        # 每条错误都要说是哪个判官下出的——两个判官的同名检查混在一起，读的人根本
+        # 不知道该去重跑哪一份产物。
+        self.prefix = ""
+
+    def fail(self, label: str) -> None:
+        self.errors.append(f"{self.prefix}{label}")
 
     def eq(self, label: str, got: Any, want: Any) -> None:
         self.checks += 1
@@ -57,21 +63,40 @@ class Checker:
                 return
         elif got == want:
             return
-        self.errors.append(f"{label}: got {got!r}, expected {want!r}")
+        self.fail(f"{label}: got {got!r}, expected {want!r}")
 
     def true(self, label: str, condition: bool) -> None:
         self.checks += 1
         if not condition:
-            self.errors.append(label)
+            self.fail(label)
 
 
-def validate(payload: dict[str, Any]) -> Checker:
-    c = Checker()
+def view_paths(judge_slug: str, primary_slug: str) -> dict[str, Path]:
+    """一个判官视图的六个源产物。主判官读主产物，其余读 14_judge_views/。"""
+    names = (
+        "09_atomic_p_scores",
+        "09_atomic_p_score_evidence",
+        "09_atomic_p_untested_cells",
+        "10_group_scores",
+        "09_atomic_p_scores_text_only",
+        "09_atomic_p_score_evidence_text_only",
+        "10_group_scores_text_only",
+    )
+    if judge_slug == primary_slug:
+        return {n: REBENCH / f"{n}.jsonl" for n in names}
+    return {n: REBENCH / "14_judge_views" / f"{n}__{judge_slug}.jsonl" for n in names}
+
+
+def validate_view(
+    payload: dict[str, Any], c: Checker, paths: dict[str, Path], floor_dir: Path,
+    union_evidence: list[dict[str, Any]],
+) -> Checker:
     # R26 起该文件也收录「未测过」的 P 行（score_10=None）。它们没有分数，
     # 不进 payload，也不该进这里的任何比对——覆盖率必须按有分的行算。
-    p_scores = [r for r in load_jsonl(REBENCH / "09_atomic_p_scores.jsonl") if r["score_10"] is not None]
-    evidence = load_jsonl(REBENCH / "09_atomic_p_score_evidence.jsonl")
-    group_scores = load_jsonl(REBENCH / "10_group_scores.jsonl")
+    # R27 又多一种 `judge_incapable`（本判官判不了），同样没有分数，同样不进比对。
+    p_scores = [r for r in load_jsonl(paths["09_atomic_p_scores"]) if r["score_10"] is not None]
+    evidence = load_jsonl(paths["09_atomic_p_score_evidence"])
+    group_scores = load_jsonl(paths["10_group_scores"])
     explorer = load_explorer()
 
     # --- scores round-trip to source jsonl --------------------------------
@@ -80,7 +105,7 @@ def validate(payload: dict[str, Any]) -> Checker:
         key = f"{row['model_key']}|{row['p_code']}"
         entry = payload["scores"].get(key)
         if entry is None:
-            c.errors.append(f"scores/{key}: missing")
+            c.fail(f"scores/{key}: missing")
             continue
         c.eq(f"scores/{key}/s", entry["s"], round(row["score_10"], 4))
         c.eq(f"scores/{key}/nf", entry["nf"], row["facet_count_with_evidence"])
@@ -119,7 +144,7 @@ def validate(payload: dict[str, Any]) -> Checker:
     # Re-derived from its own artifact, exactly like the main board is: the
     # payload must not be the only place these numbers exist.
     text_p = [
-        r for r in load_jsonl(REBENCH / "09_atomic_p_scores_text_only.jsonl")
+        r for r in load_jsonl(paths["09_atomic_p_scores_text_only"])
         if r["score_10"] is not None
     ]
     text_by_model = collections.defaultdict(list)
@@ -146,21 +171,31 @@ def validate(payload: dict[str, Any]) -> Checker:
             model["vision"],
             explorer.agg.MODEL_CAPABILITIES.get(key, {}).get("vision"),
         )
-    # The whole point of this board is one yardstick, so every panel model has
-    # to be scored over the *same* abilities. If a future panel member is short
-    # a non-visual ability this fires, and it should: the board would be
-    # comparing models over different denominators without saying so.
-    panel_text_sets = {
-        m["key"]: frozenset(r["p_code"] for r in text_p if r["model_key"] == m["key"])
-        for m in payload["models"] if m["full"]
-    }
-    c.eq(
-        "models: panel models scored over different abilities on the text board "
-        f"({ {k: len(v) for k, v in panel_text_sets.items()} })",
-        len(set(panel_text_sets.values())),
-        1,
-    )
-    text_groups = load_jsonl(REBENCH / "10_group_scores_text_only.jsonl")
+    # 这块板的意义是一把尺子，所以面板模型最好在同一组能力上被打分。R27 的判官纯净化
+    # 之后这不再自动成立（MiniMax-M3 视图里 4 个面板模型的 edubench 是别的判官判的，
+    # P12 整项没有），所以这里**不再断言齐平**——断言掉等于逼着口径去凑，或者逼人把检查
+    # 关掉。改成：不齐可以，但 payload 必须**如实声明**不齐在哪，页面才有东西可说。
+    # 悄悄不齐才是要拦的东西。
+    def panel_block(rows: list[dict[str, Any]]) -> dict[str, Any]:
+        got = {
+            m["key"]: {r["p_code"] for r in rows if r["model_key"] == m["key"]}
+            for m in payload["models"] if m["full"]
+        }
+        union: set[str] = set()
+        for codes in got.values():
+            union |= codes
+        return {
+            "counts": {k: len(v) for k, v in sorted(got.items())},
+            "uniform": len({frozenset(v) for v in got.values()}) <= 1,
+            "missing": {k: sorted(union - v) for k, v in sorted(got.items()) if union - v},
+        }
+
+    cov = payload["meta"].get("panel_coverage")
+    c.true("meta/panel_coverage: 缺失", isinstance(cov, dict))
+    if isinstance(cov, dict):
+        c.eq("meta/panel_coverage/text", cov.get("text"), panel_block(text_p))
+        c.eq("meta/panel_coverage/main", cov.get("main"), panel_block(p_scores))
+    text_groups = load_jsonl(paths["10_group_scores_text_only"])
     c.eq("groupScoreText/count", len(payload["groupScoreText"]), len(text_groups))
     for row in text_groups:
         gkey = f"{row['model_key']}|{row['group']}"
@@ -176,7 +211,7 @@ def validate(payload: dict[str, Any]) -> Checker:
     # A masked cell must leave no trace in the text-only evidence: if one shows
     # up there the mask was applied after aggregation, not before, and the
     # scores are the wrong ones.
-    text_ev = load_jsonl(REBENCH / "09_atomic_p_score_evidence_text_only.jsonl")
+    text_ev = load_jsonl(paths["09_atomic_p_score_evidence_text_only"])
     leaked = {(r["benchmark_id"], r["subdimension"]) for r in text_ev} & masked
     c.eq(f"text-only evidence: masked cells leaked through {sorted(leaked)}", leaked, set())
     # And no capability-gap zeros can survive there: the cells that could gate
@@ -207,7 +242,17 @@ def validate(payload: dict[str, Any]) -> Checker:
         set(bench_ids) <= known,
     )
     evidence_ids = {row["benchmark_id"] for row in evidence}
-    c.eq("benchmarks/id-set", set(bench_ids), evidence_ids)
+    # 严格相等在多判官下是错的：deepseek-v4-flash 判不了 eduillustrate，它的证据里
+    # 没有那个 benchmark，但页面必须仍有那一页（否则另一个判官下存在的链接会 404）。
+    # 所以是「≥ 证据集」，且多出来的每一个都必须是空榜——不能悄悄多出一个有分的。
+    c.true(
+        f"benchmarks: 证据里有而 payload 缺的 {sorted(evidence_ids - set(bench_ids))}",
+        evidence_ids <= set(bench_ids),
+    )
+    for bench in payload["benchmarks"]:
+        if bench["id"] in evidence_ids:
+            continue
+        c.eq(f"benchmarks/{bench['id']}: 无证据却有成绩", len(bench["results"]), 0)
     for bench in payload["benchmarks"]:
         c.true(f"benchmarks/{bench['id']}: empty one_liner", bool(bench["one_liner"]))
         c.true(f"benchmarks/{bench['id']}: no sections", bool(bench["sections"]))
@@ -225,7 +270,7 @@ def validate(payload: dict[str, Any]) -> Checker:
         for result in bench["results"]:
             rows = groups.get(result["m"])
             if not rows:
-                c.errors.append(f"benchmarks/{bench['id']}/{result['m']}: no evidence rows")
+                c.fail(f"benchmarks/{bench['id']}/{result['m']}: no evidence rows")
                 continue
             want = sum(r["score_10"] * r["effective_weight"] for r in rows) / sum(
                 r["effective_weight"] for r in rows
@@ -264,8 +309,11 @@ def validate(payload: dict[str, Any]) -> Checker:
     c.eq("groups: tier blocks do not match tiers", blocks, tier_ids)
     # Cell weights are re-read straight from the evidence rows: the payload must
     # never invent a weight the aggregator did not stamp.
+    # 用**全部上站判官**证据的并集，不是当前这个判官的：`abilities` 是跨判官共享的块
+    # （相关度/置信/有效权重是测量模型给的常数，不是读数），按单个判官去核对，那个判官
+    # 没判过的格就会被判成「凭空造了个权重」。
     ev_weights = {}
-    for row in evidence:
+    for row in union_evidence:
         ev_weights.setdefault(
             (row["p_code"], row["facet_id"], row["benchmark_id"], row["subdimension"]),
             (row["ability_weight"], row["row_weight"], row["effective_weight"]),
@@ -285,9 +333,19 @@ def validate(payload: dict[str, Any]) -> Checker:
                 )
                 want = ev_weights.get((code, facet["id"], cell["b"], cell["sd"]))
                 if want is None:
-                    c.errors.append(
-                        f"abilities/{code}/{facet['id']}/{cell['b']}·{cell['sd']}: no evidence row"
+                    # 上站的判官一个都没量过这一格（eduguard_adversarial 的
+                    # Refusal quality distribution 只有 deepseek-v3.2 判过，而它不上站）。
+                    # 那 payload 就必须如实说「没有权重」——不许编一个，也不许当成 0 权重
+                    # 之外的任何东西参与名义占比。
+                    c.true(
+                        f"abilities/{code}/{facet['id']}/{cell['b']}·{cell['sd']}: 无证据却给了权重",
+                        cell["eff"] is None,
                     )
+                    c.eq(
+                        f"abilities/{code}/{facet['id']}/{cell['b']}·{cell['sd']}/share",
+                        cell["share"], 0.0,
+                    )
+                    share_total += cell["share"]
                     continue
                 c.eq(f"abilities/{code}/{facet['id']}/{cell['b']}/rel", cell["rel"], want[0])
                 c.eq(f"abilities/{code}/{facet['id']}/{cell['b']}/conf", cell["conf"], want[1])
@@ -330,10 +388,13 @@ def validate(payload: dict[str, Any]) -> Checker:
     # `scripts/build_l1_floor_profile.py`.
     floor = payload.get("floor")
     c.true("floor: missing from payload", isinstance(floor, dict))
-    if isinstance(floor, dict):
-        floor_cells = load_jsonl(FLOOR_DIR / "01_l1_floor_cells.jsonl")
-        floor_evidence = load_jsonl(FLOOR_DIR / "02_l1_floor_evidence.jsonl")
-        floor_p = load_jsonl(FLOOR_DIR / "03_l1_floor_p_scores.jsonl")
+    if isinstance(floor, dict) and not (floor_dir / "03_l1_floor_p_scores.jsonl").exists():
+        # 换判官后地板要重跑：`python3 scripts/build_l1_floor_profile.py --judge <判官>`。
+        c.fail(f"floor: 这个判官的地板产物还没生成（{floor_dir}）——先跑 build_l1_floor_profile.py --judge")
+    elif isinstance(floor, dict):
+        floor_cells = load_jsonl(floor_dir / "01_l1_floor_cells.jsonl")
+        floor_evidence = load_jsonl(floor_dir / "02_l1_floor_evidence.jsonl")
+        floor_p = load_jsonl(floor_dir / "03_l1_floor_p_scores.jsonl")
 
         c.eq("floor/p/count", len(floor["p"]), len([r for r in floor_p if r["score_10"] is not None]))
         for row in floor_p:
@@ -357,7 +418,7 @@ def validate(payload: dict[str, Any]) -> Checker:
             key = f"{row['benchmark_id']}|{row['subdimension']}"
             entry = floor["cell"].get(key)
             if entry is None:
-                c.errors.append(f"floor/cell/{key}: missing")
+                c.fail(f"floor/cell/{key}: missing")
                 continue
             c.eq(f"floor/cell/{key}/s", entry["s"], round(row["score_10"], 4))
             c.eq(f"floor/cell/{key}/v", entry["v"], row["raw_value"])
@@ -401,10 +462,75 @@ def validate(payload: dict[str, Any]) -> Checker:
     c.eq("meta/n_abilities_total", meta["n_abilities_total"], len(payload["abilities"]))
     covered = {k.split("|")[1] for k in payload["scores"]}
     c.eq("meta/n_abilities_covered", meta["n_abilities_covered"], len(covered))
-    c.eq("meta/uncovered_p", set(meta["uncovered_p"]), p_codes - covered)
+    blind_p = set(meta.get("judge_incapable_p") or ())
+    # 两种空白必须分开：uncovered = 压根没有合适 benchmark（P09/P20，换谁都没有）；
+    # judge_incapable = 这把尺子读不了（P04 之于 deepseek-v4-flash，换判官就有）。
+    # 合起来才是「这个判官下没有分的 P」，任何一边多算都会让页面说错话。
+    c.eq("meta/uncovered_p+judge_incapable_p", set(meta["uncovered_p"]) | blind_p, p_codes - covered)
+    c.eq("meta: 两种空白不该重叠", set(meta["uncovered_p"]) & blind_p, set())
+    for p_code in sorted(blind_p):
+        c.eq(f"abilityRank/{p_code}: 判官判不了，应为空", len(payload["abilityRank"][p_code]), 0)
+        c.true(
+            f"scores: {p_code} 判官判不了却仍有分",
+            not any(k.endswith("|" + p_code) for k in payload["scores"]),
+        )
     c.true("boundaries: empty", bool(payload["boundaries"]))
 
     return c
+
+
+def flatten(payload: dict[str, Any], slug: str) -> dict[str, Any]:
+    """把共享块和某个判官的数字块拼回旧的扁平形状，好让下面的比对一字不改地复用。
+
+    这是拼装，不是算分：`benchmarks` 按 id 把散文和成绩接回一起，别的原样。
+    """
+    view = payload["byJudge"][slug]
+    numbers = {b["id"]: b for b in view["benchmarks"]}
+    flat = dict(payload)
+    flat.pop("byJudge", None)
+    flat.update({k: v for k, v in view.items() if k not in ("meta", "benchmarks")})
+    flat["meta"] = dict(payload["meta"], **view["meta"])
+    flat["benchmarks"] = [
+        dict(b, abilities=numbers[b["id"]]["abilities"], results=numbers[b["id"]]["results"])
+        for b in payload["benchmarks"]
+    ]
+    return flat
+
+
+def validate(payload: dict[str, Any]) -> Checker:
+    c = Checker()
+    meta = payload.get("meta") or {}
+    roster = meta.get("judges") or []
+    c.true("meta/judges: 空", bool(roster))
+    slugs = [entry["id"] for entry in roster]
+    c.eq("byJudge/keys", set(payload.get("byJudge") or {}), set(slugs))
+    c.true(
+        f"meta/defaultJudge {meta.get('defaultJudge')!r} 不在名册里",
+        meta.get("defaultJudge") in slugs,
+    )
+    explorer = load_explorer()
+    primary_slug = explorer.agg.model_slug(explorer.agg.PRIMARY_JUDGE)
+    union_evidence: list[dict[str, Any]] = []
+    for entry in roster:
+        path = view_paths(entry["id"], primary_slug)["09_atomic_p_score_evidence"]
+        if path.exists():
+            union_evidence += load_jsonl(path)
+    for entry in roster:
+        slug = entry["id"]
+        if slug not in (payload.get("byJudge") or {}):
+            continue
+        c.prefix = f"[{slug}] "
+        validate_view(
+            flatten(payload, slug), c, view_paths(slug, primary_slug),
+            floor_dir(slug, primary_slug), union_evidence,
+        )
+    c.prefix = ""
+    return c
+
+
+def floor_dir(judge_slug: str, primary_slug: str) -> Path:
+    """主判官的地板仍在老路径上；其余在 judge-<slug>/ 子目录里。"""
+    return FLOOR_DIR if judge_slug == primary_slug else FLOOR_DIR / f"judge-{judge_slug}"
 
 
 def main() -> int:

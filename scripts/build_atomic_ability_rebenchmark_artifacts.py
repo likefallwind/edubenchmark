@@ -1880,8 +1880,14 @@ def score_atomic_p(
     selected_rows: list[dict[str, Any]],
     skip_cell: Callable[[str, str], bool] | None = None,
     judge_model: str | None = None,
+    blind_rows: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """聚合到 P 分。`skip_cell(benchmark_id, subdimension)` 为真的格整格不参与。
+
+    `blind_rows` 是**别的判官**判过、而本判官判不了的取分行（判据同 `judge_can_score`）。
+    它们一分都不取，只用来在下面的 `cell_faces` 里占一个无面孔的槽位：不占位的话，这
+    些格在本判官视图里连模板行都没有，缺测循环根本扫不到，P 行会整行消失，读的人只能
+    当成「未测过」——而它是「再跑一万次也出不来」。
 
     「整格不参与」是字面意思：那一格既不产出证据行，也不会被下面的缺测补齐扫到，
     所以既不记 0 也不记未测，而是根本不进这一轮的可测量范围（分母）。纯文本口径就
@@ -1963,11 +1969,57 @@ def score_atomic_p(
     for ev in evidence_rows:
         key = (ev["p_code"], ev["facet_id"], ev["benchmark_id"], ev["subdimension"])
         cell_faces.setdefault(key, {})[ev["model_key"]] = ev
+    # R27.1：判官判不了的格，在这个判官的视图里一条证据都没有，所以 `cell_faces`
+    # （从证据行建的）扫不到它们。给它们补一个**空**槽位 + 一份合成模板，缺测循环
+    # 才会走到 judge_incapable 那一支。合成模板只承载映射信息（P/facet/权重），
+    # 分数一律 None——它不是任何一次跑分的产物。
+    blind_templates: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    for row in blind_rows or ():
+        if row["benchmark_id"] in EXCLUDED_SCORING_BENCHMARKS:
+            continue
+        if skip_cell is not None and skip_cell(row["benchmark_id"], row["subdimension"]):
+            continue
+        if judge_model is None or judge_can_score(judge_model, row["benchmark_id"]):
+            continue
+        mapping = find_mapping(row["benchmark_id"], subdimension=row["subdimension"], metric=row["metric"])
+        if mapping is None:
+            continue
+        for ability in mapping["abilities"]:
+            if ability.get("excluded"):
+                continue
+            key = (ability["p_code"], ability["facet_id"], row["benchmark_id"], row["subdimension"])
+            if key in cell_faces:
+                continue
+            cell_faces[key] = {}
+            blind_templates[key] = {
+                "model_key": "",
+                "model": "",
+                "p_code": ability["p_code"],
+                "p_name": ability["p_name"],
+                "group": ability["group"],
+                "facet_id": ability["facet_id"],
+                "facet_name": ability["facet_name"],
+                "benchmark_id": row["benchmark_id"],
+                "subdimension": row["subdimension"],
+                "source_type": "judge_incapable",
+                "source_path": "",
+                "metric": row["metric"],
+                "raw_value": None,
+                "score_10": None,
+                "judge_model": "",
+                "self_judged": False,
+                "row_weight": mapping["default_benchmark_weight"],
+                "ability_weight": ability["weight"],
+                "effective_weight": mapping["default_benchmark_weight"] * ability["weight"],
+            }
+
     zero_rows: list[dict[str, Any]] = []
     untested_rows: list[dict[str, Any]] = []
     incapable_rows: list[dict[str, Any]] = []
-    for faces in cell_faces.values():
-        template = next(iter(faces.values()))
+    for key, faces in cell_faces.items():
+        template = next(iter(faces.values()), None) or blind_templates.get(key)
+        if template is None:
+            continue
         for model_key in PANEL_MODEL_KEYS:
             if model_key in faces:
                 continue
@@ -2107,6 +2159,51 @@ def score_atomic_p(
                 "capability_zero_weight_share": 0.0,
                 "untested_cell_count": len(rows),
                 "untested_cells": sorted({f'{r["benchmark_id"]} · {r["subdimension"]}' for r in rows}),
+                "judge_models": [],
+                "judge_incapable_cell_count": len(incapable_by_slot.get((model_key, p_code), [])),
+                "judge_incapable_cells": sorted(
+                    {
+                        f'{r["benchmark_id"]} · {r["subdimension"]}'
+                        for r in incapable_by_slot.get((model_key, p_code), [])
+                    }
+                ),
+                "self_judged_cell_count": 0,
+            }
+        )
+    # 一格都没有、而缺的那些格**本判官判不了**的 (模型, P)：也要出行，但状态是
+    # `judge_incapable` 而不是 `untested`。两者的差别是能不能补：未测过再跑一次就有，
+    # 判官判不了再跑一万次也没有，只能换判官。塌成一种，网站就会把 P04 在
+    # deepseek-v4-flash 下写成「未测过」——说错话。
+    emitted = {(r["model_key"], r["p_code"]) for r in p_rows}
+    for (model_key, p_code), rows in sorted(incapable_by_slot.items()):
+        if (model_key, p_code) in emitted:
+            continue
+        template = rows[0]
+        p_rows.append(
+            {
+                "model_key": model_key,
+                "display_model": model_key,
+                "p_code": p_code,
+                "p_name": template["p_name"],
+                "group": template["group"],
+                "score_10": None,
+                "coverage_status": "judge_incapable",
+                "weight_sum": 0.0,
+                "facet_count_with_evidence": 0,
+                "facet_scores": {},
+                "evidence_count": 0,
+                "benchmark_count": 0,
+                "benchmarks": [],
+                "capability_zero_count": 0,
+                "capability_zero_weight_share": 0.0,
+                "untested_cell_count": 0,
+                "untested_cells": [],
+                "judge_models": [],
+                "judge_incapable_cell_count": len(rows),
+                "judge_incapable_cells": sorted(
+                    {f'{r["benchmark_id"]} · {r["subdimension"]}' for r in rows}
+                ),
+                "self_judged_cell_count": 0,
             }
         )
     p_rows.sort(key=lambda r: (r["model_key"], r["p_code"]))
@@ -2162,7 +2259,17 @@ def build_judge_views(selected_score_rows: list[dict[str, Any]]) -> list[dict[st
     views: list[dict[str, Any]] = []
     for judge in judges_in_rotation(selected_score_rows):
         rows = judge_view_rows(selected_score_rows, judge)
-        evidence, p_rows, group_rows, untested, incapable = score_atomic_p(rows, judge_model=judge)
+        # 本判官判不了的取分行:不进它的视图(一分不取),但要交给 score_atomic_p 占位,
+        # 否则那些格连模板都没有,P 行会整行消失(见 score_atomic_p 的 blind_rows)。
+        blind = [r for r in selected_score_rows if not judge_can_score(judge, r["benchmark_id"])]
+        evidence, p_rows, group_rows, untested, incapable = score_atomic_p(
+            rows, judge_model=judge, blind_rows=blind
+        )
+        # 纯文本口径:同一条链路再跑一遍,屏蔽由视觉定义的取分维度。网站的 overallText /
+        # groupScoreText / 纯文本榜全靠它,判官视图缺了它就出不了完整 payload。
+        text_evidence, text_p_rows, text_group_rows, _tu, _ti = score_atomic_p(
+            rows, skip_cell=requires_vision, judge_model=judge, blind_rows=blind
+        )
         have = {
             (r["benchmark_id"], r["subdimension"], r["model_key"])
             for r in rows
@@ -2198,6 +2305,9 @@ def build_judge_views(selected_score_rows: list[dict[str, Any]]) -> list[dict[st
                 "self_judged_cells": sum(1 for e in evidence if e.get("self_judged")),
                 "p_rows": p_rows,
                 "group_rows": group_rows,
+                "text_p_rows": text_p_rows,
+                "text_group_rows": text_group_rows,
+                "text_evidence": text_evidence,
                 "evidence": evidence,
                 "untested": untested,
                 "incapable": incapable,
@@ -2217,6 +2327,9 @@ def write_judge_views(views: list[dict[str, Any]], primary_incapable: list[dict[
         dump_jsonl(out / f"09_atomic_p_scores__{slug}.jsonl", view["p_rows"])
         dump_jsonl(out / f"09_atomic_p_score_evidence__{slug}.jsonl", view["evidence"])
         dump_jsonl(out / f"10_group_scores__{slug}.jsonl", view["group_rows"])
+        dump_jsonl(out / f"09_atomic_p_scores_text_only__{slug}.jsonl", view["text_p_rows"])
+        dump_jsonl(out / f"09_atomic_p_score_evidence_text_only__{slug}.jsonl", view["text_evidence"])
+        dump_jsonl(out / f"10_group_scores_text_only__{slug}.jsonl", view["text_group_rows"])
         dump_jsonl(out / f"09_atomic_p_untested_cells__{slug}.jsonl", view["untested"])
         dump_jsonl(out / f"09_atomic_p_judge_incapable_cells__{slug}.jsonl", view["incapable"])
         index.append(
@@ -3762,13 +3875,16 @@ def main() -> None:
     # 而挑选规则里 scored 排在判官偏好前面,doubao-seed-2.0-pro 因此混进了 5 个
     # deepseek-v4-flash 判的格——一个模型的画像横跨两个判官,别的模型没有,不可比。
     primary_rows = judge_view_rows(selected_score_rows, PRIMARY_JUDGE)
+    primary_blind = [
+        r for r in selected_score_rows if not judge_can_score(PRIMARY_JUDGE, r["benchmark_id"])
+    ]
     evidence_rows, p_rows, group_rows, untested_rows, incapable_rows = score_atomic_p(
-        primary_rows, judge_model=PRIMARY_JUDGE
+        primary_rows, judge_model=PRIMARY_JUDGE, blind_rows=primary_blind
     )
     # 纯文本口径：同一条链路再跑一遍，屏蔽由视觉定义的取分维度。两路输出各自成文件，
     # 现行口径的产物一个字节都不受影响。
     text_evidence, text_p, text_groups, _text_untested, _text_incapable = score_atomic_p(
-        primary_rows, skip_cell=requires_vision, judge_model=PRIMARY_JUDGE
+        primary_rows, skip_cell=requires_vision, judge_model=PRIMARY_JUDGE, blind_rows=primary_blind
     )
     # 每个判官一套完整结果。判官视图 = 它判过的格 + 全部规则判分格(判官无关,共用)。
     judge_views = build_judge_views(selected_score_rows)

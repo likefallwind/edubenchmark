@@ -34,6 +34,10 @@ RELEASE_MODELS = [
     # 一致，edubench 面板用的是论文口径的 deepseek-v3.2，那几格跨裁判不严格可比
     # （逐格裁判见 09_atomic_p_score_evidence.jsonl 的 judge_model 字段）。
     ("qwen-qwen3-5-4b", "Qwen3.5-4B"),
+    # 2026-08-31 加入：Qwen3.8-27B，自建 vLLM 部署，20 项里测到 18 项，视觉由
+    # mathvista 实测确认（0.861）。与 PANEL_MODEL_KEYS 保持一致——两处失同步过一次，
+    # 面板加了模型而这张表没加，报告就会静静少一列。
+    ("qwen-qwen3-8-27b", "Qwen3.8-27B"),
 ]
 
 P_DEFINITIONS = {

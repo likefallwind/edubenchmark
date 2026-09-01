@@ -1,7 +1,10 @@
 # L1 地板：全部瞎猜时的 P01–P20 分数
 
 > 由 `scripts/build_l1_floor_profile.py` 生成，不要手改。
-> 数据源：`data/benchmark_baselines_v1.json` 的 `l1` 块 + `reports/eval/_baseline/*/random/`，
+> **判官：`MiniMax-M3`**。`L3:random` 那类格是把乱码交给这个判官实测出来的，
+> 换判官这些格就得重跑；`simulated:*` 与 `analytic` 两类与判官无关。
+
+> 数据源：`data/benchmark_baselines_v1.json` 的 `l1` 块 + `reports/eval/_baseline/*/judge-minimax3/random/`，
 > 走 `build_atomic_ability_rebenchmark_artifacts.py` 的同一条聚合链路。
 
 ## 这张表是什么

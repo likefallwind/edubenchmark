@@ -40,9 +40,59 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import build_atomic_ability_rebenchmark_artifacts as agg  # noqa: E402
+from eval.judge_dirs import judge_dir_name  # noqa: E402
 
 BASELINE_PATH = ROOT / "data" / "benchmark_baselines_v1.json"
-PANEL_SCORES = ROOT / "reports" / "atomic_ability_rebenchmark" / "09_atomic_p_scores.jsonl"
+REBENCH = ROOT / "reports" / "atomic_ability_rebenchmark"
+PANEL_SCORES = REBENCH / "09_atomic_p_scores.jsonl"
+
+
+def judge_scored_benchmarks(judge: str) -> set[str]:
+    """该判官视图里，分数**真的出自判官**的 benchmark。
+
+    地板的判官必须跟分数的判官一致，但「一致」不等于「一律带判官」：
+    `tutorbench` 与 `eduguard_adversarial` 的取分行是 `rule_or_unknown`（前者走
+    otherbenchmark 汇总、后者由映射口径钉死），每个判官视图里都是同一份分——那它们
+    的地板也是判官无关的，不该因为换了判官就消失。只有真正由判官打出来的格，换判官
+    才必须换地板 run。
+    """
+    path = (
+        REBENCH / "09_atomic_p_score_evidence.jsonl"
+        if judge == agg.PRIMARY_JUDGE
+        else REBENCH / "14_judge_views" / f"09_atomic_p_score_evidence__{agg.model_slug(judge)}.jsonl"
+    )
+    out: set[str] = set()
+    if not path.exists():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        j = str(row.get("judge_model") or "")
+        if j and j != "rule_or_unknown":
+            out.add(row["benchmark_id"])
+    return out
+
+
+def l3_summary_path(name: str, judge: str, judge_scored: set[str]) -> Path | None:
+    """这个 benchmark 在这个判官视图下的乱码 run。取不到返回 None（= 没有随机地板）。"""
+    scoped = L3_DIR / name / judge_dir_name(judge) / "random" / "summary.json"
+    if scoped.exists():
+        return scoped
+    if name in judge_scored:
+        # 分数是这个判官打的，地板却只有别人判的那份——沿用就是拿两把尺子相减。
+        # 宁可没有地板：页面写「没有随机地板」，绝不 fallback 成 0，也绝不借别人的。
+        return None
+    # 判官无关的格（规则判分 / otherbenchmark 汇总）：全判官共用磁盘上那唯一一份。
+    found = sorted((L3_DIR / name).glob("judge-*/random/summary.json"))
+    return found[0] if len(found) == 1 else None
+
+
+def panel_scores_path(judge: str) -> Path:
+    """该判官视图下的面板 P 分，只用来算报告里的「地板占比」一列。"""
+    if judge == agg.PRIMARY_JUDGE:
+        return PANEL_SCORES
+    return REBENCH / "14_judge_views" / f"09_atomic_p_scores__{agg.model_slug(judge)}.jsonl"
 L3_DIR = ROOT / "reports" / "eval" / "_baseline"
 OUT = ROOT / "reports" / "atomic_ability_l1_floor"
 
@@ -91,7 +141,9 @@ def _l1_block(baselines: dict, name: str) -> dict[str, Any]:
     return {}
 
 
-def _synthetic_summary(baselines: dict, name: str, block: dict) -> dict[str, Any] | None:
+def _synthetic_summary(
+    baselines: dict, name: str, block: dict, judge: str, judge_scored: set[str]
+) -> dict[str, Any] | None:
     """A summary.json-shaped dict carrying the L1 draw's own metrics."""
     source = str(block.get("source") or "")
     if source.startswith("simulated:"):
@@ -105,8 +157,15 @@ def _synthetic_summary(baselines: dict, name: str, block: dict) -> dict[str, Any
             "extra_metrics": policy.get("extra_metrics_last_trial") or {},
         }
     if source == "L3:random":
-        path = L3_DIR / name / "random" / "summary.json"
-        if not path.exists():
+        # L3 地板是「把乱码交给**真实判官**打分」量出来的，所以它是判官的读数，不是
+        # 数据集属性（mrbench_tutor · Tutor_Tone 的 7.19，注释就是「judge 判乱码
+        # 71.9%『中性』」——那是 M3 的宽容度）。换判官必须换这份 run。
+        #
+        # 故意**不**回退到旧的无命名空间路径：回退等于把 M3 的地板悄悄端给别的判官，
+        # 就是拿两把尺子相减。取不到就返回 None，上面记进 problems，页面写「没有随机
+        # 地板」——地板缺失 ≠ 地板为 0。
+        path = l3_summary_path(name, judge, judge_scored)
+        if path is None:
             return None
         data = json.loads(path.read_text(encoding="utf-8"))
         data["model"] = FLOOR_MODEL
@@ -263,8 +322,14 @@ DEGENERATE_READERS = {
 }
 
 
-def floor_cells(baselines: dict) -> tuple[list[dict[str, Any]], list[str]]:
-    """One row per mapped cell, carrying its L1 score on the 0-10 scale."""
+def floor_cells(baselines: dict, judge: str | None = None) -> tuple[list[dict[str, Any]], list[str]]:
+    """One row per mapped cell, carrying its L1 score on the 0-10 scale.
+
+    `judge` 只影响 `L3:random` 那一类格（判官实测的地板）；`simulated:*` 抽样与
+    `analytic` 闭式解跟判官无关，两个判官下逐字节相同。
+    """
+    judge = judge or agg.PRIMARY_JUDGE
+    judge_scored = judge_scored_benchmarks(judge)
     rows: list[dict[str, Any]] = []
     problems: list[str] = []
     mapped: dict[str, list[dict[str, Any]]] = {}
@@ -280,7 +345,7 @@ def floor_cells(baselines: dict) -> tuple[list[dict[str, Any]], list[str]]:
             problems.append(f"{name}: L1 未定义（{block.get('derivation', '')}）")
             continue
 
-        summary = _synthetic_summary(baselines, name, block)
+        summary = _synthetic_summary(baselines, name, block, judge, judge_scored)
         produced: set[str] = set()
         if summary is not None:
             headline_value, headline_mean = _headline_pair(baselines, name, block, summary)
@@ -399,12 +464,13 @@ def _cell(
 # --------------------------------------------------------------------------
 
 
-def panel_ranges() -> dict[str, dict[str, Any]]:
+def panel_ranges(judge: str | None = None) -> dict[str, dict[str, Any]]:
     """Observed P score range across the published panel, for the 地板占比 column."""
     out: dict[str, dict[str, Any]] = {}
-    if not PANEL_SCORES.exists():
+    path = panel_scores_path(judge or agg.PRIMARY_JUDGE)
+    if not path.exists():
         return out
-    for line in PANEL_SCORES.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
@@ -425,16 +491,21 @@ def _fmt(value: Any, digits: int = 2) -> str:
 
 
 def build_markdown(
-    p_rows: list[dict[str, Any]], cells: list[dict[str, Any]], problems: list[str]
+    p_rows: list[dict[str, Any]], cells: list[dict[str, Any]], problems: list[str],
+    judge: str | None = None,
 ) -> str:
-    ranges = panel_ranges()
+    judge = judge or agg.PRIMARY_JUDGE
+    ranges = panel_ranges(judge)
     lines: list[str] = []
     add = lines.append
     add("# L1 地板：全部瞎猜时的 P01–P20 分数")
     add("")
     add("> 由 `scripts/build_l1_floor_profile.py` 生成，不要手改。")
+    add(f"> **判官：`{judge}`**。`L3:random` 那类格是把乱码交给这个判官实测出来的，")
+    add("> 换判官这些格就得重跑；`simulated:*` 与 `analytic` 两类与判官无关。")
+    add("")
     add("> 数据源：`data/benchmark_baselines_v1.json` 的 `l1` 块 + "
-        "`reports/eval/_baseline/*/random/`，")
+        f"`reports/eval/_baseline/*/{judge_dir_name(judge)}/random/`，")
     add("> 走 `build_atomic_ability_rebenchmark_artifacts.py` 的同一条聚合链路。")
     add("")
     add("## 这张表是什么")
@@ -562,11 +633,20 @@ def build_markdown(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", type=Path, default=OUT)
+    ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument(
+        "--judge",
+        default=agg.PRIMARY_JUDGE,
+        help=f"判官模型名（默认主判官 {agg.PRIMARY_JUDGE}）。只影响 L3:random 那类格。",
+    )
     args = ap.parse_args()
 
+    judge = args.judge
+    # 主判官仍写在老路径上：build_site_payload / validate_site_payload 直读它。
+    out = args.out or (OUT if judge == agg.PRIMARY_JUDGE else OUT / judge_dir_name(judge))
+
     baselines = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
-    cells, problems = floor_cells(baselines)
+    cells, problems = floor_cells(baselines, judge)
     if not cells:
         print("没有算出任何格子，检查基线 JSON", file=sys.stderr)
         return 1
@@ -576,16 +656,16 @@ def main() -> int:
     # models; the floor profile is only about the synthetic one.
     p_rows = [r for r in p_rows if r["model_key"] == FLOOR_MODEL]
 
-    args.out.mkdir(parents=True, exist_ok=True)
-    agg.dump_jsonl(args.out / "01_l1_floor_cells.jsonl", cells)
-    agg.dump_jsonl(args.out / "02_l1_floor_evidence.jsonl", [e for e in evidence_rows if e["model_key"] == FLOOR_MODEL])
-    agg.dump_jsonl(args.out / "03_l1_floor_p_scores.jsonl", p_rows)
-    (args.out / "04_l1_floor_report.md").write_text(
-        build_markdown(p_rows, cells, problems), encoding="utf-8"
+    out.mkdir(parents=True, exist_ok=True)
+    agg.dump_jsonl(out / "01_l1_floor_cells.jsonl", cells)
+    agg.dump_jsonl(out / "02_l1_floor_evidence.jsonl", [e for e in evidence_rows if e["model_key"] == FLOOR_MODEL])
+    agg.dump_jsonl(out / "03_l1_floor_p_scores.jsonl", p_rows)
+    (out / "04_l1_floor_report.md").write_text(
+        build_markdown(p_rows, cells, problems, judge), encoding="utf-8"
     )
 
-    print(f"格子 {len(cells)} 个，覆盖 {len({c['benchmark_id'] for c in cells})} 个 benchmark")
-    print(f"算出 {len(p_rows)} 个 P 的地板分 -> {args.out}")
+    print(f"判官 {judge}：格子 {len(cells)} 个，覆盖 {len({c['benchmark_id'] for c in cells})} 个 benchmark")
+    print(f"算出 {len(p_rows)} 个 P 的地板分 -> {out}")
     for problem in problems:
         print(f"  ! {problem}")
     return 0

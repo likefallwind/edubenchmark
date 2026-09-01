@@ -90,6 +90,7 @@ MODEL_DISPLAY = {
     # the API-routed models do not. Missing entries fall back to the raw key
     # silently, which is how these two shipped a slug as a display name.
     "qwen-qwen3-5-4b": "Qwen3.5-4B",
+    "qwen-qwen3-8-27b": "Qwen3.8-27B",
     "qwen-qwen3-8b": "Qwen3-8B",
     "qwen3-14b": "Qwen3-14B",
     "qwen3-5-122b-a10b": "Qwen3.5-122B-A10B",
@@ -213,16 +214,71 @@ def parse_profile(path: Path) -> dict[str, Any]:
     return {"title": title, "one_liner": one_liner, "sections": sections, "file": path.name}
 
 
-def build_payload() -> dict[str, Any]:
+def view_paths(judge: str | None) -> dict[str, Path]:
+    """判官视图的六个产物路径。`judge=None` = 主产物（= PRIMARY_JUDGE 的视图）。
+
+    判官不是"第二套口径"，是同一条链路换一把尺子量出来的第二组读数——所以这里只换
+    路径，下面的解析、聚合、呈现一个字都不改。
+    """
+    names = (
+        "09_atomic_p_scores",
+        "09_atomic_p_score_evidence",
+        "09_atomic_p_untested_cells",
+        "10_group_scores",
+        "09_atomic_p_scores_text_only",
+        "10_group_scores_text_only",
+    )
+    if judge is None:
+        return {n: REBENCH / f"{n}.jsonl" for n in names}
+    slug = agg.model_slug(judge)
+    return {n: REBENCH / "14_judge_views" / f"{n}__{slug}.jsonl" for n in names}
+
+
+def panel_coverage(
+    p_scores: list[dict[str, Any]],
+    text_p_scores: list[dict[str, Any]],
+    panel_keys: list[str],
+) -> dict[str, Any]:
+    """发布面板在这个判官下覆盖到哪些 P，以及谁比别人少了哪几项。
+
+    「少了哪几项」的参照系是**面板自己**：某个 P 只要面板里有人有分，没有的人就是短
+    了一项。用全体模型当参照会把部分覆盖模型的稀疏也算进来，那不是面板的问题。
+    """
+
+    def by_model(rows: list[dict[str, Any]]) -> dict[str, set[str]]:
+        out: dict[str, set[str]] = {key: set() for key in panel_keys}
+        for row in rows:
+            if row.get("score_10") is None or row["model_key"] not in out:
+                continue
+            out[row["model_key"]].add(row["p_code"])
+        return out
+
+    def block(rows: list[dict[str, Any]]) -> dict[str, Any]:
+        got = by_model(rows)
+        union: set[str] = set()
+        for codes in got.values():
+            union |= codes
+        missing = {k: sorted(union - v) for k, v in got.items() if union - v}
+        return {
+            "counts": {k: len(v) for k, v in sorted(got.items())},
+            "uniform": len({frozenset(v) for v in got.values()}) <= 1,
+            "missing": {k: missing[k] for k in sorted(missing)},
+        }
+
+    return {"main": block(p_scores), "text": block(text_p_scores)}
+
+
+def build_payload(judge: str | None = None) -> dict[str, Any]:
     doc_text = MAPPING_DOC.read_text(encoding="utf-8")
     model_json = json.loads(MAPPING_JSON.read_text(encoding="utf-8"))
-    p_scores = load_jsonl(REBENCH / "09_atomic_p_scores.jsonl")
-    evidence = load_jsonl(REBENCH / "09_atomic_p_score_evidence.jsonl")
-    untested = load_jsonl(REBENCH / "09_atomic_p_untested_cells.jsonl")
-    group_scores = load_jsonl(REBENCH / "10_group_scores.jsonl")
+    paths = view_paths(judge)
+    p_scores = load_jsonl(paths["09_atomic_p_scores"])
+    evidence = load_jsonl(paths["09_atomic_p_score_evidence"])
+    untested = load_jsonl(paths["09_atomic_p_untested_cells"])
+    group_scores = load_jsonl(paths["10_group_scores"])
     # 纯文本口径：同一条聚合链路屏蔽掉由视觉定义的取分维度后跑出来的第二套分。
-    text_p_scores = load_jsonl(REBENCH / "09_atomic_p_scores_text_only.jsonl")
-    text_group_scores = load_jsonl(REBENCH / "10_group_scores_text_only.jsonl")
+    text_p_scores = load_jsonl(paths["09_atomic_p_scores_text_only"])
+    text_group_scores = load_jsonl(paths["10_group_scores_text_only"])
     bench_map = load_jsonl(REBENCH / "02_benchmark_ability_mapping.jsonl")
     validity = load_jsonl(REBENCH / "13_mapping_validation_cells.jsonl")
 
@@ -353,8 +409,14 @@ def build_payload() -> dict[str, Any]:
     # --- models ----------------------------------------------------------
     # R26 起 09_atomic_p_scores.jsonl 也收录「未测过」的 P 行（score_10=None），
     # 它们不算覆盖，不能进 covered_p / p_count，否则覆盖率会把空白算成有数据。
+    # 「本判官判不了」要在过滤掉 score_10=None 之前收下来。它和「未测过」的差别是能不能
+    # 补：未测过再跑一次就有，判官判不了只能换判官。塌成一种，网站就会把 P04 在
+    # deepseek-v4-flash 下写成「未测过」——说错话。
+    judge_blind_p = {row["p_code"] for row in p_scores if row.get("coverage_status") == "judge_incapable"}
     p_scores = [row for row in p_scores if row.get("score_10") is not None]
     covered_p = sorted({row["p_code"] for row in p_scores})
+    # 判官判不了的 P 不算「没有合适 benchmark」——它有 benchmark，只是这把尺子读不了。
+    judge_blind_p -= set(covered_p)
     p_count = {}
     ev_count = {}
     for row in p_scores:
@@ -469,13 +531,27 @@ def build_payload() -> dict[str, Any]:
             "version": model_json.get("version", ""),
             "date": model_json.get("date", ""),
             "source_dir": str(REBENCH.relative_to(ROOT)),
+            "judge": judge or agg.PRIMARY_JUDGE,
+            "judge_slug": agg.model_slug(judge or agg.PRIMARY_JUDGE),
             "n_models": len(models),
             "n_abilities_total": len(abilities),
             "n_abilities_covered": len(covered_p),
             "n_benchmarks": len(benchmarks),
             "n_evidence": len(slim_evidence),
             "full_panel_size": sum(1 for m in models if m["full_panel"]),
-            "uncovered_p": [a["p_code"] for a in abilities if a["p_code"] not in covered_p],
+            # 「压根没有合适 benchmark」（P09/P20）。判官判不了的那些**不算**在内，
+            # 它们另有一个键——两种空白的措辞在页面上完全不同。
+            "uncovered_p": [
+                a["p_code"] for a in abilities
+                if a["p_code"] not in covered_p and a["p_code"] not in judge_blind_p
+            ],
+            "judge_incapable_p": sorted(judge_blind_p),
+            # 面板覆盖是否齐平。R27 的判官纯净化之后它不再自动成立：MiniMax-M3 视图下
+            # deepseek-v4-pro / doubao / glm-5.2 / minimax-m2.7 的 edubench 是别的判官
+            # 判的，进不了 M3 视图，P12 整项没有——于是同一张榜上 3 个模型平均 18 项、
+            # 4 个模型平均 17 项。**这不该被抹平，也不该被断言掉**：综合分确实不同底，
+            # 页面必须说出来，否则就是不声明地拿不同分母比大小。
+            "panel_coverage": panel_coverage(p_scores, text_p_scores, panel_keys),
             "n_zero_cells": sum(1 for r in slim_evidence if r["zero"]),
             "n_untested_cells": len(slim_untested),
             # 纯文本口径：同一条聚合链路，屏蔽由视觉定义的取分维度后的第二套分。

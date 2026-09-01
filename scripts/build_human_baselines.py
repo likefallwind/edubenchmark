@@ -935,8 +935,15 @@ def _paired_judge_gap(
     used and report the gap. If it is large, the benchmark's headline is partly
     measuring the judge's stylistic preferences, not teaching quality.
     """
-    item_list = ROOT / "reports" / "eval" / "_baseline" / benchmark / "expert" / "item_list.txt"
-    summary_path = ROOT / "reports" / "eval" / "_baseline" / benchmark / "expert" / "summary.json"
+    # 基线自 2026-08-31 起按判官分命名空间；expert 只有 MiniMax-M3 判过一份，所以
+    # glob 出唯一一份即可。多于一份说明有第二个判官也复评了人类回复——那时"人类天花板"
+    # 是哪把尺子量的就必须由调用方指定，不能默默挑一个。
+    expert_dirs = sorted((ROOT / "reports" / "eval" / "_baseline" / benchmark).glob("judge-*/expert"))
+    expert_dir = expert_dirs[0] if len(expert_dirs) == 1 else (
+        ROOT / "reports" / "eval" / "_baseline" / benchmark / "expert"
+    )
+    item_list = expert_dir / "item_list.txt"
+    summary_path = expert_dir / "summary.json"
     if not (item_list.exists() and summary_path.exists() and raw_path.exists()):
         return None
     summary = json.loads(summary_path.read_text(encoding="utf-8"))

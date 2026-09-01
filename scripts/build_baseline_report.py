@@ -165,7 +165,18 @@ def l3_results() -> dict[str, dict[str, Any]]:
     for bench_dir in sorted(BASELINE_DIR.iterdir()):
         if not bench_dir.is_dir():
             continue
-        for var_dir in sorted(bench_dir.iterdir()):
+        # 2026-08-31 起基线也按判官分命名空间（`judge-<slug>/<variant>/`）——地板是
+        # 判官的读数，不带判官的路径下第二个判官只能覆盖第一个。旧的两级布局仍然读得
+        # 出来，未迁移的 checkout 不至于突然一个基线都找不到。
+        var_dirs = []
+        for child in sorted(bench_dir.iterdir()):
+            if not child.is_dir() or child.name.startswith("_"):
+                continue
+            if is_judge_dir(child.name):
+                var_dirs += [v for v in sorted(child.iterdir()) if v.is_dir() and not v.name.startswith("_")]
+            else:
+                var_dirs.append(child)
+        for var_dir in var_dirs:
             # `_stale_*` holds runs superseded by a judge/config fix; they are
             # kept on disk for comparison but must never enter the tables.
             if not var_dir.is_dir() or var_dir.name.startswith("_"):

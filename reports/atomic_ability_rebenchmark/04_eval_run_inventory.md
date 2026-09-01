@@ -1,8 +1,8 @@
 # Eval Run Inventory
 
-Total summary files scanned: 527
-Included candidates: 382
-Excluded from main: 145
+Total summary files scanned: 531
+Included candidates: 384
+Excluded from main: 147
 
 | Benchmark | Include candidates | Excluded |
 |---|---:|---:|
@@ -14,7 +14,7 @@ Excluded from main: 145
 | `bea2025_judge` | 9 | 0 |
 | `bea2025_tutor` | 14 | 6 |
 | `ceval` | 9 | 2 |
-| `edubench` | 23 | 7 |
+| `edubench` | 24 | 7 |
 | `eduequity` | 12 | 1 |
 | `eduguard_adversarial` | 7 | 21 |
 | `eduguard_sata` | 10 | 1 |
@@ -48,6 +48,7 @@ Excluded from main: 145
 | `p08_abstention` | 7 | 0 |
 | `p08_calibration` | 7 | 0 |
 | `pedagogy_benchmark` | 13 | 1 |
+| `safe_child_llm` | 1 | 2 |
 | `sas_bench` | 10 | 0 |
 | `tutorbench` | 8 | 2 |
 

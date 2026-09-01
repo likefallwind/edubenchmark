@@ -28,10 +28,16 @@ Mechanics: writes a synthetic ``predictions.jsonl``, then hands off to
 ``extract_answer`` — and for these benchmarks the judge call lives inside
 ``extract_answer``, so the judging path is exactly the production one.
 
-Output is isolated under ``reports/eval/_baseline/<benchmark>/<variant>/`` so it
-can never collide with, or be mistaken for, a real model run.  (CLAUDE.md: a
+Output is isolated under ``reports/eval/_baseline/<benchmark>/judge-<judge>/<variant>/``
+so it can never collide with, or be mistaken for, a real model run.  (CLAUDE.md: a
 ``--model`` matching an existing directory reuses its predictions as cache and
 overwrites the scored artifacts.)
+
+The judge segment is not decoration.  A floor measured this way *is a reading of
+the judge*, not a property of the dataset -- mrbench_tutor's Tutor_Tone floor of
+7.19 is "MiniMax-M3 calls 71.9% of gibberish neutral".  Without the segment a
+second judge's baseline could only overwrite the first one's, and reusing the
+first one's alongside the second judge's scores is two rulers in one subtraction.
 
 Costs API quota.  Defaults to 40 items; check the judge model matches the run
 you intend to compare against before scaling up.
@@ -50,7 +56,7 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from eval.judge_dirs import is_judge_dir  # noqa: E402
+from eval.judge_dirs import is_judge_dir, judge_dir_name  # noqa: E402
 from eval.benchmarks import get_adapter  # noqa: E402
 from eval.predictions_io import write_predictions  # noqa: E402
 
@@ -241,6 +247,7 @@ def run_variant(
     extract_concurrency: int,
     compare_run: str | None,
     dry_run: bool,
+    judge: str | None = None,
 ) -> int:
     adapter = get_adapter(benchmark)
 
@@ -263,7 +270,12 @@ def run_variant(
             print(f"  SKIP {benchmark}/{variant}: 抽样到的题目都没有 {variant} 回复")
             return 0
 
-    out_dir = BASE_OUT / benchmark / variant
+    resolved_judge = adapter.resolved_judge_model(extractor_model)
+    # 输出路径带判官段（`judge-<slug>/`），跟 2026-08-28 起正式 run 的约定一致。
+    # 不带的话第二个判官的基线只能覆盖掉第一个的——而地板正是判官的读数：
+    # mrbench_tutor · Tutor_Tone 的 7.19 是「MiniMax-M3 判乱码 71.9% 中性」，
+    # 换个判官那个数就是别的。
+    out_dir = BASE_OUT / benchmark / judge_dir_name(resolved_judge or (judge or "unknown")) / variant
     out_dir.mkdir(parents=True, exist_ok=True)
 
     make = VARIANTS[variant]
@@ -284,11 +296,12 @@ def run_variant(
     item_list = out_dir / "item_list.txt"
     item_list.write_text("\n".join(r["item_id"] for r in rows) + "\n", encoding="utf-8")
 
-    expected_judge = _judge_of_existing_run(benchmark, compare_run)
-    resolved_judge = adapter.resolved_judge_model(extractor_model)
+    # `--judge` 给了就以它为准：这个脚本本来只会跟「该 benchmark 的主流判官」对齐，
+    # 而那正好挡住「故意换个判官再量一次地板」这件事。没给才退回投票行为。
+    expected_judge = judge or _judge_of_existing_run(benchmark, compare_run)
     if expected_judge and resolved_judge and expected_judge != resolved_judge:
         print(
-            f"  !! judge 不一致：正式 run 用 {expected_judge}，本次会用 {resolved_judge}。"
+            f"  !! judge 不一致：要的是 {expected_judge}，本次会用 {resolved_judge}。"
             f"两边不可比——先把对应的 *_JUDGE_MODEL 环境变量设成 {expected_judge} 再跑。"
         )
         return 1
@@ -359,6 +372,12 @@ def main() -> int:
         default=None,
         help="正式 run 的模型目录名，用来核对 judge 是否一致（默认取该 benchmark 下任一已完成 run）",
     )
+    ap.add_argument(
+        "--judge",
+        default=None,
+        help="判官模型名。给了就以它为准（既定输出命名空间、又当作期望值）；"
+             "不给则沿用「该 benchmark 主流 run 的判官」这一投票行为。",
+    )
     ap.add_argument("--dry-run", action="store_true", help="只打印计划与样例回复，不写文件、不调 API")
     args = ap.parse_args()
 
@@ -375,6 +394,7 @@ def main() -> int:
                 args.extract_concurrency,
                 args.compare_run,
                 args.dry_run,
+                args.judge,
             )
             if rc:
                 failures += 1
