@@ -95,6 +95,13 @@ reports/mini_selection_v2/
 reports/frontier_selection_v1/
 ```
 
+Actual model results use a separate, explicitly labelled result tree:
+
+```text
+reports/eval_suites/mini_v2/<benchmark>/[judge-<judge>/]<model>/
+reports/eval_suites/frontier_v1/<benchmark>/[judge-<judge>/]<model>/
+```
+
 Rebuild and validate without API calls:
 
 ```bash
@@ -103,6 +110,20 @@ python scripts/validate_mini_selection_v2.py
 
 python scripts/build_frontier_selection_v1.py
 python scripts/validate_frontier_selection_v1.py
+```
+
+Run either suite through the normal entry point:
+
+```bash
+SUITE=mini_v2 MODEL=<model> ./scripts/run_eval.sh <benchmarks...>
+SUITE=frontier_v1 MODEL=<model> ./scripts/run_eval.sh <benchmarks...>
+```
+
+Materialize both views from existing completed Full results without API calls:
+
+```bash
+python scripts/materialize_eval_suites.py --model <model> \
+  --suites mini_v2 frontier_v1
 ```
 
 The builders read existing full per-item evidence under `reports/eval/` and do
@@ -118,6 +139,12 @@ regenerate manifests, item lists, and reports; do not hand-edit generated files.
   prompt/rubric version with every run.
 - Validate a frontier revision on held-out or newly released models before
   claiming future-facing separation.
-- Until a suite is wired into a canonical run profile, its manifest and item
-  lists define selection membership; `reports/eval/**/summary.json` remains the
-  completion truth for actual model runs.
+- Full completion automatically materializes available mini/frontier views.
+  Running a suite first records reusable identity-tagged item evidence, so a
+  later suite or Full run calls only missing compatible items.
+- Cross-directory reuse requires matching item/request, model/provider,
+  generation/input, extractor, and judge/rubric identities. Legacy rows without
+  complete hashes are never trusted automatically across directories.
+- `summary.json` in each Full or suite result directory remains that run/view's
+  completion truth; an incomplete materialization is explicitly marked
+  `run_status: incomplete` with its missing item IDs.

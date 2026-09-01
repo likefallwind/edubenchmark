@@ -7,6 +7,7 @@
 | 路径 | 内容 | 状态 |
 |---|---|---|
 | `eval/` | 各 benchmark 的预测、抽取、逐题判分、汇总和 HTML 报告 | 当前评测证据 |
+| `eval_suites/` | mini_v2 / frontier_v1 的运行结果与 Full 派生视图 | 当前套件证据 |
 | `atomic_ability_rebenchmark/` | 当前 P01-P20 能力画像聚合产物 | 当前生成产物 |
 | `atomic_ability_l1_floor/` | 通过同一聚合管线计算的 L1 floor | 当前生成产物 |
 | `atomic_ability_rebenchmark_*_snapshot_*` | R 系列或 mapping 版本变更前的完整快照 | 历史证据，只读保留 |
@@ -33,6 +34,10 @@ reports/eval/<benchmark>/_<variant>/...
 一次标准运行通常包含 `predictions*.jsonl`、`extractions.jsonl`、
 `scored.jsonl`、`summary.json` 和 `report.html`。其中 `summary.json` 是完成状态和
 汇总指标的事实来源；预测文件、日志或正在运行的进程都不能单独证明评测已经完成。
+
+`reports/eval_suites/<suite>/` 镜像相同的 benchmark / judge / model 结构。
+兼容的新式逐题证据可在 Full、mini_v2、frontier_v1 之间复用；套件名不会改变
+一道题的回答，但 suite 分数必须保持独立标签。
 
 ## 编辑规则
 

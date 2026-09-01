@@ -29,8 +29,17 @@ from pathlib import Path
 from eval.benchmarks import available_benchmarks, get_adapter
 from eval.minimax_client import DEFAULT_MODEL
 from eval.judge_dirs import judge_dir_name
-from eval.providers import PROVIDERS, build_client, model_slug
+from eval.providers import PROVIDERS, build_client, model_slug, resolve_model_params, resolve_provider
 from eval.runner import run
+from eval.suites import (
+    SELECTION_SUITES,
+    SUITES,
+    federated_run_dirs,
+    fixed_full_entry,
+    load_manifest,
+    run_dir,
+    suite_item_list,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -109,6 +118,12 @@ def _write_run_start_summary(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--benchmark", required=True, help=f"one of: {', '.join(available_benchmarks())}")
+    parser.add_argument(
+        "--suite",
+        choices=SUITES,
+        default="full",
+        help="measurement suite (default full); mini/frontier resolve their frozen item lists",
+    )
     parser.add_argument("--limit", type=int, default=30, help="number of items (default 30; 0/negative = all)")
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument(
@@ -207,6 +222,27 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="print constructed messages, no API calls")
     args = parser.parse_args()
 
+    if args.suite != "full" and args.item_list is not None:
+        parser.error("--suite mini_v2/frontier_v1 is mutually exclusive with --item-list")
+    if args.suite != "full" and args.out_dir is not None:
+        parser.error("--suite owns its result directory and is mutually exclusive with --out-dir")
+
+    suite_manifest = None
+    suite_fixed_full = None
+    if args.suite in SELECTION_SUITES:
+        suite_manifest = load_manifest(args.suite)
+        suite_path = suite_item_list(args.suite, args.benchmark)
+        suite_fixed_full = fixed_full_entry(args.suite, args.benchmark)
+        if suite_path is not None:
+            if "--limit" in sys.argv or "--offset" in sys.argv:
+                parser.error("--suite mini_v2/frontier_v1 is mutually exclusive with --limit/--offset")
+            args.item_list = suite_path
+        elif suite_fixed_full:
+            args.limit = 0
+            args.offset = 0
+        else:
+            parser.error(f"benchmark {args.benchmark!r} is not a member of suite {args.suite!r}")
+
     adapter = get_adapter(args.benchmark)
     if hasattr(adapter, "language"):
         adapter.language = args.language
@@ -224,6 +260,8 @@ def main() -> None:
         item_ids = [line.strip() for line in raw.splitlines() if line.strip()]
         if not item_ids:
             parser.error(f"--item-list {args.item_list} is empty")
+        if len(item_ids) != len(set(item_ids)):
+            parser.error(f"--item-list {args.item_list} contains duplicate item_id values")
         try:
             list_path = str(args.item_list.resolve().relative_to(ROOT))
         except ValueError:
@@ -233,6 +271,16 @@ def main() -> None:
             "item_list_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(),
             "item_list_count": len(item_ids),
         }
+        if args.suite != "full":
+            item_list_info.update(
+                {
+                    "suite": args.suite,
+                    "suite_version": suite_manifest.get("version"),
+                    "suite_manifest": str(
+                        (ROOT / "data" / ("mini_selection_v2" if args.suite == "mini_v2" else "frontier_selection_v1") / "selection_manifest.json").relative_to(ROOT)
+                    ),
+                }
+            )
     limit = None if args.limit is not None and args.limit <= 0 else args.limit
     extractor_model = args.extractor_model
     judge_model = adapter.resolved_judge_model(extractor_model)
@@ -242,7 +290,15 @@ def main() -> None:
     # knowing which judge was default when the run was made. Rule-scored
     # benchmarks have no judge and keep the plain <benchmark>/<model>/ shape.
     base_dir = ROOT / "reports" / "eval" / args.benchmark
-    if args.out_dir is not None:
+    if args.suite in SELECTION_SUITES and not suite_fixed_full:
+        out_dir = run_dir(
+            args.suite,
+            args.benchmark,
+            model_slug(args.model),
+            judge_model,
+            variant="noimage" if args.no_images else None,
+        )
+    elif args.out_dir is not None:
         out_dir = args.out_dir
     elif judge_model:
         out_dir = base_dir / judge_dir_name(judge_model) / model_slug(args.model)
@@ -276,7 +332,9 @@ def main() -> None:
     # default path, and refuse an explicit --out-dir that points back into
     # reports/eval/ without the marker.
     if args.no_images:
-        if args.out_dir is None:
+        if args.suite in SELECTION_SUITES and not suite_fixed_full:
+            pass
+        elif args.out_dir is None:
             out_dir = base_dir / "_noimage" / out_dir.relative_to(base_dir)
         else:
             resolved = out_dir.resolve()
@@ -305,6 +363,10 @@ def main() -> None:
             },
             no_images=args.no_images,
         )
+        run_metadata["suite"] = "full" if suite_fixed_full else args.suite
+        if suite_fixed_full:
+            run_metadata["requested_suite"] = args.suite
+            run_metadata["fixed_full_anchor"] = True
 
     # Predictions and extraction use separate clients: the prediction model may
     # live on the gateway while the extractor (MiniMax-M2.7) stays on MiniMax.
@@ -322,6 +384,52 @@ def main() -> None:
             temperature=args.temperature,
         )
         extractor_client = build_client(extractor_model, timeout=args.timeout)
+
+    provider_spec = PROVIDERS[args.provider] if args.provider else resolve_provider(args.model)
+    effective_provider = provider_spec.name
+    effective_base_url = args.base_url or provider_spec.resolved_base_url()
+    effective_chat_path = args.chat_path or provider_spec.chat_path
+    effective_params = resolve_model_params(args.model, effective_provider)
+    if args.temperature is not None:
+        effective_params["temperature"] = args.temperature
+    prediction_identity_context = {
+        "schema_version": 1,
+        "benchmark": args.benchmark,
+        "model": args.model,
+        "provider": effective_provider,
+        "base_url": effective_base_url,
+        "chat_path": effective_chat_path,
+        "generation_params": effective_params,
+        "max_tokens": args.max_tokens,
+        "input_variant": "no_images" if args.no_images else "standard",
+    }
+    extractor_provider_spec = resolve_provider(extractor_model)
+    extraction_identity_context = {
+        "schema_version": 1,
+        "benchmark": args.benchmark,
+        "extractor_model": extractor_model,
+        "extractor_provider": extractor_provider_spec.name,
+        "extractor_base_url": extractor_provider_spec.resolved_base_url(),
+        "extractor_chat_path": extractor_provider_spec.chat_path,
+        "extractor_params": resolve_model_params(extractor_model, extractor_provider_spec.name),
+        "judge_model": judge_model,
+        "extraction_cache_version": getattr(adapter, "extraction_cache_version", None),
+        "judge_provenance": adapter.judge_prompt_provenance(),
+    }
+    run_metadata.update(
+        {
+            "prediction_identity_schema": 1,
+            "prediction_provider": effective_provider,
+            "prediction_base_url": effective_base_url,
+            "prediction_chat_path": effective_chat_path,
+            "extraction_identity_schema": 1,
+        }
+    )
+    reuse_dirs = federated_run_dirs(
+        args.benchmark,
+        model_slug(args.model),
+        variant="noimage" if args.no_images else None,
+    )
 
     summary = run(
         adapter=adapter,
@@ -350,6 +458,9 @@ def main() -> None:
         item_list_info=item_list_info,
         run_metadata=run_metadata,
         no_images=args.no_images,
+        prediction_identity_context=prediction_identity_context,
+        extraction_identity_context=extraction_identity_context,
+        reuse_dirs=reuse_dirs,
     )
 
     if summary:
@@ -357,6 +468,27 @@ def main() -> None:
         print(f"\nbenchmark={summary['benchmark']} model={summary['model']}")
         print(f"scored={summary['scored']}/{summary['total_items']} accuracy={'n/a' if acc is None else f'{acc:.3f}'}")
         print(f"report={out_dir / 'report.html'}")
+        if (
+            (args.suite == "full" or suite_fixed_full)
+            and not args.skip_extract
+            and not args.no_images
+        ):
+            from materialize_eval_suites import materialize_benchmark
+
+            for selection_suite in SELECTION_SUITES:
+                if (
+                    suite_item_list(selection_suite, args.benchmark) is None
+                    and not fixed_full_entry(selection_suite, args.benchmark)
+                ):
+                    continue
+                try:
+                    view = materialize_benchmark(out_dir, selection_suite, args.benchmark)
+                    print(
+                        f"materialized {selection_suite}: "
+                        f"{view.get('run_status')} {view.get('scored')}/{view.get('total_items')}"
+                    )
+                except Exception as exc:  # noqa: BLE001 - Full result remains valid
+                    print(f"warning: could not materialize {selection_suite}: {exc}", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ dedupe via ``_index_by_item`` where the last row per ``item_id`` wins.
 from __future__ import annotations
 
 import json
+import hashlib
 import time
 from datetime import datetime, timezone
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
@@ -31,6 +32,41 @@ from .predictions_io import append_prediction, read_predictions, write_predictio
 
 def _index_by_item(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(r["item_id"]): r for r in rows if r.get("item_id") is not None}
+
+
+def _sha256_json(value: Any) -> str:
+    payload = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def prediction_fingerprints(
+    adapter: BenchmarkAdapter,
+    item: dict[str, Any],
+    identity_context: dict[str, Any],
+    no_images: bool = False,
+) -> tuple[str, str, list[dict[str, Any]]]:
+    """Fingerprint the exact rendered request and its measurement identity."""
+    messages = adapter.build_messages(item)
+    if no_images:
+        messages = strip_image_parts(messages)
+    item_fingerprint = _sha256_json({"item_id": str(item["item_id"]), "messages": messages})
+    identity = _sha256_json({**identity_context, "item_fingerprint": item_fingerprint})
+    return item_fingerprint, identity, messages
+
+
+def extraction_identity(
+    prediction: dict[str, Any],
+    identity_context: dict[str, Any],
+) -> str:
+    return _sha256_json(
+        {
+            **identity_context,
+            "prediction_identity_sha256": prediction.get("prediction_identity_sha256"),
+            "response_sha256": hashlib.sha256(
+                str(prediction.get("response") or "").encode("utf-8")
+            ).hexdigest(),
+        }
+    )
 
 
 def _reason(error: str | None, limit: int = 300) -> str:
@@ -155,10 +191,11 @@ def _predict_one(
     retry_sleep: float,
     max_tokens: int | None,
     no_images: bool = False,
+    identity_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    messages = adapter.build_messages(item)
-    if no_images:
-        messages = strip_image_parts(messages)
+    item_fingerprint, identity, messages = prediction_fingerprints(
+        adapter, item, identity_context or {}, no_images
+    )
     started = time.time()
     client.reset_usage_window()
     response = ""
@@ -186,6 +223,8 @@ def _predict_one(
         "latency_seconds": round(time.time() - started, 3),
         "attempts": attempts,
         "usage": client.read_usage_window(),
+        "item_fingerprint": item_fingerprint,
+        "prediction_identity_sha256": identity,
     }
     # Preserve the model's chain-of-thought when the provider returns it. On the
     # streaming path (harness default) this includes gpt-5.5 via LIGHTER as well
@@ -216,28 +255,63 @@ def run_predictions(
     rate_limit_sleep: float = 1800.0,
     rate_limit_max_retries: int = 3,
     no_images: bool = False,
-) -> dict[str, dict[str, Any]]:
+    identity_context: dict[str, Any] | None = None,
+    reuse_dirs: list[Path] | None = None,
+    allow_new: bool = True,
+) -> tuple[dict[str, dict[str, Any]], dict[str, int]]:
     # Treat errored / empty predictions as not-done so reruns retry only those.
+    identity_context = identity_context or {}
+    expected = {
+        str(item["item_id"]): prediction_fingerprints(adapter, item, identity_context, no_images)[:2]
+        for item in items
+    }
+
+    def valid(row: dict[str, Any], *, cross_dir: bool) -> bool:
+        item_id = str(row.get("item_id"))
+        if not str(row.get("response") or "").strip() or row.get("error") or row.get("empty_response"):
+            return False
+        stored = row.get("prediction_identity_sha256")
+        if cross_dir and not stored:
+            return False
+        return not stored or stored == expected.get(item_id, (None, None))[1]
+
     existing = {
         k: v
         for k, v in _index_by_item(read_predictions(out_path)).items()
-        if str(v.get("response") or "").strip() and not v.get("error") and not v.get("empty_response")
+        if k in expected and valid(v, cross_dir=False)
     }
+    reused = 0
+    target_dir = out_path.parent.resolve()
+    for source_dir in reuse_dirs or []:
+        source_dir = source_dir.resolve()
+        if source_dir == target_dir:
+            continue
+        for item_id, row in _index_by_item(read_predictions(source_dir)).items():
+            if item_id in existing or item_id not in expected or not valid(row, cross_dir=True):
+                continue
+            existing[item_id] = {**row, "reused_from": str(source_dir)}
+            reused += 1
     pending = [it for it in items if str(it["item_id"]) not in existing]
+    missing_without_calls = len(pending) if not allow_new else 0
+    if not allow_new:
+        pending = []
     rows = list(existing.values())
     print(f"predictions: {len(existing)} cached, {len(pending)} to run")
 
     guard = RateLimitGuard(rate_limit_threshold, rate_limit_sleep, rate_limit_max_retries)
     concurrency = max(1, concurrency)
     completed = 0
+    api_calls = 0
     if concurrency == 1:
         idx = 0
         while idx < len(pending):
             item = pending[idx]
             idx += 1
             row = _predict_one(
-                adapter, item, client, model, timeout, retries, retry_sleep, max_tokens, no_images
+                adapter, item, client, model, timeout, retries, retry_sleep, max_tokens, no_images,
+                identity_context,
             )
+            api_calls += int(row.get("attempts") or 1)
             if _is_rate_limit_error(row.get("error")):
                 if guard.on_rate_limit(str(row["item_id"])):
                     pending.append(item)
@@ -262,7 +336,7 @@ def run_predictions(
                     item = pending[idx]
                     future = executor.submit(
                         _predict_one, adapter, item, client, model, timeout, retries, retry_sleep,
-                        max_tokens, no_images,
+                        max_tokens, no_images, identity_context,
                     )
                     in_flight[future] = item
                     idx += 1
@@ -272,6 +346,7 @@ def run_predictions(
                 for future in done:
                     item = in_flight.pop(future)
                     row = future.result()
+                    api_calls += int(row.get("attempts") or 1)
                     if _is_rate_limit_error(row.get("error")):
                         if guard.on_rate_limit(str(row["item_id"])):
                             pending.append(item)
@@ -289,16 +364,23 @@ def run_predictions(
     # one already fits GitHub's 100 MB limit; write_predictions evens them out
     # and consolidates any shards left by a prior finalized run.
     write_predictions(out_path, rows)
-    return _index_by_item(rows)
+    return _index_by_item(rows), {
+        "cached_in_target": len(existing) - reused,
+        "reused_cross_suite": reused,
+        "new_prediction_items": completed,
+        "new_prediction_calls": api_calls,
+        "missing_prediction_items": missing_without_calls,
+    }
 
 
 def _extract_one(
     adapter: BenchmarkAdapter,
     item: dict[str, Any],
-    response: str,
+    prediction: dict[str, Any],
     client: MiniMaxClient,
     extractor_model: str,
     judge_model: str | None,
+    identity_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     item_id = str(item["item_id"])
     client.reset_usage_window()
@@ -310,8 +392,13 @@ def _extract_one(
     cache_version = getattr(adapter, "extraction_cache_version", None)
     if cache_version:
         row["extraction_cache_version"] = str(cache_version)
+    row["extraction_identity_sha256"] = extraction_identity(
+        prediction=prediction, identity_context=identity_context or {}
+    )
     try:
-        extracted = adapter.extract_answer(item, response, client, extractor_model)
+        extracted = adapter.extract_answer(
+            item, str(prediction.get("response") or ""), client, extractor_model
+        )
         row.update({"extracted": extracted, "usage": client.read_usage_window()})
     except Exception as exc:  # noqa: BLE001
         row.update({"extracted": "", "error": str(exc)})
@@ -330,21 +417,50 @@ def run_extractions(
     rate_limit_threshold: int = 10,
     rate_limit_sleep: float = 1800.0,
     rate_limit_max_retries: int = 3,
-) -> dict[str, dict[str, Any]]:
+    identity_context: dict[str, Any] | None = None,
+    reuse_dirs: list[Path] | None = None,
+) -> tuple[dict[str, dict[str, Any]], dict[str, int]]:
     # Treat errored / empty extractions as not-done so reruns retry only those.
     cache_version = getattr(adapter, "extraction_cache_version", None)
+    identity_context = identity_context or {}
+    expected = {
+        item_id: extraction_identity(prediction, identity_context)
+        for item_id, prediction in predictions.items()
+    }
+
+    def valid(row: dict[str, Any], *, cross_dir: bool) -> bool:
+        item_id = str(row.get("item_id"))
+        if not str(row.get("extracted") or "").strip() or row.get("error"):
+            return False
+        if str(row.get("extractor_model") or "") != str(extractor_model):
+            return False
+        if row.get("judge_model") not in (None, "") and str(row.get("judge_model")) != str(judge_model):
+            return False
+        if cache_version and str(row.get("extraction_cache_version") or "") != str(cache_version):
+            return False
+        stored = row.get("extraction_identity_sha256")
+        if cross_dir and not stored:
+            return False
+        return not stored or stored == expected.get(item_id)
+
     existing = {
         k: v
         for k, v in _index_by_item(read_jsonl(out_path)).items()
-        if str(v.get("extracted") or "").strip() and not v.get("error")
-        and str(v.get("extractor_model") or "") == str(extractor_model)
-        # Legacy rows did not have a top-level judge_model. They remain safe to
-        # resume because judge changes now select a different output directory.
-        and (v.get("judge_model") in (None, "") or str(v.get("judge_model")) == str(judge_model))
-        and (not cache_version or str(v.get("extraction_cache_version") or "") == str(cache_version))
+        if k in expected and valid(v, cross_dir=False)
     }
+    reused = 0
+    target_dir = out_path.parent.resolve()
+    for source_dir in reuse_dirs or []:
+        source_dir = source_dir.resolve()
+        if source_dir == target_dir:
+            continue
+        for item_id, row in _index_by_item(read_jsonl(source_dir / "extractions.jsonl")).items():
+            if item_id in existing or item_id not in expected or not valid(row, cross_dir=True):
+                continue
+            existing[item_id] = {**row, "reused_from": str(source_dir)}
+            reused += 1
     rows = list(existing.values())
-    pending: list[tuple[dict[str, Any], str]] = []
+    pending: list[tuple[dict[str, Any], dict[str, Any]]] = []
     for item in items:
         item_id = str(item["item_id"])
         if item_id in existing:
@@ -352,49 +468,56 @@ def run_extractions(
         pred = predictions.get(item_id)
         if not pred or not str(pred.get("response") or "").strip():
             continue
-        pending.append((item, str(pred["response"])))
+        pending.append((item, pred))
     total = len(pending)
     print(f"extractions: {len(existing)} cached, {total} to run")
 
     guard = RateLimitGuard(rate_limit_threshold, rate_limit_sleep, rate_limit_max_retries)
     concurrency = max(1, concurrency)
+    completed = 0
+    api_calls = 0
     if concurrency == 1:
         n = 0
         while n < len(pending):
-            item, response = pending[n]
+            item, prediction = pending[n]
             n += 1
-            row = _extract_one(adapter, item, response, client, extractor_model, judge_model)
+            row = _extract_one(
+                adapter, item, prediction, client, extractor_model, judge_model, identity_context
+            )
+            api_calls += 1
             if _is_rate_limit_error(row.get("error")):
                 if guard.on_rate_limit(str(row["item_id"])):
-                    pending.append((item, response))
+                    pending.append((item, prediction))
                     print(f"extract item={row['item_id']} rate-limited -> re-queued{_reason(row.get('error'))}")
                     continue
             else:
                 guard.reset_streak()
             rows.append(row)
             append_jsonl(out_path, row)
+            completed += 1
             detail = f"ERROR{_reason(row.get('error'))}" if row.get("error") else f"-> {str(row.get('extracted'))[:40]!r}"
             print(f"extract {n}/{total} item={row['item_id']} {detail}")
     else:
-        completed = 0
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            in_flight: dict[Any, tuple[dict[str, Any], str]] = {}
+            in_flight: dict[Any, tuple[dict[str, Any], dict[str, Any]]] = {}
             idx = 0
             while idx < len(pending) or in_flight:
                 while idx < len(pending) and len(in_flight) < concurrency:
-                    item, response = pending[idx]
+                    item, prediction = pending[idx]
                     future = executor.submit(
-                        _extract_one, adapter, item, response, client, extractor_model, judge_model
+                        _extract_one, adapter, item, prediction, client, extractor_model,
+                        judge_model, identity_context,
                     )
-                    in_flight[future] = (item, response)
+                    in_flight[future] = (item, prediction)
                     idx += 1
                 done, _ = wait(in_flight, return_when=FIRST_COMPLETED)
                 for future in done:
-                    item, response = in_flight.pop(future)
+                    item, prediction = in_flight.pop(future)
                     row = future.result()
+                    api_calls += 1
                     if _is_rate_limit_error(row.get("error")):
                         if guard.on_rate_limit(str(row["item_id"])):
-                            pending.append((item, response))
+                            pending.append((item, prediction))
                             print(f"extract item={row['item_id']} rate-limited -> re-queued{_reason(row.get('error'))}")
                             continue
                     else:
@@ -404,7 +527,13 @@ def run_extractions(
                     completed += 1
                     detail = f"ERROR{_reason(row.get('error'))}" if row.get("error") else f"-> {str(row.get('extracted'))[:40]!r}"
                     print(f"extract {completed}/{total} item={row['item_id']} {detail}")
-    return _index_by_item(rows)
+    write_jsonl(out_path, rows)
+    return _index_by_item(rows), {
+        "cached_in_target": len(existing) - reused,
+        "reused_cross_suite": reused,
+        "new_extraction_items": completed,
+        "new_extraction_calls": api_calls,
+    }
 
 
 def run_scoring(
@@ -494,6 +623,9 @@ def run(
     item_list_info: dict[str, Any] | None = None,
     run_metadata: dict[str, Any] | None = None,
     no_images: bool = False,
+    prediction_identity_context: dict[str, Any] | None = None,
+    extraction_identity_context: dict[str, Any] | None = None,
+    reuse_dirs: list[Path] | None = None,
 ) -> dict[str, Any]:
     if item_ids is not None:
         # Fixed-list mode (--item-list): load everything, keep exactly the
@@ -510,6 +642,9 @@ def run(
             )
     else:
         items = adapter.load_items(limit=limit, offset=offset)
+    loaded_ids = [str(item["item_id"]) for item in items]
+    if len(loaded_ids) != len(set(loaded_ids)):
+        raise SystemExit(f"{adapter.name}: loaded duplicate item_id values")
     print(f"loaded {len(items)} items for benchmark={adapter.name}")
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -533,27 +668,47 @@ def run(
     extractions_path = out_dir / "extractions.jsonl"
 
     if score_only:
-        predictions = _index_by_item(read_predictions(predictions_path))
-    else:
-        predictions = run_predictions(
+        predictions, prediction_stats = run_predictions(
             adapter, items, client, predictions_path, model,
             concurrency, sleep_seconds, timeout, retries, retry_sleep, max_tokens,
             rate_limit_threshold=rate_limit_threshold,
             rate_limit_sleep=rate_limit_sleep,
             rate_limit_max_retries=rate_limit_max_retries,
             no_images=no_images,
+            identity_context=prediction_identity_context,
+            reuse_dirs=reuse_dirs,
+            allow_new=False,
+        )
+    else:
+        predictions, prediction_stats = run_predictions(
+            adapter, items, client, predictions_path, model,
+            concurrency, sleep_seconds, timeout, retries, retry_sleep, max_tokens,
+            rate_limit_threshold=rate_limit_threshold,
+            rate_limit_sleep=rate_limit_sleep,
+            rate_limit_max_retries=rate_limit_max_retries,
+            no_images=no_images,
+            identity_context=prediction_identity_context,
+            reuse_dirs=reuse_dirs,
         )
 
     if skip_extract:
         extractions: dict[str, dict[str, Any]] = {}
+        extraction_stats = {
+            "cached_in_target": 0,
+            "reused_cross_suite": 0,
+            "new_extraction_calls": 0,
+            "new_extraction_items": 0,
+        }
     else:
-        extractions = run_extractions(
+        extractions, extraction_stats = run_extractions(
             adapter, items, predictions, extractor_client, extractions_path, extractor_model,
             judge_model=judge_model,
             concurrency=extract_concurrency,
             rate_limit_threshold=rate_limit_threshold,
             rate_limit_sleep=rate_limit_sleep,
             rate_limit_max_retries=rate_limit_max_retries,
+            identity_context=extraction_identity_context,
+            reuse_dirs=reuse_dirs,
         )
 
     scored = run_scoring(adapter, items, predictions, extractions)
@@ -566,6 +721,10 @@ def run(
     if item_list_info:
         summary.update(item_list_info)
     summary["token_usage"] = aggregate_token_usage(predictions, extractions)
+    summary["execution_stats"] = {
+        "predictions": prediction_stats,
+        "extractions": extraction_stats,
+    }
     extra_metrics = adapter.extra_summary(scored)
     if extra_metrics:
         summary["extra_metrics"] = extra_metrics

@@ -65,6 +65,7 @@ The word `eval` appears in three intentional locations:
 ```text
 scripts/eval/   evaluation framework implementation
 reports/eval/   scored evidence and reports
+reports/eval_suites/   mini_v2/frontier_v1 materialized result views
 eval/           local launch and run-control artifacts
 ```
 
@@ -83,6 +84,9 @@ reports/eval/<benchmark>/_<variant>/...
 
 The path identifies the measurement. Do not mix different judges, input
 variants, item lists, or incompatible generation settings in one run directory.
+Suite views mirror the rule/judge namespace below
+`reports/eval_suites/<suite>/<benchmark>/`; compatible per-item evidence may be
+reused across these roots only when its recorded identity hashes match.
 
 ## Naming
 

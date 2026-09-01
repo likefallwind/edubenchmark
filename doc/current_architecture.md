@@ -78,6 +78,12 @@ remains the source of truth for a run. The selection contracts, score boundaries
 coverage policy, and rebuild commands are documented in
 [`selection_suites.md`](selection_suites.md).
 
+Actual suite runs and Full-derived views live under
+`reports/eval_suites/<suite>/<benchmark>/`. New per-item evidence carries request
+and extraction identity hashes, so compatible Full/mini/frontier rows are reused
+regardless of run order. Historical rows without those hashes may be sliced from
+their own completed Full run, but are not trusted as cross-run cache entries.
+
 ### 5. Atomic-ability reporting
 
 The current reporting pipeline joins eligible evaluation summaries to the

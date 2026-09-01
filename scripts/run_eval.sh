@@ -150,6 +150,15 @@ BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 MINI="${MINI:-}"
 MINI_DIR="data/mini_selection_v1"
 MINI_OUT_ROOT="reports/eval_mini_v1"
+SUITE="${SUITE:-full}"
+case "$SUITE" in
+  full|mini_v2|frontier_v1) ;;
+  *) echo "[run_eval] SUITE 只能是 full / mini_v2 / frontier_v1,收到:$SUITE" >&2; exit 2 ;;
+esac
+if [[ -n "$MINI" && "$SUITE" != "full" ]]; then
+  echo "[run_eval] 旧 MINI=1 与 SUITE=$SUITE 互斥" >&2
+  exit 2
+fi
 
 # 复刻 scripts/eval/providers.py 的 model_slug(含 MiniMax-M3 别名)
 mini_model_slug() {
@@ -190,6 +199,17 @@ run_eval_py() {
     fi
     args+=(--out-dir "$out")
     [[ -n "${DRY_RUN:-}" ]] && args+=(--dry-run)
+  elif [[ "$SUITE" != "full" ]]; then
+    local filtered=() i=0
+    while (( i < ${#args[@]} )); do
+      case "${args[$i]}" in
+        --item-list|--limit|--offset|--out-dir) i=$((i+2)); continue ;;
+      esac
+      filtered+=("${args[$i]}"); i=$((i+1))
+    done
+    args=(${filtered[@]+"${filtered[@]}"})
+    args+=(--suite "$SUITE")
+    [[ -n "${DRY_RUN:-}" ]] && args+=(--dry-run)
   fi
   # 阶段开关:在唯一出口注入,覆盖全部 benchmark,不必逐个分支改。
   # olympiadbench 那个分支自己就传了 --skip-extract / --score-only(它本来就是两段式,
@@ -212,6 +232,8 @@ run_eval_py() {
 
 if [[ -n "$MINI" ]]; then
   echo "[run_eval] MINI=1 精选题集模式:题单 $MINI_DIR/ ,输出 $MINI_OUT_ROOT/(不写 reports/eval/)"
+elif [[ "$SUITE" != "full" ]]; then
+  echo "[run_eval] SUITE=$SUITE 题单模式:输出 reports/eval_suites/$SUITE/"
 fi
 echo "[run_eval] model=$MODEL extractor_model=$EXTRACTOR_MODEL judge_model=$JUDGE_MODEL benchmarks=$BENCHMARKS"
 
@@ -380,6 +402,10 @@ for b in $BENCHMARKS; do
         python scripts/run_eduequity_judge.py --models "$MODEL" --judge-model "$JUDGE_MODEL" \
           --output-root "$EQ_ROOT" \
           --concurrency "$EXTRACT_CONCURRENCY" ${EQ_ARGS[@]+"${EQ_ARGS[@]}"}
+        if [[ "$LIMIT" == "0" ]]; then
+          python scripts/materialize_eval_suites.py --model "$MODEL" \
+            --suites mini_v2 frontier_v1 --benchmarks eduequity
+        fi
       fi
       ;;
     longtutor_evidence|longtutor_teaching)

@@ -54,6 +54,19 @@ python scripts/build_frontier_selection_v1.py
 python scripts/validate_frontier_selection_v1.py
 ```
 
+Run a selection suite or materialize it from completed Full evidence:
+
+```bash
+SUITE=mini_v2 MODEL=<model> ./scripts/run_eval.sh <benchmarks...>
+SUITE=frontier_v1 MODEL=<model> ./scripts/run_eval.sh <benchmarks...>
+python scripts/materialize_eval_suites.py --model <model> --suites mini_v2 frontier_v1
+```
+
+Suite results live under `reports/eval_suites/<suite>/`. Cross-directory cache
+reuse is allowed only for rows carrying matching prediction/extraction identity
+hashes; legacy rows without them may be materialized from their own Full run but
+must not be trusted as a cache for another run.
+
 The two suites have different contracts; see `doc/selection_suites.md`. Treat
 their item lists and reports as generated artifacts and update them through the
 builders rather than editing generated outputs by hand.

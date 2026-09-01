@@ -112,6 +112,10 @@ python scripts/eval_benchmark.py --benchmark mmlu_pro --model MiniMax-M3 --concu
 
 各阶段**可断点续跑**:`predictions.jsonl` / `extractions.jsonl` 按 `item_id` 去重,已成功的重跑时跳过,报错/空响应的会重试。中途崩溃不丢已完成结果。
 
+运行固定选择套件时设置 `SUITE=mini_v2` 或 `SUITE=frontier_v1`。新式逐题
+证据按测量身份在 Full 与两套 selection 之间复用；Full 完成后会自动生成对应
+suite 视图。已有 Full 结果也可用 `scripts/materialize_eval_suites.py` 离线导出。
+
 ### 4. 输出位置
 
 规则判分和 LLM 裁判判分使用不同路径：
@@ -122,6 +126,9 @@ reports/eval/<benchmark>/<model-slug>/
 
 # LLM 裁判判分
 reports/eval/<benchmark>/judge-<judge-slug>/<model-slug>/
+
+# 精选/前沿套件结果
+reports/eval_suites/<suite>/<benchmark>/[judge-<judge-slug>/]<model-slug>/
 ```
 
 每个标准运行目录通常包含：

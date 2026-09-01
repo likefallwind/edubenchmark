@@ -349,6 +349,19 @@ def write_report(
     homepage = getattr(adapter, "homepage", "") if adapter else ""
     description = getattr(adapter, "description", "") if adapter else ""
 
+    suite_html = ""
+    suite = summary.get("suite")
+    if suite in {"mini_v2", "frontier_v1"}:
+        meaning = (
+            "代表性快速筛查；不是 Full 绝对分的替代。"
+            if suite == "mini_v2"
+            else "错题与模型分歧挑战集；分数不代表原始题库总体分布。"
+        )
+        suite_html = (
+            f"<section class='warn'><h2>测量套件：{esc(suite)}</h2>"
+            f"<p>{esc(meaning)}</p></section>"
+        )
+
     # --- degraded-input warning (--no-images) ---
     variant_html = ""
     if summary.get("input_variant") == "no_images":
@@ -442,6 +455,7 @@ def write_report(
       <div class="kpi"><div class="v">{esc(fourth_text)}</div><div class="k">{esc(fourth_label)}</div></div>
     </div>
   </header>
+  {suite_html}
   {variant_html}
   {intro_html}
   {sample_html}

@@ -26,6 +26,12 @@ import html
 import json
 import math
 import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from materialize_eval_suites import materialize_benchmark
 
 DIMS = [
     ("correctness_and_completeness", "解题步骤的正确性和完整性", "text"),
@@ -278,6 +284,9 @@ def main():
           f"fail={summary['render_failures']} "
           f"overall(judged)={summary['overall_mean_judged_only']} "
           f"overall(all)={summary['overall_mean_all_items']}")
+    for suite in ("mini_v2", "frontier_v1"):
+        view = materialize_benchmark(Path(out), suite, "eduillustrate")
+        print(f"  materialized {suite}: {view.get('run_status')}")
 
 
 if __name__ == "__main__":
