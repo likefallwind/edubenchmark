@@ -3,7 +3,7 @@
 This document describes the current data flow. It is intentionally shorter than
 benchmark profiles and historical decision records.
 
-## Four layers
+## Five layers
 
 ### 1. Specifications and evidence
 
@@ -63,7 +63,22 @@ A normal run may contain:
 `summary.json` is the aggregate and completion source of truth. A prediction
 file, log, process, or directory name alone does not establish completion.
 
-### 4. Atomic-ability reporting
+### 4. Versioned selection suites
+
+The full benchmark pool feeds two complementary fixed selections. Mini v2 is
+the compact representative suite; Frontier v1 is the difficulty- and
+disagreement-oriented suite for tracking strong models. Their machine-readable
+manifests and fixed item lists live under `data/mini_selection_v2/` and
+`data/frontier_selection_v1/`; generated audits live under the corresponding
+directories in `reports/`.
+
+Selection builders read canonical benchmark data and completed evidence under
+`reports/eval/`, but never redefine evaluation completion: `summary.json`
+remains the source of truth for a run. The selection contracts, score boundaries,
+coverage policy, and rebuild commands are documented in
+[`selection_suites.md`](selection_suites.md).
+
+### 5. Atomic-ability reporting
 
 The current reporting pipeline joins eligible evaluation summaries to the
 P01-P20 measurement model, normalizes benchmark metrics, selects compatible run

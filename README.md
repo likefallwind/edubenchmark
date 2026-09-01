@@ -245,12 +245,15 @@ scripts/
 | **调研证据库**(`exhaustive_2026-05-13`) | `python3 scripts/build_exhaustive_2026_05_13.py` | `benchmarks=78 metrics=165 results=1616` |
 | **RE_BENCHMARK_V1**(五大类 C1–C5 + 试点包) | `python scripts/build_re_benchmark_v1.py` | 见 `data/re_benchmark_v1/README.md` |
 | **当前 P01–P20 能力画像** | 见 [`doc/current_architecture.md`](./doc/current_architecture.md) 的五步管线 | `reports/atomic_ability_rebenchmark/` + mapping validation |
+| **mini_v2 代表性精选集**(39 benchmark / 4,950 题) | `python scripts/build_mini_selection_v2.py` | `python scripts/validate_mini_selection_v2.py` |
+| **frontier_v1 前沿挑战集**(39 benchmark / 4,919 题) | `python scripts/build_frontier_selection_v1.py` | `python scripts/validate_frontier_selection_v1.py` |
 
 当前阅读入口：
 
 - [`doc/atomic_ability_mapping_v6_2026-07-19.md`](./doc/atomic_ability_mapping_v6_2026-07-19.md) —— 当前 P01–P20 可读映射
 - [`data/mapping_measurement_model_v6.json`](./data/mapping_measurement_model_v6.json) —— 当前能力映射机器事实源
 - [`reports/atomic_ability_rebenchmark/README.md`](./reports/atomic_ability_rebenchmark/README.md) —— 当前能力画像产物说明
+- [`doc/selection_suites.md`](./doc/selection_suites.md) —— full、mini_v2 与 frontier_v1 的用途、覆盖、构建和解读边界
 - [`data/benchmark_v1_2026-05-18/`](./data/benchmark_v1_2026-05-18/) 与 [`ai_edu_benchmark_v1_questions.json`](./ai_edu_benchmark_v1_questions.json) —— 历史 Benchmark v1 资产和题目索引
 - [`data/re_benchmark_v1/README.md`](./data/re_benchmark_v1/README.md) —— RE_BENCHMARK_V1 资产入口
 - [`reports/2026-05-13/`](./reports/2026-05-13/) —— 统一框架、benchmark catalog、调研报告

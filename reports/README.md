@@ -12,6 +12,8 @@
 | `atomic_ability_rebenchmark_*_snapshot_*` | R 系列或 mapping 版本变更前的完整快照 | 历史证据，只读保留 |
 | `re_benchmark_v1/` | RE_BENCHMARK_V1 报告、试点和小实验 | 版本化工作流 |
 | `mini_selection_v1/` | 精选题集选择和验证产物 | 版本化工作流 |
+| `mini_selection_v2/` | 39 个 benchmark 的代表性快速筛查集选择与离线验证 | 当前实验工作流 |
+| `frontier_selection_v1/` | 错题、模型分歧与未来能力边界组成的前沿挑战集 | 当前实验工作流 |
 | `2026-05-12/`、`2026-05-13/` | 早期 benchmark 调研和证据库报告 | 历史报告 |
 | `edubenchassistant/` | EduBench Assistant 生成的场景报告 | 按请求生成 |
 
@@ -41,3 +43,5 @@ reports/eval/<benchmark>/_<variant>/...
 
 机器可读的规范和映射保存在 `../data/`；外部下载的数据集保存在
 `../sources/datasets/`。顶层目录规则见 `../doc/repository_layout.md`。
+full、mini_v2 和 frontier_v1 的用途、重建命令与分数边界见
+`../doc/selection_suites.md`。

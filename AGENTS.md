@@ -40,6 +40,24 @@ Run MiniMax only after setting `MINIMAX_API_KEY`; keep concurrency at 2:
 python scripts/run_re_benchmark_v1.py --run-minimax-smoke --minimax-selection all --minimax-concurrency 2 --minimax-retries 2
 ```
 
+Regenerate and validate the compact representative suite:
+
+```bash
+python scripts/build_mini_selection_v2.py
+python scripts/validate_mini_selection_v2.py
+```
+
+Regenerate and validate the frontier-model challenge suite:
+
+```bash
+python scripts/build_frontier_selection_v1.py
+python scripts/validate_frontier_selection_v1.py
+```
+
+The two suites have different contracts; see `doc/selection_suites.md`. Treat
+their item lists and reports as generated artifacts and update them through the
+builders rather than editing generated outputs by hand.
+
 ## Coding Style & Naming Conventions
 
 Use Python 3, four-space indentation, and standard-library-first implementations. Prefer JSONL for row-oriented benchmark data and Markdown/HTML for reports. Keep dated snapshot names such as `benchmark_v1_2026-05-18` or `*_2026_05_18.py`. Report proxy data, missing data, gated access, and protocol-only items explicitly. For MCQ prompts, reconstruct options from source data when possible and ask for an option letter; track answer correctness separately from format compliance.
