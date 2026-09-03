@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>deepseek-v4-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">40.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">40</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 100,
+  &quot;confidence_unparsed_rate&quot;: 0.0,
+  &quot;accuracy&quot;: 0.4,
+  &quot;confidence_mean&quot;: 90.43,
+  &quot;confidence_std&quot;: 16.83,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 1,
+    &quot;10-19&quot;: 1,
+    &quot;20-29&quot;: 1,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 1,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 1,
+    &quot;70-79&quot;: 1,
+    &quot;80-89&quot;: 16,
+    &quot;90-99&quot;: 78
+  },
+  &quot;cwr_at_90&quot;: 0.6026,
+  &quot;n_high_confidence&quot;: 78,
+  &quot;ece_10bin&quot;: 0.5043,
+  &quot;brier&quot;: 0.5035,
+  &quot;auroc&quot;: 0.4612,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.4222,
+    &quot;coverage_80&quot;: 0.4,
+    &quot;coverage_70&quot;: 0.3857
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;accuracy&quot;: 0.2353,
+      &quot;n_with_confidence&quot;: 17,
+      &quot;cwr_at_90&quot;: 0.7857,
+      &quot;auroc&quot;: 0.3654
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;accuracy&quot;: 0.4872,
+      &quot;n_with_confidence&quot;: 39,
+      &quot;cwr_at_90&quot;: 0.4194,
+      &quot;auroc&quot;: 0.6211
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.5,
+      &quot;n_with_confidence&quot;: 28,
+      &quot;cwr_at_90&quot;: 0.5882,
+      &quot;auroc&quot;: 0.4158
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;accuracy&quot;: 0.1875,
+      &quot;n_with_confidence&quot;: 16,
+      &quot;cwr_at_90&quot;: 0.8125,
+      &quot;auroc&quot;: 0.7308
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 4.293
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>4</td><td>0.235</td><td><div class='bar'><i style='width:24%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>19</td><td>0.487</td><td><div class='bar'><i style='width:49%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>14</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>3</td><td>0.188</td><td><div class='bar'><i style='width:19%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>51</td><td>17</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>zh</td><td>49</td><td>23</td><td>0.469</td><td><div class='bar'><i style='width:47%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The given expression is \( x = \frac{n^2 + 2\sqrt{n}(n+4) + 16}{n + 4\sqrt{n} + 4} \). Let \( t = \sqrt{n} \), so \( n = t^2 \). The expression becomes:
+\[ x = \frac{t^4 + 2t^3 + 8t + 16}{t^2 + 4t + 4} \]
+Factor the numerator by dividing by \( (t+2)^2 \):
+\[ t^4 + 2t^3 + 8t + 16 = (t+2)^2(t^2 - 2t + 4) \]
+Thus,
+\[ x = t^2 - 2t + 4 = n - 2\sqrt{n} + 4 \]
+For \( n \in [36, 72] \), \( \sqrt{n} \in [6, \sqrt{72}] \). The function \( f(n) = n - 2\sqrt{n} + 4 \) is increasing for \( n \ge 36 \).
+- At \( n = 36 \): \( x = 36 - 12 + 4 = 28 \)
+- At \( n = 72 \): \( x = 72 - 2\sqrt{72} + 4 = 76 - 12\sqrt{2} \approx 59.03 \)
+
+So \( x \in [28, 76 - 12\sqrt{2}] \approx [28, 59.03] \).
+Checking the options:
+- (A) \(20 &lt; x &lt; 54\): fails for \(x &gt; 54\).
+- (B) \(23 &lt; x &lt; 58\): fails for \(x &gt; 58\).
+- (C) \(25 &lt; x &lt; 64\): all possible \(x\) satisfy this.
+- (D) \(28 &lt; x &lt; 60\): fails at \(x = 28\) (strict inequality).
+- (E) None of these: false because (C) is correct.
+
+The answer is (C)
+
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The number of codes available using \(n\) letters, where codes are either a single letter or an unordered pair of distinct letters, is:
+
+\[
+n + \binom{n}{2} = n + \frac{n(n-1)}{2} = \frac{n(n+1)}{2}
+\]
+
+We need this to be at least 10 to cover all 10 types of books:
+
+\[
+\frac{n(n+1)}{2} \ge 10 \implies n(n+1) \ge 20
+\]
+
+Check values:
+- For \(n = 3\): \(3 \times 4 = 12\), \(\frac{12}{2} = 6 &lt; 10\)
+- For \(n = 4\): \(4 \times 5 = 20\), \(\frac{20}{2} = 10 \ge 10\)
+
+Thus, the smallest number of letters needed is 4.
+
+The answer is B
+
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>清明时节（4月初），北方冷空气势力减弱但仍有南下可能，南方暖湿气流开始增强，两者在长江中下游地区交汇，势力相当时常形成准静止锋，带来持续性阴雨；若冷空气稍强，则形成冷锋，也会造成降水。暖锋虽也可能带来降水，但此时并非主要影响系统，高压控制下则为晴朗天气，与“雨纷纷”不符。因此，正确的天气系统组合是准静止锋或冷锋。
+
+答案是A  
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-mathqa-116</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：若曲线 $y=x^{-\frac{1}{2}}$ 在点  $\left( a, a^{-\frac{1}{2}}\right)$ 处的切线与两个坐标围成的三角形 的面积为 18 , 则 $a=$ ($\qquad$)\\
+
+选项：(A)64 (B)32 (C)16 (D)8
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>首先，求曲线 \(y = x^{-\frac{1}{2}}\) 的导数：
+\[
+y&#x27; = -\frac{1}{2}x^{-\frac{3}{2}}
+\]
+在点 \((a, a^{-\frac{1}{2}})\) 处的切线斜率为 \(m = -\frac{1}{2}a^{-\frac{3}{2}}\)。
+
+切线方程为：
+\[
+y - a^{-\frac{1}{2}} = -\frac{1}{2}a^{-\frac{3}{2}}(x - a)
+\]
+求 \(x\) 截距（令 \(y = 0\)）：
+\[
+- a^{-\frac{1}{2}} = -\frac{1}{2}a^{-\frac{3}{2}}(x - a) \implies 2a = x - a \implies x = 3a
+\]
+求 \(y\) 截距（令 \(x = 0\)）：
+\[
+y - a^{-\frac{1}{2}} = -\frac{1}{2}a^{-\frac{3}{2}}(-a) \implies y = a^{-\frac{1}{2}} + \frac{1}{2}a^{-\frac{1}{2}} = \frac{3}{2}a^{-\frac{1}{2}}
+\]
+三角形面积为：
+\[
+S = \frac{1}{2} \times |x\text{截距}| \times |y\text{截距}| = \frac{1}{2} \times 3a \times \frac{3}{2}a^{-\frac{1}{2}} = \frac{9}{4}a^{\frac{1}{2}}
+\]
+令 \(S = 18\)：
+\[
+\frac{9}{4}\sqrt{a} = 18 \implies \sqrt{a} = 8 \implies a = 64
+\]
+答案是A
+
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-155</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：在下列两个核反应方程中 $X + \, ^{14}_{7}\mathrm{N} \rightarrow Y + \, ^{17}_{8}\mathrm{O}$，$Y + \, ^{7}_{3}\mathrm{Li} \rightarrow 2X$，X 和 Y 代表两种不同的原子核，以 Z 和 A 分别表示 X 的电荷数和质量数，则（ ）
+选项：(A)$Z = 1, \, A = 1$ (B) (C) (D)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ABG&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>ABG</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>根据核反应中的电荷数（Z）和质量数（A）守恒，我们可以列出方程。
+
+设 X 的电荷数为 \(Z_X\)，质量数为 \(A_X\)；Y 的电荷数为 \(Z_Y\)，质量数为 \(A_Y\)。
+
+第一个反应：\(X + ^{14}_{7}\mathrm{N} \rightarrow Y + ^{17}_{8}\mathrm{O}\)
+质量数守恒：\(A_X + 14 = A_Y + 17 \Rightarrow A_X - A_Y = 3\)  (1)
+电荷数守恒：\(Z_X + 7 = Z_Y + 8 \Rightarrow Z_X - Z_Y = 1\)   (2)
+
+第二个反应：\(Y + ^{7}_{3}\mathrm{Li} \rightarrow 2X\)
+质量数守恒：\(A_Y + 7 = 2A_X\)  (3)
+电荷数守恒：\(Z_Y + 3 = 2Z_X\)  (4)
+
+联立方程求解：
+由(3)得 \(A_Y = 2A_X - 7\)，代入(1)：
+\(A_X - (2A_X - 7) = 3 \Rightarrow -A_X + 7 = 3 \Rightarrow A_X = 4\)
+代入(1)得 \(A_Y = 1\)。
+
+由(4)得 \(Z_Y = 2Z_X - 3\)，代入(2)：
+\(Z_X - (2Z_X - 3) = 1 \Rightarrow -Z_X + 3 = 1 \Rightarrow Z_X = 2\)
+代入(2)得 \(Z_Y = 1\)。
+
+因此，X 的电荷数 \(Z = 2\)，质量数 \(A = 4\)（即α粒子）；Y 的电荷数 \(Z = 1\)，质量数 \(A = 1\)（即质子）。选项 (A) 给出的是 Y 的数据，并非 X。根据常见题目设置，正确选项应为 \(Z=2, A=4\)，通常对应选项 (B)。
+
+答案是B
+
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-99</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：有研究发现, 某神经细胞传递信号时, 离子从细胞膜一侧流到另一侧形成跨膜电流, 若将该细胞膜视为 $1 \times 10^{-8} \mathrm{~F}$ 的电容器, 在 $2 \mathrm{~ms}$ 内细胞膜两侧的电势差从 $-70 \mathrm{mV}$ 变为 $30 \mathrm{mV}$, 则该过程中跨膜电流的平均 值为 
+选项：(A)$1.5 \times 10^{-7} \mathrm{~A}$ (B)$2 \times 10^{-7} \mathrm{~A}$ (C)$3.5 \times 10^{-7} \mathrm{~A}$ (D)$5 \times 10^{-7} \mathrm{~A}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ACDEF&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>ACDEF</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>跨膜电流的平均值可以通过电容器的电荷变化量与时间的比值求得。已知电容 \(C = 1 \times 10^{-8} \, \text{F}\)，时间 \(\Delta t = 2 \, \text{ms} = 2 \times 10^{-3} \, \text{s}\)，电势差从 \(-70 \, \text{mV}\) 变为 \(30 \, \text{mV}\)，变化量 \(\Delta V = 30 - (-70) = 100 \, \text{mV} = 0.1 \, \text{V}\)。  
+电荷变化量 \(\Delta Q = C \cdot \Delta V = 1 \times 10^{-8} \times 0.1 = 1 \times 10^{-9} \, \text{C}\)。  
+平均电流 \(I = \frac{\Delta Q}{\Delta t} = \frac{1 \times 10^{-9}}{2 \times 10^{-3}} = 5 \times 10^{-7} \, \text{A}\)。  
+因此选择(D)。
+
+答案是D
+置信度: 100</pre></details></div></section>
+</main>
+</body>
+</html>

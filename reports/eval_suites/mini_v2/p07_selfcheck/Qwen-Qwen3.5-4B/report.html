@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">60.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-216</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Think about the different ways that people use the wind. You can use it to fly a kite or to sail a boat. Wind is one of our cleanest and richest power sources（来源）, as well as one of the oldest. Evidence shows that windmills（风车）began to be used in ancient Iran back in the seventh century BC. They were first introduced to Europe during the 1100s, when armies returned from the Middle East with knowledge of using wind power.For many centuries, people used windmills to grind（磨碎）wheat into flour or pump water from deep underground when electricity was discovered in the late 1800s, people living in remote areas began to use them to produce electricity. This allowed them to have electric lights and radio. However, by the 1940s when electricity was available to people in almost all areas of the United States, windmills were rarely used.During the 1970s, people started becoming concerned about the pollution that is created when coal and gas are burned to produce electricity. People also realized that the supply of coal and gas would not last forever. Then, wind was rediscovered, though it means higher coasts. Today, there is a global movement to supply more and more of our electricity through the use of wind.
+Question: 63．What would the author probably discuss in the paragraph that follows?
+Answer Choices: (A)The advantages of wind power. (B)The design of wind power plants. (C)The worldwide movement to save energy. (D)The global trend towards producing power from wind.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.6,
+  &quot;r2_accuracy&quot;: 0.6,
+  &quot;net_gain&quot;: 0.0,
+  &quot;change_rate&quot;: 0.03,
+  &quot;n_r1_wrong&quot;: 40,
+  &quot;n_fixed_wrong_to_right&quot;: 1,
+  &quot;fix_rate&quot;: 0.025,
+  &quot;n_r1_right&quot;: 60,
+  &quot;n_broken_right_to_wrong&quot;: 1,
+  &quot;break_rate&quot;: 0.0167,
+  &quot;score_10&quot;: 5.042,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 11,
+      &quot;r2_correct&quot;: 11,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;r1_correct&quot;: 18,
+      &quot;r2_correct&quot;: 17,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 18,
+      &quot;r2_correct&quot;: 18,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 13,
+      &quot;r2_correct&quot;: 14,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>11</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>17</td><td>0.472</td><td><div class='bar'><i style='width:47%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>18</td><td>0.643</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>14</td><td>0.778</td><td><div class='bar'><i style='width:78%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>37</td><td>0.685</td><td><div class='bar'><i style='width:69%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>23</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;1.  **分析题目要求**：\n    题目引用了李商隐的诗句，并给出了关于其中物质（蚕丝、蜡）的化学性质描述。题目要求选出**说法错误**的一项。\n\n2.  **逐步验证选项**：\n\n    *   **选项 (A)：蚕丝的主要成分是蛋白质**\n        *   **分析**：蚕丝是从桑蚕（或其他丝虫）的吐丝口器中分泌而来的，其主要成分确实是**蛋白质**（主要是由两条主要的丝蛋白纤维蛋白丝和丝胶蛋白组成）。\n        *   **结论**：该说法**正确**。\n\n    *   **选项 (B)：蚕丝属于天热高分子材料**\n        *   **分析**：这里“天热”明显是“天然”的笔误。在化学常识中，蚕丝是生物大分子物质，属于**天然有机高分子材料**。如果排除笔误，从化学分类角度看，蚕丝（蛋白质）被归类为天然高分子，这一属性是正确的。\n        *   **结论**：该说法**正确**（基于对题意的合理推断）。\n\n    *   **选项 (C)：“蜡炬成灰”过程中发生了氧化反应**\n        *   **分析**：“蜡炬成灰”描述的是蜡烛燃烧直至燃尽的现象。燃烧是可燃物与氧气发生的一种剧烈的发光、放热的化学反应。从化学本质上讲，燃烧属于**氧化反应**。\n        *   **结论**：该说法**正确**。\n\n    *   **选项 (D)：古代的蜡是高级脂肪酸酯，属于高分子聚合物**\n        *   **分析**：\n            1.  **成分**：古代常见的蠟（如烛蜡、蜂蜡）主要成分确实是对应的脂肪酸与高级醇形成的酯类，有时也与油脂有关，这部分描述没错。\n            2.  **分类**：关键在于“属于高分子聚合物”。在高中化学及一般化学分类中，高分子聚合物（包括天然和合成）要求相对分子质量达到 10000 以上。而脂肪酸酯（及其对应的油、脂、蜡）属于**小分子有机物**（通常相对分子质量在几百到一千左右）。虽然它们分子很大，但结构上没有像蛋白质、纤维素、淀粉那样的“聚合”结构（即由单体通过共价键重复连接而成的长链），因此不被称为高分子聚合物。\n        *   **结论**：将“蜡”归类为“高分子聚合物”是**错误**的。\n\n3.  **综合判断**：\n    题目要求选出**说法错误**的选项。经过逐一验证，选项 A、B、C 均正确，只有选项 D 的结论错误。\n\n4.  **最终答案**：\n    答案是 D。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1.  **分析选项 (A)：“蚕丝的主要成分是蛋白质”**
+    *   蚕丝是由蚕分泌的液丝腺生产的，其主要成分是纤维蛋白（Fibroin），属于蛋白质。
+    *   该说法正确。
+
+2.  **分析选项 (B)：“蚕丝属于天然的有机高分子材料”**（注：选项中原文为“天热高分子材料”，结合语境应为笔误“天然高分子材料”）
+    *   蚕丝的主要成分是蛋白质，蛋白质是相对分子质量很大的有机高分子化合物，且来源于天然生物。
+    *   因此，蚕丝属于天然高分子材料。
+    *   该说法正确。
+
+3.  **分析选项 (C)：“‘蜡炬成灰’过程中发生了氧化反应”**
+    *   “蜡炬成灰”描述的是蜡烛燃烧的过程。燃烧是可燃物与氧气发生的一种剧烈的发光放热反应，本质上是氧化反应。
+    *   该说法正确。
+
+4.  **分析选项 (D)：“古代的蜡是高级脂肪酸酯，属于高分子聚合物”**
+    *   古代的蜡（如蜂蜡或蜡烛蜡）主要成分是高级脂肪酸的醇酯类化合物（例如蜂蜡中主要为棕榈酸和肉豆蔻酸的酯）。
+    *   虽然这些分子的碳链较长，但在化学分类上，它们属于小分子有机化合物（脂类），其相对分子质量虽然较大，但远未达到高分子聚合物（如塑料、纤维、蛋白质等）的标准（通常指高分子量、高聚合度、多聚单体结构）。
+    *   在高中化学知识体系中，油脂、蜡通常被归类为小分子有机物，而蛋白质、纤维素、淀粉等生物大分子被称为天然高分子。将蜡归类为“高分子聚合物”是错误的。
+    *   该说法错误。
+
+总结：题目要求找出说法**错误**的一项。选项 D 将蜡归类为高分子聚合物不符合化学分类标准。
+
+答案是 D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-125</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：霍林河发源于大兴安岭，为山前半干旱区及部分半湿润区的平原带来了流水及泥沙。受上游修建水库和灌溉的影响，山前平原河段多年断流。断流期间，山前平原上的洼地增多增大。伴随着洼地增多增大，周边地区可能出现(　　)
+选项：(A)水土流失 (B)沼泽化 (C)土地沙化  (D)盐碱化
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;这是一道典型的地理环境分析题，主要考察半干旱区的农业灌溉对土壤及生态环境的影响。以下是对该问题的逐步验证分析：\n\n**1. 区域背景分析**：\n*   **地理位置**：霍林河源于大兴安岭，流经内蒙古自治区东部地区（山前平原）。\n*   **气候特征**：问题中明确指出为“山前半干旱区及部分半湿润区”。这一区域的主要气候特征是**降水较少，蒸发量大于降水量**，气候较为干燥。\n*   **土壤基础**：该区域多为灌浇区，利用河流灌溉发展农业。\n\n**2. 水文与人为活动影响**：\n*   **上游水库与断流**：上游修建水库和截流导致山前平原河段多年断流。这减少了天然径流对平原的补给，可能导致局部地下水位下降，但同时也改变了区域的水循环平衡。\n*   **灌溉活动**：题目特别提到了“受...灌溉的影响”。这意味着有大量的地表水被引排进入山前平原进行农业生产。\n*   **洼地增多增大**：在断流且灌溉的背景下，山前平原的低洼地带（洼地）变得更加明显且增多。这通常是因为地势低平，灌溉后的水分难以快速排出，容易在局部低洼处**滞水**。\n\n**3. 土壤退化机制分析**：\n*   **蒸发与浓缩**：在半干旱/半湿润过渡带，蒸发作用非常强烈且显著。当灌溉水滞留在洼地或低洼地带时，水分难以通过排水系统排出。\n*   **盐分积累**：溶解在灌溉水中的可溶性盐分，随着水分不断蒸发，盐分浓度逐渐升高。最终，盐分会在土壤表层聚集、结晶，导致土壤盐分含量超过阈值，形成盐碱地。\n*   **为什么不是沼泽化 **(B) 沼泽化通常发生在降水丰富、地势低洼且排水不畅的地区（如湿地）。虽然本区域有洼地和高蒸发，但“半干旱”的基调意味着气候不利于大面积沼泽形成，相反，蒸发导致的盐分结晶是更主要的矛盾。\n*   **为什么不是土地沙化 **(C) 土地沙化（荒漠化）通常发生在过度放牧、水资源极度匮乏导致植被死亡的地区。虽然断流可能导致植被退化，但本题强调了“灌溉”带来的水分影响，且重点在于“洼地”积水与蒸发的结合，这更直接指向盐碱化。沙化是一个宏观背景，而“洼地 + 灌溉 + 蒸发”是盐碱化的直接成因。\n*   **为什么不是水土流失 **(A) 水土流失主要发生在降水集中、流速快、植被稀疏的lope 地区（如上游山区）。本题中上游断流、平原流速慢，不会发生严重的水土流失。\n\n**4. 结论验证**：\n*   结合中国地理教学中的经典案例（如华北平原、西北内陆灌溉区），在干旱半干旱区进行灌溉，因蒸发强烈且排水困难，最主要的次生环境问题就是**盐碱化**。\n*   因此，伴随洼地积水增多增大，周边地区最可能出现的现象是盐碱化。\n\n经过验证，推理逻辑符合地理学原理及类似的考试真题答案。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1.  **地理背景分析**：
+    *   **河流**：霍林河（Heling/Horing River），起源于大兴安岭，流经内蒙古东部。
+    *   **区域气候**：问题中提到“山前半干旱区及部分半湿润区”，内蒙古山河之间及山前平原属于典型干旱、半干旱气候区，降水少，蒸发旺盛。
+    *   **人为活动**：上游修建水库、灌溉。这会导致流经山前平原的主要河水流量减少（断流），但灌溉用水会补充部分地区的水分。
+
+2.  **现象分析**：
+    *   **断流与灌溉的影响**：上游截流导致山前平原河段多年断流。但灌溉使用意味着该地区引入了大量的地表水。
+    *   **洼地增多增大**：这意味着山前平原上有许多地势低洼的区域。在水循环和水利改造背景下，河道的改道或水位下降可能导致水流停滞，或者灌溉后的渗透水使地下水位较高，导致低洼处积水更显著或土壤结构改变。
+    *   **半干旱区的特征**：蒸发量远大于降水量。
+
+3.  **选项推演**：
+    *   **(A) 水土流失**：通常发生在降水集中、河流流速快且侵蚀能力强的季风雨季或上游山地区域。本题中上游断流，河流流速降低，山前平原区域主要受灌溉影响，不是侵蚀的主导区。排除。
+    *   **(B) 沼泽化**：沼泽化通常发生在降水过多、排水不畅或河漫滩广泛分布的地区。本题区域气候干旱，且河水断流，整体水分条件不足以支撑大面积的沼泽化，除非地下水位极高且长期不被蒸发。但题目强调“断流”和“蒸发”，说明水分亏缺。排除。
+    *   **(C) 土地沙化**：土地沙化（荒漠化）在干旱半干旱区常见，但本题的核心线索是“洼地增多”与“灌溉”。虽然沙化是宏观背景，但与“洼地积水/积盐”的直接联系不如选项 D 紧密。
+    *   **(D) 盐碱化**：这是半干旱/半湿润区灌溉农业区最典型的土壤次生灾害。当河水断流且灌溉水源切断排盐通道时，大量灌溉水通过渗透补给地下水或滞留在低洼地（洼地），在强烈的蒸发作用下，水分蒸发后溶于水中的盐分会在土壤表层汇集并结晶。洼地积水更难排盐，只能蒸发，因此极易形成盐碱地。
+
+4.  **结论**：
+    *   题目中的关键信息组合“山前平原（半干旱）” + “灌溉与断流（水分波动）” + “洼地增多（积水/滞水）” = 强烈的“盐分浓缩”过程。这是该地区（如内蒙古）生态建设中重点治理的问题。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;重新检查与验证解答：\n\n1.  **时间与地点分析**：\n    *   **时间**：“清明时节”，每年通常在 4 月 5 日左右，处于春季暮春阶段。\n    *   **地点**：“长江中下游地区”。这是一片水域广阔、水汽丰富的区域，春季是其降水发生的重要季节。\n    *   **天气**：“雨纷纷”。指连绵不断的细雨，伴随阴沉的天气。\n\n2.  **天气系统排除与筛选**：\n    *   **高压系统**：在高压系统（反气旋）控制下，气流下沉不易成云致雨，通常是晴朗干燥的天气（如梅雨前的伏旱或台风后的天气）。因此，**选项 (D) 包含“高压”，直接排除**。\n    *   **锋面系统**：清明时节的降雨主要发生在冷暖空气交汇区域，属于锋面雨区。\n    *   **暖锋 vs 冷锋 vs 准静止锋**：\n        *   **暖锋**：通常带来连续性降水，但在长江中下游春季（4 月）的特征性降雨，更多强调的是北方冷空气南下影响南方暖空气时发生的剧烈换季天气。虽然暖锋也会带来雨，但在地理考试的典型考点中，清明雨的主要成因侧重于冷空气活动。\n        *   **冷锋**：春季风大，冷空气活动频繁，冷锋过境是“春雨”的重要原因，沿锋带来阵性至偶发性雨。这是**最核心**的天气系统之一。\n        *   **准静止锋**：长江中下游的“梅雨”是由准静止锋造成的，发生在 6 月。但清明时分，若冷暖气流相遇处于僵持状态，或准静止锋前锋已开始影响该地区（早梅雨前奏），也会形成长时间的阴雨。在“可能是”的语境下，且为了涵盖春季及初夏过渡期的连续性降雨特征，地理试题通常将此现象与“冷锋”和“准静止锋”对应（即前梅后雨，清明处于前雨期，冷锋活动强烈，且有时伴有准静止特性）。\n    *   **暖锋地位**：虽然暖锋能形成连续雨，但在该特定考题的标准答案库中，通常优先选择 **准静止锋或冷锋**，以强调该地区春季独特的冷暖交替和湿气相表现为准静止性质（版本较多）。而 (C) 选项中的暖锋较弱，因为在等温线分析中，春季为主游动系统等。\n    *   **经验结论**：查阅相关地理题库及标准解析，关于“清明时节雨纷纷”对应的天气系统，标准答案通常为 **(A)**。这是因为清明时节处于冷暖空气交替频繁期，冷暖空气易形成锋面（冷锋），若冷气团停滞则成准静止锋（初春雨带调整期）。\n\n3.  **流程复核**：\n    *   我的第一次回答选择了 (A)。\n    *   现在的验证确认了：(D) 必错（高压不下雨）；(C) 的暖锋在春季长江中下游考题中重要性低于冷锋和准静止锋；(B) 的准静止锋虽然有，但忽略了关键的冷锋作用；(A) 同时包含了最主要的冷未来和可能的准静止特性，最为全面。\n    *   推理逻辑无误：清明雨 = 锋面雨；春季 + 长江中下游 = 冷空气 + 暖湿空气；冷 + 静 = 准静止或冷锋。\n\n4.  **最终修正/确认**：\n    *   无计算错误（本题无计算）。\n    *   无逻辑漏洞。\n    *   结论维持不变。\n\n答案是 A\n\n&lt;think&gt;\n\nThe user requires me to re-evaluate my previous answer (\&quot;A\&quot;) to the geography question regarding the weather system affecting the Yangtze River basin during Qingming. I need to show the step-by-step verification process and whether any corrections are needed.\n\n**Analysis:**\n\n1.  **Question Verfication**: \&quot;清明时节雨纷纷\&quot; (It rains frequently during Qingming) -&gt; **Time**: Spring (early April); **Location**: Mid-to-Lower Yangtze River; **Weather**: Continuous rain.\n2.  **Weather System Analysis**:\n    *   **High Pressure (D)**: High pressure normally leads to clear, dry weather. This makes (D) incorrect because \&quot;rain\&quot; is the weather pattern.\n    *   **Fronal Systems**: Rain is typically caused by 暖锋 (warm fronts), 冷锋 (cold fronts), or 准静止锋 (quasi-stationary fronts).\n    *   **Spring Characteristics in Mid-Lower Yangtze**:\n        *   Spring involves frequent northern cold air surges, colliding with southern warm wet air.\n        *   **Cold Front (冷锋)**: Cold air moving south rapidly pushes warm air up, creating rain showers. This is a primary cause of \&quot;Spring Rain\&quot; (early).\n        *   **Quasi-Stationary Front (准静止锋)**: While famous for the \&quot;Meiyu\&quot; (June), the pre-Meiyu period (April-May transition) can also see the formation of blocking systems or stationary fronts affecting rain continuity. In the context of standard geography examination questions in China regarding this specific poem line and location, \&quot;Chaly Ping An Xian\&quot; (Cold and Meiyu regions) usually points to A.\n        *   **Warm Front (暖锋)**: While warm fronts cause continuous rain, the dominant narrative for \&quot;Qingming Rain\&quot; in this exam context emphasizes the *cold* influence or the *stationary* nature of the rain belt transitioning to the rainy season.\n    *   **Answer Key Consensus**: In standard Chinese high school geography resources for this specific question, the accepted answer is universally **(A)** (准静止锋 or 冷锋). This distinguishes it from the June Mei (Stationary) and Winter Rain (Cold Front) patterns but acknowledges both as the seasonal intrusion system. Option (C) is less preferred because \&quot;Warm Front\&quot; is not the primary label for the \&quot;Spring Cold Surge Rain\&quot;.\n\n**Correction Check**:\n*   **Error?** No. The logic holds.\n*   **Change Needed?** No correction required, but the reasoning needs to be explicit in the verification section.\n\n**Conclusion**: The answer remains A.\n\n**Format**:\n1. Step-by-step reasoning.\n2. Verification of each step.\n3. Final answer in the specified format.\n\nLet&#x27;s write out the thinking process for the final output.\n1.  **Option A/B/C/D Analysis**: Focus on eliminating D first (High Pressure = clear).\n2.  **Fronal Rain Analysis**: Identify that Qingming rain is Frontal Rain.\n3.  **Specific Front Identification**:\n    *   Cold Front: Spring cold surges are active in April.\n    *   Stationary Front: Often leads into the pre-Meiyu rain adjustment period, or the question simplifies the \&quot;muddy rain\&quot; climate pattern under the broader category of front systems common in the region.\n    *   Warm Front: Standard answers in textbooks usually pair Qingming Rain with Cold Fronts or Stationary Fronts (as the incoming sweat rain system), not primarily Warm Fronts (which are often associated with southern warming but less specific to the Qingming rain phenomenon in Chinese geographic context).\n4.  **Final Decision**: A matches the standard answer key for this specific question.\n\n**Final Answer**: 答案是 A\n&lt;/think&gt;\n\n重新验证与解答如下：\n\n1.  **时间与地点确认**：\n    *   **时间**：清明时节指农历三月初，公历约在 4 月 5 日左右，为春季中期。\n    *   **地点**：长江中下游地区。\n    *   **天气**：“雨纷纷”形容细雨连绵，降水时间长。\n\n2.  **天气系统排除**：\n    *   **高压系统 (D 选项)**：高压系统（反气旋）中心气流下沉，天气晴朗干燥，不会造成“雨纷纷”的场景。因此，排除选项 **(D)**。\n    *   **锋面系统**：清明时节的降水主要类型为**锋面雨**，即冷暖空气交汇所致。\n\n3.  **具体锋面分析**：\n    *   **冷锋 (Cold Front)**：春季是冷空气活动频繁的时期，当冬季或寒潮性质的冷空气自北向南移动，与长江中下游地区相对温暖的暖空气相遇时，形成的冷锋会引起降水。这是清明雨水的主要来源之一，导致“春雨”现象。\n    *   **准静止锋 (Quasi-Stationary Front)**：虽然典型的梅雨（6 月）主要由准静止锋引起，但在清明前后（5 月前的春末），冷暖空气在流域内交汇时刻，有时会因势力相当而发生高峰阻塞，形成准静止锋，导致连绵阴雨（即春末湿润气候的开始）。在地理考试的常规逻辑中，长江流域春季的阴雨常与“冷锋”及“准静止锋”这两个系统联系在一起，分别代表冷空气突降和降雨带停滞/过渡。\n    *   **暖锋 (Warm Front)**：虽然暖锋也能带来连续性降水，但在该特定题目和地理教学体系中，“清明降雨”和“长江中下游春季雨”更侧重于**冷锋**（冷空气南下）和**准静止锋**（梅雨带前期的冷空气停滞）的影响，而非单纯的暖锋（后者更多与气温回升和台风前期有关）。\n\n4.  **选项对比**：\n    *   (A) 准静止锋或冷锋：涵盖了春季冷暖交替导致的两种主要降水机制，符合该题目的标准考点。\n    *   (B) 准静止锋或暖锋：忽略了强大的春季冷空气（冷锋）影响。\n    *   (C) 暖锋或冷锋：暖锋的重要性在此类标准试题中通常低于选项 A 中的准静止锋（作为雨带过渡的代表）。\n    *   (D) 暖锋或高压：高压错误。\n\n5.  **结论**：\n    *   经过检索地理题库及教材标准，关于“清明时节雨纷纷”在长江中下游地区的成因，标准答案确认为影响该区域的**冷锋**或**准静止锋**。\n\n无计算错误，推理逻辑符合标准地理教学规范，维持原答案。\n\n答案是 A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>第一步：分析时间、地点及天气现象。
+1.  **时间**：“清明时节”。清明通常发生在每年的 4 月 5 日左右，正值春末夏初的交界段，属于春季中后期。此时气温逐渐回升，但冷空气活动依然频繁。
+2.  **地点**：“长江中下游地区”。该区域气候特征为亚热带季风气候，靠近海岸，水汽充足。
+3.  **天气现象**：“雨纷纷”。这句诗描绘了春雨连绵、细雨如丝的景象，说明降水是持续性的、范围较广的，且天气较阴冷、阴沉。
+
+第二步：分析影响该区域的天气系统。
+1.  **排除高压系统**：高压系统（反气旋）控制下通常是晴朗、干燥、少云的天气（如“清明时节”前的晴天），不会产生“雨纷纷”的景象。因此，排除包含 (D) 的高压选项。
+2.  **分析锋面天气**：
+    *   **冷锋**：春季，来自西伯利亚或蒙古地区的冷空气活动频繁南下，与温暖湿润的暖空气交汇，形成春雷、暴雨、阵雨等天气。清明时节的冷暖空气交替是常见的“雨后天”现象，导致“雨纷纷”。因此，**冷锋**是一个主要的影响系统。
+    *   **准静止锋**：在长江中下游地区，如果冷暖空气势力相当，容易形成准静止锋。虽然梅雨（“梅子黄时雨”）期间是最典型的准静止锋天气，但春季的清明前后，如果冷空气停滞在该区域，或者暖湿气流在北方冷空气影响下抬升而形成短暂的阻滞，也可能表现为长时间的阴雨连绵（即前梅后雨的延续或春季的“巴山夜雨”式效应）。在地理试题的常规解析中，长江中下游春季的阴雨天气既可以归因于冷空气的**冷锋**过境，也可以归因于冷暖空气交汇形成的**准静止锋**（在梅雨开始前）。
+    *   **暖锋**：暖锋带来的通常是连续性降水，但在该题目的语境和常规考点中，清明时雨的重点是冷暖交替或停滞。相比之下，冷锋和准静止锋在解释该时段长江中下游特定“春雨”的成因上更符合常见的地理教学逻辑。
+
+第三步：对比选项。
+*   (A) 准静止锋或冷锋：涵盖了春季长江中下游阴雨的主要成因（冷空气带来的冷锋和可能形成的锋面系统）。
+*   (B) 准静止锋或暖锋：忽略了强烈的冷空气影响（冷锋）。
+*   (C) 暖锋或冷锋：暖锋虽可降水，但在该题目语境下，准静止锋作为梅雨前奏或局地阴雨的原因常被强调。
+*   (D) 暖锋或高压：高压错误。
+
+第四步：确定最终答案。
+根据常见的地理试题标准答案及分析，清明时节长江中下游的“雨纷纷”主要是由冷暖空气交汇造成的，既可能受冷锋影响带来阵雨，也可能受准静止锋影响带来连绵阴雨。
+
+答案是A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-46</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某网络论坛将最近一年与5年前网友曾经发布的有关社会问题的帖子进行了统计比较，发现：像拾金不昧、扶贫急难、见义勇为这样的帖子增加了 50%。而与为非作歹、作恶逃匿、杀人越货有关的帖子却增加了 90%。由此可见，社会风气正在迅速恶化。
+问题：以下哪项如果为真，最能削弱上述论证？
+选项：(A)“好事不出门，坏事传千里”。古往今来，都是如此 (B)最近5年上网的用户翻了两番 (C)最近几年，有些人在网上用造谣的方式达到营利的目的 (D)该网络论坛是一个法制论坛
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;**1. 梳理论证结构：**\n*   **论据 (前提)：** 网络论坛统计发现，最近一年与 5 年前相比，“好事”帖子数量增长了 50%，“坏事”帖子数量增长了 90%。\n*   **结论：** 社会风气正在迅速恶化。\n*   **核心逻辑链：** 帖子增长数量 $\\rightarrow$ 反映社会实际事件发生频率 $\\rightarrow$ 坏事发生频率大幅增加 $\\rightarrow$ 社会风气恶化。\n\n**2. 分析选项削弱力度：**\n\n*   **选项 (A)：“好事不出门，坏事传千里”。古往今来，都是如此**\n    *   **分析：** 这是一个关于**信息传播规律**的判断。它指出负面信息在传播过程中具有天然的放大效应（传播速度快、范围广），而正面信息相对不易传播。\n    *   **逻辑作用：** 它提供了一个**“另有他因”**的解释。帖子数量的增长（特别是坏事增幅远高于好事）可能是由**传播机制**决定的，而非**事件发生频率**决定。这直接攻击了论据到结论的逻辑链条，即：“帖子多（尤其是坏帖子多）不代表现实坏事真的变多了”。这是最本质的削弱，因为它解释了数据差异的根本性质（选择性偏差），而非仅仅是样本量问题。\n    *   **力度：** **极**。直接切断因果联系。\n\n*   **选项 (B)：最近 5 年上网的用户翻了两番**\n    *   **分析：** 指出用户基数扩大。\n    *   **逻辑作用：** 这确实削弱了统计的代表性（样本变化），导致不能简单对比。但是，它主要解释的是整体用户基数变大导致的发帖量总体增加。它不能很好地解释为什么**坏事增幅（90%）远高于好事增幅（50%）**。如果仅仅是因为人多，好和坏的发帖率理论上应同步增长（除非用户行为差异巨大）。虽然也有一定削弱，但不如 A 针对性强。\n    *   **力度：** 弱。未能解释正负比例失调的核心原因。\n\n*   **选项 (C)：最近几年，有些人在网上用造谣的方式达到营利的目的**\n    *   **分析：** 指出部分负面帖子是虚假的。\n    *   **逻辑作用：** 这指出了数据的**真实性**问题。但这属于“部分问题”，削弱力度有限，且只能说明部分帖子并非事实，不足以否定整体趋势。\n    *   **力度：** 弱。\n\n*   **选项 (D)：该网络论坛是一个法制论坛**\n    *   **分析：** 背景信息。\n    *   **逻辑作用：** 法制论坛讨论法律，不直接验证或否定社会风气的论据逻辑。甚至可以说，法制论坛更容易讨论社会公案，这反而是加强项，或者无关项。\n    *   **力度：** 无/极弱。\n\n**3. 逻辑对比与修正检查：**\n*   论证的核心难点在于用“网上帖子数量比例”推导“社会现实情况比例”。\n*   选项 (A) 直接指出了“社会舆论/传播介质”会过滤和美化/丑化事实（负面偏好），这是最经典的统计学谬误（幸存者偏差/曝光偏差）在逻辑题中的应用，对论证的摧毁性最强。\n*   选项 (B) 解释了基数变化，但对于“比例波动”的解释力不如 A。\n*   经过再次核实，这是公务员考试/逻辑思维推理中的经典题目，标准答案通常确认为 (A)。\n*   因此，之前的解答逻辑无误。\n\n答案是 A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>这道逻辑题的核心在于分析论证中的逻辑漏洞。
+
+**1. 梳理论证结构：**
+*   **论据（前提）：** 论坛统计帖子数量，好精神（如拾金不昧）的帖子增加了 50%，坏精神（如为非作歹）的帖子增加了 90%。
+*   **结论：** 社会风气正在迅速恶化。
+*   **隐含假设：** 帖子的数量（及增长幅度）直接反映了社会事件的真实发生情况（帖子增加=坏事增多）。
+
+**2. 分析各个选项的削弱力度：**
+
+*   **选项 (A)：“好事不出门，坏事传千里”。古往今来，都是如此。**
+    *   **分析：** 这是一个广泛的社会心理学规律（信息传播偏差）。它直接攻击了论据“帖子数量增加”与“结论“社会风气恶化”之间的连接。
+    *   **逻辑作用：** 该选项指出，因为媒体报道或网络传播的特性，负面消息比正面消息更容易被关注和传播（负面见广、正面见少）。因此，负面帖子的增长幅度（90%）远高于正面帖子（50%），这可能是因为传播机制放大了负面内容，而不是因为坏事真的多了倍。
+    *   **削弱力度：** **极强**。它解释了为什么本应代表“社会真实”的统计数据出现了比例失调，且这种失调符合经验规律，从而直接切断了“帖子增长=社会风气恶化”的因果链条。
+
+*   **选项 (B)：最近 5 年上网的用户翻了两番（即增加了 4 倍）。**
+    *   **分析：** 这指出了样本基数（上网人口）的变化。
+    *   **逻辑作用：** 如果上网用户基数庞大（翻了两番），那么产生的帖子总数自然会增加。这可以解释为什么总帖数涨了，但不足以解释为什么**负面情绪的增幅（90%）明显高于正面情绪的增幅（50%）**。如果仅仅是因为上网的人多了，好和坏的增长理论上应该趋于同步（除非犯罪行为是绝对的基数扩张）。虽然这也削弱了帖子的统计意义，但不如 (A) 针对“正负比例差异”的解释力强。
+    *   **注意：** 在部分逻辑题的标准答案中，如果存在直接攻击因果关系的选项（如传播偏差），A 优于 B。在某些特定题库中，B 也被视为削弱项，但 A 是更核心的“另有他因”（传播机制）。
+
+*   **选项 (C)：最近几年，有些人在网上用造谣的方式达到营利的目的。**
+    *   **分析：** 这指出了部分负面帖子是假的。
+    *   **逻辑作用：** 这确实削弱了数据真实性（因为包括虚假犯罪），但题目说的是“有些人”，影响可能有限，且解释的是“部分”而非全部。相比 (A) 的普遍规律，(A) 的解释覆盖面更广。
+
+*   **选项 (D)：该网络论坛是一个法制论坛。**
+    *   **分析：** 与统计学和社会风气的整体性质无关。如果是法制论坛，讨论的可能是法律问题，但这不直接否定帖子增幅代表现实的事件增幅。
+
+**3. 比较最强削弱项：**
+论证的核心对比是两类海报的增长幅度不同（正 50% vs 负 90%），据此得出了社会恶化的结论。
+*   选项 (A) 是利用“古往今来的传播规律”直接解释了为何“负帖子涨幅远大于正帖子”，暗示这种数据反差是**传播学偏见**造成的，而非社会现实恶化。这是最直接、最精准的削弱。
+*   选项 (B) 解释的是总数增长的原因，但对差额的解释力不如 A。
+
+**结论：** 选项 (A) 通过引入“信息传播偏差”这一根本原因，证明了负面帖子增长快并不代表坏事真的发生了快得多，从而最有力地削弱了论证。
+
+这是该逻辑题公认的标准正确答案。
+
+答案是 A
+
+**最终输出格式检查：**
+指令要求：在最后给出“答案是 X&quot;。
+在此处 X 为 A。
+
+答案是 A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::lsat-rc-110</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>The corrido, a type of narrative folk song, comes from a region half in Mexico and half in the United States known as the Lower Rio Grande Border. Corridos, which flourished from about 1836 to the late 1930s, are part of a long-standing ballad tradition that has roots in eighteenth-century Spain. Sung in Spanish, corridos combine formal features of several different types of folk songs, but their narratives consistently deal with subject matter specific to the Border region. For example, &quot;El Corrido de Kiansis&quot; (c. 1870), the oldest corrido surviving in complete form, records the first cattle drives to Kansas in the late 1860s. A single important event is likely to have inspired several corrido variants, yet the different versions of any given story all partake of standard generic elements. When sung at social gatherings, corridos served to commemorate significant local happenings, but more importantly, their heavy reliance on familiar linguistic and thematic conventions served to affirm the cohesiveness of Border communities. Corridos take their name from the Spanish verb correr, meaning to run or to flow, for corridos tell their stories simply and swiftly, without embellishments. Figures of speech such as metaphors are generally rare in corridos, and when metaphors are used, they usually incorporate everyday images that are familiar to the songs&#x27; listeners. In the popular &quot;El Corrido de Gregorio Cortez,&quot; for example, the hero Cortez, fighting off pursuers, uses the metaphor of a thunderstorm to boast that he has had harder fights than the one they gave him: &quot;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.&quot; Similar storm imagery is found in other corridos including &quot;Kiansis,&quot; which tells of stampedes caused by thunderstorms during the Kansas cattle drives. Such imagery, highly conventional and readily recognizable to corrido listeners, reflects and strengthens the continuity of the corrido tradition. The corrido is composed not only of familiar images but also of certain ready-made lines that travel easily from one ballad to another. This is most evident in the corrido&#x27;s formal closing verse, or despedida. The despedida of one variant of &quot;Gregorio Cortez&quot; is translated as follows: &quot;Now with this I say farewell / In the shade of a cypress tree; / This is the end of the ballad / Of Don Gregorio Cortez.&quot; The first and third lines are a set convention. The second and fourth lines are variable, the fourth carrying the name of the corrido or expressing its subject, and the second varying according to exigencies of rhyme. In the despedida, perhaps the clearest marker of both the corrido&#x27;s uniqueness and its generic continuity, the corrido&#x27;s maker asserts that the task of relating an authentic Border tale has been accomplished.
+Question: Which one of the following is mentioned in the passage as an example of the use of metaphor in corridos?
+Answer Choices: (A)mist (B)a cypress tree (C)a fight (D)stampedes (E)stampedes
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;Step 1: Identify the specific section of the text that discusses the use of metaphor.\nThe passage states: \&quot;Figures of speech such as metaphors are generally rare in corridos... and when metaphors are used, they usually incorporate everyday images that are familiar to the songs&#x27; listeners.\&quot;\n\nStep 2: Locate the specific example provided to illustrate this use of metaphor.\nThe text continues: \&quot;In the popular &#x27;El Corrido de Gregorio Cortez,&#x27; for example, the hero Cortez... uses the metaphor of a thunderstorm... &#x27;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.&#x27;\&quot;\n\nStep 3: Analyze the images present in this specific example regarding the available answer choices.\nThe quote explicitly contains the words \&quot;thunderstorms\&quot; and \&quot;mist\&quot;.\n- Option (A) \&quot;mist\&quot; is directly part of the quoted lyric from the song cited as the example of a metaphor.\n- Option (B) \&quot;a cypress tree\&quot; is mentioned in the context of the *despedida* (closing verse) as a variable line for rhyme and convention, but the text does not label it as a metaphor or figure of speech in that specific context (\&quot;set convention\&quot;).\n- Option (C) \&quot;a fight\&quot; is the subject of the boast (\&quot;harder fights\&quot;), not the metaphorical image itself.\n- Options (D) and (E) \&quot;stampedes\&quot; are mentioned in the context of the corrido \&quot;Kiansis,\&quot; which is linked to \&quot;storm imagery\&quot; (\&quot;stampeds caused by thunderstorms\&quot;), but the text does not explicitly identify stampedes as the *example* of the use of a metaphor in the same way it identifies the lyrical comparison in \&quot;Gregorio Cortez.\&quot;\n\nStep 4: Evaluate the correctness of Option (A).\nAlthough the text explicitly labels the \&quot;thunderstorm\&quot; as the metaphor (\&quot;uses the metaphor of a thunderstorm\&quot;), \&quot;thunderstorm\&quot; is not an answer choice. \&quot;Mist\&quot; is the other key image in that specific metaphorical comparison within the Gregorio Cortez example. Since \&quot;mist\&quot; is the only option derived from the specific sentence explaining the metaphor&#x27;s usage, it is the most accurate choice among the distractors.\n\nStep 5: Confirm previous decision.\nThe previous answer identified (A) mist as the correct choice. The reasoning is confirmed: it is the only option that appears in the specific quoted example where the text discusses metaphor usage.\n\nThe answer is A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Based on the text provided, the passage explicitly discusses the use of metaphors in corridos in the following context: &quot;In the popular &#x27;El Corrido de Gregorio Cortez,&#x27; for example, the hero Cortez... uses the metaphor of a thunderstorm... &#x27;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.&#x27;&quot;
+
+While the text explicitly names the &quot;thunderstorm&quot; as the metaphor, &quot;mist&quot; is the other image mentioned within the specific lyric quote that functions as part of this metaphorical comparison (comparing the current situation to a storm and dismissing the &quot;little mist&quot;). The text contrasts these images to show how metaphors use familiar icons. The cypress tree is mentioned in the context of the &quot;despedida&quot; (closing verse) as part of a set convention, not explicitly labeled as the metaphor in the text compared to the thunderstorm/mist imagery.
+
+Therefore, &quot;mist&quot; is the specific example mentioned in the context of the metaphorical usage.
+
+The answer is A (A, if D and E were distinct, but they are duplicates of stampeds which are events, not the specific metaphor image). Based on the logic, only A fits the criteria of a metaphor example from the text.
+
+The answer is A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::sat-en-101</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>At last, Old Widow Lau was done haggling with the driver and we stepped inside Father&#x27;s shop. It was north-facing, quite dim inside, and perhaps this was  why Father did not see us at first. He was busy with a 5 customer, a man who was distinguished-looking, like the scholars of two decades before. The two men were bent over a glass case, discussing the different qualities of inksticks. Big Uncle welcomed us and invited us to be seated. From his formal tone, I knew10 he did not recognize who we were. So I called his name in a shy voice. And he squinted at me, then laughed and announced our arrival to Little Uncle, who apologized many times for not rushing over sooner to greet us. They rushed us to be seated at one15 of two tea tables for customers. Old Widow Lau refused their invitation three times, exclaiming that my father and uncles must be too busy for visitors. She made weak efforts to leave. On the fourth insistence, we finally sat. Then Little Uncle brought20 us hot tea and sweet oranges, as well as bamboo latticework fans with which to cool ourselves.I tried to notice everything so I could later tell GaoLing what I had seen, and tease out her envy. The floors of the shop were of dark wood, polished and 25 clean, no dirty footprints, even though this was during the dustiest part of the summer. And along the walls were display cases made of wood and glass. The glass was very shiny and not one pane was broken. Within those glass cases were our silk-30 wrapped boxes, all our hard work. They looked so much nicer than they had in the ink-making studio at Immortal Heart village.I saw that Father had opened several of the boxes. He set sticks and cakes and other shapes on a silk 35 cloth covering a glass case that served as a table on which he and the customer leaned. First he pointed to a stick with a top shaped like a fairy boat and said with graceful importance, &quot;Your writing will flow as smoothly as a keel cutting through a glassy lake.&quot;40 He picked up a bird shape: &quot;Your mind will soar into the clouds of higher thought.&quot; He waved toward a row of ink cakes embellished with designs of peonies and bamboo: &quot;Your ledgers will blossom into abundance while bamboo surrounds your quiet 45 mind.&quot;As he said this, Precious Auntie came back into mind. I was remembering how she taught me that everything, even ink, had a purpose and a meaning: Good ink cannot be the quick kind, ready to pour out 50 of a bottle. You can never be an artist if your work comes without effort. That is the problem of modern ink from a bottle. You do not have to think. You simply write what is swimming on the top of your brain. And the top is nothing but pond scum, dead 55 leaves, and mosquito spawn. But when you push an inkstick along an inkstone, you take the first step to cleansing your mind and your heart. You push and you ask yourself, What are my intentions? What is in my heart that matches my mind? 60 I remembered this, and yet that day in the ink shop, I listened to what Father was saying, and his words became far more important than anything Precious Auntie had thought. &quot;Look here,&quot; Father said to his customer, and I looked. He held up an65 inkstick and rotated it in the light. &quot;See? It&#x27;s the right hue, purple-black, not brown or gray like the cheap brands you might find down the street. And listen to this.&quot; And I heard a sound as clean and pure as a small silver bell. &quot;The high-pitched tone tells you that 70 the soot is very fine, as smooth as the sliding banks of old rivers. And the scent-can you smell the balance of strength and delicacy, the musical notes of the ink&#x27;s perfume? Expensive, and everyone who sees you using it will know that it was well worth the high 75 price.&quot;I was very proud to hear Father speak of our family&#x27;s ink this way.
+Question: Throughout the passage, the narrator is portrayed as someone who is
+Answer Choices: (A)reserved around unfamiliar people. (B)attuned to her immediate surroundings. (C)sympathetic to the needs of others. (D)anxious about her responsibilities.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;Step 1: Analyze the narrator&#x27;s explicit statement about her intent. The narrator explicitly states, \&quot;I tried to notice everything so I could later tell GaoLing what I had seen.\&quot; This sentence serves as the thematic pivot for the passage, indicating that her primary focus is observation of the environment and the scene before her.\n\nStep 2: Evaluate sensory and descriptive details provided in the text. The passage devotes significant descriptive space to the narrator&#x27;s observations of the physical space (\&quot;The floors of the shop were of dark wood, polished and clean\&quot;), the objects (\&quot;display cases made of wood and glass,\&quot; \&quot;silk-wrapped boxes,\&quot; \&quot;inksticks,\&quot; \&quot;ink stones\&quot;), and the sensory experience (\&quot;scent,\&quot; \&quot;sound as clean and pure as a small silver bell\&quot;). These details demonstrate a high degree of attention to detail and awareness of her immediate context.\n\nStep 3: Evaluate the other answer choices against the text.\n*   (A) Reserved: While the narrator uses a \&quot;shy voice\&quot; when calling Big Uncle&#x27;s name, this trait is limited to the initial greeting and does not characterize the sustained, detailed observation that follows for the majority of the passage.\n*   (C) Sympathetic: There is no evidence of the narrator showing sympathy for others; in fact, she insists on sitting when the Widow refuses them, and she is self-focused on passing the observation to GaoLing.\n*   (D) Anxious: The narrator expresses pride (\&quot;I was very proud to hear Father speak\&quot;) rather than anxiety.\n\nStep 4: Compare the most supported options. The claim in (A) relies on a single moment of shyness, whereas (B) is supported by the narrator&#x27;s explicit declaration of intent (\&quot;try to notice everything\&quot;) and the extensive descriptive content that fills the passage. Therefore, (B) is the most accurate portrayal of the narrator throughout the entire excerpt.\n\nThe reasoning confirms the previous conclusion remains valid.\n\nThe answer is B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Based on the text, the narrator explicitly states, &quot;I tried to notice everything so I could later tell GaoLing what I had seen.&quot; Throughout the description of the shop, the narrator provides detailed sensory observations of the floor (&quot;dark wood, polished and clean&quot;), the display cases (&quot;glass was very shiny&quot;), the contents (&quot;silk-wrapped boxes&quot;), and the Father&#x27;s actions and words (&quot;graceful importance,&quot; &quot;scent,&quot; &quot;sound as clean and pure&quot;). This consistent focus on the environment, objects, and immediate interactions points to her being attuned to her immediate surroundings. While there is a moment of shyness (&quot;called his name in a shy voice&quot;) when addressing Big Uncle, this is a fleeting interaction rather than a trait portrayed &quot;throughout&quot; the passage, which focuses heavily on her observation and engagement with the craft and setting.
+
+The answer is B</pre></details></div></section>
+</main>
+</body>
+</html>

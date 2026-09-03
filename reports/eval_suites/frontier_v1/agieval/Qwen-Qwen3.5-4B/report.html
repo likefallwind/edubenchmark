@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · agieval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · AGIEval：标准化与资格考试推理</h1>
+    <p class="muted">基准 agieval · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">21.2%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">17</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>AGIEval 取材于人类标准化/资格考试（高考、SAT、LSAT、GRE、法考、公务员考试、竞赛 MATH 等），评测模型在真实考试情境下的推理能力。对应本仓库能力维度 D03（标准化与资格考试推理）。</p><p>本次覆盖 21 个任务，分为选择题（gold 为选项字母；jec-qa、gaokao-physics 为多选）与数学填空（gold 为自由作答）。提示采用零样本思维链，要求模型先推理、再显式给出最终答案。</p><p>选择题抽取沿用官方 post_process 取字母逻辑，数学题动态加载官方 math_equivalence做等价判定；按任务、语言、题型分桶统计。</p><p class='muted'>主页：<a href='https://github.com/ruixiangcui/AGIEval'>https://github.com/ruixiangcui/AGIEval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-106</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: The number of water lilies on a certain lake doubles every two days. If there is exactly one water lily on the lake, it takes 60 days for the lake to be fully covered with water lilies. In how many days will the lake be fully covered with lilies, if initially there were 64 water lilies on it?
+Answer Choices: (A)15 (B)28 (C)30 (D)53 (E)59
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-152</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: If Jill needed to buy 10 bottles of soda for a party in which 8 people attended, how many bottles of soda will she need to buy for a party in which 12 people are attending?
+Answer Choices: (A)6 (B)8 (C)10 (D)12 (E)14
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>aqua-rat</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-biology</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chemistry</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-chinese</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-english</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-geography</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-history</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathcloze</td><td>6</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathqa</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-physics</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>jec-qa-ca</td><td>11</td><td>4</td><td>0.364</td><td><div class='bar'><i style='width:36%'></i></div></td></tr><tr><td>jec-qa-kd</td><td>8</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>logiqa-en</td><td>10</td><td>4</td><td>0.400</td><td><div class='bar'><i style='width:40%'></i></div></td></tr><tr><td>logiqa-zh</td><td>7</td><td>3</td><td>0.429</td><td><div class='bar'><i style='width:43%'></i></div></td></tr><tr><td>lsat-ar</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>lsat-lr</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>lsat-rc</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>math</td><td>8</td><td>1</td><td>0.125</td><td><div class='bar'><i style='width:12%'></i></div></td></tr><tr><td>sat-en</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>sat-en-without-passage</td><td>8</td><td>3</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>sat-math</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>38</td><td>9</td><td>0.237</td><td><div class='bar'><i style='width:24%'></i></div></td></tr><tr><td>zh</td><td>42</td><td>8</td><td>0.190</td><td><div class='bar'><i style='width:19%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cloze</td><td>14</td><td>1</td><td>0.071</td><td><div class='bar'><i style='width:7%'></i></div></td></tr><tr><td>qa</td><td>66</td><td>16</td><td>0.242</td><td><div class='bar'><i style='width:24%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-106</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: The number of water lilies on a certain lake doubles every two days. If there is exactly one water lily on the lake, it takes 60 days for the lake to be fully covered with water lilies. In how many days will the lake be fully covered with lilies, if initially there were 64 water lilies on it?
+Answer Choices: (A)15 (B)28 (C)30 (D)53 (E)59
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>E</div><div class='ans'><span class='lbl'>归一化</span>E</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The problem describes a classic exponential growth riddle known as the &quot;Lily Pond&quot; or &quot;Water Lily&quot; problem.
+
+**Step 1: Understand the Growth Pattern**
+The population of water lilies doubles every 2 days.
+This means if you have $N$ lilies at time $t$, at time $t+2$ you will have $2N$ lilies.
+The growth can be modeled as $N(t) = N_0 \times 2^{(t/2)}$, where $N_0$ is the initial number of lilies.
+
+**Step 2: Analyze the First Scenario**
+*   Initial lilies ($N_0$) = 1
+*   Time to full coverage ($T$) = 60 days.
+*   Let the total capacity of the lake be $C$.
+*   At $t=60$, the coverage is $C$.
+*   Formula: $C = 1 \times 2^{(60/2)} = 2^{30}$.
+*   This means the lake would be fully covered with $2^{30}$ lilies at the start, or rather, 1 lily grows to $2^{30}$ lilies in 60 days.
+
+**Step 3: Analyze the Second Scenario**
+*   Initial lilies ($N_0$) = 64.
+*   We know $64 = 2^6$.
+*   We want to find the time $T&#x27;$ such that the lake is fully covered (Capacity $C = 2^{30}$).
+*   Formula: $2^{30} = 64 \times 2^{(T&#x27;/2)}$.
+*   Substitute $64 = 2^6$: $2^{30} = 2^6 \times 2^{(T&#x27;/2)}$.
+*   Combine exponents: $2^{30} = 2^{(6 + T&#x27;/2)}$.
+*   Equate the exponents: $30 = 6 + T&#x27;/2$.
+*   $24 = T&#x27;/2$.
+*   $T&#x27; = 48$ days.
+
+**Step 4: Reconcile with Options**
+The mathematically correct answer based on the text provided is **48 days**.
+However, **48 is not among the Answer Choices**.
+This suggests the question text likely contains typos compared to the standard versions of this riddle found in competitive exams.
+*   **Common Riddle Version:** The population doubles **every 1 day**, and the question asks if there are **2** lilies (which is $2^1$). In that case, the number of doublings saved is 1 day. Total time = $60 - 1 = 59$ days.
+*   **Another Variation:** The population doubles **every 1 day**, and there are **64** lilies ($2^6$). In that case, the number of doublings saved is 6 days. Total time = $60 - 6 = 54$ days.
+
+Looking at the options provided: (A) 15, (B) 28, (C) 30, (D) 53, (E) 59.
+Option </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-chemistry-99</span><span class='tag'>task=gaokao-chemistry</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：某同学进行蔗糖水解实验, 并检验产物中的醛基, 操作如下：向试管 I 中加入 $1 \mathrm{~mL} 20 \%$ 蔗糖溶液, 加入 3 滴稀硫酸, 水浴加热 5 分钟。打开盛有 $10 \% \mathrm{NaOH}$ 溶液的试剂瓶, 将玻 璃瓶塞倒放, 取 $1 \mathrm{~mL}$ 溶液加入试管 II, 盖紧瓶塞; 向试管 II 中加入 5 滴 $2 \% \mathrm{CuSO}_{4}$ 溶液。 将试管 II 中反应液加入试管 I, 用酒精灯加热试管 I 并观察现象。实验中存在的错误有几 处?
+选项：(A)1 (B)2 (C)3 (D)4
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步思考：
+
+1.  **分析实验目的与原理**：
+    *   **目的**：蔗糖水解，并检验产物中的醛基。
+    *   **原理**：蔗糖（非还原性糖）在稀硫酸催化下水解为葡萄糖和果糖（还原性糖）。检验醛基使用 $CuSO_4$ 和 $NaOH$（斐林试剂改良试剂），反应必须在**碱性环境**下进行，且生成 $Cu_2O$ 红色沉淀。
+    *   **关键步骤**：
+        1.  蔗糖水解（酸性环境）。
+        2.  **中和酸**：必须先用 $NaOH$ 中和水解液中的 $H_2SO_4$，使体系呈碱性。
+        3.  加入 $CuSO_4$：在碱性条件下与醛基反应。
+        4.  加热：提供反应能量。
+
+2.  **逐项排查实验操作中的错误**：
+    *   **操作一**：“向试管 I 中加入 1 mL 20% 蔗糖溶液，加入 3 滴稀硫酸，水浴加热 5 分钟。”
+        *   分析：蔗糖水解操作正确，条件控制合理。
+        *   结论：**无错误**。
+
+    *   **操作二**：“打开盛有 10% NaOH 溶液的试剂瓶，将玻璃瓶塞倒放，取 1 mL 溶液加入试管 II，盖紧瓶塞”
+        *   分析 1：“将玻璃瓶塞倒放”是实验室取用试剂的标准操作（防止污染），通常是正确操作（但在某些严格题目中可能被视为不规范，但在主要考点中较少作为错误）。
+        *   分析 2：浓度 10% NaOH，通常用于碱性环境调节。
+        *   结论：操作基本正确，但需结合下一步看。
+
+    *   **操作三**：“向试管 II 中加入 5 滴 2% CuSO4 溶液。”
+        *   分析：在试管 II 中预混合 NaOH 和 CuSO4。
+        *   **重大错误点 1**：标准的斐林试剂检验还原糖，需要将 NaOH 加入样品（中和酸）后，再加 CuSO4。如果在试管 II 中预先混合 NaOH 和 CuSO4，会生成 $Cu(OH)_2$ 沉淀。当混合后加入试管 I（酸性溶液）时，试管 I 中的强酸会消耗掉试管 II 中的 NaOH，导致 $Cu(OH)_2$ 溶解或无法维持碱性环境，无法进行醛基检验。通常应先向试管 I 中加入 NaOH 中和酸，再加入 CuSO4。
+        *   **结论：有错误**。
+
+    *   **操作四**：“将试管 II 中反应液加入试管 I...&quot;
+        *   分析：**重大错误点 2**：这是步骤三的后果。试管 I 是酸性的。将混合后的碱性 $Cu(OH)_2$ 溶液加入酸性试管 I 中，酸碱中和反应优先发生。若 NaOH 量不足将被酸消耗，无法保证反应所需的强碱性环境。因此，操作顺序错误，应先中和酸。
+        *   **结论：有错误**。
+
+    *   **操作五**：“用酒精灯加热试管 I 并观察现象。”
+        *   分析：如果前面已纠正，加热是正确的。但在原实验流程中，因为前面步骤不对，这里属于无效操作。
+        *   此外，关于试剂浓度：10% NaOH 和 2% CuSO4 是否标准？通常斐林试剂中 $CuSO_4$ 浓度是 NaOH 的 1/10 或特定比例。这里显式给出的 1mL NaOH + 5 滴 CuSO4 可能存在比例不当（通常体积比 1:1 或配成不同液加入）。
+        *   **关于瓶盖**：有些题目分析认为 $NaOH$ 盖紧瓶塞过于迅速或倒放不规范（腐蚀性强，应小心）算作隐患，但在化学操作题核心考点中，通常指上述化学原理错误。
+
+    *   **综合查找标准答案库中的考点**：
+        该题目是常见的教辅/高考模拟题类型的原题。
+        **通常认定的错误点有 3 处或 4 处。**
+        1.  **中和酸**：试管 I 水解后含有稀硫酸，检验醛基前提必须呈碱性。应先加 NaOH 中和，再加 CuSO4。实验中将 CuSO4 与 NaOH 在试管 II 混合后加入酸性试管 I，导致碱被酸中和，无法检验。
+        2.  **试剂混合**：$CuSO_4$ 和 $NaOH$ 不应预先在试管 II 混合。应通过向酸性水解液滴加 NaOH，然后加 $CuSO_4$ 再加热，或者$CuSO_4$ 和 $NaOH$ 分别加入试管 I（而需保碱性）。
+        3.  **加液顺序/仪器使用**：有些题目认为 $NaOH$ 瓶塞倒放对于腐蚀性强试剂不严谨（应放在干净处）或“盖紧瓶塞”操作中的接触问题。
+        4.</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-chinese-158</span><span class='tag'>task=gaokao-chinese</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>对城市而言，文明弹性是一个城市体在生存、创新、适应、应变等方面的综合状态、综合能力，是公共性与私人性之间、多样性与共同性之间、稳定性与变迁性之间、柔性与刚性之间的动态和谐，过于绵柔、松散，或者过于刚硬、密集，都是弹性不足或丧失的表现，是城市体出现危机的表征。当代城市社会，尤其需要关注以下文明弹性问题。其一，空间弹性。城市具有良好空间弹性的一个重要表现，是空间的私人性与公共性关系能够得到较为合理的处理。任何城市空间都是私人性与公共性的统一，空间弹性的核心问题，就是如何实现空间的公共性与私人性的有机统一、具体转换。片面地强调空间的公共性或片面地强调空间的私人性，都会使城市发展失去基础。目前，人们更多地要求空间的私人性，注重把空间固化为永恒的私人所有物、占有物。这种以私人化为核心的空间固化倾向，造成城市空间弹性不足，正在成为制约城市发展的一个重要原因。其二，制度弹性。一种较为理想的、有弹性的城市制度，是能够在秩序与活力、生存与发展间取得相对平衡的制度。城市有其发展周期、发展阶段，对一个正在兴起的城市而言，其主要任务是聚集更多的发展资源、激活发展活力。而对一个已经发展起来的城市而言，人们会更为注重城市制度的稳定功能。但问题在于，即使是正在崛起的城市，也需要面对秩序与稳定的问题；即使是一个已经发展起来的城市，也需要面对新活力的激活问题。过于注重某种形式的城市制度，过于注重城市制度的某种目标，都是城市制度弹性不足、走向僵化的表现，都会妨害城市发展。学科*网。其二，制度弹性。一种较为理想的、有弹性的城市制度，是能够在秩序与活力、生存与发展间取得相对平衡的制度。城市有其发展周期、发展阶段，对一个正在兴起的城市而言，其主要任务是聚集更多的发展资源、激活发展活力。而对一个已经发展起来的城市而言，人们会更为注重城市制度的稳定功能。但问题在于，即使是正在崛起的城市，也需要面对秩序与稳定的问题；即使是一个已经发展起来的城市，也需要面对新活力的激活问题。过于注重某种形式的城市制度，过于注重城市制度的某种目标，都是城市制度弹性不足、走向僵化的表现，都会妨害城市发展。其三，意义弹性。所谓城市的意义弹性，是指城市能够同时满足多样人群的不同层面的意义需要，并能够使不同的意义与价值在总体上达到平衡与和谐，不断形成具体的意义共同性。当一个城市体只允许一种、一个层面的意义存在时，这个城市体可能繁荣一时，但必然会走向衰落。当一个城市体只能满足某一类人的意义追求、意义需要时，这个城市体也往往会丧失活力。当一个城市体被某一类型的意义体系固化时，这个城市体往往不具有综合吸纳力、发展潜力。启蒙主义的片面化，理性主义的片面化，世俗主义的片面化，神圣主义的片面化，都会导致城市意义弹性的减弱，都会从根基处危害城市的健康可持续发展。综上所述，保持城市的空间弹性、制度弹性、意义弹性，并以此为基础，把握城市的类型构成与历史，建构城市命运共同体，对于城市社会的健康发展而言，是意义重大的。（摘编自陈忠《城市社会：文明多样性与命运共同体》）。
+问题：根据原文内容，下列说法不正确的一项是
+选项：(A)当一个城市体有更好的空间弹性和制度弹性时，其意义弹性也会相应变好。 (B)城市处在不同的发展阶段时会有不同危机，制度的主要功能也会因此不同。 (C)要让一个城市体具有综合吸纳能力和发展潜力，就应平衡各种主义的关系。 (D)城市盛衰自有其规律，与不同的意义和价值在总体上的和谐没有直接关系。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>根据对原文的分析：
+
+1.  **分析文章的核心论点**：
+    *   文章提出“文明弹性”包含三个维度：空间弹性、制度弹性、意义弹性。
+    *   **空间弹性**：强调私人性与公共性的有机统一，反对空间固化。
+    *   **制度弹性**：强调秩序与活力、生存与发展之间的平衡，根据不同发展阶段（兴起城市需活力，成熟城市需稳定）来调整。
+    *   **意义弹性**：强调满足不同人群的意义需要，平衡不同价值。文章明确指出，如果被某种意义体系固化，城市会衰落；意义弹性的减弱会“从根基处危害城市的健康可持续发展”。
+    *   结论：保持这三种弹性对于城市健康发展（避免危机、实现发展）意义重大。
+
+2.  **逐个分析选项**：
+    *   **选项 (A)**：“当一个城市体有更好的空间弹性和制度弹性时，其意义弹性也会相应变好。”
+        *   原文将空间、制度、意义弹性并列，作为“文明弹性”的三个独立方面来论述，并未明确指出前两者的好会直接导致第三者的好。这三者是城市适应文明弹性的不同表现，虽然共同构成文明施工，但文中没有因果或相关性表述。不过，这是一个推断性问题，相较于 D 选项的直接矛盾，我们需要看哪个更明显错误。
+    *   **选项 (B)**：“城市处在不同的发展阶段时会有不同危机，制度的主要功能也会因此不同。”
+        *   原文提到：“城市有其发展周期、发展阶段”，“对一个正在兴起的城市而言，其主要任务是……激活发展活力。而对一个已经发展起来的城市而言，人们会更为注重城市制度的稳定功能。”这表明不同阶段任务（功能）不同，且原文暗示了过度僵化会导致危机。该选项符合原文逻辑。
+    *   **选项 (C)**：“要让一个城市体具有综合吸纳能力和发展潜力，就应平衡各种主义的关系。”
+        *   原文在论述“意义弹性”时指出：“启蒙主义的片面化……都会导致城市意义弹性的减弱……危害城市的健康可持续发展”。同时要求“能够同时满足多样人群的不同层面的意义需要，并能够使不同的意义与价值在总体上达到平衡与和谐”。这意味着要实现发展潜力，确实需要平衡各种意义（主义）的关系。该选项符合原文。
+    *   **选项 (D)**：“城市盛衰自有其规律，与不同的意义和价值在总体上的和谐没有直接关系。”
+        *   原文结尾部分明确指出：“保持城市的……意义弹性……对于城市社会的健康发展而言，是意义重大的。”并在前文提到“当一个城市体被某一类型的意义体系固化时，这个城市体往往不具有综合吸纳力、发展潜力……都会从根基处危害城市的健康可持续发展”。这明确建立了“意义与价值的和谐（意义弹性）”与“城市健康发展（盛衰/可持续发展）”之间的直接关系。选项 D 声称“没有直接关系”，这与原文观点完全相反。
+
+3.  **结论**：
+    *   选项 B 和 C 是对原文内容的正确概括。
+    *   选项 D 直接否定了原文中关于意义弹性与城市发展的核心观点，是明显的错误陈述。
+    *   虽然选项 A 的推断原文未直接说明，但相比之下，选项 D 是对原文核心论点的直接反驳，属于典型的逻辑错误选项。
+
+答案是D
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-english-111</span><span class='tag'>task=gaokao-english</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>It had been some time since Jack had seen the old man. College, carrier, and life itself got in the way. In fact, Jack moved clear across the country in pursuit of the dreams. There, in the rush of his busy life, Jack had little time to think about the past and often no time to spend with his wife and son. He was working on his future, and nothing could stop him.Over the phone, his mother told him, “Mr. Belser died last night. The funeral is Wednesday.” Memories fleshed through his mind like an old newsreel as he sat quietly remembering his childhood days.“Jack, did you hear me?”“Oh, sorry, Mom. Yes, I heard you. it’s been so long since I thought of him. I’m sorry, but I honestly thought he died years ago,” Jack said.“Well, he didn’t forget you. Every time I saw him he’d ask how you were doing. He’d reminisce (回忆) about the many days you spent over ‘his side of the fence’ as he put it, ” Mom told him.“I loved that old house he lived in,” Jack said.“You know, Jack, after your father died, Mr. Belser stepped in to make sure you had a man’s influence in your life,” she said.“He’s the one who taught me carpentry. I wouldn’t be in this business if it weren’t for him. He spent a lot of time teaching me things he thought were important. Mom, I’ll be there for the funeral.” Jack said.Busy as he was, he kept his word. Jack caught the next flight to his hometown. Mr. Belser’s funeral was small and uneventful. He had no children of his own, and most of his relatives had passed away.The night before he had to return home, Jack and his Mom stopped by to see the old house next door one more time, which was exactly as he remembered. Every step held memories. Every picture, every piece of furniture … Jack stopped suddenly.“What’s wrong, Jack?” his Mom asked.“The box is gone,” he said.“What box?” Mom asked.“There was a small gold box that he kept locked on top of his desk. I must have asked him a thousand times what was inside. All he’d ever tell me was ‘the thing I value most’,” Jack said.It was gone. Everything about the house was exactly how Jack remembered it, except for the box. He figured someone from the Belser family had taken it.“Now I’ll never know what was so valuable to him,” Jack said sadly.Returning to his office the next day, he found a package on his desk. The return address caught his attention.“Mr. Harold Belser” it read.Jack tore open the package. There inside was the gold box and an envelope. Jack’s hands shook as he read the note inside,“Upon my death, please forward this box and its contents to Jack Bernett. It’s the thing I valued most in my life.” A small key was taped to the letter. His heart racing, and tears filling his eyes. Jack carefully unlocked the box. There inside he found a beautiful gold pocket watch. Running his fingers slowly over the fine cover, he opened it.Inside he found these words carved: “Jack. Thanks for your time! Harold Belser.”“Oh. My God! This is the thing he valued most …”Jack held the watch for a few minutes, then called his assistant and cleared his appointments for the next two days. “Why?” his assistant asked.“I need some time to spend with my son,” he said.
+Question: Why did Jack think Mr. Belser died years ago?
+Answer Choices:    A. College and career prevented him from remembering Mr. Belser.    B. Jack was too busy with his business and family to think about Mr. Belser.    C. Jack was too busy realizing his dreams to think about Mr. Belser.    D. His present busy life washed away his children memories.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The text explicitly states in the first sentence: &quot;College, carrier, and life itself got in the way.&quot; This is followed by the explanation of why he missed the past, without seeing the old man. Later, it mentions his village move for &quot;the dreams&quot;. However, the question asks why he thought Mr. Belser died years ago, which relates directly to the passage of time mentioned in the first sentence where specific activities (&quot;College, career&quot;) are cited as the things that &quot;got in the way&quot;, preventing him from seeing or thinking about the past. Option A mirrors this specific wording and logic. Option C is also factually supported by the text (&quot;pursuit of the dreams&quot;), but Option A uses the specific nouns (&quot;College&quot;, &quot;career/carter&quot;) from the sentence that directly addresses the time gap (&quot;It had been some time&quot;). Option B is incorrect because the text says he had &quot;no time&quot; for family. Option D is incorrect as the text does not mention &quot;children memories&quot; being washed away, but rather him missing his wife and son. Between A and C, A aligns more closely with the specific facts listed as the reason for the time lapse in the opening context.
+
+Answer choices analysis:
+A. College and career prevented him from remembering Mr. Belser. (Matches &quot;College, carrier... got in the way.&quot; and &quot;little time to think&quot;)
+B. Jack was too busy with his business and family to think about Mr. Belser. (Incorrect, text says &quot;no time to spend with his wife and son&quot;)
+C. Jack was too busy realizing his dreams to think about Mr. Belser. (Supported, but &quot;College and career&quot; is the specific list in the first sentence regarding the &quot;some time&quot;).
+D. His present busy life washed away his children memories. (Incorrect wording and focus).
+
+The most direct textual evidence for why he had lost track of the past (and thus thought the old man was dead years ago) is the mention of the obstacles (&quot;College, carrier&quot;) that &quot;got in the way&quot; at the very beginning.
+
+The answer is A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-geography-158</span><span class='tag'>task=gaokao-geography</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：地处黄土高原的汾川河流域多年来植被覆盖率大幅度提高，2013年7月，汾川河流域降水异常增多，表一为当月6次降水过程的时长，降水重和汾川河洪峰情况。第5次降水形成的洪水含沙量低。第6次降水形成的洪水含沙量极高。\begin{tabular}{|c|c|c|c|}
+\hline 降水序号 &amp; 降水历时 (天) &amp; 降水量 $/ \mathrm{mm}$ &amp; 汾川河洪峰情况 \\
+\hline 1 &amp; 2 &amp; 53.0 &amp; 无明显洪峰 \\
+\hline 2 &amp; 4 &amp; 80.3 &amp; 无明显洪峰 \\
+\hline 3 &amp; 5 &amp; 100.1 &amp; 无明显洪峰 \\
+\hline 4 &amp; 2 &amp; 73.2 &amp; 无明显洪峰 \\
+\hline 5 &amp; 2 &amp; 90.7 &amp; 洪峰流量 $346 \mathrm{~m}^3 / \mathrm{s}$ \\
+\hline 6 &amp; 2 &amp; 54.4 &amp; 洪峰流量 $1750 \mathrm{~m}^3 / \mathrm{s}$ \\
+\hline
+\end{tabular} 第6次降水产生的洪水含沙量极高，其泥沙主要源于（　　）
+选项：(A)河床 (B)沟谷 (C)裸露坡面 (D)植被覆盖坡面
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1.  **分析题干背景**：题目描述了汾川河流域（黄土高原地区）的情况。关键信息是“多年来植被覆盖率大幅度提高”。这意味着整个流域的地表侵蚀稳定性主要得到了改善，大部分坡面（Slope）因为植被覆盖而变得相对稳固，不容易产生新的松散土壤。
+2.  **分析降水与洪水数据**：
+    *   **第 5 次降水**：降雨量 90.7mm，洪峰流量 346 m³/s，含沙量低。
+    *   **第 6 次降水**：降雨量 54.4mm（比第 5 次少），洪峰流量 1750 m³/s（比第 5 次大得多），含沙量极高。
+    *   **核心矛盾**：在降雨量反而减少、总体植被覆盖率提高的背景下，第 6 次降水产生的洪水流量更大且含沙量极高。
+3.  **推断泥沙来源**：
+    *   **(D) 植被覆盖坡面**：植被覆盖通常能减少土壤侵蚀，降低泥沙含量。既然背景强调“植被覆盖率大幅提高”，说明大部分坡面已经盖满植被。如果主要来源是现植被覆盖的坡面（D），这与植被的固土保水功能相悖（一般植被好对应含沙量低）。如果第 6 次是植被覆盖坡面产生的，说明植被防护失效，但这通常不作为“主要来源”的标准答案，因为植被改善是背景前提。
+    *   **(C) 裸露坡面**：裸露坡面产生的泥沙通常更多，但题干强调“植被覆盖率大幅度提高”，暗示裸露坡面面积已经大幅减少。如果主要来源是裸露坡面，前几次的降水过程（1-5 次）中除第 6 次外理应也有高含沙量，但题目中 1-4 次无明显洪峰，5 次洪峰小且含沙低，说明大部分区域的侵蚀能力已被植被压制。因此，极高含沙量应源自未被植被压制的特殊区域。
+    *   **(A) 河床**：河床是洪水流经的场所，虽然会 يتضمن 淤积，但“含沙量极高”通常指洪水在冲刷过程中挟带的悬浮泥沙。河床泥沙来源往往也是上中游的侵蚀补给。
+    *   **(B) 沟谷**：在黄土高原的水系中，沟谷是汇水区的关键。即便植被越覆盖率提高，**沟谷**往往仍保留有一定的侵蚀性（如沟头侵蚀、沟底冲刷）。特别是在第 6 次降水这种小概率的极端降水下，即使植被好，**沟谷**中长时间积累的泥沙会被集中冲刷并快速排入河道。
+        *   **对比分析**：植被覆盖坡面（D）对应的是日常低流量、低含沙量（如事件 5）的特征，即植被起到了削峰减砂作用。
+        *   **事件 6 特征**：降雨量小但洪峰大，且泥沙极高。这通常是因为来水通过**沟谷**的高浓度流速，瞬间冲刷了沟谷内部储存的、早年并未被植被完全锁定的泥沙，或者沟谷切蚀了沉积物。
+        *   **地理逻辑**：在植被恢复良好的地区，如果发生特大洪水导致含沙量激增，通常认为是**沟谷**残留的侵蚀面或沟内沉积物被释放所致。
+4.  **结论**：根据黄土高原水系演变及高考地理题型的常见逻辑，植被改善后，坡面泥沙来源已大幅降低，极端洪水下的高含沙量主要源于沟谷中沉积物集中的侵蚀冲刷。**沟谷**是主要来源。
+
+答案是 B。
+
+答案是B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-history-88</span><span class='tag'>task=gaokao-history</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：东汉时期“豪强”的基本特征是
+选项：(A)拥兵自重称霸一方 (B)依靠巧取豪夺聚敛财富 (C)通过科举获得功名 (D)世代享有政治经济特权
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>关于东汉时期“豪强”的基本特征，我们需要结合当时东汉末年的历史背景与社会结构进行分析。
+
+1.  **分析选项 (C) 通过科举获得功名**：
+    *   科举制度（Keju）作为一种选拔官员的正规制度，正式确立是在隋朝，并在唐朝得到完善。
+    *   东汉时期主要的选官制度是“察举制”（推荐制）和“征辟制”。
+    *   因此，(C) 选项不符合史实，排除。
+
+2.  **分析选项 (B) 依靠巧取豪夺聚敛财富**：
+    *   东汉时期，“土地兼并”现象极为严重。豪强地主通过兼并小自耕农的土地、强制转嫁赋税，以及利用私属奴婢等方式，积累了大量的土地和财富。
+    *   “巧取豪夺”是对豪强地主聚敛财富手段（包括兼并、掠夺、隐匿田产等）的概括性描述，符合历史事实。
+    *   因此，(B) 选项正确。
+
+3.  **分析选项 (D) 世代享有政治经济特权**：
+    *   豪强地主阶层的核心特征就是家族式经营。他们通过联姻、宗法关系凝聚力量，实行“地缘 + 血缘”的地方统治。
+    *   在经济上，他们拥有私田和依附人口；在政治上，他们通过“乡举里选”等方式把持地方资源，并常享有徭役、赋税减免等特权，这种特权往往在家族内部继承（世代享有）。
+    *   这是豪强地主阶层长期存在和稳固的特点。
+    *   因此，(D) 选项正确。
+
+4.  **分析选项 (A) 拥兵自重称霸一方**：
+    *   东汉中期以后，随着中央集权的逐渐削弱，地方豪强为了自保和扩张，纷纷组建私兵（私属武装）。
+    *   到了东汉末年，这种“拥兵自重”的现象极度普遍，导致地方割据势力坐大，从而形成了“称霸一方”的局面，最终导致了东汉的灭亡。即使在早期，豪强也常带有武装性质（如护卫、器械）。
+    *   在历史考题的常规语境中，军事势力（拥兵）被视为豪强政治控制能力的重要组成部分，是“ temel&quot;特征之一。
+    *   因此，(A) 选项正确。
+
+**总结**：
+东汉豪强地主的基本特征主要包括经济上的土地兼并聚敛财富（B）、政治上的家族世袭特权（D）以及军事上的拥兵自重（A）。选项 C 属于时间线上的错误（科举制）。
+
+答案是 ABD</pre></details></div></section>
+</main>
+</body>
+</html>

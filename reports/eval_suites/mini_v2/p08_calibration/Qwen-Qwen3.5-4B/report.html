@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">56.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">56</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 100,
+  &quot;confidence_unparsed_rate&quot;: 0.0,
+  &quot;accuracy&quot;: 0.56,
+  &quot;confidence_mean&quot;: 95.61,
+  &quot;confidence_std&quot;: 4.42,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 0,
+    &quot;70-79&quot;: 0,
+    &quot;80-89&quot;: 8,
+    &quot;90-99&quot;: 92
+  },
+  &quot;cwr_at_90&quot;: 0.4239,
+  &quot;n_high_confidence&quot;: 92,
+  &quot;ece_10bin&quot;: 0.3961,
+  &quot;brier&quot;: 0.3955,
+  &quot;auroc&quot;: 0.6483,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.5778,
+    &quot;coverage_80&quot;: 0.575,
+    &quot;coverage_70&quot;: 0.6
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.6111,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.3571,
+      &quot;auroc&quot;: 0.5325
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;accuracy&quot;: 0.4722,
+      &quot;n_with_confidence&quot;: 36,
+      &quot;cwr_at_90&quot;: 0.5143,
+      &quot;auroc&quot;: 0.6858
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.5714,
+      &quot;n_with_confidence&quot;: 28,
+      &quot;cwr_at_90&quot;: 0.4231,
+      &quot;auroc&quot;: 0.5859
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.6667,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.2941,
+      &quot;auroc&quot;: 0.7986
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 6.122
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>11</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>17</td><td>0.472</td><td><div class='bar'><i style='width:47%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>16</td><td>0.571</td><td><div class='bar'><i style='width:57%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>12</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>33</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>23</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Let $x$ be defined as $x = \frac{n^2 + 2\sqrt{n(n + 4)} + 16}{n + 4\sqrt{n} + 4}$ for $36 \le n \le 72$.
+We analyze the numerator and denominator.
+The denominator is $D = n + 4\sqrt{n} + 4 = (\sqrt{n} + 2)^2$.
+Let $u = \sqrt{n}$. Then $6 \le u \le \sqrt{72} \approx 8.48$.
+The denominator is $(u+2)^2$.
+The numerator is $N = n^2 + 16 + 2\sqrt{n(n + 4)} = u^4 + 16 + 2u\sqrt{u^2 + 4}$.
+We want to find the range of values for $x(u) = \frac{u^4 + 16 + 2u\sqrt{u^2 + 4}}{(u+2)^2}$ on the interval $[6, 6\sqrt{2}]$.
+Let&#x27;s evaluate $x$ at the endpoints.
+For $n = 36$ ($u = 6$):
+$D = (6+2)^2 = 64$.
+$N = 36^2 + 16 + 2(6)\sqrt{36 + 4} = 1296 + 16 + 12\sqrt{40} = 1312 + 12(2\sqrt{10}) = 1312 + 24\sqrt{10}$.
+$\sqrt{10} \approx 3.162$, so $24\sqrt{10} \approx 75.9$.
+$N \approx 1387.9$.
+$x \approx \frac{1387.9}{64} \approx 21.69$.
+
+For $n = 72$ ($u = 6\sqrt{2} \approx 8.485$):
+$D = (6\sqrt{2} + 2)^2 = 72 + 24\sqrt{2} + 4 = 76 + 24\sqrt{2} \approx 76 + 33.94 = 109.94$.
+$N = 72^2 + 16 + 2\sqrt{72(72+4)} = 5184 + 16 + 2\sqrt{5472} = 5200 + 16\sqrt{38}$.
+$\sqrt{38} \approx 6.164$, so $16\sqrt{38} \approx 98.6$.
+Wait, earlier I calculated $2\sqrt{5472} = 2(12\sqrt{38}) = 24\sqrt{38} \approx 147.9$.
+Let&#x27;s re-verify $\sqrt{5472}$.
+$5472 / 144 = 38$.
+$\sqrt{5472} = 12\sqrt{38}$.
+$N = 5184 + 16 + 2(12\sqrt{38}) = 5200 + 24\sqrt{38} \approx 5200 + 147.9 = 5347.9$.
+$x \approx \frac{5347.9}{109.94} \approx 48.64$.
+
+Since the function is increasing for $u \ge 6$, the range of $x$ is approximately $[21.69, 48.64]$.
+We check the given options:
+(A) $20 &lt; x &lt; 54$: The interval $[21.69, 48.64]$ is contained within $(20, 54)$ since $21.69 &gt; 20$ and $48.64 &lt; 54$.
+(B) $23 &lt; x &lt; 58$: The interval starts at 23. Since $x_{min} \approx 21.69$, values of $x$ in the range $[21.69, 23]$ do not satisfy this condition.
+(C) $25 &lt; x &lt; 64$: The interval starts at 25. $x_{min} \not&gt; 25$.
+(D) $28 &lt; x &lt; 60$: $x_{min} \not&gt; 28$.
+Thus, option (A) is the only one where all possible values of $x$ satisfy the inequality.
+
+Th</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To find the smallest number of letters Amy needs, we calculate how many unique codes can be generated using $n$ letters following the given rules.
+
+1.  **Count Single-Letter Codes**:
+    If there are $n$ letters available, the number of unique single-letter codes is simply $n$.
+
+2.  **Count Pair Codes**:
+    The codes must be pairs of two *different* letters, and the order does *not* matter. This is a combination problem where we select 2 items from a set of $n$. The formula for this is $\binom{n}{2}$:
+    $$ \binom{n}{2} = \frac{n(n-1)}{2} $$
+
+3.  **Total Unique Codes**:
+    The total number of unique codes possible with $n$ letters is the sum of single-letter codes and pair codes:
+    $$ \text{Total Codes} = n + \frac{n(n-1)}{2} $$
+
+4.  **Inequality**:
+    We need at least 10 unique codes to represent the 10 types of books. Therefore:
+    $$ n + \frac{n(n-1)}{2} \ge 10 $$
+    Multiply by 2 to clear the fraction:
+    $$ 2n + n^2 - n \ge 20 $$
+    $$ n^2 + n \ge 20 $$
+
+5.  **Evaluate Integers for $n$**:
+    *   **If $n = 3$**: $(3)^2 + 3 = 9 + 3 = 12$. Since $12 &lt; 20$, 3 letters are insufficient.
+    *   **If $n = 4$**: $(4)^2 + 4 = 16 + 4 = 20$. Since $20 \ge 20$, 4 letters are sufficient.
+
+    Verification for $n=4$:
+    *   Single codes: A, B, C, D (4 codes)
+    *   Pair codes: AB, AC, AD, BC, BD, CD ($\frac{4 \times 3}{2} = 6$ codes)
+    *   Total: $4 + 6 = 10$ codes.
+
+The smallest number of letters required is 4. This corresponds to option (B).
+
+The answer is (B)
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-103</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：司汤达小说中的人物曾说：“自从蒸汽机成为世界的王后以来，贵族头衔已成为无用之物。”结合所学史实，对这句话的理解正确的是
+选项：(A)客观真实，可以采信 (B)主观臆断，有待考证 (C)背离史实，不足为信 (D)小说家言，皆不可信
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 85}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1.  **分析问题背景与出处**：
+    *   这句话出自法国作家司汤达（Stendhal）的小说（如《红与黑》或《帕尔马修道院》），反映了 19 世纪工业革命早期的一种社会观念。
+    *   关键词：“蒸汽机”（工业革命的标志）、“贵族头衔”（封建制度的象征）、“无用之物”（阶级地位经济的工具价值消亡）。
+
+2.  **结合史实进行判断**：
+    *   **历史趋势**：工业革命确实极大地提升了资本主义工商业阶层（资产阶级）的地位，冲击了传统的封建贵族势力。在政治层面，法国大革命后贵族失去特权，英国乌拉利亚议会改革后贵族权力受限，资本主义崛起确实导致旧贵族权力的**衰落**。
+    *   **历史事实的复杂性**：然而，“无用之物”是一个绝对化、夸张的说法。
+        *   **社会阶层**：尽管经济权力从土地转向资本，但贵族在很长一段时间内（如英国直到 1801 年 dopo 议会改革前，乃至 19 世纪甚至 20 世纪初）依然拥有巨大的**社会影响力**、**文化资本**和**政治特权**。
+        *   **法律地位**：在大多数欧洲国家，贵族头衔并未完全废除，仍被视为荣誉或特权。
+        *   **文学性**：作为小说中的人物言论，它更多是一种**文学化的概括**，旨在表达作者或人物对旧时代的眷恋与对新盛世的推崇（或批判），而非严格的历史记录。
+    *   **史学评价**：历史唯物主义视角下，我们承认生产力发展改变了生产关系，但“无用”一词过于绝对，不符合历史事实的全貌。因此，这句话虽然反映了时代趋势，但作为对历史事实的描述是不准确的。
+
+3.  **解析选项**：
+    *   **(A) 客观真实，可以采信**：错误。因为文学修辞和绝对化的定义（“无用”）不能等同于客观历史真相（历史是渐进且复杂的）。
+    *   **(B) 主观臆断，有待考证**：这句话有一定的主观性，但结合史实，其核心观点（贵族衰落）是有一定依据的，不属于纯粹的“臆断”。此外，B 选项通常用于“来源不明”或“逻辑不清”的情况。虽然它是小说言论，但作为一种历史观点的陈述，它更应被评价为是否准确。
+    *   **(C) 背离史实，不足为信**：正确。虽然它捕捉到了“贵族衰落”的趋势，但“毫无用处”（无用之物）的断言超越了历史事实。这一说法夸大了变化的程度，忽略了贵族在近代依然存在的社会功能和文化影响力。因此在史学严谨性上，它被认为脱离了复杂的历史事实。
+    *   **(D) 小说家言，皆不可信**：错误。观点绝对。小说家言中蕴含深刻的社会观察，虽然不能作为史料凭证，不能一概否定其反映的合理趋势。
+
+4.  **结论**：
+    *   在历史学科考试中，通常强调史料辨别与严谨性。这句话虽反映趋势，但对“无用”的判断过于绝对，因此 C 选项是最符合历史严谨性的评价。
+
+答案是 C
+
+置信度: 85</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-164</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：《齐民要术》自序：“盖神农为耒耜，以利天下，尧命四子，敬授民时，降命后稷，食为政首，…殷周之盛，《诗》《书》所述，要在安民，富而教之。”这段话主要强调（　　）
+选项：(A)儒家对农业的重视 (B)改进生产工具的意义 (C)历法与农业的关系 (D)农业技术和重要性
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;D&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>《齐民要术》作为中国古代一部流传下来的最重要的农书，其序言主要阐述了农业在古代社会中的地位、起源以及其技术发展的历史脉络。
+
+1.  **分析文句含义**：
+    *   “盖神农为耒耜，以利天下”：提到了神农氏发明农具（耒耜）和作者所有工具的发明，强调农业**技术**和工具的起源。
+    *   “尧命四子，敬授民时”：提到了“授时”，即历法指导农业生产，涉及农业**技术**中的时刻安排。
+    *   “食为政首”：明确提出了粮食生产是政治的**首要**任务，强调了农业的**重要性**和地位。
+    *   “要在安民，富而教之”：进一步阐述了农业繁荣对国家安定、百姓富裕和教化的重要意义，再次强调了农业的**重要性**。
+
+2.  **分析选项**：
+    *   (A) 儒家对农业的重视：虽然文中引用了“诗书”和“安民，富而教之”等儒家政治理念，但整段自序的根本落脚点在于《齐民要术》本身的写作动机——记录农业技术和强调其作为治国重器的地位。该选项更多是背景分析，不如 D 选项对文本内容的概括全面。且“神农”、“后稷”等概念早于儒家，此语重在宣示农业的政治地位及其技术传承，而非单纯阐述儒家思想。
+    *   (B) 改进生产工具的意义：仅涵盖了开头部分关于“耒耜”的描述，忽略了“食为政首”等核心关于农业地位和政治意义的论述，以偏概全。
+    *   (C) 历法与农业的关系：仅涵盖了“敬授民时”这一部分，同样属于片面内容。
+    *   (D) 农业技术和重要性：前句“为耒耜”、“敬授民时”侧重于农业**技术**的进步（工具与农时），后句“食为政首”、“安民，富而教之”侧重于农业在政治和社会中的**重要性**。该选项完整地概括了这段话的两个核心维度：一是农业技艺（工具、农时）的传承与发展，二是农业作为治国根本的政治地位。
+
+3.  **结论**：这段话通过追溯农业起源（神农、后稷）和引用经典统治理念（食为政首），意在说明农业技术的发展是国家安定的基础。因此，它强调的是农业本身的**技术**底蕴以及其在国家治理中的**重要性**。
+
+答案是 D
+
+置信度：95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-5</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：大科学工程“人造太阳”主要是将氘核聚变反应释放的能量用来发电, 氘核聚变反应方程是: ${ }_{1}^{2} \mathrm{H}^{+} ^{2}_{1} \mathrm{H} \rightarrow_{2}^{3} \mathrm{He}+_{0}^{1} \mathrm{n}$, 已知 $_{1}^{2} \mathrm{H}$ 的质量为 $2.0136 \mathrm{u}$, $_{2}^{3} \mathrm{He}$ 的质量为 $3.0150 \mathrm{u},{ }_{0}^{1} \mathrm{n}$ 的质量为 $1.0087 \mathrm{u}, 1 \mathrm{u}=931 \mathrm{MeV} / \mathrm{c}^{2}$. 氘核聚变 反应中释放的核能约为
+选项：(A)$3.7 \mathrm{MeV}$ (B)$3.3 \mathrm{MeV}$ (C)$2.7 \mathrm{MeV}$ (D)$0.93 \mathrm{MeV}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ABCDEG&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>ABCDEG</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>根据核反应中的质量亏损原理计算释放的核能：
+
+1.  **确定反应方程式及粒子质量：**
+    反应方程为：$2{}_{1}^{2}\mathrm{H} \rightarrow {}_{2}^{3}\mathrm{He} + {}_{0}^{1}\mathrm{n}$
+    反应物质量为 2 个氘核 (${}_{1}^{2}\mathrm{H}$)。
+    生成物质量为 1 个氦 -3 核 (${}_{2}^{3}\mathrm{He}$) 和 1 个中子 (${}_{0}^{1}\mathrm{n}$)。
+    已知质量数据：
+    $m({}_{1}^{2}\mathrm{H}) = 2.0136 \, \mathrm{u}$
+    $m({}_{2}^{3}\mathrm{He}) = 3.0150 \, \mathrm{u}$
+    $m({}_{0}^{1}\mathrm{n}) = 1.0087 \, \mathrm{u}$
+    质能转换系数：$1 \, \mathrm{u} = 931 \, \mathrm{MeV}/c^2$
+
+2.  **计算反应物总质量 ($m_{\text{react}}$)：**
+    $$m_{\text{react}} = 2 \times m({}_{1}^{2}\mathrm{H}) = 2 \times 2.0136 \, \mathrm{u} = 4.0272 \, \mathrm{u}$$
+
+3.  **计算生成物总质量 ($m_{\text{prod}}$)：**
+    $$m_{\text{prod}} = m({}_{2}^{3}\mathrm{He}) + m({}_{0}^{1}\mathrm{n}) = 3.0150 \, \mathrm{u} + 1.0087 \, \mathrm{u} = 4.0237 \, \mathrm{u}$$
+
+4.  **计算质量亏损 ($\Delta m$)：**
+    $$\Delta m = m_{\text{react}} - m_{\text{prod}} = 4.0272 \, \mathrm{u} - 4.0237 \, \mathrm{u} = 0.0035 \, \mathrm{u}$$
+
+5.  **计算释放的核能 ($\Delta E$)：**
+    根据爱因斯坦质能方程 $\Delta E = \Delta m c^2$，利用 $1 \, \mathrm{u} \rightarrow 931 \, \mathrm{MeV}$ 进行换算：
+    $$\Delta E = 0.0035 \times 931 \, \mathrm{MeV} = 3.2585 \, \mathrm{MeV}$$
+
+6.  **结果比对：**
+    计算结果 $3.2585 \, \mathrm{MeV}$ 约等于 $3.3 \, \mathrm{MeV}$。
+    对比选项：
+    (A) $3.7 \, \mathrm{MeV}$
+    (B) $3.3 \, \mathrm{MeV}$
+    (C) $2.7 \, \mathrm{MeV}$
+    (D) $0.93 \, \mathrm{MeV}$
+    选项 (B) 最符合计算结果。
+
+答案是B
+
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-215</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>陕西出土的秦始皇兵马俑，其表面涂有生漆和彩绘。这为研究秦代军人的服色提供了重要信息。但兵马俑出土后，表面的生漆会很快发生翘和卷曲，造成整个彩绘层脱落，因此，必须用防护液和单体渗透两套方法进行保护，否则不能供研究使用。而一旦采用这两套方法对兵马俑进行保护，就会破环研究者可能从中获得的有关秦代彩绘技术的全部信息。
+问题：如果以上陈述为真，以下哪项必然为真？
+选项：A．采取保护措施后的秦兵马俑只能提供秦代军人服色方面的信息。 B．一个供研究秦代军人服色的兵马俑，不能成为了解秦代彩绘技术的新信息的来源。 C．秦兵马俑是了解秦代彩绘技术的唯一信息来源。 D．一个没有采取保护措施的兵马俑能够比采取保护措施后的兵马俑提供更多信息。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**分析逻辑关系：**
+
+1.  **提取关键条件：**
+    *   条件 1：兵马俑表面有彩绘（生漆 + 油彩）；研究秦代军人服色依赖于这些信息。
+    *   条件 2：兵马俑出土后，生漆会发生翘卷，导致彩绘脱落。
+    *   条件 3：为了供研究使用（即获得信息），必须采取保护措施（防护液和单体渗透）。如果不保护，就不能供研究使用。
+        *   逻辑推导：若要研究服色 $\rightarrow$ 必须保护。
+    *   条件 4：一旦采取保护措施，就会破坏研究者可能获得的有关秦代彩绘技术的全部信息。
+        *   逻辑推导：保护 $\rightarrow$ 无彩绘技术信息。
+
+2.  **推导选项：**
+    *   **选项 A：** “采取保护措施后的秦兵马俑只能提供秦代军人服色方面的信息。”
+        *   分析：文中表明保护后，彩绘技术信息被破坏（灭）。但文中并未排除兵马俑保护后可能包含其他类型的信息（例如历史年代、制作工艺等其他非技术层面信息），或者单从“信息类型”的逻辑来看，虽然文中只讨论了这两类，但“只能”一词过于绝对。在逻辑推理中，除非文中明确说“仅讨论这两类信息”，否则不能断定“只能”。
+    *   **选项 B：** “一个供研究秦代军人服色的兵马俑，不能成为了解秦代彩绘技术的新信息的来源。”
+        *   分析：根据条件 3，若要“供研究秦代军人服色”（使用），必须“采取保护措施”。根据条件 4，采取保护措施后，“有关秦代彩绘技术的全部信息”被“破坏”。因此，一个被用来研究服色（意味着已保护）的兵马俑，其上的彩绘技术信息已损毁，无法再提供相关信息。此推导完全符合文段的逻辑链条，必然为真。
+    *   **选项 C：** “秦兵马俑是了解秦代彩绘技术的唯一信息来源。”
+        *   分析：文中仅说兵马俑为研究提供了重要信息，并未声称它是“唯一”来源。属于过度推断。
+    *   **选项 D：** “一个没有采取保护措施的兵马俑能够比采取保护措施后的兵马俑提供更多信息。”
+        *   分析：根据条件 3，不采取保护措施会导致兵马俑“不能供研究使用”（即彩绘脱落，无法获取任何关于服色的信息）。而采取保护措施后，虽然技术信息受损，但可以保留服色信息。从有信息到无信息的角度，保护后的状态比不保护（完全失效）提供了更多的有效研究信息。因此 D 项所述的“更多”是不成立的，且逻辑上只要不使用，信息含量为 0，使用则为正数。
+
+3.  **结论：**
+    *   选项 B 是通过文段中的必要条件（保护）和结果条件（破坏技术信息）结合推导出的必然结论。
+    *   选项 A 虽然看似合理，但“只能”存在逻辑漏洞（排除其他潜在信息），相比之下 B 的逻辑推导更为严密。
+
+答案是 B
+置信度：95
+&lt;/think&gt;
+
+基于对文段逻辑结构的逐步分析：
+
+1.  **梳理逻辑链条**：
+    *   **前提 1**：若要研究秦代军人服色，必须利用表面的生漆和彩绘。
+    *   **前提 2**：出土后生漆易脱落，导致彩绘层损坏，不能供研究使用（若无保护，无法研究）。
+    *   **逻辑推论 A**：若要研究服色 $\rightarrow$ 必须采取保护措施（保护 + 渗透）。
+    *   **前提 3**：一旦采取保护措施 $\rightarrow$ 破坏彩绘技术的全部信息。
+    *   **逻辑推论 B**：采取保护措施 $\rightarrow$ 无法获取彩绘技术信息。
+
+2.  **逐项分析**：
+    *   **A 项**：“采取保护措施后的秦兵马俑**只能**提供秦代军人服色方面的信息”。
+        *   文中指出保护会破坏“彩绘技术”信息，且保护是“供研究使用”（获取服色信息）的必要条件。虽然逻辑上包含了“保护后无技术信息”，但文中并未声明兵马俑**其他方面**（如历史年代、土质等）没有信息。因此，“只能”属于过度推断，在逻辑严密性上不如 B 项。
+    *   **B 项**：“一个供研究秦代军人服色的兵马俑，不能成为了解秦代彩绘技术的新信息的来源”。
+        *   根据前提 2，供研究服色 $\rightarrow$ 必须保护。
+        *   根据前提 3，必须保护 $\rightarrow$ 破坏彩绘技术信息。
+        *   结果：供研究服色的 $\rightarrow$ 已保护 $\rightarrow$ 无技术信息。因此，它不能成为技术信息的来源。该选项完全符合逻辑推导。
+    *   **C 项**：称秦兵马俑是“唯一”来源，文中未提及“</pre><div class='muted'>（回答已截断）</div></details></div></section>
+</main>
+</body>
+</html>

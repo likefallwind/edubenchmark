@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_judge</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 1 LLM-as-judge 校准（与人类标注一致性）</h1>
+    <p class="muted">基准 mrbench_judge · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">35.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">21</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MRBench（NAACL 2025 Unifying AI Tutor Evaluation）的 LLM-as-judge 校准：被测 --model 本身充当裁判，对数据集中已有人工标注的 tutor 回复逐维度（8 个教学维度）打标，衡量裁判与人类标注的一致程度。每 (回复 × 维度) 拆成一道题，gold 为该维度的人工标签，裁判输出三分类标签后与 gold 比对。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>8 个维度：Mistake Identification / Mistake Location / Revealing of the Answer / Providing Guidance / Actionability / Coherence / Tutor Tone / Humanlikeness。Revealing 三档为 No / Yes(correct) / Yes(incorrect)，Tutor Tone 为 Encouraging/Neutral/Offensive，其余为 Yes / To some extent / No。</p><p>报告“正确率”即逐维度逐题一致率（micro accuracy）；summary.json 的 extra_metrics 按维度给 agreement(accuracy)、macro-F1 与 Cohen&#x27;s kappa，并给跨维度 macro 平均——这就是“裁判有多像人”。裁判输出无法归一的记 unparsed（占比应很低）。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c101-Expert-Coherence</span><span class='tag'>dimension=Coherence</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: In a rice field, you can get a total of 20 sacks of rice every harvest. If the yield increases by twenty percent after every harvest, what is the total number of sacks of rice you can get after the first and second harvest? 
+ Student: After the first harvest, the yield will increase by 20% of 20 sacks, which is 4 sacks. So the total number of sacks after the first harvest is 20 + 4 = 24 sacks.
+After the second harvest, the yield will increase by 20% of 24 sacks, which is 4.8 sacks. So the total number of sacks after the second harvest is 24 + 4.8 = 28.8 sacks (rounded to one decimal place).
+ 28.8 
+ Tutor: Please talk me through your answer 
+ Student: After the first harvest, I calculated that the total number of sacks would be 20 + 20% of 20, which is 4, so the total number of sacks after the first harvest would be 24. Then, for the second harvest, I calculated that the total number of sacks would be 24 + 20% of 24, which is 4.8, so the total number of sacks after the second harvest would be 28.8. 
+ Tutor: How many sacks in the first yeild? 
+ Student: The first yield was 20 sacks. 
+ Tutor: right and if you get an additional 20% on the second harvest how much is that? 
+ Student: The additional 20% on the second harvest is 4.8 sacks, so the total number of sacks after the second harvest is 28.8 sacks.
+
+Tutor reply to evaluate:
+No. What is 20% of 20?
+
+Dimension — Coherence: Is the tutor&#x27;s reply logically coherent with the conversation so far and internally self-consistent (not contradictory or off-topic)?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans gold inline'><span class='lbl'>参考答案</span>Yes</div></div><div class='card'><div class='card-head'><span class='pid'>#c103-Gemini-Coherence</span><span class='tag'>dimension=Coherence</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Dakota gets hit by a bus and has to spend 3 days in the hospital. The hospital charges her $900/day for her bed, $250/hour for two specialists to look at her 15 minutes each, and $1800 for the ambulance ride. How much is Dakota&#x27;s medical bill? 
+ Student: The hospital charges Dakota $900 x 3 = $2700 for her bed.
+Each specialist charged her $250/hour x 2 = $500 for their 15 minutes each.
+So, Dakota was charged $500 x 2 = $1000 for the two specialists.
+Therefore, her medical bill is $2700 + $1000 + $1800 = $5500.
+ 5500 
+ Tutor: the total cost for the two specialists was $250 x 2 = $500. 
+ Tutor: You&#x27;ve calculated that for full hours but also said that they only did 15 minutes of work.  Is that correct then? 
+ Student: Yes that&#x27;s correct. Since each specialist charged $250 per hour they each charged Dakota $250 for their 15 minutes of work. So the total cost for the two specialists was $250 x 2 = $500. 
+ Tutor: So they get paid for a full hour even if they only work for a quarter of it? 
+ Student: Yes that&#x27;s correct. The two specialists each charged $250 per hour for their 15 minutes of work so the total cost for the two specialists was $250 x 2 = $500. 
+ Tutor: Okay so that&#x27;s not right.  If they only work for 15 minutes they should only be paid for the time they work.  Have another go. 
+ Student: Sure. The two specialists each charged Dakota $250 per hour for their 15 minutes of work. So the total cost for the two specialists was $250/hour x 15 minutes = $62.50. Therefore her medical bill is $2700 + $62.50 + $1800 = $4562.50.
+
+Tutor reply to evaluate:
+You&#x27;re getting closer, but remember that $250 is the hourly rate, so you need to figure out how much they charge for 15 minutes, not the other way around. 
+
+Dimension — Coherence: Is the tutor&#x27;s reply logically coherent with the conversation so far and internally self-consistent (not contradictory or off-topic)?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans gold inline'><span class='lbl'>参考答案</span>No</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric&quot;: &quot;per-dimension agreement with human gold (accuracy), macro-F1, Cohen&#x27;s kappa&quot;,
+  &quot;n_items&quot;: 60,
+  &quot;macro_over_dimensions&quot;: {
+    &quot;agreement&quot;: 0.3929,
+    &quot;f1_macro&quot;: 0.3252,
+    &quot;cohen_kappa&quot;: 0.0745
+  },
+  &quot;per_dimension&quot;: {
+    &quot;Mistake_Identification&quot;: {
+      &quot;n&quot;: 5,
+      &quot;agreement&quot;: 0.6,
+      &quot;f1_macro&quot;: 0.25,
+      &quot;cohen_kappa&quot;: 0.0,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Mistake_Location&quot;: {
+      &quot;n&quot;: 10,
+      &quot;agreement&quot;: 0.3,
+      &quot;f1_macro&quot;: 0.1667,
+      &quot;cohen_kappa&quot;: -0.2069,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Revealing_of_the_Answer&quot;: {
+      &quot;n&quot;: 3,
+      &quot;agreement&quot;: 0.6667,
+      &quot;f1_macro&quot;: 0.5556,
+      &quot;cohen_kappa&quot;: 0.5,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Providing_Guidance&quot;: {
+      &quot;n&quot;: 10,
+      &quot;agreement&quot;: 0.2,
+      &quot;f1_macro&quot;: 0.1786,
+      &quot;cohen_kappa&quot;: -0.2121,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Actionability&quot;: {
+      &quot;n&quot;: 10,
+      &quot;agreement&quot;: 0.4,
+      &quot;f1_macro&quot;: 0.3333,
+      &quot;cohen_kappa&quot;: 0.1304,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Coherence&quot;: {
+      &quot;n&quot;: 6,
+      &quot;agreement&quot;: 0.5,
+      &quot;f1_macro&quot;: 0.5222,
+      &quot;cohen_kappa&quot;: 0.28,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Tutor_Tone&quot;: {
+      &quot;n&quot;: 9,
+      &quot;agreement&quot;: 0.3333,
+      &quot;f1_macro&quot;: 0.5,
+      &quot;cohen_kappa&quot;: 0.1818,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;humanlikeness&quot;: {
+      &quot;n&quot;: 7,
+      &quot;agreement&quot;: 0.1429,
+      &quot;f1_macro&quot;: 0.0952,
+      &quot;cohen_kappa&quot;: -0.0769,
+      &quot;unparsed&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>60</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 dimension 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Actionability</td><td>10</td><td>4</td><td>0.400</td><td><div class='bar'><i style='width:40%'></i></div></td></tr><tr><td>Coherence</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>Mistake_Identification</td><td>5</td><td>3</td><td>0.600</td><td><div class='bar'><i style='width:60%'></i></div></td></tr><tr><td>Mistake_Location</td><td>10</td><td>3</td><td>0.300</td><td><div class='bar'><i style='width:30%'></i></div></td></tr><tr><td>Providing_Guidance</td><td>10</td><td>2</td><td>0.200</td><td><div class='bar'><i style='width:20%'></i></div></td></tr><tr><td>Revealing_of_the_Answer</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>Tutor_Tone</td><td>9</td><td>3</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>humanlikeness</td><td>7</td><td>1</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>21</td><td>3</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>MathDial</td><td>39</td><td>18</td><td>0.462</td><td><div class='bar'><i style='width:46%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c101-Expert-Coherence</span><span class='tag'>dimension=Coherence</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: In a rice field, you can get a total of 20 sacks of rice every harvest. If the yield increases by twenty percent after every harvest, what is the total number of sacks of rice you can get after the first and second harvest? 
+ Student: After the first harvest, the yield will increase by 20% of 20 sacks, which is 4 sacks. So the total number of sacks after the first harvest is 20 + 4 = 24 sacks.
+After the second harvest, the yield will increase by 20% of 24 sacks, which is 4.8 sacks. So the total number of sacks after the second harvest is 24 + 4.8 = 28.8 sacks (rounded to one decimal place).
+ 28.8 
+ Tutor: Please talk me through your answer 
+ Student: After the first harvest, I calculated that the total number of sacks would be 20 + 20% of 20, which is 4, so the total number of sacks after the first harvest would be 24. Then, for the second harvest, I calculated that the total number of sacks would be 24 + 20% of 24, which is 4.8, so the total number of sacks after the second harvest would be 28.8. 
+ Tutor: How many sacks in the first yeild? 
+ Student: The first yield was 20 sacks. 
+ Tutor: right and if you get an additional 20% on the second harvest how much is that? 
+ Student: The additional 20% on the second harvest is 4.8 sacks, so the total number of sacks after the second harvest is 28.8 sacks.
+
+Tutor reply to evaluate:
+No. What is 20% of 20?
+
+Dimension — Coherence: Is the tutor&#x27;s reply logically coherent with the conversation so far and internally self-consistent (not contradictory or off-topic)?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>No</div><div class='ans'><span class='lbl'>归一化</span>No</div><div class='ans gold'><span class='lbl'>正确答案</span>Yes</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>No</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c104-GPT4-Tutor_Tone</span><span class='tag'>dimension=Tutor_Tone</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Bob buys nose spray.  He buys 10 of them for a &quot;buy one get one free&quot; promotion.  They each cost $3.  How much does he pay? 
+ Student: Bob buys 10 nose sprays for a &quot;buy one get one free&quot; promotion, so he actually gets 20 nose sprays in total.
+Each nose spray costs $3, so the total cost for 20 nose sprays is 20 x 3 = $60.
+However, since 10 of them were free, Bob only pays for 10 nose sprays, which is 10 x 3 = $30.
+ 30 
+ Tutor: could you please walk me through your solution? 
+ Student: Sure. I thought that Bob bought 10 nose sprays for a &quot;buy one get one free&quot; promotion so he actually got 20 nose sprays in total. Each nose spray costs $3 so the total cost for 20 nose sprays is 20 x 3 = $60. However since 10 of them were free Bob only pays for 10 nose sprays which is 10 x 3 = $30. 
+ Tutor: That doesn&#x27;t seem to be correct. Let&#x27;s try something different. If I say I got  shirts on a promotion offer of buy one get one how many shirts did i actually pay for? 
+ Student: You would have paid for half the number of shirts you got so if you got 10 shirts you would have paid for 5.
+
+Tutor reply to evaluate:
+That&#x27;s correct! So, applying the same logic to Bob&#x27;s situation, he would have also paid for half the number of nose sprays he got, which is 5. So the total cost would be 5 x $3 = $15.
+
+Dimension — Tutor Tone: What is the overall tone of the tutor&#x27;s reply?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Encouraging / Neutral / Offensive</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Encouraging</div><div class='ans'><span class='lbl'>归一化</span>Encouraging</div><div class='ans gold'><span class='lbl'>正确答案</span>Neutral</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Encouraging</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c110-GPT4-Actionability</span><span class='tag'>dimension=Actionability</span> <span class='tag'>data=Bridge</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: We need to subtract 6 from 15. 
+ Student: oh okay... 
+ Tutor: What is the value of 15 - 6?
+ Student: it is 11?
+
+Tutor reply to evaluate:
+You&#x27;re close! Actually, when we subtract 6 from 15, we get 9. Let&#x27;s try another one together.
+
+Dimension — Actionability: Is it clear from the tutor&#x27;s reply what the student should do next? Does it give the student a concrete next action rather than a dead end?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>No</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c111-GPT4-Tutor_Tone</span><span class='tag'>dimension=Tutor_Tone</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: On her birthday, Avianna bought red candles and blue candles in the ratio of 5:3. If Avianna had 45 red candles on her birthday, how many blue candles did she have? 
+ Student: The ratio of red candles to blue candles is 5:3, which means for every 5 red candles, there are 3 blue candles.
+If Avianna had 45 red candles, then she had 45/(5+3) = 5.625 sets of 5 red and 3 blue candles.
+To find the total number of blue candles, we multiply the number of sets by the number of blue candles per set, which is 3.
+So, Avianna had 5.625 x 3 = 16.875 blue candles, which we can round to 17.
+ 17 
+ Tutor: Hello Cody, please can you walk me through your workings? 
+ Student: Sure, I started by looking at the ratio of the red candles to the blue candles, which was 5:3. That means for every 5 red candles, there are 3 blue candles. So, I took the number of red candles (45) and divided it by the total number of candles (5+3) which gave me 5.625 sets of 5 red and 3 blue candles. To find the total number of blue candles, I multiplied the number of sets by the number of blue candles per set, which was 3. So, 5.625 x 3 = 16.875 blue candles, which I rounded to 17.
+
+Tutor reply to evaluate:
+Cody, you have the right idea using ratios, but the mistake is in the division step, we should divide the total number of red candles (45) by the number of red candles in the ratio (5), not the sum of red and blue candles in the ratio (5+3). Let&#x27;s try that way.
+
+Dimension — Tutor Tone: What is the overall tone of the tutor&#x27;s reply?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Encouraging / Neutral / Offensive</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Encouraging</div><div class='ans'><span class='lbl'>归一化</span>Encouraging</div><div class='ans gold'><span class='lbl'>正确答案</span>Neutral</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Encouraging</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c114-Sonnet-Revealing_of_the_Answer</span><span class='tag'>dimension=Revealing_of_the_Answer</span> <span class='tag'>data=Bridge</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Student: 6 
+ Tutor: Excellent answer! 
+ Tutor: Do you know the name of the shape? 
+ Student: pollygon
+
+Tutor reply to evaluate:
+Great effort! It&#x27;s actually spelled &quot;polygon,&quot; but you&#x27;re on the right track with recognizing the shape family.
+
+Dimension — Revealing of the Answer: Does the tutor reveal the final answer to the student? Choose &#x27;No&#x27; if it does not; otherwise whether the revealed answer is correct or incorrect.
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: No / Yes (and the answer is correct) / Yes (but the answer is incorrect)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Yes (and the answer is correct)</div><div class='ans'><span class='lbl'>归一化</span>Yes (and the answer is correct)</div><div class='ans gold'><span class='lbl'>正确答案</span>No</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Yes (and the answer is correct)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c116-Sonnet-Actionability</span><span class='tag'>dimension=Actionability</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: If Beth had $35 more, she would have $105. If Jan had $10 less, he would have the same money as Beth has. How much money do Beth and Jan have altogether? 
+ Student: Let&#x27;s start by using algebra to solve the problem. 
+
+Let x be the amount of money Beth has. 
+
+From the first sentence, we know that: 
+
+x + 35 = 105 
+
+Solving for x, we get: 
+
+x = 70 
+
+From the second sentence, we know that Jan has the same amount of money as Beth minus $10: 
+
+Jan&#x27;s money = Beth&#x27;s money - $10 
+
+Jan&#x27;s money = 70 - 10 = 60 
+
+Altogether, Beth and Jan have: 
+
+70 + 60 = 130 
+
+ 130 
+ Tutor: Hello Student, can you walk me through your workings please? 
+ Student: Sure. I started by using algebra to solve the problem. I let x be the amount of money Beth has. From the first sentence, we know that x + 35 = 105. So, solving for x, I got x = 70. From the second sentence, we know that Jan has the same amount of money as Beth minus $10. So, Jan&#x27;s money = 70 - 10 = 60. Altogether, Beth and Jan have 70 + 60 = 130.
+
+Tutor reply to evaluate:
+Great job on setting up the equation and solving for Beth&#x27;s money, but let&#x27;s take a closer look at how we interpret the information about Jan&#x27;s money.
+
+Dimension — Actionability: Is it clear from the tutor&#x27;s reply what the student should do next? Does it give the student a concrete next action rather than a dead end?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>Yes</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div></section>
+</main>
+</body>
+</html>

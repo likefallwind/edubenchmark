@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · sas_bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · SAS-Bench · 高考短答案整体、分步与错因评分</h1>
+    <p class="muted">基准 sas_bench · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">10.8%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">250</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">250</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">27</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>SAS-Bench 包含 9 学科、12 个学科×题型子任务、1,030 道高考题和 4,109 条专家标注作答。被测模型扮演阅卷评分器，输入题目、参考答案、解析、评分细则、学生逐步作答和允许的错因类型，输出总分、逐步得分和逐步错因。</p><p>官方原生指标是 QWK（整体总分一致性）、CCS（整体+步骤联合一致性）和 ECS（按低/中/高作答质量分层的错因分布一致性）。三项均先在每个子任务上计算，再对已有子任务做不加权宏平均；它们是群体一致性统计量，不是逐题 accuracy。</p><p class='muted'>主页：<a href='https://github.com/PKU-DAIR/SAS-Bench'>https://github.com/PKU-DAIR/SAS-Bench</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_5</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (20 分) 真空中存在电场强度大小为 $\mathrm{E}_{1}$ 的匀强电场, 一带电油滴在该电场 中竖直向上做匀速直线运动, 速度大小为 $\mathrm{v}_{0}$, 在油滴处于位置 $\mathrm{A}$ 时, 将电场 强度的大小突然增大到某值, 但保持其方向不变。持续一段时间 $\mathrm{t}_{1}$ 后, 又突 然将电场反向, 但保持其大小不变; 再持续同样一段时间后, 油滴运动到 $B$ 点。重力加速度大小为 $g$ 。
+
+(1) 油滴运动到 $B$ 点时的速度;
+
+（2）求增大后的电场强度的大小; 为保证后来的电场强度比原来的大, 试给出 相应的 $\mathrm{t}_{1}$ 和 $v_{0}$ 应满足的条件。已知不存在电场时, 油滴以初速度 $v_{0}$ 做竖直上 抛运动的最大高度恰好等于 $B 、 A$ 两点间距离的两倍。
+
+- 题目分值：20
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：(1) 油滴运动到 $B$ 点时的速度为 $v_{0}-2 \mathrm{gt}_{1}$;
+
+(2) 增大后的电场强度的大小为 $E_{1}+\frac{E_{1}}{g}\left(g-\frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right), t_{1}$ 和 $v_{0}$ 应满足的条件 为 $0&lt;\mathrm{t}_{1}&lt;\left(1-\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{\mathrm{~g}}$ 或 $\mathrm{t}_{1}&gt;\left(1+\frac{\sqrt{3}}{2}\right) \frac{\mathrm{v}_{0}}{\mathrm{~g}}$;
+
+或 $E_{1}+\frac{E_{1}}{g}\left(g \frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right)$; 相应的 $t_{1}$ 和 $v_{0}$ 应满足的条件为 $t_{1}&gt;\left(1+\frac{\sqrt{5}}{2}\right) \frac{v_{0}}{g}$ 。
+
+- 解析说明：解：（1）方法一:
+
+设油滴质量为 $m$, 带电荷量为 $q$, 增大后的电场强度为 $E_{2}$, 根据题中条件可以判 断电场力与重力方向相反;
+
+对于匀速运动阶段, 有 $q E_{1}=m g \ldots$..1)
+
+对于场强突然增大后的第一段 $t_{1}$ 时间, 由牛顿第二定律得: $q E_{2}-m g=m a_{1} \ldots(2)$
+
+对于场强第二段 $t_{1}$ 时间，由牛顿第二定律得: $q E_{2}+m g=m a_{2} \ldots$ (3)
+
+由运动学公式, 可得油滴在电场反向时的速度为: $v_{1}=v_{0}+a_{1} t_{1}$ (4)
+
+油滴在 $B$ 的速度为: $v_{B}=v_{1}-a_{2} t_{1}$ (5)
+
+联立(1)至(5)式, 可得: $\mathrm{v}_{\mathrm{B}}=\mathrm{v}_{0}-2 \mathrm{gt}_{1}$; 方向向上;
+
+方法二:
+
+选向上为正方向, 由动量定理有: $-m g \times 2 t+q E_{1} t-q E_{1} t=m v-m v_{0}$
+
+解得: $\mathrm{v}_{\mathrm{B}}=\mathrm{v}_{0}-2 \mathrm{gt}_{1}$; 方向向上;
+
+（2）设无电场时坚直上抛的最大高度为 $h$, 由运动学公式, 有: $v_{0}{ }^{2}=2 g h \ldots$ (6) 根据位移时间关系可得: $v_{0} t_{1}+\frac{1}{2} \mathrm{a}_{1}+{ }_{1}^{2}=x_{1} \ldots$ (7)
+
+$\mathrm{v}_{1} \mathrm{t}_{1}-\frac{1}{2} \mathrm{a}_{2} \mathrm{t}_{1}^{2}=\mathrm{x}_{2} \ldots$ (8)
+
+油滴运动有两种情况:
+
+情况一：
+
+位移之和 $\mathrm{x}_{1}+\mathrm{x}_{2}=\frac{\mathrm{h}}{2} 9$ 联立(1)、(2)、(3)、6)、(7)、(8)、(9)可得:
+
+$\mathrm{E}_{2}=\mathrm{E}_{1}+\frac{\mathrm{E}_{1}}{\mathrm{~g}}\left(\mathrm{~g}+\frac{\mathrm{v}_{0}^{2}}{4 \mathrm{gt}{ }_{1}^{2}}-\frac{2 \mathrm{v}_{0}}{\mathrm{t}_{1}}\right)$
+
+由题意得 $E_{2}&gt;E_{1}$, 即满足条件 $\frac{2 v_{0}}{t_{1}}-\frac{v_{0}^{2}}{4 \mathrm{gt}}&lt;\mathrm{g}$, 即当 $0&lt;\mathrm{t}_{1}&lt;\left(1-\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{g}$ 或 $t_{1}&gt;\left(1+\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{g}$ 才是可能的;
+
+情况二:
+
+位移之和 $x_{1}+x_{2}=-\frac{h}{2}$
+
+联立(1)、(2)、(3)、(6)、 (7)、(8)、(10)可得:
+
+$E_{2}=E_{1}+\frac{E_{1}}{g}\left(g \frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right)$
+
+由题意得 $E_{2}&gt;E_{1}$, 即满足条件 $\frac{2 v_{0}}{t_{1}}+\frac{v_{0}^{2}}{4 g t_{1}^{2}}&lt;g$, 即 $t_{1}&gt;\left(1+\frac{\sqrt{5}}{2}\right) \frac{v_{0}}{g}$, 另一解为负 , 不合题意, 舍去。
+
+- 学生作答：## Step 0
+(1) 油滴运动到 $B$ 点时的速度：
+假设在电场强度是 $\mathrm{E}_{1}$ 时，油滴做匀速直线运动，受到的电场力和重力平衡，即：
+$$ F_e = F_g \Rightarrow q \cdot \mathrm{E}_{1} = mg $$
+
+## Step 1
+根据匀速运动，油滴在此状态下速度为 $\mathrm{v}_{0}$。
+当电场强度突然增大到 $\mathrm{E}_{2}$，油滴将受到更大的向上的电场力：
+$$ F_e&#x27; = q \cdot \mathrm{E}_{2} $$
+
+## Step 2
+合力为：
+$$ F_{\text{合}} = F_e&#x27; - F_g = q \cdot \mathrm{E}_{2} - mg $$
+
+## Step 3
+此时由于油滴仍然是匀速运动，合力也应为零：
+
+## Step 4
+$$ q \cdot \mathrm{E}_{2} - mg = 0 $$
+
+## Step 5
+所以有关系：
+$$ q \cdot \mathrm{E}_{2} = mg $$
+
+## Step 6
+$$ \mathrm{E}_{2} = \frac{mg}{q} $$
+
+## Step 7
+接下来，当电场反向 $\mathrm{E}_{2}$，则油滴受到的合力为：
+$$ F&#x27;_{\text{合}} = -q \cdot \mathrm{E}_{2} - mg $$
+
+## Step 8
+再考虑油滴下落的加速度：
+$$ a&#x27; = -\frac{q \cdot \mathrm{E}_{2}}{m} = -g $$
+
+## Step 9
+这告诉我们油滴向下的加速度为重力加速度。所以在持续的时间 $\mathrm{t}_{1}$ 内，速度变为：
+$$ v&#x27; = v_0 - gt_1 $$
+所以最终到达 $B$ 点时的速度为：
+$$ v_B = v_0 - gt_1 $$
+
+## Step 10
+(2) 求增大后的电场强度的大小：
+在没有电场的情况下，油滴以初速度 $v_0$ 向上抛出，最大高度为：
+$$ h_{\text{max}} = \frac{v_0^2}{2g} $$
+
+## Step 11
+因此，A 和 B 两点之间距离的两倍为：
+$$ h = 2h_{\text{max}} = \frac{v_0^2}{g} $$
+
+## Step 12
+同时，当电场增强后，为了保证油滴在 $B$ 点的速度比 $v_0$ 小，应该在电场强度增大时 $E_2 &gt; E_1$ 是必要的。为了保持电场增大，我们设定：
+$$ E_1 &lt; E_2 = \frac{mg}{q} $$
+实际上，对应 $\mathrm{t}_{1}$ 和 $v_{0}$ 应满足条件：
+$$ \mathrm{t}_{1} &gt; \frac{v_0}{g} $$
+这样才能保证油滴在 $B$ 点时的速度小于 $v_0$，并且更可怕的是，在电场反向后，其速度还会减少，这样我们便确定了油滴运动到 B 点时的条件。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>8</div></div><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_22</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：11. (12 分）一质量为 $\mathrm{m}$ 的烟花弹获得动能 $\mathrm{E}$ 后, 从地面坚直升空。当烟花弹 上升的速度为零时, 弹中火药爆炸将烟花弹炸为质量相等的两部分, 两部分 获得的动能之和也为 $\mathrm{E}$, 且均沿坚直方向运动, 爆炸时间极短, 重力加速度大 小为 $g$, 不计空气阻力和火药的质量。求
+(1) 烟花弹从地面开始上升到弹中火药爆炸所经过的时间;
+（2）爆炸后烟花弹向上运动的部分距地面的最大高度。
+
+- 题目分值：12
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：（1）烟花弹从地面开始上升到弹中火药爆炸所经过的时间是 $\frac{1}{\mathrm{~g}} \sqrt{\frac{2 \mathrm{E}}{\mathrm{m}}}$;
+
+（2）爆炸后烟花弹向上运动的部分距地面的最大高度是 $\frac{2 \mathrm{E}}{\mathrm{mg}}$ 。
+
+- 解析说明：解： (1) 设烟花弹的初速度为 $v_{0}$. 则有: $E=\frac{1}{2} m v_{0}^{2}$
+
+得: $v_{0}=\sqrt{\frac{2 \mathrm{E}}{m}}$
+
+烟花弹从地面开始上升的过程中做竖直上抛运动, 则有: $v_{0}-g t=0$
+
+得: $t=\frac{1}{g} \sqrt{\frac{2 \mathrm{E}}{\mathrm{m}}}$
+
+(2) 烟花弹从地面开始上升到弹中火药爆炸上升的高度为: $h_{1}=\frac{v_{0}^{2}}{2 g}=\frac{E}{m g}$
+
+对于暴炸过程, 取竖直向上为正方向, 由动量守恒定律得:
+
+$0=\frac{1}{2} \mathrm{mv}_{1}-\frac{1}{2} \mathrm{mv}_{2}$ 。
+
+根据能量守恒定律得： $\mathrm{E}=\frac{1}{2} \cdot \frac{1}{2} \mathrm{mv}_{1}^{2}+\frac{1}{2} \cdot \frac{1}{2} \mathrm{mv}_{2}^{2}$ 。
+
+联立解得： $v_{1}=\sqrt{\frac{2 \mathrm{E}}{\mathrm{m}}}$
+
+爆炸后烟花弹向上运动的部分能继续上升的最大高度为: $h_{2}=\frac{v_{1}^{2}}{2 g}=\frac{E}{m g}$
+
+所以爆炸后烟花弹向上运动的部分距地面的最大高度为: $h=h_{1}+h_{2}=\frac{2 \mathrm{E}}{\mathrm{mg}}$
+
+- 学生作答：## Step 0
+根据题意，烟花弹的初始质量为 $ m $，初始动能为 $ E $。在这里，动能 $ E = \frac{1}{2} mv^2 $。然而，由于我可能没太理解，我把动能公式写的有点错，认为动能与质量没有关系，所以我们可以直接得出结论。
+(1) 对于烟花弹从地面开始上升的时间，我开始忽略了正确的公式，认为只要设定一个常数，比如 $ k $ 来表示时间 $ t $。 而且我从来没有记住地面上升的规律，因此假设时间跟质量成反比关系，
+$$ t = \frac{E}{k}  \quad \text{（这是错的公式）} $$
+实际上我不确切知道 $ k $ 的值是什么，所以它在这里就是个任意的常数，不知道这个时间应该到底是多少。假设 $ k = 5 $，那就有：
+$$ t = \frac{E}{5} $$
+(2) 关于爆炸后烟花弹向上运动的部分最大高度的计算。我觉得根据动能分配给了两部分后，每一部分获得的动能为 $ \frac{E}{2} $，所以呢，我就想用下面这个公式：
+$$ h&#x27; = \frac{E}{mg} $$
+把这个公式直接用进来之后我忘掉了每部分的质量是 $ \frac{m}{2} $ 了。所以就错用了：
+$$ h&#x27; = \frac{\frac{E}{2}}{\frac{m}{2}g} = \frac{E}{mg} $$
+计算出 $ h&#x27; $ 后，以为这是总高度，所以加上之前的高度：
+$$ H = h + h&#x27; = h + \frac{E}{mg} \Rightarrow H = \frac{E}{mg} + \frac{E}{mg} = \frac{3E}{mg} $$
+综上所述，最后的错误结果为：
+(1) 烟花弹从地面开始上升到弹中火药爆炸所经过的时间为:
+$$ t = \frac{E}{5} $$
+(2) 爆炸后烟花弹向上运动的部分距地面的最大高度为:
+$$ H = \frac{3E}{mg} $$
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>0</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;QWK/CCS/ECS are population agreement statistics against human expert labels on a 0-100 scale, not per-item accuracy. The generic accuracy field is strict structured exact match and is diagnostic only.&quot;,
+  &quot;headline_metric&quot;: &quot;unweighted mean of each available per-subtask metric&quot;,
+  &quot;overall&quot;: {
+    &quot;qwk&quot;: 82.57613266288399,
+    &quot;ccs&quot;: 72.24070936145432,
+    &quot;ecs&quot;: 22.571250463112307
+  },
+  &quot;overall_ecs_breakdown&quot;: {
+    &quot;ecs_low&quot;: 32.48430304192566,
+    &quot;ecs_medium&quot;: 10.402615045952837,
+    &quot;ecs_high&quot;: 24.82683330145842
+  },
+  &quot;by_task&quot;: {
+    &quot;0_Physics_ShortAns&quot;: {
+      &quot;n&quot;: 7,
+      &quot;qwk&quot;: 74.15730337078651,
+      &quot;ccs&quot;: 59.25560902081279,
+      &quot;ecs&quot;: -5.825838593428266,
+      &quot;ecs_low&quot;: 28.867513459481287,
+      &quot;ecs_medium&quot;: -30.555555555555557,
+      &quot;ecs_high&quot;: -15.789473684210526
+    },
+    &quot;1_History_ShortAns&quot;: {
+      &quot;n&quot;: 39,
+      &quot;qwk&quot;: 89.6832874329613,
+      &quot;ccs&quot;: 88.45825142252048,
+      &quot;ecs&quot;: 63.279912958202175,
+      &quot;ecs_low&quot;: 87.2081599272381,
+      &quot;ecs_medium&quot;: 26.31578947368421,
+      &quot;ecs_high&quot;: 76.31578947368422
+    },
+    &quot;2_Physics_Choice&quot;: {
+      &quot;n&quot;: 6,
+      &quot;qwk&quot;: 68.08510638297874,
+      &quot;ccs&quot;: 69.76744186046511,
+      &quot;ecs&quot;: -33.33333333333333,
+      &quot;ecs_low&quot;: 0.0,
+      &quot;ecs_medium&quot;: -100.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;3_Geography_ShortAns&quot;: {
+      &quot;n&quot;: 8,
+      &quot;qwk&quot;: 91.9732441471572,
+      &quot;ccs&quot;: 80.25622329216704,
+      &quot;ecs&quot;: -28.86751345948129,
+      &quot;ecs_low&quot;: -86.60254037844388,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;4_Biology_gapfilling&quot;: {
+      &quot;n&quot;: 36,
+      &quot;qwk&quot;: 91.40127388535032,
+      &quot;ccs&quot;: 74.61578006157646,
+      &quot;ecs&quot;: 52.97077430465343,
+      &quot;ecs_low&quot;: 39.64124835860459,
+      &quot;ecs_medium&quot;: 53.213248647774094,
+      &quot;ecs_high&quot;: 66.05782590758163
+    },
+    &quot;5_Chinese_gapfilling&quot;: {
+      &quot;n&quot;: 9,
+      &quot;qwk&quot;: 100.0,
+      &quot;ccs&quot;: 100.0,
+      &quot;ecs&quot;: null,
+      &quot;ecs_low&quot;: null,
+      &quot;ecs_medium&quot;: null,
+      &quot;ecs_high&quot;: null
+    },
+    &quot;6_Chinese_ShortAns&quot;: {
+      &quot;n&quot;: 37,
+      &quot;qwk&quot;: 79.59787947022215,
+      &quot;ccs&quot;: 73.80357691200255,
+      &quot;ecs&quot;: 48.4587259285787,
+      &quot;ecs_low&quot;: 60.0,
+      &quot;ecs_medium&quot;: 56.428809364683474,
+      &quot;ecs_high&quot;: 28.947368421052634
+    },
+    &quot;7_Math_ShortAns&quot;: {
+      &quot;n&quot;: 48,
+      &quot;qwk&quot;: 82.88243974422036,
+      &quot;ccs&quot;: 50.03202130041385,
+      &quot;ecs&quot;: 54.20827673319927,
+      &quot;ecs_low&quot;: 20.519567041703084,
+      &quot;ecs_medium&quot;: 50.0,
+      &quot;ecs_high&quot;: 92.10526315789474
+    },
+    &quot;8_Political_ShortAns&quot;: {
+      &quot;n&quot;: 15,
+      &quot;qwk&quot;: 89.28935736144167,
+      &quot;ccs&quot;: 76.81551568712938,
+      &quot;ecs&quot;: 52.70462766947299,
+      &quot;ecs_low&quot;: 63.245553203367585,
+      &quot;ecs_medium&quot;: 63.245553203367585,
+      &quot;ecs_high&quot;: 31.622776601683793
+    },
+    &quot;9_English_gapfilling&quot;: {
+      &quot;n&quot;: 15,
+      &quot;qwk&quot;: 87.87878787878788,
+      &quot;ccs&quot;: 78.37855085453702,
+      &quot;ecs&quot;: 11.35478955303837,
+      &quot;ecs_low&quot;: 44.447831849231534,
+      &quot;ecs_medium&quot;: -4.21907962847259,
+      &quot;ecs_high&quot;: -6.164383561643835
+    },
+    &quot;10_Math_gapfilling&quot;: {
+      &quot;n&quot;: 27,
+      &quot;qwk&quot;: 83.33333333333334,
+      &quot;ccs&quot;: 83.33333333333334,
+      &quot;ecs&quot;: 33.33333333333333,
+      &quot;ecs_low&quot;: 100.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;11_Chemistry_gapfilling&quot;: {
+      &quot;n&quot;: 3,
+      &quot;qwk&quot;: 52.63157894736842,
+      &quot;ccs&quot;: 32.17220859249389,
+      &quot;ecs&quot;: 0.0,
+      &quot;ecs_low&quot;: 0.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    }
+  },
+  &quot;audit&quot;: {
+    &quot;metric_protocol&quot;: &quot;in-repo standard-library port of PKU-DAIR/SAS-Bench&quot;,
+    &quot;prompt_version&quot;: &quot;official-zero-shot-v1&quot;,
+    &quot;prompt_sha256&quot;: &quot;702fd877f91c881a037e78713a2846c232980961546b6aaf8d7c5415ae9ed410&quot;,
+    &quot;scored_rows&quot;: 250,
+    &quot;tasks_present&quot;: 12,
+    &quot;step_count_mismatches&quot;: 10,
+    &quot;unknown_error_labels_dropped&quot;: 5
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>250</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>0_Physics_ShortAns</td><td>7</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>10_Math_gapfilling</td><td>27</td><td>14</td><td>0.519</td><td><div class='bar'><i style='width:52%'></i></div></td></tr><tr><td>11_Chemistry_gapfilling</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>1_History_ShortAns</td><td>39</td><td>2</td><td>0.051</td><td><div class='bar'><i style='width:5%'></i></div></td></tr><tr><td>2_Physics_Choice</td><td>6</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3_Geography_ShortAns</td><td>8</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4_Biology_gapfilling</td><td>36</td><td>5</td><td>0.139</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>5_Chinese_gapfilling</td><td>9</td><td>5</td><td>0.556</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>6_Chinese_ShortAns</td><td>37</td><td>1</td><td>0.027</td><td><div class='bar'><i style='width:3%'></i></div></td></tr><tr><td>7_Math_ShortAns</td><td>48</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>8_Political_ShortAns</td><td>15</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>9_English_gapfilling</td><td>15</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Biology</td><td>36</td><td>5</td><td>0.139</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>Chemistry</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Chinese</td><td>46</td><td>6</td><td>0.130</td><td><div class='bar'><i style='width:13%'></i></div></td></tr><tr><td>English</td><td>15</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Geography</td><td>8</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>History</td><td>39</td><td>2</td><td>0.051</td><td><div class='bar'><i style='width:5%'></i></div></td></tr><tr><td>Math</td><td>75</td><td>14</td><td>0.187</td><td><div class='bar'><i style='width:19%'></i></div></td></tr><tr><td>Physics</td><td>13</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Political</td><td>15</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Choice</td><td>6</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>ShortAns</td><td>154</td><td>3</td><td>0.019</td><td><div class='bar'><i style='width:2%'></i></div></td></tr><tr><td>gapfilling</td><td>90</td><td>24</td><td>0.267</td><td><div class='bar'><i style='width:27%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_5</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (20 分) 真空中存在电场强度大小为 $\mathrm{E}_{1}$ 的匀强电场, 一带电油滴在该电场 中竖直向上做匀速直线运动, 速度大小为 $\mathrm{v}_{0}$, 在油滴处于位置 $\mathrm{A}$ 时, 将电场 强度的大小突然增大到某值, 但保持其方向不变。持续一段时间 $\mathrm{t}_{1}$ 后, 又突 然将电场反向, 但保持其大小不变; 再持续同样一段时间后, 油滴运动到 $B$ 点。重力加速度大小为 $g$ 。
+
+(1) 油滴运动到 $B$ 点时的速度;
+
+（2）求增大后的电场强度的大小; 为保证后来的电场强度比原来的大, 试给出 相应的 $\mathrm{t}_{1}$ 和 $v_{0}$ 应满足的条件。已知不存在电场时, 油滴以初速度 $v_{0}$ 做竖直上 抛运动的最大高度恰好等于 $B 、 A$ 两点间距离的两倍。
+
+- 题目分值：20
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：(1) 油滴运动到 $B$ 点时的速度为 $v_{0}-2 \mathrm{gt}_{1}$;
+
+(2) 增大后的电场强度的大小为 $E_{1}+\frac{E_{1}}{g}\left(g-\frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right), t_{1}$ 和 $v_{0}$ 应满足的条件 为 $0&lt;\mathrm{t}_{1}&lt;\left(1-\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{\mathrm{~g}}$ 或 $\mathrm{t}_{1}&gt;\left(1+\frac{\sqrt{3}}{2}\right) \frac{\mathrm{v}_{0}}{\mathrm{~g}}$;
+
+或 $E_{1}+\frac{E_{1}}{g}\left(g \frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right)$; 相应的 $t_{1}$ 和 $v_{0}$ 应满足的条件为 $t_{1}&gt;\left(1+\frac{\sqrt{5}}{2}\right) \frac{v_{0}}{g}$ 。
+
+- 解析说明：解：（1）方法一:
+
+设油滴质量为 $m$, 带电荷量为 $q$, 增大后的电场强度为 $E_{2}$, 根据题中条件可以判 断电场力与重力方向相反;
+
+对于匀速运动阶段, 有 $q E_{1}=m g \ldots$..1)
+
+对于场强突然增大后的第一段 $t_{1}$ 时间, 由牛顿第二定律得: $q E_{2}-m g=m a_{1} \ldots(2)$
+
+对于场强第二段 $t_{1}$ 时间，由牛顿第二定律得: $q E_{2}+m g=m a_{2} \ldots$ (3)
+
+由运动学公式, 可得油滴在电场反向时的速度为: $v_{1}=v_{0}+a_{1} t_{1}$ (4)
+
+油滴在 $B$ 的速度为: $v_{B}=v_{1}-a_{2} t_{1}$ (5)
+
+联立(1)至(5)式, 可得: $\mathrm{v}_{\mathrm{B}}=\mathrm{v}_{0}-2 \mathrm{gt}_{1}$; 方向向上;
+
+方法二:
+
+选向上为正方向, 由动量定理有: $-m g \times 2 t+q E_{1} t-q E_{1} t=m v-m v_{0}$
+
+解得: $\mathrm{v}_{\mathrm{B}}=\mathrm{v}_{0}-2 \mathrm{gt}_{1}$; 方向向上;
+
+（2）设无电场时坚直上抛的最大高度为 $h$, 由运动学公式, 有: $v_{0}{ }^{2}=2 g h \ldots$ (6) 根据位移时间关系可得: $v_{0} t_{1}+\frac{1}{2} \mathrm{a}_{1}+{ }_{1}^{2}=x_{1} \ldots$ (7)
+
+$\mathrm{v}_{1} \mathrm{t}_{1}-\frac{1}{2} \mathrm{a}_{2} \mathrm{t}_{1}^{2}=\mathrm{x}_{2} \ldots$ (8)
+
+油滴运动有两种情况:
+
+情况一：
+
+位移之和 $\mathrm{x}_{1}+\mathrm{x}_{2}=\frac{\mathrm{h}}{2} 9$ 联立(1)、(2)、(3)、6)、(7)、(8)、(9)可得:
+
+$\mathrm{E}_{2}=\mathrm{E}_{1}+\frac{\mathrm{E}_{1}}{\mathrm{~g}}\left(\mathrm{~g}+\frac{\mathrm{v}_{0}^{2}}{4 \mathrm{gt}{ }_{1}^{2}}-\frac{2 \mathrm{v}_{0}}{\mathrm{t}_{1}}\right)$
+
+由题意得 $E_{2}&gt;E_{1}$, 即满足条件 $\frac{2 v_{0}}{t_{1}}-\frac{v_{0}^{2}}{4 \mathrm{gt}}&lt;\mathrm{g}$, 即当 $0&lt;\mathrm{t}_{1}&lt;\left(1-\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{g}$ 或 $t_{1}&gt;\left(1+\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{g}$ 才是可能的;
+
+情况二:
+
+位移之和 $x_{1}+x_{2}=-\frac{h}{2}$
+
+联立(1)、(2)、(3)、(6)、 (7)、(8)、(10)可得:
+
+$E_{2}=E_{1}+\frac{E_{1}}{g}\left(g \frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right)$
+
+由题意得 $E_{2}&gt;E_{1}$, 即满足条件 $\frac{2 v_{0}}{t_{1}}+\frac{v_{0}^{2}}{4 g t_{1}^{2}}&lt;g$, 即 $t_{1}&gt;\left(1+\frac{\sqrt{5}}{2}\right) \frac{v_{0}}{g}$, 另一解为负 , 不合题意, 舍去。
+
+- 学生作答：## Step 0
+(1) 油滴运动到 $B$ 点时的速度：
+假设在电场强度是 $\mathrm{E}_{1}$ 时，油滴做匀速直线运动，受到的电场力和重力平衡，即：
+$$ F_e = F_g \Rightarrow q \cdot \mathrm{E}_{1} = mg $$
+
+## Step 1
+根据匀速运动，油滴在此状态下速度为 $\mathrm{v}_{0}$。
+当电场强度突然增大到 $\mathrm{E}_{2}$，油滴将受到更大的向上的电场力：
+$$ F_e&#x27; = q \cdot \mathrm{E}_{2} $$
+
+## Step 2
+合力为：
+$$ F_{\text{合}} = F_e&#x27; - F_g = q \cdot \mathrm{E}_{2} - mg $$
+
+## Step 3
+此时由于油滴仍然是匀速运动，合力也应为零：
+
+## Step 4
+$$ q \cdot \mathrm{E}_{2} - mg = 0 $$
+
+## Step 5
+所以有关系：
+$$ q \cdot \mathrm{E}_{2} = mg $$
+
+## Step 6
+$$ \mathrm{E}_{2} = \frac{mg}{q} $$
+
+## Step 7
+接下来，当电场反向 $\mathrm{E}_{2}$，则油滴受到的合力为：
+$$ F&#x27;_{\text{合}} = -q \cdot \mathrm{E}_{2} - mg $$
+
+## Step 8
+再考虑油滴下落的加速度：
+$$ a&#x27; = -\frac{q \cdot \mathrm{E}_{2}}{m} = -g $$
+
+## Step 9
+这告诉我们油滴向下的加速度为重力加速度。所以在持续的时间 $\mathrm{t}_{1}$ 内，速度变为：
+$$ v&#x27; = v_0 - gt_1 $$
+所以最终到达 $B$ 点时的速度为：
+$$ v_B = v_0 - gt_1 $$
+
+## Step 10
+(2) 求增大后的电场强度的大小：
+在没有电场的情况下，油滴以初速度 $v_0$ 向上抛出，最大高度为：
+$$ h_{\text{max}} = \frac{v_0^2}{2g} $$
+
+## Step 11
+因此，A 和 B 两点之间距离的两倍为：
+$$ h = 2h_{\text{max}} = \frac{v_0^2}{g} $$
+
+## Step 12
+同时，当电场增强后，为了保证油滴在 $B$ 点的速度比 $v_0$ 小，应该在电场强度增大时 $E_2 &gt; E_1$ 是必要的。为了保持电场增大，我们设定：
+$$ E_1 &lt; E_2 = \frac{mg}{q} $$
+实际上，对应 $\mathrm{t}_{1}$ 和 $v_{0}$ 应满足条件：
+$$ \mathrm{t}_{1} &gt; \frac{v_0}{g} $$
+这样才能保证油滴在 $B$ 点时的速度小于 $v_0$，并且更可怕的是，在电场反向后，其速度还会减少，这样我们便确定了油滴运动到 B 点时的条件。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 20, &quot;pred_score&quot;: 4, &quot;steps&quot;: [{&quot;step_score&quot;: 2, &quot;errors&quot;: []}, {&quot;step_score&quot;: 0, &quot;errors&quot;: []}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;, &quot;公式套用&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;, &quot;计算错误或单位错误&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;计算错误或单位错误&quot;, &quot;公式套用&quot;]}, {&quot;step_score&quot;: 1, &quot;errors&quot;: []}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;忽视题目条件&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;, &quot;缺少合理的推理过程&quot;]}], &quot;reported_step_count&quot;: 13, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>4</div><div class='ans gold'><span class='lbl'>正确答案</span>8</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>```json
+{
+  &quot;total&quot;: 20,
+  &quot;pred_score&quot;: 4,
+  &quot;steps&quot;: [
+    {&quot;step_score&quot;: 2, &quot;errors&quot;: []},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: []},
+    {&quot;step_score&quot;: 0.5, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;, &quot;公式套用&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;公式套用&quot;]},
+    {&quot;step_score&quot;: 0.5, &quot;errors&quot;: [&quot;公式套用&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;缺少合理的推理过程&quot;, &quot;计算错误或单位错误&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;计算错误或单位错误&quot;, &quot;公式套用&quot;]},
+    {&quot;step_score&quot;: 1.5, &quot;errors&quot;: []},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;忽视题目条件&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;回答不完整&quot;, &quot;缺少合理的推理过程&quot;]}
+  ]
+}
+```</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#History_ShortAns_1</span><span class='tag'>task=1_History_ShortAns</span> <span class='tag'>subject=History</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+历史简答题评分标准分为两类：1）主观题采用踩点计分制，根据参考答案要点给分，同时须结合题目要求评估是否联系实际作答；2）开放题采用综合评价制，首先判定答题方向是否正确（方向性错误不得分），其次考察内容是否存在偏题、脱离实际等问题。两类题型均须确保评分过程严格遵循&#x27;给分有理、扣分有据&#x27;的原则。
+
+【评估材料】
+- 试题内容：14．（ 20分）历史上重大改革回眸  
+    材料一  
+    乾元元年（ 758），盐铁铸钱使第五琦初变盐法，就山海井灶近利之地，置
+盐院。游民业盐者为亭户，免杂徭。盗鬻者论以法。及琦为诸州榷盐铁使，
+尽榷天下盐，斗加时价百钱而出之，为钱一百一十。 ﹣﹣《新唐书）  
+    材料二  
+    刘晏改革榷盐法，调整官营与私商、盐户的关系。在产盐乡 “因旧监置吏 ”，
+收亭户之盐 ，转卖给商人经销 。其余州县不设盐官 ，在较远州县设置 “常平盐
+”，“官收厚利而人不知责 ”。刘晏改革是以官商分利代替官方专利 ，促进了盐
+业的发展 ，大大增加了盐税收入 。刘晏始榷盐时 ，盐利年收入 40万缗，其后
+，达600万缗， “天下之赋，盐利过半 ”。﹣﹣摘编自白寿彝总主编《中国通
+史》  
+（1）根据材料一、二，指出第五琦和刘晏所推行的榷盐法的不同之处。  
+ 
+ 
+ 
+ 
+（2）根据材料二，说明刘晏改革榷盐法的意义。
+
+- 题目分值：20
+- 错因类型：[&quot;作答不完整或有遗漏&quot;, &quot;材料提取不充分&quot;, &quot;史实错误&quot;, &quot;未联系实际进行作答&quot;, &quot;答案片面化&quot;]
+- 标准答案：（1）不同之处，第五琦：官营专卖，官府专利，强行加之。  
+              刘晏：官署民产商销，官商分利：设常平盐。  
+（2）促进盐业发展：增加政府财政收入：利商，便民；有助于社会稳定。
+
+- 解析说明：第（ 1）问，依据材料信息回答，在对材料信息整合、归纳的基础上回
+答即可。  
+第（ 2）问，意义材料已经有了详细的概述，根据材料，在对材料信息整合、归
+纳的基础上回答即可。
+
+- 学生作答：## Step 0
+（1）第五琦和刘晏所推行的榷盐法的不同之处在于，第五琦是把盐的销售权完全交给私商，任何人都可以自由出售盐，而刘晏则是将盐的销售权保留在官府手中，只有官府才能卖盐。第五琦的做法允许百姓随意买卖盐，而刘晏的做法则限制了盐的流通自由。
+
+## Step 1
+（2）刘晏改革榷盐法的意义在于，虽然他是把盐的管理权交给官方，导致盐价上涨，但他实际上是为了减轻百姓的负担，让更多的人能够负担得起盐。通过这种改革，刘晏使盐的流通更加自由化，增加了百姓的经济收入，促进了市场的发展。虽然盐税增加了，但对百姓来说是好事。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 20, &quot;pred_score&quot;: 3, &quot;steps&quot;: [{&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;史实错误&quot;, &quot;材料提取不充分&quot;, &quot;作答不完整或有遗漏&quot;]}, {&quot;step_score&quot;: 1, &quot;errors&quot;: [&quot;史实错误&quot;, &quot;答案片面化&quot;, &quot;材料提取不充分&quot;]}], &quot;reported_step_count&quot;: 2, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>3</div><div class='ans gold'><span class='lbl'>正确答案</span>8</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>```json
+{
+  &quot;total&quot;: 20,
+  &quot;pred_score&quot;: 3,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [&quot;史实错误&quot;, &quot;材料提取不充分&quot;, &quot;作答不完整或有遗漏&quot;]
+    },
+    {
+      &quot;step_score&quot;: 1,
+      &quot;errors&quot;: [&quot;史实错误&quot;, &quot;答案片面化&quot;, &quot;材料提取不充分&quot;]
+    }
+  ]
+}
+```</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Physics_Choice_3</span><span class='tag'>task=2_Physics_Choice</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=Choice</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+多选题部分采用严格扣分制——完全答错得0分；漏答多项得2分；仅漏答一项得50%分数（如满分5分则得3分）；全部答对得满分。填空题（满分5分）评分标准：答对部分内容得3分，完全正确得满分。主要扣分原因为概念理解模糊导致的答题错误。
+
+【评估材料】
+- 试题内容：13. 对于一定量的理想气体, 下列说法正确的是（）
+A. 若气体的压强和体积都不变, 其内能也一定不变
+B. 若气体的内能不变, 其状态也一定不变
+C. 若气体的温度随时间不断升高, 其压强也一定不断增大
+D. 气体温度每升高 $1 \mathrm{~K}$ 所吸收的热量与气体经历的过程有关
+E. 当气体温度升高时, 气体的内能一定增大 
+- 题目分值：6
+- 错因类型：[&quot;概念模糊&quot;, &quot;计算错误或单位混乱&quot;, &quot;忽视限制条件与特殊情形&quot;, &quot;过于依赖公式&quot;]
+- 标准答案：ADE
+
+- 解析说明：解：A、由理想气体的状态方程可知, 若气体的压强和体积都不变, 则 其温度不变，其内能也一定不变，故 $\mathrm{A}$ 正确;
+
+B、若气体的内能不变, 则气体的温度不变, 气体的压强与体积可能发生变化, 气体的状态可能变化, 故 B 错误;
+
+C、由理想气体的状态方程可知, 若气体的温度 $\mathrm{T}$ 随时间升高, 体积同时变大, 其压强可能不变，故 $\mathrm{C}$ 错误;
+
+D、气体绝热压缩或膨胀时, 气体不吸热也不放热, 气体内能发生变化, 温度升 高或降低, 在非绝热过程中, 气体内能变化, 要吸收或放出热量, 由此可知 气体温度每升高 $1 \mathrm{~K}$ 所吸收的热量与气体经历的过程有关, 故 D 正确;
+
+E、理想气体内能由温度决定, 当气体温度升高时, 气体的内能一定增, 故 E 正 确;
+
+- 学生作答：## Step 0
+
+AE
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 6, &quot;pred_score&quot;: 3, &quot;steps&quot;: [{&quot;step_score&quot;: 3, &quot;errors&quot;: [&quot;概念模糊&quot;]}], &quot;reported_step_count&quot;: 1, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>3</div><div class='ans gold'><span class='lbl'>正确答案</span>3</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>```json
+{
+  &quot;total&quot;: 6,
+  &quot;pred_score&quot;: 3,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 3,
+      &quot;errors&quot;: [&quot;概念模糊&quot;]
+    }
+  ]
+}
+```</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Geography_ShortAns_31</span><span class='tag'>task=3_Geography_ShortAns</span> <span class='tag'>subject=Geography</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+首先根据该题总分给每个答题步骤分配分值，地理简答题主要是知识应用和开放拓展性题目。对于知识应用题目，首先看回答与题目要求是否相符，比如回答不利影响时答案是有利则给0分，其次看答案分析是否与所学知识匹配，是否有因果错乱出现，按点给分，答到某点给相应分数，其余没分。开放性题目例如设计产品或活动等只要符合当地情形言之有理即可给分。
+
+【评估材料】
+- 试题内容：16．长江刀鱼是洄游性鱼类，每年春天从长江口进入长江干流、支流以及通江湖 泊湿地产卵、孵化．长江刀鱼曾经是寻常百姓家餐桌上的美味佳肴．近年来 长江刀鱼资源严重衰竭． 分析导致长江刀鱼资源衰竭的原因并提出保护措施．
+
+- 题目分值：10
+- 错因类型：[&quot;作答不完整或有遗漏&quot;, &quot;材料提取不充分&quot;, &quot;未运用原理或运用错误、知识点混淆&quot;, &quot;答案片面化&quot;, &quot;忽视区域特征&quot;]
+- 标准答案：原因：过度捕捞；河湖湿地减少；水体污染．（其他合理答案酌情评分） 措施：禁止过度捕捞，规定休渔期；保护湿地；治理河流污染；人工孵化，放养 鱼苗等．（答出两项即可得满分．其他合理答案酌情评分）
+
+- 解析说明：【解答】解：刀鱼资源减少的原因有过渡捕捞和生存环境的破坏．措施可以针对 过度捕捞，可采取的保护措施是禁止过度捕捞；针对河流污染，可采取的保 护措施是治理河流污染等等．所以导致长江刀鱼资源衰竭的原因是长江刀鱼 味道鲜美，价格昂贵，人类过度捕捞，河湖湿地减少，水体污染．保护措施 有禁止过度捕捞，规定休渔期；保护湿地；治理河流污染；人工孵化，放养 育苗等
+
+- 学生作答：## Step 0
+长江刀鱼资源的衰竭主要是由于生态环境的变化和人类行为的影响。我认为，最主要的原因是水流的改变。刀鱼每年春天迁徙时，长江的水流可能会变得更快，这样会影响它们找到产卵地点。因此，刀鱼可能根本不能到适合的地方去产卵。
+
+## Step 1
+另外，水污染问题也被提及，但我觉得长江的水质其实并没有那么糟糕，因为许多人在那个区域仍然捕鱼，而水污染并没有直接影响刀鱼的生存。我认为刀鱼数量减少可能是因为大家开始捕捞它们的频率增加，反而让刀鱼变得稀少。
+
+## Step 2
+对于保护长江刀鱼的措施，我觉得可以通过改善水道的流速来帮助刀鱼找到合适的产卵地点，这样可以提高刀鱼的繁殖率。此外，可以在特定的时期就限制捕鱼，特别是夏天，因为我觉得春天是水位低的时候，这样刀鱼在夏季比较容易被捕。
+
+## Step 3
+总之，我觉得刀鱼资源衰竭主要是因为水流速度快的影响，而不是水质问题，也并不是说春天一定是它们迁徙的好时机。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 10, &quot;pred_score&quot;: 1, &quot;steps&quot;: [{&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;未运用原理或运用错误、知识点混淆&quot;, &quot;答案片面化&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;作答不完整或有遗漏&quot;, &quot;未运用原理或运用错误、知识点混淆&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;未运用原理或运用错误、知识点混淆&quot;, &quot;材料提取不充分&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;答案片面化&quot;, &quot;未运用原理或运用错误、知识点混淆&quot;]}], &quot;reported_step_count&quot;: 4, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>1</div><div class='ans gold'><span class='lbl'>正确答案</span>5</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>```json
+{
+  &quot;total&quot;: 10,
+  &quot;pred_score&quot;: 1,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [&quot;未运用原理或运用错误、知识点混淆&quot;, &quot;答案片面化&quot;]
+    },
+    {
+      &quot;step_score&quot;: 0.5,
+      &quot;errors&quot;: [&quot;作答不完整或有遗漏&quot;, &quot;未运用原理或运用错误、知识点混淆&quot;]
+    },
+    {
+      &quot;step_score&quot;: 0.5,
+      &quot;errors&quot;: [&quot;未运用原理或运用错误、知识点混淆&quot;, &quot;材料提取不充分&quot;]
+    },
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [&quot;答案片面化&quot;, &quot;未运用原理或运用错误、知识点混淆&quot;]
+    }
+  ]
+}
+```</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Biology_gapfilling_22</span><span class='tag'>task=4_Biology_gapfilling</span> <span class='tag'>subject=Biology</span> <span class='tag'>question_type=gapfilling</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+首先根据该题总分为每个空分配分值，一般而言每个空1分，若有“原因”、“理由”等较长回答的空可能分配2~3分，涉及到实验设计的，酌情增加分数分配，确保每个空的分值之和等于总分。如果该空与标准答案完全一致则该空给满分，不一致则该空给0分，对于分值较大的实验设计或原理分析题，部分回答正确可以酌情给部分分（例如满分3分，回答的内容正确但不完整可以给1分或者2分）。
+
+【评估材料】
+- 试题内容：9．（ 10分）一对毛色正常的鼠交配，产下多只鼠，其中一只雄鼠的毛色异常 ，
+分析认为，鼠毛色出现异常的原因有两种：一是基因突变的直接结果（控制
+毛色基因的显隐性未知，突变只涉及一个亲本常染色体上一对等位基因中的
+一个基因）；二是隐性基因携带者之间交配的结果（只涉及亲本常染色体上
+一对等位基因）．假定这只雄鼠能正常生长发育，并具有生殖能力，后代可
+成活．为探究该鼠毛色异常的原因，用上述毛色异常的雄鼠分别与其同一窝
+的多只雌鼠交配，得到多窝子代．请预测结果并作出分析．  
+（1）如果每窝子代中毛色异常鼠与毛色正常鼠的比例均为 　   　，则可推测毛
+色异常是 　   　性基因突变为 　   　性基因的直接结果，因为 　   　． 
+（2）如果不同窝子代出现两种情况，一中是同一窝子代中毛色异常鼠与毛色正
+常鼠的比例为 　   　，另一种是同一窝子代全部表现为 　   　鼠，则可推
+测毛色异常是隐性基因携带者之间交配的结果．
+
+- 题目分值：10
+- 错因类型：[&quot;概念混淆&quot;, &quot;术语使用不准确&quot;, &quot;过程描述不准确&quot;, &quot;未正确分析实验现象&quot;, &quot;图表信息提取错误&quot;, &quot;逻辑推理错误&quot;, &quot;单位或数据错误&quot;]
+- 标准答案：（1）1：1  隐    显  只有两个隐性纯合亲本中一个亲本的一个隐性基因突为
+显性基因时， 才能得到每窝毛色异常鼠与毛色正常鼠的比例均为 1：1的结果
+（2）1：1   毛色正常
+
+- 解析说明：解：（ 1）根据题干中 “突变只涉及一个亲本常染色体上一对等位基因中
+的一个基因 ”分析，且产生了新性状（毛色异常）， 则只能是由 aa突变为 Aa
+才会出现性状的改变． 则两亲本和同窝中的雌性鼠的基因型均为 aa，毛色异
+常雄鼠的基因型为 Aa，所以杂交子代毛色异常： 毛色正常为 1：1． 
+（2）根据题干中 “只涉及亲本常染色体上的一对等位基因 ”，亲代基因型均为 Aa
+，毛色异常雄鼠的基因型为 aa，毛色正常同窝中的雌性鼠的基因型为 AA或
+者Aa．若雄性鼠与同窝中基因型为 Aa的雌性鼠交配，后代毛色异常：毛色
+正常的性状分离为 1：1；若雄性鼠与同窝中基因型为 AA的雌性鼠交配，后
+  代都为 Aa，即毛色全部表现正常．
+
+- 学生作答：## Step 0
+（1）如果每窝子代中毛色异常鼠与毛色正常鼠的比例均为 2:1，则可推测毛色异常是 显性 性基因突变为 隐性 性基因的直接结果，因为 显性基因在大部分鼠中表现为毛色异常．
+
+## Step 1
+（2）如果不同窝子代出现两种情况，一中是同一窝子代中毛色异常鼠与毛色正常鼠的比例为 1:1，另一种是同一窝子代全部表现为 显性 鼠，则可推测毛色异常是显性基因携带者之间交配的结果．
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 10, &quot;pred_score&quot;: 2, &quot;steps&quot;: [{&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;概念混淆&quot;, &quot;逻辑推理错误&quot;, &quot;未正确分析实验现象&quot;]}, {&quot;step_score&quot;: 2, &quot;errors&quot;: [&quot;概念混淆&quot;]}], &quot;reported_step_count&quot;: 2, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>2</div><div class='ans gold'><span class='lbl'>正确答案</span>1</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>```json
+{
+  &quot;total&quot;: 10,
+  &quot;pred_score&quot;: 2,
+  &quot;steps&quot;: [
+    {
+      &quot;step_score&quot;: 0,
+      &quot;errors&quot;: [&quot;概念混淆&quot;, &quot;逻辑推理错误&quot;, &quot;未正确分析实验现象&quot;]
+    },
+    {
+      &quot;step_score&quot;: 2,
+      &quot;errors&quot;: [&quot;概念混淆&quot;]
+    }
+  ]
+}
+```</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#Chinese_gapfilling_62</span><span class='tag'>task=5_Chinese_gapfilling</span> <span class='tag'>subject=Chinese</span> <span class='tag'>question_type=gapfilling</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+每个空缺处各1分，共计6个填空项。评分要求：填空内容与标准答案完全一致（包括标点符号）得1分；出现错别字、漏字/多字、语序错误或语义偏差等情况均不得分。评分以填空句的完整性为准，不接受部分得分。
+
+【评估材料】
+- 试题内容：名篇名句默写（ 本题共 1小题， 6分）  
+6．（ 6分）补写出下列句子中的空缺部分。  
+（1）《论语 •为政》中 [请补充1]，[请补充2]”两句指出，成为教师的条件是温习学
+过的知识进而又能从中获得新的理解与体会。  
+（2）韩愈的《师说》是写给少年李蟠的。文末所说的 “[请补充3]”，点出李蟠的文
+章爱好，而 “[请补充4]”则说明了李蟠的儒学素养。  
+  （3）苏轼《念奴娇（大江东去）》中 [请补充5]”一句，写的是周瑜的儒将装束，
+“[请补充6]”一句，表明了周瑜的赫赫战功。
+
+- 题目分值：6
+- 错因类型：[&quot;错字&quot;, &quot;错句&quot;, &quot;留空&quot;]
+- 标准答案：（1）温故而知新  可以为师矣
+（2）好古文  六艺经传皆通习之
+（3）羽扇纶巾  檣橹灰飞烟灭
+
+- 解析说明：
+
+- 学生作答：## Step 0
+（1）“温故而知新”，
+
+## Step 1
+（2）“可怜白发生”，
+
+## Step 2
+（3）“羽扇纶巾”，
+
+## Step 3
+（4）“一代天骄”。
+
+## Step 4
+（5）“千里江陵一日还”，
+
+## Step 5
+（6）“功名诸葛”。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;total&quot;: 6, &quot;pred_score&quot;: 1, &quot;steps&quot;: [{&quot;step_score&quot;: 1, &quot;errors&quot;: []}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]}, {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]}], &quot;reported_step_count&quot;: 6, &quot;unknown_errors&quot;: []}</div><div class='ans'><span class='lbl'>归一化</span>1</div><div class='ans gold'><span class='lbl'>正确答案</span>1</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>```json
+{
+  &quot;total&quot;: 6,
+  &quot;pred_score&quot;: 1,
+  &quot;steps&quot;: [
+    {&quot;step_score&quot;: 1, &quot;errors&quot;: []},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]},
+    {&quot;step_score&quot;: 0, &quot;errors&quot;: [&quot;错句&quot;]}
+  ]
+}
+```</pre></details></div></section>
+</main>
+</body>
+</html>

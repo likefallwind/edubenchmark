@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">74.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">74</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-216</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Think about the different ways that people use the wind. You can use it to fly a kite or to sail a boat. Wind is one of our cleanest and richest power sources（来源）, as well as one of the oldest. Evidence shows that windmills（风车）began to be used in ancient Iran back in the seventh century BC. They were first introduced to Europe during the 1100s, when armies returned from the Middle East with knowledge of using wind power.For many centuries, people used windmills to grind（磨碎）wheat into flour or pump water from deep underground when electricity was discovered in the late 1800s, people living in remote areas began to use them to produce electricity. This allowed them to have electric lights and radio. However, by the 1940s when electricity was available to people in almost all areas of the United States, windmills were rarely used.During the 1970s, people started becoming concerned about the pollution that is created when coal and gas are burned to produce electricity. People also realized that the supply of coal and gas would not last forever. Then, wind was rediscovered, though it means higher coasts. Today, there is a global movement to supply more and more of our electricity through the use of wind.
+Question: 63．What would the author probably discuss in the paragraph that follows?
+Answer Choices: (A)The advantages of wind power. (B)The design of wind power plants. (C)The worldwide movement to save energy. (D)The global trend towards producing power from wind.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.74,
+  &quot;r2_accuracy&quot;: 0.74,
+  &quot;net_gain&quot;: 0.0,
+  &quot;change_rate&quot;: 0.04,
+  &quot;n_r1_wrong&quot;: 26,
+  &quot;n_fixed_wrong_to_right&quot;: 2,
+  &quot;fix_rate&quot;: 0.0769,
+  &quot;n_r1_right&quot;: 74,
+  &quot;n_broken_right_to_wrong&quot;: 2,
+  &quot;break_rate&quot;: 0.027,
+  &quot;score_10&quot;: 5.249,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 15,
+      &quot;r2_correct&quot;: 15,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;r1_correct&quot;: 27,
+      &quot;r2_correct&quot;: 27,
+      &quot;fixed&quot;: 2,
+      &quot;broken&quot;: 2
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 17,
+      &quot;r2_correct&quot;: 17,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 15,
+      &quot;r2_correct&quot;: 15,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>15</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>27</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>17</td><td>0.607</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>15</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>38</td><td>0.704</td><td><div class='bar'><i style='width:70%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>36</td><td>0.783</td><td><div class='bar'><i style='width:78%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;我们逐步验证原解答的推理过程：\n1. 验证选项A：蚕丝是蚕分泌的天然蛋白纤维，主要成分为丝心蛋白等蛋白质，该表述正确，不符合题意。\n2. 验证选项B：题目中“天热”为输入笔误，应为“天然”。蚕丝的主要成分蛋白质相对分子质量可达数万至数十万，属于天然形成的高分子化合物，因此蚕丝属于天然高分子材料，该表述正确，不符合题意。\n3. 验证选项C：“蜡炬成灰”是蜡烛燃烧的过程，燃烧是可燃物与氧气发生的剧烈氧化还原反应，蜡作为还原剂被氧化，该过程确实发生了氧化反应，表述正确，不符合题意。\n4. 验证选项D：古代蜡多来自动植物（如蜂蜡、虫蜡），主要成分为高级脂肪酸酯，但这类物质的相对分子质量通常仅为数百，远达不到高分子聚合物（相对分子质量通常≥10⁴，由单体聚合得到）的判定标准，不属于高分子聚合物，该表述错误，符合题意。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>我们逐个分析选项：
+1. 分析选项A：蚕丝是蚕分泌的天然纤维，主要成分是蛋白质，该说法正确。
+2. 分析选项B：蛋白质的相对分子质量可达数万以上，属于高分子化合物，且蚕丝是天然形成的，因此属于天然高分子材料，该说法正确。
+3. 分析选项C：“蜡炬成灰”是蜡烛燃烧的过程，燃烧属于剧烈的氧化反应，因此该过程发生了氧化反应，该说法正确。
+4. 分析选项D：古代蜡多来自动植物油脂，主要成分为高级脂肪酸酯，但高级脂肪酸酯的相对分子质量通常仅为数百，远低于高分子聚合物（相对分子质量通常上万）的标准，不属于高分子聚合物，该说法错误。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::lsat-rc-110</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>The corrido, a type of narrative folk song, comes from a region half in Mexico and half in the United States known as the Lower Rio Grande Border. Corridos, which flourished from about 1836 to the late 1930s, are part of a long-standing ballad tradition that has roots in eighteenth-century Spain. Sung in Spanish, corridos combine formal features of several different types of folk songs, but their narratives consistently deal with subject matter specific to the Border region. For example, &quot;El Corrido de Kiansis&quot; (c. 1870), the oldest corrido surviving in complete form, records the first cattle drives to Kansas in the late 1860s. A single important event is likely to have inspired several corrido variants, yet the different versions of any given story all partake of standard generic elements. When sung at social gatherings, corridos served to commemorate significant local happenings, but more importantly, their heavy reliance on familiar linguistic and thematic conventions served to affirm the cohesiveness of Border communities. Corridos take their name from the Spanish verb correr, meaning to run or to flow, for corridos tell their stories simply and swiftly, without embellishments. Figures of speech such as metaphors are generally rare in corridos, and when metaphors are used, they usually incorporate everyday images that are familiar to the songs&#x27; listeners. In the popular &quot;El Corrido de Gregorio Cortez,&quot; for example, the hero Cortez, fighting off pursuers, uses the metaphor of a thunderstorm to boast that he has had harder fights than the one they gave him: &quot;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.&quot; Similar storm imagery is found in other corridos including &quot;Kiansis,&quot; which tells of stampedes caused by thunderstorms during the Kansas cattle drives. Such imagery, highly conventional and readily recognizable to corrido listeners, reflects and strengthens the continuity of the corrido tradition. The corrido is composed not only of familiar images but also of certain ready-made lines that travel easily from one ballad to another. This is most evident in the corrido&#x27;s formal closing verse, or despedida. The despedida of one variant of &quot;Gregorio Cortez&quot; is translated as follows: &quot;Now with this I say farewell / In the shade of a cypress tree; / This is the end of the ballad / Of Don Gregorio Cortez.&quot; The first and third lines are a set convention. The second and fourth lines are variable, the fourth carrying the name of the corrido or expressing its subject, and the second varying according to exigencies of rhyme. In the despedida, perhaps the clearest marker of both the corrido&#x27;s uniqueness and its generic continuity, the corrido&#x27;s maker asserts that the task of relating an authentic Border tale has been accomplished.
+Question: Which one of the following is mentioned in the passage as an example of the use of metaphor in corridos?
+Answer Choices: (A)mist (B)a cypress tree (C)a fight (D)stampedes (E)stampedes
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;### Step 1: Re-extract all passage references to metaphor use\nFirst, confirm the only section of the passage that explicitly discusses and provides examples of metaphors in corridos:\n&gt; *\&quot;Figures of speech such as metaphors are generally rare in corridos, and when metaphors are used, they usually incorporate everyday images that are familiar to the songs&#x27; listeners. In the popular &#x27;El Corrido de Gregorio Cortez,&#x27; for example, the hero Cortez, fighting off pursuers, uses the metaphor of a thunderstorm to boast that he has had harder fights than the one they gave him: &#x27;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.&#x27;\&quot;*\nThis is the only metaphor example provided in the full text. The extended metaphor compares hard past fights to thunderstorms, and the current low-stakes fight to \&quot;little mist\&quot;—neither weather term refers to actual weather, so both function as metaphorical vehicles.\n### Step 2: Re-evaluate each answer option\n- (A) mist: As confirmed above, mist is a core part of the only explicit metaphor example provided. It is used metaphorically to describe the low intensity of Cortez’s current fight.\n- (B) a cypress tree: The cypress tree appears only in the example of a corrido’s formal closing verse (despedida), where it is a literal setting detail for the singer’s farewell. No text indicates it is used metaphorically. Eliminate.\n- (C) a fight: A fight is the literal subject Cortez describes using metaphor, not the metaphor itself. Eliminate.\n- (D) stampedes / (E) stampedes: Stampedes are referenced only as literal events that occurred during 1860s Kansas cattle drives, recounted in \&quot;El Corrido de Kiansis.\&quot; No text indicates they are used metaphorically. Eliminate both.\n### Step 3: Confirm no additional metaphor examples exist\nAll other imagery referenced in the passage (storm imagery in \&quot;Kiansis,\&quot; cypress tree in the despedida) is framed as literal narrative or formal detail, not metaphor. The original reasoning is fully correct.\nThe answer is A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>### Step 1: Locate the passage&#x27;s discussion of metaphor
+First, find the section of the text that addresses metaphors in corridos:
+&gt; *&quot;In the popular &#x27;El Corrido de Gregorio Cortez,&#x27; for example, the hero Cortez, fighting off pursuers, uses the metaphor of a thunderstorm to boast that he has had harder fights than the one they gave him: &#x27;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.&#x27;&quot;*
+Here, Cortez uses weather imagery as a metaphor: hard past fights are compared to thunderstorms, and his current, easier fight is compared to &quot;little mist.&quot;
+
+### Step 2: Evaluate each answer option
+- **(A) mist**: As confirmed above, mist is part of the metaphor Cortez uses to describe his current fight. This matches the question’s request.
+- **(B) a cypress tree**: A cypress tree is mentioned in the example closing verse (despedida) of &quot;Gregorio Cortez,&quot; but it is a literal setting detail, not a metaphor.
+- **(C) a fight**: A fight is the literal subject Cortez describes with metaphor, not the metaphor itself.
+- **(D) stampedes / (E) stampedes**: Stampedes are mentioned as literal events during cattle drives in &quot;El Corrido de Kiansis,&quot; not metaphors.
+
+The answer is A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::sat-en-101</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>At last, Old Widow Lau was done haggling with the driver and we stepped inside Father&#x27;s shop. It was north-facing, quite dim inside, and perhaps this was  why Father did not see us at first. He was busy with a 5 customer, a man who was distinguished-looking, like the scholars of two decades before. The two men were bent over a glass case, discussing the different qualities of inksticks. Big Uncle welcomed us and invited us to be seated. From his formal tone, I knew10 he did not recognize who we were. So I called his name in a shy voice. And he squinted at me, then laughed and announced our arrival to Little Uncle, who apologized many times for not rushing over sooner to greet us. They rushed us to be seated at one15 of two tea tables for customers. Old Widow Lau refused their invitation three times, exclaiming that my father and uncles must be too busy for visitors. She made weak efforts to leave. On the fourth insistence, we finally sat. Then Little Uncle brought20 us hot tea and sweet oranges, as well as bamboo latticework fans with which to cool ourselves.I tried to notice everything so I could later tell GaoLing what I had seen, and tease out her envy. The floors of the shop were of dark wood, polished and 25 clean, no dirty footprints, even though this was during the dustiest part of the summer. And along the walls were display cases made of wood and glass. The glass was very shiny and not one pane was broken. Within those glass cases were our silk-30 wrapped boxes, all our hard work. They looked so much nicer than they had in the ink-making studio at Immortal Heart village.I saw that Father had opened several of the boxes. He set sticks and cakes and other shapes on a silk 35 cloth covering a glass case that served as a table on which he and the customer leaned. First he pointed to a stick with a top shaped like a fairy boat and said with graceful importance, &quot;Your writing will flow as smoothly as a keel cutting through a glassy lake.&quot;40 He picked up a bird shape: &quot;Your mind will soar into the clouds of higher thought.&quot; He waved toward a row of ink cakes embellished with designs of peonies and bamboo: &quot;Your ledgers will blossom into abundance while bamboo surrounds your quiet 45 mind.&quot;As he said this, Precious Auntie came back into mind. I was remembering how she taught me that everything, even ink, had a purpose and a meaning: Good ink cannot be the quick kind, ready to pour out 50 of a bottle. You can never be an artist if your work comes without effort. That is the problem of modern ink from a bottle. You do not have to think. You simply write what is swimming on the top of your brain. And the top is nothing but pond scum, dead 55 leaves, and mosquito spawn. But when you push an inkstick along an inkstone, you take the first step to cleansing your mind and your heart. You push and you ask yourself, What are my intentions? What is in my heart that matches my mind? 60 I remembered this, and yet that day in the ink shop, I listened to what Father was saying, and his words became far more important than anything Precious Auntie had thought. &quot;Look here,&quot; Father said to his customer, and I looked. He held up an65 inkstick and rotated it in the light. &quot;See? It&#x27;s the right hue, purple-black, not brown or gray like the cheap brands you might find down the street. And listen to this.&quot; And I heard a sound as clean and pure as a small silver bell. &quot;The high-pitched tone tells you that 70 the soot is very fine, as smooth as the sliding banks of old rivers. And the scent-can you smell the balance of strength and delicacy, the musical notes of the ink&#x27;s perfume? Expensive, and everyone who sees you using it will know that it was well worth the high 75 price.&quot;I was very proud to hear Father speak of our family&#x27;s ink this way.
+Question: Throughout the passage, the narrator is portrayed as someone who is
+Answer Choices: (A)reserved around unfamiliar people. (B)attuned to her immediate surroundings. (C)sympathetic to the needs of others. (D)anxious about her responsibilities.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;### Step-by-Step Re-Verification\nFirst, we confirm the core question requirement: we are identifying a trait the narrator demonstrates *consistently throughout the passage*, not just in an isolated moment. We cross-check each option against the full text below:\n1.  **Re-examine Option A (reserved around unfamiliar people):**\n    The only reference to shyness is the narrator calling Big Uncle’s name in a shy voice, but Big Uncle is her relative, not an unfamiliar person. There are no extended interactions with the only stranger present (the customer) to demonstrate consistent reserve. This is a single minor detail, not a trait shown throughout the passage, so A is still unsupported.\n2.  **Re-examine Option B (attuned to her immediate surroundings):**\n    We confirm this trait is consistent across the full passage:\n    - The narrator immediately notices physical details of the shop (north-facing, dim) and connects this to why her father did not see them at first.\n    - She picks up on subtle social cues: she recognizes Big Uncle’s formal tone and correctly infers he does not recognize her and Old Widow Lau.\n    - She explicitly states her intentional focus on her environment: \&quot;I tried to notice everything so I could later tell GaoLing what I had seen, and tease out her envy.\&quot;\n    - She observes and records specific, small details: the polished, footprint-free dark wood floors, unbroken shiny glass display cases, the appearance of her family’s ink boxes, every line of her father’s sales pitch (the ink shapes, purple-black hue, bell-like sound of the inkstick, balanced scent), and the contrast between her father’s language and Precious Auntie’s lessons.\n    This constant, intentional awareness of both physical and social aspects of her environment confirms she is attuned to her surroundings, and this trait runs from their arrival to the end of the passage. B remains fully supported.\n3.  **Re-examine Option C (sympathetic to the needs of others):**\n    There is no point in the passage where the narrator expresses concern for or acts to meet another person’s needs. She observes Old Widow Lau’s polite refusals to sit and her uncles’ apologies for late greetings, but does not react with sympathy or support. No evidence for this trait exists,  C is still unsupported.\n4.  **Re-examine Option D (anxious about her responsibilities):**\n    The passage never references the narrator having any responsibilities, nor does it show her expressing anxiety about any duties. She is focused on observing her surroundings and feels pride in her family’s ink, with no anxiety present. D is still unsupported.\nNo errors were found in the original reasoning.\nThe answer is B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To solve this question, we analyze each option by cross-referencing it with details from the passage to identify the consistent portrayal of the narrator:
+### Step 1: Evaluate Option A (reserved around unfamiliar people)
+The narrator only mentions calling Big Uncle’s name in a shy voice early in the passage. This is a single, minor detail, not a trait demonstrated throughout the text. Additionally, Big Uncle, Little Uncle, and Father are her relatives (not unfamiliar people), and the narrator has no extended interactions with the only stranger present (the customer). This option is not supported as a consistent portrayal.
+### Step 2: Evaluate Option B (attuned to her immediate surroundings)
+The narrator is consistently shown noticing and processing details of her environment and interactions:
+- She immediately observes the shop is north-facing and dim, connecting this to why Father did not see them at first.
+- She picks up on Big Uncle’s formal tone and correctly infers he does not recognize her and Old Widow Lau.
+- She explicitly states, &quot;I tried to notice everything so I could later tell GaoLing what I had seen,&quot; and proceeds to describe small, specific details: the polished dark wood floors, unbroken shiny glass display cases, the appearance of the family’s ink boxes, Father’s sales pitch for the inksticks, and the sound and appearance of the ink itself.
+This constant awareness of her physical and social environment aligns directly with being &quot;attuned to her immediate surroundings.&quot;
+### Step 3: Evaluate Option C (sympathetic to the needs of others)
+There is no evidence in the passage of the narrator expressing sympathy or concern for others’ needs. She observes Old Widow Lau’s polite refusal to sit and the uncles’ efforts to greet them, but does not react with sympathy or act to meet anyone’s needs. This option is unsupported.
+### Step 4: Evaluate Option D (anxious about her responsibilities)
+The passage contains no mention of the narrator worrying about duties o</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::computer_architecture-val-18</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>下列关于Cache的说法中，正确的是____。
+A. 采用直接映像时，Cache无需考虑替换问题
+B. 如果选用最优替换算法，则Cache的命中率可以达到100%
+C. Cache本身的速度越快，则Cache存储器的等效访问速度就越快
+D. Cache的容量与主存的容量差别越大越好
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;正确选项：A\n\n### 选项解析：\n1. **选项A**：直接映像的规则是每个主存块只能映射到Cache中唯一的固定行。当Cache失效需要调入新块时，如果目标行已被占用，只能替换该行的内容，不存在“选择替换哪个Cache块”的决策需求，因此无需设计替换算法（无需考虑替换策略问题），该说法正确。\n2. **选项B**：最优替换算法（OPT）是理论上替换未来最久不访问的块，但无法避免首次访问块的强制性失效，也无法解决工作集大于Cache容量带来的容量失效，命中率不可能达到100%，该说法错误。\n3. **选项C**：Cache等效访问速度由Cache本身速度和命中率共同决定（等效访问时间公式：$t_e = h*t_c + (1-h)*t_m$，其中$h$为命中率，$t_c$为Cache访问时间，$t_m$为主存访问时间）。若Cache本身速度提升但命中率大幅下降，等效访问速度反而可能变慢，并非Cache本身越快等效速度就越快，该说法错误。\n4. **选项D**：Cache容量过小会导致命中率极低，无法发挥加速作用；容量过大则会带来成本过高、本身访问速度下降的问题，并非和主存容量差别越大越好，该说法错误。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>正确选项：A
+
+### 选项解析：
+1. **选项A**：直接映像的规则是每个主存块只能映射到Cache中唯一的固定行。当Cache失效需要调入新块时，如果目标行已被占用，只能替换该行的内容，不存在“选择替换哪个Cache块”的决策需求，因此无需设计替换算法（无需考虑替换策略问题），该说法正确。
+2. **选项B**：最优替换算法（OPT）是理论上替换未来最久不访问的块，但无法避免首次访问块的强制性失效，也无法解决工作集大于Cache容量带来的容量失效，命中率不可能达到100%，该说法错误。
+3. **选项C**：Cache等效访问速度不仅取决于Cache本身速度，还和命中率强相关（公式：等效访问时间$t_e = h*t_c + (1-h)*t_m$，$h$为命中率，$t_c$为Cache访问时间，$t_m$为主存访问时间）。如果Cache速度极快但命中率极低，等效访问速度仍会接近较慢的主存速度，并非Cache本身越快等效速度就越快，该说法错误。
+4. **选项D**：Cache容量过小会导致命中率极低，无法发挥加速作用；容量过大则会带来成本过高、本身访问速度下降的问题，并非和主存容量差别越大越好，该说法错误。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::computer_network-val-12</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>下列关于交换技术叙述错误的是____
+A. 电路交换在发送与接收方的物理链路上预留带宽
+B. 数据报交换可能出现分组乱序
+C. 数据报交换可能出现分组乱序
+D. 报文交换要求有较大缓存
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;### 正确选项：C\n（注：原题存在输入笔误，B、C选项内容完全重复，该题的标准题干中C选项应为**虚电路交换可能出现分组乱序**，以下为逐项验证过程：\n---\n### 逐项验证：\n1. **选项A验证**：电路交换为面向连接的交换技术，通信前需建立端到端的专属通路，会在传输路径的各段物理链路上预留专属带宽，通信过程中独占该预留资源，表述正确，排除。\n2. **选项B验证**：数据报交换属于无连接分组交换，每个分组独立选择路由路径，不同分组可能经由不同路径到达接收方，因此可能出现分组乱序，表述正确，排除。\n3. **选项C（修正后标准表述）验证**：虚电路交换为面向连接的分组交换，同一次通信的所有分组会沿预先建立的同一条虚电路传输，能够保证分组按发送顺序到达接收方，不会出现乱序，因此该表述错误，符合题意。\n4. **选项D验证**：报文交换以完整报文为单位进行存储转发，中间节点需要暂存整个完整报文才能执行转发操作，因此要求节点具备较大的缓存空间，表述正确，排除。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>### 正确选项：C
+（注：题目存在输入笔误，原题C选项应为**虚电路交换可能出现分组乱序**，该表述错误，因此选C）
+
+---
+### 知识点解析：
+1. **选项A**：电路交换是面向连接的交换技术，通信前需要建立端到端的连接，会在传输路径的物理链路上预留专属带宽资源，通信过程中独占该预留带宽，表述正确。
+2. **选项B（修正后原题的B）**：数据报交换属于无连接的分组交换，每个分组独立选择路由路径，不同分组可能通过不同路径到达接收方，因此可能出现分组乱序，表述正确。
+3. **选项C（修正后原题的C）**：虚电路交换是面向连接的分组交换，所有分组会沿着同一条预先建立的虚电路传输，能够保证分组按发送顺序到达接收方，不会出现乱序，因此该表述错误。
+4. **选项D**：报文交换以完整报文为单位进行存储转发，中间节点需要暂存整个完整报文，因此要求节点有较大的缓存空间，表述正确。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::electrical_engineer-val-5</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>在系统的初始运行条件、故障持续时间均完全相同的情况下，导致系统的暂态稳定性最差的是____
+A. 单相接地短路
+B. 两相短路
+C. 三相短路
+D. 断相故障
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;C\n### 解析：\n电力系统暂态稳定性的核心取决于故障期间发电机的不平衡功率大小：故障越严重，电磁功率降幅越大，转子过剩功率越多，加速面积越大，暂态稳定性越差。\n逐步验证推理逻辑：\n1. **故障类型的影响本质**：暂态稳定的核心矛盾是原动机输入功率与发电机电磁功率的不平衡。相同条件下，故障导致的电磁功率跌落幅度越大，转子过剩功率越多，发电机加速越剧烈，暂态稳定性越差。\n2. **短路故障的严重程度排序**：根据正序等效定则，各类短路的附加阻抗满足：三相短路附加阻抗为0，两相短路附加阻抗为ZΣ2，单相接地短路附加阻抗为ZΣ2+ZΣ0，附加阻抗越大，故障点正序电压越高，发电机电磁功率的跌落幅度越小。因此故障严重程度为：三相短路＞两相短路＞单相接地短路，三相短路时故障点正序电压接近0，发电机与系统间的功率传输能力下降幅度最大，电磁功率最低，转子过剩功率最大，对暂态稳定的破坏最强。\n3. **断相故障的影响**：断相属于纵向故障，仅部分相丧失传输能力，系统整体功率传输能力的衰减远小于短路故障，对暂态稳定的影响最弱。\n综上，相同条件下三相短路导致系统暂态稳定性最差，原解答无误。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C
+### 解析：
+电力系统暂态稳定性的核心取决于故障期间发电机的不平衡功率大小：故障越严重，电磁功率降幅越大，转子过剩功率越多，加速面积越大，暂态稳定性越差。
+根据故障严重程度排序：
+1. 三相短路是最严重的对称短路，金属性三相短路时故障点正序电压为0，发电机与系统间的功率传输能力下降幅度最大，电磁功率最低，转子过剩功率最大，对暂态稳定的破坏最强。
+2. 不对称短路（两相短路、单相接地短路）的故障程度轻于三相短路：根据正序等效定则，其附加阻抗均大于三相短路的附加阻抗（0），电磁功率降幅更小。
+3. 断相属于纵向故障，仅部分相丧失传输能力，整体功率传输能力远高于短路故障，对暂态稳定的影响最弱。
+因此相同条件下，三相短路导致系统暂态稳定性最差。</pre></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mmlu_pro</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MMLU-Pro：通用学科知识与复杂选择题推理</h1>
+    <p class="muted">基准 mmlu_pro · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">28.7%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">23</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MMLU-Pro 是 MMLU 的增强版，覆盖 14 个学科/专业领域，把选项从 4 个扩展到最多10 个，并替换掉过易、易猜的题目，更强调多步推理而非纯记忆。对应本仓库能力维度D01（通用学科知识与复杂推理）。</p><p>本次使用官方 test 划分（12,032 题）。提示采用零样本思维链，要求模型先推理、再在最后一行给出 `The answer is (X)`。</p><p>答案抽取沿用官方正则（依次匹配 `answer is (X)`、`answer: X`、末尾独立大写字母），失败时由 LLM 兜底抽取；判分为与标准选项字母精确匹配，并按学科分桶统计。</p><p class='muted'>主页：<a href='https://github.com/TIGER-AI-Lab/MMLU-Pro'>https://github.com/TIGER-AI-Lab/MMLU-Pro</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#10401</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: For the signal f(t)=3sin(200πt)+ 6sin(400πt) + sin(500πt), determine the minimum sampling requency (in πHz) satisfying the Nyquist criterion.
+Options:
+A. 550
+B. 1000
+C. 600
+D. 250
+E. 500
+F. 400
+G. 450
+H. 700
+I. 200
+J. 800
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>E</div></div><div class='card'><div class='card-head'><span class='pid'>#10533</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: Three of the following are classic security properties; which one is not?
+Options:
+A. Confidentiality
+B. Availability
+C. Correctness
+D. Integrity
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>business</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>chemistry</td><td>5</td><td>1</td><td>0.200</td><td><div class='bar'><i style='width:20%'></i></div></td></tr><tr><td>computer science</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>economics</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>engineering</td><td>8</td><td>3</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>health</td><td>7</td><td>4</td><td>0.571</td><td><div class='bar'><i style='width:57%'></i></div></td></tr><tr><td>history</td><td>4</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>law</td><td>14</td><td>2</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>math</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>other</td><td>9</td><td>1</td><td>0.111</td><td><div class='bar'><i style='width:11%'></i></div></td></tr><tr><td>philosophy</td><td>5</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>physics</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>psychology</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#10401</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: For the signal f(t)=3sin(200πt)+ 6sin(400πt) + sin(500πt), determine the minimum sampling requency (in πHz) satisfying the Nyquist criterion.
+Options:
+A. 550
+B. 1000
+C. 600
+D. 250
+E. 500
+F. 400
+G. 450
+H. 700
+I. 200
+J. 800
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>E</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this problem, I need to find the maximum frequency component in the signal, then apply the Nyquist criterion.
+
+## Identifying Frequency Components
+
+The signal f(t) = 3sin(200πt) + 6sin(400πt) + sin(500πt) has angular frequencies:
+- ω₁ = 200π rad/s → f₁ = 100 Hz
+- ω₂ = 400π rad/s → f₂ = 200 Hz
+- ω₃ = 500π rad/s → f₃ = 250 Hz
+
+## Applying Nyquist Criterion
+
+The maximum frequency is **f_max = 250 Hz**
+
+The minimum sampling frequency (Nyquist rate) must be:
+$$f_s \geq 2 \times f_{max} = 2 \times 250 = 500 \text{ Hz}$$
+
+## Converting to πHz
+
+Converting the sampling frequency to angular frequency (in π rad/s):
+$$\omega_s = 2\pi f_s = 2\pi(500) = 1000\pi \text{ rad/s}$$
+
+So in πHz, the minimum sampling frequency = **1000π**
+
+The answer is (B)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10533</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: Three of the following are classic security properties; which one is not?
+Options:
+A. Confidentiality
+B. Availability
+C. Correctness
+D. Integrity
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The three classic security properties form the well-known CIA triad: **Confidentiality** (protecting information from unauthorized access), **Integrity** (ensuring data is not tampered with or altered), and **Availability** (ensuring systems and data are accessible when needed).
+
+**Correctness**, while important in software engineering and information systems in general, is not considered one of the classic security properties in the traditional CIA triad.
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10787</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Collins suggests that the moral value of caring actions comes from
+Options:
+A. the cost-effectiveness of caring actions in terms of resources expended.
+B. the non-instrumental value of caring actions as manifestations of intrinsic goods for person like love and forgiveness.
+C. the value assigned to the action by the person performing the caring act.
+D. how well any caring actions fulfills the recipient&#x27;s interests and the strength of one&#x27;s intention to fulfill the recipient&#x27;s interest.
+E. the balance between the intention and the actual outcome of the caring actions.
+F. the intrinsic value of caring attitudes which motivate caring actions.
+G. the impact of the actions on the overall well-being of the society.
+H. the degree to which those actions align with societal norms and expectations.
+I. the extent to which the actions are recognized and appreciated by others.
+J. the degree to which those actions produces the greatest amount of happiness in the recipient of care.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>F</div><div class='ans'><span class='lbl'>归一化</span>F</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this question, I need to identify Collins&#x27;s view on the source of moral value in caring actions within the ethics of care tradition.
+
+**Analyzing the options:**
+
+- Options A, G, J focus on consequences/utilitarian outcomes (cost, societal well-being, happiness) - these are consequentialist views, not care ethics.
+- Options C, H, I focus on external valuation (performer, society, others) - these miss the internal moral significance care ethics emphasizes.
+- Options D and E focus on interests, intentions, or outcomes - these blend deontological/consequentialist elements.
+- Options B and F focus on intrinsic value of caring itself.
+
+**Key distinction between B and F:**
+- Option B emphasizes caring actions as *manifestations* of intrinsic goods (love, forgiveness).
+- Option F emphasizes caring *attitudes* that *motivate* caring actions as the source of value.
+
+In the care ethics framework associated with Collins, the moral significance of caring actions is grounded in the caring attitudes/dispositions that motivate them. The attitude of care is what gives the action its moral worth—it is not merely the production of outcomes or alignment with norms that matters, but the caring stance itself that has intrinsic moral value and is expressed through action.
+
+The answer is (F)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10841</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question: &quot; _Ad novitatem_ &quot; is a specific kind of fallacy of
+Options:
+A. Division
+B. False sign
+C. False cause
+D. Hasty Generalization
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this question, I need to identify what type of fallacy &quot;Ad novitatem&quot; (appeal to novelty) is.
+
+**Understanding &quot;Ad novitatem&quot;:** This is the fallacy of arguing that something is better, truer, or more correct simply because it is new or recent. For example, claiming that the newest medical treatment must be the best one.
+
+**Analyzing the options:**
+
+- **A. Division** - Fallacy of assuming parts have the properties of the whole. Not applicable here.
+- **B. False sign** - Involves taking one thing as a reliable sign of another, but this isn&#x27;t the best fit.
+- **C. False cause** - Fallacy of assuming a causal relationship where none exists. &quot;Ad novitatem&quot; assumes that the newness of something *causes* it to be better or truer, when in fact, newness has no causal bearing on truth or quality.
+- **D. Hasty Generalization** - Drawing a broad conclusion from limited evidence. Not the right category.
+
+**Reasoning:** &quot;Ad novitatem&quot; assumes that because something is new, it must therefore be superior or more valid. This creates a false causal connection between the property of being new and the quality of being true/better. The newness is treated as the &quot;cause&quot; of goodness, which is a classic false cause fallacy.
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10872</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Singer presents his three-premise argument in addition to appealing to the case of the drowning child because
+Options:
+A. he argues that moral claims can only be justified through logical reasoning and real-life examples.
+B. he believes that abstract arguments are more likely to convince one to act.
+C. he believes that using both abstract arguments and emotional appeals provides a balanced perspective.
+D. he wants to appeal to the reader&#x27;s reason and not just pull at the reader&#x27;s heartstrings.
+E. he wants to show that moral obligations can arise from both rational argument and emotional response.
+F. he believes arguments are a more efficient way to appeal to one&#x27;s emotions.
+G. he believes the case of the drowning child will make his argument more relatable.
+H. he argues that our emotional reactions have no bearing on which moral claims are true.
+I. he aims to appeal to both the logical and emotional aspects of the reader&#x27;s mind.
+J. he thinks that a combination of argument and emotion is more effective than either alone.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>J</div><div class='ans'><span class='lbl'>归一化</span>J</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this question, I need to identify why Peter Singer (in &quot;Famine, Affluence, and Morality&quot;) presents both his three-premise argument and the drowning child example.
+
+Analyzing Singer&#x27;s approach:
+- The three-premise argument provides rational, logical justification for moral obligations to help those in need
+- The drowning child example is an emotionally compelling analogy that makes the moral imperative feel intuitive and immediate
+
+Singer&#x27;s purpose in combining both is strategic. The abstract argument alone might be too detached to motivate action, while the emotional example alone might not provide sufficient moral justification. By combining them, he strengthens his case: the logical argument establishes *why* we have these obligations, while the emotional example helps readers recognize that they already accept this reasoning in close-to-home cases.
+
+Evaluating the options:
+- A, C, and D focus too narrowly on one aspect or suggest motivations Singer doesn&#x27;t explicitly endorse
+- B is incorrect; Singer doesn&#x27;t think abstract arguments are more likely to convince one to act
+- E and H misrepresent Singer&#x27;s view on emotional response
+- F is illogical (arguments vs. emotions)
+- G only addresses part of why he uses the drowning child example
+- I is close but less specific than J about the strategic combination
+- J captures Singer&#x27;s reasoning that the combined approach is more effective than either argument or emotional appeal alone
+
+The answer is (J)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10917</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Which of the following is not one of the four main excuses for terrorism that Michael Walzer discusses?
+Options:
+A. Terrorism is a form of freedom of speech.
+B. Terrorism is a necessary evil.
+C. Terrorism benefits oppressed groups.
+D. Terrorism is driven by economic factors.
+E. Terrorism is a legitimate form of self-defense.
+F. All political activity is terroristic.
+G. Terrorism is a method of political influence.
+H. Terrorism is a response to unjust government actions.
+I. Terrorism is a last resort.
+J. Terrorism is an expression of religious beliefs.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this question, I need to recall Michael Walzer&#x27;s analysis of terrorism, particularly from his essay &quot;Terrorism&quot; in *Arguing About War*.
+
+Walzer identifies four main moral excuses offered for terrorism:
+1. **Terrorism is a form of free speech/communication** (giving voice to the voiceless) - matches option A
+2. **Terrorism is self-defense** (a response to state violence) - matches option E
+3. **Terrorism is a last resort** (when no other options remain) - matches option I
+4. **Terrorism is a form of political action** (attempting to influence politics) - matches option G
+
+These are all moral justifications or excuses that attempt to legitimize terrorism as a choice rather than a structural explanation of its causes.
+
+Option D, &quot;Terrorism is driven by economic factors,&quot; is a causal/structural explanation (more associated with Marxist or materialist analyses of terrorism) rather than a moral excuse. Walzer&#x27;s four excuses are all moral claims about why terrorism might be permissible, not explanations of its underlying causes in terms of economic conditions.
+
+The answer is (D)</pre></details></div></section>
+</main>
+</body>
+</html>

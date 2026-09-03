@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">26.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">26</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 99,
+  &quot;confidence_unparsed_rate&quot;: 0.01,
+  &quot;accuracy&quot;: 0.26,
+  &quot;confidence_mean&quot;: 83.96,
+  &quot;confidence_std&quot;: 14.55,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 1,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 6,
+    &quot;60-69&quot;: 6,
+    &quot;70-79&quot;: 16,
+    &quot;80-89&quot;: 17,
+    &quot;90-99&quot;: 53
+  },
+  &quot;cwr_at_90&quot;: 0.7547,
+  &quot;n_high_confidence&quot;: 53,
+  &quot;ece_10bin&quot;: 0.5871,
+  &quot;brier&quot;: 0.5564,
+  &quot;auroc&quot;: 0.4846,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.2472,
+    &quot;coverage_80&quot;: 0.2405,
+    &quot;coverage_70&quot;: 0.2319
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;accuracy&quot;: 0.2353,
+      &quot;n_with_confidence&quot;: 16,
+      &quot;cwr_at_90&quot;: 0.9,
+      &quot;auroc&quot;: 0.359
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;accuracy&quot;: 0.2308,
+      &quot;n_with_confidence&quot;: 39,
+      &quot;cwr_at_90&quot;: 0.7778,
+      &quot;auroc&quot;: 0.45
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.2143,
+      &quot;n_with_confidence&quot;: 28,
+      &quot;cwr_at_90&quot;: 0.7273,
+      &quot;auroc&quot;: 0.5833
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;accuracy&quot;: 0.4375,
+      &quot;n_with_confidence&quot;: 16,
+      &quot;cwr_at_90&quot;: 0.6429,
+      &quot;auroc&quot;: 0.3492
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 3.649
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>4</td><td>0.235</td><td><div class='bar'><i style='width:24%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>9</td><td>0.231</td><td><div class='bar'><i style='width:23%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>6</td><td>0.214</td><td><div class='bar'><i style='width:21%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>7</td><td>0.438</td><td><div class='bar'><i style='width:44%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>51</td><td>15</td><td>0.294</td><td><div class='bar'><i style='width:29%'></i></div></td></tr><tr><td>zh</td><td>49</td><td>11</td><td>0.224</td><td><div class='bar'><i style='width:22%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this problem, I need to find the minimum number of letters that can create at least 10 unique codes (single letters or unordered pairs of different letters).
+
+## Setting Up the Count
+
+If Amy uses $n$ letters, she can create:
+- **Single-letter codes:** $n$ codes
+- **Two-letter pair codes** (order doesn&#x27;t matter, letters must be different): $\binom{n}{2} = \frac{n(n-1)}{2}$ codes
+
+**Total codes:** $n + \frac{n(n-1)}{2} = \frac{n(n+1)}{2}$
+
+## Testing Values
+
+I need $\frac{n(n+1)}{2} \geq 10$:
+
+**Try n = 3:** $\frac{3 \times 4}{2} = 6$ codes (too few)
+
+**Try n = 4:** $\frac{4 \times 5}{2} = 10$ codes ✓
+
+## Verification with 4 Letters
+
+With letters A, B, C, D:
+- **Singles (4):** A, B, C, D
+- **Pairs (6):** AB, AC, AD, BC, BD, CD
+- **Total: 10 codes** ✓
+
+This exactly covers all 10 types of books.
+
+The answer is B
+
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-27</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：黄色固体 $\mathrm{X}$, 可能含有漂白粉、 $\mathrm{FeSO}_{4} $、$ \mathrm{Fe}_{2}\left(\mathrm{SO}_{4}\right)_{3} $、$ \mathrm{CuCl}_{2} $、$ \mathrm{KI}$ 之中的几种或全 部。将 $\mathrm{X}$ 与足量的水作用, 得到深棕色固体混合物 $\mathrm{Y}$ 和无色碱性溶液 $\mathrm{Z}$ 。下列结论合理的 是
+选项：(A)$\mathrm{X}$ 中含 $\mathrm{KI}$, 可能含有 $\mathrm{CuCl}_{2}$ (B)$\mathrm{X}$ 中含有漂白粉和 $\mathrm{FeSO}_{4}$ (C)$\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}, \mathrm{Y}$ 中含有 $\mathrm{Fe}(\mathrm{OH})_{3}$ (D)用 $\mathrm{H}_{2} \mathrm{SO}_{4}$ 酸化溶液 $\mathrm{Z}$, 若有黄绿色气体放出, 说明 $\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 65}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析过程
+
+## 已知条件
+- X 是**黄色固体**
+- 与足量水作用后得到：
+  - Y：**深棕色固体混合物**
+  - Z：**无色碱性溶液**
+
+## X 的可能成分及其性质
+| 成分 | 颜色 | 备注 |
+|------|------|------|
+| 漂白粉 | 白色 | 提供 ClO⁻（强氧化剂）和碱性 |
+| FeSO₄ | 浅绿色 | 含 Fe²⁺ |
+| Fe₂(SO₄)₃ | 黄色 | 含 Fe³⁺ |
+| CuCl₂ | 蓝绿色/棕黄色 | 含 Cu²⁺ |
+| KI | 白色 | 含 I⁻ |
+
+## 关键推断
+
+**关于 Z 是碱性溶液：**
+- 必须是 X 中的漂白粉溶于水产生 ClO⁻，使溶液呈碱性。
+- **结论：X 中必含漂白粉**
+
+**关于 Y 是深棕色固体：**
+- 深棕色是 Fe(OH)₃ 的特征颜色。
+- 在碱性条件下，Fe²⁺ 被 ClO⁻ 氧化为 Fe³⁺，Fe³⁺ 与 OH⁻ 生成 Fe(OH)₃ 沉淀。
+- **结论：Y 中必含 Fe(OH)₃，X 中必含铁盐（FeSO₄ 或 Fe₂(SO₄)₃）**
+
+**关于 Z 无色：**
+- 无 I₂、Cu²⁺、Fe²⁺、Fe³⁺ 留在溶液中。
+
+## 各选项分析
+
+**(A) X 中含 KI，可能含有 CuCl₂**
+- I⁻ 被 ClO⁻ 氧化为 IO₃⁻（无色）虽与现象一致，但**无法判定 X 中一定含 KI**（I⁻ 完全可以不存在）。
+- 此结论中&quot;X 必含 KI&quot;缺乏依据。**不合理** ✗
+
+**(B) X 中含有漂白粉和 FeSO₄**
+- 漂白粉是必要的（保证 Z 呈碱性）。✓
+- FeSO₄ 含有 Fe²⁺，可被 ClO⁻ 氧化，最终生成 Fe(OH)₃（深棕色），符合 Y 的现象。✓
+- 此结论合理。✓
+
+**(C) X 中含有 CuCl₂，Y 中含有 Fe(OH)₃**
+- Y 中含 Fe(OH)₃ 是必然的（深棕色来源）。✓
+- 但**无法判定 X 中必含 CuCl₂**（Y 的深棕色可以仅由 Fe(OH)₃ 提供）。
+- 此结论部分合理，但&quot;X 必含 CuCl₂&quot;无依据。**不完全合理** ✗
+
+**(D) 用 H₂SO₄ 酸化 Z，若有黄绿色气体，说明 X 中含 CuCl₂**
+- Z 中含 ClO⁻（漂白粉提供）和 Cl⁻，酸化时：ClO⁻ + Cl⁻ + 2H⁺ → Cl₂↑ + H₂O
+- **黄绿色气体（Cl₂）可由漂白粉直接产生，与 CuCl₂ 无关**。
+- 此结论错误。✗
+
+## 最终结论
+
+合理的结论是 **(B)**：X 中必含漂白粉（保证碱性 Z），可能含 FeSO₄（提供 Fe²⁺，经 ClO⁻ 氧化后生成 Fe(OH)₃，使 Y 呈深棕色）。
+
+答案是B
+
+置信度: 65</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析&quot;清明时节雨纷纷&quot;影响长江中下游地区的天气系统
+
+## 思考过程
+
+**第一步：确定时间背景**
+清明时节为每年4月初，此时正值春季，长江中下游地区冷暖气流活动频繁。
+
+**第二步：分析各天气系统的可能性**
+
+1. **准静止锋**：春季，冷暖气团在江淮地区势均力敌，形成著名的&quot;江淮准静止锋&quot;，造成连绵阴雨天气，是此时长江中下游地区多雨的重要原因之一。✓
+
+2. **冷锋**：春季北方冷空气仍活跃，冷空气南下与南方暖湿气流相遇形成冷锋，带来降水。✓
+
+3. **暖锋**：春季暖锋过境时虽可带来连续性降水，但在长江中下游地区影响相对较小，且不是该时节的主导天气系统。✗
+
+4. **高压**：高压控制下盛行下沉气流，天气晴朗干燥，不会出现&quot;雨纷纷&quot;的天气。✗
+
+**第三步：综合判断**
+清明时节长江中下游地区的主要降水天气系统为准静止锋（江淮准静止锋）和冷锋。
+
+## 答案
+
+答案是A
+
+置信度: 90</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-mathqa-116</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：若曲线 $y=x^{-\frac{1}{2}}$ 在点  $\left( a, a^{-\frac{1}{2}}\right)$ 处的切线与两个坐标围成的三角形 的面积为 18 , 则 $a=$ ($\qquad$)\\
+
+选项：(A)64 (B)32 (C)16 (D)8
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 求解过程
+
+## 求导数
+对于曲线 $y = x^{-\frac{1}{2}}$：
+$$y&#x27; = -\frac{1}{2}x^{-\frac{3}{2}}$$
+
+## 在点 $(a, a^{-\frac{1}{2}})$ 处的切线斜率
+$$m = -\frac{1}{2}a^{-\frac{3}{2}}$$
+
+## 切线方程
+$$y - a^{-\frac{1}{2}} = -\frac{1}{2}a^{-\frac{3}{2}}(x - a)$$
+
+## 求截距
+
+**x 截距**（令 $y=0$）：
+$$-a^{-\frac{1}{2}} = -\frac{1}{2}a^{-\frac{3}{2}}(x-a)$$
+$$2a = x - a \implies x = 3a$$
+
+**y 截距**（令 $x=0$）：
+$$y = a^{-\frac{1}{2}} + \frac{1}{2}a^{-\frac{1}{2}} = \frac{3}{2}a^{-\frac{1}{2}}$$
+
+## 计算三角形面积
+$$S = \frac{1}{2} \cdot 3a \cdot \frac{3}{2}a^{-\frac{1}{2}} = \frac{9}{4}a^{\frac{1}{2}}$$
+
+## 求解 a
+由 $\frac{9}{4}a^{\frac{1}{2}} = 18$：
+$$a^{\frac{1}{2}} = 8 \implies a = 64$$
+
+**验证**：$\frac{9}{4} \times 8 = 18$ ✓
+
+答案是A
+
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-155</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：在下列两个核反应方程中 $X + \, ^{14}_{7}\mathrm{N} \rightarrow Y + \, ^{17}_{8}\mathrm{O}$，$Y + \, ^{7}_{3}\mathrm{Li} \rightarrow 2X$，X 和 Y 代表两种不同的原子核，以 Z 和 A 分别表示 X 的电荷数和质量数，则（ ）
+选项：(A)$Z = 1, \, A = 1$ (B) (C) (D)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ADE&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>ADE</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 解题过程
+
+## 设未知数
+设 X 的电荷数为 Z，质量数为 A；Y 的电荷数为 Z_Y，质量数为 A_Y。
+
+## 根据核反应方程中电荷数和质量数守恒
+
+**反应 1**：X + ¹⁴₇N → Y + ¹⁷₈O
+- 质量数守恒：A + 14 = A_Y + 17，得 A_Y = A - 3
+- 电荷数守恒：Z + 7 = Z_Y + 8，得 Z_Y = Z - 1
+
+**反应 2**：Y + ⁷₃Li → 2X
+- 质量数守恒：(A - 3) + 7 = 2A，解得 **A = 4**
+- 电荷数守恒：(Z - 1) + 3 = 2Z，解得 **Z = 2**
+
+## 验证
+
+X 是 ⁴₂He（α 粒子），Y 是 ¹₁H（质子）：
+
+- 反应1：⁴₂He + ¹⁴₇N → ¹₁H + ¹⁷₈O  
+  质量：4+14 = 1+17 ✓；电荷：2+7 = 1+8 ✓
+
+- 反应2：¹₁H + ⁷₃Li → 2⁴₂He  
+  质量：1+7 = 2×4 ✓；电荷：1+3 = 2×2 ✓
+
+## 结论
+
+X 的电荷数 Z = 2，质量数 A = 4，对应选项 (D)。
+
+**答案是 D**
+
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-99</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：有研究发现, 某神经细胞传递信号时, 离子从细胞膜一侧流到另一侧形成跨膜电流, 若将该细胞膜视为 $1 \times 10^{-8} \mathrm{~F}$ 的电容器, 在 $2 \mathrm{~ms}$ 内细胞膜两侧的电势差从 $-70 \mathrm{mV}$ 变为 $30 \mathrm{mV}$, 则该过程中跨膜电流的平均 值为 
+选项：(A)$1.5 \times 10^{-7} \mathrm{~A}$ (B)$2 \times 10^{-7} \mathrm{~A}$ (C)$3.5 \times 10^{-7} \mathrm{~A}$ (D)$5 \times 10^{-7} \mathrm{~A}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ACDEF&quot;, &quot;c&quot;: 99}</div><div class='ans'><span class='lbl'>归一化</span>ACDEF</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 求解过程
+
+**已知条件：**
+- 电容 C = 1 × 10⁻⁸ F
+- 时间 Δt = 2 ms = 2 × 10⁻³ s
+- 电势差从 -70 mV 变为 30 mV
+
+**计算步骤：**
+
+**第一步：求电势差的变化量**
+
+$$\Delta U = 30 \text{ mV} - (-70 \text{ mV}) = 100 \text{ mV} = 0.1 \text{ V}$$
+
+**第二步：求电荷变化量**
+
+由电容定义 Q = CU，得：
+
+$$\Delta Q = C \cdot \Delta U = 1 \times 10^{-8} \text{ F} \times 0.1 \text{ V} = 1 \times 10^{-9} \text{ C}$$
+
+**第三步：求平均电流**
+
+$$I = \frac{\Delta Q}{\Delta t} = \frac{1 \times 10^{-9} \text{ C}}{2 \times 10^{-3} \text{ s}} = 5 \times 10^{-7} \text{ A}$$
+
+答案是D
+
+置信度: 99</pre></details></div></section>
+</main>
+</body>
+</html>

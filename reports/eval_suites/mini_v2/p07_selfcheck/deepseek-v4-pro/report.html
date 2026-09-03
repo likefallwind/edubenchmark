@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>deepseek-v4-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">67.7%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">99</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">67</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-216</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Think about the different ways that people use the wind. You can use it to fly a kite or to sail a boat. Wind is one of our cleanest and richest power sources（来源）, as well as one of the oldest. Evidence shows that windmills（风车）began to be used in ancient Iran back in the seventh century BC. They were first introduced to Europe during the 1100s, when armies returned from the Middle East with knowledge of using wind power.For many centuries, people used windmills to grind（磨碎）wheat into flour or pump water from deep underground when electricity was discovered in the late 1800s, people living in remote areas began to use them to produce electricity. This allowed them to have electric lights and radio. However, by the 1940s when electricity was available to people in almost all areas of the United States, windmills were rarely used.During the 1970s, people started becoming concerned about the pollution that is created when coal and gas are burned to produce electricity. People also realized that the supply of coal and gas would not last forever. Then, wind was rediscovered, though it means higher coasts. Today, there is a global movement to supply more and more of our electricity through the use of wind.
+Question: 63．What would the author probably discuss in the paragraph that follows?
+Answer Choices: (A)The advantages of wind power. (B)The design of wind power plants. (C)The worldwide movement to save energy. (D)The global trend towards producing power from wind.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 99,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.6869,
+  &quot;r2_accuracy&quot;: 0.6768,
+  &quot;net_gain&quot;: -0.0101,
+  &quot;change_rate&quot;: 0.0808,
+  &quot;n_r1_wrong&quot;: 31,
+  &quot;n_fixed_wrong_to_right&quot;: 2,
+  &quot;fix_rate&quot;: 0.0645,
+  &quot;n_r1_right&quot;: 68,
+  &quot;n_broken_right_to_wrong&quot;: 3,
+  &quot;break_rate&quot;: 0.0441,
+  &quot;score_10&quot;: 5.102,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 12,
+      &quot;r2_correct&quot;: 12,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;r1_correct&quot;: 25,
+      &quot;r2_correct&quot;: 26,
+      &quot;fixed&quot;: 2,
+      &quot;broken&quot;: 1
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 27,
+      &quot;r1_correct&quot;: 18,
+      &quot;r2_correct&quot;: 17,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 13,
+      &quot;r2_correct&quot;: 12,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>1</td></tr><tr><td>scored</td><td>99</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>12</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>26</td><td>0.722</td><td><div class='bar'><i style='width:72%'></i></div></td></tr><tr><td>mmlu_pro</td><td>27</td><td>17</td><td>0.630</td><td><div class='bar'><i style='width:63%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>12</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>53</td><td>35</td><td>0.660</td><td><div class='bar'><i style='width:66%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>32</td><td>0.696</td><td><div class='bar'><i style='width:70%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>1</td><td>模型返回了空内容</td><td class='muted'>mmlu_pro::3730</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;经过重新检查，我对每个选项的推理如下：\n\n- (A) 蚕丝主要成分是丝素蛋白和丝胶蛋白，属于蛋白质，说法正确。\n- (B) 蛋白质是天然高分子化合物，蚕丝作为天然蛋白质纤维，属于天然高分子材料，说法正确。\n- (C) “蜡炬成灰”描述的是蜡烛燃烧，燃烧过程是有机物与氧气发生的氧化反应，说法正确。\n- (D) 古代的蜡（如蜂蜡）主要成分是高级脂肪酸与高级醇形成的酯，分子量几百到上千，不属于高分子聚合物（高分子通常要求分子量上万并具有重复单元），说法错误。\n\n因此，原答案无误。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>我们逐步分析每个选项：
+
+(A) 蚕丝的主要成分是蛋白质。蚕丝由蚕分泌的丝素蛋白和丝胶蛋白构成，属于天然蛋白质纤维，说法正确。
+
+(B) 蚕丝属于天然高分子材料。蛋白质是天然高分子化合物，蚕丝作为蛋白质纤维，当然属于天然高分子材料，说法正确。
+
+(C) “蜡炬成灰”过程中发生了氧化反应。蜡烛燃烧是蜡与空气中的氧气发生氧化反应，生成二氧化碳和水等，说法正确。
+
+(D) 古代的蜡是高级脂肪酸酯，属于高分子聚合物。古代的蜡（如蜂蜡）主要成分确实是高级脂肪酸与高级一元醇形成的酯，但其相对分子质量一般为几百，远未达到高分子聚合物的程度（高分子通常分子量上万，且具有重复结构单元）。因此，该说法错误。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;“清明时节”是4月初，长江中下游地区正值春季。此时冷空气势力减弱但仍可南下，暖湿气流开始增强，两者交汇频繁。当冷暖气团势力相当时，易形成准静止锋，带来持续阴雨（“雨纷纷”）；当冷空气势力较强、主动推进时，会形成冷锋过境，也会带来降水。暖锋在我国该地区春季相对少见，高压（反气旋）则多晴朗天气，与“雨纷纷”不符。因此，可能的天气系统是准静止锋或冷锋。\n\n答案是A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>清明时节（4月初），长江中下游地区冷暖气团交汇频繁。此时，冷空气势力减弱但仍有一定影响，暖湿气流开始增强，两者势均力敌时容易形成准静止锋，带来持续阴雨天气；同时，北方南下的冷空气也会形成冷锋，过境时产生降水。暖锋在该地区春季较为少见，高压则通常带来晴朗天气，与“雨纷纷”不符。因此，可能的天气系统是准静止锋或冷锋。
+
+答案是A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-123</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：在走向现代化的道路上，各个国家路径不同。其中以军事力量完成统一，以发展重工业为重点的国家是
+选项：(A)法国 (B)日本 (C)德国 (D)俄国
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;逐步验证：\n\n1. **德国**：19世纪，普鲁士通过三次王朝战争（普丹、普奥、普法）以军事力量完成德意志统一；统一后迅速推进工业化，以钢铁、煤炭、军工等重工业为发展重点。符合条件。\n\n2. **日本**：通过倒幕运动（戊辰战争等）以军事力量结束幕藩体制，建立中央集权国家，实质上完成了从封建割据到现代统一的转变；明治维新后以“富国强兵”为口号，大力扶持重工业（军工、造船、钢铁等）。符合条件。\n\n3. **俄国**：1861年改革后确实重点发展重工业，但俄国历史上并未经历如德、日那样通过军事力量完成国家统一的过程（沙俄是一个长期统一的帝国）。不符合“以军事力量完成统一”的条件。\n\n4. **法国**：法国统一较早，工业化进程相对均衡，重工业并非其唯一或最突出的重点，且不存在19世纪军事统一的过程。不符合条件。\n\n综上，符合全部条件的国家是德国和日本。原答案无误。\n\n答案是BC&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>在走向现代化的道路上，德国和日本都通过军事力量完成了国家统一，并在工业化进程中重点发展重工业。德国通过普鲁士领导的王朝战争实现统一，日本则通过倒幕运动建立中央集权政府，随后两国均大力发展重工业以增强国力。法国和俄国没有通过军事力量完成统一的过程。
+
+答案是BC</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-46</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某网络论坛将最近一年与5年前网友曾经发布的有关社会问题的帖子进行了统计比较，发现：像拾金不昧、扶贫急难、见义勇为这样的帖子增加了 50%。而与为非作歹、作恶逃匿、杀人越货有关的帖子却增加了 90%。由此可见，社会风气正在迅速恶化。
+问题：以下哪项如果为真，最能削弱上述论证？
+选项：(A)“好事不出门，坏事传千里”。古往今来，都是如此 (B)最近5年上网的用户翻了两番 (C)最近几年，有些人在网上用造谣的方式达到营利的目的 (D)该网络论坛是一个法制论坛
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;论证将网络论坛上关于负面社会问题的帖子数量增幅（90%）大于正面帖子增幅（50%），作为社会风气迅速恶化的依据。要削弱这一论证，最有效的方式是指出帖子数量的变化并不能真实反映社会风气的变化。\n\n选项C指出，最近几年有些人在网上通过造谣营利，这意味着部分负面帖子可能是虚构的，并非真实发生的社会事件。因此，负面帖子数量的增加并不能可靠地代表社会实际负面事件的增加，从而直接削弱了从帖子数据推出社会风气恶化的推理链条。\n\n其他选项均不能有效削弱：A只说明“坏事传千里”是常态，无法解释为何增幅差异变大，反而可能默认了负面事件增加的事实；B指出用户总数翻了两番，但不能解释为何负面帖子增幅远高于正面帖子增幅；D指出论坛性质为法制论坛，但论坛性质在比较的两个时期并未改变，无法解释增幅差异。\n\n答案是C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>论证基于帖子数量变化比例推断社会风气恶化，但选项C指出，有些帖子可能出于营利目的造谣，并非真实事件，因而无法直接反映社会风气，这直接削弱了论据的有效性。其他选项均不能有效削弱。
+
+答案是C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::lsat-rc-110</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>The corrido, a type of narrative folk song, comes from a region half in Mexico and half in the United States known as the Lower Rio Grande Border. Corridos, which flourished from about 1836 to the late 1930s, are part of a long-standing ballad tradition that has roots in eighteenth-century Spain. Sung in Spanish, corridos combine formal features of several different types of folk songs, but their narratives consistently deal with subject matter specific to the Border region. For example, &quot;El Corrido de Kiansis&quot; (c. 1870), the oldest corrido surviving in complete form, records the first cattle drives to Kansas in the late 1860s. A single important event is likely to have inspired several corrido variants, yet the different versions of any given story all partake of standard generic elements. When sung at social gatherings, corridos served to commemorate significant local happenings, but more importantly, their heavy reliance on familiar linguistic and thematic conventions served to affirm the cohesiveness of Border communities. Corridos take their name from the Spanish verb correr, meaning to run or to flow, for corridos tell their stories simply and swiftly, without embellishments. Figures of speech such as metaphors are generally rare in corridos, and when metaphors are used, they usually incorporate everyday images that are familiar to the songs&#x27; listeners. In the popular &quot;El Corrido de Gregorio Cortez,&quot; for example, the hero Cortez, fighting off pursuers, uses the metaphor of a thunderstorm to boast that he has had harder fights than the one they gave him: &quot;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.&quot; Similar storm imagery is found in other corridos including &quot;Kiansis,&quot; which tells of stampedes caused by thunderstorms during the Kansas cattle drives. Such imagery, highly conventional and readily recognizable to corrido listeners, reflects and strengthens the continuity of the corrido tradition. The corrido is composed not only of familiar images but also of certain ready-made lines that travel easily from one ballad to another. This is most evident in the corrido&#x27;s formal closing verse, or despedida. The despedida of one variant of &quot;Gregorio Cortez&quot; is translated as follows: &quot;Now with this I say farewell / In the shade of a cypress tree; / This is the end of the ballad / Of Don Gregorio Cortez.&quot; The first and third lines are a set convention. The second and fourth lines are variable, the fourth carrying the name of the corrido or expressing its subject, and the second varying according to exigencies of rhyme. In the despedida, perhaps the clearest marker of both the corrido&#x27;s uniqueness and its generic continuity, the corrido&#x27;s maker asserts that the task of relating an authentic Border tale has been accomplished.
+Question: Which one of the following is mentioned in the passage as an example of the use of metaphor in corridos?
+Answer Choices: (A)mist (B)a cypress tree (C)a fight (D)stampedes (E)stampedes
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;The passage explicitly discusses metaphor in the context of \&quot;El Corrido de Gregorio Cortez.\&quot; It states that the hero uses a metaphor comparing his struggle to a storm, saying: \&quot;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.\&quot; Here, \&quot;mist\&quot; is the metaphorical term used to represent the fight. The other options are not presented as metaphors: \&quot;a cypress tree\&quot; appears in a literal closing formula, \&quot;a fight\&quot; is what the metaphor describes, and \&quot;stampedes\&quot; are literal events caused by thunderstorms. Therefore, the correct answer is \&quot;mist.\&quot;\n\nThe answer is A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The passage discusses the use of metaphor in corridos by citing the example from &quot;El Corrido de Gregorio Cortez,&quot; where the hero compares his past struggles to a thunderstorm and the current fight to &quot;this little mist.&quot; The word &quot;mist&quot; is directly used as a metaphor for the fight. The other options are not metaphors in the passage: a cypress tree appears in the literal closing verse, a fight is the subject of the metaphor rather than the metaphor itself, and stampedes are literal events.
+
+The answer is A.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::sat-en-101</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>At last, Old Widow Lau was done haggling with the driver and we stepped inside Father&#x27;s shop. It was north-facing, quite dim inside, and perhaps this was  why Father did not see us at first. He was busy with a 5 customer, a man who was distinguished-looking, like the scholars of two decades before. The two men were bent over a glass case, discussing the different qualities of inksticks. Big Uncle welcomed us and invited us to be seated. From his formal tone, I knew10 he did not recognize who we were. So I called his name in a shy voice. And he squinted at me, then laughed and announced our arrival to Little Uncle, who apologized many times for not rushing over sooner to greet us. They rushed us to be seated at one15 of two tea tables for customers. Old Widow Lau refused their invitation three times, exclaiming that my father and uncles must be too busy for visitors. She made weak efforts to leave. On the fourth insistence, we finally sat. Then Little Uncle brought20 us hot tea and sweet oranges, as well as bamboo latticework fans with which to cool ourselves.I tried to notice everything so I could later tell GaoLing what I had seen, and tease out her envy. The floors of the shop were of dark wood, polished and 25 clean, no dirty footprints, even though this was during the dustiest part of the summer. And along the walls were display cases made of wood and glass. The glass was very shiny and not one pane was broken. Within those glass cases were our silk-30 wrapped boxes, all our hard work. They looked so much nicer than they had in the ink-making studio at Immortal Heart village.I saw that Father had opened several of the boxes. He set sticks and cakes and other shapes on a silk 35 cloth covering a glass case that served as a table on which he and the customer leaned. First he pointed to a stick with a top shaped like a fairy boat and said with graceful importance, &quot;Your writing will flow as smoothly as a keel cutting through a glassy lake.&quot;40 He picked up a bird shape: &quot;Your mind will soar into the clouds of higher thought.&quot; He waved toward a row of ink cakes embellished with designs of peonies and bamboo: &quot;Your ledgers will blossom into abundance while bamboo surrounds your quiet 45 mind.&quot;As he said this, Precious Auntie came back into mind. I was remembering how she taught me that everything, even ink, had a purpose and a meaning: Good ink cannot be the quick kind, ready to pour out 50 of a bottle. You can never be an artist if your work comes without effort. That is the problem of modern ink from a bottle. You do not have to think. You simply write what is swimming on the top of your brain. And the top is nothing but pond scum, dead 55 leaves, and mosquito spawn. But when you push an inkstick along an inkstone, you take the first step to cleansing your mind and your heart. You push and you ask yourself, What are my intentions? What is in my heart that matches my mind? 60 I remembered this, and yet that day in the ink shop, I listened to what Father was saying, and his words became far more important than anything Precious Auntie had thought. &quot;Look here,&quot; Father said to his customer, and I looked. He held up an65 inkstick and rotated it in the light. &quot;See? It&#x27;s the right hue, purple-black, not brown or gray like the cheap brands you might find down the street. And listen to this.&quot; And I heard a sound as clean and pure as a small silver bell. &quot;The high-pitched tone tells you that 70 the soot is very fine, as smooth as the sliding banks of old rivers. And the scent-can you smell the balance of strength and delicacy, the musical notes of the ink&#x27;s perfume? Expensive, and everyone who sees you using it will know that it was well worth the high 75 price.&quot;I was very proud to hear Father speak of our family&#x27;s ink this way.
+Question: Throughout the passage, the narrator is portrayed as someone who is
+Answer Choices: (A)reserved around unfamiliar people. (B)attuned to her immediate surroundings. (C)sympathetic to the needs of others. (D)anxious about her responsibilities.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;The passage consistently emphasizes the narrator&#x27;s deliberate observation of her environment. She explicitly states, \&quot;I tried to notice everything so I could later tell GaoLing what I had seen,\&quot; and then provides detailed descriptions of the shop&#x27;s lighting, cleanliness, display cases, the actions of her father and uncles, the dialogue, and even the sensory qualities of the inksticks. She is not characterized primarily by reservation, sympathy, or anxiety in this excerpt, but by her acute attention to her surroundings. The analysis confirms the choice.\n\nThe answer is B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The narrator consistently demonstrates careful observation and a deliberate effort to absorb details of her surroundings, from the shop&#x27;s dimness and polished floors to the conversation and the inksticks. She explicitly says, &quot;I tried to notice everything so I could later tell GaoLing what I had seen,&quot; and goes on to describe sensory details and social interactions, indicating she is highly attuned to her immediate environment.
+
+The answer is B</pre></details></div></section>
+</main>
+</body>
+</html>

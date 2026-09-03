@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ceval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · C-Eval：中文多学科考试知识（选择题，5-shot answer-only）</h1>
+    <p class="muted">基准 ceval · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">33.6%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">150</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">149</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">50</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>C-Eval 是覆盖 52 个学科、四个难度层级的中文多项选择评测，分为 STEM、社会科学、人文、其他四大类。每题为四选一（A/B/C/D）。对应本仓库能力维度 D01（通用学科知识与推理），用于衡量模型的中文本土学科知识，属 sanity check。</p><p>本次使用带公开标签的 val 划分（1,346 题）；官方 test 划分不公开答案、需提交排行榜，故不在本地评测范围内。评测采用官方 **5-shot answer-only** 协议：每个学科取 dev 集的 5 个示例作为 user/assistant 多轮对话（assistant 回复即标准字母），再以相同格式（结尾为「答案：」）提问。</p><p>由于 few-shot 已把输出约束为单个字母，本适配器**不做 LLM 答案抽取**，直接读取回复首个选项字母与标准答案精确匹配（等价官方 `response[0] == answer`），并按学科大类与具体学科分桶统计。</p><p class='muted'>主页：<a href='https://github.com/hkust-nlp/ceval'>https://github.com/hkust-nlp/ceval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#accountant-val-11</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#accountant-val-12</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>如果用合作性和坚定性两维坐标来描述企业某一利益相关者在企业战略决策与实施过程行为模式，“和解”是____。
+A. 中等程度的坚定性和中等程度的合作性行为的组合
+B. 不坚定行为与合作行为的组合
+C. 坚定行为和不合作行为的组合
+D. 坚定行为与合作行为的组合
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>1</td></tr><tr><td>scored</td><td>149</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Humanities</td><td>30</td><td>7</td><td>0.233</td><td><div class='bar'><i style='width:23%'></i></div></td></tr><tr><td>Other</td><td>51</td><td>18</td><td>0.353</td><td><div class='bar'><i style='width:35%'></i></div></td></tr><tr><td>STEM</td><td>44</td><td>16</td><td>0.364</td><td><div class='bar'><i style='width:36%'></i></div></td></tr><tr><td>Social Science</td><td>24</td><td>9</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>accountant</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>advanced_mathematics</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>art_studies</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>basic_medicine</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>business_administration</td><td>6</td><td>4</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>chinese_language_and_literature</td><td>5</td><td>2</td><td>0.400</td><td><div class='bar'><i style='width:40%'></i></div></td></tr><tr><td>civil_servant</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>clinical_medicine</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>college_chemistry</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>college_economics</td><td>10</td><td>3</td><td>0.300</td><td><div class='bar'><i style='width:30%'></i></div></td></tr><tr><td>college_physics</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>college_programming</td><td>6</td><td>2</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>computer_architecture</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>computer_network</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>discrete_mathematics</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>education_science</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>electrical_engineer</td><td>12</td><td>4</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>environmental_impact_assessment_engineer</td><td>6</td><td>2</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>fire_engineer</td><td>5</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>high_school_chinese</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>high_school_history</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>high_school_mathematics</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_politics</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>law</td><td>4</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>legal_professional</td><td>5</td><td>1</td><td>0.200</td><td><div class='bar'><i style='width:20%'></i></div></td></tr><tr><td>logic</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>mao_zedong_thought</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>marxism</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>metrology_engineer</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>middle_school_biology</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>middle_school_geography</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>middle_school_history</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>modern_chinese_history</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>operating_system</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>physician</td><td>8</td><td>3</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>probability_and_statistics</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>professional_tour_guide</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>sports_science</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>tax_accountant</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>teacher_qualification</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>urban_and_rural_planner</td><td>13</td><td>6</td><td>0.462</td><td><div class='bar'><i style='width:46%'></i></div></td></tr><tr><td>veterinary_medicine</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>1</td><td>模型返回了空内容</td><td class='muted'>civil_servant-val-38</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#accountant-val-11</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>注册会计师甲选择了A公司2017年整个会计期间的会计分录和其他调整进行会计分录测试时，在确定对总体完整性时执行了下列程序中不恰当的是____。
+A. 从被审计单位会计信息系统中导出所有待测试会计分录和其他调整，并将总账与财务报表核对，以检查是否存在其他调整
+B. 加计从会计信息系统中导出的所有会计分录和其他调整中的本期发生额，与科目余额表中的各科目本期发生额核对相符
+C. 将系统生成的重要账户余额与明细账和总账及科目余额表中的余额核对，测试计算准确性
+D. 检查所有结账前作出的与本期财务报表有关的会计分录和其他调整，测试其完整性
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#accountant-val-12</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>如果用合作性和坚定性两维坐标来描述企业某一利益相关者在企业战略决策与实施过程行为模式，“和解”是____。
+A. 中等程度的坚定性和中等程度的合作性行为的组合
+B. 不坚定行为与合作行为的组合
+C. 坚定行为和不合作行为的组合
+D. 坚定行为与合作行为的组合
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#accountant-val-22</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>根据COSO内部控制框架，反舞弊机制属于内部控制要素中的____。
+A. 风险评估
+B. 控制活动
+C. 监控
+D. 信息与沟通
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#art_studies-val-0</span><span class='tag'>category=Humanities</span> <span class='tag'>subject=art_studies</span></div><div class='qtext'>蓝印花布是一种传统的民间纺织印染工艺品。蓝印花布印制方法始于____。
+A. 汉代
+B. 魏晋时期
+C. 唐代
+D. 宋代
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#art_studies-val-12</span><span class='tag'>category=Humanities</span> <span class='tag'>subject=art_studies</span></div><div class='qtext'>____不是水华的作品。
+A. 《早春二月》
+B. 《林家铺子》
+C. 《土地》
+D. 《白毛女》
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#art_studies-val-14</span><span class='tag'>category=Humanities</span> <span class='tag'>subject=art_studies</span></div><div class='qtext'>《十五贯》又叫____。
+A. 《清忠谱》
+B. 《双熊梦》
+C. 《十五贯戏言成巧祸》
+D. 《奈何天》
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div></section>
+</main>
+</body>
+</html>

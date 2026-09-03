@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · agieval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · AGIEval：标准化与资格考试推理</h1>
+    <p class="muted">基准 agieval · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">26.6%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">79</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">21</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>AGIEval 取材于人类标准化/资格考试（高考、SAT、LSAT、GRE、法考、公务员考试、竞赛 MATH 等），评测模型在真实考试情境下的推理能力。对应本仓库能力维度 D03（标准化与资格考试推理）。</p><p>本次覆盖 21 个任务，分为选择题（gold 为选项字母；jec-qa、gaokao-physics 为多选）与数学填空（gold 为自由作答）。提示采用零样本思维链，要求模型先推理、再显式给出最终答案。</p><p>选择题抽取沿用官方 post_process 取字母逻辑，数学题动态加载官方 math_equivalence做等价判定；按任务、语言、题型分桶统计。</p><p class='muted'>主页：<a href='https://github.com/ruixiangcui/AGIEval'>https://github.com/ruixiangcui/AGIEval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-106</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: The number of water lilies on a certain lake doubles every two days. If there is exactly one water lily on the lake, it takes 60 days for the lake to be fully covered with water lilies. In how many days will the lake be fully covered with lilies, if initially there were 64 water lilies on it?
+Answer Choices: (A)15 (B)28 (C)30 (D)53 (E)59
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-152</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: If Jill needed to buy 10 bottles of soda for a party in which 8 people attended, how many bottles of soda will she need to buy for a party in which 12 people are attending?
+Answer Choices: (A)6 (B)8 (C)10 (D)12 (E)14
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>1</td></tr><tr><td>scored</td><td>79</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>aqua-rat</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>gaokao-biology</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-chemistry</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chinese</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>gaokao-english</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-geography</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-history</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathcloze</td><td>6</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathqa</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-physics</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>jec-qa-ca</td><td>11</td><td>3</td><td>0.273</td><td><div class='bar'><i style='width:27%'></i></div></td></tr><tr><td>jec-qa-kd</td><td>7</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>logiqa-en</td><td>10</td><td>6</td><td>0.600</td><td><div class='bar'><i style='width:60%'></i></div></td></tr><tr><td>logiqa-zh</td><td>7</td><td>1</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>lsat-ar</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>lsat-lr</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>lsat-rc</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>math</td><td>8</td><td>3</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>sat-en</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>sat-en-without-passage</td><td>8</td><td>2</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>sat-math</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>38</td><td>13</td><td>0.342</td><td><div class='bar'><i style='width:34%'></i></div></td></tr><tr><td>zh</td><td>41</td><td>8</td><td>0.195</td><td><div class='bar'><i style='width:20%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cloze</td><td>14</td><td>3</td><td>0.214</td><td><div class='bar'><i style='width:21%'></i></div></td></tr><tr><td>qa</td><td>65</td><td>18</td><td>0.277</td><td><div class='bar'><i style='width:28%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>输入审核拒绝</strong></td><td>1</td><td>平台内容审核判定输入敏感，拒绝处理——非模型能力问题</td><td class='muted'>jec-qa-kd-364</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-152</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: If Jill needed to buy 10 bottles of soda for a party in which 8 people attended, how many bottles of soda will she need to buy for a party in which 12 people are attending?
+Answer Choices: (A)6 (B)8 (C)10 (D)12 (E)14
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>E</div><div class='ans'><span class='lbl'>归一化</span>E</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this problem, I need to find the relationship between people and bottles of soda.
+
+**Given information:** 8 people need 10 bottles of soda.
+
+**Finding the pattern:**
+- 8 bottles would give 1 bottle per person
+- 10 - 8 = 2 extra bottles
+- Pattern: 1 bottle per person + 2 extra bottles
+
+**Applying the pattern to 12 people:**
+- 12 × 1 + 2 = 12 + 2 = 14 bottles
+
+The answer is (E)14</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-biology-204</span><span class='tag'>task=gaokao-biology</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：野生型拟南芥的叶片是光滑形边缘, 研究影响其叶片形状的基因时, 发现了 6 个不同的 隐性突变, 每个隐性突变只涉及 1 个基因。这些突变都能使拟南芥的叶片表现为锯齿状边 缘。利用上述突变培育成 6 个不同纯合突变体(1)-(6), 每个突变体只有 1 种隐性突变。不考 虑其他突变, 根据表中的杂交实验结果, 下列推断错误的是
+
+\begin{tabular}{|l|l|}
+\hline 杂交组合 &amp; 子代叶片边缘 \\
+\hline$(1) \times(2)$ &amp; 光滑形 \\
+\hline$(1) \times(3)$ &amp; 锯齿状 \\
+\hline (1) $\times(4)$ &amp; 锯齿状 \\
+\hline (2) $\times(6)$ &amp; 光滑形 \\
+\hline (1) $\times(2)$ &amp; 锯齿状 \\
+\hline
+\end{tabular}
+选项：(A)(2)和(3)杂交, 子代叶片边缘为光滑形 (B)(3)和(4)杂交, 子代叶片边缘为锯齿 状 (C)(2)和(5)杂交, 子代叶片边缘为光滑形 (D)(4)和(5)杂交, 子代叶片边缘为光滑 形
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析过程
+
+## 第一步：根据杂交结果判断基因关系
+
+**互补原理**：两个隐性突变杂交后，若子代表现为野生型（光滑形），说明两个突变基因位于**不同基因**上（互相补充）；若子代仍为突变型（锯齿状），说明两个突变位于**同一基因**上（不能互补）。
+
+根据表中数据：
+
+| 杂交组合 | 结果 | 推断 |
+|---------|------|------|
+| (1)×(2) | 光滑形 | 1和2在不同基因 |
+| (1)×(3) | 锯齿状 | 1和3在**同一基因A** |
+| (1)×(4) | 锯齿状 | 1和4在**同一基因A** |
+| (2)×(6) | 光滑形 | 2和6在不同基因 |
+| (3)×(5) | 锯齿状 | 3和5在**同一基因A** |
+
+## 第二步：确定基因分组
+
+- **基因A（同一基因）**：突变(1)、(3)、(4)、(5)
+- **基因B**：突变(2)
+- **基因C**：突变(6)
+
+## 第三步：逐项分析选项
+
+**选项A：(2)×(3)**
+- (2)在基因B，(3)在基因A → 不同基因 → 子代光滑形 ✓ 推断正确
+
+**选项B：(3)×(4)**
+- (3)和(4)都在基因A → 同一基因 → 子代锯齿状 ✓ 推断正确
+
+**选项C：(2)×(5)**
+- (2)在基因B，(5)在基因A → 不同基因 → 子代光滑形 ✓ 推断正确
+
+**选项D：(4)×(5)**
+- (4)和(5)**都在基因A** → 同一基因 → 子代应为**锯齿状** ✗ 推断错误（选项说光滑形）
+
+## 结论
+
+选项(D)的推断与实际结果不符。
+
+**答案是D**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-chinese-160</span><span class='tag'>task=gaokao-chinese</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>材料一：。
+问题：下列对材料相关内容的概括和分析，正确的一项是
+选项：(A)图书出版产业的发展与繁荣离不开政策支持，“十二五”期间诸多法律法规与政策的及时出台，为实体书店和网店的发展提供了良好的环境。 (B)全国各地新建或改造的大型书城正逐步向文化购物中心转型，这表明实体书店向多元化的经营方式转变，其业态已经成为一种主流。 (C)各类出版社为加快产业升级，纷纷借助已有的数字出版部门，实现网络技术和图书出版的融合发展，这拉近了出版业与市场的距离。 (D)由于互联网的快速发展，电子图书的销售、图书版权产生的间接利润、图书作为传播平台产生的广告效益等都会给图书出版业带来新的增值。学科.网
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 逐步分析
+
+由于&quot;材料一&quot;的原文内容未提供，我将基于选项的逻辑结构和常见命题规律进行分析：
+
+## 各选项分析
+
+**选项A**：&quot;十二五&quot;期间政策支持——若材料中未明确提及&quot;十二五&quot;这一具体时间段或政策细节，则该选项属于过度推断。
+
+**选项B**：使用&quot;已经成为一种主流&quot;这一绝对化表述——在语文阅读理解中，&quot;主流&quot;等绝对化词语往往是错误的标志，因为材料通常只描述发展趋势，而非定性为&quot;主流&quot;。
+
+**选项C**：&quot;纷纷借助已有的数字出版部门&quot;——&quot;已有&quot;一词限定性较强，若材料中描述的是&quot;建立&quot;&quot;组建&quot;新的数字部门，则该选项与原文不符。
+
+**选项D**：列举电子图书销售、版权间接利润、广告效益三类增值来源——这种综合归纳类选项通常与材料的核心内容契合度较高，且未使用绝对化表述，符合客观陈述的要求。
+
+## 判断
+
+根据选项的表述特征：
+- A项可能存在时间限定过度
+- B项&quot;主流&quot;为绝对化表述
+- C项&quot;已有的&quot;限定词可能与材料不符
+- D项从多个角度归纳图书出版业的新增值，表述客观全面
+
+---
+
+**答案是D**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-english-111</span><span class='tag'>task=gaokao-english</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>It had been some time since Jack had seen the old man. College, carrier, and life itself got in the way. In fact, Jack moved clear across the country in pursuit of the dreams. There, in the rush of his busy life, Jack had little time to think about the past and often no time to spend with his wife and son. He was working on his future, and nothing could stop him.Over the phone, his mother told him, “Mr. Belser died last night. The funeral is Wednesday.” Memories fleshed through his mind like an old newsreel as he sat quietly remembering his childhood days.“Jack, did you hear me?”“Oh, sorry, Mom. Yes, I heard you. it’s been so long since I thought of him. I’m sorry, but I honestly thought he died years ago,” Jack said.“Well, he didn’t forget you. Every time I saw him he’d ask how you were doing. He’d reminisce (回忆) about the many days you spent over ‘his side of the fence’ as he put it, ” Mom told him.“I loved that old house he lived in,” Jack said.“You know, Jack, after your father died, Mr. Belser stepped in to make sure you had a man’s influence in your life,” she said.“He’s the one who taught me carpentry. I wouldn’t be in this business if it weren’t for him. He spent a lot of time teaching me things he thought were important. Mom, I’ll be there for the funeral.” Jack said.Busy as he was, he kept his word. Jack caught the next flight to his hometown. Mr. Belser’s funeral was small and uneventful. He had no children of his own, and most of his relatives had passed away.The night before he had to return home, Jack and his Mom stopped by to see the old house next door one more time, which was exactly as he remembered. Every step held memories. Every picture, every piece of furniture … Jack stopped suddenly.“What’s wrong, Jack?” his Mom asked.“The box is gone,” he said.“What box?” Mom asked.“There was a small gold box that he kept locked on top of his desk. I must have asked him a thousand times what was inside. All he’d ever tell me was ‘the thing I value most’,” Jack said.It was gone. Everything about the house was exactly how Jack remembered it, except for the box. He figured someone from the Belser family had taken it.“Now I’ll never know what was so valuable to him,” Jack said sadly.Returning to his office the next day, he found a package on his desk. The return address caught his attention.“Mr. Harold Belser” it read.Jack tore open the package. There inside was the gold box and an envelope. Jack’s hands shook as he read the note inside,“Upon my death, please forward this box and its contents to Jack Bernett. It’s the thing I valued most in my life.” A small key was taped to the letter. His heart racing, and tears filling his eyes. Jack carefully unlocked the box. There inside he found a beautiful gold pocket watch. Running his fingers slowly over the fine cover, he opened it.Inside he found these words carved: “Jack. Thanks for your time! Harold Belser.”“Oh. My God! This is the thing he valued most …”Jack held the watch for a few minutes, then called his assistant and cleared his appointments for the next two days. “Why?” his assistant asked.“I need some time to spend with my son,” he said.
+Question: Why did Jack think Mr. Belser died years ago?
+Answer Choices:    A. College and career prevented him from remembering Mr. Belser.    B. Jack was too busy with his business and family to think about Mr. Belser.    C. Jack was too busy realizing his dreams to think about Mr. Belser.    D. His present busy life washed away his children memories.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this question, I need to find why Jack thought Mr. Belser died years ago.
+
+From the passage: &quot;It had been some time since Jack had seen the old man. College, **career**, and life itself got in the way. In fact, Jack moved clear across the country in pursuit of the **dreams**. There, in the rush of his **busy life**, Jack had little time to think about the past...&quot;
+
+Evaluating each option:
+- **A. College and career prevented him from remembering Mr. Belser.** ✓ Directly supported by &quot;College, career, and life itself got in the way.&quot;
+- **B. Jack was too busy with his business and family to think about Mr. Belser.** ✗ Incorrect - the passage states he had &quot;no time to spend with his wife and son,&quot; meaning he was NOT busy with family; he was neglecting them.
+- **C. Jack was too busy realizing his dreams to think about Mr. Belser.** ✓ Supported by &quot;moved clear across the country in pursuit of the dreams&quot; and &quot;He was working on his future.&quot;
+- **D. His present busy life washed away his children [childhood] memories.** ✓ Supported by &quot;in the rush of his busy life, Jack had little time to think about the past.&quot;
+
+The answer is A, C, D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-geography-158</span><span class='tag'>task=gaokao-geography</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：地处黄土高原的汾川河流域多年来植被覆盖率大幅度提高，2013年7月，汾川河流域降水异常增多，表一为当月6次降水过程的时长，降水重和汾川河洪峰情况。第5次降水形成的洪水含沙量低。第6次降水形成的洪水含沙量极高。\begin{tabular}{|c|c|c|c|}
+\hline 降水序号 &amp; 降水历时 (天) &amp; 降水量 $/ \mathrm{mm}$ &amp; 汾川河洪峰情况 \\
+\hline 1 &amp; 2 &amp; 53.0 &amp; 无明显洪峰 \\
+\hline 2 &amp; 4 &amp; 80.3 &amp; 无明显洪峰 \\
+\hline 3 &amp; 5 &amp; 100.1 &amp; 无明显洪峰 \\
+\hline 4 &amp; 2 &amp; 73.2 &amp; 无明显洪峰 \\
+\hline 5 &amp; 2 &amp; 90.7 &amp; 洪峰流量 $346 \mathrm{~m}^3 / \mathrm{s}$ \\
+\hline 6 &amp; 2 &amp; 54.4 &amp; 洪峰流量 $1750 \mathrm{~m}^3 / \mathrm{s}$ \\
+\hline
+\end{tabular} 第6次降水产生的洪水含沙量极高，其泥沙主要源于（　　）
+选项：(A)河床 (B)沟谷 (C)裸露坡面 (D)植被覆盖坡面
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析过程
+
+## 关键信息提取
+- 流域位于黄土高原，植被覆盖率大幅提高
+- 第5次降水（90.7mm）→ 洪峰流量346 m³/s，**含沙量低**
+- 第6次降水（54.4mm）→ 洪峰流量1750 m³/s，**含沙量极高**
+
+## 逐步推理
+
+**1. 比较第5次和第6次降水的特点：**
+- 第6次降水量比第5次小（54.4mm &lt; 90.7mm）
+- 但第6次洪峰流量约为第5次的5倍（1750 vs 346 m³/s）
+- 第6次洪水含沙量极高，第5次含沙量低
+
+**2. 分析坡面情况：**
+- 植被覆盖率大幅提高 → 裸露坡面(C)面积大大减少
+- 前5次降水已将坡面松散物质基本冲走
+- 第5次降水（更大）产生的洪水含沙量低，说明坡面侵蚀被有效控制
+- 因此第6次洪水含沙量极高**不可能主要来自坡面**
+
+**3. 分析沟谷和河床：**
+- 前5次降水使沟谷和河床中堆积了大量泥沙
+- 第6次洪水流量为第5次的5倍，流速和冲刷能量大
+- 强烈的洪水冲刷河床(A)和沟谷(B)，将之前堆积的泥沙携带下来
+- 流量越大，挟沙能力越强，含沙量越高
+
+**4. 结论：**
+- 高含沙量与高洪峰流量同步出现，说明泥沙来源需要强大的水流动力才能启动
+- 河床和沟谷的沉积物在特大洪水冲刷下被大量卷入水流
+- 而坡面（无论裸露还是植被覆盖）都不是此次高含沙量的主要贡献者
+
+## 最终答案
+
+答案是 **A、B**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-history-88</span><span class='tag'>task=gaokao-history</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：东汉时期“豪强”的基本特征是
+选项：(A)拥兵自重称霸一方 (B)依靠巧取豪夺聚敛财富 (C)通过科举获得功名 (D)世代享有政治经济特权
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 东汉时期&quot;豪强&quot;的基本特征分析
+
+## 逐项分析
+
+**选项A：拥兵自重称霸一方** ✓
+- 东汉后期，中央集权削弱，地方豪强纷纷建立私人武装，拥兵自重，称霸一方。
+- 这是豪强势力的重要表现之一，符合史实。
+
+**选项B：依靠巧取豪夺聚敛财富** ✗
+- 豪强的财富来源主要是土地兼并和宗族经营，并非全部依靠&quot;巧取豪夺&quot;。
+- 该描述过于片面，不能作为&quot;基本特征&quot;。
+
+**选项C：通过科举获得功名** ✗
+- 科举制度始于隋朝，东汉时期根本不存在科举制度。
+- 东汉时期的选官制度是察举制，此项明显错误。
+
+**选项D：世代享有政治经济特权** ✓
+- 这是豪强最本质的特征。
+- 豪强家族往往世代为官、世代占有土地，形成&quot;世族&quot;&quot;豪族&quot;等特权阶层。
+- 政治上把持仕途，经济上兼并土地，这是豪强作为社会阶层的根本属性。
+
+## 结论
+
+豪强的基本特征包括：
+- **拥兵自重**（军事力量）
+- **世代享有政治经济特权**（政治经济地位）
+
+答案是 **A、D**</pre></details></div></section>
+</main>
+</body>
+</html>

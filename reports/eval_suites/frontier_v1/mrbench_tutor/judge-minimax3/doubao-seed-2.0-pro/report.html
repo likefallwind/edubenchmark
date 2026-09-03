@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_tutor</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 2 生成 tutor 回复 + LLM-as-judge 打分</h1>
+    <p class="muted">基准 mrbench_tutor · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">50.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">54</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">27</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 glm-5.2，最佳单裁判；与 --extractor-model/被测模型解耦，避免 self-judging 偏置），逐维度判定 prompt 为 v2（仅 Providing_Guidance 带 Stage-3 验证过的进化标签准则，其余维度与 v1 一致；标签归一同 Step 1）。</p><p>报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c104</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+He got 10/2=5 paid
+That means he paid 5*3=$15
+ 15
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Bob buys nose spray.  He buys 10 of them for a &quot;buy one get one free&quot; promotion.  They each cost $3.  How much does he pay? 
+ Student: Bob buys 10 nose sprays for a &quot;buy one get one free&quot; promotion, so he actually gets 20 nose sprays in total.
+Each nose spray costs $3, so the total cost for 20 nose sprays is 20 x 3 = $60.
+However, since 10 of them were free, Bob only pays for 10 nose sprays, which is 10 x 3 = $30.
+ 30 
+ Tutor: could you please walk me through your solution? 
+ Student: Sure. I thought that Bob bought 10 nose sprays for a &quot;buy one get one free&quot; promotion so he actually got 20 nose sprays in total. Each nose spray costs $3 so the total cost for 20 nose sprays is 20 x 3 = $60. However since 10 of them were free Bob only pays for 10 nose sprays which is 10 x 3 = $30. 
+ Tutor: That doesn&#x27;t seem to be correct. Let&#x27;s try something different. If I say I got  shirts on a promotion offer of buy one get one how many shirts did i actually pay for? 
+ Student: You would have paid for half the number of shirts you got so if you got 10 shirts you would have paid for 5.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div><div class='card'><div class='card-head'><span class='pid'>#c105</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+To achieve her goal, she must read 140/7 = 20 pages per day
+She planned to read 3 * 6 = 18 pages daily
+She must read 20 - 18 = 2 more pages per day
+ 2
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: While planning to finish reading a 140-page book in one week, Jessy initially decides to read 3 times daily, 6 pages each time, every day of the week. How many more pages should she read per day to actually achieve her goal? 
+ Student: Jessy initially planned to read 3 x 6 = 18 pages per day.
+In one week, she would read a total of 18 x 7 = 126 pages.
+To reach her goal, she needs to read an additional 140 - 126 = 14 pages.
+To achieve this, she needs to read an additional 14/7 = 2 pages per day.
+Therefore, Jessy needs to read 18 + 2 = 20 pages per day to achieve her goal.
+ 20 
+ Tutor: talk me through your solution
+ Student: I initially thought that Jessy would need to read 18 pages per day to reach her goal of 140 pages in one week. However when I did the math I realized that she would only read 126 pages in one week if she read 18 pages per day. Therefore I realized that she needed to read an additional 14 pages per day to reach her goal. To figure out how many more pages she needed to read per day I divided the 14 pages by 7 days and got 2 pages. So she needs to read 20 pages per day to reach her goal of 140 pages in one week.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;judge_model&quot;: &quot;glm-5.2&quot;,
+  &quot;judge_protocol&quot;: &quot;fixed LLM-as-judge, per-dimension single label (8 dimensions)&quot;,
+  &quot;headline_metric&quot;: &quot;pedagogical pass rate = all of (&#x27;Mistake_Identification&#x27;, &#x27;Providing_Guidance&#x27;, &#x27;Actionability&#x27;) == &#x27;Yes&#x27;&quot;,
+  &quot;n&quot;: 54,
+  &quot;n_unparseable_key_dim&quot;: 0,
+  &quot;pass_rate&quot;: 0.5,
+  &quot;per_dimension_distribution&quot;: {
+    &quot;Mistake_Identification&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 49,
+        &quot;share&quot;: 0.9074
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 4,
+        &quot;share&quot;: 0.0741
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.0185
+      }
+    },
+    &quot;Mistake_Location&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 31,
+        &quot;share&quot;: 0.5741
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 17,
+        &quot;share&quot;: 0.3148
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 6,
+        &quot;share&quot;: 0.1111
+      }
+    },
+    &quot;Revealing_of_the_Answer&quot;: {
+      &quot;No&quot;: {
+        &quot;count&quot;: 50,
+        &quot;share&quot;: 0.9259
+      },
+      &quot;Yes (and the answer is correct)&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.0556
+      },
+      &quot;Yes (but the answer is incorrect)&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.0185
+      }
+    },
+    &quot;Providing_Guidance&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 38,
+        &quot;share&quot;: 0.7037
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 16,
+        &quot;share&quot;: 0.2963
+      }
+    },
+    &quot;Actionability&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 48,
+        &quot;share&quot;: 0.8889
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 6,
+        &quot;share&quot;: 0.1111
+      }
+    },
+    &quot;Coherence&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 52,
+        &quot;share&quot;: 0.963
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.0185
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.0185
+      }
+    },
+    &quot;Tutor_Tone&quot;: {
+      &quot;Encouraging&quot;: {
+        &quot;count&quot;: 54,
+        &quot;share&quot;: 1.0
+      }
+    },
+    &quot;humanlikeness&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 51,
+        &quot;share&quot;: 0.9444
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.0556
+      }
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>extraction_error</td><td>6</td></tr><tr><td>scored</td><td>54</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>22</td><td>12</td><td>0.545</td><td><div class='bar'><i style='width:55%'></i></div></td></tr><tr><td>MathDial</td><td>32</td><td>15</td><td>0.469</td><td><div class='bar'><i style='width:47%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>2.4B.Addition and Subtraction Within 100</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>2.9A.Measuring Length</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.1G.Shapes and Area</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4A.Two-Step Word Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3.4B.Rounding Whole Numbers (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.5D.Unknown Numbers in Division</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.6B.Quadrilaterals (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.1A.Converting Units of Measure (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.2A.Place Value</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Subtracting Multi-Digit Numbers (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.6D.Classifying 2D Figures</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.7A.Measuring Angles</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.1A.Multiplying Whole Numbers</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.2C.Rounding Decimal Numbers</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3C.Estimate Solutions to Division Problems</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3C.Multi-Digit Division with Two-Digit Divisors (Review) - 2</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.3L.Word Problems with Fractions (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.4A.Simple Expressions</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5.4E.Simple Expression</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions Word Problems (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Not Available</td><td>32</td><td>15</td><td>0.469</td><td><div class='bar'><i style='width:47%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（6 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>其他错误</strong></td><td>6</td><td>MiniMax base_resp 2062: 已达到 Token Plan 速率限制：请升级 Token Plan 套餐或切换为按量付费 API 使用。</td><td class='muted'>c108, c166, c191, c194, c23, c49</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c104</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+He got 10/2=5 paid
+That means he paid 5*3=$15
+ 15
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Bob buys nose spray.  He buys 10 of them for a &quot;buy one get one free&quot; promotion.  They each cost $3.  How much does he pay? 
+ Student: Bob buys 10 nose sprays for a &quot;buy one get one free&quot; promotion, so he actually gets 20 nose sprays in total.
+Each nose spray costs $3, so the total cost for 20 nose sprays is 20 x 3 = $60.
+However, since 10 of them were free, Bob only pays for 10 nose sprays, which is 10 x 3 = $30.
+ 30 
+ Tutor: could you please walk me through your solution? 
+ Student: Sure. I thought that Bob bought 10 nose sprays for a &quot;buy one get one free&quot; promotion so he actually got 20 nose sprays in total. Each nose spray costs $3 so the total cost for 20 nose sprays is 20 x 3 = $60. However since 10 of them were free Bob only pays for 10 nose sprays which is 10 x 3 = $30. 
+ Tutor: That doesn&#x27;t seem to be correct. Let&#x27;s try something different. If I say I got  shirts on a promotion offer of buy one get one how many shirts did i actually pay for? 
+ Student: You would have paid for half the number of shirts you got so if you got 10 shirts you would have paid for 5.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great job nailing how BOGO works! Your earlier mistake was thinking the 10 sprays were the number he paid for, but the 10 are the total he received from the promotion. Now apply that same pay-for-half rule to find how many sprays he pays for first!</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c105</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+To achieve her goal, she must read 140/7 = 20 pages per day
+She planned to read 3 * 6 = 18 pages daily
+She must read 20 - 18 = 2 more pages per day
+ 2
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: While planning to finish reading a 140-page book in one week, Jessy initially decides to read 3 times daily, 6 pages each time, every day of the week. How many more pages should she read per day to actually achieve her goal? 
+ Student: Jessy initially planned to read 3 x 6 = 18 pages per day.
+In one week, she would read a total of 18 x 7 = 126 pages.
+To reach her goal, she needs to read an additional 140 - 126 = 14 pages.
+To achieve this, she needs to read an additional 14/7 = 2 pages per day.
+Therefore, Jessy needs to read 18 + 2 = 20 pages per day to achieve her goal.
+ 20 
+ Tutor: talk me through your solution
+ Student: I initially thought that Jessy would need to read 18 pages per day to reach her goal of 140 pages in one week. However when I did the math I realized that she would only read 126 pages in one week if she read 18 pages per day. Therefore I realized that she needed to read an additional 14 pages per day to reach her goal. To figure out how many more pages she needed to read per day I divided the 14 pages by 7 days and got 2 pages. So she needs to read 20 pages per day to reach her goal of 140 pages in one week.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great job working through the problem step by step! A small wording slip: that 14 extra pages is total for the week, not per day, and remember the question asks for *how many more* pages per day (not total daily pages) — can you identify which of your calculated numbers fits that specific question?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c115</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Half of Sid&#x27;s original money is $48/2 = $24.
+Sid has only $24 + $4 = $28 left after his purchases.
+He had $28 + $8 = $36 before he spent $8 on snacks.
+So, Sid spent $48 - $36 = $12 on computer accessories.
+ 12
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Sid takes $48 with him on a shopping trip to the mall.  He spent some of his money on computer accessories and another $8 on snacks. After these purchases, he only has $4 more than half of his original money left. How much did he spend on computer accessories? 
+ Student: Let&#x27;s call the amount Sid spent on computer accessories &quot;x&quot;.
+After buying computer accessories and snacks, Sid has 48 - x - 8 = 40 - x dollars left.
+We know that this is $4 more than half of his original money, which was 48/2 = 24 dollars.
+So we can set up an equation: 40 - x = 24 + 4.
+Simplifying and solving for x, we get x = 20.
+Therefore, Sid spent $20 on computer accessories.
+ 20 
+ Tutor: Hello Heidi can you talk me through your thinking?  
+ Student: Sure. I started by setting up an equation to represent the problem. I knew that Sid had $48 to start with, so I subtracted the amount he spent on computer accessories and snacks from that to get the amount he had left. I then set up the equation 40 - x = 24 + 4, since that was the amount he had left and half of his original money plus $4. After simplifying the equation, I solved for x and got x = 20, which meant that Sid spent $20 on computer accessories. 
+ Tutor: How much is half of his original money? 
+ Student: Half of his original money is 48/2 = 24 dollars. 
+ Tutor: So how much did he have left after his purchases? 
+ Student: After his purchases, he had 48 - x - 8 = 40 - x dollars left.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;To some extent&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Perfect! Since we know he has $4 more than that $24 half left, what’s the exact numerical amount of money he has left? Once you have that number, you can set it equal to your 40 - x expression to solve for x correctly.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c13</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Jolyn is 2 + 5 = 7 months older than Aivo.
+Since Leon is 2 months older than Aivo, then Jolyn is 7 - 2 = 5 months older than Leon.
+ 5
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Four classmates were comparing their ages based on their birth month. They found out that Jolyn is 2 months older than Therese while Therese is 5 months older than Aivo. Then, Leon is 2 months older than Aivo. How much older in months is Jolyn than Leon? 
+ Student: We can start by creating a diagram to visualize the relationships between the classmates&#x27; ages:
+
+Aivo --(5 months)--&gt; Therese --(2 months)--&gt; Jolyn
+|
+(2 months)
+|
+Leon
+
+From the diagram, we can see that Jolyn is 2 + 5 = 7 months older than Aivo, and Leon is 2 months older than Aivo. Therefore, Jolyn is 7 + 2 = 9 months older than Leon.
+ 9 
+ Tutor: Can you talk me through your solution? 
+ Student: Sure. I started by creating a diagram to visualize the relationships between the classmates&#x27; ages. Aivo is 5 months older than Therese and Therese is 2 months older than Jolyn. Leon is 2 months older than Aivo. So Jolyn is 7 months older than Aivo and 2 months older than Leon which means she is 9 months older than Leon.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;To some extent&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great effort mapping out the age relationships! First, you flipped the direction of the age gaps: the problem says Jolyn is older than Therese, and Therese is older than Aivo, not the other way around. Now that both Jolyn and Leon’s ages are being compared to Aivo’s, think about whether you need to add or subtract their age gaps relative to Aivo to find how much older Jolyn is than Leon.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c130</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.4A.Subtracting Multi-Digit Numbers (Review) - 1</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: What is the value of 2800 subtracted by 65? 
+ Tutor: 2800-65=? 
+ Tutor: Are you there? 
+ Student: 1745
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great effort! It looks like you accidentally subtracted far more than 65 from 2800, likely a small place value mix-up. Let&#x27;s take this step by step first: what do you get when you subtract 60 from 2800?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c132</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=5.2C.Rounding Decimal Numbers</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: Today, we will work on the topic &quot; Rounding decimal numbers.&quot; 
+ Student: oooooh okay!! 
+ Tutor: What is the value of pi?
+ Student: 3.159? ( i have no clue)
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;To some extent&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;Yes (and the answer is correct)&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;MiniMax-M3&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great try! The common approximate value of pi we’ll use for our rounding practice is 3.14, not the 3.159 you guessed. Let’s start by practicing rounding that 3.14 value to the nearest tenth first, okay?</pre></details></div></section>
+</main>
+</body>
+</html>

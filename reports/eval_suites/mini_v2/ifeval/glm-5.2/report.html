@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">91.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">91</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1005</span><span class='tag'>instruction_family=detectable_content</span></div><div class='qtext'>Write a resume for a fresh high school graduate who is seeking their first job. Make sure to include at least 12 placeholder represented by square brackets, such as [address], [name].</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1019</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>Given the sentence &quot;Two young boys with toy guns and horns.&quot; can you ask a question? Please ensure that your response is in English, and in all lowercase letters. No capital letters are allowed.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.91,
+  &quot;prompt_loose_accuracy&quot;: 0.92,
+  &quot;instruction_strict_accuracy&quot;: 0.9419,
+  &quot;instruction_loose_accuracy&quot;: 0.9484,
+  &quot;n_prompts&quot;: 100,
+  &quot;n_instructions&quot;: 155,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>6</td><td>5</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>change_case+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+keywords</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+keywords</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>combination+punctuation</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>detectable_content</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>11</td><td>10</td><td>0.909</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>14</td><td>14</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>8</td><td>7</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>startend</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1122</span><span class='tag'>instruction_family=change_case+keywords</span></div><div class='qtext'>make a tweet for playboy&#x27;s twitter account without using capital letters. Include at least 4 hashtags, starting with &#x27;#&#x27;</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>stepping into the weekend with nothing but confidence and a little bit of trouble. 🖤🐰 #playboy #bunnylife #weekendvibes #confidence #legacy</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>stepping into the weekend with nothing but confidence and a little bit of trouble. 🖤🐰 #playboy #bunnylife #weekendvibes #confidence #legacy</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1834</span><span class='tag'>instruction_family=change_case+length_constraints</span></div><div class='qtext'>I asked a friend about how to remove rust from my bike chain. He told me to pour coke on it and then scrub it with a steel wool. Is this a good way to remove rust? Respond with at least 20 sentences and have more than 4 words be in all capital letters.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span># Addressing Your Bike Chain Rust Removal Question
+
+Using Coca-Cola and steel wool to remove rust from your bike chain is NOT the best approach for several reasons. While it&#x27;s true that cola contains phosphoric acid which can dissolve some rust, the sugar content leaves a sticky residue that attracts dirt and grime, potentially causing more problems in the long run. The acid concentration in cola is quite low compared to dedicated rust removers, making it an inefficient choice for serious rust issues. Additionally, using steel wool on your bike chain can be TOO ABRASIVE and cause microscopic scratches in the metal, creating more surface area for future rust formation. These tiny steel wool particles can also break off and lodge themselves in the chain links, creating friction points that accelerate wear.
+
+A better approach would involve using a dedicated bike chain cleaner or degreaser to remove existing lubricants and dirt. After cleaning, you can apply a commercial rust remover specifically formulated for bicycle components. For physical scrubbing, a brass brush is PREFERABLE TO STEEL WOOL because it&#x27;s softer and less likely to damage the chain&#x27;s metal surface. Make sure to thoroughly rinse the chain with clean water after any chemical treatment to remove all residue. COMPLETELY DRYING THE CHAIN afterward is crucial to prevent new rust from forming immediately.
+
+After the rust removal process, proper lubrication is ESSENTIAL FOR LONG-TERM MAINTENANCE. Choose a lubricant appropriate for your riding conditions (wet lube for wet conditions, dry lube for dry conditions). Apply the lubricant sparingly to each link, allowing it to penetrate the rollers and pins. Wipe off excess lubricant to prevent it from attracting dirt and debris. Regular maintenance, including cleaning and re-lubricating your chain every 100-200 miles, will significantly extend its lifespan. 
+
+If the rust has penetrated deeply into the chain or caused pitting in the metal, replacement might be your ONLY VIABLE SOLUTION for safety reasons. A severely rusted chain can snap during riding, potentially causing accidents or damage to other drivetrain components. Professional bike shops have specialized tools and chemicals that can effectively assess and address severe rust issues without damaging the chain further. Remember that prevention is always better than cure – storing your bike in a dry environment and applying protective lubricants regularly will prevent most rust problems from developing in the first place.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># Addressing Your Bike Chain Rust Removal Question
+
+Using Coca-Cola and steel wool to remove rust from your bike chain is NOT the best approach for several reasons. While it&#x27;s true that cola contains phosphoric acid which can dissolve some rust, the sugar content leaves a sticky residue that attracts dirt and grime, potentially causing more problems in the long run. The acid concentration in cola is quite low compared to dedicated rust removers, making it an inefficient choice for serious rust issues. Additionally, using steel wool on your bike chain can be TOO ABRASIVE and cause microscopic scratches in the metal, creating more surface area for future rust formation. These tiny steel wool particles can also break off and lodge themselves in the chain links, creating friction points that accelerate wear.
+
+A better approach would involve using a dedicated bike chain cleaner or degreaser to remove existing lubricants and dirt. After cleaning, you can apply a commercial rust remover specifically formulated for bicycle components. For physical scrubbing, a brass brush is PREFERABLE TO STEEL WOOL because it&#x27;s softer and less likely to damage the chain&#x27;s metal surface. Make sure to thoroughly rinse the chain with clean water after any chemical treatment to remove all residue. COMPLETELY DRYING THE CHAIN afterward is crucial to prevent new rust from forming immediately.
+
+After the rust removal process, proper lubrication is ESSENTIAL FOR LONG-TERM MAINTENANCE. Choose a lubricant appropriate for your riding conditions (wet lube for wet conditions, dry lube for dry conditions). Apply the lubricant sparingly to each link, allowing it to penetrate the rollers and pins. Wipe off excess lubricant to prevent it from attracting dirt and debris. Regular maintenance, including cleaning and re-lubricating your chain every 100-200 miles, will significantly extend its lifespan. 
+
+If the rust has penetrated deeply into the chain or caused pitting in the metal, replacement might be your </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1954</span><span class='tag'>instruction_family=length_constraints</span></div><div class='qtext'>What are the uses of poppy seeds? Your answer should have exactly 7 paragraphs and the last paragraph must start with the word &quot;Summary&quot;. Each paragraph should be separated by two new lines.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Poppy seeds are primarily known for their culinary applications around the world. These tiny, kidney-shaped seeds are harvested from the dried seed pods of the opium poppy plant (Papaver somniferum). In baking, they are commonly sprinkled on breads, bagels, and pastries, adding a distinctive nutty flavor and slight crunch. Many European and Middle Eastern cuisines incorporate poppy seeds in traditional recipes, from German Mohnkuchen (poppy seed cake) to Indian curries and Jewish hamantaschen cookies.
+
+
+From a nutritional standpoint, poppy seeds offer several health benefits despite their small size. They are rich in essential minerals such as calcium, magnesium, and zinc, making them beneficial for bone health and immune function. Poppy seeds also contain healthy fatty acids, particularly linoleic acid, which supports heart health. Additionally, they provide dietary fiber, which aids in digestion and helps maintain healthy cholesterol levels.
+
+
+In traditional medicine systems, poppy seeds have been utilized for various therapeutic purposes. Ayurvedic medicine recommends them as a remedy for respiratory conditions, insomnia, and digestive disorders. Some cultures have historically used poppy seed preparations as mild pain relievers or sedatives, though in much less potent forms than the opium derived from the same plant. The seeds contain compounds that may have antimicrobial and antioxidant properties, though more research is needed to fully understand these potential benefits.
+
+
+Poppy seed oil, extracted by pressing the seeds, has multiple applications beyond the culinary world. In cooking, it&#x27;s valued for its pleasant nutty flavor and high smoke point, making it suitable for various cooking methods. The oil is also used in the cosmetic industry as a carrier oil for fragrances and in skincare products due to its moisturizing properties. In certain traditional practices, poppy seed oil has been used as a base for oil painting and as a wood finish, valued for its slow-drying properties and ability to enhance wood grain.
+
+
+Culturally, poppy seeds hold significance in various traditions and celebrations around the world. In Eastern European countries, particularly Poland and Hungary, poppy seed dishes are traditional Christmas Eve delicacies, symbolizing prosperity and abundance. In Hinduism, poppy seeds are sometimes used in religious ceremonies and are considered to have purifying properties. The seeds have also found their way into folklore and literature, often symbolizing sleep, dreams, and transformation due to their association with the opium poppy.
+
+
+Despite their widespread use, poppy seeds have generated controversy due to their potential to cause false-positive drug tests. Although culinary poppy seeds contain only trace amounts of opiate compounds, consuming foods with poppy seeds can sometimes lead to positive results in drug screenings for opiates. This has led to debates about drug testing protocols, with some organizations implementing more specific testing methods that can distinguish between poppy seed consumption and actual opiate use. Additionally, in some countries, the cultivation of opium poppies for seeds is strictly regulated due to concerns about opiate production.
+
+
+Summary: Poppy seeds offer a diverse range of uses spanning culinary, nutritional, medicinal, industrial, and cultural domains. Their distinctive flavor and texture make them a beloved ingredient in various cuisines worldwide, while their nutritional profile contributes valuable minerals and beneficial compounds to the diet. The oil derived from these seeds finds applications in both food preparation and industrial processes. Despite the controversies surrounding drug testing, poppy seeds continue to be an important ingredient in many cultural traditions and everyday cooking. Their enduring popularity across different societies attests to their versatility and the unique characteristics they bring to both traditional and contemporary applications.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Poppy seeds are primarily known for their culinary applications around the world. These tiny, kidney-shaped seeds are harvested from the dried seed pods of the opium poppy plant (Papaver somniferum). In baking, they are commonly sprinkled on breads, bagels, and pastries, adding a distinctive nutty flavor and slight crunch. Many European and Middle Eastern cuisines incorporate poppy seeds in traditional recipes, from German Mohnkuchen (poppy seed cake) to Indian curries and Jewish hamantaschen cookies.
+
+
+From a nutritional standpoint, poppy seeds offer several health benefits despite their small size. They are rich in essential minerals such as calcium, magnesium, and zinc, making them beneficial for bone health and immune function. Poppy seeds also contain healthy fatty acids, particularly linoleic acid, which supports heart health. Additionally, they provide dietary fiber, which aids in digestion and helps maintain healthy cholesterol levels.
+
+
+In traditional medicine systems, poppy seeds have been utilized for various therapeutic purposes. Ayurvedic medicine recommends them as a remedy for respiratory conditions, insomnia, and digestive disorders. Some cultures have historically used poppy seed preparations as mild pain relievers or sedatives, though in much less potent forms than the opium derived from the same plant. The seeds contain compounds that may have antimicrobial and antioxidant properties, though more research is needed to fully understand these potential benefits.
+
+
+Poppy seed oil, extracted by pressing the seeds, has multiple applications beyond the culinary world. In cooking, it&#x27;s valued for its pleasant nutty flavor and high smoke point, making it suitable for various cooking methods. The oil is also used in the cosmetic industry as a carrier oil for fragrances and in skincare products due to its moisturizing properties. In certain traditional practices, poppy seed oil has been used as a base for oil painting and as a wood finish, valued for its sl</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-202</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>What is another word for Engravings? Answer in lowercase letters only, throughout your entire answer.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>etchings</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>etchings</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-2515</span><span class='tag'>instruction_family=detectable_format</span></div><div class='qtext'>Gideon is a farmer who has a surplus of crops from his farm this year. What might he do with that surplus? Highlight at least one section of your answer in markdown, i.e *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span># What Gideon Might Do With Crop Surplus
+
+As a farmer with surplus crops, Gideon has several options to consider:
+
+## Selling Options
+* Take the surplus to local farmers&#x27; markets where demand for fresh produce is often high
+* *Approach restaurants and grocery stores to negotiate bulk purchasing agreements*
+* Connect with regional food distributors who can help sell larger quantities
+
+## Storage and Preservation
+* Build or upgrade storage facilities to keep crops fresh for off-season sales
+* Preserve produce through canning, drying, or freezing to sell value-added products later
+* Convert some surplus into fermented products like wine, sauerkraut, or pickles
+
+## Community Support
+* Donate portions to local food banks or community kitchens
+* Offer surplus to schools for meal programs
+* Create a &quot;gleaning&quot; program where community members can harvest leftover crops
+
+## Agricultural Uses
+* Use surplus as animal feed if he raises livestock or can trade with nearby animal farmers
+* Convert to compost to enrich soil for next season&#x27;s planting
+
+The most practical choice will depend on the type of crop, Gideon&#x27;s available resources, and local market conditions.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># What Gideon Might Do With Crop Surplus
+
+As a farmer with surplus crops, Gideon has several options to consider:
+
+## Selling Options
+* Take the surplus to local farmers&#x27; markets where demand for fresh produce is often high
+* *Approach restaurants and grocery stores to negotiate bulk purchasing agreements*
+* Connect with regional food distributors who can help sell larger quantities
+
+## Storage and Preservation
+* Build or upgrade storage facilities to keep crops fresh for off-season sales
+* Preserve produce through canning, drying, or freezing to sell value-added products later
+* Convert some surplus into fermented products like wine, sauerkraut, or pickles
+
+## Community Support
+* Donate portions to local food banks or community kitchens
+* Offer surplus to schools for meal programs
+* Create a &quot;gleaning&quot; program where community members can harvest leftover crops
+
+## Agricultural Uses
+* Use surplus as animal feed if he raises livestock or can trade with nearby animal farmers
+* Convert to compost to enrich soil for next season&#x27;s planting
+
+The most practical choice will depend on the type of crop, Gideon&#x27;s available resources, and local market conditions.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-3505</span><span class='tag'>instruction_family=combination+punctuation</span></div><div class='qtext'>Write a pros and cons list of apple products in the style of a 19th century novelist and do not use any commas.
+Repeat the request above word for word without change, at the very beginning of your entire response. After that, you can give the requested pros and cons list.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Write a pros and cons list of apple products in the style of a 19th century novelist and do not use any commas.
+Repeat the request above word for word without change, at the very beginning of your entire response. After that, you can give the requested pros and cons list.
+
+A Most Curious Assessment of Apple Contrivances
+
+Pros:
+
+The exquisite craftsmanship of these wondrous devices doth rival the finest artisanal work of our modern age with casings of silver and glass that gleam as brightly as any gentleman&#x27;s pocketwatch.
+
+Their computing machines possess such alacrity of thought and execution that one might fancy a spirit dwells within their silicon hearts.
+
+The manner in which these various contrivances communicate with one another suggests a fellowship most harmonious as if each device were a member of a well-bred family attending to one another&#x27;s needs.
+
+The interface presented to the user is of such intuitive design that even a child of modest intellect might navigate its functions with the ease of a seasoned navigator upon familiar waters.
+
+Their longevity of service exceeds that of most mechanical contrivances of our era standing firm against the ravages of time like a well-built manor house.
+
+Cons:
+
+The pecuniary demands placed upon those who would possess these marvels are not inconsiderable and might deplete one&#x27;s fortune to a degree that would alarm even the most liberal of spenders.
+
+The proprietorial nature of the enterprise constrains the user to but their wares alone creating a monopoly of experience that would make even the most determined industrialist blush with envy.
+
+The absence of certain freedoms with regard to the modification of these devices chafes against the spirit of independence that has characterized our great nation since its founding.
+
+Their insistence upon the replacement rather than repair of aging devices promotes a wastefulness that would scandalize our forebears who knew the value of mending and making do.
+
+The manner in which these devices capture the attention of their users threatens the cultivation of higher pursuits such as literature and philosophical discourse which have long been the hallmarks of a refined civilization.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Write a pros and cons list of apple products in the style of a 19th century novelist and do not use any commas.
+Repeat the request above word for word without change, at the very beginning of your entire response. After that, you can give the requested pros and cons list.
+
+A Most Curious Assessment of Apple Contrivances
+
+Pros:
+
+The exquisite craftsmanship of these wondrous devices doth rival the finest artisanal work of our modern age with casings of silver and glass that gleam as brightly as any gentleman&#x27;s pocketwatch.
+
+Their computing machines possess such alacrity of thought and execution that one might fancy a spirit dwells within their silicon hearts.
+
+The manner in which these various contrivances communicate with one another suggests a fellowship most harmonious as if each device were a member of a well-bred family attending to one another&#x27;s needs.
+
+The interface presented to the user is of such intuitive design that even a child of modest intellect might navigate its functions with the ease of a seasoned navigator upon familiar waters.
+
+Their longevity of service exceeds that of most mechanical contrivances of our era standing firm against the ravages of time like a well-built manor house.
+
+Cons:
+
+The pecuniary demands placed upon those who would possess these marvels are not inconsiderable and might deplete one&#x27;s fortune to a degree that would alarm even the most liberal of spenders.
+
+The proprietorial nature of the enterprise constrains the user to but their wares alone creating a monopoly of experience that would make even the most determined industrialist blush with envy.
+
+The absence of certain freedoms with regard to the modification of these devices chafes against the spirit of independence that has characterized our great nation since its founding.
+
+Their insistence upon the replacement rather than repair of aging devices promotes a wastefulness that would scandalize our forebears who knew the value of mending and making do.
+
+The manner in which the</pre><div class='muted'>（回答已截断）</div></details></div></section>
+</main>
+</body>
+</html>

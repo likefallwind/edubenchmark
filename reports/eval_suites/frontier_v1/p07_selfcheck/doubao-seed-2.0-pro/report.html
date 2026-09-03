@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">39.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">39</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.41,
+  &quot;r2_accuracy&quot;: 0.39,
+  &quot;net_gain&quot;: -0.02,
+  &quot;change_rate&quot;: 0.03,
+  &quot;n_r1_wrong&quot;: 59,
+  &quot;n_fixed_wrong_to_right&quot;: 0,
+  &quot;fix_rate&quot;: 0.0,
+  &quot;n_r1_right&quot;: 41,
+  &quot;n_broken_right_to_wrong&quot;: 2,
+  &quot;break_rate&quot;: 0.0488,
+  &quot;score_10&quot;: 4.756,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;r1_correct&quot;: 9,
+      &quot;r2_correct&quot;: 9,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;r1_correct&quot;: 22,
+      &quot;r2_correct&quot;: 20,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 2
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 6,
+      &quot;r2_correct&quot;: 6,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;r1_correct&quot;: 4,
+      &quot;r2_correct&quot;: 4,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>9</td><td>0.529</td><td><div class='bar'><i style='width:53%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>20</td><td>0.513</td><td><div class='bar'><i style='width:51%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>6</td><td>0.214</td><td><div class='bar'><i style='width:21%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>4</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>52</td><td>14</td><td>0.269</td><td><div class='bar'><i style='width:27%'></i></div></td></tr><tr><td>zh</td><td>48</td><td>25</td><td>0.521</td><td><div class='bar'><i style='width:52%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;### Step 1: Reconfirm problem constraints and core formula\nFirst, we restate the problem rules to avoid misinterpretation: We need 10 unique codes, where each code is either (1) a single distinct letter, or (2) an unordered pair of two different letters (so AB = BA, and pairs like AA are invalid).\nThe total number of unique codes possible with \\( n \\) letters is calculated as:\n- Single-letter codes: \\( n \\) (one per letter used)\n- Two-letter codes: Unordered pairs of distinct letters are combinations of \\( n \\) letters taken 2 at a time, given by \\( \\binom{n}{2} = \\frac{n(n-1)}{2} \\)\nTotal codes = \\( n + \\frac{n(n-1)}{2} \\). We need this total to be at least 10 for 10 book types.\n---\n### Step 2: Verify calculations for candidate \\( n \\) values\nWe test small values of \\( n \\) starting from the smallest option, since we need the minimum number of letters:\n1. For \\( n=3 \\) (Option A):\n   Single codes = 3, two-letter codes = \\( \\binom{3}{2} = 3 \\)\n   Total codes = \\( 3 + 3 = 6 \\), which is less than 10. Insufficient.\n2. For \\( n=4 \\) (Option B):\n   Single codes = 4, two-letter codes = \\( \\binom{4}{2} = 6 \\)\n   Total codes = \\( 4 + 6 = 10 \\), which exactly meets the requirement for 10 unique book codes. Sufficient.\nLarger values of \\( n \\) (5, 10, 20) also work but are not the smallest possible.\n---\n### Step 3: Confirm no rule misinterpretation\nThe problem explicitly states order of letters in pairs does not matter, so we correctly used combinations (not permutations) for two-letter codes. We also excluded invalid same-letter pairs per the \&quot;pair of two different letters\&quot; rule. No errors were found in the original reasoning.\nThe answer is B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To solve the problem, we calculate the total number of unique codes Amy can create with \( n \) letters, where codes are either single letters or unordered pairs of distinct letters.
+### Step 1: Define the total number of codes
+- **Single-letter codes**: There are \( n \) unique single-letter codes (one for each letter).
+- **Two-letter codes**: Since order does not matter and letters are distinct, this is the number of combinations of \( n \) letters taken 2 at a time, given by \( \binom{n}{2} = \frac{n(n-1)}{2} \).
+Total unique codes = single-letter codes + two-letter codes = \( n + \frac{n(n-1)}{2} \). We need this total to be at least 10 (for 10 book types).
+### Step 2: Test small values of \( n \)
+- For \( n=3 \) (Option A):
+  Single codes = 3, two-letter codes = \( \binom{3}{2} = 3 \). Total = \( 3 + 3 = 6 \), which is less than 10. Insufficient.
+- For \( n=4 \) (Option B):
+  Single codes = 4, two-letter codes = \( \binom{4}{2} = 6 \). Total = \( 4 + 6 = 10 \), which exactly matches the number of book types. Sufficient.
+Larger values of \( n \) (5, 10, 20) work but are not the smallest.
+The answer is B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-biology-8</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：用体外实验的方法可合成多肽链。已知苯丙氨酸的密码子是 UUU, 若要在体外合成同位 素标记的多肽链, 所需的材料组合是
+
+(1)同位素标记的 tRNA
+
+(2)蛋白质合成所需的酶
+
+(3)同位素标记的苯丙氨酸
+
+(4)人工合成的多聚尿嘧啶核苷酸
+
+(5)除去了 DNA 和 mRNA 的细胞裂解液
+选项：(A)(1)(2)(4) (B)(2)(3)(4) (C)(3)(4)(5) (D)(1)(3)(5)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;### 逐步验证推理过程\n#### 第一步：验证核心逻辑的正确性\n要获得同位素标记的多肽链，同位素必须整合到多肽的结构中——多肽的组成单位是氨基酸，tRNA、酶等仅为翻译过程的工具，不会进入多肽链，因此仅标记氨基酸可实现目标，标记tRNA无效，该基础逻辑成立。\n#### 第二步：逐个验证材料的必要性\n1.  (1)同位素标记的tRNA：tRNA是转运氨基酸的工具，翻译后不会进入多肽链，无法使多肽带上同位素标记，该材料不需要，原判断正确。\n2.  (2)蛋白质合成所需的酶：完整的翻译过程除酶之外，还需要核糖体（翻译场所）、tRNA、能量物质、翻译因子等多种组分，仅提供酶无法支撑多肽合成，该材料不需要，原判断正确。\n3.  (3)同位素标记的苯丙氨酸：氨基酸是多肽的合成原料，标记苯丙氨酸才能让合成的多肽链带有同位素，该材料必需，原判断正确。\n4.  (4)人工合成的多聚尿嘧啶核苷酸：苯丙氨酸的密码子为UUU，多聚尿嘧啶核苷酸（polyU）可作为翻译的模板mRNA；后续细胞裂解液已去除内源mRNA，必须额外提供模板，该材料必需，原判断正确。\n5.  (5)除去了DNA和mRNA的细胞裂解液：裂解液中包含翻译所需的核糖体、tRNA、各类酶、能量物质、翻译因子等所有必需组分，且去除了内源核酸，不会干扰外源polyU的翻译，可提供翻译所需的其他全部条件，该材料必需，原判断正确。\n#### 第三步：验证选项的正确性\n- A选项(1)(2)(4)：无标记氨基酸，缺少翻译必需的核糖体、tRNA等组分，错误；\n- B选项(2)(3)(4)：缺少翻译必需的核糖体、tRNA、能量等组分，错误；\n- C选项(3)(4)(5)：包含标记原料、翻译模板，以及翻译所需的所有其他组分，符合要求，正确；\n- D选项(1)(3)(5)：标记tRNA无效，且缺少翻译模板，错误。\n\n答案是C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>要解决这个问题，我们需要结合翻译过程的所需条件，逐一分析每个材料的必要性：
+### 步骤1：明确翻译的核心条件
+体外合成多肽链（即翻译过程）需要的基本要素包括：**模板mRNA、原料氨基酸、翻译所需的核糖体、tRNA、酶、能量物质**。而要获得**同位素标记的多肽链**，需要让多肽的组成单位（氨基酸）带有同位素标记。
+### 步骤2：逐一分析每个材料
+1.  (1)同位素标记的tRNA：tRNA的功能是转运氨基酸，翻译过程中tRNA不会进入多肽链，因此标记tRNA无法让多肽带上同位素，该材料不需要。
+2.  (2)蛋白质合成所需的酶：仅提供酶无法满足翻译的全部需求，翻译还需要核糖体、tRNA、能量等关键组分，因此单独加酶不足以支持多肽合成，该材料不是合适选择。
+3.  (3)同位素标记的苯丙氨酸：多肽是氨基酸脱水缩合的产物，标记苯丙氨酸（原料）才能让合成的多肽链带有同位素，该材料必需。
+4.  (4)人工合成的多聚尿嘧啶核苷酸：苯丙氨酸的密码子是UUU，因此多聚尿嘧啶核苷酸（polyU）可作为翻译的模板mRNA，该材料必需。
+5.  (5)除去了DNA和mRNA的细胞裂解液：裂解液中含有核糖体、tRNA、翻译所需的酶、能量物质等所有翻译必需的其他组分，且去除了内源DNA和mRNA，不会干扰外源polyU模板的翻译，该材料可以提供翻译所需的其他条件，是必需的。
+### 步骤3：组合正确材料
+综上，所需材料为(3)(4)(5)。
+答案是C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;我们逐步验证原解答的推理过程：\n1. 验证选项A：蚕丝是蚕分泌的天然蛋白纤维，主要成分为丝心蛋白等蛋白质，该表述正确，不符合题意。\n2. 验证选项B：题目中“天热”为输入笔误，应为“天然”。蚕丝的主要成分蛋白质相对分子质量可达数万至数十万，属于天然形成的高分子化合物，因此蚕丝属于天然高分子材料，该表述正确，不符合题意。\n3. 验证选项C：“蜡炬成灰”是蜡烛燃烧的过程，燃烧是可燃物与氧气发生的剧烈氧化还原反应，蜡作为还原剂被氧化，该过程确实发生了氧化反应，表述正确，不符合题意。\n4. 验证选项D：古代蜡多来自动植物（如蜂蜡、虫蜡），主要成分为高级脂肪酸酯，但这类物质的相对分子质量通常仅为数百，远达不到高分子聚合物（相对分子质量通常≥10⁴，由单体聚合得到）的判定标准，不属于高分子聚合物，该表述错误，符合题意。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>我们逐个分析选项：
+1. 分析选项A：蚕丝是蚕分泌的天然纤维，主要成分是蛋白质，该说法正确。
+2. 分析选项B：蛋白质的相对分子质量可达数万以上，属于高分子化合物，且蚕丝是天然形成的，因此属于天然高分子材料，该说法正确。
+3. 分析选项C：“蜡炬成灰”是蜡烛燃烧的过程，燃烧属于剧烈的氧化反应，因此该过程发生了氧化反应，该说法正确。
+4. 分析选项D：古代蜡多来自动植物油脂，主要成分为高级脂肪酸酯，但高级脂肪酸酯的相对分子质量通常仅为数百，远低于高分子聚合物（相对分子质量通常上万）的标准，不属于高分子聚合物，该说法错误。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-139</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：马丁•路德反对罗马教廷，宣扬因信仰而得救。他倡导的改革运动得到农民、手工工匠、下层僧侣的支持，推动了宗教民族主义的发展。王公贵族为扩大自身政治权力，也纷纷建立其辖区官方教会。这主要说明宗教改革（　　）
+选项：(A)使社会各阶层有了共同目标 (B)扩大了世俗贵族权力 (C)有利于近代民族国家的形成 (D)有着广泛的社会基础
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;### 重新验证推理过程\n#### 第一步：重申题干核心信息\n题干从两个维度呈现宗教改革的特征：①支持群体多元：覆盖农民、手工工匠、下层僧侣等中下层群体，以及王公贵族等上层世俗统治者；②改革产生的关键影响：推动宗教民族主义发展，打破罗马教廷大一统教权，催生了隶属于世俗辖区的官方教会。题干要求提炼材料核心主旨。\n---\n#### 第二步：逐一验证选项推理的准确性\n1. **验证选项A**：“使社会各阶层有了共同目标”\n   原推理判断该选项错误，验证如下：①“社会各阶层”表述绝对，天主教会高层、支持教廷的保守封建主明确反对宗教改革，不属于支持阶层；②支持阶层的目标存在本质差异：中下层群体反对教会经济剥削、追求信仰平等，王公贵族以扩张世俗权力为目标，不存在统一的共同目标。原推理无误，A排除。\n2. **验证选项B**：“扩大了世俗贵族权力”\n   原推理判断该选项错误，验证如下：①题干仅提到王公贵族“为扩大自身政治权力”而建立辖区教会，属于动机表述，未提及权力扩大的最终结果，表述不符合材料；②该内容仅对应王公贵族这一单一群体的行为，属于局部信息，无法涵盖材料中下层支持、宗教民族主义发展等核心内容，不符合“主要说明”的主旨要求。原推理无误，B排除。\n3. **验证选项C**：“有利于近代民族国家的形成”\n   原推理判断该选项正确，验证如下：①材料明确提及改革推动“宗教民族主义”发展，这是近代民族认同的核心组成部分；②辖区官方教会的建立打破了罗马教廷跨民族的大一统教权控制，将教权纳入世俗权力体系，契合近代民族国家“教权从属于民族主权”的核心特征，是民族国家形成的重要动力。原推理无误，C正确。\n4. **验证选项D**：“有着广泛的社会基础”\n   原推理判断该选项正确，验证如下：材料显示宗教改革的支持力量既包括农民、手工工匠、下层僧侣等中下层民众群体，也包括王公贵族等上层世俗统治群体，支持阶层覆盖范围广，充分体现了改革社会基础的广泛性。原推理无误，D正确。\n---\n原解答推理全部正确，无错误需要修正。\n答案是CD&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>我们可以通过逐步分析材料和选项得出结论：
+### 第一步：梳理材料核心信息
+材料呈现了宗教改革的两个关键特征：① 支持者/参与者阶层多元：包括农民、手工工匠、下层僧侣等下层群体，以及王公贵族等上层世俗统治者；② 改革产生的重要影响：推动了宗教民族主义发展，催生了脱离罗马教廷控制的辖区官方教会。
+### 第二步：逐一分析选项
+1. **选项A**：“使社会各阶层有了共同目标”
+   该表述错误。不同阶层参与宗教改革的动机差异极大：下层群体反对教会剥削、追求信仰平等，王公贵族以扩大自身政治权力为目标，不存在统一的共同目标；且“社会各阶层”表述绝对，天主教会高层等群体明确反对宗教改革，因此排除A。
+2. **选项B**：“扩大了世俗贵族权力”
+   该内容属于材料的局部信息，并非核心主旨。材料仅提及王公贵族“为扩大自身政治权力”而建立辖区教会，未明确体现权力扩大的最终结果，且仅对应王公贵族的行为，无法涵盖材料中下层支持、宗教民族主义发展等核心内容，因此不属于材料“主要说明”的范畴，排除B。
+3. **选项C**：“有利于近代民族国家的形成”
+   该表述正确。材料明确提到改革推动了“宗教民族主义”的发展，这是近代民族意识的核心组成部分；同时辖区官方教会的建立打破了罗马教廷对欧洲教权的大一统控制，推动了民族教会与世俗权力的结合，为近代民族国家的形成奠定了基础，符合材料主旨。
+4. **选项D**：“有着广泛的社会基础”
+   该表述正确。宗教改革得到了农民、手工工匠、下层僧侣等下层群体的支持，也获得了王公贵族等上层群体的响应，参与阶层覆盖广泛，充分体现了改革社会基础的广泛性，符合材料核心内容。
+答案是CD</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-337</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>李明：“目前我国已经具备了开征遗产税的条件。我国已经有一大批人进入了高收入阶层，遗产税的开征有了雄厚的现实经济基础。我国的基尼系数邑超过了4．0的国际警戒线，社会的贫富差距在逐渐加大，这对遗产税的开征提出了迫切的要求。张涛：“我国目前还不具备开征遗产税的条件。如果现在实施遗产税，很可能遇到征不到税的问题。”
+问题：以下哪项如果为真，最能加强张涛的反对意见?
+选项：A．目前我国的人均寿命为72岁，我国目前的富裕人群的年龄为35—50岁。 B．目前在我国，无论平民百姓还是百万富翁都想把自己的财富留给子孙。 C．只有在对个人信息很清楚的情况下才能实施遗产税。 D．我国有些富有的影视明星不到60岁就不幸去世了。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;### 第一步：重新明确核心论证逻辑\n张涛的核心论点：**我国目前不具备开征遗产税的条件**，核心支撑论据为：**现在开征遗产税很可能征不到税**。加强项必须紧扣“当前开征无法征到税”的核心逻辑。\n---\n### 第二步：逐一验证选项推理\n#### 选项A验证\n遗产税的征税对象是财产所有人去世后遗留的遗产，征税核心主体是高收入/富裕人群。当前富裕人群集中在35-50岁，而我国人均寿命为72岁，意味着核心征税群体短期内不会产生可征税的遗产，直接从征税来源的角度，支撑了“现在开征会征不到税”的论据，推理正确，属于加强项。\n#### 选项B验证\n“想把财富留给子孙”仅为主观意愿，不代表能通过合法/非法手段规避遗产税：若财富在去世后留给子孙，反而属于遗产税的征税范围，无法证明“征不到税”，推理正确，不属于加强项。\n#### 选项C验证\n该选项仅说明“掌握个人信息是开征遗产税的必要条件”，但未给出“我国目前无法清楚掌握个人信息”的事实前提，属于不明确的条件表述，推理正确，不属于加强项。\n#### 选项D验证\n“部分富人不到60岁去世”意味着存在可征税的遗产，反而反驳了“征不到税”的核心论据，属于削弱项，推理正确。\n---\n### 第三步：结论验证\n原分析逻辑自洽，无错误。\n答案是A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>要解决这道题，首先需要明确张涛的核心逻辑：**结论是我国目前不具备开征遗产税的条件，核心论据是现在开征很可能征不到税**。要加强张涛的意见，需要支持“现在开征会征不到税”这一核心论据。
+接下来逐一分析选项：
+1. **选项A**：遗产税的征税前提是遗产所有人去世，对遗留的遗产征税。目前我国富裕人群年龄集中在35-50岁，而人均寿命为72岁，意味着这批主要的潜在征税对象短期内不会去世，没有可征税的遗产来源，直接支撑了“现在开征会征不到税”的论据，能够加强张涛的意见。
+2. **选项B**：“想把财富留给子孙”只是主观想法，不代表人们能通过合法或非法手段规避遗产税。如果财富在去世后留给子孙，反而属于遗产税的征税范围，无法支持“征不到税”的观点，不能加强。
+3. **选项C**：该选项仅指出“对个人信息清楚是实施遗产税的必要条件”，但并未说明我国目前是否满足“个人信息清楚”这一前提，属于无事实支撑的条件表述，无法加强。
+4. **选项D**：“有些富人不到60岁去世”意味着存在可征税的遗产，反而反驳了“征不到税”的论据，是对张涛意见的削弱，不能加强。
+答案是A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::lsat-lr-166</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Only Canadian films are shown at the Lac Nichoutec Film Festival. This year, most of the films that won prizes at that festival also won prizes at international film festivals.
+Question: If the above statements are true, which one of the following statements must also be true?
+Answer Choices: (A)This year, most of the Canadian films that were shown at international film festivals won prizes at the Lac Nichoutec Film Festival. (B)Most of the Canadian Films produced this year were shown at the Lac Nichoutec Film Festival. (C)Some of the films that won prizes at international film festivals this year were Canadian films. (D)This year, not every film that won a prize at the Lac Nichoutec Film Festival was also shown at an international film festival. (E)This year, at least one Film that won a prize at an international Film festival was not shown at the Lac Nichoutec Film Festival.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;### Step 1: Re-verify Core Premises and Logical Translations\nFirst, confirm the formal logic of the given statements, following standard reasoning conventions (consistent with standardized test logic for this type of question):\n1. **\&quot;Only Canadian films are shown at LNFF\&quot;**: The logical form of \&quot;Only X are Y\&quot; is *All Y are X*, so *All films shown at LNFF are Canadian*. A universal standard assumption for film festivals (required for the first premise to be relevant to the question) is that prizes are only awarded to films screened at the festival. Thus: *All LNFF prize winners are Canadian*.\n2. **\&quot;Most LNFF prize winners also won prizes at international festivals\&quot;**: \&quot;Most\&quot; is a proportional quantifier with existential import: it can only be true if the set of LNFF prize winners is non-empty, and more than half of this set won international prizes. For any non-empty set, \&quot;more than half\&quot; means at least 1 member. Thus: *There is at least 1 film that won both an LNFF prize and an international prize*.\n\n---\n### Step 2: Re-evaluate Each Option for Necessary Truth\nA statement is only valid if it cannot be false when the premises are true.\n#### Option A\n\&quot;Most of the Canadian films that were shown at international film festivals won prizes at LNFF.\&quot;\nThis reverses the original proportional relationship and refers to a different group (Canadian films *shown* at international festivals, not Canadian films that *won prizes* at international festivals). Example that satisfies the premises but makes A false:\n- 10 LNFF prize winners, 9 of whom won international prizes (satisfies \&quot;most\&quot;)\n- 1000 total Canadian films shown at international festivals, only 9 of which are LNFF prize winners.\nA is false here. **Not necessarily true.**\n\n#### Option B\n\&quot;Most of the Canadian films produced this year were shown at LNFF.\&quot;\nThe first premise only states LNFF exclusively shows Canadian films, not that it screens most Canadian films produced. Example that satisfies the premises but makes B false: 1000 Canadian films produced, only 50 shown at LNFF. **Not necessarily true.**\n\n#### Option C\n\&quot;Some of the films that won prizes at international film festivals this year were Canadian films.\&quot;\n\&quot;Some\&quot; in logic means \&quot;at least one\&quot;. We confirmed there is at least 1 film that won both an LNFF prize and an international prize, and all LNFF prize winners are Canadian. For C to be false, *no international prize winners could be Canadian*, which would make the second premise (\&quot;most LNFF prize winners won international prizes\&quot;) impossible (0 of any non-empty set is not \&quot;most\&quot;). **Must be true.**\n\n#### Option D\n\&quot;This year, not every film that won a prize at LNFF was also shown at an international film festival.\&quot;\n\&quot;Most\&quot; includes the case of *all* LNFF prize winners winning international awards (e.g., 2 LNFF prize winners, both won international prizes—this satisfies \&quot;most\&quot;). In this case, all LNFF prize winners were shown at international festivals, making D false. **Not necessarily true.**\n\n#### Option E\n\&quot;This year, at least one film that won a prize at an international film festival was not shown at LNFF.\&quot;\nIt is possible for all international prize winners to be LNFF films (e.g., 2 LNFF prize winners, both won international prizes, and no other films won international prizes that year). This satisfies the premises but makes E false. **Not necessarily true.**\n\n---\nThe answer is C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To solve this problem, we first formalize the given premises and then evaluate each option against them:
+
+### Step 1: Restate the premises clearly
+1. **Only Canadian films are shown at the Lac Nichoutec Film Festival (LNFF):** This means *all films shown at LNFF are Canadian*. For a film to win a prize at LNFF, it must have been shown at the festival (a standard assumption for film festivals, as prizes are awarded to films screened at the event). Thus, all LNFF prize winners are Canadian films.
+2. **Most LNFF prize winners also won prizes at international festivals:** &quot;Most&quot; means more than half of the LNFF prize winners. For this statement to be true, there must be at least one LNFF prize winner (if there were zero LNFF prize winners, &quot;most of zero&quot; is logically false, since 0 is not greater than 0). This means the overlap between LNFF prize winners and international prize winners is non-empty (at least one film is in both groups).
+
+---
+
+### Step 2: Evaluate each option
+#### Option A
+&quot;Most of the Canadian films that were shown at international film festivals won prizes at LNFF.&quot;  
+This reverses the original &quot;most&quot; relationship. The premise only tells us about LNFF prize winners, not the total number of Canadian films at international festivals. For example, there could be 1000 Canadian films at international festivals, with only 9 LNFF prize winners among them—this would make the premise true (9 out of 10 LNFF prize winners are international winners) but Option A false. **Not necessarily true.**
+
+#### Option B
+&quot;Most of the Canadian films produced this year were shown at LNFF.&quot;  
+The first premise only states that LNFF exclusively shows Canadian films, not that it screens most Canadian films produced. There could be far more Canadian films made than fit in the festival. **Not necessarily true.**
+
+#### Option C
+&quot;Some of the films that won prizes at international film festivals this year were Canadian films.&quot;  
+We know there is at least one film that won both an LNFF </pre><div class='muted'>（回答已截断）</div></details></div></section>
+</main>
+</body>
+</html>

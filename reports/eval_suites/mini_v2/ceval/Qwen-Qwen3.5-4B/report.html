@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ceval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · C-Eval：中文多学科考试知识（选择题，5-shot answer-only）</h1>
+    <p class="muted">基准 ceval · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">80.7%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">150</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">150</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">121</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>C-Eval 是覆盖 52 个学科、四个难度层级的中文多项选择评测，分为 STEM、社会科学、人文、其他四大类。每题为四选一（A/B/C/D）。对应本仓库能力维度 D01（通用学科知识与推理），用于衡量模型的中文本土学科知识，属 sanity check。</p><p>本次使用带公开标签的 val 划分（1,346 题）；官方 test 划分不公开答案、需提交排行榜，故不在本地评测范围内。评测采用官方 **5-shot answer-only** 协议：每个学科取 dev 集的 5 个示例作为 user/assistant 多轮对话（assistant 回复即标准字母），再以相同格式（结尾为「答案：」）提问。</p><p>由于 few-shot 已把输出约束为单个字母，本适配器**不做 LLM 答案抽取**，直接读取回复首个选项字母与标准答案精确匹配（等价官方 `response[0] == answer`），并按学科大类与具体学科分桶统计。</p><p class='muted'>主页：<a href='https://github.com/hkust-nlp/ceval'>https://github.com/hkust-nlp/ceval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#accountant-val-22</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>根据COSO内部控制框架，反舞弊机制属于内部控制要素中的____。
+A. 风险评估
+B. 控制活动
+C. 监控
+D. 信息与沟通
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#accountant-val-36</span><span class='tag'>category=Other</span> <span class='tag'>subject=accountant</span></div><div class='qtext'>2018年12月，某鞭炮生产厂将自产的一批鞭炮与其供应商换取生产用原材料，已知该批鞭炮的平均销售价格为14万元，最低销售价格为10万元，最高销售价格为18万元，则该鞭炮生产厂应缴纳的消费税为____万元。(以上价格均为不含税价，鞭炮消费税税率15%)
+A. 1.5
+B. 2.7
+C. 1.73
+D. 1.05
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>150</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Humanities</td><td>28</td><td>20</td><td>0.714</td><td><div class='bar'><i style='width:71%'></i></div></td></tr><tr><td>Other</td><td>43</td><td>33</td><td>0.767</td><td><div class='bar'><i style='width:77%'></i></div></td></tr><tr><td>STEM</td><td>48</td><td>42</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>Social Science</td><td>31</td><td>26</td><td>0.839</td><td><div class='bar'><i style='width:84%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>accountant</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>advanced_mathematics</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>art_studies</td><td>4</td><td>3</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>basic_medicine</td><td>5</td><td>4</td><td>0.800</td><td><div class='bar'><i style='width:80%'></i></div></td></tr><tr><td>business_administration</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>chinese_language_and_literature</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>civil_servant</td><td>5</td><td>4</td><td>0.800</td><td><div class='bar'><i style='width:80%'></i></div></td></tr><tr><td>clinical_medicine</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>college_chemistry</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>college_economics</td><td>7</td><td>5</td><td>0.714</td><td><div class='bar'><i style='width:71%'></i></div></td></tr><tr><td>college_physics</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>college_programming</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>computer_architecture</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>computer_network</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>discrete_mathematics</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>education_science</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>electrical_engineer</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>environmental_impact_assessment_engineer</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>fire_engineer</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>high_school_biology</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_chemistry</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_chinese</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>high_school_geography</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_history</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>high_school_mathematics</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>high_school_politics</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>ideological_and_moral_cultivation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>law</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>legal_professional</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>logic</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>marxism</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>metrology_engineer</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>middle_school_biology</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>middle_school_chemistry</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>middle_school_geography</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>middle_school_history</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>middle_school_physics</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>middle_school_politics</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>modern_chinese_history</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>operating_system</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>physician</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>plant_protection</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>probability_and_statistics</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>professional_tour_guide</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>sports_science</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>tax_accountant</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>teacher_qualification</td><td>4</td><td>3</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>urban_and_rural_planner</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>veterinary_medicine</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#art_studies-val-27</span><span class='tag'>category=Humanities</span> <span class='tag'>subject=art_studies</span></div><div class='qtext'>明传奇《目连救母劝善记》是____写的。
+A. 周朝俊
+B. 高濂
+C. 许自昌
+D. 郑自珍
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#basic_medicine-val-6</span><span class='tag'>category=Other</span> <span class='tag'>subject=basic_medicine</span></div><div class='qtext'>全身营养不良时，首先发生萎缩的组织或器官是____
+A. 骨骼肌
+B. 脂肪组织
+C. 肝
+D. 脑
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#business_administration-val-9</span><span class='tag'>category=Social Science</span> <span class='tag'>subject=business_administration</span></div><div class='qtext'>经营战略的本质是____。
+A. 目标与目的
+B. 资源
+C. 公司远景
+D. 组织结构
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#chinese_language_and_literature-val-3</span><span class='tag'>category=Humanities</span> <span class='tag'>subject=chinese_language_and_literature</span></div><div class='qtext'>《史记·高祖本纪》：“今则来，沛公恐不得有此。”句中“则”的用法是____。
+A. 表示承接
+B. 表示转折
+C. 表示假设
+D. 表示因果
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#civil_servant-val-8</span><span class='tag'>category=Other</span> <span class='tag'>subject=civil_servant</span></div><div class='qtext'>一天，一个农民的驴子掉到枯井里，那可怜的驴子在井里凄凉地惨叫了几个钟头，农民亦急得团团转，就是毫无办法把它救起来，最后，他断然认定：驴子已老了，这口枯井也该填起来，不值得花精力去救驴子。他请来所有邻居帮他填井。大家抓起铁锹，开始往井里填土。驴子很快意识到发生了什么事，起初，它恐慌地大哭，不一会儿，居然安静下来。人们忍不住往井里看，奇迹发生了。每一铲砸到驴子背上的土，它都作了出人意料的处理：迅速抖落一身尘土，然后狠狠地用脚踩紧。这样，没过多久，驴子竟然自己把自己升了起来，到了井口，它纵身一跳，平安地跑开了，在场的人均惊诧不已。 这段文字告诉我们的道理是____。
+A. 人生中的每一个困难都是通往成功的垫脚石
+B. 换一种思维常常能够产生意想不到的效果
+C. 冷静思考是克服困难的首要条件
+D. 求人不如求己，很多时候，自己才是自己最大的救星
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#college_chemistry-val-7</span><span class='tag'>category=STEM</span> <span class='tag'>subject=college_chemistry</span></div><div class='qtext'>某溶液的pH=0.04,则其中$H^+$的浓度为____
+A. $0.912mol/dm^3$
+B. $0.91mol/dm^3$
+C. $0.9mol/dm^3$
+D. $1.1mol/dm^3$
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · sas_bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · SAS-Bench · 高考短答案整体、分步与错因评分</h1>
+    <p class="muted">基准 sas_bench · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">n/a</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">250</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">250</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">None</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>SAS-Bench 包含 9 学科、12 个学科×题型子任务、1,030 道高考题和 4,109 条专家标注作答。被测模型扮演阅卷评分器，输入题目、参考答案、解析、评分细则、学生逐步作答和允许的错因类型，输出总分、逐步得分和逐步错因。</p><p>官方原生指标是 QWK（整体总分一致性）、CCS（整体+步骤联合一致性）和 ECS（按低/中/高作答质量分层的错因分布一致性）。三项均先在每个子任务上计算，再对已有子任务做不加权宏平均；它们是群体一致性统计量，不是逐题 accuracy。</p><p class='muted'>主页：<a href='https://github.com/PKU-DAIR/SAS-Bench'>https://github.com/PKU-DAIR/SAS-Bench</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#Biology_gapfilling_107</span><span class='tag'>task=4_Biology_gapfilling</span> <span class='tag'>subject=Biology</span> <span class='tag'>question_type=gapfilling</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+首先根据该题总分为每个空分配分值，一般而言每个空1分，若有“原因”、“理由”等较长回答的空可能分配2~3分，涉及到实验设计的，酌情增加分数分配，确保每个空的分值之和等于总分。如果该空与标准答案完全一致则该空给满分，不一致则该空给0分，对于分值较大的实验设计或原理分析题，部分回答正确可以酌情给部分分（例如满分3分，回答的内容正确但不完整可以给1分或者2分）。
+
+【评估材料】
+- 试题内容：12．植物甲具有极强的耐旱性 ，其耐旱性与某个基因有关 ，若从该植物中获得该
+耐旱基因，并将其转移到耐旱性低的植物乙中，有可能提高后者的耐旱性。  
+回答下列问题：  
+（1）理论上，基因组文库含有生物的 　   　基因；而cDNA文库含有生物的 　   　
+基因。  
+（2）若要从植物甲中获得耐旱基因，可首先建立该植物的基因组文库，再从中 　   　
+出所需的耐旱基因。  
+（3）将耐旱基因导入农杆菌，并通过农杆菌转化法将其导入植物 　   　的体细
+胞中，经过一系列的过程得到再生植株。要确认该耐旱基因是否在再生植株
+中正确表达，应检测此再生植株中该基因的 　   　，如果检测结果呈阳性，
+再在田间试验中检测植株的 　   　是否得到提高。  
+（4）假如用得到的二倍体转基因耐旱植株自交，子代中耐旱与不耐旱植株的数
+量比为 3：1时，则可推测该耐旱基因整合到了 　   　（填 “同源染色体的一
+条上 ”或“同源染色体的两条上 ”）。
+
+- 题目分值：15
+- 错因类型：[&quot;概念混淆&quot;, &quot;术语使用不准确&quot;, &quot;过程描述不准确&quot;, &quot;未正确分析实验现象&quot;, &quot;图表信息提取错误&quot;, &quot;逻辑推理错误&quot;, &quot;单位或数据错误&quot;]
+- 标准答案：（1）全部；    部分；
+（2）筛选；
+（3）乙；    表达产物；     耐旱性；
+（4）同源染色体的一条上。
+
+- 解析说明：解：（ 1）理论上，基因组文库含有生物的全部基因； 而cDNA文库含
+有生物的部分基因。  
+（2）若要从植物甲中获得耐旱基因，可首先建立该植物的基因组文库，再从中
+筛选出所需的耐旱基因。  
+（3）由于植物乙的耐旱性低，因此将耐旱基因导入农杆菌，并通过农杆菌转化
+法将其导入植物乙的体细胞中，经过一系列的过程得到再生植株。要确认该
+  耐旱基因是否在再生植株中正确表达，应检测此再生植株中该基因的表达产
+物，如果检测结果呈阳性 ，再在田间试验中检测植株的耐旱性是否得到提高 。 
+（4）假如用得到的二倍体转基因耐旱植株自交，子代中耐旱与不耐旱植株的数
+量比为 3：1时，该比例符合杂合子（ Aa）自交后代的结果，则可推测该耐旱
+基因（ A）整合到了同源染色体的一条上。
+
+- 学生作答：## Step 0
+（1）细胞；而cDNA文库含有生物的 基因组；
+
+## Step 1
+（2）提取；
+
+## Step 2
+（3）叶片；DNA；产量；
+
+## Step 3
+（4）同源染色体的一条上；
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>{&#x27;total&#x27;: 15, &#x27;manual_label&#x27;: 5, &#x27;steps&#x27;: [{&#x27;response&#x27;: &#x27;（1）细胞；而cDNA文库含有生物的 基因组；&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;术语使用不准确&#x27;, &#x27;过程描述不准确&#x27;, &#x27;未正确分析实验现象&#x27;]}, {&#x27;response&#x27;: &#x27;（2）提取；&#x27;, &#x27;label&#x27;: 2, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}, {&#x27;response&#x27;: &#x27;（3）叶片；DNA；产量；&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;术语使用不准确&#x27;, &#x27;过程描述不准确&#x27;, &#x27;未正确分析实验现象&#x27;]}, {&#x27;response&#x27;: &#x27;（4）同源染色体的一条上；&#x27;, &#x27;label&#x27;: 3, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}]}</div></div><div class='card'><div class='card-head'><span class='pid'>#Biology_gapfilling_151</span><span class='tag'>task=4_Biology_gapfilling</span> <span class='tag'>subject=Biology</span> <span class='tag'>question_type=gapfilling</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+首先根据该题总分为每个空分配分值，一般而言每个空1分，若有“原因”、“理由”等较长回答的空可能分配2~3分，涉及到实验设计的，酌情增加分数分配，确保每个空的分值之和等于总分。如果该空与标准答案完全一致则该空给满分，不一致则该空给0分，对于分值较大的实验设计或原理分析题，部分回答正确可以酌情给部分分（例如满分3分，回答的内容正确但不完整可以给1分或者2分）。
+
+【评估材料】
+- 试题内容：11．（ 15分）回答与胡萝卜素有关的问题：  
+（1）胡萝卜含有的胡萝卜素中，最主要的是 　   　（填 “α﹣胡萝卜素 ”、“β﹣
+胡萝卜素 ”或“γ﹣胡萝卜素 ”），该胡萝卜素在人体内可以转变成两分子 　   　，
+后者缺乏会引起人在弱光下视物不清的病症，该疾病称为 　   　，胡萝卜素
+是　   　（填 “挥发性 ”或“非挥发性 ”）物质．  
+（2）工业生产上，用养殖的岩藻作为原料提取胡萝卜素时， 　   　（填 “需要 ”
+或“不需要 ”）将鲜活的岩藻干燥．  
+（3）现有乙醇和乙酸乙酯两种溶剂，应选用其中的 　   　作为胡萝卜素的萃取
+剂，不选用另外一种的理由是 　   　．
+
+- 题目分值：15
+- 错因类型：[&quot;概念混淆&quot;, &quot;术语使用不准确&quot;, &quot;过程描述不准确&quot;, &quot;未正确分析实验现象&quot;, &quot;图表信息提取错误&quot;, &quot;逻辑推理错误&quot;, &quot;单位或数据错误&quot;]
+- 标准答案：（1）β﹣胡萝卜素   维生素 A  夜盲症    非挥发性
+（2）需要
+（3）乙酸乙酯    萃取胡萝卜素的有机溶剂不与水混溶，而乙醇虽为有机溶剂但
+和水混溶
+
+- 解析说明：解：（ 1）胡萝卜含有的胡萝卜素中， 最主要的是 β﹣胡萝卜素，该胡
+萝卜素在人体内可以转变成两分子维生素 A，后者缺乏会引起人在弱光下视
+物不清的病症，该疾病称为夜盲症，胡萝卜素是非挥发性物质．  
+（2）工业生产上，用养殖的岩藻作为原料提取胡萝卜素时，需要将鲜活的岩藻
+干燥．  
+（3）萃取胡萝卜素的有机溶剂应该能够充分溶解胡萝卜素，并且不与水混溶，
+故乙醇和乙酸乙酯两种溶剂 ，应选用其中的乙酸乙酯作为胡萝卜素的萃取剂 ．
+
+- 学生作答：## Step 0
+（1）α﹣胡萝卜素，维生素D，白内障，挥发性
+
+## Step 1
+（2）不需要
+
+## Step 2
+（3）乙醇，乙醇容易挥发。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>{&#x27;total&#x27;: 15, &#x27;manual_label&#x27;: 0, &#x27;steps&#x27;: [{&#x27;response&#x27;: &#x27;（1）α﹣胡萝卜素，维生素D，白内障，挥发性&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;未正确分析实验现象&#x27;]}, {&#x27;response&#x27;: &#x27;（2）不需要&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;未正确分析实验现象&#x27;]}, {&#x27;response&#x27;: &#x27;（3）乙醇，乙醇容易挥发。&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;过程描述不准确&#x27;, &#x27;未正确分析实验现象&#x27;]}]}</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;QWK/CCS/ECS are population agreement statistics against human expert labels on a 0-100 scale, not per-item accuracy. The generic accuracy field is strict structured exact match and is diagnostic only.&quot;,
+  &quot;headline_metric&quot;: &quot;unweighted mean of each available per-subtask metric&quot;,
+  &quot;overall&quot;: {
+    &quot;qwk&quot;: 69.61115344595062,
+    &quot;ccs&quot;: 53.435011664765774,
+    &quot;ecs&quot;: 8.91107368836826
+  },
+  &quot;overall_ecs_breakdown&quot;: {
+    &quot;ecs_low&quot;: 30.55738274046125,
+    &quot;ecs_medium&quot;: -6.594027911144056,
+    &quot;ecs_high&quot;: 2.7698662357875823
+  },
+  &quot;by_task&quot;: {
+    &quot;0_Physics_ShortAns&quot;: {
+      &quot;n&quot;: 5,
+      &quot;qwk&quot;: 8.000000000000007,
+      &quot;ccs&quot;: 23.756575424449565,
+      &quot;ecs&quot;: 1.1137803005754752,
+      &quot;ecs_low&quot;: -30.779350562554626,
+      &quot;ecs_medium&quot;: -30.42903097250923,
+      &quot;ecs_high&quot;: 64.54972243679028
+    },
+    &quot;1_History_ShortAns&quot;: {
+      &quot;n&quot;: 26,
+      &quot;qwk&quot;: 96.46172098541419,
+      &quot;ccs&quot;: 81.42966023666388,
+      &quot;ecs&quot;: 2.0711737542459403,
+      &quot;ecs_low&quot;: 80.0,
+      &quot;ecs_medium&quot;: -73.78647873726219,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;2_Physics_Choice&quot;: {
+      &quot;n&quot;: 19,
+      &quot;qwk&quot;: 80.27681660899654,
+      &quot;ccs&quot;: 71.2121212121212,
+      &quot;ecs&quot;: 0.0,
+      &quot;ecs_low&quot;: 100.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: -100.0
+    },
+    &quot;3_Geography_ShortAns&quot;: {
+      &quot;n&quot;: 4,
+      &quot;qwk&quot;: 0.0,
+      &quot;ccs&quot;: 0.0,
+      &quot;ecs&quot;: -33.33333333333333,
+      &quot;ecs_low&quot;: -100.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;4_Biology_gapfilling&quot;: {
+      &quot;n&quot;: 33,
+      &quot;qwk&quot;: 97.02607633942847,
+      &quot;ccs&quot;: 58.374218946172675,
+      &quot;ecs&quot;: 3.3333333333333335,
+      &quot;ecs_low&quot;: 10.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;5_Chinese_gapfilling&quot;: {
+      &quot;n&quot;: 18,
+      &quot;qwk&quot;: 100.0,
+      &quot;ccs&quot;: 88.60711422422887,
+      &quot;ecs&quot;: 66.66666666666666,
+      &quot;ecs_low&quot;: 100.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 100.0
+    },
+    &quot;6_Chinese_ShortAns&quot;: {
+      &quot;n&quot;: 31,
+      &quot;qwk&quot;: 91.10787172011662,
+      &quot;ccs&quot;: 41.275541895028,
+      &quot;ecs&quot;: 59.66410278374966,
+      &quot;ecs_low&quot;: 97.46794344808964,
+      &quot;ecs_medium&quot;: 46.16902584383194,
+      &quot;ecs_high&quot;: 35.35533905932738
+    },
+    &quot;7_Math_ShortAns&quot;: {
+      &quot;n&quot;: 23,
+      &quot;qwk&quot;: 92.18287468479333,
+      &quot;ccs&quot;: 55.07518324537526,
+      &quot;ecs&quot;: 1.091604415563168,
+      &quot;ecs_low&quot;: 63.245553203367585,
+      &quot;ecs_medium&quot;: -21.081851067789195,
+      &quot;ecs_high&quot;: -38.88888888888889
+    },
+    &quot;8_Political_ShortAns&quot;: {
+      &quot;n&quot;: 8,
+      &quot;qwk&quot;: 82.27848101265822,
+      &quot;ccs&quot;: 46.58720276566254,
+      &quot;ecs&quot;: 18.51851851851852,
+      &quot;ecs_low&quot;: 50.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 5.555555555555555
+    },
+    &quot;9_English_gapfilling&quot;: {
+      &quot;n&quot;: 6,
+      &quot;qwk&quot;: 88.0,
+      &quot;ccs&quot;: 79.60549232451699,
+      &quot;ecs&quot;: -32.19296217890031,
+      &quot;ecs_low&quot;: -63.245553203367585,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: -33.33333333333333
+    },
+    &quot;10_Math_gapfilling&quot;: {
+      &quot;n&quot;: 76,
+      &quot;qwk&quot;: 100.0,
+      &quot;ccs&quot;: 95.29702970297029,
+      &quot;ecs&quot;: 20.0,
+      &quot;ecs_low&quot;: 60.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;11_Chemistry_gapfilling&quot;: {
+      &quot;n&quot;: 1,
+      &quot;qwk&quot;: 0.0,
+      &quot;ccs&quot;: 0.0,
+      &quot;ecs&quot;: 0.0,
+      &quot;ecs_low&quot;: 0.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    }
+  },
+  &quot;audit&quot;: {
+    &quot;metric_protocol&quot;: &quot;in-repo standard-library port of PKU-DAIR/SAS-Bench&quot;,
+    &quot;prompt_version&quot;: &quot;official-zero-shot-v1&quot;,
+    &quot;prompt_sha256&quot;: &quot;702fd877f91c881a037e78713a2846c232980961546b6aaf8d7c5415ae9ed410&quot;,
+    &quot;scored_rows&quot;: 250,
+    &quot;tasks_present&quot;: 12,
+    &quot;step_count_mismatches&quot;: 0,
+    &quot;unknown_error_labels_dropped&quot;: 0
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>250</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>0_Physics_ShortAns</td><td>5</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>10_Math_gapfilling</td><td>76</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>11_Chemistry_gapfilling</td><td>1</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>1_History_ShortAns</td><td>26</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2_Physics_Choice</td><td>19</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3_Geography_ShortAns</td><td>4</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4_Biology_gapfilling</td><td>33</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5_Chinese_gapfilling</td><td>18</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>6_Chinese_ShortAns</td><td>31</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>7_Math_ShortAns</td><td>23</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>8_Political_ShortAns</td><td>8</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>9_English_gapfilling</td><td>6</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Biology</td><td>33</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Chemistry</td><td>1</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Chinese</td><td>49</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>English</td><td>6</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Geography</td><td>4</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>History</td><td>26</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Math</td><td>99</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Physics</td><td>24</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Political</td><td>8</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Choice</td><td>19</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>ShortAns</td><td>97</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gapfilling</td><td>134</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table></section>
+  
+  
+</main>
+</body>
+</html>

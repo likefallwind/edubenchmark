@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">60.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 99,
+  &quot;confidence_unparsed_rate&quot;: 0.01,
+  &quot;accuracy&quot;: 0.6,
+  &quot;confidence_mean&quot;: 86.9,
+  &quot;confidence_std&quot;: 12.01,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 1,
+    &quot;50-59&quot;: 2,
+    &quot;60-69&quot;: 3,
+    &quot;70-79&quot;: 16,
+    &quot;80-89&quot;: 23,
+    &quot;90-99&quot;: 54
+  },
+  &quot;cwr_at_90&quot;: 0.3148,
+  &quot;n_high_confidence&quot;: 54,
+  &quot;ece_10bin&quot;: 0.2771,
+  &quot;brier&quot;: 0.3013,
+  &quot;auroc&quot;: 0.64,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.618,
+    &quot;coverage_80&quot;: 0.6329,
+    &quot;coverage_70&quot;: 0.6522
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.6111,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.4545,
+      &quot;auroc&quot;: 0.4221
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;accuracy&quot;: 0.5556,
+      &quot;n_with_confidence&quot;: 36,
+      &quot;cwr_at_90&quot;: 0.3333,
+      &quot;auroc&quot;: 0.6047
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.6429,
+      &quot;n_with_confidence&quot;: 27,
+      &quot;cwr_at_90&quot;: 0.2143,
+      &quot;auroc&quot;: 0.7441
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.6111,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.2857,
+      &quot;auroc&quot;: 0.7338
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 6.626
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>11</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>20</td><td>0.556</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>18</td><td>0.643</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>11</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>35</td><td>0.648</td><td><div class='bar'><i style='width:65%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>25</td><td>0.543</td><td><div class='bar'><i style='width:54%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this problem, I need to find the minimum number of letters that can create at least 10 unique codes (single letters or unordered pairs of different letters).
+
+## Setting Up the Count
+
+If Amy uses $n$ letters, she can create:
+- **Single-letter codes:** $n$ codes
+- **Two-letter pair codes** (order doesn&#x27;t matter, letters must be different): $\binom{n}{2} = \frac{n(n-1)}{2}$ codes
+
+**Total codes:** $n + \frac{n(n-1)}{2} = \frac{n(n+1)}{2}$
+
+## Testing Values
+
+I need $\frac{n(n+1)}{2} \geq 10$:
+
+**Try n = 3:** $\frac{3 \times 4}{2} = 6$ codes (too few)
+
+**Try n = 4:** $\frac{4 \times 5}{2} = 10$ codes ✓
+
+## Verification with 4 Letters
+
+With letters A, B, C, D:
+- **Singles (4):** A, B, C, D
+- **Pairs (6):** AB, AC, AD, BC, BD, CD
+- **Total: 10 codes** ✓
+
+This exactly covers all 10 types of books.
+
+The answer is B
+
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-biology-123</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：某植物的 2 种黄叶突变体表现型相似, 测定各类植株叶片的光合色素含量（单位: $\mu \mathrm{g} \cdot {\mathrm{g}^{-1}}$ ), 结果如 表。下列有关叙述正确的是
+
+\begin{tabular}{|l|l|l|l|l|}
+\hline 植林类型 &amp; 叶绿素 a &amp; 叶绿素 $\mathrm{b}$ &amp; 类胡夢卜素 &amp; 叶绿素/胡夢卜素 \\
+\hline 野生型 &amp; 1235 &amp; 519 &amp; 419 &amp; 4.19 \\
+\hline 突变体 1 &amp; 512 &amp; 75 &amp; 370 &amp; 1.59 \\
+\hline 突变体 2 &amp; 115 &amp; 20 &amp; 379 &amp; 0.35 \\
+\hline
+\end{tabular}
+选项：(A)两种突变体的出现增加了物种多样性 (B)突变体 2 比突变体 1 吸收红光的能力更强 (C)两种突变体的光合色素含量差异, 是由不同基因的突变所致 (D)叶绿素与类胡夢卜素的比值大幅下降可导致突变体的叶片呈黄色
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 92}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 逐步分析
+
+## 表格数据分析
+- **野生型**：叶绿素a=1235, 叶绿素b=519, 类胡萝卜素=419, 比值=4.19（叶绿素占优势，绿色）
+- **突变体1**：叶绿素a=512, 叶绿素b=75, 类胡萝卜素=370, 比值=1.59
+- **突变体2**：叶绿素a=115, 叶绿素b=20, 类胡萝卜素=379, 比值=0.35
+
+## 逐项分析
+
+### (A) 两种突变体的出现增加了物种多样性
+- **错误**。物种多样性是指不同物种之间的多样性，基因突变产生同种生物的不同表现型属于**遗传多样性**，而非物种多样性。
+
+### (B) 突变体2比突变体1吸收红光的能力更强
+- **错误**。吸收红光的主要色素是叶绿素a和叶绿素b。
+  - 突变体1总叶绿素：512+75=587
+  - 突变体2总叶绿素：115+20=135
+  - 突变体1的叶绿素远高于突变体2，吸收红光能力应**更强**。
+
+### (C) 两种突变体的光合色素含量差异，是由不同基因的突变所致
+- **正确**。两个突变体虽然表现型相似（都是黄叶），但叶绿素a、叶绿素b含量差异显著（突变体2的叶绿素含量远低于突变体1），说明控制色素合成的机制存在不同，最可能是**不同基因**突变的结果。
+
+### (D) 叶绿素与类胡萝卜素的比值大幅下降可导致突变体的叶片呈黄色
+- **正确**。类胡萝卜素本身呈黄色（或橙黄色）。当叶绿素与类胡萝卜素的比值大幅下降时（如突变体2的比值仅0.35），叶绿素（绿色）相对含量大大减少，类胡萝卜素（黄色）的颜色就显现出来，使叶片呈黄色。
+
+## 最终答案
+
+答案是 **C、D**
+
+置信度: 92</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chinese-202</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：下列词语中，没有错别字的一组是
+选项：(A)讳疾忌医    微言大义    万事具备，只欠东风 (B)罄竹难书    两全其美    一言既出，驷马难追 (C)掷地有声    曲意逢迎    桃李不言，下自成蹊 (D)至高无上    原型必露    失之东隅，收之桑榆
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析各选项中的词语/成语
+
+## 选项 (A)
+- 讳疾忌医 ✓ 正确
+- 微言大义 ✓ 正确
+- **万事具备** ✗ 错误，应为&quot;万事**俱**备&quot;（&quot;俱&quot;意为全部，&quot;具&quot;意为工具）
+
+## 选项 (B)
+- 罄竹难书 ✓ 正确（罄：尽，指罪行多得写不完）
+- 两全其美 ✓ 正确
+- 一言既出，驷马难追 ✓ 正确
+
+## 选项 (C)
+- 掷地有声 ✓ 正确（形容话语有力）
+- 曲意逢迎 ✓ 正确（逢迎：迎合，违心地迎合别人）
+- 桃李不言，下自成蹊 ✓ 正确（出自《史记》）
+
+## 选项 (D)
+- 至高无上 ✓ 正确
+- **原型必露** ✗ 错误，应为&quot;**原形毕露**&quot;（&quot;形&quot;非&quot;型&quot;；&quot;毕&quot;非&quot;必&quot;）
+- 失之东隅，收之桑榆 ✓ 正确
+
+## 结论
+(A) 中&quot;具&quot;应为&quot;俱&quot;；(D) 中&quot;型&quot;应为&quot;形&quot;，&quot;必&quot;应为&quot;毕&quot;；(B) 和 (C) 均无错别字。
+
+答案是BC
+
+置信度: 90</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-164</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：《齐民要术》自序：“盖神农为耒耜，以利天下，尧命四子，敬授民时，降命后稷，食为政首，…殷周之盛，《诗》《书》所述，要在安民，富而教之。”这段话主要强调（　　）
+选项：(A)儒家对农业的重视 (B)改进生产工具的意义 (C)历法与农业的关系 (D)农业技术和重要性
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;D&quot;, &quot;c&quot;: 85}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析《齐民要术》自序内容
+
+## 逐句解读
+
+1. **&quot;神农为耒耜，以利天下&quot;**——神农制作耕具（耒耜），以造福天下
+   → 涉及**生产工具与技术**
+
+2. **&quot;尧命四子，敬授民时&quot;**——尧任命四子，教民众掌握农时
+   → 涉及**农业时令知识**
+
+3. **&quot;降命后稷，食为政首&quot;**——后稷受命，&quot;食&quot;（农业）被列为政事的首要任务
+   → 强调**农业的重要性**
+
+4. **&quot;要在安民，富而教之&quot;**——使民众安定、富足并施以教化
+   → 进一步凸显**农业是治国安民的根本**
+
+## 选项辨析
+
+| 选项 | 评估 |
+|------|------|
+| (A) 儒家对农业的重视 | ✗ 文中未特别体现儒家立场 |
+| (B) 改进生产工具的意义 | ✗ 只是其中一个方面，不全面 |
+| (C) 历法与农业的关系 | ✗ 只是其中一个方面，不全面 |
+| (D) 农业技术和重要性 | ✓ 既涵盖工具、时令等技术层面，又涵盖&quot;食为政首&quot;&quot;安民富而教之&quot;的重要性层面 |
+
+## 结论
+
+整段话从生产工具、农时历法讲到以农为政首、以农安民，既谈了**农业技术**（耒耜、授时），又强调了**农业的重要性**（治国根本、富民教化），故 D 项最为全面准确。
+
+**答案是D**
+
+置信度: 85</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-5</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：大科学工程“人造太阳”主要是将氘核聚变反应释放的能量用来发电, 氘核聚变反应方程是: ${ }_{1}^{2} \mathrm{H}^{+} ^{2}_{1} \mathrm{H} \rightarrow_{2}^{3} \mathrm{He}+_{0}^{1} \mathrm{n}$, 已知 $_{1}^{2} \mathrm{H}$ 的质量为 $2.0136 \mathrm{u}$, $_{2}^{3} \mathrm{He}$ 的质量为 $3.0150 \mathrm{u},{ }_{0}^{1} \mathrm{n}$ 的质量为 $1.0087 \mathrm{u}, 1 \mathrm{u}=931 \mathrm{MeV} / \mathrm{c}^{2}$. 氘核聚变 反应中释放的核能约为
+选项：(A)$3.7 \mathrm{MeV}$ (B)$3.3 \mathrm{MeV}$ (C)$2.7 \mathrm{MeV}$ (D)$0.93 \mathrm{MeV}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ABCDE&quot;, &quot;c&quot;: 99}</div><div class='ans'><span class='lbl'>归一化</span>ABCDE</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 氘核聚变反应核能计算
+
+## 第一步：计算反应前后的质量
+
+**反应前（反应物）的总质量：**
+$$2 \times 2.0136 \text{ u} = 4.0272 \text{ u}$$
+
+**反应后（生成物）的总质量：**
+$$3.0150 \text{ u} + 1.0087 \text{ u} = 4.0237 \text{ u}$$
+
+## 第二步：计算质量亏损
+
+$$\Delta m = 4.0272 \text{ u} - 4.0237 \text{ u} = 0.0035 \text{ u}$$
+
+## 第三步：计算释放的核能
+
+利用质能关系 $E = \Delta m \cdot c^2$，并用 $1 \text{ u} = 931 \text{ MeV}/c^2$ 换算：
+
+$$E = 0.0035 \text{ u} \times 931 \text{ MeV/u} \approx 3.26 \text{ MeV} \approx 3.3 \text{ MeV}$$
+
+## 结论
+
+答案是B
+置信度: 99</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-215</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>陕西出土的秦始皇兵马俑，其表面涂有生漆和彩绘。这为研究秦代军人的服色提供了重要信息。但兵马俑出土后，表面的生漆会很快发生翘和卷曲，造成整个彩绘层脱落，因此，必须用防护液和单体渗透两套方法进行保护，否则不能供研究使用。而一旦采用这两套方法对兵马俑进行保护，就会破环研究者可能从中获得的有关秦代彩绘技术的全部信息。
+问题：如果以上陈述为真，以下哪项必然为真？
+选项：A．采取保护措施后的秦兵马俑只能提供秦代军人服色方面的信息。 B．一个供研究秦代军人服色的兵马俑，不能成为了解秦代彩绘技术的新信息的来源。 C．秦兵马俑是了解秦代彩绘技术的唯一信息来源。 D．一个没有采取保护措施的兵马俑能够比采取保护措施后的兵马俑提供更多信息。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 92}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 逐步分析
+
+## 梳理题干逻辑
+
+1. 兵马俑表面的生漆和彩绘能提供两类信息：
+   - **秦代军人服色**信息
+   - **秦代彩绘技术**信息
+
+2. 出土后若不保护 → 生漆翘曲，彩绘脱落 → **不能供研究使用**（无法提供任何信息）
+
+3. 采取保护措施后 → 彩绘保留 → 可供研究，但**会破坏有关秦代彩绘技术的全部信息**
+
+## 逐项分析
+
+**A. 采取保护措施后的秦兵马俑只能提供秦代军人服色方面的信息。**
+
+&quot;只能&quot;过于绝对。保护后确实可提供服色信息，但彩绘技术信息被破坏。然而，兵马俑还可能提供其他未被提及的信息（如兵器、姿态、烧制工艺等）。所以 A **不一定为真**。
+
+**B. 一个供研究秦代军人服色的兵马俑，不能成为了解秦代彩绘技术的新信息的来源。**
+
+- &quot;供研究秦代军人服色&quot; → 该兵马俑必须已采取保护措施（否则不能供研究）
+- 采取保护措施 → 秦代彩绘技术信息被破坏
+- 因此，它**不能**提供彩绘技术方面的新信息
+
+B **必然为真** ✓
+
+**C. 秦兵马俑是了解秦代彩绘技术的唯一信息来源。**
+
+题干未排除其他信息源（如文献、同时期其他文物等），C **不一定为真**。
+
+**D. 一个没有采取保护措施的兵马俑能够比采取保护措施后的兵马俑提供更多信息。**
+
+- 未保护：不能供研究使用 → 提供信息为 0
+- 已保护：可提供服色信息
+
+所以未保护的提供的信息**更少**，D 与事实**相反**。
+
+## 结论
+
+答案是 **B**
+
+置信度: 92</pre></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_tutor</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 2 生成 tutor 回复 + LLM-as-judge 打分</h1>
+    <p class="muted">基准 mrbench_tutor · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">88.3%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">53</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MRBench Step 2：被测 --model 为每条 tutor-student 对话生成下一句教师回应（引导式、不直接给答案），再由固定裁判在 8 个教学维度上逐维打标，得到该模型的教学能力画像。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>裁判模型固定为 MRBENCH_JUDGE_MODEL（默认 glm-5.2，最佳单裁判；与 --extractor-model/被测模型解耦，避免 self-judging 偏置），逐维度判定 prompt 为 v2（仅 Providing_Guidance 带 Stage-3 验证过的进化标签准则，其余维度与 v1 一致；标签归一同 Step 1）。</p><p>报告“正确率”为教学合格率：关键维度（Mistake Identification / Providing Guidance / Actionability）同时为 Yes 的比例（粗粒度代理）。summary.json 的 extra_metrics 给每个维度的标签分布（Yes / To some extent / No 等占比），是更完整的信号。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c104</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+He got 10/2=5 paid
+That means he paid 5*3=$15
+ 15
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Bob buys nose spray.  He buys 10 of them for a &quot;buy one get one free&quot; promotion.  They each cost $3.  How much does he pay? 
+ Student: Bob buys 10 nose sprays for a &quot;buy one get one free&quot; promotion, so he actually gets 20 nose sprays in total.
+Each nose spray costs $3, so the total cost for 20 nose sprays is 20 x 3 = $60.
+However, since 10 of them were free, Bob only pays for 10 nose sprays, which is 10 x 3 = $30.
+ 30 
+ Tutor: could you please walk me through your solution? 
+ Student: Sure. I thought that Bob bought 10 nose sprays for a &quot;buy one get one free&quot; promotion so he actually got 20 nose sprays in total. Each nose spray costs $3 so the total cost for 20 nose sprays is 20 x 3 = $60. However since 10 of them were free Bob only pays for 10 nose sprays which is 10 x 3 = $30. 
+ Tutor: That doesn&#x27;t seem to be correct. Let&#x27;s try something different. If I say I got  shirts on a promotion offer of buy one get one how many shirts did i actually pay for? 
+ Student: You would have paid for half the number of shirts you got so if you got 10 shirts you would have paid for 5.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div><div class='card'><div class='card-head'><span class='pid'>#c105</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+To achieve her goal, she must read 140/7 = 20 pages per day
+She planned to read 3 * 6 = 18 pages daily
+She must read 20 - 18 = 2 more pages per day
+ 2
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: While planning to finish reading a 140-page book in one week, Jessy initially decides to read 3 times daily, 6 pages each time, every day of the week. How many more pages should she read per day to actually achieve her goal? 
+ Student: Jessy initially planned to read 3 x 6 = 18 pages per day.
+In one week, she would read a total of 18 x 7 = 126 pages.
+To reach her goal, she needs to read an additional 140 - 126 = 14 pages.
+To achieve this, she needs to read an additional 14/7 = 2 pages per day.
+Therefore, Jessy needs to read 18 + 2 = 20 pages per day to achieve her goal.
+ 20 
+ Tutor: talk me through your solution
+ Student: I initially thought that Jessy would need to read 18 pages per day to reach her goal of 140 pages in one week. However when I did the math I realized that she would only read 126 pages in one week if she read 18 pages per day. Therefore I realized that she needed to read an additional 14 pages per day to reach her goal. To figure out how many more pages she needed to read per day I divided the 14 pages by 7 days and got 2 pages. So she needs to read 20 pages per day to reach her goal of 140 pages in one week.
+
+Tutor&#x27;s next reply:</div><div class='ans gold inline'><span class='lbl'>参考答案</span>pedagogical</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;judge_model&quot;: &quot;glm-5.2&quot;,
+  &quot;judge_protocol&quot;: &quot;fixed LLM-as-judge, per-dimension single label (8 dimensions)&quot;,
+  &quot;headline_metric&quot;: &quot;pedagogical pass rate = all of (&#x27;Mistake_Identification&#x27;, &#x27;Providing_Guidance&#x27;, &#x27;Actionability&#x27;) == &#x27;Yes&#x27;&quot;,
+  &quot;n&quot;: 60,
+  &quot;n_unparseable_key_dim&quot;: 0,
+  &quot;pass_rate&quot;: 0.8833,
+  &quot;per_dimension_distribution&quot;: {
+    &quot;Mistake_Identification&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 59,
+        &quot;share&quot;: 0.9833
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.0167
+      }
+    },
+    &quot;Mistake_Location&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 54,
+        &quot;share&quot;: 0.9
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 4,
+        &quot;share&quot;: 0.0667
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 2,
+        &quot;share&quot;: 0.0333
+      }
+    },
+    &quot;Revealing_of_the_Answer&quot;: {
+      &quot;No&quot;: {
+        &quot;count&quot;: 58,
+        &quot;share&quot;: 0.9667
+      },
+      &quot;Yes (and the answer is correct)&quot;: {
+        &quot;count&quot;: 2,
+        &quot;share&quot;: 0.0333
+      }
+    },
+    &quot;Providing_Guidance&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 54,
+        &quot;share&quot;: 0.9
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 5,
+        &quot;share&quot;: 0.0833
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 1,
+        &quot;share&quot;: 0.0167
+      }
+    },
+    &quot;Actionability&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 60,
+        &quot;share&quot;: 1.0
+      }
+    },
+    &quot;Coherence&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 55,
+        &quot;share&quot;: 0.9167
+      },
+      &quot;No&quot;: {
+        &quot;count&quot;: 3,
+        &quot;share&quot;: 0.05
+      },
+      &quot;To some extent&quot;: {
+        &quot;count&quot;: 2,
+        &quot;share&quot;: 0.0333
+      }
+    },
+    &quot;Tutor_Tone&quot;: {
+      &quot;Encouraging&quot;: {
+        &quot;count&quot;: 54,
+        &quot;share&quot;: 0.9
+      },
+      &quot;Neutral&quot;: {
+        &quot;count&quot;: 6,
+        &quot;share&quot;: 0.1
+      }
+    },
+    &quot;humanlikeness&quot;: {
+      &quot;Yes&quot;: {
+        &quot;count&quot;: 60,
+        &quot;share&quot;: 1.0
+      }
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>60</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>23</td><td>20</td><td>0.870</td><td><div class='bar'><i style='width:87%'></i></div></td></tr><tr><td>MathDial</td><td>37</td><td>33</td><td>0.892</td><td><div class='bar'><i style='width:89%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 topic 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>2.4B.Addition and Subtraction Within 100</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2.9A.Measuring Length</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.1G.Shapes and Area</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4A.Two-Step Word Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.4B.Rounding Whole Numbers (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.5D.Unknown Numbers in Division</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>3.6B.Quadrilaterals (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.1A.Converting Units of Measure (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.2A.Place Value</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.4A.Subtracting Multi-Digit Numbers (Review) - 1</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4.6D.Classifying 2D Figures</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.7A.Measuring Angles</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>4.9A.Converting Units of Measure (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.1A.Multiplying Whole Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.2C.Rounding Decimal Numbers</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3A.Multi-Digit Division with Two-Digit Divisors (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3C.Estimate Solutions to Division Problems</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3C.Multi-Digit Division with Two-Digit Divisors (Review) - 2</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.3L.Word Problems with Fractions (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.4A.Simple Expressions</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>5.4E.Simple Expression</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>6.2E.Dividing Fractions Word Problems (Review) - 1</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Not Available</td><td>37</td><td>33</td><td>0.892</td><td><div class='bar'><i style='width:89%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c107</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.1A.Converting Units of Measure (Review) - 1</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: Now, we got 10km / 1 * 0.621m / 1km. 
+ Tutor: Next, we need to find the value of 10 times 0.621. 
+ Tutor: What is the value of 10 times 0.621? 
+ Student: 6,210
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Nice try, but the decimal moved too far: multiplying by 10 shifts the decimal one place right, not three. Shift 0.621 just one place right and tell me what you get.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c130</span><span class='tag'>data=Bridge</span> <span class='tag'>topic=4.4A.Subtracting Multi-Digit Numbers (Review) - 1</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Not Available
+
+Conversation so far:
+Tutor: What is the value of 2800 subtracted by 65? 
+ Tutor: 2800-65=? 
+ Tutor: Are you there? 
+ Student: 1745
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;No&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Good try! It looks like the hundreds place may have gotten subtracted too much. Try breaking 65 into 60 and 5: what is 2800 − 60 first, then take away 5 more?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c131</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+Adding the pizzas delivered in the park and in the building, Jimmy delivered a total of 2 + 3 = 5 pizzas
+The value of the 5 pizzas without delivery charge is 5 pizzas * $12/pizza = $60.
+The cost of the delivery charge for two pizzas is 2 pizzas * $2/pizza = $4
+In total, Jimmy got paid $60 + $4 = $64 for the pizzas.
+ 64
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jimmy is a pizza delivery man. Each pizza costs 12 dollars and the delivery charge is 2 extra dollars if the area is farther than 1 km from the pizzeria. Jimmy delivers 3 pizzas in the park, which is located 100 meters away from the pizzeria. Also, he delivers 2 pizzas in a building 2 km away from the pizzeria. How much money did Jimmy get paid for the pizzas? 
+ Student: For the 3 pizzas delivered in the park, Jimmy only needs to charge 36 dollars (3 x 12). The distance is less than 1 km, so he doesn&#x27;t need to add any delivery charges.
+
+For the 2 pizzas delivered in the building, Jimmy needs to charge 24 dollars (2 x 12). The distance is farther than 1 km, so he needs to add 2 dollars for each pizza, which is a total of 4 dollars.
+
+So the total amount of money Jimmy earned for the pizzas is 36 + 24 = 60 dollars.
+ 60 
+ Tutor: talk me through your solution
+ Student: Sure. I calculated that for the 3 pizzas delivered in the park Jimmy only needs to charge 36 dollars (3 x 12). The distance is less than 1 km so he doesn&#x27;t need to add any delivery charges. For the 2 pizzas delivered in the building Jimmy needs to charge 24 dollars (2 x 12). The distance is farther than 1 km so he needs to add 2 dollars for each pizza which is a total of 4 dollars. So the total amount of money Jimmy earned for the pizzas is 36 + 24 = 60 dollars.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>You’re very close—you correctly found the pizza costs and even calculated the $4 delivery charge! Just make sure to include that extra $4 in your final total. What do you get when you add it to $60?</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c156</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+In one week he will have saved 20+10=30 dollars
+In two weeks he will have saved 30+10=40 dollars
+In three weeks he will have saved 40+10=50 dollars
+At the end of week four, he will have saved 50+10=60 dollars
+ 60
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jay has decided to save money from his paycheck every week. He has decided that he will increase the amount he saves each week by 10 dollars. If he started by saving 20 dollars this week, how much will he have saved in a month from now?
+ Student: In one week, Jay saves 20 dollars.
+In the second week, he saves 20+10 = 30 dollars.
+In the third week, he saves 30+10 = 40 dollars.
+In the fourth week, he saves 40+10 = 50 dollars.
+So in a month, which is four weeks, Jay saves 20+30+40+50 = 140 dollars.
+ 140 
+ Tutor: the problem is asking me to figure out how much money Jay will have saved in a month from now. He is increasing the amount he saves each week by 10 dollars and he started by saving 20 dollars this week. So I added up the amount he saves each week which is 20 + 30 + 40 + 50 = 140 dollars 
+ Tutor: I think you may have misunderstood the question. Lets see if we can clear this up together 
+ Student: Okay what did I misunderstand?
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;To some extent&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;No&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Nice work on the weekly pattern. The question is asking for the amount he will save in the week that is a month from now, not the total saved over all four weeks. Start at 20 this week and keep adding 10 for each week that passes until you reach four weeks from now.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c194</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+The cost of the apples was $12 / 2 = $6.
+When the cost of 3 kg of apples was $6, then the cost of 1 kg of apples was $6 / 3 kg = $2/kg.
+ 2
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Betty bought 1 kg of oranges and 3 kg of apples. The total cost of oranges was $12. The apples were two times cheaper than the oranges. How much did Betty pay for 1 kg of apples? 
+ Student: Since the cost of apples is two times cheaper than the oranges, then the cost of apples is 1/2 x $12 = $6.
+Betty bought a total of 1 + 3 = 4 kg of fruits.
+So, the cost of 1 kg of fruits is $12 + $6 = $18.
+Since $18 is the cost of 1 kg of oranges and 1 kg of apples, then Betty paid $18 - $12 = $6 for 1 kg of apples.
+ 6 
+ Tutor: the solution is actually a lot simpler than that. You worked out how much the 3kg of apples cost can you tell me that number? 
+ Tutor: Hi Scott can you tell me how much the 3kg of apples cost? 
+ Tutor: Hi Scott can you explain your answer to me? 
+ Student: Hi Teacher the 3kg of apples cost $6. I worked it out by calculating that the cost of 1kg of apples is two times cheaper than the cost of 1kg of oranges so 1/2 x $12 = $6. Then I added the cost of 1kg of oranges to the cost of 3kg of apples to get the total cost of the 4kg of fruits which was $18. So the cost of 1kg of apples was $18 - $12 = $6.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;Yes&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;No&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;No&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Nice, you correctly found that the 3 kg of apples cost $6. The small slip is treating that $6 as the cost of 1 kg too—if 3 kg cost $6, what would 1 kg cost? Try dividing that $6 by 3.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c48</span><span class='tag'>data=MathDial</span> <span class='tag'>topic=Not Available</span></div><div class='qtext'>You are an experienced, supportive math tutor. Read the tutor-student conversation below and write ONLY the tutor&#x27;s next reply.
+Guidelines: identify and locate any mistake the student made, give a helpful hint or explanation, and make the next step clear. Do NOT reveal the final answer outright. Keep it concise (1-3 sentences), encouraging, and natural.
+
+Reference solution (for your understanding only — do not quote it verbatim):
+The price per 500 mL milk from the 2 packs is $2.50/2 = $1.25.
+This means that for each pack of 500 mL milk, you can save $1.30 - $1.25 = $0.05.
+Ten sets of 2 packs mean 10 x 2 = 20 packs of 500 mL of milk.
+So, your total savings will be $0.05 x 20 = $1.
+ 1
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: If you buy 2 packs of 500 mL milk, it will cost $2.50. If you buy them individually, they will cost $1.30 each. How much is your total savings from buying ten sets of 2 packs of 500 mL milk? 
+ Student: The cost of 1 pack of 500 mL milk is $1.30/2 = $0.65.
+So, the cost of 2 packs of 500 mL milk is $0.65 x 2 = $1.30.
+Thus, the total cost for 10 sets of 2 packs of 500 mL milk is $1.30 x 10 = $13.
+If we buy 10 sets of 2 packs of 500 mL milk, the cost will be $2.50 x 10 = $25.
+Therefore, our total savings is $25 - $13 = $12.
+ 12 
+ Tutor: lets read the question again how much does an individual pack of milk cost? 
+ Student: Hi an individual pack of milk costs $1.30 each. 
+ Tutor: perfect so how much does 2 individual packs cost? 
+ Student: 2 individual packs of milk cost $1.30 x 2 = $2.60.
+
+Tutor&#x27;s next reply:</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;Mistake_Identification&quot;: &quot;No&quot;, &quot;Mistake_Location&quot;: &quot;Yes&quot;, &quot;Revealing_of_the_Answer&quot;: &quot;No&quot;, &quot;Providing_Guidance&quot;: &quot;Yes&quot;, &quot;Actionability&quot;: &quot;Yes&quot;, &quot;Coherence&quot;: &quot;Yes&quot;, &quot;Tutor_Tone&quot;: &quot;Encouraging&quot;, &quot;humanlikeness&quot;: &quot;Yes&quot;, &quot;judge_model&quot;: &quot;deepseek-v4-flash&quot;}</div><div class='ans'><span class='lbl'>归一化</span>fail</div><div class='ans gold'><span class='lbl'>正确答案</span>pedagogical</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great — that’s the right comparison. Now compare $2.60 with the actual price of a 2-pack set, $2.50, and use the difference to find the savings for 10 sets.</pre></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mooccube_prereq</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MOOCCube 先修关系推理（P19 学习路径规划的知识结构基础，规则判分）</h1>
+    <p class="muted">基准 mooccube_prereq · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">33.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">33</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MOOCCube（Yu et al., ACL 2020，学堂在线）知识图谱里 905 条专家标注的先修边（425 个数学/计算机概念）当金标，构造两类题、100% 规则判分——无裁判、无抽取模型。</p><p>① 先修选择（200 题）：给概念 Y，问学它之前必须先掌握哪一个。干扰项一律同领域，其中最多两个是 Y 的**后继**概念（方向反转陷阱：Y 才是它们的先修）——只靠“听起来相关”选不对，必须懂方向。随机基线 0.25。</p><p>② 学习顺序排序（100 题）：4-6 个有依赖的概念打乱，要求排出满足全部先修约束的顺序（任意合法拓扑序均算对，部分分 = 满足的约束比例）。每题随机打乱的通过概率在出题时精确枚举，只保留 ≤5% 的题。</p><p>headline accuracy = 两类题的整体正确率；extra_metrics.score_10 做了**随机基线校正**（随机作答得 0 分）。注意：这测的是学科知识结构层面的路径，不是针对某个学生当前状态的个性化路径规划。</p><p class='muted'>主页：<a href='http://moocdata.cn/data/MOOCCube'>http://moocdata.cn/data/MOOCCube</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#mooccube-mcq-05bbc39615</span><span class='tag'>task=mcq</span> <span class='tag'>field=计算机科学技术</span> <span class='tag'>variant=mcq_with_reverse_trap</span></div><div class='qtext'>下面是某学科知识图谱中的一个概念。
+
+概念：IP地址
+定义：给连接到互联网上的设备分配的网络层地址。该地址在IPv4网络中由32bit构成，在IPv6网络中由128bit构成。
+
+问题：按照先修（prerequisite）关系，学习「IP地址」之前，必须先掌握下面哪一个概念？
+注意：先修关系是有方向的——正确选项应当是「IP地址」的前置基础，而不是要以「IP地址」为基础才能学的后续概念。
+
+A. 入侵防御系统——执行入侵检测并试图阻止检测到的恶意活动的设备或软件。
+B. 域名——计算机网络中域的标识符。
+C. 跟踪——通过分析捕捉到的场景镜头来判断场景中对象移动的过程。
+D. 最大传输单元——通过一个物理网络在单个协议数据单元中可以传输的最大数据量。例如一个链路帧可以封装的IP分组的最大长度。
+
+可以简短思考，最后一行只写：答案：&lt;字母&gt;</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#mooccube-mcq-0b61437981</span><span class='tag'>task=mcq</span> <span class='tag'>field=计算机科学技术</span> <span class='tag'>variant=mcq_sibling_only</span></div><div class='qtext'>下面是某学科知识图谱中的一个概念。
+
+概念：最短路径
+定义：图中从一个顶点到另一个顶点之间路径长度之和最小的路径。
+
+问题：按照先修（prerequisite）关系，学习「最短路径」之前，必须先掌握下面哪一个概念？
+注意：先修关系是有方向的——正确选项应当是「最短路径」的前置基础，而不是要以「最短路径」为基础才能学的后续概念。
+
+A. 任务——一个可被操作系统管理、调度和分配资源的程序执行单位。通常可以是一个进程或线程。
+B. 拒绝服务——一种使系统或网络失去服务能力的攻击。在互联网上，它洪泛一个网络或结点，降低网络或结点性能，阻止其他用户对网络或结点服务的获取。
+C. 以太网——物理上或逻辑上采用总线型拓扑，使用CSMA/CD介质访问控制方法的局域网。
+D. 配置项——配置管理系统所管理的基本单元。包括配置管理涉及的各种开发文档、模型、代码等。每个配置项在配置管理过程中被作为单个实体来对待。
+
+可以简短思考，最后一行只写：答案：&lt;字母&gt;</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_mcq&quot;: 57,
+  &quot;n_order&quot;: 43,
+  &quot;mcq_accuracy&quot;: 0.4386,
+  &quot;order_exact_accuracy&quot;: 0.186,
+  &quot;unparsed_rate&quot;: 0.01,
+  &quot;mcq_unparsed_rate&quot;: 0.0,
+  &quot;order_unparsed_rate&quot;: 0.0233,
+  &quot;scoring&quot;: &quot;rule-based (option-letter regex + topological constraint check); no judge, no extraction LLM&quot;,
+  &quot;mcq_accuracy_with_reverse_trap&quot;: 0.5,
+  &quot;mcq_accuracy_sibling_only&quot;: 0.3704,
+  &quot;order_constraint_satisfaction&quot;: 0.6733,
+  &quot;order_random_baseline&quot;: 0.0296,
+  &quot;mcq_chance_corrected&quot;: 0.2515,
+  &quot;order_chance_corrected&quot;: 0.1612,
+  &quot;headline_metric&quot;: &quot;score_10 = 10 × (0.5×mcq_chance_corrected + 0.5×order_chance_corrected); each component = max(0, (acc − chance) / (1 − chance))&quot;,
+  &quot;score_10&quot;: 2.063
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>mcq</td><td>57</td><td>25</td><td>0.439</td><td><div class='bar'><i style='width:44%'></i></div></td></tr><tr><td>order</td><td>43</td><td>8</td><td>0.186</td><td><div class='bar'><i style='width:19%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 field 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>数学</td><td>47</td><td>18</td><td>0.383</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>计算机科学技术</td><td>53</td><td>15</td><td>0.283</td><td><div class='bar'><i style='width:28%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 variant 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>mcq_sibling_only</td><td>27</td><td>10</td><td>0.370</td><td><div class='bar'><i style='width:37%'></i></div></td></tr><tr><td>mcq_with_reverse_trap</td><td>30</td><td>15</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>order_n4</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>order_n5</td><td>20</td><td>3</td><td>0.150</td><td><div class='bar'><i style='width:15%'></i></div></td></tr><tr><td>order_n6</td><td>19</td><td>4</td><td>0.211</td><td><div class='bar'><i style='width:21%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#mooccube-mcq-0fa6a0615e</span><span class='tag'>task=mcq</span> <span class='tag'>field=计算机科学技术</span> <span class='tag'>variant=mcq_with_reverse_trap</span></div><div class='qtext'>下面是某学科知识图谱中的一个概念。
+
+概念：子网
+定义：设 N=(S,T;F)为一个网，若,，则称为网N 的一个子网。
+
+问题：按照先修（prerequisite）关系，学习「子网」之前，必须先掌握下面哪一个概念？
+注意：先修关系是有方向的——正确选项应当是「子网」的前置基础，而不是要以「子网」为基础才能学的后续概念。
+
+A. 资源共享——基于网络的资源的用户数据和信息的分享过程。
+B. 报文交换——一种交换技术。在源和目的地之间的中间结点在把用户报文继续向前传送之前，需要接收并存储整个用户报文，例如一个文件。
+C. 无线局域网——不使用导线（电缆或光缆）、采用无线电波作为介质来传送数据的局域网。
+D. 网络地址转换——在专用网络的内部私有地址和外部公用地址之间进行转换的一种互联网技术。
+
+可以简短思考，最后一行只写：答案：&lt;字母&gt;</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>分析这道题需要先理解「子网」这个概念的学科背景。
+
+虽然定义中出现了 N=(S,T;F) 这种Petri网记号，但四个选项全部都是计算机网络领域的概念，所以这里的「子网」应理解为计算机网络中的子网（subnet）。
+
+要学习子网（subnet）概念，需要先掌握网络通信的基础知识。各选项分析：
+
+- A. 资源共享：过于宽泛，不是直接的前置知识
+- B. 报文交换：是数据通信的基础概念，属于网络底层的交换技术，是理解网络如何工作的基础
+- C. 无线局域网：这是子网概念的一种具体应用形式，应该是后续知识
+- D. 网络地址转换（NAT）：NAT 是建立在子网概念之上的技术（私有子网地址需要通过 NAT 转换为公网地址），所以它是子网的后续概念
+
+在计算机网络的知识体系中，学习顺序通常是：数据通信基础（包括报文交换等交换技术）→ 网络层概念（包括 IP 地址、子网划分）→ 地址转换（NAT）→ 无线网络等。
+
+因此，学习「子网」之前必须先掌握的是数据通信的基础概念。
+
+答案：B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mooccube-order-060212e040</span><span class='tag'>task=order</span> <span class='tag'>field=数学</span> <span class='tag'>variant=order_n6</span></div><div class='qtext'>下面 6 个概念之间存在先修（prerequisite）依赖关系，现在顺序是打乱的。
+
+- 减法
+- 加法
+- 绝对值
+- 基本运算
+- 数值计算
+- 逻辑表达式
+
+请把它们排成一个合理的学习顺序：一个概念的所有先修概念都必须排在它前面。满足全部依赖的顺序可能不止一种，给出其中任意一种即可。
+
+可以简短思考，最后一行只写（用 -&gt; 分隔，只写概念名称，不要加序号）：
+答案：&lt;最先学的概念&gt; -&gt; &lt;第二个&gt; -&gt; ... -&gt; &lt;最后学的概念&gt;（共 6 个）</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>数值计算 -&gt; 基本运算 -&gt; 加法 -&gt; 减法 -&gt; 绝对值 -&gt; 逻辑表达式</div><div class='ans'><span class='lbl'>归一化</span>数值计算 -&gt; 基本运算 -&gt; 加法 -&gt; 减法 -&gt; 绝对值 -&gt; 逻辑表达式</div><div class='ans gold'><span class='lbl'>正确答案</span>减法 先于 数值计算; 加法 先于 减法; 加法 先于 数值计算; 基本运算 先于 加法; 基本运算 先于 绝对值; 基本运算 先于 逻辑表达式</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>思考这些概念的学习顺序：
+
+- **数值计算**：最基础的概念，涉及数字本身。
+- **基本运算**：四则运算等基础运算的总体概念。
+- **加法**：基本运算之一。
+- **减法**：基本运算之一，建立在加法基础上。
+- **绝对值**：需要先理解数与基本运算（加减）。
+- **逻辑表达式**：需要以数值、运算等为基础，通过比较与逻辑运算得到。
+
+答案：数值计算 -&gt; 基本运算 -&gt; 加法 -&gt; 减法 -&gt; 绝对值 -&gt; 逻辑表达式</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mooccube-mcq-1269641242</span><span class='tag'>task=mcq</span> <span class='tag'>field=计算机科学技术</span> <span class='tag'>variant=mcq_with_reverse_trap</span></div><div class='qtext'>下面是某学科知识图谱中的一个概念。
+
+概念：编址
+定义：对主存、外部设备和通用寄存器堆等分配地址的过程。包括编址宽度（字节编址、字编址等），地址空间大小和地址空间划分等。
+
+问题：按照先修（prerequisite）关系，学习「编址」之前，必须先掌握下面哪一个概念？
+注意：先修关系是有方向的——正确选项应当是「编址」的前置基础，而不是要以「编址」为基础才能学的后续概念。
+
+A. 传输层——特指承担物联网接入层与应用层之间的数据通信任务的核心承载网络。
+B. 协议控制信息——OSI参考模型中在一个给定的层的实体之间借助下一个较低层提供的服务所交换的控制信息。它们通过这种信息来协同相互间的联合操作。
+C. 即时通信——一个实时通信系统。用于在互联网上传递即时报文。
+D. 漫游——无线网络用户在不中止通信的情况下自由移动的能力。当位于重叠覆盖小区时，无线网络硬件可以自动转向具有最好信号的接入点。
+
+可以简短思考，最后一行只写：答案：&lt;字母&gt;</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**分析：**
+
+&quot;编址&quot;在此处的定义涉及主存、外部设备和通用寄存器堆的地址分配，这属于计算机组成原理/体系结构领域的概念。
+
+然而，四个选项均来自计算机网络/通信领域：
+- A. 传输层（网络分层概念）
+- B. 协议控制信息（OSI模型中各层间交换的控制信息）
+- C. 即时通信（具体应用）
+- D. 漫游（无线网络概念）
+
+在这四个选项中，**协议控制信息**（PCI）是OSI参考模型中各层实体之间传递的基本控制信息，它包含了寻址、路由、差错控制等关键字段，是网络通信中最基础的概念。在网络编址（如IP地址、MAC地址等）的学习中，理解协议控制信息中地址字段的结构和作用是必要的前置基础。
+
+其他选项要么是更高层的应用（C），要么是特定场景的功能（A、D），都不如B基础。
+
+答案：B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mooccube-order-0867358692</span><span class='tag'>task=order</span> <span class='tag'>field=计算机科学技术</span> <span class='tag'>variant=order_n6</span></div><div class='qtext'>下面 6 个概念之间存在先修（prerequisite）依赖关系，现在顺序是打乱的。
+
+- 数理逻辑
+- 常数
+- 单向鉴别：一个实体向另一个实体提供真实性证明，而后者不向前者提供真实性证明的鉴别。
+- 数字签名：附加在数据上的签名数据，或是对数据所做的密码变换。用以确认数据来源及完整性，防止被人（例如接受者）篡改或者伪造。
+- 数据加密标准：由美国IBM公司研制的一种分组密码算法。1977年成为美国国家标准。它是一个密钥总长为64位的分组乘积密码，能够在56位有效密钥作用下，对由…
+- 密钥长度：密钥的位长度。
+
+请把它们排成一个合理的学习顺序：一个概念的所有先修概念都必须排在它前面。满足全部依赖的顺序可能不止一种，给出其中任意一种即可。
+
+可以简短思考，最后一行只写（用 -&gt; 分隔，只写概念名称，不要加序号）：
+答案：&lt;最先学的概念&gt; -&gt; &lt;第二个&gt; -&gt; ... -&gt; &lt;最后学的概念&gt;（共 6 个）</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>常数 -&gt; 数理逻辑 -&gt; 数据加密标准 -&gt; 密钥长度 -&gt; 数字签名 -&gt; 单向鉴别</div><div class='ans'><span class='lbl'>归一化</span>常数 -&gt; 数理逻辑 -&gt; 数据加密标准 -&gt; 密钥长度 -&gt; 数字签名 -&gt; 单向鉴别</div><div class='ans gold'><span class='lbl'>正确答案</span>密钥长度 先于 数据加密标准; 常数 先于 数据加密标准; 数字签名 先于 单向鉴别; 数据加密标准 先于 单向鉴别; 数理逻辑 先于 常数</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**分析依赖关系：**
+- 常数：最基础的数学概念，无需先修
+- 数理逻辑：需要基础的数学（如常数）作为基础
+- 数据加密标准 (DES)：需要数理逻辑和数学基础
+- 密钥长度：需要先了解 DES 算法
+- 数字签名：需要密码学基础（密钥长度等）
+- 单向鉴别：需要数字签名等密码学机制作为支撑
+
+答案：常数 -&gt; 数理逻辑 -&gt; 数据加密标准 -&gt; 密钥长度 -&gt; 数字签名 -&gt; 单向鉴别</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mooccube-mcq-1dac0229cf</span><span class='tag'>task=mcq</span> <span class='tag'>field=计算机科学技术</span> <span class='tag'>variant=mcq_sibling_only</span></div><div class='qtext'>下面是某学科知识图谱中的一个概念。
+
+概念：查询优化
+定义：寻找具有较小执行代价的查询执行计划的过程。
+
+问题：按照先修（prerequisite）关系，学习「查询优化」之前，必须先掌握下面哪一个概念？
+注意：先修关系是有方向的——正确选项应当是「查询优化」的前置基础，而不是要以「查询优化」为基础才能学的后续概念。
+
+A. 外模式——数据库用户的数据视图。即与某一应用有关的数据的逻辑表示。
+B. 顺序存储——在计算机存储器中用一片地址连续的存储单元依次存放数据元素。
+C. 排序——将一组数据元素按某种顺序排列的过程。
+D. 时间戳——一种加密后形成的，为电子文件的日期和时间信息提供安全保护的凭证文档。
+
+可以简短思考，最后一行只写：答案：&lt;字母&gt;</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>查询优化需要评估不同执行计划的代价，而理解数据如何在物理层面存储是估算 I/O 代价的基础。顺序存储是数据库物理存储的最基本形式，是学习查询执行与代价估算的前置知识。
+
+答案：B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mooccube-order-09096933f1</span><span class='tag'>task=order</span> <span class='tag'>field=数学</span> <span class='tag'>variant=order_n6</span></div><div class='qtext'>下面 6 个概念之间存在先修（prerequisite）依赖关系，现在顺序是打乱的。
+
+- 正弦
+- 立方
+- 减法
+- 指数
+- 等于
+- 计算
+
+请把它们排成一个合理的学习顺序：一个概念的所有先修概念都必须排在它前面。满足全部依赖的顺序可能不止一种，给出其中任意一种即可。
+
+可以简短思考，最后一行只写（用 -&gt; 分隔，只写概念名称，不要加序号）：
+答案：&lt;最先学的概念&gt; -&gt; &lt;第二个&gt; -&gt; ... -&gt; &lt;最后学的概念&gt;（共 6 个）</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>等于 -&gt; 减法 -&gt; 指数 -&gt; 立方 -&gt; 正弦 -&gt; 计算</div><div class='ans'><span class='lbl'>归一化</span>等于 -&gt; 减法 -&gt; 指数 -&gt; 立方 -&gt; 正弦 -&gt; 计算</div><div class='ans gold'><span class='lbl'>正确答案</span>减法 先于 正弦; 立方 先于 指数; 等于 先于 减法; 计算 先于 减法; 计算 先于 指数</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>思考：
+- 等于（=）是最基础的符号概念，无先修。
+- 减法需要先理解&quot;等于&quot;等基本概念。
+- 指数（幂运算）需要基础算术（减法等）作为先修。
+- 立方（x³）是指数的一种特殊形式，需要先学指数。
+- 正弦属于三角函数，需要指数和计算等更广泛的数学基础。
+- 计算是综合运用所有上述概念的能力，作为最后的综合。
+
+答案：等于 -&gt; 减法 -&gt; 指数 -&gt; 立方 -&gt; 正弦 -&gt; 计算</pre></details></div></section>
+</main>
+</body>
+</html>

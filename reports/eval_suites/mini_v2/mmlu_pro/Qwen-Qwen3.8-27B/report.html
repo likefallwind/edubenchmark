@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mmlu_pro</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MMLU-Pro：通用学科知识与复杂选择题推理</h1>
+    <p class="muted">基准 mmlu_pro · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">88.6%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">79</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">70</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MMLU-Pro 是 MMLU 的增强版，覆盖 14 个学科/专业领域，把选项从 4 个扩展到最多10 个，并替换掉过易、易猜的题目，更强调多步推理而非纯记忆。对应本仓库能力维度D01（通用学科知识与复杂推理）。</p><p>本次使用官方 test 划分（12,032 题）。提示采用零样本思维链，要求模型先推理、再在最后一行给出 `The answer is (X)`。</p><p>答案抽取沿用官方正则（依次匹配 `answer is (X)`、`answer: X`、末尾独立大写字母），失败时由 LLM 兜底抽取；判分为与标准选项字母精确匹配，并按学科分桶统计。</p><p class='muted'>主页：<a href='https://github.com/TIGER-AI-Lab/MMLU-Pro'>https://github.com/TIGER-AI-Lab/MMLU-Pro</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#100</span><span class='tag'>category=business</span></div><div class='qtext'>Question: Steven Moore purchased a new car for $3,462.20, including taxes and all other charges. He wishes to pay for it in 35 months. Find his monthly payments.
+Options:
+A. $100.20
+B. $102.55
+C. $110.35
+D. $95.46
+E. $98.92
+F. $96.06
+G. $107.49
+H. $105.23
+I. $89.78
+J. $93.20
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>E</div></div><div class='card'><div class='card-head'><span class='pid'>#10270</span><span class='tag'>category=physics</span></div><div class='qtext'>Question: A deuteron (nucleus of deuterium atom consisting of a proton and a neutron) with speed $14.9 \mathrm{~km} / \mathrm{s}$ collides elastically with a neutron at rest. Use the approximation that the deuteron is twice the mass of the neutron. If the deuteron is scattered through a $\mathrm{LAB}$ angle $\psi=10^{\circ}$, what is the final speed of the deuteron?
+Options:
+A. 13.2 km/s
+B. 14.9$\mathrm{~km} / \mathrm{s}$
+C. 14.44$\mathrm{~km} / \mathrm{s}$
+D. 16.1 km/s
+E. 12.5 km/s
+F. 13.8$\mathrm{~km} / \mathrm{s}$
+G. 14.0 km/s
+H. 16.8 km/s
+I. 15.0 km/s
+J. 15.3$\mathrm{~km} / \mathrm{s}$
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>1</td></tr><tr><td>scored</td><td>79</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>business</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>chemistry</td><td>8</td><td>8</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>computer science</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>economics</td><td>5</td><td>4</td><td>0.800</td><td><div class='bar'><i style='width:80%'></i></div></td></tr><tr><td>engineering</td><td>5</td><td>4</td><td>0.800</td><td><div class='bar'><i style='width:80%'></i></div></td></tr><tr><td>health</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>history</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>law</td><td>7</td><td>5</td><td>0.714</td><td><div class='bar'><i style='width:71%'></i></div></td></tr><tr><td>math</td><td>9</td><td>8</td><td>0.889</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>other</td><td>6</td><td>5</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>philosophy</td><td>4</td><td>3</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>physics</td><td>9</td><td>8</td><td>0.889</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>psychology</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>请求超时</strong></td><td>1</td><td>模型推理时间超过超时上限，未在限定时间内返回</td><td class='muted'>11574</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#10362</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: Array A contains 256 elements of 4 bytes each. Its first element is stored at physical address 4,096.
+Array B contains 512 elements of 4 bytes each. Its first element is stored at physical address 8,192.
+Assume that only arrays A and B can be cached in an initially empty, physically addressed, physically tagged, direct-mapped, 2K-byte cache with an 8-byte block size. The following loop is then executed.
+for (i = 0; i &lt; 256; i++)
+        A[i] = A[i] + B[2*i];
+During the execution of the loop, how many bytes will be written to memory if the cache has a write-through policy?
+Options:
+A. 1024
+B. 512
+C. 1536
+D. 2048
+E. 0
+F. 16384
+G. 3072
+H. 4096
+I. 8192
+J. 256
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The loop runs 256 times, and each iteration performs one store to `A[i]`.
+
+Since the cache is write-through, every store to the cache is propagated to main memory. In the standard block-transfer cache model, a write to any part of an 8-byte cache block writes the whole 8-byte block to memory.
+
+So each of the 256 stores causes:
+
+\[
+8 \text{ bytes}
+\]
+
+Total bytes written to memory:
+
+\[
+256 \times 8 = 2048
+\]
+
+The answer is (D)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#11058</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Which of the following is the timespan for Japan&#x27;s closure to Christianity and Europe?
+Options:
+A. 1853-1945
+B. 1603-1868
+C. 1587-1639
+D. 1749-1945
+E. 1052-1616
+F. 1614-1859
+G. 1641-1853
+H. 1492-1641
+I. 1517-1870
+J. 1792-1941
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>G</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Japan’s “closure to Christianity and Europe” is commonly dated from Toyotomi Hideyoshi’s 1587 anti-Christian edict to the 1639 expulsion of the Portuguese, which completed the exclusion of Christian and much European presence.
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#12036</span><span class='tag'>category=engineering</span></div><div class='qtext'>Question: The water surface, in an open cylindrical tank is 25 ft below thetop. Dry air is blown over the top of the tank and the entiresystem is maintained at 65°F and 1 atm. If the air in thetank is stagnant, determine the diffusion rate of the water.
+Options:
+A. 5.00 × 10^-6 lb moles/ft^2-hr
+B. 2.75 × 10^-6 lb moles/ft^2-hr
+C. 1.25 × 10^-6 lb moles/ft^2-hr
+D. 0.25 × 10^-6 lb moles/ft^2-hr
+E. 1.75 × 10^-6 lb moles/ft^2-hr
+F. 3.25 × 10^-6 lb moles/ft^2-hr
+G. 3.00 × 10^-6 lb moles/ft^2-hr
+H. 2.25 × 10^-6 lb moles/ft^2-hr
+I. 4.25 × 10^-6 lb moles/ft^2-hr
+J. 0.75 × 10^-6 lb moles/ft^2-hr
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>H</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The water surface is saturated at 65°F, so the water-vapor partial pressure at the surface is approximately
+
+\[
+p_{A,s}\approx 0.30\ \text{psia}
+\]
+
+Thus,
+
+\[
+y_{A,s}=\frac{0.30}{14.696}\approx 0.0204
+\]
+
+Dry air at the tank top means
+
+\[
+p_{A,top}=0,\qquad y_{A,top}=0
+\]
+
+For diffusion through stagnant air, the molar diffusion rate is
+
+\[
+N_A=\frac{D_{AB}C}{L}\ln\left(\frac{p_{B,top}}{p_{B,water}}\right)
+\]
+
+where
+
+\[
+C=\frac{P}{RT}
+\]
+
+Using \(T=65+459.67=524.67^\circ R\),
+
+\[
+C=\frac{1}{0.7302(524.67)}\approx 2.61\times 10^{-3}\ \text{lb mol/ft}^3
+\]
+
+For water vapor in air near 65°F,
+
+\[
+D_{AB}\approx 0.30\ \text{cm}^2/\text{s}\approx 0.116\ \text{ft}^2/\text{hr}
+\]
+
+and
+
+\[
+\ln\left(\frac{14.696}{14.696-0.30}\right)\approx 0.0207
+\]
+
+Therefore,
+
+\[
+N_A=\frac{(0.116)(2.61\times 10^{-3})}{25}(0.0207)
+\]
+
+\[
+N_A\approx 2.5\times 10^{-7}\ \text{lb mol/ft}^2\text{-hr}
+\]
+
+\[
+N_A\approx 0.25\times 10^{-6}\ \text{lb mol/ft}^2\text{-hr}
+\]
+
+The answer is (D)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#1432</span><span class='tag'>category=law</span></div><div class='qtext'>Question: A retiree owned a building in a city. Several years ago, an artist, in a signed writing, entered a three- year lease agreement with the retiree. The artist agreed to pay $800 monthly rent for the third-floor apartment in the retiree&#x27;s building. The original three-year term had long since expired, but the artist has continued to pay his rent, and the retiree continued to accept it. The building became infested with rats after a restaurant was opened in the adjacent building. The artist could not tolerate the rats and served notice on the retiree that he was moving to another city and has not been heard from since. At common law, what remedy was available to the retiree before she accepted the first rental payment after the end of the initial three-year period?
+Options:
+A. Recovery of double the rent prorated on a monthly basis for the number of months the artist was on the premises beyond the three- year period.
+B. Sue the artist for damages due to the infestation of rats.
+C. Recovery of the difference between the lease price and the fair market value of the leasehold for a year.
+D. Eviction of the artist for non-payment of rent.
+E. Require that the artist move out immediately or be held responsible for three years&#x27; rent.
+F. Seek a court order to compel the artist to continue the lease for another three years.
+G. Require the artist to pay for the extermination of the rats.
+H. Terminate the lease agreement without any further obligations.
+I. Recovery of triple the rent prorated on a monthly basis for the number of months the artist was on the premises beyond the three- year period.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>E</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The original lease had a fixed three-year term. After that term expired, the artist remained in possession. At common law, a tenant who remains after the expiration of a lease term without the landlord’s consent is a **tenant at sufferance** (a holdover tenant).
+
+Before the landlord accepts rent from the holdover tenant, the tenant does not become a new periodic tenant. Instead, the common-law remedy for the landlord was to recover a **holdover penalty of double the rent**, prorated for the period the tenant remained beyond the original lease term. Acceptance of rent would later create a periodic tenancy, but before that acceptance the double-rent holdover remedy was available.
+
+The rat infestation and the artist’s notice are not the basis for the landlord’s common-law pre-acceptance remedy.
+
+The answer is (A).</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#1508</span><span class='tag'>category=law</span></div><div class='qtext'>Question: After a wife found out about her husband&#x27;s infidelity, she decided to have him killed. The defendant approached a hit man to solicit his assistance in carrying out the planned murder. Although the wife believed that he was a hit man, he was, in fact, an undercover agent. The wife told the undercovr agent she would pay him $20,000 if he accepted the job and an additional $20,000 after the killing was completed. Upon hearing the wife&#x27;s proposal, the undercover agent told the wife he would kill her husband. However, the undercover agent secretly intended not to go through with the plan, and he merely feigned agreement because he wished to trap the wife. The wife told the undercover agent that she would deliver the first payment the next day. However, before making the initial payment, the wife learned that the hit man was really an undercover agent. Fearful that she might be prosecuted for planning her husband&#x27;s murder, the wife contacted the police and renounced her participation in the criminal endeavor. The defendant will most likely be found
+Options:
+A. not guilty of either solicitation or conspiracy to commit murder.
+B. not guilty due to lack of intent.
+C. guilty of attempted murder.
+D. guilty of solicitation and conspiracy to commit murder.
+E. not guilty due to renouncing her participation.
+F. guilty of solicitation.
+G. guilty of conspiracy to commit murder and attempted murder.
+H. not guilty of conspiracy to commit murder, but guilty of solicitation.
+I. guilty of attempted murder and solicitation.
+J. guilty of conspiracy to commit murder.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>H</div><div class='ans'><span class='lbl'>归一化</span>H</div><div class='ans gold'><span class='lbl'>正确答案</span>F</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The wife completed solicitation when she requested that the undercover agent kill her husband and offered to pay him. Solicitation is complete upon the request or hiring, even if the person solicited is an undercover agent or later the wife renounces. Renunciation is generally not a defense to solicitation.
+
+Conspiracy, however, requires an actual agreement between two or more persons to commit the crime. Here, the undercover agent only feigned agreement and secretly intended not to commit the murder, so there was no true meeting of the minds and no actual conspiracy.
+
+She also is not most likely guilty of attempted murder because she did not take a substantial step beyond solicitation, such as making the payment.
+
+The answer is (H)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#5883</span><span class='tag'>category=other</span></div><div class='qtext'>Question: Which of the following causes more deaths globally each year (as of 2017)?
+Options:
+A. Malaria
+B. Malnutrition
+C. Tuberculosis
+D. Diarrheal diseases
+E. Influenza
+F. Road injuries
+G. Diabetes
+H. HIV/AIDS
+I. Alcohol-related diseases
+J. Dementia
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>J</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Using commonly cited global estimates around 2017:
+
+- **Malaria:** ~0.45 million deaths  
+- **Malnutrition:** several million deaths; broad global estimates are often cited around **5.1 million** in 2017  
+- **Tuberculosis:** ~1.6 million deaths  
+- **Diarrheal diseases:** ~1.5 million deaths  
+- **Influenza:** ~0.3–0.6 million deaths  
+- **Road injuries:** ~1.3 million deaths  
+- **Diabetes:** ~1.5–1.6 million deaths  
+- **HIV/AIDS:** ~1.0 million deaths  
+- **Alcohol-related diseases:** ~2–3 million deaths  
+- **Dementia:** ~1.6 million deaths  
+
+Among the listed options, malnutrition has the largest estimated annual global death toll.
+
+The answer is (B)</pre></details></div></section>
+</main>
+</body>
+</html>

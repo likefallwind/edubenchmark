@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">71.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">71</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 100,
+  &quot;confidence_unparsed_rate&quot;: 0.0,
+  &quot;accuracy&quot;: 0.71,
+  &quot;confidence_mean&quot;: 94.61,
+  &quot;confidence_std&quot;: 7.49,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 1,
+    &quot;70-79&quot;: 3,
+    &quot;80-89&quot;: 12,
+    &quot;90-99&quot;: 84
+  },
+  &quot;cwr_at_90&quot;: 0.2857,
+  &quot;n_high_confidence&quot;: 84,
+  &quot;ece_10bin&quot;: 0.2441,
+  &quot;brier&quot;: 0.2687,
+  &quot;auroc&quot;: 0.5007,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.7111,
+    &quot;coverage_80&quot;: 0.7,
+    &quot;coverage_70&quot;: 0.7143
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.7778,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.25,
+      &quot;auroc&quot;: 0.2411
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;accuracy&quot;: 0.6944,
+      &quot;n_with_confidence&quot;: 36,
+      &quot;cwr_at_90&quot;: 0.3235,
+      &quot;auroc&quot;: 0.5673
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.6786,
+      &quot;n_with_confidence&quot;: 28,
+      &quot;cwr_at_90&quot;: 0.2778,
+      &quot;auroc&quot;: 0.4971
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.7222,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.25,
+      &quot;auroc&quot;: 0.6077
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 6.075
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>14</td><td>0.778</td><td><div class='bar'><i style='width:78%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>25</td><td>0.694</td><td><div class='bar'><i style='width:69%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>19</td><td>0.679</td><td><div class='bar'><i style='width:68%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>13</td><td>0.722</td><td><div class='bar'><i style='width:72%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>39</td><td>0.722</td><td><div class='bar'><i style='width:72%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>32</td><td>0.696</td><td><div class='bar'><i style='width:70%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To find the smallest number of letters Amy will need, we can determine the number of unique codes that can be created with $n$ letters. 
+The codes can be either a single letter or a pair of two different letters, and the order doesn&#x27;t matter. So, the total number of unique codes possible with $n$ letters is the sum of combinations of $n$ letters taken 1 at a time and 2 at a time:
+Total codes = $\binom{n}{1} + \binom{n}{2} = n + \frac{n(n-1)}{2}$
+
+We need this total to be at least 10. Let&#x27;s test the smallest values for $n$:
+- If $n = 3$: Total codes = $3 + \frac{3 \times 2}{2} = 3 + 3 = 6$. (Not enough)
+- If $n = 4$: Total codes = $4 + \frac{4 \times 3}{2} = 4 + 6 = 10$. (Exactly enough)
+
+Since 4 letters provide exactly 10 unique codes (A, B, C, D, AB, AC, AD, BC, BD, CD), Amy needs at least 4 letters.
+
+The answer is B
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chinese-202</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：下列词语中，没有错别字的一组是
+选项：(A)讳疾忌医    微言大义    万事具备，只欠东风 (B)罄竹难书    两全其美    一言既出，驷马难追 (C)掷地有声    曲意逢迎    桃李不言，下自成蹊 (D)至高无上    原型必露    失之东隅，收之桑榆
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1. **分析选项 A**：
+   - “讳疾忌医”正确。
+   - “微言大义”正确，指精微的语言包含深刻的道理。
+   - “万事具备”中“具”为错别字，应为“俱备”（俱，全、都）。所以A有错别字。
+
+2. **分析选项 B**：
+   - “罄竹难书”正确，“罄”指尽、空。
+   - “两全其美”正确，“其”作代词。
+   - “一言既出，驷马难追”正确，“既”指已经，“驷马”指同驾一辆车的四匹马。所以B没有错别字。
+
+3. **分析选项 C**：
+   - “掷地有声”正确。
+   - “曲意逢迎”正确，“曲意”指违背自己的意愿。
+   - “桃李不言，下自成蹊”正确，“蹊”指小路，比喻人只要真诚、忠实，就能感动别人。所以C没有错别字。
+
+4. **分析选项 D**：
+   - “至高无上”正确。
+   - “原型必露”中“型”和“必”均为错别字，应为“原形毕露”（形，本来面目；毕，完全）。所以D有错别字。
+
+5. **综合判断**：
+   选项 B 和选项 C 中的词语和成语均没有错别字，符合题意。
+
+答案是B、C
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-5</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：大科学工程“人造太阳”主要是将氘核聚变反应释放的能量用来发电, 氘核聚变反应方程是: ${ }_{1}^{2} \mathrm{H}^{+} ^{2}_{1} \mathrm{H} \rightarrow_{2}^{3} \mathrm{He}+_{0}^{1} \mathrm{n}$, 已知 $_{1}^{2} \mathrm{H}$ 的质量为 $2.0136 \mathrm{u}$, $_{2}^{3} \mathrm{He}$ 的质量为 $3.0150 \mathrm{u},{ }_{0}^{1} \mathrm{n}$ 的质量为 $1.0087 \mathrm{u}, 1 \mathrm{u}=931 \mathrm{MeV} / \mathrm{c}^{2}$. 氘核聚变 反应中释放的核能约为
+选项：(A)$3.7 \mathrm{MeV}$ (B)$3.3 \mathrm{MeV}$ (C)$2.7 \mathrm{MeV}$ (D)$0.93 \mathrm{MeV}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ABCDEFG&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>ABCDEFG</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>反应前后质量变化为：
+
+\[
+\Delta m = 2m_{(^2_1H)} - \left[m_{(^3_2He)} + m_{(^1_0n)}\right]
+\]
+
+代入数据：
+
+\[
+\Delta m = 2 \times 2.0136 - (3.0150 + 1.0087)
+\]
+
+\[
+\Delta m = 4.0272 - 4.0237 = 0.0035\ \mathrm{u}
+\]
+
+释放的核能为：
+
+\[
+\Delta E = \Delta m \cdot 931\ \mathrm{MeV}
+\]
+
+\[
+\Delta E = 0.0035 \times 931 \approx 3.2585\ \mathrm{MeV} \approx 3.3\ \mathrm{MeV}
+\]
+
+答案是B
+
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-215</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>陕西出土的秦始皇兵马俑，其表面涂有生漆和彩绘。这为研究秦代军人的服色提供了重要信息。但兵马俑出土后，表面的生漆会很快发生翘和卷曲，造成整个彩绘层脱落，因此，必须用防护液和单体渗透两套方法进行保护，否则不能供研究使用。而一旦采用这两套方法对兵马俑进行保护，就会破环研究者可能从中获得的有关秦代彩绘技术的全部信息。
+问题：如果以上陈述为真，以下哪项必然为真？
+选项：A．采取保护措施后的秦兵马俑只能提供秦代军人服色方面的信息。 B．一个供研究秦代军人服色的兵马俑，不能成为了解秦代彩绘技术的新信息的来源。 C．秦兵马俑是了解秦代彩绘技术的唯一信息来源。 D．一个没有采取保护措施的兵马俑能够比采取保护措施后的兵马俑提供更多信息。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1. 分析题干给出的逻辑条件：
+   - 条件①：兵马俑出土后，如果不采取保护措施，彩绘层会脱落，导致“不能供研究使用”。
+   - 条件②：要使其能供研究使用，必须采取“防护液”和“单体渗透”两套方法进行保护。
+   - 条件③：一旦采用这两套方法保护，就会“破坏研究者可能从中获得的有关秦代彩绘技术的全部信息”。
+
+2. 分析各个选项：
+   - 选项A：题干说明采取保护措施后能提供秦代军人服色方面的信息，但并没有断言“只能”提供这一种信息（还可能提供军阵、武器等其他信息），因此A不必然为真。
+   - 选项B：如果一个兵马俑能供研究秦代军人服色，说明它已经供研究使用了；根据条件①和②的逆否命题，供研究使用就必然采取了保护措施；再根据条件③，采取保护措施就会破坏有关秦代彩绘技术的全部信息。因此，它不能成为了解秦代彩绘技术的新信息的来源。B必然为真。
+   - 选项C：题干只说兵马俑被保护后会破坏彩绘技术信息，从未说兵马俑是了解秦代彩绘技术的“唯一”信息来源，C不必然为真。
+   - 选项D：没有采取保护措施的兵马俑会彩绘脱落，导致“不能供研究使用”，因此无法与采取了保护措施的兵马俑比较提供信息的多少，D不必然为真。
+
+3. 结论：只有B选项必然为真。
+
+答案是B
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A
+
+置信度: 90</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-15</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>在某市一项对公司年轻人员的最新调查中，与往年相比，今年有70％的人打算购买房屋，这一比例已达到历史最高值。然而，在房屋管理局的统计中，该市今年的房屋成交量却比往年有所下降。以下哪项如果为真，最不能解释上述现象?____
+A. 一些打算购买房屋的年轻人目前并不具备该市购买房屋的条件
+B. 往年资料表明，年轻人员购买房屋的比例不足购买房屋成员的30％
+C. 近年来爆发的金融风暴，对房地产行业有一定的打击
+D. 近几个月该市楼市价格不稳定，使得一些购房者持观望态度
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+
+置信度: 95</pre></details></div></section>
+</main>
+</body>
+</html>

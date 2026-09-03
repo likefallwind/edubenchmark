@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">23.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">23</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 99,
+  &quot;confidence_unparsed_rate&quot;: 0.01,
+  &quot;accuracy&quot;: 0.23,
+  &quot;confidence_mean&quot;: 94.41,
+  &quot;confidence_std&quot;: 5.37,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 0,
+    &quot;70-79&quot;: 1,
+    &quot;80-89&quot;: 10,
+    &quot;90-99&quot;: 88
+  },
+  &quot;cwr_at_90&quot;: 0.7614,
+  &quot;n_high_confidence&quot;: 88,
+  &quot;ece_10bin&quot;: 0.7118,
+  &quot;brier&quot;: 0.689,
+  &quot;auroc&quot;: 0.4771,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.236,
+    &quot;coverage_80&quot;: 0.2532,
+    &quot;coverage_70&quot;: 0.2319
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;accuracy&quot;: 0.1765,
+      &quot;n_with_confidence&quot;: 17,
+      &quot;cwr_at_90&quot;: 0.8571,
+      &quot;auroc&quot;: 0.3929
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;accuracy&quot;: 0.3077,
+      &quot;n_with_confidence&quot;: 38,
+      &quot;cwr_at_90&quot;: 0.6757,
+      &quot;auroc&quot;: 0.4071
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.1786,
+      &quot;n_with_confidence&quot;: 28,
+      &quot;cwr_at_90&quot;: 0.8261,
+      &quot;auroc&quot;: 0.4609
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;accuracy&quot;: 0.1875,
+      &quot;n_with_confidence&quot;: 16,
+      &quot;cwr_at_90&quot;: 0.7857,
+      &quot;auroc&quot;: 0.7051
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 3.579
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>3</td><td>0.176</td><td><div class='bar'><i style='width:18%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>12</td><td>0.308</td><td><div class='bar'><i style='width:31%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>5</td><td>0.179</td><td><div class='bar'><i style='width:18%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>3</td><td>0.188</td><td><div class='bar'><i style='width:19%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>51</td><td>10</td><td>0.196</td><td><div class='bar'><i style='width:20%'></i></div></td></tr><tr><td>zh</td><td>49</td><td>13</td><td>0.265</td><td><div class='bar'><i style='width:27%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Let $x$ be defined as $x = \frac{n^2 + 2\sqrt{n(n + 4)} + 16}{n + 4\sqrt{n} + 4}$ for $36 \le n \le 72$.
+We analyze the numerator and denominator.
+The denominator is $D = n + 4\sqrt{n} + 4 = (\sqrt{n} + 2)^2$.
+Let $u = \sqrt{n}$. Then $6 \le u \le \sqrt{72} \approx 8.48$.
+The denominator is $(u+2)^2$.
+The numerator is $N = n^2 + 16 + 2\sqrt{n(n + 4)} = u^4 + 16 + 2u\sqrt{u^2 + 4}$.
+We want to find the range of values for $x(u) = \frac{u^4 + 16 + 2u\sqrt{u^2 + 4}}{(u+2)^2}$ on the interval $[6, 6\sqrt{2}]$.
+Let&#x27;s evaluate $x$ at the endpoints.
+For $n = 36$ ($u = 6$):
+$D = (6+2)^2 = 64$.
+$N = 36^2 + 16 + 2(6)\sqrt{36 + 4} = 1296 + 16 + 12\sqrt{40} = 1312 + 12(2\sqrt{10}) = 1312 + 24\sqrt{10}$.
+$\sqrt{10} \approx 3.162$, so $24\sqrt{10} \approx 75.9$.
+$N \approx 1387.9$.
+$x \approx \frac{1387.9}{64} \approx 21.69$.
+
+For $n = 72$ ($u = 6\sqrt{2} \approx 8.485$):
+$D = (6\sqrt{2} + 2)^2 = 72 + 24\sqrt{2} + 4 = 76 + 24\sqrt{2} \approx 76 + 33.94 = 109.94$.
+$N = 72^2 + 16 + 2\sqrt{72(72+4)} = 5184 + 16 + 2\sqrt{5472} = 5200 + 16\sqrt{38}$.
+$\sqrt{38} \approx 6.164$, so $16\sqrt{38} \approx 98.6$.
+Wait, earlier I calculated $2\sqrt{5472} = 2(12\sqrt{38}) = 24\sqrt{38} \approx 147.9$.
+Let&#x27;s re-verify $\sqrt{5472}$.
+$5472 / 144 = 38$.
+$\sqrt{5472} = 12\sqrt{38}$.
+$N = 5184 + 16 + 2(12\sqrt{38}) = 5200 + 24\sqrt{38} \approx 5200 + 147.9 = 5347.9$.
+$x \approx \frac{5347.9}{109.94} \approx 48.64$.
+
+Since the function is increasing for $u \ge 6$, the range of $x$ is approximately $[21.69, 48.64]$.
+We check the given options:
+(A) $20 &lt; x &lt; 54$: The interval $[21.69, 48.64]$ is contained within $(20, 54)$ since $21.69 &gt; 20$ and $48.64 &lt; 54$.
+(B) $23 &lt; x &lt; 58$: The interval starts at 23. Since $x_{min} \approx 21.69$, values of $x$ in the range $[21.69, 23]$ do not satisfy this condition.
+(C) $25 &lt; x &lt; 64$: The interval starts at 25. $x_{min} \not&gt; 25$.
+(D) $28 &lt; x &lt; 60$: $x_{min} \not&gt; 28$.
+Thus, option (A) is the only one where all possible values of $x$ satisfy the inequality.
+
+Th</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To find the smallest number of letters Amy needs, we calculate how many unique codes can be generated using $n$ letters following the given rules.
+
+1.  **Count Single-Letter Codes**:
+    If there are $n$ letters available, the number of unique single-letter codes is simply $n$.
+
+2.  **Count Pair Codes**:
+    The codes must be pairs of two *different* letters, and the order does *not* matter. This is a combination problem where we select 2 items from a set of $n$. The formula for this is $\binom{n}{2}$:
+    $$ \binom{n}{2} = \frac{n(n-1)}{2} $$
+
+3.  **Total Unique Codes**:
+    The total number of unique codes possible with $n$ letters is the sum of single-letter codes and pair codes:
+    $$ \text{Total Codes} = n + \frac{n(n-1)}{2} $$
+
+4.  **Inequality**:
+    We need at least 10 unique codes to represent the 10 types of books. Therefore:
+    $$ n + \frac{n(n-1)}{2} \ge 10 $$
+    Multiply by 2 to clear the fraction:
+    $$ 2n + n^2 - n \ge 20 $$
+    $$ n^2 + n \ge 20 $$
+
+5.  **Evaluate Integers for $n$**:
+    *   **If $n = 3$**: $(3)^2 + 3 = 9 + 3 = 12$. Since $12 &lt; 20$, 3 letters are insufficient.
+    *   **If $n = 4$**: $(4)^2 + 4 = 16 + 4 = 20$. Since $20 \ge 20$, 4 letters are sufficient.
+
+    Verification for $n=4$:
+    *   Single codes: A, B, C, D (4 codes)
+    *   Pair codes: AB, AC, AD, BC, BD, CD ($\frac{4 \times 3}{2} = 6$ codes)
+    *   Total: $4 + 6 = 10$ codes.
+
+The smallest number of letters required is 4. This corresponds to option (B).
+
+The answer is (B)
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-27</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：黄色固体 $\mathrm{X}$, 可能含有漂白粉、 $\mathrm{FeSO}_{4} $、$ \mathrm{Fe}_{2}\left(\mathrm{SO}_{4}\right)_{3} $、$ \mathrm{CuCl}_{2} $、$ \mathrm{KI}$ 之中的几种或全 部。将 $\mathrm{X}$ 与足量的水作用, 得到深棕色固体混合物 $\mathrm{Y}$ 和无色碱性溶液 $\mathrm{Z}$ 。下列结论合理的 是
+选项：(A)$\mathrm{X}$ 中含 $\mathrm{KI}$, 可能含有 $\mathrm{CuCl}_{2}$ (B)$\mathrm{X}$ 中含有漂白粉和 $\mathrm{FeSO}_{4}$ (C)$\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}, \mathrm{Y}$ 中含有 $\mathrm{Fe}(\mathrm{OH})_{3}$ (D)用 $\mathrm{H}_{2} \mathrm{SO}_{4}$ 酸化溶液 $\mathrm{Z}$, 若有黄绿色气体放出, 说明 $\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>本题主要考察物质的化学性质及混合物分析。
+
+**1. 分析 X 与水的反应及产物：**
+*   **X 与足量水混合：** 得到深棕色固体混合物 Y 和无色碱性溶液 Z。
+*   **分析 Z（无色碱性溶液）：** 说明 Z 中不含导致有颜色的离子（如 $\mathrm{Cu}^{2+}$ 的蓝色，$\mathrm{Fe}^{3+}$ 的黄色，$\mathrm{Fe}^{2+}$ 的浅绿色，$\mathrm{I}^-$ 遇氧化剂可能显色等）。碱性溶液暗示 $\mathrm{OH}^-$ 的来源。在给定选项中，只有**漂白粉**（通常含 $\mathrm{Ca(ClO)}_2$ 和 $\mathrm{CaCl}_2$ 混合物，水解显碱性）能提供碱性。因此，**X 中一定含有漂白粉**。
+*   **碱性环境对金属离子的影响：** 在碱性溶液中，$\mathrm{Fe}^{2+}/\mathrm{Fe}^{3+}$ 会生成 $\mathrm{Fe(OH)}_2/\mathrm{Fe(OH)}_3$ 沉淀；$\mathrm{Cu}^{2+}$ 会生成 $\mathrm{Cu(OH)}_2$ 沉淀；$\mathrm{I}^-$ 会被漂白粉中的 $\mathrm{ClO}^-$ 氧化。由于 Z 是无色的，说明 $\mathrm{Fe}^{3+}$、$\mathrm{Fe}^{2+}$、$\mathrm{Cu}^{2+}$、$\mathrm{I}^-$ 均已转化为沉淀或气体保留在 Y 中，未留在溶液 Z 中。
+*   **分析 Y（深棕色固体混合物）：**
+    *   **$\mathrm{Fe}^{3+}$：** 生成 $\mathrm{Fe(OH)}_3$，颜色为**红褐色**（深褐色）。
+    *   **$\mathrm{I}^-$：** 在碱性条件下，$\mathrm{I}^-$ 被 $\mathrm{ClO}^-$ 氧化生成 $\mathrm{IO}_3^-$（可溶于碱液进入 Z）或形成 $\mathrm{I}_2$。在强碱性溶液中，$\mathrm{I}_2$ 不稳定，会发生歧化反应 $\mathrm{I}_2 + \mathrm{OH}^- \rightarrow \mathrm{I}^- + \mathrm{IO}^- + \mathrm{H}_2\mathrm{O}$ 等，最终以 $\mathrm{I}^-$ 和 $\mathrm{IO}_3^-$ 形式进入溶液 Z（$\mathrm{IO}_3^-$ 无色，$\mathrm{I}^-$ 无色）。因此，在强碱性溶液 Z 中，$\mathrm{I}_2$ 很难以固体形式存在，且 $\mathrm{I}^-$ 不显色。若 Y 为深棕色固体，主要来源应考虑 $\mathrm{Fe(OH)}_3$。
+    *   **$\mathrm{Cu}^{2+}$：** 生成 $\mathrm{Cu(OH)}_2$，颜色为**蓝色**（或蓝绿色）。若 X 含 $\mathrm{CuCl}_2$，Y 中含有蓝色沉淀。
+    *   **“深棕色”的指示：** 在高中化学推断题中，“红褐色”通常特指 $\mathrm{Fe(OH)}_3$，而“深棕色”或“褐色”固体常作为混合物中被 $\mathrm{Fe(OH)}_3$ 主导的判断依据。同时，若含有 $\mathrm{KI}$，因碱性条件 $\mathrm{I}_2$ 溶解，不符合 Y 为固体的描述。
+
+**2. 评估选项：**
+*   **(A) X 中含 KI，可能含有 $\mathrm{CuCl}_2$：** 若含 KI，在碱性环境中，$\mathrm{I}^-$ 被氧化为 $\mathrm{IO}_3^-$ 进入溶液 Z（无色），或者 $\mathrm{I}_2$ 颜色极浅/溶解，无法解释 Y 的深棕色。且 KI 为白色固体，易混合。因此该推断较弱。
+*   **(B) X 中含有漂白粉和 $\mathrm{FeSO}_4$：**
+    *   漂白粉提供碱性环境（析出 $\mathrm{Ca(OH)}_2$）。
+    *   漂白粉中的 $\mathrm{ClO}^-$ 具有强氧化性，能将 $\mathrm{FeSO}_4$ 中的 $\mathrm{Fe}^{2+}$ 氧化为 $\mathrm{Fe}^{3+}$。
+    *   在碱性溶液中，$\mathrm{Fe}^{3+}$ 生成**红褐色**（深棕色）$\mathrm{Fe(OH)}_3$ 固体，符合 Y 的特征。
+    *   $\mathrm{Fe}^{2+}$、$\mathrm{Fe}^{3+}$、漂白粉中的阳离子进入溶液 Z 的检验逻辑（Z 无色 </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>分析步骤如下：
+
+1.  **确定时间、地点与现象**：
+    *   **时间**：“清明时节”，通常在公历 4 月 4 日或 5 日左右，属于北半球春季中后期。
+    *   **地点**：长江中下游地区。
+    *   **现象**：“雨纷纷”，通常指连续性的、持续时间较长的阴雨天气，气象学上称为“春汛”或“梅雨前期”的降雨。
+
+2.  **分析主要影响天气系统**：
+    *   在长江中下游地区，春季（特别是清明前后至初夏）的降雨主要受冷暖空气交替控制。
+    *   最主要的原因是**准静止锋**（江淮准静止锋）。此时，来自热带地区的暖湿气流北上与仍有余威的冬季冷空气在长江中下游地区相遇。暖湿气流在海拔位置爬升雨云，冷暖空气对峙，形成相对沿线的“雨带”，导致久雨连绵。这是地理教材中解释“清明雨”或“梅雨”最主要的系统。
+
+3.  **分析其他可能的天气系统**：
+    *   **冷锋（Cold Front）**：在清明时节，尽管夏季风逐渐增强，但冬季风（冷空气）尚未完全撤退。南向的冷空气活动仍频繁，冷空气南下时（过境）会系统性地降雨，虽然持续时间短于准静止锋，但确实是该时期影响该地区天气的重要系统之一。
+    *   **暖锋（Warm Front）**：虽然暖锋也会带来雨，但在地理试题关于“清明时节”的具体语境下，更强调准静止锋（对峙）和冷锋（冷空气活动）的作用。暖锋通常与梅雨期（气压梯度较小稳定）相关，但清明时的频繁冷空气波动更指向冷锋或准静止锋。
+    *   **高压（High Pressure）**：高压脊通常带来晴朗多风的天气（如大陆副高），不会导致持续降雨，因此排除包含“高压”的选项（如 D）。
+
+4.  **对比选项**：
+    *   (A) 准静止锋或冷锋：符合上述分析，准静止锋是持续雨的主要原因，冷锋也是春季该区域常见的降雨系统。
+    *   (B) 准静止锋或暖锋：虽然准静止锋正确，但相比冷锋，清明时节的冷锋活动（冷空气入侵）更为显著。
+    *   (C) 暖锋或冷锋：忽略了最主要的准静止锋因素。
+    *   (D) 暖锋或高压：高压排除。
+
+5.  **确定结论**：
+    *   根据中国地理考试的常见标准答案逻辑，清明时节长江中下游地区的降雨主要归因于**江淮准静止锋**及其春季冷空气带来的**冷锋**活动。因此，准静止锋或冷锋是最准确的组合。
+
+答案是 A
+
+置信度：95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-139</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：马丁•路德反对罗马教廷，宣扬因信仰而得救。他倡导的改革运动得到农民、手工工匠、下层僧侣的支持，推动了宗教民族主义的发展。王公贵族为扩大自身政治权力，也纷纷建立其辖区官方教会。这主要说明宗教改革（　　）
+选项：(A)使社会各阶层有了共同目标 (B)扩大了世俗贵族权力 (C)有利于近代民族国家的形成 (D)有着广泛的社会基础
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 98}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1.  **分析题干信息**：
+    *   **起因**：马丁•路德反对罗马教廷，宣扬因信仰得救（宗教改革思想）。
+    *   **过程**：得到农民、手工工匠、下层僧侣支持（宗教传播基础）；推动了宗教民族主义的发展（民族意识觉醒）。
+    *   **政治结果**：王公贵族为扩大政治权力，建立辖区官方教会（政教合一、民族国家雏形）。
+    *   **核心问题**：这主要说明宗教改革产生了什么**历史影响**？
+
+2.  **辨析选项**：
+    *   **(A) 使社会各阶层有了共同目标**：错误。虽然题干提到得到农民、工匠、僧侣支持，但王公贵族出于“政治权力”支持。不同阶级利益往往存在冲突（如后期农民战争与贵族/皇帝立场不同），并非“共同目标”。
+    *   **(B) 扩大了世俗贵族权力**：正确但非核心。题干确实提到了王公贵族利用宗教改革扩大权力，但这只是手段或现象，题干后半部分强调了“宗教民族主义”的发展，指向更深层次的历史结构变化。
+    *   **(C) 有利于近代民族国家的形成**：正确。题干明确提到“宗教民族主义”的发展以及王公贵族建立“官方教会”来巩固辖区权力。这是打破普遍天主教会的统一后，各国确立自身信仰主权、凝聚民族认同、强化中央集权的过程，正是近代民族国家形成的重要特征。
+    *   **(D) 有着广泛的社会基础**：片面。题干确实提到农民、工匠等支持，但这属于改革成功的一面。题目问的是“主要说明”，结合后半段关于政治权和民族主义的描述，其宏观历史指向应选择政治/国家层面的影响，而非单纯的社会基础。
+
+3.  **综合判断**：
+    *   在历史学界和常规史学考题中，结合“宗教民族主义”与“神权世俗化/王权加强”的描述，通常旨在强调宗教改革对国家主权和民族认同构建的推动作用，即近代民族国家的兴起。选项 C 最全面地概括了“宗教民族主义”与王公建立官方教会所形成的政治结构演变。
+
+答案是 C
+置信度：98</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-mathqa-116</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：若曲线 $y=x^{-\frac{1}{2}}$ 在点  $\left( a, a^{-\frac{1}{2}}\right)$ 处的切线与两个坐标围成的三角形 的面积为 18 , 则 $a=$ ($\qquad$)\\
+
+选项：(A)64 (B)32 (C)16 (D)8
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1.  **求导数与切线斜率**
+    已知曲线方程为 $y = x^{-\frac{1}{2}}$（即 $y = \frac{1}{\sqrt{x}}$）。
+    对 $x$ 求导得：
+    $$y&#x27; = -\frac{1}{2}x^{-\frac{3}{2}} = -\frac{1}{2x\sqrt{x}}$$
+    在点 $\left( a, a^{-\frac{1}{2}}\right)$ 处的切线斜率 $k$ 为：
+    $$k = y&#x27;\big|_{x=a} = -\frac{1}{2a\sqrt{a}} = -\frac{1}{2a^{\frac{3}{2}}}$$
+
+2.  **写出切线方程**
+    利用点斜式方程 $y - y_0 = k(x - x_0)$，代入点 $\left(a, \frac{1}{\sqrt{a}}\right)$ 和斜率 $k$：
+    $$y - \frac{1}{\sqrt{a}} = -\frac{1}{2a^{\frac{3}{2}}}(x - a)$$
+    化简得：
+    $$y = -\frac{1}{2a^{\frac{3}{2}}}x + \frac{a}{2a^{\frac{3}{2}}} + \frac{1}{\sqrt{a}}$$
+    $$y = -\frac{1}{2a^{\frac{3}{2}}}x + \frac{1}{2\sqrt{a}} + \frac{1}{\sqrt{a}}$$
+    $$y = -\frac{1}{2a^{\frac{3}{2}}}x + \frac{3}{2\sqrt{a}}$$
+
+3.  **求切线在坐标轴上的截距**
+    *   **纵截距**（令 $x=0$）：
+        $$y = \frac{3}{2\sqrt{a}}$$
+    *   **横截距**（令 $y=0$）：
+        $$-\frac{1}{2a^{\frac{3}{2}}}x + \frac{3}{2\sqrt{a}} = 0$$
+        $$\frac{3}{2\sqrt{a}} = \frac{1}{2a^{\frac{3}{2}}}x$$
+        $$x = \frac{3}{2\sqrt{a}} \cdot 2a^{\frac{3}{2}} = 3a$$
+
+4.  **建立面积方程并求解**
+    切线与两坐标轴围成的三角形面积 $S$ 为：
+    $$S = \frac{1}{2} \cdot |x_{截距}| \cdot |y_{截距}| = \frac{1}{2} \cdot 3a \cdot \frac{3}{2\sqrt{a}}$$
+    $$S = \frac{9}{4} \sqrt{a}$$
+    根据题意，面积 $S = 18$：
+    $$\frac{9}{4} \sqrt{a} = 18$$
+    $$\sqrt{a} = 18 \cdot \frac{4}{9}$$
+    $$\sqrt{a} = 2 \cdot 4 = 8$$
+    解得：
+    $$a = 64$$
+
+    检查选项：
+    (A) 64 (符合)
+    (B) 32
+    (C) 16
+    (D) 8
+
+5.  **得出结论**
+    计算结果与选项 (A) 一致。
+
+答案是A
+置信度: 100</pre></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · agieval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · AGIEval：标准化与资格考试推理</h1>
+    <p class="muted">基准 agieval · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">78.8%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">63</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>AGIEval 取材于人类标准化/资格考试（高考、SAT、LSAT、GRE、法考、公务员考试、竞赛 MATH 等），评测模型在真实考试情境下的推理能力。对应本仓库能力维度 D03（标准化与资格考试推理）。</p><p>本次覆盖 21 个任务，分为选择题（gold 为选项字母；jec-qa、gaokao-physics 为多选）与数学填空（gold 为自由作答）。提示采用零样本思维链，要求模型先推理、再显式给出最终答案。</p><p>选择题抽取沿用官方 post_process 取字母逻辑，数学题动态加载官方 math_equivalence做等价判定；按任务、语言、题型分桶统计。</p><p class='muted'>主页：<a href='https://github.com/ruixiangcui/AGIEval'>https://github.com/ruixiangcui/AGIEval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-203</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: What is 60% of 30% of 1400 grams?
+Answer Choices: (A)450 gms (B)100 gms (C)252 gms (D)240 gms (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-246</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: Alice wants to put up fencing around three sides of her rectangular yard and leave one side of 10 meters unfenced. If the yard has an area of 240 square meters, how many meters of fencing does she need?
+Answer Choices: (A)58 (B)62 (C)66 (D)70 (E)74
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>aqua-rat</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-biology</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chemistry</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>gaokao-chinese</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>gaokao-english</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-geography</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-history</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-mathcloze</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathqa</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-physics</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>jec-qa-ca</td><td>6</td><td>5</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>jec-qa-kd</td><td>5</td><td>2</td><td>0.400</td><td><div class='bar'><i style='width:40%'></i></div></td></tr><tr><td>logiqa-en</td><td>7</td><td>5</td><td>0.714</td><td><div class='bar'><i style='width:71%'></i></div></td></tr><tr><td>logiqa-zh</td><td>7</td><td>5</td><td>0.714</td><td><div class='bar'><i style='width:71%'></i></div></td></tr><tr><td>lsat-ar</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>lsat-lr</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>lsat-rc</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>math</td><td>11</td><td>10</td><td>0.909</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>sat-en</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>sat-en-without-passage</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>sat-math</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>43</td><td>36</td><td>0.837</td><td><div class='bar'><i style='width:84%'></i></div></td></tr><tr><td>zh</td><td>37</td><td>27</td><td>0.730</td><td><div class='bar'><i style='width:73%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cloze</td><td>12</td><td>10</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>qa</td><td>68</td><td>53</td><td>0.779</td><td><div class='bar'><i style='width:78%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#gaokao-chemistry-162</span><span class='tag'>task=gaokao-chemistry</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：实验室制备下列气体, 能实现的是
+选项：(A)$\mathrm{Cl}_{2}: \mathrm{MnO}_{2}$ 与稀 $\mathrm{HCl}$ 溶液混合 (B)$\mathrm{C}_{2} \mathrm{H}_{4}: \mathrm{CaC}_{2}$ 与 $\mathrm{H}_{2} \mathrm{O}$ 混合 (C)$\mathrm{CO}_{2}$ : 加热饱和 $\mathrm{NaHCO}_{3}$ 溶液 (D)$\mathrm{SO}_{2}: \mathrm{Cu}$ 丝与稀 $\mathrm{H}_{2} \mathrm{SO}_{4}$ 混合
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析各选项的实验室制气方法
+
+## 选项A：Cl₂ 的制备
+反应方程式应为：
+$$\mathrm{MnO_2 + 4HCl(浓) \xrightarrow{\Delta} MnCl_2 + Cl_2\uparrow + 2H_2O}$$
+
+**关键条件**：必须使用**浓盐酸**并加热。
+- 由于稀盐酸中 Cl⁻ 浓度太低，MnO₂ 的氧化性不足以将 Cl⁻ 氧化为 Cl₂
+- **A 不可行** ❌
+
+## 选项B：C₂H₄ 的制备
+反应方程式为：
+$$\mathrm{CaC_2 + 2H_2O \rightarrow Ca(OH)_2 + C_2H_2\uparrow}$$
+
+- 该反应生成的是 **乙炔（C₂H₂）**，而非乙烯（C₂H₄）
+- 实验室制 C₂H₄ 应使用乙醇与浓硫酸在 170℃ 下反应：
+$$\mathrm{CH_3CH_2OH \xrightarrow{浓H_2SO_4, 170℃} CH_2=CH_2\uparrow + H_2O}$$
+- **B 不可行** ❌
+
+## 选项C：CO₂ 的制备
+- NaHCO₃ 在水溶液中较稳定，**加热 NaHCO₃ 溶液并不能使其分解**产生 CO₂
+- 分解 NaHCO₃ 制 CO₂ 需要**加热固体**：
+$$\mathrm{2NaHCO_3 \xrightarrow{\Delta} Na_2CO_3 + H_2O + CO_2\uparrow}$$
+- 实验室制 CO₂ 通常用 CaCO₃ 与稀盐酸反应
+- **C 不可行** ❌
+
+## 选项D：SO₂ 的制备
+- 金属活动性顺序中，Cu 位于 H 之后，**不与稀硫酸反应**
+- Cu 与浓硫酸反应需要**加热**：
+$$\mathrm{Cu + 2H_2SO_4(浓) \xrightarrow{\Delta} CuSO_4 + SO_2\uparrow + 2H_2O}$$
+- 实验室通常用 Na₂SO₃ 与稀硫酸反应制 SO₂
+- **D 不可行** ❌
+
+## 结论
+
+四个选项中：
+| 选项 | 问题 |
+|:---:|:---|
+| A | 稀盐酸不能与 MnO₂ 反应 |
+| B | 反应产物是 C₂H₂，不是 C₂H₄ |
+| C | 加热 NaHCO₃ 溶液不能产生 CO₂ |
+| D | Cu 不与稀硫酸反应 |
+
+**答案是：无（A、B、C、D 都不正确）**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-chinese-71</span><span class='tag'>task=gaokao-chinese</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>材料一：。
+问题：下列对材料相关内容的概括和分析，不正确的一项是
+选项：(A)“鸟巢一代”参加奥运志愿服务形成了集体记忆，其中蕴含的价值取向与社会主义核心价值观的契合度较高。 (B)共享单车公司除了让运营人员加强维护外，还尝试通过信用分奖惩的方式来帮助解决破坏单车等多种问题。 (C)为了推动共享秩序的建立，单车猎人开始寻找并拍照举报违规停放、私自上锁和丢弃单车等不文明的行为。 (D)单车猎人的群体性行为有助于规范共享单车的使用，构建在共享单车公司之外的民间力量参与治理的新格局。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>根据选项内容和这类阅读理解题的常见考点进行分析：
+
+**选项B分析**：
+材料中共享单车公司通过信用分奖惩机制，主要是为了规范用户的文明使用行为（如规范停车、制止私占等），但&quot;破坏单车&quot;属于违法行为，需要依靠法律手段解决，而非信用分奖惩所能解决。因此，选项B将信用分奖惩与&quot;解决破坏单车等问题&quot;混为一谈，**概括不准确**。
+
+**其他选项分析**：
+- A项：&quot;鸟巢一代&quot;参与奥运志愿服务的集体记忆与社会主义核心价值观相契合，符合材料内容。
+- C项：单车猎人寻找并拍照举报违规停放、私自上锁等不文明行为，推动共享秩序建立，符合材料内容。
+- D项：单车猎人的群体性行为确实有助于规范共享单车使用，构建民间力量参与治理的新格局，符合材料内容。
+
+答案是B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-mathcloze-25</span><span class='tag'>task=gaokao-mathcloze</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=cloze</span></div><div class='qtext'>问题：已知 $a, b, c$ 分别为 $\triangle A B C$ 的三个内角 $A, B, C$ 的对边, $a=2$ 且 $(2+b)(\sin A-\sin B)=(c-b) \sin C$, 则 $\triangle A B C$ 面积的最大值为 $(\quad)$.
+请逐步推导，并在最后用 \boxed{} 给出最终答案。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>\sqrt{3}</div><div class='ans'><span class='lbl'>归一化</span>\sqrt{3}</div><div class='ans gold'><span class='lbl'>正确答案</span>$\sqrt{3}$</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 求解三角形面积的最大值
+
+## 第一步：利用正弦定理转化条件
+
+由正弦定理 $\frac{a}{\sin A} = \frac{b}{\sin B} = \frac{c}{\sin C} = 2R$，将原式 $(2+b)(\sin A - \sin B) = (c-b)\sin C$ 两边同乘 $2R$：
+
+$$(2+b)(a-b) = c(c-b)$$
+
+## 第二步：代入 $a=2$ 化简
+
+$$(2+b)(2-b) = c(c-b)$$
+
+$$4 - b^2 = c^2 - bc$$
+
+整理得：
+
+$$b^2 + c^2 - bc = 4$$
+
+## 第三步：求角 $A$
+
+由余弦定理：$a^2 = b^2 + c^2 - 2bc\cos A$，即 $b^2 + c^2 = 4 + 2bc\cos A$。
+
+代入上式：
+
+$$4 + 2bc\cos A - bc = 4$$
+
+$$bc(2\cos A - 1) = 0$$
+
+由于 $b, c &gt; 0$，所以 $\cos A = \dfrac{1}{2}$，即 $A = \dfrac{\pi}{3}$。
+
+## 第四步：求面积最大值
+
+三角形面积：
+
+$$S = \frac{1}{2}bc\sin A = \frac{\sqrt{3}}{4}bc$$
+
+由基本不等式 $b^2 + c^2 \geq 2bc$，结合约束条件 $b^2 + c^2 - bc = 4$：
+
+$$4 = b^2 + c^2 - bc \geq 2bc - bc = bc$$
+
+所以 $bc \leq 4$，当且仅当 $b = c = 2$ 时等号成立（此时三角形为等边三角形）。
+
+因此：
+
+$$S_{\max} = \frac{\sqrt{3}}{4} \times 4 = \sqrt{3}$$
+
+## 最终答案
+
+$$\boxed{\sqrt{3}}$$</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-physics-15</span><span class='tag'>task=gaokao-physics</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：物块在轻绳的拉动下沿倾角为 $30^{\circ}$ 的固定斜面向上匀速运动, 轻绳与 斜面平行. 已知物块与斜面之间的动摩擦因数为 $\frac{\sqrt{3}}{3}$, 重力加速度取 $10 \mathrm{~m} / \mathrm{s}^{2}$. 若轻绳能承受的 最大张力为 $1500 \mathrm{~N}$, 则物块的质量最大为 
+选项：(A)$150 \mathrm{~kg}$ (B)$100 \sqrt{3} \mathrm{~kg}$ (C)$200 \mathrm{~kg}$ (D)$200 \sqrt{3} \mathrm{~kg}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>AG</div><div class='ans'><span class='lbl'>归一化</span>AG</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析物块受力情况
+
+物块沿斜面向上匀速运动，沿斜面方向受力平衡。
+
+**沿斜面方向的力：**
+- 绳的拉力 $T$（沿斜面向上）
+- 重力沿斜面向下的分量：$mg\sin 30°$
+- 滑动摩擦力（阻碍向上运动）：$\mu mg\cos 30°$（沿斜面向下）
+
+# 列平衡方程
+
+由匀速运动条件（沿斜面方向合力为零）：
+
+$$T = mg\sin 30° + \mu mg\cos 30°$$
+
+# 代入数值计算
+
+其中：
+- $\sin 30° = \dfrac{1}{2}$
+- $\mu = \dfrac{\sqrt{3}}{3}$
+- $\cos 30° = \dfrac{\sqrt{3}}{2}$
+
+计算摩擦力系数项：
+$$\mu\cos 30° = \frac{\sqrt{3}}{3} \times \frac{\sqrt{3}}{2} = \frac{3}{6} = \frac{1}{2}$$
+
+所以：
+$$T = mg\left(\frac{1}{2} + \frac{1}{2}\right) = mg$$
+
+# 求最大质量
+
+当 $T$ 取最大值 $1500\text{ N}$ 时：
+$$m_{\max} = \frac{T_{\max}}{g} = \frac{1500}{10} = 150 \text{ kg}$$
+
+答案是 **(A) 150 kg**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#jec-qa-ca-512</span><span class='tag'>task=jec-qa-ca</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：以下案件属于行政诉讼受案范围的是:
+选项：(A)甲市公安局以涉嫌诈骗为由对李某进行刑事立案侦查后决定没收其非法所得10万元，李某不服欲向法院提起诉讼 (B)乙县交通局向中太百货公司购买了100套办公用品，但拒交货款 (C)方某与韩某两人互殴，在丙县公安机关的调解下就医疗费用赔偿达成调解协议。后韩某拒不履行协议，方某欲以该公安机关为被告提起诉讼 (D)丁县税务局作出对欠缴税款的林某罚款1000元的处罚之后，林某来访提出申诉，税务局经审查后作出了驳回林某申诉请求的决定
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>[&#x27;A&#x27;]</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析各选项是否属于行政诉讼受案范围
+
+## 选项A分析
+甲市公安局以涉嫌诈骗为由进行**刑事立案侦查**后决定没收非法所得。
+- 公安机关在此行使的是**刑事司法职权**，而非行政管理职权
+- 没收非法所得是刑事诉讼中的处置措施，应通过刑事诉讼程序解决
+- **不属于行政诉讼受案范围**
+
+## 选项B分析
+乙县交通局向百货公司购买办公用品并拒交货款。
+- 这是基于**买卖合同**产生的纠纷，交通局是以平等民事主体身份参与交易
+- 行政机关从事民事活动时，与相对人法律地位平等
+- 应通过**民事诉讼**解决，不属于行政诉讼受案范围
+- **不属于行政诉讼受案范围**
+
+## 选项C分析
+公安机关对互殴双方就医疗费赔偿进行调解。
+- 公安机关的调解行为是**居间调解**，本身不是具体行政行为
+- 调解协议是双方当事人之间的**民事合意**
+- 被告应为违约方韩某，而非公安机关
+- **不属于行政诉讼受案范围**
+
+## 选项D分析
+丁县税务局对林某作出罚款处罚决定，驳回其申诉请求。
+- 税务局是**行政机关**
+- 罚款属于**行政处罚**（具体行政行为）
+- 驳回申诉的决定也属于行政行为
+- 该行为直接影响了林某的权利义务
+- **属于行政诉讼受案范围** ✓
+
+## 结论
+只有选项D中的行为是行政机关行使行政管理职权的具体行政行为，直接影响相对人的权利义务，依法属于行政诉讼受案范围。
+
+**答案是D**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#jec-qa-kd-134</span><span class='tag'>task=jec-qa-kd</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：魏晋南北朝时期，为了体现恤刑及加强皇帝对司法审判的控制，确立了:()。
+选项：(A)律博士 (B)登闻鼓制度 (C)死刑复奏制度 (D)废除肉刑
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>[&#x27;C&#x27;]</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析魏晋南北朝时期的司法制度
+
+## 逐项分析
+
+**(A) 律博士**
+- 设立于曹魏时期
+- 性质是设置专掌教习法律知识的官职
+- 目的在于培养法律人才，**与恤刑和加强皇帝对司法审判控制关系不大**
+- ❌ 不符合
+
+**(B) 登闻鼓制度**
+- 正式确立于**西晋**时期（魏晋南北朝时期）
+- 在朝堂外悬设大鼓，凡有冤屈者可击鼓上达，**由皇帝亲自受理申诉**
+- 体现了**恤刑**精神——为受冤百姓提供救济途径
+- 体现了**加强皇帝对司法审判的控制**——皇帝可越过地方官府直接干预案件
+- ✅ 符合题意
+
+**(C) 死刑复奏制度**
+- 死刑复奏制度（死罪须经多次上奏复核）正式确立于**隋文帝**时期
+- 隋朝不属于魏晋南北朝时期
+- ❌ 不符合（不属于该时期）
+
+**(D) 废除肉刑**
+- **汉文帝**时期已废除肉刑
+- 属于汉代而非魏晋南北朝时期
+- ❌ 不符合
+
+## 结论
+
+登闻鼓制度是魏晋南北朝时期为体现恤刑精神、加强皇帝对司法审判控制而确立的制度。
+
+**答案是B**</pre></details></div></section>
+</main>
+</body>
+</html>

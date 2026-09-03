@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>deepseek-v4-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">35.4%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">99</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">35</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 99,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.3333,
+  &quot;r2_accuracy&quot;: 0.3535,
+  &quot;net_gain&quot;: 0.0202,
+  &quot;change_rate&quot;: 0.1717,
+  &quot;n_r1_wrong&quot;: 66,
+  &quot;n_fixed_wrong_to_right&quot;: 8,
+  &quot;fix_rate&quot;: 0.1212,
+  &quot;n_r1_right&quot;: 33,
+  &quot;n_broken_right_to_wrong&quot;: 6,
+  &quot;break_rate&quot;: 0.1818,
+  &quot;score_10&quot;: 4.697,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;r1_correct&quot;: 7,
+      &quot;r2_correct&quot;: 6,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;r1_correct&quot;: 14,
+      &quot;r2_correct&quot;: 18,
+      &quot;fixed&quot;: 7,
+      &quot;broken&quot;: 3
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 27,
+      &quot;r1_correct&quot;: 9,
+      &quot;r2_correct&quot;: 9,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;r1_correct&quot;: 3,
+      &quot;r2_correct&quot;: 2,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 2
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>1</td></tr><tr><td>scored</td><td>99</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>6</td><td>0.353</td><td><div class='bar'><i style='width:35%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>18</td><td>0.462</td><td><div class='bar'><i style='width:46%'></i></div></td></tr><tr><td>mmlu_pro</td><td>27</td><td>9</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>2</td><td>0.125</td><td><div class='bar'><i style='width:12%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>51</td><td>12</td><td>0.235</td><td><div class='bar'><i style='width:24%'></i></div></td></tr><tr><td>zh</td><td>48</td><td>23</td><td>0.479</td><td><div class='bar'><i style='width:48%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>1</td><td>模型返回了空内容</td><td class='muted'>mmlu_pro::8510</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;The expression simplifies as follows:\n\nLet \\( t = \\sqrt{n} \\). Then \\( n = t^2 \\) and the expression becomes\n\\[\nx = \\frac{t^4 + 2t(t^2+4) + 16}{t^2 + 4t + 4} = \\frac{t^4 + 2t^3 + 8t + 16}{(t+2)^2}.\n\\]\nPolynomial division yields \\( x = t^2 - 2t + 4 = n - 2\\sqrt{n} + 4 \\).\n\nFor \\( n \\in [36, 72] \\), we have \\( t = \\sqrt{n} \\in [6, \\sqrt{72}] \\approx [6, 8.485] \\). Then\n\\[\nx = (\\sqrt{n} - 1)^2 + 3.\n\\]\nThe minimum occurs at \\( \\sqrt{n} = 6 \\), giving \\( x = 28 \\). The maximum occurs at \\( \\sqrt{n} = \\sqrt{72} \\), giving \\( x = 76 - 12\\sqrt{2} \\approx 59.03 \\). Therefore, \\( x \\in [28, 76 - 12\\sqrt{2}] \\approx [28, 59.03] \\).\n\nAmong the choices, only (C) \\( 25 &lt; x &lt; 64 \\) contains the entire range. (Option (D) has \\( 28 &lt; x &lt; 60 \\), but \\( x = 28 \\) is attained, so the strict inequality fails.)\n\nThe answer is (C).&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The expression simplifies as follows: let \( t = \sqrt{n} \). Then \( n = t^2 \) and the expression becomes
+
+\[
+x = \frac{t^4 + 2t(t^2+4) + 16}{t^2 + 4t + 4} = \frac{t^4 + 2t^3 + 8t + 16}{(t+2)^2}.
+\]
+
+Polynomial division yields \( x = t^2 - 2t + 4 = n - 2\sqrt{n} + 4 \).
+
+For \( n \in [36, 72] \), \( t = \sqrt{n} \in [6, \sqrt{72}] \approx [6, 8.485] \). Then
+\[
+x = (\sqrt{n} - 1)^2 + 3.
+\]
+The minimum occurs at \( \sqrt{n}=6 \) giving \( x = 28 \), and the maximum at \( \sqrt{n}=\sqrt{72} \) giving \( x = 76 - 12\sqrt{2} \approx 59.03 \). Thus \( x \in [28, 59.03] \).
+
+Among the options, only \( 25 &lt; x &lt; 64 \) contains the entire range. (Option (D) has \( 28 &lt; x &lt; 60 \), but \( x = 28 \) is attained, so it is not strictly greater than 28.)
+
+The answer is (C).</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;The problem asks for the smallest number of letters needed to create unique codes for 10 types of books, using either a single letter or an unordered pair of distinct letters.\n\nIf we have \\(n\\) letters, the number of possible codes is the sum of single letters and pairs:\n\\[\nn + \\binom{n}{2} = n + \\frac{n(n-1)}{2} = \\frac{n(n+1)}{2}\n\\]\nWe need this to be at least 10.\n\n- For \\(n = 3\\): \\(\\frac{3 \\times 4}{2} = 6\\) (not enough)\n- For \\(n = 4\\): \\(\\frac{4 \\times 5}{2} = 10\\) (exactly enough)\n\nThus, the smallest number of letters is 4. The reasoning and calculations are correct.\n\nThe answer is B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Amy needs to create unique codes for 10 types of books using either a single letter or an unordered pair of distinct letters. If she has \(n\) letters available, the number of possible codes is the sum of single letters and pairs:
+
+\[
+n + \binom{n}{2} = n + \frac{n(n-1)}{2} = \frac{n(n+1)}{2}
+\]
+
+We need this to be at least 10.
+
+- For \(n = 3\): \(\frac{3 \times 4}{2} = 6\) (not enough)
+- For \(n = 4\): \(\frac{4 \times 5}{2} = 10\) (exactly enough)
+
+Thus, the smallest number of letters needed is 4.
+
+The answer is B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-biology-8</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：用体外实验的方法可合成多肽链。已知苯丙氨酸的密码子是 UUU, 若要在体外合成同位 素标记的多肽链, 所需的材料组合是
+
+(1)同位素标记的 tRNA
+
+(2)蛋白质合成所需的酶
+
+(3)同位素标记的苯丙氨酸
+
+(4)人工合成的多聚尿嘧啶核苷酸
+
+(5)除去了 DNA 和 mRNA 的细胞裂解液
+选项：(A)(1)(2)(4) (B)(2)(3)(4) (C)(3)(4)(5) (D)(1)(3)(5)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;根据题目要求，在体外合成同位素标记的多肽链，该实验模拟了经典的Nirenberg和Matthaei破译遗传密码的实验。题中已知苯丙氨酸的密码子是UUU，因此需使用人工合成的多聚尿嘧啶核苷酸（4）作为mRNA模板，指导合成多聚苯丙氨酸。为了使合成的多肽链带有同位素标记，需要提供同位素标记的苯丙氨酸（3）作为原料。除去了DNA和mRNA的细胞裂解液（5）提供了翻译所需的所有细胞器（如核糖体）、tRNA、酶、能量系统等，同时排除了内源模板的干扰，确保翻译仅以外源加入的多聚尿嘧啶核苷酸为模板。选项（1）标记的tRNA和（2）纯化的酶均非必需，因为细胞裂解液中已包含这些组分，且标记通常直接通过氨基酸掺入多肽链实现。\n\n答案是C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>在这个经典的体外翻译实验中，要合成同位素标记的多肽链，需要提供翻译模板、翻译系统以及标记的氨基酸。多聚尿嘧啶核苷酸（4）作为mRNA模板，编码苯丙氨酸；除去了DNA和mRNA的细胞裂解液（5）提供核糖体、tRNA、酶等翻译所需组分，同时排除内源模板的干扰；同位素标记的苯丙氨酸（3）作为合成原料，使合成的多肽链带有同位素标记。标记的tRNA（1）和额外的酶（2）均非必需，因为裂解液已包含tRNA和酶。
+
+答案是C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;经过重新检查，我对每个选项的推理如下：\n\n- (A) 蚕丝主要成分是丝素蛋白和丝胶蛋白，属于蛋白质，说法正确。\n- (B) 蛋白质是天然高分子化合物，蚕丝作为天然蛋白质纤维，属于天然高分子材料，说法正确。\n- (C) “蜡炬成灰”描述的是蜡烛燃烧，燃烧过程是有机物与氧气发生的氧化反应，说法正确。\n- (D) 古代的蜡（如蜂蜡）主要成分是高级脂肪酸与高级醇形成的酯，分子量几百到上千，不属于高分子聚合物（高分子通常要求分子量上万并具有重复单元），说法错误。\n\n因此，原答案无误。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>我们逐步分析每个选项：
+
+(A) 蚕丝的主要成分是蛋白质。蚕丝由蚕分泌的丝素蛋白和丝胶蛋白构成，属于天然蛋白质纤维，说法正确。
+
+(B) 蚕丝属于天然高分子材料。蛋白质是天然高分子化合物，蚕丝作为蛋白质纤维，当然属于天然高分子材料，说法正确。
+
+(C) “蜡炬成灰”过程中发生了氧化反应。蜡烛燃烧是蜡与空气中的氧气发生氧化反应，生成二氧化碳和水等，说法正确。
+
+(D) 古代的蜡是高级脂肪酸酯，属于高分子聚合物。古代的蜡（如蜂蜡）主要成分确实是高级脂肪酸与高级一元醇形成的酯，但其相对分子质量一般为几百，远未达到高分子聚合物的程度（高分子通常分子量上万，且具有重复结构单元）。因此，该说法错误。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-122</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>It was the first mow of winter﹣﹣an exciting day for every，child but not for most tether．Up until now，l had been able to dress myself for recess（课间休息），but today I would need some help．Miss Finlayson，my kindergarten teacher at Princess Elizabeth School near Hamilton，Ontario，had been through first snow days，many times in her long career，but I think struggled still remember this one．  I managed to get into my  wool snow pants．But I straggled with my jacket because it didn&#x27;t fit well．It was a hand﹣me﹣down from my brother，and it made me wonder why I had to wear his ugly clothes．At least my hat and matching scarf were mine，and they were quite pretty．Finally it was time to have Miss Finlayson help me with my boots．In her calm，motherly voice she said，&quot;By the end of winter，you will be able to put on own boots．&quot;I didn&#x27;t realize at the time that this was more a statement of hope than of confidence．  I handed her my boots and stuck out my foot．Like most children，I expected the adult to do an the work．After mush wiggling and pushing，she managed to get first one into place and then，with a sigh，worked the second one on too．  I announced，&quot;They&#x27;re on the wrong feet．&quot;With the grace that only experience can bring，she struggled to get the boots off and went through the joyless task of putting them on again．Then I said，&quot;These aren&#x27;t my boots．you know．&quot;As she pulled the offending boots from my feet，she still managed to look both helpful and interested．Once they were off．I said，&quot;They are my brother&#x27;s boots．My mother makes me wear them，and I hate them!&quot;Somehow，from long years of practice，she managed to act as though I wasn&#x27;t an annoying little girl．She pushed and shoved．less gently this time，and the boots were returned to their proper place on my feet．With a great sigh of relief，seeing the end of her struggle with me，she asked，&quot;Now，where are your gloves？&#x27;&#x27;  I looked into her eyes and said．&quot;I didn&#x27;t want to lose them．so I put them into the toes of my boots．&quot;
+Question: 62．It can be inferred that before the little girl finally went out to enjoy the first snow of winter，the teacher had to help her put on her boots　．
+Answer Choices: (A)once (B)twice (C)three times (D)four times
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;The teacher helped the girl put on her boots three times:\n\n1. **First time:** The teacher initially put the boots on the girl after she handed them over and stuck out her foot.\n2. **Second time:** The girl said they were on the wrong feet, so the teacher took them off and put them on again.\n3. **Third time:** The girl then said they weren&#x27;t her boots, so the teacher took them off once more, and after the girl explained they were her brother&#x27;s, the teacher put them back on.\n\nThe story ends with the teacher asking about gloves and the girl&#x27;s reply, without any further removal or putting on of boots before she goes outside.\n\nThe answer is C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The little girl&#x27;s teacher helped her put on her boots three times. First, the teacher put the boots on initially. Then, after the girl said they were on the wrong feet, the teacher took them off and put them on again. Finally, when the girl said they weren&#x27;t her boots, the teacher removed them once more and put them back on. No further removal is mentioned before she goes outside.
+
+The answer is C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-103</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：司汤达小说中的人物曾说：“自从蒸汽机成为世界的王后以来，贵族头衔已成为无用之物。”结合所学史实，对这句话的理解正确的是
+选项：(A)客观真实，可以采信 (B)主观臆断，有待考证 (C)背离史实，不足为信 (D)小说家言，皆不可信
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;仔细审视题干，司汤达小说中的人物说“自从蒸汽机成为世界的王后以来，贵族头衔已成为无用之物”，这确实敏锐地捕捉到了工业革命对传统社会结构的冲击：资产阶级凭借财富崛起，贵族的绝对经济和政治优势被削弱。然而，结合19世纪的史实，这句论断存在绝对化的问题。工业革命后，贵族头衔在欧洲许多国家（如英国、德意志诸邦，甚至经历大革命的法国）依然具有重要的政治权力、社会声望和经济特权，或者与资产阶级财富结合形成新的精英阶层，远未到“已成为无用之物”的程度。因此，这句话更多是小说人物带有强烈主观色彩的时代感慨，是一种需要结合具体语境考证的文学性表达，不能直接当作客观真实的历史结论采信。\n\n答案是B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>这句话反映了工业革命对社会结构的深刻影响。蒸汽机作为工业革命的象征，推动了资本主义经济的崛起，使资产阶级凭借财富和工业实力逐渐取代了传统贵族依靠血统和土地的特权地位。尽管贵族头衔在形式上并未完全消失，但其实际权力和影响力确实被大大削弱，因此这句话抓住了历史发展的核心趋势，符合史实，可以采信。
+
+答案是A</pre></details></div></section>
+</main>
+</body>
+</html>

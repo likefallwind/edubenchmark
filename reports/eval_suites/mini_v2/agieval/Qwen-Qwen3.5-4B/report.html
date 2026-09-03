@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · agieval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · AGIEval：标准化与资格考试推理</h1>
+    <p class="muted">基准 agieval · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">83.8%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">67</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>AGIEval 取材于人类标准化/资格考试（高考、SAT、LSAT、GRE、法考、公务员考试、竞赛 MATH 等），评测模型在真实考试情境下的推理能力。对应本仓库能力维度 D03（标准化与资格考试推理）。</p><p>本次覆盖 21 个任务，分为选择题（gold 为选项字母；jec-qa、gaokao-physics 为多选）与数学填空（gold 为自由作答）。提示采用零样本思维链，要求模型先推理、再显式给出最终答案。</p><p>选择题抽取沿用官方 post_process 取字母逻辑，数学题动态加载官方 math_equivalence做等价判定；按任务、语言、题型分桶统计。</p><p class='muted'>主页：<a href='https://github.com/ruixiangcui/AGIEval'>https://github.com/ruixiangcui/AGIEval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-203</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: What is 60% of 30% of 1400 grams?
+Answer Choices: (A)450 gms (B)100 gms (C)252 gms (D)240 gms (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-246</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: Alice wants to put up fencing around three sides of her rectangular yard and leave one side of 10 meters unfenced. If the yard has an area of 240 square meters, how many meters of fencing does she need?
+Answer Choices: (A)58 (B)62 (C)66 (D)70 (E)74
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>aqua-rat</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-biology</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chemistry</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chinese</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>gaokao-english</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-geography</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-history</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-mathcloze</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathqa</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-physics</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>jec-qa-ca</td><td>6</td><td>4</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>jec-qa-kd</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>logiqa-en</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>logiqa-zh</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>lsat-ar</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>lsat-lr</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>lsat-rc</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>math</td><td>11</td><td>8</td><td>0.727</td><td><div class='bar'><i style='width:73%'></i></div></td></tr><tr><td>sat-en</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>sat-en-without-passage</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>sat-math</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>43</td><td>35</td><td>0.814</td><td><div class='bar'><i style='width:81%'></i></div></td></tr><tr><td>zh</td><td>37</td><td>32</td><td>0.865</td><td><div class='bar'><i style='width:86%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cloze</td><td>12</td><td>8</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>qa</td><td>68</td><td>59</td><td>0.868</td><td><div class='bar'><i style='width:87%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#gaokao-chinese-71</span><span class='tag'>task=gaokao-chinese</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>材料一：。
+问题：下列对材料相关内容的概括和分析，不正确的一项是
+选项：(A)“鸟巢一代”参加奥运志愿服务形成了集体记忆，其中蕴含的价值取向与社会主义核心价值观的契合度较高。 (B)共享单车公司除了让运营人员加强维护外，还尝试通过信用分奖惩的方式来帮助解决破坏单车等多种问题。 (C)为了推动共享秩序的建立，单车猎人开始寻找并拍照举报违规停放、私自上锁和丢弃单车等不文明的行为。 (D)单车猎人的群体性行为有助于规范共享单车的使用，构建在共享单车公司之外的民间力量参与治理的新格局。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**思考过程：**
+
+1.  **题目分析**：
+    *   该题是一道结合阅读材料的选择性理解题（通常是语文科目中的阅读理解），要求选出“概括和分析不正确的一项”。
+    *   题目中提到的核心关键词包括：“鸟巢一代”（奥运志愿者）、“共享单车”、“单车猎人”、“信用分”、“社会治理”等。
+    *   问题在于，用户提供的“材料一”内容是缺失的。但根据题目选项的设置（如“鸟巢一代”与“单车猎人”的对比或并列，“信用分”实施主体等），这是一道在历年各类高考模拟卷或中考语文卷中较为经典的真题（通常出自关于共享经济治理或城市文明建设的非连续性文本）。
+    *   在无法看到原文的情况下，我需要基于该类题目的常规逻辑和常见考点进行推理。
+
+2.  **选项逐一排查**：
+    *   **选项 A**：“鸟巢一代”参加奥运志愿服务形成了集体记忆，其中蕴含的价值取向与社会主义核心价值观的契合度较高。
+        *   *分析*：在涉及“鸟巢一代”（2008 年北京奥运会志愿者）的语境文章中，通常会将这一群体的奉献精神和集体记忆提升到社会责任、核心价值观的高度。这种表述在语文阅读理解中通常被视为正确的归纳（顺应主流价值观）。
+    *   **选项 B**：共享单车公司除了让运营人员加强维护外，还尝试通过信用分奖惩的方式来帮助解决破坏单车等多种问题。
+        *   *分析*：这是一个典型的“细节陷阱”选项。根据此类文章（如《共享单车与城市治理》类文本）的通例：
+            1.  **责任主体混淆**：信用分制度通常是政府（如城管、交通委）主导或平台/运营商针对**用户**（骑行者）实施的，而不是直接针对“运营人员”（运维员工）的奖惩手段来作为公司解决破坏单车的核心尝试；或者文章强调是“平台”或“第三方机制”，而非笼统的“共享单车公司”。
+            2.  **逻辑归因**：文章常铺垫公司为了解决难题尝试了某些措施（如维护、技术升级），而“信用分”往往是后来在政府压力或社会需求下（如“单车猎人”出现的前因）才推行的，或者是针对用户的惩戒，而非单纯公司的尝试。此外，常考点在于诋毁或质疑公司各自为战，强调“单车猎人”的民间补充作用。此选项极易因扩大了公司主体作用或混淆了信用分的适用对象（用户 vs 运营人员）而被判定为错误。
+        *   *推断*：此项陈述在原文中往往找不到对应直接的“信用分为了解决破坏单车问题由运营人员管理”的支撑，或者属于强加的因果完全不正确，是常见错误选项。
+    *   **选项 C**：为了推动共享秩序的建立，单车猎人开始寻找并拍照举报违规停放、私自上锁和丢弃单车等不文明的行为。
+        *   *分析*：这是对“单车猎人”行为的标准描述。此类文章通常定义“单车猎人”为自发参与治理的民间力量，通过出卖图片、举报违规来获取价值或关注。此概括通常符合事实，为正确选项。
+    *   **选项 D**：单车猎人的群体性行为有助于规范共享单车的使用，构建在共享单车公司之外的民间力量参与治理的新格局。
+        *   *分析*：这是文章的主旨升华部分。共享经济乱象中，官方和平台治理滞后，民间力量（猎人）的参与被视为社会治理格局的补充（“纵横溢出”+“格局构建”）。此类正面总结通常在材料中是文章的结论意向，故视为正确。
+
+3.  **综合判断**：
+    *   选项 A、C、D 在逻辑和常规语境下多属于“正确”的归纳（涉及价值观、行为定义、治理格局）。
+    *   选项 B 涉及具体措施的实施细节（谁做？怎么做的？针对谁？），在命题技巧中，这通常是出题人设置“曲解文意”或“无中生有”的地方。特别是“信用分”与“运营人员”的关联，或者“尝试解决”的夸大，是最可能错误的点。
+
+4.  **结论**：
+    *   基于对历年真题库中类似题目（常见于 2018-2022 年语文阅读理解“共享经济/城市治理”板块）的记忆与逻辑推演，**选项 B** 通常设定为分析不正确的一项，因为原文多侧重政府或平台的规范，或信用分对象为骑行用户而非公司运营模式中的运营人员，或者强调政府引导而非公司自发尝试。
+
+答案是 B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-mathcloze-25</span><span class='tag'>task=gaokao-mathcloze</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=cloze</span></div><div class='qtext'>问题：已知 $a, b, c$ 分别为 $\triangle A B C$ 的三个内角 $A, B, C$ 的对边, $a=2$ 且 $(2+b)(\sin A-\sin B)=(c-b) \sin C$, 则 $\triangle A B C$ 面积的最大值为 $(\quad)$.
+请逐步推导，并在最后用 \boxed{} 给出最终答案。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>\sqrt{3}</div><div class='ans'><span class='lbl'>归一化</span>\sqrt{3}</div><div class='ans gold'><span class='lbl'>正确答案</span>$\sqrt{3}$</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>### 逐步推导过程
+
+**1. 利用正弦定理转化等式**
+
+已知 $\triangle ABC$ 中，$a=2$，且给出等式：
+$$(2+b)(\sin A-\sin B)=(c-b) \sin C$$
+根据余弦定理，我们知道 $a, b, c$ 满足各边的关系。根据正弦定理 $\frac{a}{\sin A} = \frac{b}{\sin B} = \frac{c}{\sin C} = 2R$（其中 $R$ 为外接圆半径），我们可以将角度的正弦值转化为边长之间的关系。具体地，有：
+$$\sin A = \frac{a}{2R}, \quad \sin B = \frac{b}{2R}, \quad \sin C = \frac{c}{2R}$$
+将上述关系代入原方程中：
+$$(a+b)\left(\frac{a}{2R} - \frac{b}{2R}\right) = (c-b) \cdot \frac{c}{2R}$$
+因为 $R \neq 0$，我们可以将等式两边同时乘以 $2R$，消去分母：
+$$(a+b)(a-b) = (c-b)c$$
+展开左边和右边：
+$$a^2 - b^2 = c^2 - bc$$
+移项，整理得到：
+$$a^2 = b^2 + c^2 - bc$$
+
+**2. 利用余弦定理确定角 $A$**
+
+根据三角形的余弦定理，对于边 $a$ 有：
+$$a^2 = b^2 + c^2 - 2bc \cos A$$
+对比我们推导出的关系式 $a^2 = b^2 + c^2 - bc$，可以得到：
+$$b^2 + c^2 - 2bc \cos A = b^2 + c^2 - bc$$
+消去两边的 $b^2 + c^2$，得：
+$$-2bc \cos A = -bc$$
+由于 $b, c$ 均为三角形的边长，故 $bc \neq 0$，我们可以约去 $-bc$，得：
+$$\cos A = \frac{1}{2}$$
+因为 $A$ 是三角形的内角，所以 $A \in (0, \pi)$，故：
+$$A = \frac{\pi}{3} \quad (60^\circ)$$
+
+**3. 表示三角形面积并求解最大值**
+
+三角形的面积公式为：
+$$S_{\triangle ABC} = \frac{1}{2}bc \sin A$$
+将 $A = 60^\circ$ 代入，得：
+$$S = \frac{1}{2}bc \cdot \frac{\sqrt{3}}{2} = \frac{\sqrt{3}}{4}bc$$
+要使面积 $S$ 最大，我们需要求 $bc$ 的最大值。
+
+回顾步骤 1 中推导出的约束条件（且已知 $a=2$）：
+$$4 = b^2 + c^2 - bc$$
+利用基本不等式 $b^2 + c^2 \ge 2bc$（当且仅当 $b=c$ 时取等号），代入上式：
+$$4 = b^2 + c^2 - bc \ge 2bc - bc$$
+$$4 \ge bc$$
+即 $bc$ 的最大值为 4。
+
+**4. 计算最大面积**
+
+将 $bc$ 的最大值 4 代入面积公式：
+$$S_{max} = \frac{\sqrt{3}}{4} \times 4 = \sqrt{3}$$
+此时，当且仅当 $b=c$ 时取等号。此时 $a=b=c=2$，三角形为等边三角形，满足所有条件。
+
+因此，$\triangle ABC$ 面积的最大值为 $\sqrt{3}$。
+
+\boxed{\sqrt{3}}</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#jec-qa-ca-46</span><span class='tag'>task=jec-qa-ca</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：2月，甲、乙、丙三人共同设立一普通合伙企业。合伙协议约定由乙丙承担全部亏损。2013年6月，该合伙企业向银行贷款10万元人民币，期限1年。2013年10月，甲退伙。2013年11月，丁入伙。到2014年6月，银行要求还债时，发现该合伙企业所剩财产已不足清偿全部贷款。对不足部分，有义务承担清偿责任的是:
+选项：(A)乙、丙 (B)甲、乙、丙 (C)乙、丙、丁 (D)甲、乙、丙、丁
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>[&#x27;D&#x27;]</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**问题分析步骤：**
+
+1.  **合伙企业债务责任的认定原则：**
+    根据《中华人民共和国合伙企业法》第三十八条和第三十九条的规定，合伙企业对其债务，应先以其全部财产清偿。合伙企业财产不足清偿到期债务的，各合伙人承担无限连带责任。这意味着在外部（债权人）关系中，合伙人是连带 liable 的，合伙人内部的约定不能对抗善意第三人。
+
+2.  **内部亏损约定的效力：**
+    题目中提到“合伙协议约定由乙丙承担全部亏损”。根据合伙企业法，合伙人内部对亏损分担比例的约定，仅在合伙人之间内部有效，**不能对抗外部债权人**。因此，尽管协议约定乙、丙承担全部亏损，如果合伙企业资产不足，债权人（银行）完全有权要求甲（甲曾是合伙人）来偿还债务。甲在履行了对外清偿责任后，可以根据合伙协议向乙、丙追偿。因此，甲对外仍有责任，排除选项 (A)。
+
+3.  **退伙人（甲）的责任：**
+    甲在 2013 年 10 月退伙，而银行贷款发生在 2013 年 6 月。根据《合伙企业法》第五十一条（关于入伙前债务的责任）及相关法理（如退伙时偿还债务的规定），退伙人对基于退伙前的原因发生的合伙企业债务，仍应承担无限连带责任。虽然在退伙时进行了清算或结算，但如果债务发生在退伙之前，无论是否称内结算，退伙人甲仍需对银行承担清偿责任。因此，甲有义务承担责任，排除选项 (C)。
+
+4.  **新入伙人（丁）的责任：**
+    丁在 2013 年 11 月入伙，此时贷款发生在 2013 年 6 月。根据《合伙企业法》第四十四条及相关法律解释，新合伙人入伙之前合伙企业应当承担债务，由加入该债务时的合伙人承担责任。新合伙人入伙后，仅对入伙后发生的债务承担 unlimited joint and several liability。除非新合伙人对入伙前已经发生的债务进行了担保或承诺，否则新入伙的丁不需要对入伙前已经形成的债务（即 2013 年 6 月的银行贷款）承担清偿责任。因此，丁没有义务清偿该笔旧债，排除选项 (D) 并确认 (C、D) 包含丁的选项错误。
+
+5.  **原合伙人（乙、丙）的责任：**
+    乙和丙在债务发生期间（2013 年 6 月）均为合伙人，且 2013 年乙、丙并未退伙（注：题目仅提及甲退伙，未提及乙丙退伙或限制），直到 2014 年债务到期时仍在合伙企业存续。即使 2014 年 6 月甲退伙后，乙丙在债务发生时是正常合伙人，对合伙企业债务承担无限连带责任。内部亏损承担的约定同样不能对抗外部债权人，因此乙、丙均有义务承担责任。
+
+**结论归纳：**
+*   **甲：** 退伙人对退伙前的债务承担责任。
+*   **乙、丙：** 合伙人在债务发生期间的责任，不因内部约定而免除。
+*   **丁：** 新入伙人对入伙前债务不承担责任。
+
+因此，负有清偿责任的是甲、乙、丙。
+
+答案是 B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#logiqa-en-86</span><span class='tag'>task=logiqa-en</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Based on the following questions? Most people think that advertisers do whatever they can to attract customers.But advertisers are not always like this.Recently, in order to expand sales, a family magazine called &quot;Bay&quot; was renamed &quot;Inferno&quot;, which mainly published violent and pornographic content.As a result, some perennial advertisers from the original &quot;Bay&quot; magazine refused to renew the contract and turned to other publications.This shows that these advertisers not only consider economic benefits, but also take into account their ethical responsibilities.
+Question: If the following item is true, can the argument be strengthened most?
+Answer Choices: (A)The cost and selling price of &quot;Inferno&quot; are lower than that of &quot;Harbour&quot;. (B)The above advertisers who refused to renew their contracts have not affected the benefits after switching to other publications. (C)Readers of family magazines are generally not interested in violent and pornographic content. (D)Some clients who advertise in other family magazines and so on turn to &quot;Inferno&quot; magazine.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The argument claims that some advertisers consider ethical responsibilities (specifically against violent/pornographic content) rather than just economic benefits. To strengthen this, we need to show that economic reasons (like cost or potential profit) did not compel the advertisers to stay with the new &quot;Inferno&quot; magazine. If the new magazine offered better economic terms than the alternatives, choosing not to use it would strongly indicate an ethical motivation (overriding financial incentives).
+
+1.  **Analyze the Argument:**
+    *   **Premise:** Some advertisers refused to renew contracts with &quot;Inferno&quot; (formerly &quot;Bay&quot;) after it changed content to violent/pornographic material.
+    *   **Conclusion:** They do not only consider economic benefits; they consider ethical responsibilities.
+    *   **Underlying Assumption:** Leaving would have been financially neutral or costly implies they chose a path they didn&#x27;t need to finance (Ethics). To strengthen, we need to prove they *could have* made good money (or even got more) staying/inferno, or that leaving cost them money.
+
+2.  **Evaluate Options:**
+    *   **(A) The cost and selling price of &quot;Inferno&quot; are lower than that of &quot;Harbour&quot;.** (Assuming &quot;Harbour&quot; refers to the alternative publications or the previous terms). If &quot;Inferno&quot; (the new, controversial magazine) was *cheaper* for advertisers to advertise in, a purely economic decision would be to pay less and stay there. By refusing a cheaper deal in favor of other, likely more expensive options, the advertisers sacrificed economic savings. This strongly supports the conclusion that their decision was driven by Ethics.
+    *   **(B) The above advertisers... have not affected the benefits after switching to other publications.** This means switching didn&#x27;t bring financial pain. This removes a potential counter-argument (financial loss forced the switch), but it doesn&#x27;t prove why they left. If there was no financial loss, leaving is possible for reasons other than eth</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#logiqa-zh-639</span><span class='tag'>task=logiqa-zh</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>国内油价与国际油价相比一向是“涨快跌慢”，原因之一是我国成品油调价依据三地原油价格变动超过4%这个边界条件。比如，从100美元一桶涨到104美元时，我们就跟着涨价；但是，从104美元回调4%再降价，则要等价格回落到 99,.84美元。
+问题：以下哪项陈述最好地指出了上述论证的缺陷？
+选项：A．上述论证没能说明，国内油价不合理是由多种原因造成的。 B．上述论证没能说明，国内油价不合理的根本原因在于行业垄断。 C．上述论证没能说明，以4%为边界条件，则油价越高，国内反应越迟钝。 D．上述论证没有从相同的价格基点出发进行比较，如果涨价的基点是100美元，对降价    的条件分析也应该以100美元为基点。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>这是一个逻辑判断题，主要考察的是分析论证中的逻辑缺陷，特别是数据对比的基准点不一致问题。
+
+**第一步：分析题干论证结构**
+*   **论点**：国内油价“涨快跌慢”的原因之一是成品油调价依据三地原油价格变动超过4%这个边界条件。
+*   **论据**：通过具体数值例子说明。
+    *   涨价例子：从100美元涨到104美元（增加4美元）。
+    *   降价例子：从104美元回调4%再降价，需等到回落到99.84美元（减少4.16美元）。
+*   **推论**：因为涨价只需涨4美元，而降价（从高点回踩）跌幅需超过4.16美元才能触发，所以下跌“更慢”或“更慢”。
+
+**第二步：寻找论证缺陷**
+该论证的核心在于对比“涨价的难度”和“降价的难度”。
+*   在“涨价”的对比中，它是相对于**初始基点 100美元**计算的（100-&gt;104，幅度4美元）。
+*   在“降价”的对比中，它计算的是相对于**调整后的新基点 104美元**（104-&gt;99.84，幅度4.16美元）。
+
+这一不对等的基准导致了幅度上的不对称（4美元 vs 4.16美元）。然而，如果要公平地评估&quot;4%边界条件”是否导致了“涨快跌慢”的现象，应该从**相同的起点（等值基点）**进行数值比较。
+如果以初始的100美元为基准：
+*   涨价触发点：$100 \times (1 + 4\%) = 104$。
+*   降价触发点：$100 \times (1 - 4\%) = 96$。
+在这种情况下，涨价落点与降价落点距离初始价格的幅度是一样的（都是4美元）。如果是这样，那么仅仅是4%的规则本身并不必然解释“涨快跌慢”（或者说论证中的数据引导具有误导性，即通过抬高降价的基准点人为制造了数值差异）。
+
+选项 D 指出：“上述论证没有从相同的价格基点出发进行比较”，并建议“如果涨价的基点是100美元，对降价的条件分析也应该以100美元为基点”。这直接指出了题干论证在逻辑基准上的一致性错误。
+
+**第三步：排除其他选项**
+*   **A 项**：讨论“多种原因”和“根本原因”。这是关于原因分析的补充，而不是指出题干逻辑推导过程中的方法性缺陷。
+*   **B 项**：归因为“行业垄断”。这是引入了另一个外部原因，没有指出题干针对油价机制的具体论证逻辑漏洞。
+*   **C 项**：结论。该项实际上是题干论点的一个延伸或概括（以4%为边界条件，油价越高，国内反应越迟钝），而不是对论证本身的缺陷分析。
+
+**结论**
+选项 D 准确指出了题干中用于支撑论据的数据对比存在“基点不一致”的逻辑谬误。
+
+答案是 D
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#lsat-ar-37</span><span class='tag'>task=lsat-ar</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>A bakery makes exactly three kinds of cookie—oatmeal, peanut butter, and sugar. Exactly three batches of each kind of cookie are made each week (Monday through Friday) and each batch is made, from start to finish, on a single day. The following conditions apply: No two batches of the same kind of cookie are made on the same day. At least one batch of cookies is made on Monday. The second batch of oatmeal cookies is made on the same day as the first batch of peanut butter cookies. The second batch of sugar cookies is made on Thursday.
+Question: How many of the days, Monday through Friday, are such that at most two batches of cookies could be made on that day?
+Answer Choices: (A)one (B)two (C)three (D)four (E)five
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>E</div><div class='ans'><span class='lbl'>归一化</span>E</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To determine the number of days from Monday to Friday where it is possible to have at most two batches of cookies made, we must construct valid schedules to see if each day can accommodate 1 or 2 batches without violating the given constraints.
+
+The constraints are:
+1. 3 types of cookies (O, P, S), 3 batches each (9 total).
+2. No two batches of same kind on same day.
+3. Monday has $\ge 1$ batch.
+4. $O_2$ and $P_1$ are on same day.
+5. $S_2$ is on Thursday.
+
+We need to test if for each day $D \in \{M, T, W, Th, F\}$, there exists a valid schedule where $B_D \le 2$.
+
+1.  **Monday**: We can construct a schedule where Monday has only 1 batch.
+    *   $O: \{M, T, W\}$, $P: \{M, W, F\}$, $S: \{Th, T, F\}$.
+    *   $S_2$ on $Th$. $O_2, P_1$ on $M$.
+    *   Checking $M$: Batches on $M$ are $O_1, P_2$ (from sets above). That&#x27;s 2 batches.
+    *   Wait, let&#x27;s ensure 1 is possible.
+    *   $O: \{M, T, W\}$, $P: \{T, W, F\}$, $S: \{Th, T, W\}$.
+    *   $O_2, P_1$ on $W$.
+    *   $M$ has $O$. $B_M = 1$. Valid. So Monday works.
+
+2.  **Tuesday**: Can be empty? No, &quot;at least one batch&quot; applies to Monday. But can Tuesday be empty? Yes.
+    *   Check constraint &quot;Mon has batch&quot;.
+    *   If we make $B_{Th}=1$ (only S) and $B_F=1$, $B_W=3$, can we reduce T?
+    *   Schedule: $O=\{M, T, W\}$, $P=\{M, F, W\}$, $S=\{Th, T, F\}$.
+    *   $O_2, P_1$ on $M$.
+    *   $S_2$ on $Th$.
+    *   $B_T$: Only $S$. $B_T = 1 \le 2$. So Tuesday works.
+
+3.  **Wednesday**: Can it be $\le 2$?
+    *   Schedule from example above: $O=\{M, T, W\}$, $P=\{M, F, W\}$, $S=\{Th, T, F\}$.
+    *   $B_W$: $O, P$. $B_W = 2 \le 2$. So Wednesday works.
+    *   Even simpler: Can it be 1?
+    *   Use $O=\{M, W, F\}$, $P=\{T, W, F\}$, $S=\{Th, T, M\}$.
+    *   $O_2, P_1$ on $W$.
+    *   $B_W = 2$.
+    *   So Wednesday works.
+
+4.  **Thursday**: $S_2$ is on Thursday, so $B_{Th} \ge 1$.
+    *   Can we have $B_{Th} \le 2$? Yes.
+    *   Schedule above: $S=\{Th, T, M\}$, $P=\{M, F, W\}$, $O=\{M, T, W\}$.
+    *   $O_2, P_1$ on $M$.
+</pre><div class='muted'>（回答已截断）</div></details></div></section>
+</main>
+</body>
+</html>

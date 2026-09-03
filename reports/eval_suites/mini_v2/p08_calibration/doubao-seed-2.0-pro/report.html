@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">70.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">70</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 100,
+  &quot;confidence_unparsed_rate&quot;: 0.0,
+  &quot;accuracy&quot;: 0.7,
+  &quot;confidence_mean&quot;: 97.3,
+  &quot;confidence_std&quot;: 3.84,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 0,
+    &quot;70-79&quot;: 0,
+    &quot;80-89&quot;: 4,
+    &quot;90-99&quot;: 96
+  },
+  &quot;cwr_at_90&quot;: 0.3021,
+  &quot;n_high_confidence&quot;: 96,
+  &quot;ece_10bin&quot;: 0.273,
+  &quot;brier&quot;: 0.2774,
+  &quot;auroc&quot;: 0.6464,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.7444,
+    &quot;coverage_80&quot;: 0.775,
+    &quot;coverage_70&quot;: 0.7857
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.7222,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.2778,
+      &quot;auroc&quot;: 0.4769
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;accuracy&quot;: 0.8333,
+      &quot;n_with_confidence&quot;: 36,
+      &quot;cwr_at_90&quot;: 0.1429,
+      &quot;auroc&quot;: 0.6444
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.6071,
+      &quot;n_with_confidence&quot;: 28,
+      &quot;cwr_at_90&quot;: 0.44,
+      &quot;auroc&quot;: 0.615
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.5556,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.4444,
+      &quot;auroc&quot;: 0.65
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 6.722
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>13</td><td>0.722</td><td><div class='bar'><i style='width:72%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>30</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>17</td><td>0.607</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>10</td><td>0.556</td><td><div class='bar'><i style='width:56%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>33</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>37</td><td>0.804</td><td><div class='bar'><i style='width:80%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To solve the problem, we start by simplifying the expression for \(x\) using algebraic substitution and factorization.
+
+
+### Step 1: Substitute \(t = \sqrt{n}\)
+Let \(t = \sqrt{n}\), so \(n = t^2\) (since \(t \geq 0\) for square roots). This simplifies the expression by eliminating square roots temporarily.
+
+
+### Step 2: Simplify the Denominator
+The denominator of \(x\) is:
+\[
+\text{Denominator} = n + 4\sqrt{n} + 4
+\]
+Substitute \(n = t^2\) and \(\sqrt{n} = t\):
+\[
+\text{Denominator} = t^2 + 4t + 4 = (t + 2)^2
+\]
+This is a perfect square, so the denominator simplifies to \((t + 2)^2\).
+
+
+### Step 3: Simplify the Numerator
+The numerator of \(x\) is:
+\[
+\text{Numerator} = n^2 + 2\sqrt{n}(n + 4) + 16
+\]
+Substitute \(n = t^2\) and \(\sqrt{n} = t\):
+\[
+\text{Numerator} = (t^2)^2 + 2t(t^2 + 4) + 16 = t^4 + 2t^3 + 8t + 16
+\]
+Factor the polynomial by grouping:
+\[
+t^4 + 2t^3 + 8t + 16 = t^3(t + 2) + 8(t + 2) = (t^3 + 8)(t + 2)
+\]
+Use the sum-of-cubes formula \(a^3 + b^3 = (a + b)(a^2 - ab + b^2)\) for \(t^3 + 2^3\):
+\[
+t^3 + 8 = (t + 2)(t^2 - 2t + 4)
+\]
+Substitute back into the numerator:
+\[
+\text{Numerator} = (t + 2)(t^2 - 2t + 4) \cdot (t + 2) = (t + 2)^2(t^2 - 2t + 4)
+\]
+
+
+### Step 4: Simplify \(x\)
+Divide the simplified numerator by the simplified denominator (the \((t + 2)^2\) terms cancel out, since \(t + 2 &gt; 0\)):
+\[
+x = \frac{(t + 2)^2(t^2 - 2t + 4)}{(t + 2)^2} = t^2 - 2t + 4
+\]
+Rewrite \(x\) in terms of \(n\) (since \(t = \sqrt{n}\) and \(t^2 = n\)):
+\[
+x = n - 2\sqrt{n} + 4
+\]
+
+
+### Step 5: Find the Range of \(x\)
+We know \(36 \leq n \leq 72\). Since \(x = n - 2\sqrt{n} + 4\) is an increasing function of \(n\) (its derivative with respect to \(n\) is \(1 - \frac{1}{\sqrt{n}} &gt; 0\) for \(n \geq 1\)), the minimum and maximum values of \(x\) occur at the endpoints of \(n\):
+- **Minimum \(x\):** At \(n = 36\):
+  \[
+  x = 36 - 2\sqrt{36} + 4 = 36 - 12 + 4 = 28
+  \]
+- **Maximum \(x\):** At \(n = 72\):
+  \[
+  x = 72 - 2\sqrt{72} + 4 = 76 - 12\sqrt{2} \approx 76 - 16.97 = </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To solve the problem, we need to calculate the total number of unique codes Amy can create with `n` letters, where codes are either single letters or unordered pairs of distinct letters. We need this total to be at least 10 (one for each book type).
+### Step 1: Define the total number of codes
+- **Single-letter codes**: There are `n` unique single-letter codes (one for each letter).
+- **Unordered pairs of distinct letters**: Since order does not matter, this is the number of combinations of `n` letters taken 2 at a time, calculated as `C(n, 2) = n(n-1)/2`.
+Total codes = number of single-letter codes + number of unordered pair codes = `n + n(n-1)/2`.
+### Step 2: Test small values of `n`
+We test increasing values of `n` to find the smallest `n` where total codes ≥ 10:
+1.  For `n=3`:
+    - Single-letter codes: 3
+    - Pair codes: `C(3,2) = 3(3-1)/2 = 3`
+    - Total: `3 + 3 = 6`, which is less than 10. Insufficient.
+2.  For `n=4`:
+    - Single-letter codes: 4
+    - Pair codes: `C(4,2) = 4(4-1)/2 = 6`
+    - Total: `4 + 6 = 10`, which exactly matches the number of book types. Sufficient.
+### Step 3: Verify
+For `n=4` (letters A, B, C, D), the full set of codes is: A, B, C, D, AB, AC, AD, BC, BD, CD. This is 10 unique codes, which covers all 10 book types.
+The answer is B
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chinese-202</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：下列词语中，没有错别字的一组是
+选项：(A)讳疾忌医    微言大义    万事具备，只欠东风 (B)罄竹难书    两全其美    一言既出，驷马难追 (C)掷地有声    曲意逢迎    桃李不言，下自成蹊 (D)至高无上    原型必露    失之东隅，收之桑榆
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>我们逐个分析选项中的词语，排查错别字：
+### 分析选项A
+- 讳疾忌医：写法正确，指隐瞒疾病不愿医治，比喻掩饰缺点不愿改正。
+- 微言大义：写法正确，指精微的语言中蕴含深刻的道理。
+- 万事具备，只欠东风：存在错别字，正确写法为「万事俱备，只欠东风」，「俱」是副词，表「都、全」的含义，此处用表「具备」义的「具」错误。因此A选项排除。
+
+### 分析选项B
+- 罄竹难书：写法正确，「罄」指尽，形容罪恶多得写不完。
+- 两全其美：写法正确，指做一件事同时顾全两方面，使双方都受益。
+- 一言既出，驷马难追：写法正确，指话说出口就无法收回，必须算数。
+B选项所有词语均无错别字。
+
+### 分析选项C
+- 掷地有声：写法正确，形容话语坚定有力或文辞优美。
+- 曲意逢迎：写法正确，「曲意」指违背本心，指刻意迎合他人。
+- 桃李不言，下自成蹊：写法正确，「蹊」指小路，比喻人品德高尚，自然会受人敬仰归附。
+C选项所有词语均无错别字。
+
+### 分析选项D
+- 至高无上：写法正确，形容地位、权力等极高，没有能超过的。
+- 原型必露：存在错别字，正确写法为「原形毕露」，「原形」指本来面目（而非「原型」所指的原始模型），「毕」指全部（而非「必」所指的必定）。因此D选项排除。
+
+答案是BC
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-5</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：大科学工程“人造太阳”主要是将氘核聚变反应释放的能量用来发电, 氘核聚变反应方程是: ${ }_{1}^{2} \mathrm{H}^{+} ^{2}_{1} \mathrm{H} \rightarrow_{2}^{3} \mathrm{He}+_{0}^{1} \mathrm{n}$, 已知 $_{1}^{2} \mathrm{H}$ 的质量为 $2.0136 \mathrm{u}$, $_{2}^{3} \mathrm{He}$ 的质量为 $3.0150 \mathrm{u},{ }_{0}^{1} \mathrm{n}$ 的质量为 $1.0087 \mathrm{u}, 1 \mathrm{u}=931 \mathrm{MeV} / \mathrm{c}^{2}$. 氘核聚变 反应中释放的核能约为
+选项：(A)$3.7 \mathrm{MeV}$ (B)$3.3 \mathrm{MeV}$ (C)$2.7 \mathrm{MeV}$ (D)$0.93 \mathrm{MeV}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ABCDE&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>ABCDE</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>要解决氘核聚变释放核能的问题，需利用**质能方程**，通过计算质量亏损求解核能，步骤如下：
+
+### 步骤1：计算反应前后的总质量
+反应前为2个氘核，总质量为：
+$$m_{\text{前}} = 2 \times 2.0136\ \text{u} = 4.0272\ \text{u}$$
+
+反应后为1个$_{2}^{3}\text{He}$和1个中子，总质量为：
+$$m_{\text{后}} = 3.0150\ \text{u} + 1.0087\ \text{u} = 4.0237\ \text{u}$$
+
+### 步骤2：计算质量亏损
+质量亏损为反应前后的质量差：
+$$\Delta m = m_{\text{前}} - m_{\text{后}} = 4.0272\ \text{u} - 4.0237\ \text{u} = 0.0035\ \text{u}$$
+
+### 步骤3：根据质能方程计算释放的核能
+已知$1\ \text{u}=931\ \text{MeV}/c^2$，由质能方程$\Delta E = \Delta m c^2$，代入得：
+$$\Delta E = 0.0035\ \text{u} \times 931\ \text{MeV}/c^2 \times c^2 \approx 3.3\ \text{MeV}$$
+
+答案是B
+
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-215</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>陕西出土的秦始皇兵马俑，其表面涂有生漆和彩绘。这为研究秦代军人的服色提供了重要信息。但兵马俑出土后，表面的生漆会很快发生翘和卷曲，造成整个彩绘层脱落，因此，必须用防护液和单体渗透两套方法进行保护，否则不能供研究使用。而一旦采用这两套方法对兵马俑进行保护，就会破环研究者可能从中获得的有关秦代彩绘技术的全部信息。
+问题：如果以上陈述为真，以下哪项必然为真？
+选项：A．采取保护措施后的秦兵马俑只能提供秦代军人服色方面的信息。 B．一个供研究秦代军人服色的兵马俑，不能成为了解秦代彩绘技术的新信息的来源。 C．秦兵马俑是了解秦代彩绘技术的唯一信息来源。 D．一个没有采取保护措施的兵马俑能够比采取保护措施后的兵马俑提供更多信息。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 99}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>### 步骤1：梳理题干逻辑关系
+首先提取题干的核心逻辑链：
+1. 兵马俑出土后若不采取保护措施（防护液+单体渗透），彩绘层会很快脱落，**不能供任何研究使用**（包括研究服色）。即：能供研究使用（含研究服色）→ 必须采取保护措施。
+2. 若采取保护措施，会**破坏兵马俑中所有秦代彩绘技术的信息**。即：采取保护措施→ 无法从该兵马俑获得彩绘技术信息。
+将两个逻辑链串联可得：能供研究（含研究服色）的兵马俑→ 采取了保护措施→ 无法提供彩绘技术信息。
+
+### 步骤2：逐一分析选项
+- **选项A**：题干仅说明保护措施会破坏彩绘技术信息，并未提及兵马俑只能提供服色信息（还可能有陶质工艺、秦代冶炼等其他信息），“只能”属于无依据的绝对表述，错误。
+- **选项B**：根据串联的逻辑链，供研究秦代军人服色的兵马俑，一定是采取过保护措施的，而保护措施会破坏全部彩绘技术信息，因此它无法成为彩绘技术新信息的来源，符合逻辑，正确。
+- **选项C**：题干从未提及秦兵马俑是了解秦代彩绘技术的“唯一”来源，属于无中生有，错误。
+- **选项D**：未采取保护措施的兵马俑会很快出现彩绘层脱落，根本不能供研究使用，无法提供任何有效研究信息，远不如保护后能提供服色信息的兵马俑，因此“提供更多信息”的表述错误。
+
+答案是B
+置信度: 99</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::college_economics-val-40</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>政府对餐馆的营业收入征收20%的营业税；营业收入以餐馆向顾客开具发票的总金额来确定。法律规定顾客有权索取发票。假定发票对于顾客没有任何价值，因此顾客都不开发票。这时，政府为了增加税收，推出了发票抽奖的活动。每开具100元的发票，顾客可从政府那里得到的中奖收入为10元。根据科斯定理并运用供求理论，你预计政府引入这一做法的后果是：____
+A. 顾客开发票；政府税收增加，餐馆收入下降
+B. 顾客不开发票，政府税收不变，餐馆收入下降
+C. 顾客不开发票，政府税收不变，餐馆收入不变
+D. 顾客开发票，政府税收不变，餐馆收入不变
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B
+要解答这道题，需结合科斯定理和供求逻辑逐步推导：
+1. 首先分析开票对双方的成本收益：每100元消费若开票，顾客能从政府获得10元中奖收益，但餐馆需要缴纳20%的营业税（即20元成本）。对顾客和餐馆的整体而言，开票的总净收益为10-20=-10元，不开票的总剩余更高。
+2. 根据科斯定理，只要产权明晰（本题明确顾客有索取发票的权利）、交易成本为零，双方会通过协商达成对整体最优的结果：餐馆为了避免缴纳20元的税，愿意向顾客支付介于10元（顾客开票的收益）到20元（餐馆开票的成本）之间的补偿，换取顾客不开票；顾客拿到的补偿高于开票的中奖收益，也会同意不开票。
+3. 最终结果：顾客依然不开发票，政府没有开票额因此税收和原来一致、没有变化；餐馆需要向顾客支付补偿，实际收入较原来下降。
+
+置信度: 95</pre></details></div></section>
+</main>
+</body>
+</html>

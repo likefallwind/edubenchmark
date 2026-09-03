@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">33.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">97</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">32</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 97,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.3711,
+  &quot;r2_accuracy&quot;: 0.3299,
+  &quot;net_gain&quot;: -0.0412,
+  &quot;change_rate&quot;: 0.1546,
+  &quot;n_r1_wrong&quot;: 61,
+  &quot;n_fixed_wrong_to_right&quot;: 5,
+  &quot;fix_rate&quot;: 0.082,
+  &quot;n_r1_right&quot;: 36,
+  &quot;n_broken_right_to_wrong&quot;: 9,
+  &quot;break_rate&quot;: 0.25,
+  &quot;score_10&quot;: 4.16,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;r1_correct&quot;: 6,
+      &quot;r2_correct&quot;: 5,
+      &quot;fixed&quot;: 2,
+      &quot;broken&quot;: 3
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;r1_correct&quot;: 17,
+      &quot;r2_correct&quot;: 14,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 4
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 25,
+      &quot;r1_correct&quot;: 7,
+      &quot;r2_correct&quot;: 6,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;r1_correct&quot;: 6,
+      &quot;r2_correct&quot;: 7,
+      &quot;fixed&quot;: 2,
+      &quot;broken&quot;: 1
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>3</td></tr><tr><td>scored</td><td>97</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>5</td><td>0.294</td><td><div class='bar'><i style='width:29%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>14</td><td>0.359</td><td><div class='bar'><i style='width:36%'></i></div></td></tr><tr><td>mmlu_pro</td><td>25</td><td>6</td><td>0.240</td><td><div class='bar'><i style='width:24%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>7</td><td>0.438</td><td><div class='bar'><i style='width:44%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>49</td><td>16</td><td>0.327</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>zh</td><td>48</td><td>16</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（3 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>3</td><td>模型返回了空内容</td><td class='muted'>mmlu_pro::10608, mmlu_pro::12111, mmlu_pro::8510</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;Rechecking the computation:\n\nLet  \n\\[\na=\\sqrt n.\n\\]\nSince \\(36\\le n\\le 72\\), we have  \n\\[\n6\\le a\\le 6\\sqrt2.\n\\]\n\nThe expression is\n\\[\nx=\\frac{a^4+2a(a^2+4)+16}{a^2+4a+4}.\n\\]\n\nNow factor the numerator:\n\\[\na^4+2a^3+8a+16=(a^2+4a+4)(a^2-2a+4).\n\\]\n\nAlso,\n\\[\na^2+4a+4=(a+2)^2.\n\\]\n\nThus,\n\\[\nx=a^2-2a+4=(a-1)^2+3.\n\\]\n\nBecause \\(a\\ge 6\\), the function \\((a-1)^2+3\\) is increasing on the interval. Therefore:\n\nMinimum at \\(a=6\\):\n\\[\nx_{\\min}=6^2-2(6)+4=36-12+4=28.\n\\]\n\nMaximum at \\(a=6\\sqrt2\\):\n\\[\nx_{\\max}=(6\\sqrt2)^2-2(6\\sqrt2)+4\n=72-12\\sqrt2+4\n=76-12\\sqrt2.\n\\]\n\nNumerically,\n\\[\n76-12\\sqrt2\\approx 59.03.\n\\]\n\nSo\n\\[\n28\\le x\\le 59.03.\n\\]\n\nNow check the choices:\n\n- (A) \\(20&lt;x&lt;54\\): false, since \\(x\\) can exceed \\(54\\).\n- (B) \\(23&lt;x&lt;58\\): false, since \\(x\\) can exceed \\(58\\).\n- (C) \\(25&lt;x&lt;64\\): true, because \\(28&gt;25\\) and \\(x&lt;59.03&lt;64\\).\n- (D) \\(28&lt;x&lt;60\\): false, because when \\(n=36\\), \\(x=28\\), so \\(28&lt;x\\) is not strictly true.\n- (E) None of these: false, because (C) is true.\n\nTherefore, the previous answer is correct.\n\nThe answer is C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Let \(a=\sqrt n\). Then \(n=a^2\), and
+
+\[
+x=\frac{a^4+2a(a^2+4)+16}{a^2+4a+4}
+=\frac{a^4+2a^3+8a+16}{(a+2)^2}.
+\]
+
+Now factor/notice:
+
+\[
+(a^2+4a+4)(a^2-2a+4)=a^4+2a^3+8a+16.
+\]
+
+So
+
+\[
+x=a^2-2a+4=(\sqrt n-1)^2+3.
+\]
+
+Since \(36\le n\le 72\),
+
+\[
+6\le \sqrt n\le 6\sqrt 2.
+\]
+
+The function \(f(a)=a^2-2a+4\) is increasing for \(a\ge 6\). Thus
+
+\[
+x_{\min}=6^2-2(6)+4=28,
+\]
+
+\[
+x_{\max}=(6\sqrt2)^2-2(6\sqrt2)+4=72-12\sqrt2+4=76-12\sqrt2.
+\]
+
+Numerically,
+
+\[
+76-12\sqrt2\approx 59.03.
+\]
+
+So
+
+\[
+28\le x\le 76-12\sqrt2&lt;60.
+\]
+
+Checking the choices:
+
+- (A), (B) have upper bounds too small.
+- (D) says \(28&lt;x&lt;60\), but at \(n=36\), \(x=28\), so the strict inequality fails.
+- (C) \(25&lt;x&lt;64\) is valid because \(28&gt;25\) and \(x&lt;60&lt;64\).
+
+The answer is C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;Let \\(n\\) be the number of letters Amy uses.\n\nPossible codes:\n\n- Single-letter codes: \\(n\\)\n- Two-letter codes with two different letters, order does not matter: \\(\\binom{n}{2}\\)\n\nTotal possible distinct codes:\n\n\\[\nn+\\binom{n}{2}=n+\\frac{n(n-1)}{2}\n\\]\n\nWe need at least 10 codes:\n\n\\[\nn+\\binom{n}{2} \\ge 10\n\\]\n\nCheck small values:\n\n- \\(n=3\\):  \n  \\[\n  3+\\binom{3}{2}=3+3=6\n  \\]  \n  Not enough.\n\n- \\(n=4\\):  \n  \\[\n  4+\\binom{4}{2}=4+6=10\n  \\]  \n  Exactly enough.\n\nThus, the smallest number of letters needed is 4.\n\nThe answer is B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Let \(n\) be the number of letters Amy uses.
+
+She can make codes of two kinds:
+
+1. Single-letter codes: \(n\) possibilities  
+2. Two-letter pair codes, where order does not matter and letters are different: \(\binom{n}{2}\) possibilities  
+
+So the total number of distinct codes is
+
+\[
+n + \binom{n}{2} = n + \frac{n(n-1)}{2}
+\]
+
+We need at least 10 codes:
+
+\[
+n + \frac{n(n-1)}{2} \ge 10
+\]
+
+Try small values:
+
+- \(n=3\): \(3+\binom{3}{2}=3+3=6\), not enough
+- \(n=4\): \(4+\binom{4}{2}=4+6=10\), enough
+
+So Amy needs at least 4 letters.
+
+The answer is B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-biology-8</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：用体外实验的方法可合成多肽链。已知苯丙氨酸的密码子是 UUU, 若要在体外合成同位 素标记的多肽链, 所需的材料组合是
+
+(1)同位素标记的 tRNA
+
+(2)蛋白质合成所需的酶
+
+(3)同位素标记的苯丙氨酸
+
+(4)人工合成的多聚尿嘧啶核苷酸
+
+(5)除去了 DNA 和 mRNA 的细胞裂解液
+选项：(A)(1)(2)(4) (B)(2)(3)(4) (C)(3)(4)(5) (D)(1)(3)(5)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;逐步重新检查：\n\n1. **目标**：在体外合成**同位素标记的多肽链**。  \n   多肽链由氨基酸脱水缩合形成，因此要让多肽链被同位素标记，应将同位素标记在**氨基酸**上，而不是 tRNA 上。\n\n2. **(1) 同位素标记的 tRNA**  \n   tRNA 的作用是转运氨基酸，并识别密码子，但 tRNA 本身**不会进入多肽链**。  \n   因此，标记 tRNA 不能使多肽链被同位素标记。  \n   **不需要 (1)。**\n\n3. **(2) 蛋白质合成所需的酶**  \n   蛋白质合成确实需要酶，但题目中 **(5) 除去了 DNA 和 mRNA 的细胞裂解液** 通常已经提供核糖体、tRNA、翻译所需酶和因子等完整无细胞翻译系统。  \n   若只选 (2)、(3)、(4)，可能缺少核糖体、tRNA 等关键成分，不能保证合成多肽。  \n   因此本题中更关键的是 **(5)**，而不是单独选 (2)。  \n   **不选 (2)。**\n\n4. **(3) 同位素标记的苯丙氨酸**  \n   苯丙氨酸是合成多肽链的原料之一。若苯丙氨酸被同位素标记，则掺入多肽链后会使多肽链带有同位素标记。  \n   **必须选 (3)。**\n\n5. **(4) 人工合成的多聚尿嘧啶核苷酸**  \n   已知苯丙氨酸密码子是 **UUU**。  \n   多聚尿嘧啶核苷酸，即 poly-U，可作为 mRNA 模板，指导核糖体连续读取 UUU 密码子，从而合成多聚苯丙氨酸。  \n   **必须选 (4)。**\n\n6. **(5) 除去了 DNA 和 mRNA 的细胞裂解液**  \n   该裂解液可提供核糖体、tRNA、酶、翻译因子等体外蛋白质合成所需成分，同时除去内源 DNA 和 mRNA，可避免内源 mRNA 干扰合成目标多肽。  \n   **必须选 (5)。**\n\n因此，正确组合是：\n\n**(3)(4)(5)**\n\n对应选项为 C。\n\n答案是C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>要合成“同位素标记的多肽链”，关键是让同位素进入多肽链中。
+
+- 苯丙氨酸的密码子是 **UUU**，因此需要人工合成的 **多聚尿嘧啶核苷酸（poly-U）** 作为 mRNA 模板，对应 **(4)**。
+- 多肽链由氨基酸缩合而成，同位素应标记在氨基酸上，因此需要用 **同位素标记的苯丙氨酸**，对应 **(3)**。
+- 体外合成还需要核糖体、tRNA、相关酶和翻译因子等，通常由 **除去了 DNA 和 mRNA 的细胞裂解液** 提供，避免内源核酸干扰，对应 **(5)**。
+- **同位素标记的 tRNA** 不会使多肽链被标记，因为 tRNA 本身不进入肽链。
+- 只加“蛋白质合成所需的酶”而没有完整翻译系统，也不能完成多肽合成。
+
+因此所需材料组合是 **(3)(4)(5)**。
+
+答案是C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;逐步验证如下：\n\n1. **A项：蚕丝的主要成分是蛋白质**  \n   蚕丝由蚕吐丝形成，主要成分为丝蛋白，属于蛋白质类物质。  \n   **说法正确。**\n\n2. **B项：蚕丝属于天然高分子材料**  \n   题目中“天热”应为“天然”的笔误。蚕丝是自然界中形成的高分子材料，相对分子质量较大，属于天然高分子材料。  \n   **说法正确。**\n\n3. **C项：“蜡炬成灰”过程中发生了氧化反应**  \n   “蜡炬成灰”指蜡烛燃烧。蜡烛燃烧是与氧气反应生成二氧化碳和水等物质，属于氧化反应。  \n   **说法正确。**\n\n4. **D项：古代的蜡是高级脂肪酸酯，属于高分子聚合物**  \n   古代的蜡主要成分可能包括高级脂肪酸酯、高级脂肪酸、烃类等。虽然其中可能含有高级脂肪酸酯，但这些物质通常相对分子质量较小，不属于高分子聚合物。  \n   **说法错误。**\n\n题目要求选择“说法错误的”，因此错误选项是 **D**。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步分析：
+
+- **A项**：蚕丝的主要成分是蛋白质，尤其是丝蛋白，说法正确。  
+- **B项**：蚕丝是天然形成的高分子材料，属于天然高分子材料，说法正确。  
+- **C项**：“蜡炬成灰”指蜡烛燃烧，燃烧本质上是氧化反应，说法正确。  
+- **D项**：古代的蜡主要成分是高级脂肪酸酯，例如高级脂肪酸与高级醇形成的酯，但它们不是高分子聚合物，只是小分子有机物的混合物，说法错误。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-27</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：黄色固体 $\mathrm{X}$, 可能含有漂白粉、 $\mathrm{FeSO}_{4} $、$ \mathrm{Fe}_{2}\left(\mathrm{SO}_{4}\right)_{3} $、$ \mathrm{CuCl}_{2} $、$ \mathrm{KI}$ 之中的几种或全 部。将 $\mathrm{X}$ 与足量的水作用, 得到深棕色固体混合物 $\mathrm{Y}$ 和无色碱性溶液 $\mathrm{Z}$ 。下列结论合理的 是
+选项：(A)$\mathrm{X}$ 中含 $\mathrm{KI}$, 可能含有 $\mathrm{CuCl}_{2}$ (B)$\mathrm{X}$ 中含有漂白粉和 $\mathrm{FeSO}_{4}$ (C)$\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}, \mathrm{Y}$ 中含有 $\mathrm{Fe}(\mathrm{OH})_{3}$ (D)用 $\mathrm{H}_{2} \mathrm{SO}_{4}$ 酸化溶液 $\mathrm{Z}$, 若有黄绿色气体放出, 说明 $\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;复核后认为原答案仍然正确，但需要把推理补充得更严谨一些。\n\n1. **Z 为无色碱性溶液**  \n   所给物质中，\\(\\mathrm{FeSO_4}\\)、\\(\\mathrm{Fe_2(SO_4)_3}\\)、\\(\\mathrm{CuCl_2}\\) 水溶液均因水解呈酸性或本身显弱酸性，\\(\\mathrm{KI}\\) 近似中性，只有**漂白粉**可使体系显碱性。  \n   因此可合理推断：**X 中一定含有漂白粉**。  \n   同时 Z 无色，说明溶液中不应残留明显的 \\(\\mathrm{Fe^{3+}}\\)（黄色）、\\(\\mathrm{Fe^{2+}}\\)（浅绿色）、\\(\\mathrm{Cu^{2+}}\\)（蓝色/绿色）等有色离子，这些若存在，在碱性条件下会被沉淀除去。\n\n2. **Y 为深棕色固体混合物**  \n   候选物质中，能与漂白粉发生明显氧化还原并生成深棕色/紫黑色固体的是：\n\n   \\[\n   \\mathrm{ClO^- + 2I^- + H_2O \\rightarrow I_2 \\downarrow + Cl^- + 2OH^-}\n   \\]\n\n   \\(\\mathrm{I_2}\\) 为深棕色/紫黑色固体。因此由“深棕色固体”可合理推断 **X 中含有 \\(\\mathrm{KI}\\)**。  \n   若体系中还含有铁盐，则碱性条件下可生成红褐色 \\(\\mathrm{Fe(OH)_3}\\)：\n\n   \\[\n   \\mathrm{Fe^{3+} + 3OH^- \\rightarrow Fe(OH)_3 \\downarrow}\n   \\]\n\n   \\(\\mathrm{I_2}\\) 与 \\(\\mathrm{Fe(OH)_3}\\) 混合可呈深棕色固体混合物。  \n   若含有 \\(\\mathrm{CuCl_2}\\)，\\(\\mathrm{Cu^{2+}}\\) 可与 \\(\\mathrm{I^-}\\) 或碱性环境作用生成 \\(\\mathrm{CuI}\\)、\\(\\mathrm{Cu(OH)_2}\\) 等固体，并与 \\(\\mathrm{I_2}\\) 混合，也不与现象矛盾。  \n   所以：**X 中含 \\(\\mathrm{KI}\\)，且可能含有 \\(\\mathrm{CuCl_2}\\)**，A 合理。\n\n3. **选项 B：X 中含有漂白粉和 \\(\\mathrm{FeSO_4}\\)**  \n   漂白粉可以确定，但 \\(\\mathrm{FeSO_4}\\) 不能确定。  \n   铁元素也可能来自 \\(\\mathrm{Fe_2(SO_4)_3}\\)，且 X 为黄色固体，更常见的是含 \\(\\mathrm{Fe_2(SO_4)_3}\\) 或 \\(\\mathrm{CuCl_2}\\) 提供颜色，不能推出一定含 \\(\\mathrm{FeSO_4}\\)。  \n   因此 B 不合理。\n\n4. **选项 C：X 中含有 \\(\\mathrm{CuCl_2}\\)，Y 中含有 \\(\\mathrm{Fe(OH)_3}\\)**  \n   \\(\\mathrm{CuCl_2}\\) 不是必须存在的；黄色固体也可由 \\(\\mathrm{Fe_2(SO_4)_3}\\) 提供。  \n   同时若体系中不含铁盐，Y 中也不一定有 \\(\\mathrm{Fe(OH)_3}\\)。  \n   因此 C 不合理。\n\n5. **选项 D：用 \\(\\mathrm{H_2SO_4}\\) 酸化 Z，若有黄绿色气体放出，说明 X 中含有 \\(\\mathrm{CuCl_2}\\)**  \n   黄绿色气体为 \\(\\mathrm{Cl_2}\\)。  \n   漂白粉中含有 \\(\\mathrm{ClO^-}\\) 和 \\(\\mathrm{Cl^-}\\)，酸化时可发生：\n\n   \\[\n   \\mathrm{ClO^- + Cl^- + 2H^+ \\rightarrow Cl_2 \\uparrow + H_2O}\n   \\]\n\n   因此放出 \\(\\mathrm{Cl_2}\\) 只能说明体系中可能存在漂白粉组分，不能说明 X 中一定含 \\(\\mathrm{CuCl_2}\\)。  \n   所以 D 不合理。\n\n综上，原答案无误，只有 A 合理。\n\n答案是A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步分析：
+
+1. **溶液 Z 为无色碱性溶液**  
+   所给物质中，能明显使水溶液显碱性的是**漂白粉**（含 \(\mathrm{Ca(OCl)Cl}\)、\(\mathrm{Ca(OH)_2}\) 等）。  
+   因此可以确定：**X 中一定含有漂白粉**。  
+   同时，Z 无色，说明溶液中不应残留明显的 \(\mathrm{Fe^{3+}}\)（黄色）、\(\mathrm{Cu^{2+}}\)（蓝色）、\(\mathrm{Fe^{2+}}\)（浅绿色）等有色离子；若有这些金属离子，在碱性漂白粉中会被沉淀或氧化除去。
+
+2. **固体 Y 为深棕色固体混合物**  
+   碱性条件下，铁盐可生成 \(\mathrm{Fe(OH)_3}\)，颜色为红褐色。  
+   但要得到“深棕色固体混合物”，合理的推断是其中还含有 \(\mathrm{I_2}\)（深棕色/紫黑色固体）。  
+   \(\mathrm{I_2}\) 只能由 \(\mathrm{KI}\) 被氧化得到，例如：
+
+   \[
+   \mathrm{ClO^- + 2I^- + H_2O \rightarrow I_2 + Cl^- + 2OH^-}
+   \]
+
+   所以可以推出：**X 中一定含有 KI**。
+
+3. **CuCl₂ 是否一定含有？**  
+   不一定。  
+   - 若 X 中不含 \(\mathrm{CuCl_2}\)，也可由漂白粉、铁盐、KI 得到 \(\mathrm{Fe(OH)_3}\) 和 \(\mathrm{I_2}\) 的深棕色固体混合物。  
+   - 若 X 中含有 \(\mathrm{CuCl_2}\)，\(\mathrm{Cu^{2+}}\) 可生成 \(\mathrm{Cu(OH)_2}\) 或与 \(\mathrm{I^-}\) 生成 \(\mathrm{CuI}\)、\(\mathrm{I_2}\)，也不矛盾，溶液仍可能为无色碱性。  
+   因此只能说明：**可能含有 CuCl₂**，不能说明一定含有。
+
+   所以 A 合理，C 中“X 中含有 CuCl₂”不合理。
+
+4. **B 是否合理？**  
+   由现象只能推出可能含有某种铁盐，不能确定一定是 \(\mathrm{FeSO_4}\)。  
+   \(\mathrm{FeSO_4}\) 和 \(\mathrm{Fe_2(SO_4)_3}\) 最终都可能生成 \(\mathrm{Fe(OH)_3}\)。且 X 为黄色，更提示可能含黄色的 \(\mathrm{Fe_2(SO_4)_3}\)，而不是 \(\mathrm{FeSO_4}\)。  
+   因此 B 不合理。
+
+5. **D 是否合理？**  
+   用 \(\mathrm{H_2SO_4}\) 酸化 Z，若放出黄绿色气体，该气体是 \(\mathrm{Cl_2}\)。  
+   其来源通常是漂白粉中的 \(\mathrm{ClO^-}\) 与 \(\mathrm{Cl^-}\) 在酸性条件下反应：
+
+   \[
+   \mathrm{ClO^- + Cl^- + 2H^+ \rightarrow Cl_2 \uparrow + H_2O}
+   \]
+
+   这说明 Z 中可能仍有漂白粉组分，不能说明 X 中含有 \(\mathrm{CuCl_2}\)。D 不合理。
+
+综上，只有 A 合理。
+
+答案是A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-103</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：司汤达小说中的人物曾说：“自从蒸汽机成为世界的王后以来，贵族头衔已成为无用之物。”结合所学史实，对这句话的理解正确的是
+选项：(A)客观真实，可以采信 (B)主观臆断，有待考证 (C)背离史实，不足为信 (D)小说家言，皆不可信
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;重新检查如下：\n\n1. 题干关键信息：  \n   - 这句话出自“司汤达小说中的人物”。  \n   - 司汤达是19世纪法国作家，小说属于文学作品，并非严格的史料或历史文献。  \n   - 因此，小说中人物的话可能包含作者的主观认识、时代感受和文学夸张，不能直接等同于客观史实。\n\n2. 结合史实判断内容：  \n   - “蒸汽机成为世界的王后”反映工业革命以来机器大生产对社会结构的冲击。  \n   - 工业革命促进资本主义经济发展，资产阶级力量增强，传统贵族依靠血统、头衔获取的政治和社会优势确实相对下降。  \n   - 但说贵族头衔“已成为无用之物”过于绝对。贵族头衔在社会身份、政治影响、家族地位等方面仍可能有一定作用，不能简单说完全无用。\n\n3. 对选项逐项判断：  \n   - A“客观真实，可以采信”：不正确。小说人物言论有文学虚构和主观表达，不能直接作为客观史实采信。  \n   - B“主观臆断，有待考证”：较正确。它体现作者或小说人物对时代变化的一种主观判断，需要结合其他史料进一步考证。  \n   - C“背离史实，不足为信”：不准确。这句话虽夸张，但并非完全背离史实，工业革命确实冲击了贵族社会的传统地位。  \n   - D“小说家言，皆不可信”：错误。文学作品虽具主观性，但仍可反映时代背景、社会心态和历史趋势，不能一概否定。\n\n4. 结论：  \n   原答案选择B是合理的。小说中人物的话属于带有主观性的文学表达，虽有一定历史背景，但不能直接采信，应结合史实考证。\n\n答案是B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>这句话有一定历史背景：工业革命以来，蒸汽机推动机器大生产发展，资本主义经济力量增强，资产阶级地位上升，传统贵族依靠血统、头衔获得的政治与社会优势相对下降。因此，说“贵族头衔已成为无用之物”反映了工业革命对旧贵族社会地位的冲击。
+
+但它出自小说人物之口，属于文学表达，带有作者的主观加工和夸张色彩；而且“无用之物”说法也较绝对，不能直接当作完全客观的史实来采信。也不能因为它是“小说家言”就认为完全不可信，而应结合其他史料加以考证。
+
+因此，最合理的是 **主观臆断，有待考证**。
+
+答案是B</pre></details></div></section>
+</main>
+</body>
+</html>

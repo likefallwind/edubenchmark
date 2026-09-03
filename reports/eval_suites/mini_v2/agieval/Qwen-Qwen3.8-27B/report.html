@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · agieval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · AGIEval：标准化与资格考试推理</h1>
+    <p class="muted">基准 agieval · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">91.2%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">73</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>AGIEval 取材于人类标准化/资格考试（高考、SAT、LSAT、GRE、法考、公务员考试、竞赛 MATH 等），评测模型在真实考试情境下的推理能力。对应本仓库能力维度 D03（标准化与资格考试推理）。</p><p>本次覆盖 21 个任务，分为选择题（gold 为选项字母；jec-qa、gaokao-physics 为多选）与数学填空（gold 为自由作答）。提示采用零样本思维链，要求模型先推理、再显式给出最终答案。</p><p>选择题抽取沿用官方 post_process 取字母逻辑，数学题动态加载官方 math_equivalence做等价判定；按任务、语言、题型分桶统计。</p><p class='muted'>主页：<a href='https://github.com/ruixiangcui/AGIEval'>https://github.com/ruixiangcui/AGIEval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-203</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: What is 60% of 30% of 1400 grams?
+Answer Choices: (A)450 gms (B)100 gms (C)252 gms (D)240 gms (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-246</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: Alice wants to put up fencing around three sides of her rectangular yard and leave one side of 10 meters unfenced. If the yard has an area of 240 square meters, how many meters of fencing does she need?
+Answer Choices: (A)58 (B)62 (C)66 (D)70 (E)74
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>aqua-rat</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-biology</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chemistry</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chinese</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>gaokao-english</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-geography</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-history</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-mathcloze</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathqa</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-physics</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>jec-qa-ca</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>jec-qa-kd</td><td>5</td><td>4</td><td>0.800</td><td><div class='bar'><i style='width:80%'></i></div></td></tr><tr><td>logiqa-en</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>logiqa-zh</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>lsat-ar</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>lsat-lr</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>lsat-rc</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>math</td><td>11</td><td>10</td><td>0.909</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>sat-en</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>sat-en-without-passage</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>sat-math</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>43</td><td>40</td><td>0.930</td><td><div class='bar'><i style='width:93%'></i></div></td></tr><tr><td>zh</td><td>37</td><td>33</td><td>0.892</td><td><div class='bar'><i style='width:89%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cloze</td><td>12</td><td>10</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>qa</td><td>68</td><td>63</td><td>0.926</td><td><div class='bar'><i style='width:93%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#gaokao-chinese-71</span><span class='tag'>task=gaokao-chinese</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>材料一：。
+问题：下列对材料相关内容的概括和分析，不正确的一项是
+选项：(A)“鸟巢一代”参加奥运志愿服务形成了集体记忆，其中蕴含的价值取向与社会主义核心价值观的契合度较高。 (B)共享单车公司除了让运营人员加强维护外，还尝试通过信用分奖惩的方式来帮助解决破坏单车等多种问题。 (C)为了推动共享秩序的建立，单车猎人开始寻找并拍照举报违规停放、私自上锁和丢弃单车等不文明的行为。 (D)单车猎人的群体性行为有助于规范共享单车的使用，构建在共享单车公司之外的民间力量参与治理的新格局。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>从四个选项的表述来看，A、B、C 项基本符合常见材料对“鸟巢一代”的集体记忆、共享单车公司信用分治理、单车猎人举报不文明行为等内容的概括。D 项的问题在于把“单车猎人”的群体性行为夸大为“构建在共享单车公司之外的民间力量参与治理的新格局”，表述过于绝对和拔高；共享单车治理通常需要企业、用户、社会力量和管理部门共同参与，单靠单车猎人并不能“构建新格局”。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-mathcloze-25</span><span class='tag'>task=gaokao-mathcloze</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=cloze</span></div><div class='qtext'>问题：已知 $a, b, c$ 分别为 $\triangle A B C$ 的三个内角 $A, B, C$ 的对边, $a=2$ 且 $(2+b)(\sin A-\sin B)=(c-b) \sin C$, 则 $\triangle A B C$ 面积的最大值为 $(\quad)$.
+请逐步推导，并在最后用 \boxed{} 给出最终答案。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>\sqrt3</div><div class='ans'><span class='lbl'>归一化</span>\sqrt3</div><div class='ans gold'><span class='lbl'>正确答案</span>$\sqrt{3}$</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>由正弦定理，设
+
+\[
+\frac{\sin A}{a}=\frac{\sin B}{b}=\frac{\sin C}{c}=k,
+\]
+
+则
+
+\[
+\sin A=ak,\quad \sin B=bk,\quad \sin C=ck.
+\]
+
+已知 \(a=2\)，代入题设条件：
+
+\[
+(2+b)(\sin A-\sin B)=(c-b)\sin C
+\]
+
+得
+
+\[
+(2+b)(2k-bk)=(c-b)ck.
+\]
+
+因为 \(k&gt;0\)，约去 \(k\)：
+
+\[
+(2+b)(2-b)=c(c-b).
+\]
+
+即
+
+\[
+4-b^2=c^2-bc.
+\]
+
+整理得
+
+\[
+b^2+c^2-bc=4. \tag{1}
+\]
+
+另一方面，由余弦定理：
+
+\[
+a^2=b^2+c^2-2bc\cos A.
+\]
+
+因为 \(a=2\)，所以
+
+\[
+4=b^2+c^2-2bc\cos A. \tag{2}
+\]
+
+比较 \((1)\) 与 \((2)\)：
+
+\[
+b^2+c^2-bc=b^2+c^2-2bc\cos A,
+\]
+
+因此
+
+\[
+bc=2bc\cos A.
+\]
+
+由于 \(b,c&gt;0\)，所以
+
+\[
+\cos A=\frac12,
+\]
+
+故
+
+\[
+A=\frac{\pi}{3}.
+\]
+
+三角形面积为
+
+\[
+S=\frac12 bc\sin A
+=\frac12 bc\cdot \frac{\sqrt3}{2}
+=\frac{\sqrt3}{4}bc.
+\]
+
+下面在约束条件
+
+\[
+b^2+c^2-bc=4
+\]
+
+下求 \(bc\) 的最大值。由均值不等式：
+
+\[
+b^2+c^2\ge 2bc,
+\]
+
+所以
+
+\[
+4=b^2+c^2-bc\ge 2bc-bc=bc.
+\]
+
+因此
+
+\[
+bc\le 4.
+\]
+
+等号成立当且仅当 \(b=c\)。此时由
+
+\[
+b^2+c^2-bc=4
+\]
+
+得
+
+\[
+b^2=4,
+\]
+
+即
+
+\[
+b=c=2.
+\]
+
+此时三角形为边长为 \(2\) 的等边三角形，面积取得最大值：
+
+\[
+S_{\max}=\frac{\sqrt3}{4}\cdot 4=\sqrt3.
+\]
+
+因此，\(\triangle ABC\) 面积的最大值为
+
+\[
+\boxed{\sqrt3}
+\]</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#jec-qa-kd-436</span><span class='tag'>task=jec-qa-kd</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：关于对战争和武装冲突中若干概念的理解，以下说法正确的是
+选项：(A)战争只能是国家和国家之间才可能进行的，但是武装冲突则不一定是国家之间的行为。 (B)当双方处于战争状态时，他们之间一定存在敌对行为。 (C)永久中立国必须在其他国家处于战争状态时放弃使用武力的交战权力。 (D)在战争中不得使用背信弃义的作战方法是指不能采取欺诈的手段来赢得战斗的胜利。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>AC</div><div class='ans'><span class='lbl'>归一化</span>AC</div><div class='ans gold'><span class='lbl'>正确答案</span>[&#x27;A&#x27;]</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A 正确：国际法上通常将“战争”理解为国家之间的武装冲突；“武装冲突”外延更广，还包括非国际性武装冲突，未必都是国家之间。
+
+B 错误：战争状态是一种法律状态，并不以实际敌对行为的存在为必要条件；可以存在战争状态但暂时没有敌对行动。
+
+C 正确：永久中立国承担永久中立义务，在其他国家处于战争状态时不得作为交战国行使使用武力的交战权力；但其仍保留自卫权。题干表述的是“交战权力”，并非否定一切使用武力。
+
+D 错误：禁止的是“背信弃义”，并不等于禁止一切欺诈手段；战争诈欺通常是被允许的。
+
+答案是A、C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#logiqa-en-86</span><span class='tag'>task=logiqa-en</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Based on the following questions? Most people think that advertisers do whatever they can to attract customers.But advertisers are not always like this.Recently, in order to expand sales, a family magazine called &quot;Bay&quot; was renamed &quot;Inferno&quot;, which mainly published violent and pornographic content.As a result, some perennial advertisers from the original &quot;Bay&quot; magazine refused to renew the contract and turned to other publications.This shows that these advertisers not only consider economic benefits, but also take into account their ethical responsibilities.
+Question: If the following item is true, can the argument be strengthened most?
+Answer Choices: (A)The cost and selling price of &quot;Inferno&quot; are lower than that of &quot;Harbour&quot;. (B)The above advertisers who refused to renew their contracts have not affected the benefits after switching to other publications. (C)Readers of family magazines are generally not interested in violent and pornographic content. (D)Some clients who advertise in other family magazines and so on turn to &quot;Inferno&quot; magazine.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The argument concludes that the advertisers’ refusal to renew with *Inferno* shows they consider ethical responsibilities, not only economic benefits.
+
+To strengthen this, we need to make it more plausible that their decision was not simply driven by economic self-interest or economic loss.
+
+- **(A)** says *Inferno* has lower cost and selling price than the original magazine. This may make the magazine seem more economically attractive, but it does not directly show that these advertisers’ economic benefits were unaffected by their decision.
+- **(B)** directly says that after switching to other publications, these advertisers’ benefits were not affected. This weakens the alternative explanation that they left only because *Inferno* would harm their economic interests, making the ethical-responsibility explanation more plausible.
+- **(C)** suggests readers may dislike violent/pornographic content, which gives an economic reason for advertisers to leave; this weakens the argument.
+- **(D)** mentions other clients turning to *Inferno*, but it does not directly address these advertisers’ motives or benefits.
+
+Thus, (B) most strongly strengthens the argument.
+
+The answer is B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#logiqa-zh-639</span><span class='tag'>task=logiqa-zh</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>国内油价与国际油价相比一向是“涨快跌慢”，原因之一是我国成品油调价依据三地原油价格变动超过4%这个边界条件。比如，从100美元一桶涨到104美元时，我们就跟着涨价；但是，从104美元回调4%再降价，则要等价格回落到 99,.84美元。
+问题：以下哪项陈述最好地指出了上述论证的缺陷？
+选项：A．上述论证没能说明，国内油价不合理是由多种原因造成的。 B．上述论证没能说明，国内油价不合理的根本原因在于行业垄断。 C．上述论证没能说明，以4%为边界条件，则油价越高，国内反应越迟钝。 D．上述论证没有从相同的价格基点出发进行比较，如果涨价的基点是100美元，对降价    的条件分析也应该以100美元为基点。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>论证想用“4% 调价边界”来说明国内油价“涨快跌慢”，但其举例中比较的基点不一致：
+
+- 涨价条件：以 **100 美元**为基点，涨 4% 到 **104 美元**；
+- 降价条件：却改成以 **104 美元**为基点，跌 4% 到 **99.84 美元**。
+
+要说明“涨”和“跌”的触发条件是否对称，应当从同一个价格基点出发比较。例如如果涨价的基点是 100 美元，那么降价条件也应以 100 美元为基点，即跌 4% 到 96 美元，而不是直接拿 104 美元作为新的基点。
+
+A、B 都引入了题干未涉及的“原因很多”或“行业垄断”，不是指出该论证的逻辑缺陷；C 只是说论证没有进一步说明油价越高反应越迟钝，也不是对该例证推理错误的直接批评。D 直接指出了题干在比较涨价和降价条件时使用了不同基点，因此最能指出论证缺陷。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#math-338</span><span class='tag'>task=math</span> <span class='tag'>language=en</span> <span class='tag'>question_type=cloze</span></div><div class='qtext'>Question: Simplify $\cos 54^\circ \cos 4^\circ - \cos 36^\circ \cos 86^\circ.$
+
+Enter your answer is a trigonometric function evaluated at an integer, such as &quot;sin 7&quot;.  (The system will assume that the angle is in degrees.)
+Reason step by step, then give the final answer in \boxed{}.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>\text{sin 32}</div><div class='ans'><span class='lbl'>归一化</span>\text{sin 32}</div><div class='ans gold'><span class='lbl'>正确答案</span>\cos 58^\circ</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>We use the product-to-sum identity:
+
+\[
+\cos A\cos B=\frac12\left(\cos(A-B)+\cos(A+B)\right)
+\]
+
+First,
+
+\[
+\cos 54^\circ \cos 4^\circ
+= \frac12\left(\cos 50^\circ+\cos 58^\circ\right)
+\]
+
+Next,
+
+\[
+\cos 36^\circ \cos 86^\circ
+= \frac12\left(\cos(-50^\circ)+\cos 122^\circ\right)
+= \frac12\left(\cos 50^\circ+\cos 122^\circ\right)
+\]
+
+Subtract:
+
+\[
+\cos 54^\circ \cos 4^\circ-\cos 36^\circ \cos 86^\circ
+= \frac12\left(\cos 50^\circ+\cos 58^\circ-\cos 50^\circ-\cos 122^\circ\right)
+\]
+
+\[
+= \frac12\left(\cos 58^\circ-\cos 122^\circ\right)
+\]
+
+Now use
+
+\[
+\cos x-\cos y=-2\sin\left(\frac{x+y}{2}\right)\sin\left(\frac{x-y}{2}\right)
+\]
+
+So,
+
+\[
+\cos 58^\circ-\cos 122^\circ
+= -2\sin 90^\circ \sin(-32^\circ)
+\]
+
+Since \(\sin 90^\circ=1\) and \(\sin(-32^\circ)=-\sin 32^\circ\),
+
+\[
+\cos 58^\circ-\cos 122^\circ
+= 2\sin 32^\circ
+\]
+
+Thus,
+
+\[
+\frac12\left(\cos 58^\circ-\cos 122^\circ\right)=\sin 32^\circ
+\]
+
+\[
+\boxed{\text{sin 32}}
+\]</pre></details></div></section>
+</main>
+</body>
+</html>

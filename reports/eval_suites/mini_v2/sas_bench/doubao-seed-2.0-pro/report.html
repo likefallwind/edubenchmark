@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · sas_bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · SAS-Bench · 高考短答案整体、分步与错因评分</h1>
+    <p class="muted">基准 sas_bench · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">n/a</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">250</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">250</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">None</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>SAS-Bench 包含 9 学科、12 个学科×题型子任务、1,030 道高考题和 4,109 条专家标注作答。被测模型扮演阅卷评分器，输入题目、参考答案、解析、评分细则、学生逐步作答和允许的错因类型，输出总分、逐步得分和逐步错因。</p><p>官方原生指标是 QWK（整体总分一致性）、CCS（整体+步骤联合一致性）和 ECS（按低/中/高作答质量分层的错因分布一致性）。三项均先在每个子任务上计算，再对已有子任务做不加权宏平均；它们是群体一致性统计量，不是逐题 accuracy。</p><p class='muted'>主页：<a href='https://github.com/PKU-DAIR/SAS-Bench'>https://github.com/PKU-DAIR/SAS-Bench</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#Biology_gapfilling_118</span><span class='tag'>task=4_Biology_gapfilling</span> <span class='tag'>subject=Biology</span> <span class='tag'>question_type=gapfilling</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+首先根据该题总分为每个空分配分值，一般而言每个空1分，若有“原因”、“理由”等较长回答的空可能分配2~3分，涉及到实验设计的，酌情增加分数分配，确保每个空的分值之和等于总分。如果该空与标准答案完全一致则该空给满分，不一致则该空给0分，对于分值较大的实验设计或原理分析题，部分回答正确可以酌情给部分分（例如满分3分，回答的内容正确但不完整可以给1分或者2分）。
+
+【评估材料】
+- 试题内容：9．（ 10分）现有一未受人类干扰的自然湖泊，某研究小组考察了湖泊中处于食
+物链最高营养级的某鱼种群的年龄组成，结果如下表．  
+年龄  0+ 1+ 2+ 3+ 4+ 5+ 6+ 7+ 8+ 9+ 10+ 11+ ≧12 
+个体数  92 187  121  70 69 62 63 72 64 55 42 39 264  
+注：表中 1+代表鱼的年龄大于等于 1，小于 2，其他以此类推．  
+回答下列问题  
+（1）通常，种群的年龄结构大致可以分为三种类型，分别是 　   　．研究表明
+：该鱼在 3+时达到性成熟（进入成年）， 9+时丧失繁殖能力（进入老年）根
+据表中数据可知幼年、成年、老年三个年龄组个体数的比例为 　   　，由此
+可推测该鱼种群数量的变化趋势是 　   　． 
+（2）如果要调查这一湖泊中该鱼的种群密度，常用的调查方法是 　   　．该方
+法常用于调查 　   　强、活动范围广的动物的种群密度．  
+（3）在该湖泊中，能量沿食物链流动时，所具有的两个特点是 　   　．
+
+- 题目分值：10
+- 错因类型：[&quot;概念混淆&quot;, &quot;术语使用不准确&quot;, &quot;过程描述不准确&quot;, &quot;未正确分析实验现象&quot;, &quot;图表信息提取错误&quot;, &quot;逻辑推理错误&quot;, &quot;单位或数据错误&quot;]
+- 标准答案：（1）增长型、衰退型、稳定型    1：1：1    保持稳定
+（2）标志重捕法   活动能力
+（3）单向流动、逐级递减
+
+- 解析说明：解：（ 1）种群的年龄结构大致可以分为增长型、衰退型、稳定型三种
+类型．研究表明：该鱼在 3+时达到性成熟 （进入成年 ），9+时丧失繁殖能力 （
+进入老年），根据表中数据可知幼年、 成年和老年 3个年龄组个体数的比例
+为（ 92+187+121）：（70+69+62+63+72+64）：（55+42+39+264）=400：420：
+400≈1：1：1，由此可推测该鱼种群数量的变化趋势是保持稳定．  
+（2）对于活动能力强、活动范围大的个体调查种群密度时适宜用标志重捕法，
+所以调查这一湖泊中该鱼的种群密度，常用的调查方法是标志重捕法．  
+（3）在该湖泊中，能量沿食物链流动时，所具有的两个特点是单向流动、逐级
+递减．
+
+- 学生作答：## Step 0
+（1）幼年型、成熟型、老年型；比例为 2:1:3；数量趋于增加。
+
+## Step 1
+（2）观察法；用于调查 植物。
+
+## Step 2
+（3）能量可以循环使用、能量在流动过程中会增强。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>{&#x27;total&#x27;: 10, &#x27;manual_label&#x27;: 0, &#x27;steps&#x27;: [{&#x27;response&#x27;: &#x27;（1）幼年型、成熟型、老年型；比例为 2:1:3；数量趋于增加。&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;过程描述不准确&#x27;, &#x27;术语使用不准确&#x27;, &#x27;未正确分析实验现象&#x27;]}, {&#x27;response&#x27;: &#x27;（2）观察法；用于调查 植物。&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;术语使用不准确&#x27;, &#x27;未正确分析实验现象&#x27;]}, {&#x27;response&#x27;: &#x27;（3）能量可以循环使用、能量在流动过程中会增强。&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;术语使用不准确&#x27;]}]}</div></div><div class='card'><div class='card-head'><span class='pid'>#Biology_gapfilling_132</span><span class='tag'>task=4_Biology_gapfilling</span> <span class='tag'>subject=Biology</span> <span class='tag'>question_type=gapfilling</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+首先根据该题总分为每个空分配分值，一般而言每个空1分，若有“原因”、“理由”等较长回答的空可能分配2~3分，涉及到实验设计的，酌情增加分数分配，确保每个空的分值之和等于总分。如果该空与标准答案完全一致则该空给满分，不一致则该空给0分，对于分值较大的实验设计或原理分析题，部分回答正确可以酌情给部分分（例如满分3分，回答的内容正确但不完整可以给1分或者2分）。
+
+【评估材料】
+- 试题内容：7．（ 12分）某基因的反义基因可抑制该基因的表达． 为研究番茄的 X基因和 Y
+基因对其果实成熟的影响，某研究小组以番茄的非转基因植株（ A组，即对
+照组）、反义 X基因的转基因植株（ B组）和反义 Y基因的转基因植株（ C组为材料进行试验，在番茄植株长出果实后的不同天数（ d），分别检测各组
+果实的乙烯释放量（果实中乙烯含量越高，乙烯的释放量就越大），结果如
+下表：  
+\begin{array}{|c|c|c|c|c|} \hline \multirow{2}{*}{\text { 组别 }} &amp; \multicolumn{4}{|c|}{\text { 乙烯释放量 }(\mu \mathrm{L}^{\circ} \mathrm{kg}^{-1} \bullet \mathrm{h}^{-1})} \\ \cline { 2 - 5 } &amp; 20 \mathrm{~d} &amp; 35 \mathrm{~d} &amp; 40 \mathrm{~d} &amp; 45 \mathrm{~d} \\ \hline \text { A } &amp; 0 &amp; 27 &amp; 17 &amp; 15 \\ \hline \text { B } &amp; 0 &amp; 9 &amp; 5 &amp; 2 \\ \hline \text { C } &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\ \hline \end{array}
+回答下列问题：  
+（1）若在 B组果实中没有检测到 X基因表达的蛋白质， 在C组果实中没有检测
+  到Y基因表达的蛋白质 ．可推测，A组果实中与乙烯含量有关的基因有 　   　，
+B组果实中与乙烯含量有关的基因有 　   　． 
+（2）三组果实中，成熟最早的是 　   　组，其原因是 　   　．如果在 35天时
+采摘 A组与 B组果实，在常温下储存时间较长的应是 　   　组．
+
+- 题目分值：12
+- 错因类型：[&quot;概念混淆&quot;, &quot;术语使用不准确&quot;, &quot;过程描述不准确&quot;, &quot;未正确分析实验现象&quot;, &quot;图表信息提取错误&quot;, &quot;逻辑推理错误&quot;, &quot;单位或数据错误&quot;]
+- 标准答案：（1）X基因和 Y基因    X基因、 Y基因和反义 X基因
+（2）A  乙烯具有促进果实成熟的作用，该组果实的乙烯含量高于其他组    B
+
+- 解析说明：解：（1）B组、 C组乙烯释放量均低于 A组，可见 A组乙烯的合成和 X
+基因和 Y基因都有关 ，而B组中与乙烯含量有关的基因有 X基因、Y基因和反
+义X基因．  
+（2）三组果实中， 成熟最早的是 A组，因为乙烯具有促进果实成熟的作用，该
+组果实中乙烯含量高于其他组 ，如果在 35天时采摘 A组与 B组果实，在常温
+下储存时间较长的应是 B组，原因是 B组乙烯释放量低，成熟晚，耐储存．
+
+- 学生作答：## Step 0
+（1）X基因，Y基因
+
+## Step 1
+（2）C组，乙烯释放量最低；A组
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>{&#x27;total&#x27;: 12, &#x27;manual_label&#x27;: 0, &#x27;steps&#x27;: [{&#x27;response&#x27;: &#x27;（1）X基因，Y基因&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;过程描述不准确&#x27;]}, {&#x27;response&#x27;: &#x27;（2）C组，乙烯释放量最低；A组&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;过程描述不准确&#x27;, &#x27;未正确分析实验现象&#x27;]}]}</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;QWK/CCS/ECS are population agreement statistics against human expert labels on a 0-100 scale, not per-item accuracy. The generic accuracy field is strict structured exact match and is diagnostic only.&quot;,
+  &quot;headline_metric&quot;: &quot;unweighted mean of each available per-subtask metric&quot;,
+  &quot;overall&quot;: {
+    &quot;qwk&quot;: 79.13848714612702,
+    &quot;ccs&quot;: 64.37484855114529,
+    &quot;ecs&quot;: 13.591464218220416
+  },
+  &quot;overall_ecs_breakdown&quot;: {
+    &quot;ecs_low&quot;: 7.064880508518962,
+    &quot;ecs_medium&quot;: 15.839785910974541,
+    &quot;ecs_high&quot;: 17.869726235167747
+  },
+  &quot;by_task&quot;: {
+    &quot;0_Physics_ShortAns&quot;: {
+      &quot;n&quot;: 7,
+      &quot;qwk&quot;: 91.35802469135803,
+      &quot;ccs&quot;: 53.01257508010031,
+      &quot;ecs&quot;: -11.295080099345773,
+      &quot;ecs_low&quot;: -29.617443887954614,
+      &quot;ecs_medium&quot;: 10.540925533894598,
+      &quot;ecs_high&quot;: -14.808721943977307
+    },
+    &quot;1_History_ShortAns&quot;: {
+      &quot;n&quot;: 39,
+      &quot;qwk&quot;: 84.47145877378436,
+      &quot;ccs&quot;: 68.48961891430238,
+      &quot;ecs&quot;: 54.21052631578947,
+      &quot;ecs_low&quot;: 60.0,
+      &quot;ecs_medium&quot;: 2.631578947368421,
+      &quot;ecs_high&quot;: 100.0
+    },
+    &quot;2_Physics_Choice&quot;: {
+      &quot;n&quot;: 6,
+      &quot;qwk&quot;: 68.08510638297874,
+      &quot;ccs&quot;: 69.76744186046511,
+      &quot;ecs&quot;: -33.33333333333333,
+      &quot;ecs_low&quot;: 0.0,
+      &quot;ecs_medium&quot;: -100.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;3_Geography_ShortAns&quot;: {
+      &quot;n&quot;: 8,
+      &quot;qwk&quot;: 86.25,
+      &quot;ccs&quot;: 86.54329625525314,
+      &quot;ecs&quot;: -28.86751345948129,
+      &quot;ecs_low&quot;: -86.60254037844388,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;4_Biology_gapfilling&quot;: {
+      &quot;n&quot;: 36,
+      &quot;qwk&quot;: 85.41284403669725,
+      &quot;ccs&quot;: 59.86538234030498,
+      &quot;ecs&quot;: 46.24692038780698,
+      &quot;ecs_low&quot;: 0.0,
+      &quot;ecs_medium&quot;: 68.9170107245042,
+      &quot;ecs_high&quot;: 69.82375043891675
+    },
+    &quot;5_Chinese_gapfilling&quot;: {
+      &quot;n&quot;: 9,
+      &quot;qwk&quot;: 100.0,
+      &quot;ccs&quot;: 100.0,
+      &quot;ecs&quot;: null,
+      &quot;ecs_low&quot;: null,
+      &quot;ecs_medium&quot;: null,
+      &quot;ecs_high&quot;: null
+    },
+    &quot;6_Chinese_ShortAns&quot;: {
+      &quot;n&quot;: 37,
+      &quot;qwk&quot;: 69.42245213386747,
+      &quot;ccs&quot;: 56.874802342174554,
+      &quot;ecs&quot;: 35.73830289166957,
+      &quot;ecs_low&quot;: 30.0,
+      &quot;ecs_medium&quot;: 66.68859288553503,
+      &quot;ecs_high&quot;: 10.526315789473683
+    },
+    &quot;7_Math_ShortAns&quot;: {
+      &quot;n&quot;: 48,
+      &quot;qwk&quot;: 79.1393559418638,
+      &quot;ccs&quot;: 46.31777586246682,
+      &quot;ecs&quot;: 43.986166509347484,
+      &quot;ecs_low&quot;: 15.789473684210526,
+      &quot;ecs_medium&quot;: 70.0,
+      &quot;ecs_high&quot;: 46.16902584383194
+    },
+    &quot;8_Political_ShortAns&quot;: {
+      &quot;n&quot;: 15,
+      &quot;qwk&quot;: 78.34210973331069,
+      &quot;ccs&quot;: 60.31776012642618,
+      &quot;ecs&quot;: 20.360617022596397,
+      &quot;ecs_low&quot;: 40.0,
+      &quot;ecs_medium&quot;: 21.081851067789195,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;9_English_gapfilling&quot;: {
+      &quot;n&quot;: 15,
+      &quot;qwk&quot;: 78.87323943661973,
+      &quot;ccs&quot;: 73.54910995997834,
+      &quot;ecs&quot;: -10.873833167958267,
+      &quot;ecs_low&quot;: -51.855803824103454,
+      &quot;ecs_medium&quot;: 34.37768586162851,
+      &quot;ecs_high&quot;: -15.143381541399858
+    },
+    &quot;10_Math_gapfilling&quot;: {
+      &quot;n&quot;: 27,
+      &quot;qwk&quot;: 75.67567567567568,
+      &quot;ccs&quot;: 77.329360780065,
+      &quot;ecs&quot;: 33.33333333333333,
+      &quot;ecs_low&quot;: 100.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    },
+    &quot;11_Chemistry_gapfilling&quot;: {
+      &quot;n&quot;: 3,
+      &quot;qwk&quot;: 52.63157894736842,
+      &quot;ccs&quot;: 20.43105909220667,
+      &quot;ecs&quot;: 0.0,
+      &quot;ecs_low&quot;: 0.0,
+      &quot;ecs_medium&quot;: 0.0,
+      &quot;ecs_high&quot;: 0.0
+    }
+  },
+  &quot;audit&quot;: {
+    &quot;metric_protocol&quot;: &quot;in-repo standard-library port of PKU-DAIR/SAS-Bench&quot;,
+    &quot;prompt_version&quot;: &quot;official-zero-shot-v1&quot;,
+    &quot;prompt_sha256&quot;: &quot;702fd877f91c881a037e78713a2846c232980961546b6aaf8d7c5415ae9ed410&quot;,
+    &quot;scored_rows&quot;: 250,
+    &quot;tasks_present&quot;: 12,
+    &quot;step_count_mismatches&quot;: 0,
+    &quot;unknown_error_labels_dropped&quot;: 0
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>250</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>0_Physics_ShortAns</td><td>7</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>10_Math_gapfilling</td><td>27</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>11_Chemistry_gapfilling</td><td>3</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>1_History_ShortAns</td><td>39</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>2_Physics_Choice</td><td>6</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>3_Geography_ShortAns</td><td>8</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>4_Biology_gapfilling</td><td>36</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>5_Chinese_gapfilling</td><td>9</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>6_Chinese_ShortAns</td><td>37</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>7_Math_ShortAns</td><td>48</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>8_Political_ShortAns</td><td>15</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>9_English_gapfilling</td><td>15</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Biology</td><td>36</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Chemistry</td><td>3</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Chinese</td><td>46</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>English</td><td>15</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Geography</td><td>8</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>History</td><td>39</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Math</td><td>75</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Physics</td><td>13</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Political</td><td>15</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Choice</td><td>6</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>ShortAns</td><td>154</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gapfilling</td><td>90</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table></section>
+  
+  
+</main>
+</body>
+</html>

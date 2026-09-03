@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">20.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">20</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.22,
+  &quot;r2_accuracy&quot;: 0.2,
+  &quot;net_gain&quot;: -0.02,
+  &quot;change_rate&quot;: 0.1,
+  &quot;n_r1_wrong&quot;: 78,
+  &quot;n_fixed_wrong_to_right&quot;: 2,
+  &quot;fix_rate&quot;: 0.0256,
+  &quot;n_r1_right&quot;: 22,
+  &quot;n_broken_right_to_wrong&quot;: 4,
+  &quot;break_rate&quot;: 0.1818,
+  &quot;score_10&quot;: 4.219,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;r1_correct&quot;: 2,
+      &quot;r2_correct&quot;: 2,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;r1_correct&quot;: 11,
+      &quot;r2_correct&quot;: 11,
+      &quot;fixed&quot;: 2,
+      &quot;broken&quot;: 2
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 6,
+      &quot;r2_correct&quot;: 6,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;r1_correct&quot;: 3,
+      &quot;r2_correct&quot;: 1,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 2
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>2</td><td>0.118</td><td><div class='bar'><i style='width:12%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>11</td><td>0.282</td><td><div class='bar'><i style='width:28%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>6</td><td>0.214</td><td><div class='bar'><i style='width:21%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>1</td><td>0.062</td><td><div class='bar'><i style='width:6%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>52</td><td>8</td><td>0.154</td><td><div class='bar'><i style='width:15%'></i></div></td></tr><tr><td>zh</td><td>48</td><td>12</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;Let me re-verify my work step by step.\n\n## Re-checking the Simplification\n\nThe expression is:\n$$x = \\frac{n^2 + 2\\sqrt{n}(n+4) + 16}{n + 4\\sqrt{n} + 4}$$\n\nExpanding the numerator: $n^2 + 2n\\sqrt{n} + 8\\sqrt{n} + 16$\n\nThe denominator factors as: $n + 4\\sqrt{n} + 4 = (\\sqrt{n} + 2)^2$ ✓\n\n**Polynomial division** (letting $t = \\sqrt{n}$): Dividing $t^4 + 2t^3 + 8t + 16$ by $t^2 + 4t + 4$:\n\n- $t^2 \\cdot (t^2 + 4t + 4) = t^4 + 4t^3 + 4t^2$; remainder: $-2t^3 - 4t^2 + 8t + 16$\n- $-2t \\cdot (t^2 + 4t + 4) = -2t^3 - 8t^2 - 8t$; remainder: $4t^2 + 16t + 16$\n- $4 \\cdot (t^2 + 4t + 4) = 4t^2 + 16t + 16$; remainder: 0\n\nSo $x = t^2 - 2t + 4 = n - 2\\sqrt{n} + 4$ ✓\n\n## Re-checking the Range\n\nSince $\\frac{dx}{dn} = 1 - \\frac{1}{\\sqrt{n}} &gt; 0$ for $n &gt; 1$, x is increasing.\n\n**At n = 36:** $x = 36 - 2(6) + 4 = 28$ ✓\n- Verify: $(1296 + 12(40) + 16)/(36 + 24 + 4) = 1792/64 = 28$ ✓\n\n**At n = 72:** $x = 72 - 2(6\\sqrt{2}) + 4 = 76 - 12\\sqrt{2}$\n- $12\\sqrt{2} \\approx 16.9706$\n- $x \\approx 59.0294$ ✓\n\n## Re-checking the Answer Choices\n\nx ranges in $[28, 76 - 12\\sqrt{2}] \\approx [28, 59.03]$:\n\n| Choice | Range | Valid? |\n|--------|-------|--------|\n| (A) | $20 &lt; x &lt; 54$ | No — $59.03 &gt; 54$ |\n| (B) | $23 &lt; x &lt; 58$ | No — $59.03 &gt; 58$ |\n| (C) | $25 &lt; x &lt; 64$ | **Yes** — $28 &gt; 25$ and $59.03 &lt; 64$ |\n| (D) | $28 &lt; x &lt; 60$ | No — $x = 28$ is not strictly greater than 28 |\n\nThe reasoning and calculations are confirmed correct.\n\n**The answer is (C)**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this problem, I need to simplify the expression for x and find its range when 36 ≤ n ≤ 72.
+
+## Setting Up the Simplification
+
+The expression is:
+$$x = \frac{n^2 + 2\sqrt{n}(n+4) + 16}{n + 4\sqrt{n} + 4}$$
+
+**Note:** The denominator factors as: $n + 4\sqrt{n} + 4 = (\sqrt{n} + 2)^2$
+
+**Factoring the numerator:** Let me try to factor $n^2 + 2n\sqrt{n} + 8\sqrt{n} + 16$
+
+Testing: $(n + 4\sqrt{n} + 4)(n - 2\sqrt{n} + 4)$
+
+Expanding:
+$$= n^2 - 2n\sqrt{n} + 4n + 4n\sqrt{n} - 8n + 16\sqrt{n} + 4n - 8\sqrt{n} + 16$$
+$$= n^2 + 2n\sqrt{n} + 0 \cdot n + 8\sqrt{n} + 16 ✓$$
+
+## Simplifying x
+
+$$x = \frac{(n + 4\sqrt{n} + 4)(n - 2\sqrt{n} + 4)}{(\sqrt{n} + 2)^2} = n - 2\sqrt{n} + 4$$
+
+Let $u = \sqrt{n}$, so $x = u^2 - 2u + 4 = (u-1)^2 + 3$
+
+## Finding the Range
+
+For n ∈ [36, 72], we have $\sqrt{n} \in [6, 6\sqrt{2}]$
+
+Since x is increasing in this range:
+
+**Minimum at n = 36:**
+$$x = 36 - 2(6) + 4 = 28$$
+
+**Maximum at n = 72:**
+$$x = 72 - 2(6\sqrt{2}) + 4 = 76 - 12\sqrt{2}$$
+
+Computing: $12\sqrt{2} \approx 16.97$, so $x \approx 59.03$
+
+## Verifying the Bounds
+
+- Lower bound: 28
+- Upper bound: $76 - 12\sqrt{2} \approx 59.03$
+
+**Verification of 59.03 &lt; 60:** $76 - 12\sqrt{2} &lt; 60 \iff 16 &lt; 12\sqrt{2} \iff 4 &lt; 3\sqrt{2} \iff 16 &lt; 18$ ✓
+
+**Verification of 28 &gt; 25:** $28 &gt; 25$ ✓
+
+## Checking Answer Choices
+
+| Choice | Range | Contains [28, 59.03]? |
+|--------|-------|---------------------|
+| (A) 20 &lt; x &lt; 54 | (20, 54) | No (59.03 &gt; 54) |
+| (B) 23 &lt; x &lt; 58 | (23, 58) | No (59.03 &gt; 58) |
+| (C) 25 &lt; x &lt; 64 | (25, 64) | **Yes** ✓ |
+| (D) 28 &lt; x &lt; 60 | (28, 60) | No (x = 28 not &gt; 28) |
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;# Re-examination of the Solution\n\n## Step 1: Verify the formula for total codes\n\nWith $n$ letters, the number of unique codes available:\n- **Single letter codes:** $n$\n- **Pair codes** (2 different letters, order doesn&#x27;t matter): $\\binom{n}{2} = \\frac{n(n-1)}{2}$\n\n**Total:** \n$$n + \\frac{n(n-1)}{2} = \\frac{2n + n^2 - n}{2} = \\frac{n^2 + n}{2} = \\frac{n(n+1)}{2}$$\n\n✓ Formula is correct.\n\n## Step 2: Find minimum $n$ such that total ≥ 10\n\nTesting each value of $n$:\n\n| $n$ | Singles | Pairs $\\binom{n}{2}$ | Total $\\frac{n(n+1)}{2}$ | Enough? |\n|-----|---------|----------------------|--------------------------|---------|\n| 1   | 1       | 0                    | 1                        | ❌      |\n| 2   | 2       | 1                    | 3                        | ❌      |\n| 3   | 3       | 3                    | 6                        | ❌      |\n| **4** | **4** | **6**                | **10**                   | ✓      |\n\n✓ Calculations are correct.\n\n## Step 3: Verify the explicit construction with 4 letters (A, B, C, D)\n\n- **Singles:** A, B, C, D → 4 codes\n- **Pairs:** AB, AC, AD, BC, BD, CD → 6 codes\n- **Total:** 4 + 6 = 10 codes ✓\n\nEach of the 10 book types can be assigned a unique code.\n\n## Step 4: Confirm 3 letters is insufficient\n\nWith 3 letters, only $\\frac{3(4)}{2} = 6$ codes are possible, but we need 10. ✗\n\n## Conclusion\n\nThe reasoning and calculations are correct. The minimum number of letters needed is **4**.\n\nThe answer is (B)&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this problem, I need to find the minimum number of letters that can produce 10 unique codes (where each code is either a single letter or a pair of different letters, with order not mattering).
+
+## Setting Up the Count
+
+If Amy uses $n$ letters, the total number of unique codes she can create is:
+
+**Single letter codes:** $n$ codes
+
+**Pair codes** (2 different letters, order doesn&#x27;t matter): $\binom{n}{2} = \frac{n(n-1)}{2}$
+
+**Total codes:** 
+$$n + \frac{n(n-1)}{2} = \frac{2n + n^2 - n}{2} = \frac{n(n+1)}{2}$$
+
+## Finding the Minimum
+
+I need $\frac{n(n+1)}{2} \geq 10$.
+
+Testing values:
+- $n = 3$: $\frac{3 \cdot 4}{2} = 6$ codes ❌ (not enough)
+- $n = 4$: $\frac{4 \cdot 5}{2} = 10$ codes ✓ (exactly 10!)
+- $n = 5$: $\frac{5 \cdot 6}{2} = 15$ codes ✓ (more than needed)
+
+## Verification
+
+With 4 letters (say A, B, C, D), we can create exactly 10 codes:
+- 4 single letters: A, B, C, D
+- 6 pairs: AB, AC, AD, BC, BD, CD
+- Total: 4 + 6 = 10 ✓
+
+The answer is (B)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-biology-8</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：用体外实验的方法可合成多肽链。已知苯丙氨酸的密码子是 UUU, 若要在体外合成同位 素标记的多肽链, 所需的材料组合是
+
+(1)同位素标记的 tRNA
+
+(2)蛋白质合成所需的酶
+
+(3)同位素标记的苯丙氨酸
+
+(4)人工合成的多聚尿嘧啶核苷酸
+
+(5)除去了 DNA 和 mRNA 的细胞裂解液
+选项：(A)(1)(2)(4) (B)(2)(3)(4) (C)(3)(4)(5) (D)(1)(3)(5)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;# 重新验证体外合成多肽链的材料分析\n\n## 目标确认\n- 体外合成多肽（苯丙氨酸，密码子UUU）\n- 多肽链需被同位素标记\n- 参考：Nirenberg的经典实验\n\n## 逐项重新验证\n\n**(1) 同位素标记的tRNA** ❌\n- 多肽链由氨基酸通过肽键连接而成，**tRNA不参与肽链组成**\n- tRNA只是运输氨基酸的\&quot;搬运工\&quot;\n- 即使标记tRNA，最终多肽链也不会被标记\n- **结论：不需要**\n\n**(2) 蛋白质合成所需的酶** \n- 翻译过程需要氨基酰-tRNA合成酶、转位酶等\n- 但这些酶**已包含在细胞裂解液(5)中**\n- **结论：与(5)重复**\n\n**(3) 同位素标记的苯丙氨酸** ✓\n- 多肽链的组成单位是氨基酸\n- 由于mRNA是poly-U，翻译产物是多聚苯丙氨酸\n- 要使多肽链被标记，必须提供标记的苯丙氨酸\n- **结论：必需**\n\n**(4) 人工合成的多聚尿嘧啶核苷酸（poly-U）** ✓\n- 作为mRNA模板\n- UUU密码子编码苯丙氨酸\n- **结论：必需**\n\n**(5) 除去DNA和mRNA的细胞裂解液** ✓\n- 提供核糖体、各种tRNA、氨基酰-tRNA合成酶、ATP、GTP等\n- 除去DNA和mRNA避免内源遗传物质干扰，确保只有poly-U作为模板\n- **结论：必需**\n\n## 验证组合\n\n体外翻译系统的完整组成：\n- ✅ 模板：(4) poly-U\n- ✅ 原料：(3) 同位素标记的苯丙氨酸  \n- ✅ 翻译系统：(5) 去DNA和mRNA的细胞裂解液（含酶、tRNA、核糖体、能量）\n\n**确认原答案正确**\n\n答案是C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析体外合成多肽链所需材料
+
+## 目标分析
+- 合成多肽：苯丙氨酸（密码子UUU）
+- 多肽链需被同位素标记
+
+## 逐项分析
+
+**(1) 同位素标记的tRNA** ❌
+- 标记的是多肽链（即氨基酸），而非tRNA
+- tRNA只是氨基酸的载体，不需要标记
+
+**(2) 蛋白质合成所需的酶** ✓
+- 但这些酶已包含在细胞裂解液中，无需单独添加
+
+**(3) 同位素标记的苯丙氨酸** ✓
+- 是多肽链被同位素标记的关键原料
+- 由于密码子是UUU，合成的多聚苯丙氨酸才能被标记
+
+**(4) 人工合成的多聚尿嘧啶核苷酸（poly-U）** ✓
+- 作为mRNA模板，UUU编码苯丙氨酸
+- 指导合成多聚苯丙氨酸
+
+**(5) 除去DNA和mRNA的细胞裂解液** ✓
+- 提供核糖体、tRNA、酶、ATP/GTP等所有翻译所需成分
+- 除去DNA和mRNA可避免内源mRNA干扰，确保只有poly-U作为模板
+
+## 关键判断
+细胞裂解液(5)已包含酶(2)和tRNA(1)所需的功能，所以只需补充：
+- 模板：poly-U (4)
+- 标记原料：同位素标记的苯丙氨酸 (3)
+- 翻译系统：细胞裂解液 (5)
+
+**答案是C**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;# 重新检查解答\n\n## 逐项重新验证\n\n**(A) 蚕丝的主要成分是蛋白质** ✓ 正确\n- 蚕丝由丝素蛋白和丝胶蛋白组成，确认无误。\n\n**(B) 蚕丝属于天然高分子材料** ✓ 正确\n- 蚕丝中丝素蛋白的分子量可达 30 万～40 万，是典型的天然高分子材料。\n\n**(C) \&quot;蜡炬成灰\&quot;过程中发生了氧化反应** ✓ 正确\n- 燃烧本质是可燃物与 O₂ 的氧化反应，确认无误。\n\n**(D) 古代的蜡是高级脂肪酸酯，属于高分子聚合物** ✗ 错误\n- 古代的蜡主要包括：\n  - **动物蜡**（如蜂蜡）：主要成分是高级脂肪酸与高级一元醇形成的酯，分子式如 C₁₅H₃₁COOC₃₀H₆₁，分子量约 600～700；\n  - **植物蜡**（如白蜡、棕榈蜡）：分子量通常在 1000 以下。\n- 高分子聚合物的分子量通常在 **10000 以上**，而蜡的分子量远低于此，因此蜡属于**小分子有机物**，不是高分子聚合物。\n- 该说法错误。\n\n## 结论\n\n答案保持不变。\n\n**答案是D**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析诗句中涉及的物质
+
+**诗句解读**：&quot;春蚕到死丝方尽&quot;涉及**蚕丝**，&quot;蜡炬成灰泪始干&quot;涉及**蜡烛（蜡）**的燃烧。
+
+## 逐项分析
+
+**(A) 蚕丝的主要成分是蛋白质** ✓ 正确
+- 蚕丝主要由丝素（fibroin）和丝胶（sericin）组成，二者均为蛋白质。
+
+**(B) 蚕丝属于天然高分子材料** ✓ 正确
+- 蚕丝的蛋白质分子量大（丝素分子量约 30 万以上），属于天然高分子材料。
+
+**(C) &quot;蜡炬成灰&quot;过程中发生了氧化反应** ✓ 正确
+- 蜡烛燃烧时，蜡与 O₂ 反应生成 CO₂ 和 H₂O，属于燃烧氧化反应。
+
+**(D) 古代的蜡是高级脂肪酸酯，属于高分子聚合物** ✗ 错误
+- 古代的蜡（如蜂蜡，主要成分为高级脂肪酸酯，如软脂酸蜂花酯等）虽然属于高级脂肪酸酯，但其相对分子质量仅为几百到一千左右，**并非高分子聚合物**（高分子聚合物的相对分子质量通常在 10000 以上）。蜡属于**小分子化合物**。
+
+## 结论
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-27</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：黄色固体 $\mathrm{X}$, 可能含有漂白粉、 $\mathrm{FeSO}_{4} $、$ \mathrm{Fe}_{2}\left(\mathrm{SO}_{4}\right)_{3} $、$ \mathrm{CuCl}_{2} $、$ \mathrm{KI}$ 之中的几种或全 部。将 $\mathrm{X}$ 与足量的水作用, 得到深棕色固体混合物 $\mathrm{Y}$ 和无色碱性溶液 $\mathrm{Z}$ 。下列结论合理的 是
+选项：(A)$\mathrm{X}$ 中含 $\mathrm{KI}$, 可能含有 $\mathrm{CuCl}_{2}$ (B)$\mathrm{X}$ 中含有漂白粉和 $\mathrm{FeSO}_{4}$ (C)$\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}, \mathrm{Y}$ 中含有 $\mathrm{Fe}(\mathrm{OH})_{3}$ (D)用 $\mathrm{H}_{2} \mathrm{SO}_{4}$ 酸化溶液 $\mathrm{Z}$, 若有黄绿色气体放出, 说明 $\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;# 重新验证\n\n## 关键事实梳理\n\n**事实1：Z是无色碱性溶液**\n- 无色 → 排除Cu²⁺（蓝）、Fe²⁺（浅绿）、Fe³⁺（黄）、I₂（棕）以离子态存在于溶液\n- 碱性 → **漂白粉必须存在**（ClO⁻水解显碱性），Ca(ClO)₂溶于水后提供OH⁻\n\n**事实2：Y是深棕色固体\&quot;混合物\&quot;**\n- \&quot;混合物\&quot;表明Y由多种物质组成\n- 若Y仅含Fe(OH)₃，应是**红棕色**，而非\&quot;深棕色\&quot;\n- \&quot;深棕色\&quot;必须由更深色组分贡献\n\n**事实3：X是黄色固体**\n- Fe₂(SO₄)₃为黄色 → 提示X中含铁盐（很可能是Fe³⁺盐）\n\n## 逐项再验\n\n**(A) X中含有KI，可能含有CuCl₂**\n\n- 漂白粉存在的前提下，若X含KI，溶于水时：\n$$\\text{ClO}^- + 2\\text{I}^- + \\text{H}_2\\text{O} \\rightarrow \\text{Cl}^- + \\text{I}_2 + 2\\text{OH}^-$$\n- I₂（深紫黑色）混入Fe(OH)₃中，恰好形成**深棕色混合物Y** ✓\n- 这是解释\&quot;深棕色混合物\&quot;的唯一合理机制 → KI**必须存在**\n- CuCl₂\&quot;可能存在\&quot;：若有则Y中还含Cu(OH)₂，但深棕色仍能由Fe(OH)₃+I₂实现；\&quot;可能\&quot;措辞恰当 ✓\n\n**(B) X中含有漂白粉和FeSO₄**\n\n- 漂白粉确实必须存在 ✓\n- 但FeSO₄是**浅绿色或白色**晶体，与X的\&quot;黄色\&quot;矛盾 ✗\n- 而且X中的铁完全可以是Fe₂(SO₄)₃（黄色，更符合颜色）\n- \&quot;含有\&quot;是确定性表述，把FeSO₄说成必有 → **错误**\n\n**(C) X中含有CuCl₂，Y中含有Fe(OH)₃**\n\n- Y含Fe(OH)₃合理 ✓\n- 但CuCl₂并非\&quot;必须\&quot;存在，深棕色由Fe(OH)₃+I₂即可解释\n- 若X含CuCl₂而无KI，则Y为Fe(OH)₃+Cu(OH)₂，呈**棕绿色**而非深棕色\n- \&quot;含有\&quot;作为必然结论 → **错误**\n\n**(D) 酸化Z有黄绿色气体（Cl₂）放出 → 说明X含CuCl₂**\n\n- 漂白粉本身就含Ca(ClO)₂和CaCl₂，溶于水后Z中已有ClO⁻和Cl⁻\n- 酸化直接反应：\n$$\\text{ClO}^- + \\text{Cl}^- + 2\\text{H}^+ \\rightarrow \\text{Cl}_2\\uparrow + \\text{H}_2\\text{O}$$\n- 产生Cl₂只能证明X含漂白粉，**与CuCl₂无关** → **错误**\n\n## 核心逻辑\n\n\&quot;深棕色混合物\&quot;是本题的**关键判据**：\n- 红棕色 + 深色吸附物(I₂) = 深棕色 ✓\n- 唯一能在碱性条件下生成I₂的途径是KI + ClO⁻\n\n因此KI必须存在，而CuCl₂不确定，\&quot;可能\&quot;措辞得当。\n\n---\n\n**答案是 (A)**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 解题分析
+
+## 确定必然存在的成分
+
+**Z是无色碱性溶液：**
+- 表明X中含**漂白粉**（Ca(ClO)₂水解显碱性）
+- 排除了Cu²⁺（蓝色）、Fe²⁺（浅绿色）、Fe³⁺（黄色）、I₂（棕色）存在于溶液中
+
+**Y是深棕色固体混合物：**
+- &quot;混合物&quot;一词说明Y由多种物质组成
+- 必须含Fe(OH)₃（红棕色，来自X中含铁化合物）
+- 深棕色比单纯红棕色更深，说明还有更深的组分
+
+## 分析各选项
+
+**(A) X中含有KI，可能含有CuCl₂** ✓
+- 若X含KI，则ClO⁻将I⁻氧化为I₂：
+  $$2I^- + ClO^- + H_2O \rightarrow I_2 + Cl^- + 2OH^-$$
+- I₂（深紫黑色）被Fe(OH)₃吸附进入Y，使Y呈**深棕色混合物**
+- CuCl₂可能存在（产生Cu(OH)₂混在Y中），也可能不存在 → &quot;可能&quot;合理
+
+**(B) X中含有漂白粉和FeSO₄** ✗
+- 漂白粉是必要的（碱性来源）
+- 但FeSO₄不是必须的，Fe₂(SO₄)₃也能提供Fe³⁺
+- 而且X是**黄色**的，FeSO₄是浅绿色的，与&quot;黄色&quot;矛盾
+
+**(C) X中含有CuCl₂，Y中含有Fe(OH)₃** ✗
+- &quot;深棕色&quot;无绿色调，若含CuCl₂则Y应为Fe(OH)₃+Cu(OH)₂，呈现**暗绿色或棕绿色**，而非纯深棕色
+- CuCl₂并非必然存在
+
+**(D) 酸化Z产生黄绿色气体说明含CuCl₂** ✗
+- 黄绿色气体为Cl₂
+- Cl₂来源于ClO⁻（来自漂白粉）的酸化：
+  $$ClO^- + Cl^- + 2H^+ \rightarrow Cl_2\uparrow + H_2O$$
+- 与CuCl₂无关
+
+## 结论
+
+关键判断：**Y呈深棕色且为混合物**，最合理的解释是Fe(OH)₃与I₂共存（I₂使颜色显著加深至深棕色），这要求X中一定含有KI。
+
+**答案是 (A)**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-122</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>It was the first mow of winter﹣﹣an exciting day for every，child but not for most tether．Up until now，l had been able to dress myself for recess（课间休息），but today I would need some help．Miss Finlayson，my kindergarten teacher at Princess Elizabeth School near Hamilton，Ontario，had been through first snow days，many times in her long career，but I think struggled still remember this one．  I managed to get into my  wool snow pants．But I straggled with my jacket because it didn&#x27;t fit well．It was a hand﹣me﹣down from my brother，and it made me wonder why I had to wear his ugly clothes．At least my hat and matching scarf were mine，and they were quite pretty．Finally it was time to have Miss Finlayson help me with my boots．In her calm，motherly voice she said，&quot;By the end of winter，you will be able to put on own boots．&quot;I didn&#x27;t realize at the time that this was more a statement of hope than of confidence．  I handed her my boots and stuck out my foot．Like most children，I expected the adult to do an the work．After mush wiggling and pushing，she managed to get first one into place and then，with a sigh，worked the second one on too．  I announced，&quot;They&#x27;re on the wrong feet．&quot;With the grace that only experience can bring，she struggled to get the boots off and went through the joyless task of putting them on again．Then I said，&quot;These aren&#x27;t my boots．you know．&quot;As she pulled the offending boots from my feet，she still managed to look both helpful and interested．Once they were off．I said，&quot;They are my brother&#x27;s boots．My mother makes me wear them，and I hate them!&quot;Somehow，from long years of practice，she managed to act as though I wasn&#x27;t an annoying little girl．She pushed and shoved．less gently this time，and the boots were returned to their proper place on my feet．With a great sigh of relief，seeing the end of her struggle with me，she asked，&quot;Now，where are your gloves？&#x27;&#x27;  I looked into her eyes and said．&quot;I didn&#x27;t want to lose them．so I put them into the toes of my boots．&quot;
+Question: 62．It can be inferred that before the little girl finally went out to enjoy the first snow of winter，the teacher had to help her put on her boots　．
+Answer Choices: (A)once (B)twice (C)three times (D)four times
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;Re-examining the text carefully:\n\n**Boot-on sequence:**\n\n1. **First time ON:** \&quot;she managed to get first one into place and then, with a sigh, worked the second one on too.\&quot;\n   → Girl says \&quot;They&#x27;re on the wrong feet\&quot; → Teacher takes them OFF.\n\n2. **Second time ON:** \&quot;went through the joyless task of putting them on again.\&quot;\n   → Girl says \&quot;These aren&#x27;t my boots\&quot; → Teacher pulls them OFF.\n\n3. **Third time ON:** \&quot;the boots were returned to their proper place on my feet.\&quot;\n   → Teacher then asks about the gloves, and the girl reveals she hid them in the boots (indicating the boots stayed on this time).\n\nSo the teacher had to put the boots on **three times** before the girl was finally ready to go out.\n\nThe answer is C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this question, I need to count how many times the teacher helped put the boots on the little girl.
+
+**Tracing through the text:**
+
+1. **First time:** &quot;she managed to get first one into place and then, with a sigh, worked the second one on too.&quot;
+
+2. Then the girl announced: &quot;They&#x27;re on the wrong feet.&quot; — Teacher had to take them off.
+
+3. **Second time:** &quot;she struggled to get the boots off and went through the joyless task of putting them on again.&quot;
+
+4. Then the girl said: &quot;These aren&#x27;t my boots, you know.&quot; — Teacher had to take them off again.
+
+5. **Third time:** &quot;the boots were returned to their proper place on my feet.&quot;
+
+After this, the teacher asked about the gloves, and the girl revealed she had put them in the toes of her boots. The teacher put on the boots a total of three times before the girl was finally ready to go out.
+
+The answer is C</pre></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mmlu_pro</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MMLU-Pro：通用学科知识与复杂选择题推理</h1>
+    <p class="muted">基准 mmlu_pro · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">28.7%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">23</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MMLU-Pro 是 MMLU 的增强版，覆盖 14 个学科/专业领域，把选项从 4 个扩展到最多10 个，并替换掉过易、易猜的题目，更强调多步推理而非纯记忆。对应本仓库能力维度D01（通用学科知识与复杂推理）。</p><p>本次使用官方 test 划分（12,032 题）。提示采用零样本思维链，要求模型先推理、再在最后一行给出 `The answer is (X)`。</p><p>答案抽取沿用官方正则（依次匹配 `answer is (X)`、`answer: X`、末尾独立大写字母），失败时由 LLM 兜底抽取；判分为与标准选项字母精确匹配，并按学科分桶统计。</p><p class='muted'>主页：<a href='https://github.com/TIGER-AI-Lab/MMLU-Pro'>https://github.com/TIGER-AI-Lab/MMLU-Pro</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#10401</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: For the signal f(t)=3sin(200πt)+ 6sin(400πt) + sin(500πt), determine the minimum sampling requency (in πHz) satisfying the Nyquist criterion.
+Options:
+A. 550
+B. 1000
+C. 600
+D. 250
+E. 500
+F. 400
+G. 450
+H. 700
+I. 200
+J. 800
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>E</div></div><div class='card'><div class='card-head'><span class='pid'>#10533</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: Three of the following are classic security properties; which one is not?
+Options:
+A. Confidentiality
+B. Availability
+C. Correctness
+D. Integrity
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>business</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>chemistry</td><td>5</td><td>2</td><td>0.400</td><td><div class='bar'><i style='width:40%'></i></div></td></tr><tr><td>computer science</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>economics</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>engineering</td><td>8</td><td>3</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>health</td><td>7</td><td>1</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>history</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>law</td><td>14</td><td>2</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>math</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>other</td><td>9</td><td>3</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>philosophy</td><td>5</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>physics</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>psychology</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#10533</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: Three of the following are classic security properties; which one is not?
+Options:
+A. Confidentiality
+B. Availability
+C. Correctness
+D. Integrity
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The three classic security properties that form the foundation of information security are commonly known as the **CIA Triad**.
+
+1.  **Confidentiality (A):** Ensures that information is accessible only to those authorized to have access.
+2.  **Integrity (D):** Ensures that data is accurate, complete, and has not been altered in an unauthorized manner.
+3.  **Availability (B):** Ensures that information and resources are accessible when needed by authorized users.
+
+**Correctness (C)** is generally not classified as a classic security property. Instead, correctness is a concept usually found in software engineering, formal verification, or reliability assurance domains, referring to whether a system or software functions correctly according to its specifications or logic rather than a security policy.
+
+Therefore, &quot;Correctness&quot; is the option that does not belong to the classic set of security properties.
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#1068</span><span class='tag'>category=law</span></div><div class='qtext'>Question: A truck driver was assigned to drive a huge tractor- trailer loaded with logs. The logs were being sold by a lumber company, which had loaded the tractor- trailer. After four hours of steady driving, the truck driver stopped at a lounge and consumed five bottles of beer. He left the tavern in an intoxicated condition and then drove off to make his final delivery. As he came to the top of a steep incline in the highway and started his descent, an 11-year-old girl suddenly darted out into the road directly in front of him. The truck driver slammed on his powerful air brakes and swerved sharply to the left to avoid hitting her, but the girl was struck by the tractor- trailer and was seriously injured. The girl&#x27;s parents, on behalf of their daughter, assert a claim against the lumber company to recover damages for the girl&#x27;s injuries. At trial, which of the following is LEAST likely to be admissible?
+Options:
+A. Evidence that the truck driver completed a state-approved alcohol education program, if the driver claims that he was not intoxicated.
+B. Evidence that the truck driver&#x27;s reputation for driving is poor, if the lumber company and truck driver argue that the latter was not negligent.
+C. Evidence that the lumber company carried liability insurance on the tractor-trailer, if an investigator for the lumber company&#x27;s insurance company testified for the lumber company that they deny ownership of the truck.
+D. Evidence that the girl had darted into the road in front of vehicles before, if the parents argue that she was frightened by the truck.
+E. Evidence that the truck driver had a previous conviction for a DUI five years ago.
+F. Evidence of the girl&#x27;s school records, if her parents argue that she was a cautious child.
+G. Evidence that the lumber company carried liability insurance on the tractor-trailer, if the lumber company argues that the truck driver was an independent contractor.
+H. Evidence that the truck driver was on his phone at the time of the accident, if the lumber company argues that the driver was distracted.
+I. Evidence that the truck driver pleaded guilty to a criminal charge of DUI arising from this incident.
+J. Evidence that the lumber company had previously been fined for overloading their trucks, if the lumber company argues that the truck was not overloaded.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The question asks which piece of evidence is LEAST likely to be admissible in the civil trial against the lumber company.
+
+1.  **Analyze Option A:** Evidence that the truck driver completed a state-approved alcohol education program, if the driver claims he was not intoxicated.
+    *   **Legal Principle:** Under Federal Rule of Evidence 404(a), evidence of a person&#x27;s character or conduct for the purpose of proving that the person acted in conformity therewith on a specific occasion is inadmissible (character evidence).
+    *   **Application:** The driver claims he was not intoxicated. The defendant (truck driver) may try to introduce evidence of his completed alcohol education program to show he is a &quot;responsible driver&quot; or to support his claim that he did not act improperly when he actually did. However, evidence of a completed program or training to prove a specific act (or state of mind at the time of the accident) is generally considered **character evidence**. While it might show general habits (Rule 404(b) exception), proof of a rehabilitation program does not prove the specific state of intoxication or lack thereof at the time of the accident. It is not a **habit**. It is not an **opinion**. It is **character evidence** used to prove conduct.
+    *   **Conclusion:** This is generally **inadmissible** for the purpose of proving innocence of the intoxication claim in a civil suit. It falls under Rule 404/405 character rules.
+
+2.  **Analyze Option C:** Evidence that the lumber company carried liability insurance... if an investigator testified they deny ownership.
+    *   **Legal Principle:** Evidence of insurance coverage is generally admissible in civil trials (to show policy limits or capacity). The denial of ownership by an investigator is a hearsay statement. However, insurance evidence is usually the best evidence for capacity.
+    *   **Application:** If the lumber company is denying ownership, evidence of the insurance is still admissible to establish th</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#10787</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Collins suggests that the moral value of caring actions comes from
+Options:
+A. the cost-effectiveness of caring actions in terms of resources expended.
+B. the non-instrumental value of caring actions as manifestations of intrinsic goods for person like love and forgiveness.
+C. the value assigned to the action by the person performing the caring act.
+D. how well any caring actions fulfills the recipient&#x27;s interests and the strength of one&#x27;s intention to fulfill the recipient&#x27;s interest.
+E. the balance between the intention and the actual outcome of the caring actions.
+F. the intrinsic value of caring attitudes which motivate caring actions.
+G. the impact of the actions on the overall well-being of the society.
+H. the degree to which those actions align with societal norms and expectations.
+I. the extent to which the actions are recognized and appreciated by others.
+J. the degree to which those actions produces the greatest amount of happiness in the recipient of care.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>F</div><div class='ans'><span class='lbl'>归一化</span>F</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The question pertains to a specific view on care ethics attributed to a philosopher or scholar named **Collins**, likely found in nursing ethics or bioethics curriculum materials (such as those referencing standard readings in care ethics). In the context of these educational texts, **Collins** is cited for emphasizing that the moral worth of care is not merely in the outcome or the cost, but in the **intrinsic value of the caring attitudes** (such as care, concern, or love) that drive and define the actions. This aligns with the core tenets of Relational Care Ethics, which prioritize the relational state and the moral attitude over instrumental outcomes.
+
+Option F explicitly states: &quot;the intrinsic value of caring attitudes which motivate caring actions.&quot; This matches the specific theoretical position attributed to Collins in the relevant source material. Option B is similar but focuses on the actions themselves as manifestations rather than the motivating attitudes, whereas Collins&#x27;s view in this context is defined by the moral status of the caring mindset.
+
+The answer is (F)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10841</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question: &quot; _Ad novitatem_ &quot; is a specific kind of fallacy of
+Options:
+A. Division
+B. False sign
+C. False cause
+D. Hasty Generalization
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The Latin phrase &quot;_Ad novitatem_&quot; translates to &quot;To the novelty&quot; or &quot;On the grounds of novelty.&quot; It refers to the logical fallacy known as the **Appeal to Novelty** (or the Novelty Fallacy).
+
+In this fallacy, an argument claims that a statement, theory, or practice is true or valid simply because it is new. The reasoning implies a causal link or a ground for validity based on the attribute of being &quot;new&quot; rather than on evidence or logic.
+
+Among the options provided:
+*   **Division** involves error in reasoning about the parts of a whole.
+*   **False sign** involves error in reasoning about the relationship between indicators and the conclusion (correlation vs. causation).
+*   **Hasty Generalization** involves drawing a conclusion from a sample that is too small.
+*   **False cause** (or *non causa pro causa*) involves incorrect reasoning about causal relationships.
+
+While formally &quot;Appeal to Novelty&quot; is often categorized under &quot;Fallacies of Relevance,&quot; in the context of specific logic question banks and standardized tests using these specific options and Latin terms, **_Ad novitatem_** is classified under **False cause**. The error is viewed as the assumption that the *newness* causes the *truth* or validity of the argument, fitting the structure of a causal fallacy in this context.
+
+&quot;
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10872</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Singer presents his three-premise argument in addition to appealing to the case of the drowning child because
+Options:
+A. he argues that moral claims can only be justified through logical reasoning and real-life examples.
+B. he believes that abstract arguments are more likely to convince one to act.
+C. he believes that using both abstract arguments and emotional appeals provides a balanced perspective.
+D. he wants to appeal to the reader&#x27;s reason and not just pull at the reader&#x27;s heartstrings.
+E. he wants to show that moral obligations can arise from both rational argument and emotional response.
+F. he believes arguments are a more efficient way to appeal to one&#x27;s emotions.
+G. he believes the case of the drowning child will make his argument more relatable.
+H. he argues that our emotional reactions have no bearing on which moral claims are true.
+I. he aims to appeal to both the logical and emotional aspects of the reader&#x27;s mind.
+J. he thinks that a combination of argument and emotion is more effective than either alone.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>I</div><div class='ans'><span class='lbl'>归一化</span>I</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Step 1: Identify the core rhetorical strategy of the author (Singer).
+Peter Singer is known for combining philosophical arguments (Utilitarianism, premises regarding equal moral consideration) with thought experiments and anecdotes (The Drowning Child) to evoke empathy.
+
+Step 2: Analyze the relationship between the &quot;three-premise argument&quot; and the &quot;case of the drowning child&quot;.
+The three-premise argument typically appeals to **logic/reason** (Logos), establishing the theoretical framework for why one *should* act (moral obligation based on impartiality).
+The case of the drowning child appeals to **emotion/empathy** (Pathos), illustrating the urgency and moral weight of the issue in a visceral way.
+
+Step 3: Determine why Singer uses both in combination.
+If Singer only used the logical argument, he might be dismissed as cold or abstract. If he only used the emotional story, he might be seen as relying on sentimentality insufficient to justify the obligation theoretically. By using both, he addresses the reader&#x27;s mind more completely. He appeals to the rational side (to ground the morality) and the emotional side (to motivate the action).
+
+Step 4: Evaluate the options based on this analysis.
+*   **A:** &quot;Only&quot; justifies logical—incorrect, as he also values emotional connection.
+*   **B:** Believes abstract arguments are better—incorrect, he values the story too.
+*   **C:** &quot;Balanced perspective&quot; is vague compared to specific appeal strategies.
+*   **D:** &quot;Appeal to reason and not just...&quot; implies dismissing emotion. Singer uses emotion (child) as a valid and necessary part of the persuasion.
+*   **E:** Suggests obligations arise from emotion. Philosophically, rights/obligations (logical) guide the action, while emotion facilitates it.
+*   **I:** &quot;Appeals to both the logical and emotional aspects of the reader&#x27;s mind.&quot; This accurately describes the dual-rhetorical strategy (Logos + Pathos).
+*   **J:** &quot;Combination... is more effective.&quot; While likely true, Option I describ</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#10917</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Which of the following is not one of the four main excuses for terrorism that Michael Walzer discusses?
+Options:
+A. Terrorism is a form of freedom of speech.
+B. Terrorism is a necessary evil.
+C. Terrorism benefits oppressed groups.
+D. Terrorism is driven by economic factors.
+E. Terrorism is a legitimate form of self-defense.
+F. All political activity is terroristic.
+G. Terrorism is a method of political influence.
+H. Terrorism is a response to unjust government actions.
+I. Terrorism is a last resort.
+J. Terrorism is an expression of religious beliefs.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The question asks to identify which option is *not* one of the four main excuses for terrorism according to Michael Walzer. In his analysis of terrorism (often found in essays such as &quot;Terrorism&quot; or his book *Just and Unjust Wars*), Michael Walzer categorizes the common justifications or excuses provided by those concerned with terrorism. These four excuses typically focus on the political and moral dimensions of violence rather than its material causes.
+
+The four excuses generally cited in Walzer&#x27;s framework include:
+1.  **Freedom of Speech:** Arguing that political violence is a form of communication to the state or a medium of expression. (Matches Option A).
+2.  **Self-Defense / Oppressed Groups:** Arguing that terrorism is a legitimate form of resistance or defense against an oppressive regime or for the benefit of oppressed populations. (Matches Option E or C).
+3.  **Last Resort / Necessary Violag:** Arguing that terrorism is the only viable option when diplomatic channels are closed or negotiation is impossible. (Matches Option I or B).
+4.  **Political Influence / Strategy:** Arguing that terrorism is a tool for achieving political goals or influencing the state&#x27;s position more effectively than conventional means. (Matches Option G).
+
+Option **D. Terrorism is driven by economic factors**, is a sociological or economic explanation regarding the *causes* of terrorism (e.g., poverty, unemployment), rather than a moral or political *excuse* or justification used to defend the act. Walzer focuses moral evaluation on the justification itself (&quot;Why is it excusable?&quot;), not the underlying economic determinant (&quot;Why is it happening?&quot;). Therefore, it is the one that does not fit his list of normative excuses.
+
+The answer is (D)</pre></details></div></section>
+</main>
+</body>
+</html>

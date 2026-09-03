@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mathtutorbench_mistake_correction</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MathTutorBench · Mistake Correction</h1>
+    <p class="muted">基准 mathtutorbench_mistake_correction · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">40.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">40</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>给定含错误的对话与题目，生成完整正确解并在 &#x27;Final Answer:&#x27; 后给出最终答案。数据 eth-nlped/stepverify（仅取含错误样本）。移植官方 tasks/mistake_correction.py：从回复解析 Final Answer / 末尾数字，与参考解最终数字按 |Δ|&lt;1e-6 比较。正确率即官方 accuracy。对应 D13（纠错与反馈）。</p><p class='muted'>主页：<a href='https://github.com/eth-lre/mathtutorbench'>https://github.com/eth-lre/mathtutorbench</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#mc-100</span></div><div class='qtext'>You are a helpful math tutor assisting a student. Given the following conversation and problem, provide a complete correct solution. Make sure to show your work and state the final answer clearly after &#x27;Final Answer:&#x27;.
+Problem: Tom is cutting a piece of wood to make a shelf. He cut the wood to 143 cm, but it is too long to fit in the bookshelf he is making. He decides to cut 25 cm off the board. But it turned out longer than the other boards. He had to cut off 7 cm from each to make them the same size. How long were the boards before he cut the 7 cm off?
+Conversation:
+Teacher: Hi, could you please walk me through your solution?
+Student: Sure. I started by figuring out the length of the board after Tom cut off 25 cm. I did this by subtracting 25 from 143, which gave me 118 cm. Then, I realized that Tom had to cut 7 cm off each board to make them the same size. So, I added 7 to 118 to get the original length of the boards before he cut the 7 cm off, which was 125 cm. Finally, I added the 7 cm back to get the answer of 132 cm. Does that make sense?
+Teacher: </div><div class='ans gold inline'><span class='lbl'>参考答案</span>125</div></div><div class='card'><div class='card-head'><span class='pid'>#mc-106</span></div><div class='qtext'>You are a helpful math tutor assisting a student. Given the following conversation and problem, provide a complete correct solution. Make sure to show your work and state the final answer clearly after &#x27;Final Answer:&#x27;.
+Problem: James turned 23 the same time John turned 35.  Tim is 5 years less than twice John&#x27;s age.  If Tim is 79 how old is James?
+Conversation:
+Teacher: Hi Heidi, can you tell me how you got your answer?
+Teacher: 
+Teacher: 
+Teacher: Hi Heidi, can you tell me how you got your answer?
+Student: Sure. I started by finding the difference in age between James and John, which is 12 years. Then, I assumed James is x years old and John is (x + 12) years old. Then, I used the given information that Tim is 5 years less than twice John&#x27;s age to get 2(x + 12) - 5 = 79. I then simplified the equation to 2x + 19 = 79 and subtracted 19 from both sides to get 2x = 60. Finally, I divided both sides by 2 to get x = 30, so James is 30 years old.
+Teacher: </div><div class='ans gold inline'><span class='lbl'>参考答案</span>25</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#mc-100</span></div><div class='qtext'>You are a helpful math tutor assisting a student. Given the following conversation and problem, provide a complete correct solution. Make sure to show your work and state the final answer clearly after &#x27;Final Answer:&#x27;.
+Problem: Tom is cutting a piece of wood to make a shelf. He cut the wood to 143 cm, but it is too long to fit in the bookshelf he is making. He decides to cut 25 cm off the board. But it turned out longer than the other boards. He had to cut off 7 cm from each to make them the same size. How long were the boards before he cut the 7 cm off?
+Conversation:
+Teacher: Hi, could you please walk me through your solution?
+Student: Sure. I started by figuring out the length of the board after Tom cut off 25 cm. I did this by subtracting 25 from 143, which gave me 118 cm. Then, I realized that Tom had to cut 7 cm off each board to make them the same size. So, I added 7 to 118 to get the original length of the boards before he cut the 7 cm off, which was 125 cm. Finally, I added the 7 cm back to get the answer of 132 cm. Does that make sense?
+Teacher: </div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>118.0</div><div class='ans'><span class='lbl'>归一化</span>118.0</div><div class='ans gold'><span class='lbl'>正确答案</span>125</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Good start, but let’s keep the cuts in order.
+
+- Tom first cut the wood to **143 cm**.
+- He then cut **25 cm** off:  
+  \[
+  143 - 25 = 118
+  \]
+  So after that cut, the board was **118 cm** long.
+
+The **7 cm** cut happened **after** the board was already 118 cm long. So, before he cut off the 7 cm, the board was still **118 cm** long.
+
+You do not add 7 here. Adding 7 would be correct if 118 cm were the length **after** the 7 cm cut. If we wanted the length **after** the 7 cm cut, it would be:
+\[
+118 - 7 = 111
+\]
+
+Final Answer: 118 cm</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mc-106</span></div><div class='qtext'>You are a helpful math tutor assisting a student. Given the following conversation and problem, provide a complete correct solution. Make sure to show your work and state the final answer clearly after &#x27;Final Answer:&#x27;.
+Problem: James turned 23 the same time John turned 35.  Tim is 5 years less than twice John&#x27;s age.  If Tim is 79 how old is James?
+Conversation:
+Teacher: Hi Heidi, can you tell me how you got your answer?
+Teacher: 
+Teacher: 
+Teacher: Hi Heidi, can you tell me how you got your answer?
+Student: Sure. I started by finding the difference in age between James and John, which is 12 years. Then, I assumed James is x years old and John is (x + 12) years old. Then, I used the given information that Tim is 5 years less than twice John&#x27;s age to get 2(x + 12) - 5 = 79. I then simplified the equation to 2x + 19 = 79 and subtracted 19 from both sides to get 2x = 60. Finally, I divided both sides by 2 to get x = 30, so James is 30 years old.
+Teacher: </div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>30.0</div><div class='ans'><span class='lbl'>归一化</span>30.0</div><div class='ans gold'><span class='lbl'>正确答案</span>25</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The student’s reasoning is correct.
+
+Let James’s current age be \(x\).
+
+Since James turned 23 the same time John turned 35, John is 12 years older than James:
+
+\[
+\text{John&#x27;s age} = x + 12
+\]
+
+Tim is 5 years less than twice John’s age, and Tim is 79:
+
+\[
+2(x + 12) - 5 = 79
+\]
+
+Solve:
+
+\[
+2x + 24 - 5 = 79
+\]
+
+\[
+2x + 19 = 79
+\]
+
+\[
+2x = 60
+\]
+
+\[
+x = 30
+\]
+
+So James is 30 years old.
+
+Final Answer: 30</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mc-111</span></div><div class='qtext'>You are a helpful math tutor assisting a student. Given the following conversation and problem, provide a complete correct solution. Make sure to show your work and state the final answer clearly after &#x27;Final Answer:&#x27;.
+Problem: Matthew asked his children how many hotdogs they wanted for dinner.  Both Ella and Emma agreed they wanted 2 hotdogs each.  Luke said he could eat twice the amount of hotdogs as his sisters while Hunter said he could only eat 1 and half times the total amount of his sisters.  How many hotdogs did Matthew need to cook?
+Conversation:
+Teacher: Hi Michael.  You appear to have been confused by the question.  Please talk me through your solution.
+Student: Hi, I first added the number of hotdogs that Ella and Emma wanted, which was 2 + 2 = 4. Then I multiplied the number of hotdogs that Luke wanted by 2 because he wanted twice the amount of hotdogs as his sisters, which was 2 x 2 = 4. Lastly, I multiplied the number of hotdogs that Hunter wanted by 1.5 because he wanted 1.5 times the total amount of his sisters, which was 1.5 x 4 = 6. So altogether, Matthew needed to cook 4 + 4 + 4 + 6 = 18 hotdogs.
+Teacher: </div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>18.0</div><div class='ans'><span class='lbl'>归一化</span>18.0</div><div class='ans gold'><span class='lbl'>正确答案</span>14</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Michael, let’s break the problem down step by step and make sure we count each child’s hotdogs exactly once.
+
+1. **Ella and Emma’s hotdogs**  
+   Ella wants 2 hotdogs.  
+   Emma wants 2 hotdogs.  
+   So the sisters together want:  
+   \[
+   2 + 2 = 4
+   \]
+
+2. **Luke’s hotdogs**  
+   Luke wants **twice the amount as his sisters**. Since his sisters together want 4 hotdogs, Luke wants:  
+   \[
+   2 \times 4 = 8
+   \]
+
+3. **Hunter’s hotdogs**  
+   Hunter wants **1 and a half times the total amount of his sisters**. The sisters’ total is 4, so Hunter wants:  
+   \[
+   1.5 \times 4 = 6
+   \]
+
+4. **Total hotdogs Matthew needs to cook**  
+   Add each child’s amount once:  
+   \[
+   2 + 2 + 8 + 6 = 18
+   \]
+
+   Or, using the sisters’ combined total:  
+   \[
+   4 + 8 + 6 = 18
+   \]
+
+So Matthew needed to cook **18 hotdogs**.
+
+Final Answer: 18 hotdogs</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mc-123</span></div><div class='qtext'>You are a helpful math tutor assisting a student. Given the following conversation and problem, provide a complete correct solution. Make sure to show your work and state the final answer clearly after &#x27;Final Answer:&#x27;.
+Problem: Pat is having a picnic with her family. She has 42 cookies. She also has 63 pieces of candy and 21 brownies. There are 7 people in her family. If each person gets the same number of each dessert, how much will each person get?
+Conversation:
+Teacher: Hi Cody,  I think you were confused by this question.  Please talk me through your solution.
+Teacher: You correctly added the total number of desserts as 126 and divided it amongst 7 people to give 18 desserts each.  What would happen if you calculated each dessert separately?
+Student: If I calculated each dessert separately, I would get 42/7 = 6 cookies for each person, 63/7 = 9 pieces of candy for each person, and 21/7 = 3 brownies for each person. However, this would mean that each person would not get the same number of each dessert.
+Teacher: </div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>3.0</div><div class='ans'><span class='lbl'>归一化</span>3.0</div><div class='ans gold'><span class='lbl'>正确答案</span>18</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>You calculated each dessert separately correctly. The key is what “the same number of each dessert” means:
+
+- It means **each person gets the same number of cookies as everyone else**
+- **Each person gets the same number of candy as everyone else**
+- **Each person gets the same number of brownies as everyone else**
+
+It does **not** mean that the number of cookies, candy, and brownies must all be the same number.
+
+Work:
+
+Cookies:  
+\[
+42 \div 7 = 6
+\]
+
+Candy:  
+\[
+63 \div 7 = 9
+\]
+
+Brownies:  
+\[
+21 \div 7 = 3
+\]
+
+Check:  
+Each person gets \(6 + 9 + 3 = 18\) desserts, and  
+\[
+7 \times 18 = 126
+\]
+which matches the total number of desserts.
+
+Final Answer: Each person gets 6 cookies, 9 pieces of candy, and 3 brownies.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mc-133</span></div><div class='qtext'>You are a helpful math tutor assisting a student. Given the following conversation and problem, provide a complete correct solution. Make sure to show your work and state the final answer clearly after &#x27;Final Answer:&#x27;.
+Problem: There are 30 players on a football team. The coach has 8 liters of water. She pours 200 milliliters of water for every player so they can get hydrated. Unfortunately, there was a water spill and 250ml of water was spilled. How much water was left over?
+Conversation:
+Teacher: Hi Jian, Can you please talk me through your solution
+Student: Sure. I started by calculating how much water the coach would need for all the players. I multiplied 30 players by 200 milliliters of water, which gave me a total of 6000 milliliters, or 6 liters. Then, I subtracted the 6 liters of water used for the players from the 8 liters of water the coach had, and then subtracted the 250 milliliters that were spilled. This gave me 1.75 liters of water left over.
+Teacher: </div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>1.75</div><div class='ans'><span class='lbl'>归一化</span>1.75</div><div class='ans gold'><span class='lbl'>正确答案</span>1750</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Great work, Jian! Your reasoning and answer are correct. Here is the full solution with the work shown:
+
+- The coach starts with 8 liters of water.
+- Convert liters to milliliters:  
+  \(8 \text{ L} = 8000 \text{ mL}\)
+
+- Water needed for all players:  
+  \(30 \times 200 = 6000 \text{ mL}\)
+
+- Water spilled:  
+  \(250 \text{ mL}\)
+
+- Total water used/spilled:  
+  \(6000 + 250 = 6250 \text{ mL}\)
+
+- Water left over:  
+  \(8000 - 6250 = 1750 \text{ mL}\)
+
+Convert back to liters:  
+\(1750 \text{ mL} = 1.75 \text{ L}\)
+
+Final Answer: 1.75 liters of water were left over.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#mc-184</span></div><div class='qtext'>You are a helpful math tutor assisting a student. Given the following conversation and problem, provide a complete correct solution. Make sure to show your work and state the final answer clearly after &#x27;Final Answer:&#x27;.
+Problem: James turned 23 the same time John turned 35.  Tim is 5 years less than twice John&#x27;s age.  If Tim is 79 how old is James?
+Conversation:
+Teacher: Morning Mariana, can you talk me through your solution?
+Teacher: Morning Mariana, can you talk me through your solution?
+Teacher: Morning Mariana, can you talk me through your solution?
+Student: Mariana: Sure. I started by finding the difference in age between James and John which is 12 years. Then I assumed James is x years old, so John is (x + 12) years old. Tim is 5 years less than twice John&#x27;s age, so I set up the equation 2(x + 12) - 5 = 79. I then simplified the equation to 2x + 19 = 79 and subtracted 19 from both sides to get 2x = 60. Finally, I divided both sides by 2 to get x = 30, which means James is 30 years old.
+Teacher: </div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>30.0</div><div class='ans'><span class='lbl'>归一化</span>30.0</div><div class='ans gold'><span class='lbl'>正确答案</span>25</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Mariana’s solution is correct. Since James turned 23 when John turned 35, John is 12 years older than James.
+
+Let James’s age be \(x\).  
+Then John’s age is \(x + 12\).
+
+Tim is 5 years less than twice John’s age, and Tim is 79:
+
+\[
+2(x + 12) - 5 = 79
+\]
+
+Simplify:
+
+\[
+2x + 24 - 5 = 79
+\]
+
+\[
+2x + 19 = 79
+\]
+
+Subtract 19 from both sides:
+
+\[
+2x = 60
+\]
+
+Divide by 2:
+
+\[
+x = 30
+\]
+
+So James is 30 years old.
+
+Final Answer: James is 30 years old.</pre></details></div></section>
+</main>
+</body>
+</html>

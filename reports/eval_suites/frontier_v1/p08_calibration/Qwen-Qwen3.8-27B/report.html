@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">34.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">97</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">33</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 97,
+  &quot;n_with_confidence&quot;: 97,
+  &quot;confidence_unparsed_rate&quot;: 0.0,
+  &quot;accuracy&quot;: 0.3402,
+  &quot;confidence_mean&quot;: 87.75,
+  &quot;confidence_std&quot;: 10.79,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 1,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 2,
+    &quot;70-79&quot;: 10,
+    &quot;80-89&quot;: 29,
+    &quot;90-99&quot;: 55
+  },
+  &quot;cwr_at_90&quot;: 0.6182,
+  &quot;n_high_confidence&quot;: 55,
+  &quot;ece_10bin&quot;: 0.5373,
+  &quot;brier&quot;: 0.506,
+  &quot;auroc&quot;: 0.5798,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.3793,
+    &quot;coverage_80&quot;: 0.3974,
+    &quot;coverage_70&quot;: 0.3824
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 16,
+      &quot;accuracy&quot;: 0.125,
+      &quot;n_with_confidence&quot;: 16,
+      &quot;cwr_at_90&quot;: 0.8,
+      &quot;auroc&quot;: 0.6429
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;accuracy&quot;: 0.4615,
+      &quot;n_with_confidence&quot;: 39,
+      &quot;cwr_at_90&quot;: 0.5,
+      &quot;auroc&quot;: 0.5344
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 26,
+      &quot;accuracy&quot;: 0.2692,
+      &quot;n_with_confidence&quot;: 26,
+      &quot;cwr_at_90&quot;: 0.8333,
+      &quot;auroc&quot;: 0.6203
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;accuracy&quot;: 0.375,
+      &quot;n_with_confidence&quot;: 16,
+      &quot;cwr_at_90&quot;: 0.6154,
+      &quot;auroc&quot;: 0.5333
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 4.808
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>3</td></tr><tr><td>scored</td><td>97</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>16</td><td>2</td><td>0.125</td><td><div class='bar'><i style='width:12%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>18</td><td>0.462</td><td><div class='bar'><i style='width:46%'></i></div></td></tr><tr><td>mmlu_pro</td><td>26</td><td>7</td><td>0.269</td><td><div class='bar'><i style='width:27%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>6</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>49</td><td>13</td><td>0.265</td><td><div class='bar'><i style='width:27%'></i></div></td></tr><tr><td>zh</td><td>48</td><td>20</td><td>0.417</td><td><div class='bar'><i style='width:42%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（3 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>2</td><td>模型返回了空内容</td><td class='muted'>mmlu_pro::12105, mmlu_pro::4554</td></tr><tr><td><strong>请求超时</strong></td><td>1</td><td>模型推理时间超过超时上限，未在限定时间内返回</td><td class='muted'>agieval::logiqa-zh-337</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 75}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Let \(t=\sqrt n\). Since \(36\le n\le 72\),
+
+\[
+6\le t\le \sqrt{72}=6\sqrt2.
+\]
+
+Rewrite the expression in terms of \(t\):
+
+\[
+x=\frac{n^2+2\sqrt n(n+4)+16}{n+4\sqrt n+4}
+=\frac{t^4+2t(t^2+4)+16}{t^2+4t+4}.
+\]
+
+The numerator factors nicely:
+
+\[
+t^4+2t^3+8t+16=(t+2)(t^3+8)=(t+2)^2(t^2-2t+4).
+\]
+
+The denominator is
+
+\[
+t^2+4t+4=(t+2)^2.
+\]
+
+So
+
+\[
+x=t^2-2t+4=n-2\sqrt n+4.
+\]
+
+Since \(t\ge 6\), the function \(t^2-2t+4\) is increasing. Thus:
+
+- Minimum at \(t=6\):
+
+\[
+x_{\min}=36-12+4=28.
+\]
+
+- Maximum at \(t=6\sqrt2\):
+
+\[
+x_{\max}=72-12\sqrt2+4=76-12\sqrt2\approx 59.03.
+\]
+
+So the actual range is
+
+\[
+28\le x&lt;60.
+\]
+
+Now check the options:
+
+- (D) says \(28&lt;x&lt;60\), but at \(n=36\), \(x=28\), so the strict inequality \(28&lt;x\) fails.
+- (C) says \(25&lt;x&lt;64\), which is definitely true for all allowed \(n\).
+
+Thus, as written, the strictly correct choice is (C).
+
+The answer is C
+Confidence: 75</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>We need enough unique codes from a set of \(n\) letters.
+
+A code can be:
+
+- a single letter: \(n\) choices
+- a pair of two different letters, where order does not matter: \(\binom{n}{2}\) choices
+
+So the total number of possible codes is
+
+\[
+n + \binom{n}{2} = n + \frac{n(n-1)}{2} = \frac{n(n+1)}{2}.
+\]
+
+We need at least 10 unique codes:
+
+\[
+\frac{n(n+1)}{2} \ge 10.
+\]
+
+Check small values:
+
+- \(n=3\): \(\frac{3\cdot4}{2}=6\), not enough.
+- \(n=4\): \(\frac{4\cdot5}{2}=10\), exactly enough.
+
+Thus, the smallest number of letters needed is 4.
+
+The answer is B
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-27</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：黄色固体 $\mathrm{X}$, 可能含有漂白粉、 $\mathrm{FeSO}_{4} $、$ \mathrm{Fe}_{2}\left(\mathrm{SO}_{4}\right)_{3} $、$ \mathrm{CuCl}_{2} $、$ \mathrm{KI}$ 之中的几种或全 部。将 $\mathrm{X}$ 与足量的水作用, 得到深棕色固体混合物 $\mathrm{Y}$ 和无色碱性溶液 $\mathrm{Z}$ 。下列结论合理的 是
+选项：(A)$\mathrm{X}$ 中含 $\mathrm{KI}$, 可能含有 $\mathrm{CuCl}_{2}$ (B)$\mathrm{X}$ 中含有漂白粉和 $\mathrm{FeSO}_{4}$ (C)$\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}, \mathrm{Y}$ 中含有 $\mathrm{Fe}(\mathrm{OH})_{3}$ (D)用 $\mathrm{H}_{2} \mathrm{SO}_{4}$ 酸化溶液 $\mathrm{Z}$, 若有黄绿色气体放出, 说明 $\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步分析：
+
+1. **溶液 Z 为碱性**  
+   在给出的可能物质中，普通盐（FeSO₄、Fe₂(SO₄)₃、CuCl₂、KI）溶于水一般呈中性或酸性，不能使溶液明显呈碱性；只有**漂白粉**水解/存在次氯酸钙等成分可使溶液呈碱性。  
+   因此 X 中**一定含有漂白粉**。
+
+2. **溶液 Z 为无色**  
+   说明溶液中基本不存在有色离子或物质，如：
+   - Cu²⁺（蓝色）
+   - Fe³⁺（黄色/棕黄色）
+   - Fe²⁺（浅绿色，通常不作为“无色”）
+   - 溶解的 I₂（棕黄色/棕色）
+
+   若 X 中含有 CuCl₂、Fe盐或 KI，它们应被转化为沉淀或无色离子，例如 Cu(OH)₂、Fe(OH)₃、I₂ 固体或碘酸盐/碘离子等。
+
+3. **固体 Y 为深棕色固体混合物**  
+   在本题体系中，较有特征性的**深棕色固体**是 **I₂**。漂白粉中的次氯酸根在碱性或弱碱性条件下可氧化 I⁻：  
+   \[
+   \mathrm{ClO^- + 2I^- + H_2O \rightarrow I_2 + Cl^- + 2OH^-}
+   \]
+   因此可以合理推断 X 中**含有 KI**。
+
+   若 X 中同时含有 CuCl₂，Cu²⁺ 在碱性溶液中会生成蓝色 Cu(OH)₂ 沉淀，或与 I⁻ 发生反应生成 CuI/I₂ 等；Cu²⁺ 不再留在溶液中，溶液仍可无色；蓝色沉淀与棕色 I₂、Fe(OH)₃ 等混合后也可呈现深棕色。  
+   所以 **CuCl₂ 可能存在，但不是必须存在**。  
+   故 A 合理。
+
+4. **选项 B**  
+   “X 中含有漂白粉和 FeSO₄”中，漂白粉可以推出，但 **FeSO₄ 不一定必须存在**。  
+   Fe₂(SO₄)₃ 在碱性条件下也能生成红褐色 Fe(OH)₃ 沉淀；且 FeSO₄ 本身为绿色，不能由“黄色固体 X”必然推出 FeSO₄ 一定存在。  
+   故 B 不合理。
+
+5. **选项 C**  
+   “X 中含有 CuCl₂，Y 中含有 Fe(OH)₃”中，CuCl₂ 不是必然存在的，Cu(OH)₂ 蓝色沉淀只是可能与棕色物质混合；Fe(OH)₃ 也不是由现象必然唯一推出的。  
+   故 C 不合理。
+
+6. **选项 D**  
+   用 H₂SO₄ 酸化 Z，若放出黄绿色气体，通常是 **Cl₂**。但漂白粉本身含有 ClO⁻ 和 Cl⁻，酸化即可发生：
+   \[
+   \mathrm{ClO^- + Cl^- + 2H^+ \rightarrow Cl_2 \uparrow + H_2O}
+   \]
+   因此黄绿色气体只能说明存在次氯酸盐/氯离子体系，不能专门说明 X 中含有 CuCl₂。  
+   故 D 不合理。
+
+答案是A  
+置信度: 90</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 85}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步分析：
+
+1. “清明时节”大约在 4 月初，此时我国东部地区冷暖空气活动频繁，长江中下游地区容易出现阴雨天气。  
+2. “雨纷纷”说明有降水，通常与锋面天气有关，因此可先排除以高压为主的选项（高压控制下多为晴朗干燥天气）。  
+3. 清明前后，冷空气仍可能南下：若冷空气主动推进，可能形成冷锋，带来降水；若冷暖气团势力相当、锋面移动缓慢，则可能形成准静止锋，造成连续性阴雨。  
+4. 暖锋虽然也可能带来降水，但在清明前后的长江中下游地区，结合季节与区域背景，不如“准静止锋或冷锋”典型。
+
+答案是A  
+置信度: 85</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-139</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：马丁•路德反对罗马教廷，宣扬因信仰而得救。他倡导的改革运动得到农民、手工工匠、下层僧侣的支持，推动了宗教民族主义的发展。王公贵族为扩大自身政治权力，也纷纷建立其辖区官方教会。这主要说明宗教改革（　　）
+选项：(A)使社会各阶层有了共同目标 (B)扩大了世俗贵族权力 (C)有利于近代民族国家的形成 (D)有着广泛的社会基础
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 70}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步分析：
+
+1. 材料指出马丁·路德反对罗马教廷，改革运动得到农民、手工工匠、下层僧侣等群体支持，并“推动了宗教民族主义的发展”。  
+2. 材料又指出王公贵族为了扩大自身政治权力，在各自辖区建立官方教会。这说明宗教改革削弱了罗马教廷的普世权威，使教会逐渐与世俗统治者的辖区结合，宗教权力向地方世俗政权转移。  
+3. 这种宗教民族主义和“辖区官方教会”的出现，有利于增强政治单位内部的统一性和主权意识，因此更符合“有利于近代民族国家的形成”。  
+4. A项“共同目标”说法过绝对，不同阶层动机并不一致；B项只反映王公贵族的作用，较为片面；D项“广泛的社会基础”虽有一定依据，但不是材料强调的主要趋势，材料更突出宗教民族主义和官方教会建立所体现的政治—民族国家意义。
+
+答案是C  
+置信度: 70</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-mathqa-116</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：若曲线 $y=x^{-\frac{1}{2}}$ 在点  $\left( a, a^{-\frac{1}{2}}\right)$ 处的切线与两个坐标围成的三角形 的面积为 18 , 则 $a=$ ($\qquad$)\\
+
+选项：(A)64 (B)32 (C)16 (D)8
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>由 \(y=x^{-\frac12}=\frac1{\sqrt{x}}\)，可得
+
+\[
+y&#x27;=-\frac12 x^{-\frac32}
+\]
+
+在点 \(\left(a,a^{-\frac12}\right)\) 处切线斜率为
+
+\[
+k=-\frac12 a^{-\frac32}
+\]
+
+切线方程为
+
+\[
+y-a^{-\frac12}=-\frac12 a^{-\frac32}(x-a)
+\]
+
+求与 \(x\) 轴交点，令 \(y=0\)：
+
+\[
+-a^{-\frac12}=-\frac12 a^{-\frac32}(x-a)
+\]
+
+\[
+x-a=2a
+\]
+
+\[
+x=3a
+\]
+
+求与 \(y\) 轴交点，令 \(x=0\)：
+
+\[
+y-a^{-\frac12}=-\frac12 a^{-\frac32}(-a)=\frac12 a^{-\frac12}
+\]
+
+\[
+y=\frac32 a^{-\frac12}
+\]
+
+所以切线与坐标轴围成的三角形面积为
+
+\[
+S=\frac12 \cdot 3a \cdot \frac32 a^{-\frac12}
+\]
+
+\[
+S=\frac94 \sqrt{a}
+\]
+
+已知 \(S=18\)，因此
+
+\[
+\frac94 \sqrt{a}=18
+\]
+
+\[
+\sqrt{a}=8
+\]
+
+\[
+a=64
+\]
+
+答案是A  
+置信度: 100</pre></details></div></section>
+</main>
+</body>
+</html>

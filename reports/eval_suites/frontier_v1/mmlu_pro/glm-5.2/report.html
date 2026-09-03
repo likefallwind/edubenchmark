@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mmlu_pro</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MMLU-Pro：通用学科知识与复杂选择题推理</h1>
+    <p class="muted">基准 mmlu_pro · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">32.4%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">71</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">23</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MMLU-Pro 是 MMLU 的增强版，覆盖 14 个学科/专业领域，把选项从 4 个扩展到最多10 个，并替换掉过易、易猜的题目，更强调多步推理而非纯记忆。对应本仓库能力维度D01（通用学科知识与复杂推理）。</p><p>本次使用官方 test 划分（12,032 题）。提示采用零样本思维链，要求模型先推理、再在最后一行给出 `The answer is (X)`。</p><p>答案抽取沿用官方正则（依次匹配 `answer is (X)`、`answer: X`、末尾独立大写字母），失败时由 LLM 兜底抽取；判分为与标准选项字母精确匹配，并按学科分桶统计。</p><p class='muted'>主页：<a href='https://github.com/TIGER-AI-Lab/MMLU-Pro'>https://github.com/TIGER-AI-Lab/MMLU-Pro</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#10401</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: For the signal f(t)=3sin(200πt)+ 6sin(400πt) + sin(500πt), determine the minimum sampling requency (in πHz) satisfying the Nyquist criterion.
+Options:
+A. 550
+B. 1000
+C. 600
+D. 250
+E. 500
+F. 400
+G. 450
+H. 700
+I. 200
+J. 800
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>E</div></div><div class='card'><div class='card-head'><span class='pid'>#10533</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: Three of the following are classic security properties; which one is not?
+Options:
+A. Confidentiality
+B. Availability
+C. Correctness
+D. Integrity
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>9</td></tr><tr><td>scored</td><td>71</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>business</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>chemistry</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>computer science</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>economics</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>engineering</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>health</td><td>7</td><td>3</td><td>0.429</td><td><div class='bar'><i style='width:43%'></i></div></td></tr><tr><td>history</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>law</td><td>13</td><td>2</td><td>0.154</td><td><div class='bar'><i style='width:15%'></i></div></td></tr><tr><td>math</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>other</td><td>9</td><td>1</td><td>0.111</td><td><div class='bar'><i style='width:11%'></i></div></td></tr><tr><td>philosophy</td><td>5</td><td>2</td><td>0.400</td><td><div class='bar'><i style='width:40%'></i></div></td></tr><tr><td>physics</td><td>6</td><td>2</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>psychology</td><td>6</td><td>3</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（9 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>8</td><td>模型返回了空内容</td><td class='muted'>1068, 11559, 11704, 11801, 11952, 12053, 8099, 8420</td></tr><tr><td><strong>其他错误</strong></td><td>1</td><td>MiniMax HTTP 502: {&quot;error&quot;:{&quot;message&quot;:&quot;Upstream error: &quot;,&quot;type&quot;:&quot;gateway_error&quot;,&quot;code&quot;:502}}</td><td class='muted'>4384</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#10401</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: For the signal f(t)=3sin(200πt)+ 6sin(400πt) + sin(500πt), determine the minimum sampling requency (in πHz) satisfying the Nyquist criterion.
+Options:
+A. 550
+B. 1000
+C. 600
+D. 250
+E. 500
+F. 400
+G. 450
+H. 700
+I. 200
+J. 800
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>E</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To determine the minimum sampling frequency satisfying the Nyquist criterion, we first need to find the maximum frequency component present in the signal.
+
+The given signal is:
+$f(t) = 3\sin(200\pi t) + 6\sin(400\pi t) + \sin(500\pi t)$
+
+Recall that a generic sinusoidal signal can be written as $\sin(2\pi f t)$, where $f$ is the frequency in Hertz (Hz), or as $\sin(\omega t)$, where $\omega$ is the angular frequency in radians per second (rad/s). 
+
+Comparing this to the components of our signal:
+1. $3\sin(200\pi t)$: The angular frequency is $\omega_1 = 200\pi$ rad/s, which corresponds to an ordinary frequency of $f_1 = 100$ Hz.
+2. $6\sin(400\pi t)$: The angular frequency is $\omega_2 = 400\pi$ rad/s, which corresponds to an ordinary frequency of $f_2 = 200$ Hz.
+3. $\sin(500\pi t)$: The angular frequency is $\omega_3 = 500\pi$ rad/s, which corresponds to an ordinary frequency of $f_3 = 250$ Hz.
+
+The maximum ordinary frequency present in the signal is:
+$f_{max} = 250 \text{ Hz}$
+
+According to the Nyquist criterion, the minimum sampling frequency (or Nyquist rate) $f_s$ must be at least twice the maximum frequency of the signal:
+$f_s \ge 2 \times f_{max}$
+$f_s = 2 \times 250 \text{ Hz} = 500 \text{ Hz}$
+
+The question asks for the sampling frequency &quot;(in $\pi$Hz)&quot;. In the context of signal processing questions of this type, &quot;in $\pi$Hz&quot; (or more accurately, $\pi$ rad/s) refers to the coefficient of the angular sampling frequency $\omega_s$. 
+The angular sampling frequency is calculated as:
+$\omega_s = 2\pi f_s = 2\pi (500) = 1000\pi \text{ rad/s}$
+
+Expressing this angular frequency &quot;in $\pi$&quot; units means we extract the coefficient of $\pi$, which is 1000. (Alternatively, treating the coefficients $200$, $400$, and $500$ from the original signal as the frequencies directly in $\pi$Hz gives a max frequency of $500\pi$Hz, and twice that is $1000\pi$Hz, yielding 1000). 
+
+Both interpretations point to the same numerical value required by the options.
+
+The answer is (B)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10533</span><span class='tag'>category=computer science</span></div><div class='qtext'>Question: Three of the following are classic security properties; which one is not?
+Options:
+A. Confidentiality
+B. Availability
+C. Correctness
+D. Integrity
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The classic security properties are commonly known as the CIA triad, which stands for Confidentiality, Integrity, and Availability. 
+- Confidentiality ensures that information is not disclosed to unauthorized individuals.
+- Integrity ensures that information is accurate and has not been tampered with.
+- Availability ensures that information and resources are accessible to authorized users when needed.
+
+Correctness, while a highly desirable property in software engineering and system design (meaning a system behaves exactly as specified), is not considered one of the classic security properties.
+
+The answer is (C)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10872</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Singer presents his three-premise argument in addition to appealing to the case of the drowning child because
+Options:
+A. he argues that moral claims can only be justified through logical reasoning and real-life examples.
+B. he believes that abstract arguments are more likely to convince one to act.
+C. he believes that using both abstract arguments and emotional appeals provides a balanced perspective.
+D. he wants to appeal to the reader&#x27;s reason and not just pull at the reader&#x27;s heartstrings.
+E. he wants to show that moral obligations can arise from both rational argument and emotional response.
+F. he believes arguments are a more efficient way to appeal to one&#x27;s emotions.
+G. he believes the case of the drowning child will make his argument more relatable.
+H. he argues that our emotional reactions have no bearing on which moral claims are true.
+I. he aims to appeal to both the logical and emotional aspects of the reader&#x27;s mind.
+J. he thinks that a combination of argument and emotion is more effective than either alone.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>J</div><div class='ans'><span class='lbl'>归一化</span>J</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Peter Singer, in works like *The Life You Can Save*, employs both the emotional thought experiment of the drowning child and the logical structure of his three-premise argument to persuade the reader. Singer explicitly notes that while reason can tell us what our moral obligations are, emotion is often required to motivate us to act. Neither reason alone nor emotion alone is likely to be sufficient to persuade people to change their behavior on a large scale. Therefore, Singer presents both because he believes that utilizing both rational argument and emotional appeal together makes for a far more compelling and effective case than relying on either method by itself. 
+
+The answer is (J)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#10917</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  Which of the following is not one of the four main excuses for terrorism that Michael Walzer discusses?
+Options:
+A. Terrorism is a form of freedom of speech.
+B. Terrorism is a necessary evil.
+C. Terrorism benefits oppressed groups.
+D. Terrorism is driven by economic factors.
+E. Terrorism is a legitimate form of self-defense.
+F. All political activity is terroristic.
+G. Terrorism is a method of political influence.
+H. Terrorism is a response to unjust government actions.
+I. Terrorism is a last resort.
+J. Terrorism is an expression of religious beliefs.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Michael Walzer, in his essay &quot;Terrorism: A Critique of Excuses,&quot; evaluates the moral arguments used to justify terrorism. He explicitly outlines four main excuses typically offered by its defenders:
+1. **Terrorism is a last resort** (Option I)
+2. **Terrorism is the only available means of political influence / method of political influence** (Option G)
+3. **Terrorism benefits oppressed groups** (Option C)
+4. **Terrorism is a response to unjust government actions** (Option H)
+
+The other options fall outside of the specific moral excuses Walzer addresses in his critique. However, the claim that &quot;terrorism is driven by economic factors&quot; is the classic intended distractor in political philosophy examinations on this topic. Walzer takes care to explicitly distinguish between *excuses* (which are moral justifications for an action) and *explanations* or *root causes* (such as economic conditions, poverty, or religious expression). To say terrorism is driven by economic factors is to offer a causal explanation for why terrorism occurs, not a moral excuse or justification for the act itself. 
+
+The answer is (D)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#11082</span><span class='tag'>category=philosophy</span></div><div class='qtext'>Question:  What is the &quot;intergenerational storm&quot; of climate change?
+Options:
+A. the problem of massive world overpopulation over generations.
+B. the problem that the pace of climate change is too fast for future generations to adapt.
+C. the problem of greenhouse gas emissions increasing over generations due to technological advancements.
+D. the problem that current generations are not doing enough to prevent climate change, thus leaving future generations to deal with the consequences.
+E. the problem that the compounding effects of greenhouse gas emissions require the current generation to, in effect, cooperate with future generations.
+F. the problem of a lack of education among current generations about the long-term effects of climate change.
+G. the problem that future generations may not be able to afford the costs of reversing the effects of climate change.
+H. the problem that the negative effects of climate change disproportionately affect the younger generation.
+I. the problem that the bad effects of current carbon dioxide emissions will fall largely on future generations.
+J. the problem that countries are possibly biased toward the interests of the current generation, which largely benefits from carbon dioxide emissions.
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>I</div><div class='ans'><span class='lbl'>归一化</span>I</div><div class='ans gold'><span class='lbl'>正确答案</span>J</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The &quot;intergenerational storm&quot; is a concept from philosopher Stephen Gardiner&#x27;s analysis of climate change as a &quot;perfect moral storm.&quot; According to Gardiner, the intergenerational storm arises because of a severe asymmetry in the temporal dispersion of causes and effects: the current generation enjoys the short-term benefits of greenhouse gas emissions (such as economic growth and energy consumption), while the severe negative consequences and costs of those emissions are deferred and will fall largely on distant future generations. This temporal disconnect creates a massive moral and political incentive problem, as those responsible for causing the problem are not the ones who will primarily suffer from it, making it exceedingly difficult to take adequate preventative action. 
+
+Option I accurately captures this core concept by identifying the problem as the bad effects of current carbon dioxide emissions falling largely on future generations. 
+
+The answer is (I)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#1123</span><span class='tag'>category=law</span></div><div class='qtext'>Question: Which of the following statements is false?
+Options:
+A. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because of the decrease in the number of member states
+B. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because it was not enforcing its judgments effectively
+C. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because it wasn&#x27;t examining enough cases
+D. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because of the growth in the number of individuals who could access the Court after the increase in the number of member states
+E. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because it was unable to keep up with the rapid changes in international law
+F. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because the workload had increased
+G. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because it was being heavily influenced by political pressure
+H. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because it was a part time court that could not process the growing number of complaints
+I. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because of the lack of diversity among its judges
+J. In the 1990&#x27;s it became apparent the European Court of Human Rights had to be reformed because of budgetary constraints
+
+Think step by step, then end your response with a line of the exact form &quot;The answer is (X)&quot; where X is the letter of the correct option.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The European Court of Human Rights (ECtHR) underwent significant reforms in the 1990s, culminating in Protocol No. 11 which came into force in 1998. 
+
+During this time, the fall of the Berlin Wall and the end of the Cold War led to a massive **increase**, not a decrease, in the number of member states of the Council of Europe, as many Eastern and Central European countries joined. This expansion dramatically increased the number of individuals who had access to the Court (as the right of individual petition became mandatory for all new member states). Consequently, the Court&#x27;s workload increased exponentially. 
+
+Because the old system was comprised of a part-time Court and a separate European Commission of Human Rights, it became heavily backlogged and could not process the growing number of complaints efficiently. This led to the reforms that established a permanent, full-time Court. 
+
+Option A states that the Court had to be reformed because of a &quot;decrease&quot; in the number of member states. This is historically false, as the exact opposite occurred.
+
+The answer is (A)</pre></details></div></section>
+</main>
+</body>
+</html>

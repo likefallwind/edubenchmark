@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">37.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">37</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 100,
+  &quot;confidence_unparsed_rate&quot;: 0.0,
+  &quot;accuracy&quot;: 0.37,
+  &quot;confidence_mean&quot;: 96.25,
+  &quot;confidence_std&quot;: 3.82,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 0,
+    &quot;70-79&quot;: 0,
+    &quot;80-89&quot;: 3,
+    &quot;90-99&quot;: 97
+  },
+  &quot;cwr_at_90&quot;: 0.6392,
+  &quot;n_high_confidence&quot;: 97,
+  &quot;ece_10bin&quot;: 0.5925,
+  &quot;brier&quot;: 0.5833,
+  &quot;auroc&quot;: 0.5358,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.3889,
+    &quot;coverage_80&quot;: 0.4,
+    &quot;coverage_70&quot;: 0.4
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;accuracy&quot;: 0.2941,
+      &quot;n_with_confidence&quot;: 17,
+      &quot;cwr_at_90&quot;: 0.6875,
+      &quot;auroc&quot;: 0.4583
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;accuracy&quot;: 0.5128,
+      &quot;n_with_confidence&quot;: 39,
+      &quot;cwr_at_90&quot;: 0.4872,
+      &quot;auroc&quot;: 0.5816
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.3214,
+      &quot;n_with_confidence&quot;: 28,
+      &quot;cwr_at_90&quot;: 0.7308,
+      &quot;auroc&quot;: 0.4912
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;accuracy&quot;: 0.1875,
+      &quot;n_with_confidence&quot;: 16,
+      &quot;cwr_at_90&quot;: 0.8125,
+      &quot;auroc&quot;: 0.5769
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 4.483
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>5</td><td>0.294</td><td><div class='bar'><i style='width:29%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>20</td><td>0.513</td><td><div class='bar'><i style='width:51%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>9</td><td>0.321</td><td><div class='bar'><i style='width:32%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>3</td><td>0.188</td><td><div class='bar'><i style='width:19%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>51</td><td>14</td><td>0.275</td><td><div class='bar'><i style='width:27%'></i></div></td></tr><tr><td>zh</td><td>49</td><td>23</td><td>0.469</td><td><div class='bar'><i style='width:47%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;C&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To solve the problem, we start by simplifying the expression for \(x\) using algebraic substitution and factorization.
+
+
+### Step 1: Substitute \(t = \sqrt{n}\)
+Let \(t = \sqrt{n}\), so \(n = t^2\) (since \(t \geq 0\) for square roots). This simplifies the expression by eliminating square roots temporarily.
+
+
+### Step 2: Simplify the Denominator
+The denominator of \(x\) is:
+\[
+\text{Denominator} = n + 4\sqrt{n} + 4
+\]
+Substitute \(n = t^2\) and \(\sqrt{n} = t\):
+\[
+\text{Denominator} = t^2 + 4t + 4 = (t + 2)^2
+\]
+This is a perfect square, so the denominator simplifies to \((t + 2)^2\).
+
+
+### Step 3: Simplify the Numerator
+The numerator of \(x\) is:
+\[
+\text{Numerator} = n^2 + 2\sqrt{n}(n + 4) + 16
+\]
+Substitute \(n = t^2\) and \(\sqrt{n} = t\):
+\[
+\text{Numerator} = (t^2)^2 + 2t(t^2 + 4) + 16 = t^4 + 2t^3 + 8t + 16
+\]
+Factor the polynomial by grouping:
+\[
+t^4 + 2t^3 + 8t + 16 = t^3(t + 2) + 8(t + 2) = (t^3 + 8)(t + 2)
+\]
+Use the sum-of-cubes formula \(a^3 + b^3 = (a + b)(a^2 - ab + b^2)\) for \(t^3 + 2^3\):
+\[
+t^3 + 8 = (t + 2)(t^2 - 2t + 4)
+\]
+Substitute back into the numerator:
+\[
+\text{Numerator} = (t + 2)(t^2 - 2t + 4) \cdot (t + 2) = (t + 2)^2(t^2 - 2t + 4)
+\]
+
+
+### Step 4: Simplify \(x\)
+Divide the simplified numerator by the simplified denominator (the \((t + 2)^2\) terms cancel out, since \(t + 2 &gt; 0\)):
+\[
+x = \frac{(t + 2)^2(t^2 - 2t + 4)}{(t + 2)^2} = t^2 - 2t + 4
+\]
+Rewrite \(x\) in terms of \(n\) (since \(t = \sqrt{n}\) and \(t^2 = n\)):
+\[
+x = n - 2\sqrt{n} + 4
+\]
+
+
+### Step 5: Find the Range of \(x\)
+We know \(36 \leq n \leq 72\). Since \(x = n - 2\sqrt{n} + 4\) is an increasing function of \(n\) (its derivative with respect to \(n\) is \(1 - \frac{1}{\sqrt{n}} &gt; 0\) for \(n \geq 1\)), the minimum and maximum values of \(x\) occur at the endpoints of \(n\):
+- **Minimum \(x\):** At \(n = 36\):
+  \[
+  x = 36 - 2\sqrt{36} + 4 = 36 - 12 + 4 = 28
+  \]
+- **Maximum \(x\):** At \(n = 72\):
+  \[
+  x = 72 - 2\sqrt{72} + 4 = 76 - 12\sqrt{2} \approx 76 - 16.97 = </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To solve the problem, we need to calculate the total number of unique codes Amy can create with `n` letters, where codes are either single letters or unordered pairs of distinct letters. We need this total to be at least 10 (one for each book type).
+### Step 1: Define the total number of codes
+- **Single-letter codes**: There are `n` unique single-letter codes (one for each letter).
+- **Unordered pairs of distinct letters**: Since order does not matter, this is the number of combinations of `n` letters taken 2 at a time, calculated as `C(n, 2) = n(n-1)/2`.
+Total codes = number of single-letter codes + number of unordered pair codes = `n + n(n-1)/2`.
+### Step 2: Test small values of `n`
+We test increasing values of `n` to find the smallest `n` where total codes ≥ 10:
+1.  For `n=3`:
+    - Single-letter codes: 3
+    - Pair codes: `C(3,2) = 3(3-1)/2 = 3`
+    - Total: `3 + 3 = 6`, which is less than 10. Insufficient.
+2.  For `n=4`:
+    - Single-letter codes: 4
+    - Pair codes: `C(4,2) = 4(4-1)/2 = 6`
+    - Total: `4 + 6 = 10`, which exactly matches the number of book types. Sufficient.
+### Step 3: Verify
+For `n=4` (letters A, B, C, D), the full set of codes is: A, B, C, D, AB, AC, AD, BC, BD, CD. This is 10 unique codes, which covers all 10 book types.
+The answer is B
+Confidence: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>### 逐步分析过程
+1. 首先排除错误选项D：高压（反气旋）控制下盛行下沉气流，以晴朗天气为主，与“雨纷纷”的降水特征完全不符，因此D选项直接排除。
+2. 分析锋面系统的活动规律与匹配度：
+    - **冷锋的可能性**：清明为4月上旬，此时北方冷空气仍有较强势力，可南下抵达长江中下游地区，与当地暖湿气流交汇。若冷空气移动速度较慢（慢行冷锋），会带来连续性的阴雨天气，符合“雨纷纷”的特征，因此冷锋是可能的影响系统。
+    - **准静止锋的可能性**：虽然江淮准静止锋的典型活动时段为夏初（6-7月，对应梅雨），但气候规律存在年际波动，部分年份冷暖空气势力交汇提前，或局地形成移动缓慢的准静止锋，可带来持续性连阴雨，因此准静止锋也具备可能性。
+    - **暖锋的可能性**：我国属于典型季风气候，4月暖气团势力整体较弱，主雨带仍位于华南地区，暖锋在长江中下游活动极少，不是该时段该区域降水的主要可能影响系统。
+3. 综上，清明时节影响长江中下游的可能天气系统为准静止锋或冷锋，对应选项A。
+
+答案是A
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-mathqa-116</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：若曲线 $y=x^{-\frac{1}{2}}$ 在点  $\left( a, a^{-\frac{1}{2}}\right)$ 处的切线与两个坐标围成的三角形 的面积为 18 , 则 $a=$ ($\qquad$)\\
+
+选项：(A)64 (B)32 (C)16 (D)8
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;A&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>### 步骤1：求曲线的导数（切线斜率）
+曲线为 $y=x^{-\frac{1}{2}}=\frac{1}{\sqrt{x}}$（定义域 $x&gt;0$，故 $a&gt;0$），根据幂函数求导公式 $(x^n)&#x27;=nx^{n-1}$，得导数：
+$$y&#x27;=-\frac{1}{2}x^{-\frac{3}{2}}$$
+在点 $(a,a^{-\frac{1}{2}})$ 处的切线斜率为：
+$$k=y&#x27;\big|_{x=a}=-\frac{1}{2}a^{-\frac{3}{2}}$$
+
+---
+
+### 步骤2：写出切线方程
+由点斜式 $y-y_0=k(x-x_0)$，代入切点 $(a,a^{-\frac{1}{2}})$ 和斜率 $k$，得切线方程：
+$$y - a^{-\frac{1}{2}} = -\frac{1}{2}a^{-\frac{3}{2}}(x - a)$$
+
+---
+
+### 步骤3：求切线与坐标轴的截距
+#### （1）y轴截距（令 $x=0$）
+代入 $x=0$：
+$$y = a^{-\frac{1}{2}} + \frac{a}{2a^{\frac{3}{2}}} = a^{-\frac{1}{2}} + \frac{1}{2}a^{-\frac{1}{2}} = \frac{3}{2}a^{-\frac{1}{2}} = \frac{3}{2\sqrt{a}}$$
+
+#### （2）x轴截距（令 $y=0$）
+代入 $y=0$：
+$$-a^{-\frac{1}{2}} = -\frac{1}{2}a^{-\frac{3}{2}}(x - a)$$
+两边消去负号，整理得：
+$$2a = x - a \implies x=3a$$
+
+---
+
+### 步骤4：计算三角形面积并求解a
+切线与坐标轴围成的直角三角形面积为：
+$$S=\frac{1}{2} \times |x截距| \times |y截距|$$
+代入截距（均为正）和 $S=18$：
+$$18 = \frac{1}{2} \times 3a \times \frac{3}{2\sqrt{a}}$$
+化简得：
+$$18 = \frac{9\sqrt{a}}{4}$$
+解得：
+$$\sqrt{a}=8 \implies a=64$$
+
+答案是A
+
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-155</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：在下列两个核反应方程中 $X + \, ^{14}_{7}\mathrm{N} \rightarrow Y + \, ^{17}_{8}\mathrm{O}$，$Y + \, ^{7}_{3}\mathrm{Li} \rightarrow 2X$，X 和 Y 代表两种不同的原子核，以 Z 和 A 分别表示 X 的电荷数和质量数，则（ ）
+选项：(A)$Z = 1, \, A = 1$ (B) (C) (D)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ADG&quot;, &quot;c&quot;: 100}</div><div class='ans'><span class='lbl'>归一化</span>ADG</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>要解决这个问题，我们利用核反应的两个基本守恒规律：电荷数守恒（反应前后总电荷数相等）和质量数守恒（反应前后总质量数相等），逐步推导如下：
+
+### 步骤1：设定未知量
+设X的电荷数为$Z$，质量数为$A$；设Y的电荷数为$Z&#x27;$，质量数为$A&#x27;$。
+
+### 步骤2：对第一个核反应列守恒方程
+第一个反应：$X + \, ^{14}_{7}\mathrm{N} \rightarrow Y + \, ^{17}_{8}\mathrm{O}$
+- 电荷数守恒：反应前后总电荷数相等，因此有：
+  $Z + 7 = Z&#x27; + 8$
+  整理得：$Z&#x27; = Z - 1$  --- (1)
+- 质量数守恒：反应前后总质量数相等，因此有：
+  $A + 14 = A&#x27; + 17$
+  整理得：$A&#x27; = A - 3$  --- (2)
+
+### 步骤3：对第二个核反应列守恒方程
+第二个反应：$Y + \, ^{7}_{3}\mathrm{Li} \rightarrow 2X$
+- 电荷数守恒：反应前后总电荷数相等，因此有：
+  $Z&#x27; + 3 = 2Z$  --- (3)
+- 质量数守恒：反应前后总质量数相等，因此有：
+  $A&#x27; + 7 = 2A$  --- (4)
+
+### 步骤4：联立方程求解
+将(1)代入(3)，求解$Z$：
+$(Z - 1) + 3 = 2Z$
+$Z + 2 = 2Z$
+解得：$Z = 2$
+
+将(2)代入(4)，求解$A$：
+$(A - 3) + 7 = 2A$
+$A + 4 = 2A$
+解得：$A = 4$
+
+因此X的电荷数$Z=2$，质量数$A=4$，对应常规设置中的选项D。
+
+答案是D
+置信度: 100</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-physics-99</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：有研究发现, 某神经细胞传递信号时, 离子从细胞膜一侧流到另一侧形成跨膜电流, 若将该细胞膜视为 $1 \times 10^{-8} \mathrm{~F}$ 的电容器, 在 $2 \mathrm{~ms}$ 内细胞膜两侧的电势差从 $-70 \mathrm{mV}$ 变为 $30 \mathrm{mV}$, 则该过程中跨膜电流的平均 值为 
+选项：(A)$1.5 \times 10^{-7} \mathrm{~A}$ (B)$2 \times 10^{-7} \mathrm{~A}$ (C)$3.5 \times 10^{-7} \mathrm{~A}$ (D)$5 \times 10^{-7} \mathrm{~A}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;ABCDEF&quot;, &quot;c&quot;: 99}</div><div class='ans'><span class='lbl'>归一化</span>ABCDEF</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>要解决这个问题，我们可以利用电容器的电荷量与电势差的关系，结合平均电流的定义来推导：
+1. **明确核心公式**：
+   对于电容器，电荷量与电势差的关系为 $Q = CU$，因此电荷量的变化量 $\Delta Q = C \cdot \Delta U$。
+   平均电流的定义为单位时间内通过的电荷量，即 $\bar{I} = \frac{\Delta Q}{\Delta t}$。
+   联立可得平均电流的表达式：$\bar{I} = \frac{C \cdot \Delta U}{\Delta t}$。
+2. **整理已知量并统一单位**：
+   - 电容 $C = 1 \times 10^{-8} \ \text{F}$
+   - 时间间隔 $\Delta t = 2 \ \text{ms} = 2 \times 10^{-3} \ \text{s}$
+   - 电势差变化量 $\Delta U = 30 \ \text{mV} - (-70 \ \text{mV}) = 100 \ \text{mV} = 0.1 \ \text{V}$
+3. **代入计算**：
+   将数值代入平均电流公式：
+   $$
+   \bar{I} = \frac{1 \times 10^{-8} \ \text{F} \times 0.1 \ \text{V}}{2 \times 10^{-3} \ \text{s}} = \frac{1 \times 10^{-9} \ \text{C}}{2 \times 10^{-3} \ \text{s}} = 5 \times 10^{-7} \ \text{A}
+   $$
+答案是D
+置信度: 99</pre></details></div></section>
+</main>
+</body>
+</html>

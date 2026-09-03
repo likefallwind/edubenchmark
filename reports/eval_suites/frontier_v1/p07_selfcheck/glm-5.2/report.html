@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>glm-5.2</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">35.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">35</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.36,
+  &quot;r2_accuracy&quot;: 0.35,
+  &quot;net_gain&quot;: -0.01,
+  &quot;change_rate&quot;: 0.17,
+  &quot;n_r1_wrong&quot;: 64,
+  &quot;n_fixed_wrong_to_right&quot;: 6,
+  &quot;fix_rate&quot;: 0.0938,
+  &quot;n_r1_right&quot;: 36,
+  &quot;n_broken_right_to_wrong&quot;: 7,
+  &quot;break_rate&quot;: 0.1944,
+  &quot;score_10&quot;: 4.497,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;r1_correct&quot;: 8,
+      &quot;r2_correct&quot;: 7,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;r1_correct&quot;: 11,
+      &quot;r2_correct&quot;: 13,
+      &quot;fixed&quot;: 4,
+      &quot;broken&quot;: 2
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 8,
+      &quot;r2_correct&quot;: 8,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 1
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;r1_correct&quot;: 9,
+      &quot;r2_correct&quot;: 7,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 3
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>7</td><td>0.412</td><td><div class='bar'><i style='width:41%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>13</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>8</td><td>0.286</td><td><div class='bar'><i style='width:29%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>7</td><td>0.438</td><td><div class='bar'><i style='width:44%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>52</td><td>18</td><td>0.346</td><td><div class='bar'><i style='width:35%'></i></div></td></tr><tr><td>zh</td><td>48</td><td>17</td><td>0.354</td><td><div class='bar'><i style='width:35%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;Let&#x27;s carefully re-examine the reasoning and calculations step by step.\n\n**Step 1: Understand the rules for creating a code.**\nA code can be formed in one of two ways:\n1. A single letter (e.g., &#x27;A&#x27;).\n2. A pair of two *different* letters (e.g., &#x27;AB&#x27;), where the order does *not* matter (so &#x27;AB&#x27; is the same as &#x27;BA&#x27; and only counts as one code). \n\n**Step 2: Set up the formula.**\nIf Amy has $n$ letters at her disposal, the number of possible codes she can create is the sum of:\n- The number of single-letter codes: $n$\n- The number of pairs of two different letters: $\\binom{n}{2} = \\frac{n(n-1)}{2}$\n\nSo, the total number of unique codes is:\n$\\text{Total Codes} = n + \\frac{n(n-1)}{2}$\n\n**Step 3: Test values of $n$ to find the minimum needed for 10 books.**\nWe need the total number of codes to be at least 10. Let&#x27;s test small integers:\n\n- For $n = 3$:\n  $\\text{Total Codes} = 3 + \\frac{3(3-1)}{2} = 3 + \\frac{3 \\times 2}{2} = 3 + 3 = 6$\n  6 codes are not enough for 10 types of books.\n\n- For $n = 4$:\n  $\\text{Total Codes} = 4 + \\frac{4(4-1)}{2} = 4 + \\frac{4 \\times 3}{2} = 4 + 6 = 10$\n  10 codes are exactly enough for 10 types of books.\n\nLet&#x27;s list them out to be absolutely sure:\nSingle letters: A, B, C, D (4 codes)\nPairs: AB, AC, AD, BC, BD, CD (6 codes)\nTotal = 4 + 6 = 10 codes. \n\nSince $n=3$ is too few and $n=4$ gives exactly 10 codes, 4 is the smallest number of letters Amy will need. \n\nThe reasoning and calculations from the previous response are completely correct.\n\nThe answer is B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To find the smallest number of letters Amy needs, we must determine the number of unique codes that can be created with $n$ letters. 
+
+According to the rules:
+1. A code can be a single letter. The number of such codes is simply $n$.
+2. A code can be a pair of two different letters, where the order does not matter (meaning AB is the same as BA). The number of such combinations is given by the formula for combinations: $\binom{n}{2} = \frac{n(n-1)}{2}$.
+
+So, the total number of unique codes that can be generated with $n$ letters is:
+Total Codes = $n + \frac{n(n-1)}{2} = \frac{2n + n(n-1)}{2} = \frac{n(n+1)}{2}$
+
+Amy needs at least 10 unique codes for her 10 types of books. Let&#x27;s test small values for $n$:
+- If $n = 3$, Total Codes = $\frac{3(3+1)}{2} = \frac{3 \times 4}{2} = 6$. (Not enough, since 6 &lt; 10)
+- If $n = 4$, Total Codes = $\frac{4(4+1)}{2} = \frac{4 \times 5}{2} = 10$. (Exactly enough, since 10 = 10)
+
+With 4 letters (for example, A, B, C, D), Amy can make 4 single-letter codes (A, B, C, D) and 6 two-letter codes (AB, AC, AD, BC, BD, CD), yielding exactly 10 uniquely represented codes. 
+
+Thus, the smallest number of letters Amy will need is 4.
+
+The answer is B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-biology-8</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：用体外实验的方法可合成多肽链。已知苯丙氨酸的密码子是 UUU, 若要在体外合成同位 素标记的多肽链, 所需的材料组合是
+
+(1)同位素标记的 tRNA
+
+(2)蛋白质合成所需的酶
+
+(3)同位素标记的苯丙氨酸
+
+(4)人工合成的多聚尿嘧啶核苷酸
+
+(5)除去了 DNA 和 mRNA 的细胞裂解液
+选项：(A)(1)(2)(4) (B)(2)(3)(4) (C)(3)(4)(5) (D)(1)(3)(5)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;重新检查体外合成同位素标记多肽链的所需材料：\n\n1. **模板**：人工合成的多聚尿嘧啶核苷酸（多聚 U），作为 mRNA 提供 UUU 密码子。需要 (4)。\n\n2. **原料**：多肽链由氨基酸脱水缩合而成，tRNA 只是运载工具，不会成为多肽链的组成成分。要得到标记的多肽链，必须直接使用同位素标记的苯丙氨酸。需要 (3)，不需要 (1)。\n\n3. **翻译系统**：除去 DNA 和 mRNA 的细胞裂解液 (5) 提供了核糖体、tRNA、酶、ATP 等完整的翻译机器，同时去除了内源 mRNA 的干扰。需要 (5)，不需要单独添加酶 (2)。\n\n因此组合为 (3)(4)(5)，对应选项 C。推理无误。\n\n答案是C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>要解答本题，我们需要分析体外合成多肽链所需的基本条件以及同位素标记的原理：
+
+1. **模板（mRNA）**：体外合成多肽链需要 mRNA 作为翻译的模板。已知苯丙氨酸的密码子是 UUU，因此可以用人工合成的多聚尿嘧啶核苷酸作为 mRNA，这对应了 (4)。
+
+2. **翻译系统（核糖体、tRNA、酶等）**：多肽链的合成需要在核糖体上进行，还需要 tRNA 运载氨基酸以及相关的酶和 ATP。选择“除去了 DNA 和 mRNA 的细胞裂解液” (5) 可以提供一个无内源 mRNA 干扰的翻译系统（包含核糖体、tRNA、酶等所有必需的翻译机器）。
+
+3. **同位素标记的原料**：题目要求合成“同位素标记的多肽链”。因为多肽链是由氨基酸脱水缩合而成的，tRNA 只是运载工具，不会成为多肽链的组成成分，所以标记 tRNA (1) 没有用。必须直接提供同位素标记的氨基酸，即同位素标记的苯丙氨酸 (3)。
+
+4. **关于酶 (2)**：在成分 (5) 的细胞裂解液中已经包含了蛋白质合成所需的各种酶，因此不需要额外单独添加 (2)。
+
+综上所述，所需的材料组合是 (3)、(4)、(5)。
+
+答案是C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;重新验证各选项的推理过程：\n\n(A) 蚕丝的主要成分是蛋白质。蚕丝是由蚕吐出的丝，其核心成分是丝心蛋白，因此属于蛋白质。该说法正确。\n\n(B) 蚕丝属于天然高分子材料（选项中“天热”为“天然”的错别字）。蛋白质是自然界存在的天然高分子化合物，因此作为蛋白质的蚕丝属于天然高分子材料。该说法正确。\n\n(C) “蜡炬成灰”过程中发生了氧化反应。蜡烛燃烧是石蜡等可燃物与氧气发生的发光发热的剧烈氧化反应。该说法正确。\n\n(D) 古代的蜡是高级脂肪酸酯，属于高分子聚合物。古代的蜡主要是蜂蜡，其主要成分是高级脂肪酸与高级一元醇形成的酯，虽然是酯类，但其相对分子质量通常在数百到上千之间，属于小分子化合物，并不属于高分子聚合物（高分子化合物的相对分子质量通常在10000以上）。因此，“属于高分子聚合物”的说法错误。\n\n经过重新验证，原推理过程准确无误，D选项确实为说法错误的一项。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>本题考查化学与生活的相关知识，逐项分析如下：
+
+(A) 蚕丝的主要成分是蛋白质，属于动物纤维，该项说法正确。
+(B) 蚕丝的主要成分是蛋白质，蛋白质是天然高分子化合物，因此蚕丝属于天然高分子材料（选项中“天热”应为“天然”的笔误），该项说法正确。
+(C) “蜡炬成灰”是指蜡烛燃烧的过程，蜡烛燃烧是石蜡与氧气发生的剧烈氧化反应，放出热量，该项说法正确。
+(D) 古代的蜡（如蜂蜡）主要成分是高级脂肪酸与高级一元醇形成的酯，其相对分子质量较小，一般在数百左右，不属于高分子聚合物。现代蜡烛的主要成分是石蜡，是石油分馏产物之一，属于碳原子数较多的烃类混合物，同样不属于高分子聚合物。该项说法错误。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-125</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：霍林河发源于大兴安岭，为山前半干旱区及部分半湿润区的平原带来了流水及泥沙。受上游修建水库和灌溉的影响，山前平原河段多年断流。断流期间，山前平原上的洼地增多增大。伴随着洼地增多增大，周边地区可能出现(　　)
+选项：(A)水土流失 (B)沼泽化 (C)土地沙化  (D)盐碱化
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;**逐步思考：**\n\n1. **重新审视区域背景与现象的因果关系**：\n   霍林河地处半干旱及部分半湿润区，气候特征是降水较少且集中，蒸发作用较强。上游修建水库和灌溉导致山前平原河段断流，河流不再带来泥沙沉积。断流后，地表缺乏水分和植被保护，风力侵蚀作用加剧，或者原本被泥沙填平的旧河道、牛轭湖等地貌重新暴露，导致山前平原上的“洼地增多增大”。\n\n2. **重点分析“洼地增多增大”对周边地区水文及土壤的影响**：\n   原解答认为洼地是风蚀洼地，风吹走的泥沙在周边沉积导致沙化。但仔细推敲题干逻辑，“伴随洼地增多增大，周边地区可能出现...”，这里的因果关系更侧重于洼地这一**微地形**变化对**水土运动**的影响。\n   - 洼地地势低洼，容易成为局部的**汇水中心**。即使河流断流，半干旱区偶尔的降水以及地下径流仍会向洼地汇集。\n   - 汇水作用会导致洼地及周边的**地下水位相对较高**（甚至接近地表）。\n   - 在半干旱、半湿润气候下，**蒸发旺盛**。洼地周边地下水位较高的区域，地下水通过毛细管作用上升到地表，水分蒸发后，水中的盐分便会在地表大量积累。\n\n3. **区域典型环境问题印证**：\n   霍林河流域位于松嫩平原西部，该区域是中国典型的苏打盐碱地分布区。其盐碱化的核心机制正是“微地形（洼地）汇水—周边地下水位升高—强烈蒸发—盐分表聚”。因此，洼地增多增大直接加剧了周边地区的**土壤盐碱化**。\n\n4. **重新排除其他选项**：\n   - **(A) 水土流失**：平原区地势平坦，且断流后流水作用减弱，不易发生水土流失。排除。\n   - **(B) 沼泽化**：半干旱区本身降水较少，且河流长期断流缺乏稳定水源补给，蒸发又强，难以形成沼泽。排除。\n   - **(C) 土地沙化**：风力侵蚀确实会加剧，但如果是导致周边沙化，其直接原因应表述为“风力沉积作用增强”，而非刻意强调“伴随洼地增多增大”。洼地的形成更多是改变了局部的水盐运动规律。排除。\n\n综上所述，伴随洼地增多增大，洼地成为汇水区，在强烈蒸发下，周边地区最可能出现盐分聚集，即土壤盐碱化。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**逐步思考：**
+
+1. **分析自然环境背景**：
+   霍林河发源于大兴安岭，流经山前半干旱区及部分半湿润区的平原。该区域降水较少，蒸发较强，气候偏干旱，风力作用显著。
+
+2. **分析断流带来的影响**：
+   受上游水库截流和灌溉影响，山前平原河段多年断流。断流导致该河段失去了流水的常年补给，也失去了上游泥沙的沉积作用；同时，由于气候偏干旱，地表水分减少，植被覆盖率会下降，地表物质变得松散。
+
+3. **分析洼地增多增大的原因**：
+   在半干旱区，河流断流后，流水沉积作用停止，风力作用占据主导地位。强劲的风力侵蚀地表松散沉积物，形成风蚀洼地，导致“山前平原上的洼地增多增大”。
+
+4. **分析洼地增多增大对周边地区的影响**：
+   随着风蚀洼地的增多和增大，被风力侵蚀吹扬起的大量沙物质会在风力减弱时沉积在洼地周边地区，导致周边地区出现土地沙化现象。
+
+5. **排除其他选项**：
+   - **(A) 水土流失**：该区域为平原区，地势平坦，且断流后流水作用减弱，水力侵蚀不显著，不易发生水土流失。
+   - **(B) 沼泽化**：半干旱区本身降水较少，蒸发较强，且河流断流后缺乏水源补给，不会形成沼泽化。
+   - **(D) 盐碱化**：土壤盐碱化通常发生在地下水位较高且蒸发旺盛的低洼地带。河流长期断流会导致地下水得不到补给，地下水位下降，一般不会加剧周边地区的盐碱化。
+
+综上所述，伴随洼地增多增大，周边地区受风沙沉积影响，最可能出现土地沙化。
+
+答案是C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-history-164</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：《齐民要术》自序：“盖神农为耒耜，以利天下，尧命四子，敬授民时，降命后稷，食为政首，…殷周之盛，《诗》《书》所述，要在安民，富而教之。”这段话主要强调（　　）
+选项：(A)儒家对农业的重视 (B)改进生产工具的意义 (C)历法与农业的关系 (D)农业技术和重要性
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;1. **重新审视引文及拆解**：\n   * “盖神农为耒耜，以利天下”：神农制作农具（耒耜）造福天下。此处提到了**农业生产工具与技术**。\n   * “尧命四子，敬授民时”：尧任命官员教授百姓农时（历法）。此处提到了**农业相关技术指导**。\n   * “降命后稷，食为政首”：任命后稷为农官，把粮食问题作为政务之首。此处强调了**农业（粮食）对于国家政治的重要性**。\n   * “殷周之盛，《诗》《书》所述，要在安民，富而教之”：殷周的繁荣在于安定百姓，使他们富足并加以教育。此处进一步强调了**农业作为富民强国根本的重要性**。\n\n2. **重新验证选项**：\n   * (A) 儒家对农业的重视：虽然“富而教之”体现了儒家思想，但引文大量篇幅列举了神农、尧、后稷等先古传说及圣王事迹，并非单指儒家，该选项片面。\n   * (B) 改进生产工具的意义：仅对应“神农为耒耜”这一句，未能涵盖全段主旨，过于片面。\n   * (C) 历法与农业的关系：仅对应“敬授民时”这一句，同样过于片面。\n   * (D) 农业技术和重要性：引文前半部分列举的“耒耜”、“民时”属于农业技术；后半部分“食为政首”、“安民”、“富而教之”则高度强调了农业对治国安民的重要性。该选项全面且准确地概括了整段话的核心主旨。\n\n3. **结论**：\n   经过重新验证，之前的推理逻辑严密，选项分析准确无误，未发现错误。贾思勰在《齐民要术》序言中引用古代圣王的事迹，正是为了突出农业技术及其对国家社会的重要性。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1. **分析引文内容**：
+   引文出自《齐民要术》作者贾思勰的自序，可拆分为几个部分理解：
+   * “盖神农为耒耜，以利天下”：神农制作农具（耒耜），造福天下。这提到了**农业生产工具（技术）**。
+   * “尧命四子，敬授民时”：尧任命官员，恭敬地教授百姓农时（历法）。这提到了**农业相关知识与技术（历法指导农业）**。
+   * “降命后稷，食为政首”：舜任命后稷为农官，把粮食问题作为政治的首要任务。这强调了**农业在治国理政中的重要性**。
+   * “殷周之盛，《诗》《书》所述，要在安民，富而教之”：殷周时期的繁荣，正如《诗经》《尚书》所记述的，核心在于安定百姓，使他们富足并加以教育。这进一步强调了**农业作为富民强国根本的重要性**。
+
+2. **逐一分析选项**：
+   * (A) 儒家对农业的重视：虽然“富而教之”带有儒家色彩，但引文大量列举了神农、尧、后稷等先古传说中的圣王事迹，并非单指儒家。
+   * (B) 改进生产工具的意义：只概括了“神农为耒耜”这一小部分，过于片面。
+   * (C) 历法与农业的关系：只概括了“敬授民时”这一小部分，同样过于片面。
+   * (D) 农业技术和重要性：引文前半部分（耒耜、民时）突出了农业技术及工具；后半部分（食为政首、安民、富而教之）突出了农业对国家政治和百姓生活的重要性。该选项全面且准确地概括了引文主旨。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-337</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>李明：“目前我国已经具备了开征遗产税的条件。我国已经有一大批人进入了高收入阶层，遗产税的开征有了雄厚的现实经济基础。我国的基尼系数邑超过了4．0的国际警戒线，社会的贫富差距在逐渐加大，这对遗产税的开征提出了迫切的要求。张涛：“我国目前还不具备开征遗产税的条件。如果现在实施遗产税，很可能遇到征不到税的问题。”
+问题：以下哪项如果为真，最能加强张涛的反对意见?
+选项：A．目前我国的人均寿命为72岁，我国目前的富裕人群的年龄为35—50岁。 B．目前在我国，无论平民百姓还是百万富翁都想把自己的财富留给子孙。 C．只有在对个人信息很清楚的情况下才能实施遗产税。 D．我国有些富有的影视明星不到60岁就不幸去世了。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;1. **重新审视题目要求**：\n   - 李明的观点：我国具备开征遗产税的条件。理由：高收入人群多，且贫富差距大。\n   - 张涛的观点：我国目前不具备开征遗产税的条件。理由是如果现在实施，很可能遇到“征不到税”的问题。\n   - 题目要求：寻找最能**加强张涛反对意见**的选项，即需要解释为什么“现在”开征遗产税会面临“征不到税”的问题。\n\n2. **重新逐项分析选项**：\n   - **A项**：指出目前我国富裕人群的年龄在35-50岁，而人均寿命为72岁。这意味着当前这批富人距离去世还有相当长的一段时间。因为遗产税是在人死后征收的，所以如果现在开征，短期内确实会面临这批富人尚未去世而“无税可征”的尴尬局面。这直接且有力地支持了张涛“现在开征会遇到征不到税问题”的观点，最能加强其论证。\n   - **B项**：指出人们想把财富留给子孙。这只说明了人们的主观意愿，但并不能说明客观上能否征到税，且遗产税本身就是在财富留给子孙时征收的，因此对张涛的论点支持力度很弱或无关。\n   - **C项**：指出实施遗产税需要对个人信息很清楚。这提出了一个征收的技术条件，但并没有说明我国目前个人信息状况如何，是否能满足该条件不得而知，因此不能直接加强张涛的观点。\n   - **D项**：指出有些富有的明星不到60岁去世。这说明富人也有可能早逝，如果早逝就能征到遗产税，这反而削弱了张涛“征不到税”的论点。\n\n3. **结论**：经过重新验证，A项最能解释为什么现在开征遗产税会“征不到税”，从而最能加强张涛的反对意见。原推理无误。\n\n答案是A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1. **分析题干逻辑**：
+   - 李明的观点：我国具备开征遗产税的条件。理由是高收入人群多，且贫富差距大。
+   - 张涛的观点：我国目前不具备开征遗产税的条件。理由是如果现在实施，很可能遇到“征不到税”的问题。
+   - 题目要求：寻找最能**加强张涛反对意见**的选项，即需要解释为什么现在开征遗产税会“征不到税”。
+
+2. **逐项分析选项**：
+   - **A项**：指出目前我国富裕人群的年龄在35-50岁，而人均寿命为72岁。这意味着当前这批富人距离去世还有相当长的一段时间。因为遗产税是在人死后征收的，所以如果现在开征，短期内确实会面临“无税可征”的尴尬局面。这直接有力地支持了张涛“征不到税”的观点，最能加强其论证。
+   - **B项**：指出人们想把财富留给子孙。这只说明了人们的主观意愿，但并不能说明客观上能否征到税，也无法反驳遗产税的征收机制，对张涛的论点支持力度很弱或无关。
+   - **C项**：指出实施遗产税需要对个人信息很清楚。这提出了一个征收的技术条件，但并没有说明我国目前个人信息状况如何，是否能满足该条件不得而知，因此不能直接加强张涛的观点。
+   - **D项**：指出有些富有的明星不到60岁去世。这说明富人也有可能早逝，如果早逝就能征到遗产税，这反而削弱了张涛“征不到税”的论点。
+
+3. **结论**：A项最能解释为什么现在开征遗产税会“征不到税”，从而最能加强张涛的反对意见。
+
+答案是A</pre></details></div></section>
+</main>
+</body>
+</html>

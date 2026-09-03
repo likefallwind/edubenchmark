@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">66.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">66</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-216</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Think about the different ways that people use the wind. You can use it to fly a kite or to sail a boat. Wind is one of our cleanest and richest power sources（来源）, as well as one of the oldest. Evidence shows that windmills（风车）began to be used in ancient Iran back in the seventh century BC. They were first introduced to Europe during the 1100s, when armies returned from the Middle East with knowledge of using wind power.For many centuries, people used windmills to grind（磨碎）wheat into flour or pump water from deep underground when electricity was discovered in the late 1800s, people living in remote areas began to use them to produce electricity. This allowed them to have electric lights and radio. However, by the 1940s when electricity was available to people in almost all areas of the United States, windmills were rarely used.During the 1970s, people started becoming concerned about the pollution that is created when coal and gas are burned to produce electricity. People also realized that the supply of coal and gas would not last forever. Then, wind was rediscovered, though it means higher coasts. Today, there is a global movement to supply more and more of our electricity through the use of wind.
+Question: 63．What would the author probably discuss in the paragraph that follows?
+Answer Choices: (A)The advantages of wind power. (B)The design of wind power plants. (C)The worldwide movement to save energy. (D)The global trend towards producing power from wind.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.62,
+  &quot;r2_accuracy&quot;: 0.66,
+  &quot;net_gain&quot;: 0.04,
+  &quot;change_rate&quot;: 0.1,
+  &quot;n_r1_wrong&quot;: 38,
+  &quot;n_fixed_wrong_to_right&quot;: 7,
+  &quot;fix_rate&quot;: 0.1842,
+  &quot;n_r1_right&quot;: 62,
+  &quot;n_broken_right_to_wrong&quot;: 3,
+  &quot;break_rate&quot;: 0.0484,
+  &quot;score_10&quot;: 5.679,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 10,
+      &quot;r2_correct&quot;: 11,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 0
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;r1_correct&quot;: 23,
+      &quot;r2_correct&quot;: 25,
+      &quot;fixed&quot;: 5,
+      &quot;broken&quot;: 3
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 19,
+      &quot;r2_correct&quot;: 19,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 10,
+      &quot;r2_correct&quot;: 11,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>11</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>25</td><td>0.694</td><td><div class='bar'><i style='width:69%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>19</td><td>0.679</td><td><div class='bar'><i style='width:68%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>11</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>35</td><td>0.648</td><td><div class='bar'><i style='width:65%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>31</td><td>0.674</td><td><div class='bar'><i style='width:67%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;# 重新检查解答\n\n## 逐项重新验证\n\n**(A) 蚕丝的主要成分是蛋白质** ✓ 正确\n- 蚕丝由丝素蛋白和丝胶蛋白组成，确认无误。\n\n**(B) 蚕丝属于天然高分子材料** ✓ 正确\n- 蚕丝中丝素蛋白的分子量可达 30 万～40 万，是典型的天然高分子材料。\n\n**(C) \&quot;蜡炬成灰\&quot;过程中发生了氧化反应** ✓ 正确\n- 燃烧本质是可燃物与 O₂ 的氧化反应，确认无误。\n\n**(D) 古代的蜡是高级脂肪酸酯，属于高分子聚合物** ✗ 错误\n- 古代的蜡主要包括：\n  - **动物蜡**（如蜂蜡）：主要成分是高级脂肪酸与高级一元醇形成的酯，分子式如 C₁₅H₃₁COOC₃₀H₆₁，分子量约 600～700；\n  - **植物蜡**（如白蜡、棕榈蜡）：分子量通常在 1000 以下。\n- 高分子聚合物的分子量通常在 **10000 以上**，而蜡的分子量远低于此，因此蜡属于**小分子有机物**，不是高分子聚合物。\n- 该说法错误。\n\n## 结论\n\n答案保持不变。\n\n**答案是D**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析诗句中涉及的物质
+
+**诗句解读**：&quot;春蚕到死丝方尽&quot;涉及**蚕丝**，&quot;蜡炬成灰泪始干&quot;涉及**蜡烛（蜡）**的燃烧。
+
+## 逐项分析
+
+**(A) 蚕丝的主要成分是蛋白质** ✓ 正确
+- 蚕丝主要由丝素（fibroin）和丝胶（sericin）组成，二者均为蛋白质。
+
+**(B) 蚕丝属于天然高分子材料** ✓ 正确
+- 蚕丝的蛋白质分子量大（丝素分子量约 30 万以上），属于天然高分子材料。
+
+**(C) &quot;蜡炬成灰&quot;过程中发生了氧化反应** ✓ 正确
+- 蜡烛燃烧时，蜡与 O₂ 反应生成 CO₂ 和 H₂O，属于燃烧氧化反应。
+
+**(D) 古代的蜡是高级脂肪酸酯，属于高分子聚合物** ✗ 错误
+- 古代的蜡（如蜂蜡，主要成分为高级脂肪酸酯，如软脂酸蜂花酯等）虽然属于高级脂肪酸酯，但其相对分子质量仅为几百到一千左右，**并非高分子聚合物**（高分子聚合物的相对分子质量通常在 10000 以上）。蜡属于**小分子化合物**。
+
+## 结论
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-125</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：霍林河发源于大兴安岭，为山前半干旱区及部分半湿润区的平原带来了流水及泥沙。受上游修建水库和灌溉的影响，山前平原河段多年断流。断流期间，山前平原上的洼地增多增大。伴随着洼地增多增大，周边地区可能出现(　　)
+选项：(A)水土流失 (B)沼泽化 (C)土地沙化  (D)盐碱化
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;让我重新检查这道题的推理。\n\n## 重新审题\n\n**关键信息**：\n1. 霍林河发源于大兴安岭\n2. 为山前平原带来流水及泥沙\n3. 上游修建水库和灌溉 → 山前平原河段**多年断流**\n4. 断流期间：**洼地增多增大**\n5. 问：伴随着洼地增多增大，周边地区可能出现什么？\n\n## 重新分析\n\n**关键地理原理**：\n- 山前平原是河流泥沙堆积形成的，**地下水埋藏浅**\n- 原本有河水补给和洪水泛滥，带来淡水稀释盐分\n- 断流后情况发生变化\n\n**逐项分析**：\n\n**A. 水土流失** ❌\n- 水土流失主要发生在山区/坡面\n- 山前平原地势平坦，且断流后径流减少，流水侵蚀减弱\n- 不会因洼地增多而加剧\n\n**B. 沼泽化** ❌\n- 半干旱区降水量小，蒸发量大\n- 断流后缺乏水源补给\n- 不具备形成沼泽的水分条件\n\n**C. 土地沙化** ❌\n- 沙化主要与植被破坏、过度放垦、气候干旱有关\n- 虽然半干旱区有沙化可能，但与\&quot;洼地增多增大\&quot;无直接因果关系\n- 洼地是汇水的地方，不是沙化典型发生的地貌部位\n\n**D. 盐碱化** ✅\n- 洼地是地表水、地下水的**汇集区**\n- 洼地增多增大 → 地下水位抬升（更浅）\n- 山前平原原本地下水位就较浅\n- 半干旱区**蒸发强烈**\n- 地下水沿土壤毛细管上升 → 水分蒸发 → **盐分在表层土壤积累**\n- 断流前有河水/洪水补给，盐分被冲刷带走\n- 断流后失去这个\&quot;天然排盐\&quot;过程，加之洼地汇集，盐分更易积累\n\n## 验证结论\n\n断流 → 洼地增多增大（汇水）→ 地下水位抬升 → 强烈蒸发 → 盐分地表积聚 → 盐碱化\n\n这是半干旱山前平原断流后典型的\&quot;次生盐渍化\&quot;过程，逻辑成立。\n\n**答案是D**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 分析过程
+
+## 关键信息提取
+1. **霍林河**：发源于大兴安岭，流入山前平原（半干旱—半湿润过渡区）
+2. **断流原因**：上游修建水库和灌溉
+3. **断流后果**：山前平原河段多年断流
+4. **现状**：断流期间，洼地增多增大
+
+## 各选项分析
+
+**A. 水土流失** ❌
+- 水土流失主要发生在坡面，与流水侵蚀有关
+- 断流后地表径流减少，水力侵蚀减弱
+- 反而不太可能加剧
+
+**B. 沼泽化** ❌
+- 沼泽化需要长期稳定的水源
+- 该地区为半干旱区，蒸发旺盛
+- 断流后水分条件变差，难以形成沼泽
+
+**C. 土地沙化** 
+- 虽有可能性（断流后植被退化），但与&quot;洼地增多增大&quot;无直接因果关系
+
+**D. 盐碱化** ✅
+- 洼地地势低洼，是地下水汇集的部位，地下水位相对较高
+- 半干旱区蒸发旺盛，洼地及周边土壤中的水分被强烈蒸发
+- 水分蒸发后，盐分在土壤表层积累
+- 形成土壤盐碱化（这是山前平原断流后典型的次生盐渍化过程）
+
+## 结论
+
+断流后，洼地成为地下水的汇集点；半干旱气候下蒸发强烈，盐分随水分蒸发在洼地及周边土壤表层不断积聚，导致盐碱化。
+
+**答案是D**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;# 重新验证\n\n**重新审视题目要素：**\n- 时间：清明时节（春季，约4月初）\n- 地点：长江中下游地区\n- 现象：雨纷纷（持续性降水）\n\n**逐一分析各天气系统：**\n\n**① 准静止锋** ✓\n- 春季冷暖气团在长江中下游地区势均力敌，形成著名的\&quot;江淮准静止锋\&quot;\n- 这是造成该地区春季连绵阴雨（清明雨）的最主要天气系统\n- **符合题意**\n\n**② 冷锋** ✓\n- 春季北方冷空气仍频繁南下，冷锋过境时迫使暖湿气流抬升，形成降水\n- 是该季节常见的带来降水的天气系统\n- **符合题意**\n\n**③ 暖锋** ✗\n- 暖锋多出现在春季东北和华北地区，由南向北推进\n- 长江中下游此时并非暖锋典型影响区\n- 暖锋降水强度一般较小，不符合\&quot;雨纷纷\&quot;的连绵特征\n- **不符合题意**\n\n**④ 高压** ✗\n- 高压控制下盛行下沉气流，天气晴朗干燥\n- 与\&quot;雨纷纷\&quot;明显矛盾\n- **不符合题意**\n\n**验证结论：**\n长江中下游清明时节的\&quot;雨纷纷\&quot;主要源于准静止锋（江淮准静止锋）的持续降水，以及冷锋南下带来的降水。暖锋影响有限，高压控制下无降水，故排除B、C、D。\n\n原答案无误。\n\n---\n\n**答案是A**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 思考过程
+
+**分析诗句背景：**
+&quot;清明时节雨纷纷&quot;出自杜牧的《清明》，描述的是清明节前后（4月初）长江中下游地区连绵阴雨的天气特征。
+
+**分析天气系统：**
+
+1. **准静止锋**：春季，冷暖气团在长江中下游地区势均力敌，形成江准静止锋（或华南准静止锋），造成持续性降水——这是该地区清明时节连绵春雨的主要原因。✓
+
+2. **冷锋**：春季，北方冷空气仍较活跃，时有冷锋南下，冷空气迫使暖湿空气抬升形成降水。✓
+
+3. **暖锋**：在长江中下游清明时节，暖锋活动相对较少，不是主要降水系统。✗
+
+4. **高压**：高压控制下盛行下沉气流，多晴朗干燥天气，与&quot;雨纷纷&quot;不符。✗
+
+**结合长江中下游地区春季天气实际：**
+- 准静止锋是造成该地区春季连绵阴雨的主导天气系统
+- 冷锋南下也是常见带来降水的天气系统
+
+**排除选项：**
+- B项中暖锋在该季节不典型
+- C项忽略了最典型的准静止锋
+- D项高压控制下不会降雨，明显错误
+
+---
+
+**答案是A**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-46</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某网络论坛将最近一年与5年前网友曾经发布的有关社会问题的帖子进行了统计比较，发现：像拾金不昧、扶贫急难、见义勇为这样的帖子增加了 50%。而与为非作歹、作恶逃匿、杀人越货有关的帖子却增加了 90%。由此可见，社会风气正在迅速恶化。
+问题：以下哪项如果为真，最能削弱上述论证？
+选项：(A)“好事不出门，坏事传千里”。古往今来，都是如此 (B)最近5年上网的用户翻了两番 (C)最近几年，有些人在网上用造谣的方式达到营利的目的 (D)该网络论坛是一个法制论坛
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;**重新验证推理过程：**\n\n**论证核心：** 帖子数量变化 → 反映社会事件实际变化 → 推断社会风气恶化\n\n**逐项重新分析：**\n\n**A项**：\&quot;好事不出门，坏事传千里\&quot;古往今来如此。\n- 该项说明5年前和现在都存在同样的报道偏差\n- 在同一偏差下，好事帖子（50%）增长仍慢于坏事帖子（90%），论证的对比逻辑依然成立\n- **不能削弱**论证\n\n**B项**：5年来上网用户翻了两番（即增长为原来的4倍）。\n- 设5年前：好事帖子=100，坏事帖子=100，用户=100\n- 现在：好事帖子=150，坏事帖子=190，用户=400\n- **人均好事帖子**：1.00 → 150/400=0.375（**下降了62.5%**）\n- **人均坏事帖子**：1.00 → 190/400=0.475（**下降了52.5%**）\n- 两类帖子的人均发帖率都在下降，帖子总数增加完全可以由用户基数扩大解释\n- 这从根本上动摇了\&quot;帖子增加=社会事件增加=社会风气恶化\&quot;的推理链\n- **能够有效削弱**论证\n\n**C项**：部分人通过造谣营利。\n- 仅质疑部分坏事帖子的真实性，但无法解释为何坏事帖子增长快于好事帖子\n- 削弱力度有限\n\n**D项**：该论坛是法制论坛。\n- 论坛性质5年内相对稳定，不能解释两个时点之间的变化\n- 削弱力度有限\n\n**验证结论：**\nB项提供了\&quot;帖子数量增加\&quot;的替代解释（用户基数暴增），且数学计算显示帖子的人均增长率为负数，社会风气恶化的推论难以成立。我的原答案正确。\n\n答案是B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**分析论证结构：**
+
+论证的推理是：
+- 前提：关于坏事的帖子增长(90%)快于好事的帖子(50%)
+- 结论：社会风气正在迅速恶化
+
+**隐含前提：** 帖子的数量变化能够真实反映社会事件的实际变化。
+
+**逐项分析：**
+
+**A项**：&quot;好事不出门，坏事传千里&quot;古往今来如此。这说明过去和现在都存在同样的报道偏差。如果这种偏差一直存在，那么两个时间点都在同一偏差下比较，论证的对比仍然有效，**不能削弱**。
+
+**B项**：5年来上网用户翻了两番（即增至4倍）。如果用户增至4倍：
+- 好事帖子仅增50%，人均好事帖子 = 1.5/4 = 0.375（人均下降62.5%）
+- 坏事帖子仅增90%，人均坏事帖子 = 1.9/4 = 0.475（人均下降52.5%）
+
+帖子的增长幅度远小于用户的增长幅度，**说明帖子数量增加可能仅仅是因为上网人数增多**，并不能反映社会事件实际增多（实际上人均都下降了）。这直接削弱了&quot;社会风气恶化&quot;的结论，**最能削弱**。
+
+**C项**：部分人在网上造谣。这只说明部分坏事的帖子可能不真实，但无法解释为什么坏事帖子增长快于好事帖子，削弱力度有限。
+
+**D项**：该论坛是法制论坛。论坛性质主要解释为什么该论坛中讨论坏事的帖子较多，但无法解释为什么同一论坛在5年间帖子数量发生了这样的变化（因为论坛性质在5年内相对稳定），削弱力度有限。
+
+**结论：** B项提供了对帖子增长现象最直接的替代解释（用户基数暴增），从根本上动摇了&quot;帖子增加=社会事件增加=社会风气恶化&quot;的推理链条。
+
+答案是B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::lsat-lr-227</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Studies have found that human tears contain many of the same hormones that the human body produces in times of emotional stress. Hence, shedding tears removes significant quantities of these hormones from the body. Therefore, crying must have the effect of reducing emotional stress.
+Question: The reasoning in the argument is most vulnerable to criticism on the grounds that the argument
+Answer Choices: (A)overlooks the possibility that if crying has a tendency to reduce emotional stress, this tendency might arise because of something other than the shedding of tears (B)confuses a condition that is required for the production of a given phenomenon with a condition that in itself would be sufficient to cause the production of that phenomenon (C)fails to adequately address the possibility that, even if one phenomenon causally contributes to a second phenomenon, the second phenomenon may causally influence the first as well (D)fails to adequately distinguish between two distinct factors that are jointly responsible for causing a given phenomenon (E)takes for granted that because certain substances are present whenever a condition occurs, those substances are a cause of that condition
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;Re-examining the argument step by step:\n\n**The argument&#x27;s logic:**\n1. Tears contain stress hormones\n2. Shedding tears removes these hormones\n3. Therefore, crying reduces emotional stress\n\n**The critical flaw:** The argument assumes that the *only* way crying could reduce stress is through the physical removal of stress hormones via tears. However, crying could reduce stress through completely different mechanisms:\n- Social support received from others when crying\n- Cathartic release of emotions\n- Signaling to oneself/others that one needs help\n- Physical effects of sobbing/breathing patterns\n- Psychological acknowledgment of one&#x27;s emotions\n\nThe argument never considers these alternative explanations, jumping directly to the conclusion that the stress-reducing effect (if it exists) must come from hormone removal via tears.\n\n**Re-checking each option:**\n- (A) ✓ Correctly identifies that the argument overlooks alternative mechanisms by which crying might reduce stress that don&#x27;t involve shedding tears\n- (B) ✗ No confusion of necessary/sufficient conditions\n- (C) ✗ No claim about bidirectional causation\n- (D) ✗ No claim about joint causes\n- (E) ✗ The argument doesn&#x27;t assume presence = causation; it separately claims hormones are produced during stress and that removing them would reduce stress\n\nMy original analysis is confirmed.\n\nThe answer is A.&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>E</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at this argument, I need to identify the logical flaw in the reasoning that links crying to stress reduction.
+
+**Argument structure:**
+1. Tears contain stress hormones
+2. Shedding tears removes these hormones
+3. Therefore, crying reduces emotional stress
+
+**Key analysis:** The argument assumes that the only mechanism by which crying reduces stress is the physical removal of stress hormones through tears. However, this overlooks the possibility that crying might reduce stress through other means entirely — such as social support from others, emotional catharsis, or the act of expressing suppressed emotions — none of which depend on hormones being removed via tears.
+
+**Evaluating the choices:**
+- (A) correctly identifies this flaw: the argument overlooks alternative explanations for why crying might reduce stress that don&#x27;t involve the shedding of tears
+- (B) is about confusing necessary and sufficient conditions — not the issue here
+- (C) concerns feedback loops between two phenomena — not the central flaw
+- (D) involves jointly responsible causes — not applicable
+- (E) concerns the fallacy of assuming presence of substances equals causation of a condition — not quite the issue, since the argument is more about the mechanism, not correlation implying causation
+
+The answer is A.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::lsat-rc-110</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>The corrido, a type of narrative folk song, comes from a region half in Mexico and half in the United States known as the Lower Rio Grande Border. Corridos, which flourished from about 1836 to the late 1930s, are part of a long-standing ballad tradition that has roots in eighteenth-century Spain. Sung in Spanish, corridos combine formal features of several different types of folk songs, but their narratives consistently deal with subject matter specific to the Border region. For example, &quot;El Corrido de Kiansis&quot; (c. 1870), the oldest corrido surviving in complete form, records the first cattle drives to Kansas in the late 1860s. A single important event is likely to have inspired several corrido variants, yet the different versions of any given story all partake of standard generic elements. When sung at social gatherings, corridos served to commemorate significant local happenings, but more importantly, their heavy reliance on familiar linguistic and thematic conventions served to affirm the cohesiveness of Border communities. Corridos take their name from the Spanish verb correr, meaning to run or to flow, for corridos tell their stories simply and swiftly, without embellishments. Figures of speech such as metaphors are generally rare in corridos, and when metaphors are used, they usually incorporate everyday images that are familiar to the songs&#x27; listeners. In the popular &quot;El Corrido de Gregorio Cortez,&quot; for example, the hero Cortez, fighting off pursuers, uses the metaphor of a thunderstorm to boast that he has had harder fights than the one they gave him: &quot;I have weathered thunderstorms; / This little mist doesn&#x27;t bother me.&quot; Similar storm imagery is found in other corridos including &quot;Kiansis,&quot; which tells of stampedes caused by thunderstorms during the Kansas cattle drives. Such imagery, highly conventional and readily recognizable to corrido listeners, reflects and strengthens the continuity of the corrido tradition. The corrido is composed not only of familiar images but also of certain ready-made lines that travel easily from one ballad to another. This is most evident in the corrido&#x27;s formal closing verse, or despedida. The despedida of one variant of &quot;Gregorio Cortez&quot; is translated as follows: &quot;Now with this I say farewell / In the shade of a cypress tree; / This is the end of the ballad / Of Don Gregorio Cortez.&quot; The first and third lines are a set convention. The second and fourth lines are variable, the fourth carrying the name of the corrido or expressing its subject, and the second varying according to exigencies of rhyme. In the despedida, perhaps the clearest marker of both the corrido&#x27;s uniqueness and its generic continuity, the corrido&#x27;s maker asserts that the task of relating an authentic Border tale has been accomplished.
+Question: Which one of the following is mentioned in the passage as an example of the use of metaphor in corridos?
+Answer Choices: (A)mist (B)a cypress tree (C)a fight (D)stampedes (E)stampedes
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;Re-examining the question and passage:\n\nThe question asks which option is mentioned in the passage as an example of the use of metaphor in corridos.\n\nThe passage explicitly states: \&quot;In the popular &#x27;El Corrido de Gregorio Cortez,&#x27; for example, the hero Cortez, fighting off pursuers, **uses the metaphor of a thunderstorm to boast that he has had harder fights** than the one they gave him.\&quot;\n\nBreaking this down:\n- The metaphor employed is that of a thunderstorm\n- The metaphor is used to describe/comment on **a fight** (the pursuit by his enemies)\n- The passage specifically highlights this fight as the example of metaphor use\n\nEvaluating each option:\n- (A) mist - mentioned in the quoted lyrics, but as part of the metaphor&#x27;s imagery, not as the example of metaphor use\n- (B) a cypress tree - appears in the despedida, not connected to metaphor\n- (C) a fight - explicitly the subject that the thunderstorm metaphor describes; the passage uses it as the example\n- (D) stampedes - mentioned in \&quot;Kiansis\&quot; as an event, not as a metaphor\n- (E) stampedes - duplicate of D\n\nThe passage clearly identifies the fight (the pursuit) as the context in which the thunderstorm metaphor is applied, making it the example of metaphor use in corridos.\n\nThe answer is C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Looking at the passage, I need to identify what is described as an example of metaphor in corridos.
+
+The passage states: &quot;In the popular &#x27;El Corrido de Gregorio Cortez,&#x27; for example, the hero Cortez, fighting off pursuers, **uses the metaphor of a thunderstorm to boast that he has had harder fights** than the one they gave him.&quot;
+
+The metaphor being used is the comparison of a fight to a thunderstorm. The fight is the subject being described metaphorically.
+
+- (A) mist - mentioned in the quote but not as the metaphor itself
+- (B) a cypress tree - mentioned in the despedida, not as a metaphor example
+- (C) a fight - this is what is being described through the thunderstorm metaphor
+- (D) stampedes - mentioned in the Kiansis corrido, not as the metaphor example
+- (E) stampedes - duplicate of D
+
+The answer is C</pre></details></div></section>
+</main>
+</body>
+</html>

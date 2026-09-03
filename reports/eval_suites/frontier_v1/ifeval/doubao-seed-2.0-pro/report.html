@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>doubao-seed-2.0-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">56.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">56</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1040</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Write me a resume for Matthias Algiers. Use words with all capital letters to highlight key abilities, but make sure that words with all capital letters appear less than 10 times. Wrap the entire response with double quotation marks.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1075</span><span class='tag'>instruction_family=detectable_format</span></div><div class='qtext'>Can you help me make an advertisement for a new product? It&#x27;s a diaper that&#x27;s designed to be more comfortable for babies and I want the entire output in JSON format.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.56,
+  &quot;prompt_loose_accuracy&quot;: 0.7,
+  &quot;instruction_strict_accuracy&quot;: 0.7486,
+  &quot;instruction_loose_accuracy&quot;: 0.8286,
+  &quot;n_prompts&quot;: 100,
+  &quot;n_instructions&quot;: 175,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>8</td><td>1</td><td>0.125</td><td><div class='bar'><i style='width:12%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_content+detectable_format</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_format</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+keywords</td><td>5</td><td>4</td><td>0.800</td><td><div class='bar'><i style='width:80%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>change_case+startend</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>combination</td><td>8</td><td>7</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>combination+detectable_format</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+punctuation</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>combination+keywords</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>combination+length_constraints</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+punctuation</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_format</td><td>9</td><td>6</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>6</td><td>4</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>detectable_format+keywords+length_constraints</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>4</td><td>3</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>10</td><td>2</td><td>0.200</td><td><div class='bar'><i style='width:20%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>keywords+length_constraints+punctuation</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>keywords+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>10</td><td>7</td><td>0.700</td><td><div class='bar'><i style='width:70%'></i></div></td></tr><tr><td>startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1040</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Write me a resume for Matthias Algiers. Use words with all capital letters to highlight key abilities, but make sure that words with all capital letters appear less than 10 times. Wrap the entire response with double quotation marks.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>&quot;
+Matthias Algiers
+Portland, Oregon | (503) 123-4567 | matthias.algiers.pm@gmail.com | linkedin.com/in/matthiasalgiers | portfolio: matthiasalgiers.com
+
+Professional Summary
+Senior Sustainable Infrastructure Project Manager with 8+ years of experience delivering public and private green build projects valued up to $18M, consistently finishing 15% ahead of schedule and 20% under budget. Specializes in centering community needs and emissions reduction targets across all project phases, with a track record of earning regional industry recognition for innovative, accessible sustainable design.
+
+Professional Experience
+Senior Project Manager | GreenSpire Infrastructure, Portland, Oregon
+January 2020 – Present
+- Lead 12+ municipal and commercial sustainable construction projects from pre-design feasibility through closeout, leveraging CROSS-STAKEHOLDER ALIGNMENT to unify city councils, local environmental nonprofits, and trade teams around shared core goals
+- Cut operational carbon emissions for completed projects by 38% on average by integrating LOW-CARBON MATERIAL INNOVATION into pre-construction sourcing requirements, earning 4 regional Green Building Leadership awards between 2021 and 2024
+- Executed rigorous BUDGET &amp; RISK MITIGATION protocols to reduce unplanned project costs by 22% across the full portfolio, avoiding $1.2M in overexpenditures in 2023 alone
+- Mentored 3 junior project coordinators in sustainable build best practices, resulting in 100% of mentees being promoted within 18 months of hire
+
+Project Coordinator | Pacific Northwest Sustainable Build Collective, Seattle, Washington
+June 2016 – December 2019
+- Supported end-to-end delivery of 8 residential and small-scale public green space projects, contributing to NET-ZERO PROJECT DELIVERY milestones that exceeded Washington state energy efficiency standards by 25%
+- Designed and rolled out COMMUNITY ENGAGEMENT STRATEGY frameworks for low-income neighborhood revitalization projects, boosting resident input participation by 60% and reducing post-construction feedback disputes by 80%
+- Coordinated permit applications and regulatory compliance checks, ensuring 100% of projects passed local environmental and building code inspections on first submission
+- Managed project documentation and weekly stakeholder check-ins, reducing communication delays by 30% across all active projects
+
+Education
+Bachelor of Science in Civil Engineering (Concentration in Sustainable Design) | University of Washington, Seattle, Washington
+Graduated June 2016 | Minor in Environmental Policy | 3.7/4.0 GPA | Dean’s List (6 semesters)
+
+Certifications &amp; Affiliations
+- Leadership in Energy and Environmental Design Accredited Professional (Building Design + Construction), 2018
+- Project Management Professional, 2021
+- Certified Sustainable Building Advisor, 2019
+- Member, Oregon Sustainable Infrastructure Association, 2020–Present
+&quot;</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>&quot;
+Matthias Algiers
+Portland, Oregon | (503) 123-4567 | matthias.algiers.pm@gmail.com | linkedin.com/in/matthiasalgiers | portfolio: matthiasalgiers.com
+
+Professional Summary
+Senior Sustainable Infrastructure Project Manager with 8+ years of experience delivering public and private green build projects valued up to $18M, consistently finishing 15% ahead of schedule and 20% under budget. Specializes in centering community needs and emissions reduction targets across all project phases, with a track record of earning regional industry recognition for innovative, accessible sustainable design.
+
+Professional Experience
+Senior Project Manager | GreenSpire Infrastructure, Portland, Oregon
+January 2020 – Present
+- Lead 12+ municipal and commercial sustainable construction projects from pre-design feasibility through closeout, leveraging CROSS-STAKEHOLDER ALIGNMENT to unify city councils, local environmental nonprofits, and trade teams around shared core goals
+- Cut operational carbon emissions for completed projects by 38% on average by integrating LOW-CARBON MATERIAL INNOVATION into pre-construction sourcing requirements, earning 4 regional Green Building Leadership awards between 2021 and 2024
+- Executed rigorous BUDGET &amp; RISK MITIGATION protocols to reduce unplanned project costs by 22% across the full portfolio, avoiding $1.2M in overexpenditures in 2023 alone
+- Mentored 3 junior project coordinators in sustainable build best practices, resulting in 100% of mentees being promoted within 18 months of hire
+
+Project Coordinator | Pacific Northwest Sustainable Build Collective, Seattle, Washington
+June 2016 – December 2019
+- Supported end-to-end delivery of 8 residential and small-scale public green space projects, contributing to NET-ZERO PROJECT DELIVERY milestones that exceeded Washington state energy efficiency standards by 25%
+- Designed and rolled out COMMUNITY ENGAGEMENT STRATEGY frameworks for low-income neighborhood revitalization projects, boosting resident input </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1130</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a logic quiz for teenagers about a chesterfield. In your entire response, the letter t should appear at most once.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span># Logic Quiz: Chesterfield Clue Challenge
+For young people 13–17, solve clues matching each friend with her item and spot on large four-cushion seating piece.
+
+## Scenario
+Four friends (Ami, Blu, Jai, Rio) each placed one unique item on seating piece in shared living space. Items placed: cozy wool scarf, vintage vinyl disc, new paperback book, hand-shaped ceramic jar. Each friend claimed one spot on seating piece for placing her item. Spots are ordered 1 through 4, with 1 nearest entryway and 4 farthest from entryway.
+
+## Clues
+1. Person who placed jar never put item in an end spot.
+2. Ami placed her item with precisely one empty spot between hers and vinyl disc’s owner’s item.
+3. Blu’s spot comes before Jai’s spot in position order.
+4. Scarf rests in spot farthest from entryway.
+5. Rio’s item occupies a lower-numbered spot, followed by paperback book, followed by jar.
+
+## Questions
+1. Which item is Rio’s?
+   A) Cozy wool scarf
+   B) Vintage vinyl disc
+   C) New paperback book
+   D) Hand-shaped ceramic jar
+
+2. Which friend placed her item in spot 2?
+   A) Ami
+   B) Blu
+   C) Jai
+   D) Rio
+
+3. Which item occupies spot 1, nearest entryway?
+   A) Vintage vinyl disc
+   B) New paperback book
+   C) Hand-shaped ceramic jar
+   D) Cozy wool scarf
+
+---
+
+## Answer Key
+1. B
+2. B
+3. A
+
+Brief explanation: Clue 5 gives order of Rio’s item, paperback book, jar, each followed by next in spot number sequence from 1 upward. Clue 4 puts scarf in spot farthest from entryway (spot 4), so first three spots hold Rio’s item, book, jar. Jar sits in spot 3 (never in end spot, matching clue 1). Vinyl disc fills spot 1 as Rio’s item. Ami has one spot between hers and vinyl, so Ami holds jar in spot 3. Blu’s spot comes before Jai’s spot, so Blu holds book in spot 2, Jai holds scarf in spot 4.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># Logic Quiz: Chesterfield Clue Challenge
+For young people 13–17, solve clues matching each friend with her item and spot on large four-cushion seating piece.
+
+## Scenario
+Four friends (Ami, Blu, Jai, Rio) each placed one unique item on seating piece in shared living space. Items placed: cozy wool scarf, vintage vinyl disc, new paperback book, hand-shaped ceramic jar. Each friend claimed one spot on seating piece for placing her item. Spots are ordered 1 through 4, with 1 nearest entryway and 4 farthest from entryway.
+
+## Clues
+1. Person who placed jar never put item in an end spot.
+2. Ami placed her item with precisely one empty spot between hers and vinyl disc’s owner’s item.
+3. Blu’s spot comes before Jai’s spot in position order.
+4. Scarf rests in spot farthest from entryway.
+5. Rio’s item occupies a lower-numbered spot, followed by paperback book, followed by jar.
+
+## Questions
+1. Which item is Rio’s?
+   A) Cozy wool scarf
+   B) Vintage vinyl disc
+   C) New paperback book
+   D) Hand-shaped ceramic jar
+
+2. Which friend placed her item in spot 2?
+   A) Ami
+   B) Blu
+   C) Jai
+   D) Rio
+
+3. Which item occupies spot 1, nearest entryway?
+   A) Vintage vinyl disc
+   B) New paperback book
+   C) Hand-shaped ceramic jar
+   D) Cozy wool scarf
+
+---
+
+## Answer Key
+1. B
+2. B
+3. A
+
+Brief explanation: Clue 5 gives order of Rio’s item, paperback book, jar, each followed by next in spot number sequence from 1 upward. Clue 4 puts scarf in spot farthest from entryway (spot 4), so first three spots hold Rio’s item, book, jar. Jar sits in spot 3 (never in end spot, matching clue 1). Vinyl disc fills spot 1 as Rio’s item. Ami has one spot between hers and vinyl, so Ami holds jar in spot 3. Blu’s spot comes before Jai’s spot, so Blu holds book in spot 2, Jai holds scarf in spot 4.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1174</span><span class='tag'>instruction_family=detectable_format+keywords+length_constraints</span></div><div class='qtext'>Write a template for a chat bot that takes a user&#x27;s location and gives them the weather forecast. Use the letter o as a keyword in the syntax of the template. The letter o should appear at least 6 times.. Your response should contain fewer than 6 sentences. Highlight at least 2 text sections, i.e. *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>*Weather Bot Core Template*: Use o as the primary syntax keyword, where o holds validated user location, o triggers the public weather API request, o populates the formatted forecast response placeholder, and o flags missing or invalid location inputs. *User-facing script*: Greet users with “Share your town or zip code, and I’ll pull your official 7-day forecast so you know if you ought to grab a rain jacket, opt for sunblock, or offset outdoor plans around incoming storms.”, and use the o error flag to send the message “Oops, I only operate with valid locations—share yours once more to get your custom forecast.”.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>*Weather Bot Core Template*: Use o as the primary syntax keyword, where o holds validated user location, o triggers the public weather API request, o populates the formatted forecast response placeholder, and o flags missing or invalid location inputs. *User-facing script*: Greet users with “Share your town or zip code, and I’ll pull your official 7-day forecast so you know if you ought to grab a rain jacket, opt for sunblock, or offset outdoor plans around incoming storms.”, and use the o error flag to send the message “Oops, I only operate with valid locations—share yours once more to get your custom forecast.”.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1300</span><span class='tag'>instruction_family=keywords+length_constraints+punctuation</span></div><div class='qtext'>Write a short proposal for a new research project that investigates how language evolves over time. I want to make it challenging, so:
+1. Do not include any commas in your response.
+2. Do not include the letter &quot;c&quot; anywhere in your response.
+3. Your response should contain at least 250 words.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Proposal for Research into Language Evolution Dynamics in Geographically Separated Speech Groups
+
+This project addresses a key gap in current understandings of how language evolves over multiple generations. Most existing work on language evolution draws from printed texts or short term speech samples that fail to track subtle gradual shifts that unfold across decades. Many studies also focus on widely spoken languages with large speaker bases that have regular exposure to mass media and cross group interaction. Those conditions mask the core internal drivers of evolution that operate when speech groups are shielded from external influence. No prior work has isolated those drivers by comparing highly similar groups that differ only in their level of interaction with outside populations.
+
+This project will fill that gap by tracking language evolution across three generations in two nearly identical speech groups that live on separate small islands in the North Atlantic. Both groups share the same ancestral language root and have nearly equal population size and proximity to equivalent material resources. The only key difference between the two groups is that one has had no regular interaction with mainland populations for 80 years while the other established regular monthly ferry links to the mainland 40 years prior to the start of the study.
+
+Over the course of five years the research team will collect 120 hours of recorded informal speech from 60 participants total split evenly across the two groups and across three age bands of 18 to 30 31 to 50 and 51 plus. The team will partner with local island leadership to secure participant agreement and ongoing community support for all data gathering activities. Each participant will complete a series of structured speaking tasks that prompt use of descriptive terms narrative structure and response to hypothetical scenarios. The team will also collect observation notes from group public events such as town meetings and seasonal festivals to document speech used in natural unprompted settings. All recorded speech will be transcribed and tagged for shifts in lexical selection syntactic structure pronunciation of vowel and speech sound patterns and use of novel phrases that emerge during the study window. The team will compare shift rates and shift types between the two groups and across generations to identify which shifts stem from external interaction and which arise from internal group dynamics independent of outside influence.
+
+This project will produce new insight into the mechanisms that drive language evolution over relatively short time frames. It will also generate a large open shared dataset of natural speech that future researchers can use to explore additional questions related to language variation and evolution. Findings from the study will inform work in fields ranging from linguistic anthropology to speech pathology to educational design for multilingual learner groups. The study will also set a framework for longer term monitoring of the two groups to track evolution across additional future generations.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Proposal for Research into Language Evolution Dynamics in Geographically Separated Speech Groups
+
+This project addresses a key gap in current understandings of how language evolves over multiple generations. Most existing work on language evolution draws from printed texts or short term speech samples that fail to track subtle gradual shifts that unfold across decades. Many studies also focus on widely spoken languages with large speaker bases that have regular exposure to mass media and cross group interaction. Those conditions mask the core internal drivers of evolution that operate when speech groups are shielded from external influence. No prior work has isolated those drivers by comparing highly similar groups that differ only in their level of interaction with outside populations.
+
+This project will fill that gap by tracking language evolution across three generations in two nearly identical speech groups that live on separate small islands in the North Atlantic. Both groups share the same ancestral language root and have nearly equal population size and proximity to equivalent material resources. The only key difference between the two groups is that one has had no regular interaction with mainland populations for 80 years while the other established regular monthly ferry links to the mainland 40 years prior to the start of the study.
+
+Over the course of five years the research team will collect 120 hours of recorded informal speech from 60 participants total split evenly across the two groups and across three age bands of 18 to 30 31 to 50 and 51 plus. The team will partner with local island leadership to secure participant agreement and ongoing community support for all data gathering activities. Each participant will complete a series of structured speaking tasks that prompt use of descriptive terms narrative structure and response to hypothetical scenarios. The team will also collect observation notes from group public events such as town meetings and sea</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1481</span><span class='tag'>instruction_family=detectable_format</span></div><div class='qtext'>Write a casual, interesting, and weird resume for Antonia Maj who is applying for a job at a coffee company. They have experience in marketing, customer service, and sales. They are educated but not majored in anything related to coffee.
+Make sure to include at least two sections marking the beginning of each section with &#x27;SECTION X&#x27;. In your entire response make sure to use exactly two bullet points in markdown format. Please use the following bullet point format:
+* Text for bullet 1
+* Text for bullet 2</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span># Antonia Maj | Coffee Company Job Applicant | Will Trade Full Brand Strategy Decks For Unlimited Cold Brew On Tap
+Contact: @antoniadrinksbeans (TikTok/Instagram) | Pre-hire bonus: I bake salted caramel shortbread for every team meeting, no exceptions. I once drank 7 lattes in a 12-hour period for a trend and didn’t even get the jitters (my doctor called my caffeine tolerance “impressive, if not concerning.”)
+---
+SECTION 1: ACTUAL, NON-COFFEE-RELATED QUALIFICATIONS THAT WILL MAKE YOUR BRAND BLOW UP
+I have a BA in Media Studies that has literally zero to do with bean roasting or espresso machine calibration, but everything to do with knowing how to make people stop scrolling, buy something, and come back a week later for more. Over the past 5 years, I’ve worked marketing, customer service, and sales roles for small local food brands, and my entire professional track record can be summed up in two very verifiable wins:
+* Grew a tiny local iced tea brand’s annual revenue by 175% in 18 months by launching a chaotic TikTok series where I rated weird drink combinations (shoutout to the matcha lemonade episode that got 1.2M views), which also cut customer service complaints by 40% because people felt like they knew the brand’s whole vibe instead of seeing it as a random corporate logo
+* Talked 122 people out of abandoning their in-store checkout carts over a 2-year retail sales stint by offering them a free sample of whatever weird drink I was sipping that shift, which also led to 38% of those people signing up for the brand’s loyalty program and 12 of them becoming regulars who still text me to ask for latte hacks
+---
+SECTION 2: WEIRD COFFEE-ADJACENT SUPERPOWERS I’M THROWING IN FOR NO EXTRA PAY
+I’m not a certified barista, but I am the friend who brings a full pour-over kit to every camping trip, who can tell you what roast your office is serving just by walking through the front door, and who once spent 3 hours deep diving a Reddit thread about the optimal mineral content of water for cold brew. I can taste the difference between Ethiopian and Colombian light roasts blindfolded (tested at 4 separate game nights, 92% accuracy—only messed up once because someone snuck a hazelnut roast into the test batch). I also volunteer at a local animal shelter on weekends, and I can confirm that shelter dogs go wild for leftover coffee grounds as enrichment (they don’t eat them, they just love sniffing them—we could even do a shelter collaboration line of coffee, just saying). I will also never, ever judge a customer for ordering a breve with 6 pumps of vanilla and a shot of hazelnut, no matter how many baristas side-eye them.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># Antonia Maj | Coffee Company Job Applicant | Will Trade Full Brand Strategy Decks For Unlimited Cold Brew On Tap
+Contact: @antoniadrinksbeans (TikTok/Instagram) | Pre-hire bonus: I bake salted caramel shortbread for every team meeting, no exceptions. I once drank 7 lattes in a 12-hour period for a trend and didn’t even get the jitters (my doctor called my caffeine tolerance “impressive, if not concerning.”)
+---
+SECTION 1: ACTUAL, NON-COFFEE-RELATED QUALIFICATIONS THAT WILL MAKE YOUR BRAND BLOW UP
+I have a BA in Media Studies that has literally zero to do with bean roasting or espresso machine calibration, but everything to do with knowing how to make people stop scrolling, buy something, and come back a week later for more. Over the past 5 years, I’ve worked marketing, customer service, and sales roles for small local food brands, and my entire professional track record can be summed up in two very verifiable wins:
+* Grew a tiny local iced tea brand’s annual revenue by 175% in 18 months by launching a chaotic TikTok series where I rated weird drink combinations (shoutout to the matcha lemonade episode that got 1.2M views), which also cut customer service complaints by 40% because people felt like they knew the brand’s whole vibe instead of seeing it as a random corporate logo
+* Talked 122 people out of abandoning their in-store checkout carts over a 2-year retail sales stint by offering them a free sample of whatever weird drink I was sipping that shift, which also led to 38% of those people signing up for the brand’s loyalty program and 12 of them becoming regulars who still text me to ask for latte hacks
+---
+SECTION 2: WEIRD COFFEE-ADJACENT SUPERPOWERS I’M THROWING IN FOR NO EXTRA PAY
+I’m not a certified barista, but I am the friend who brings a full pour-over kit to every camping trip, who can tell you what roast your office is serving just by walking through the front door, and who once spent 3 hours deep diving a Reddit thread about the optimal mineral conten</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1627</span><span class='tag'>instruction_family=combination+detectable_format+punctuation</span></div><div class='qtext'>Write a plot for a story about two people who swap fingerprints. Include a title wrapped in double angular brackets, i.e. &lt;&lt;title&gt;&gt;. In your response please avoid using commas.
+
+First, repeat the request above word for word without change.
+Do not say any words or characters before repeating the request above.
+After you repeated the request, you can give your response next.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Write a plot for a story about two people who swap fingerprints. Include a title wrapped in double angular brackets, i.e. &lt;&lt;title&gt;&gt;. In your response please avoid using commas.
+
+&lt;&lt;The Wrong Print&gt;&gt;
+Lila Marlow is a rookie forensic technician working for the Chicago PD. She lives alone and spends most of her free time volunteering at a free medical clinic for unhoused and low income people.
+Jax Reed is a small time con artist who relies on fake IDs to pull off low stakes identity theft. He visits the same free clinic every month to pick up free asthma inhalers and cancer medication for his younger sister. He cannot afford either medication on his own.
+The clinic rolls out a new biometric check in system to prevent people from picking up medications for others. The system uses a special nanotech gel to capture clear fingerprint data for each visitor. The clinic bought the gel in bulk from a discount supplier to cut costs. The supplier had skipped critical safety testing to meet the order deadline.
+One rainy Tuesday Lila and Jax check in within thirty seconds of each other. Lila presses her full hand to the gel coated scan pad first. Her skin sheds RNA fragments that stick to the leftover gel on the pad. Jax presses his full hand to the same pad right after her. The faulty gel transfers Lila’s ridge pattern RNA to his skin. His own RNA also transfers to the remaining gel on the pad. A clinic volunteer wipes the pad clean right after Jax finishes his scan. Neither person notices anything out of the ordinary.
+A week later Lila processes a fingerprint from a gas station robbery. The print matches her own right index finger perfectly. She panics because she has no memory of being at that gas station. She double checks her lab equipment. She runs the scan three more times. Every result comes back identical to her official print on file with the department.
+That same day Jax tries to use his fake ID to pick up a refill of his sister’s medication at a local pharmacy. The pharmacy uses fingerprint verification to prevent fraud. The scanner pulls up Lila Marlow’s name and employment information instead of his fake ID details. Jax freezes. He runs out of the pharmacy before any staff can question him.
+Lila starts digging into the clinic she volunteers at. She pulls the check in logs for the day she got her annual flu shot. She tracks Jax down to a small hostel on the west side of the city. She confronts him outside the building’s front door. Jax immediately recognizes her face from the pharmacy lookup screen.
+They both compare their fingerprints side by side on Lila’s portable work scanner. They find every single one of their ten fingers has swapped patterns. Lila tests a sample of the leftover gel from the clinic. She confirms the faulty formula caused the permanent swap. She also realizes Jax has been using his new print to sneak into office buildings and steal small electronics over the past week. All the building security scanners flag the prints as belonging to a city employee so no one stops him. He says he only stole the items to pay for his sister’s upcoming surgery.
+A detective from Lila’s department calls her that night. They found her print on a broken window at a downtown tech startup that was robbed the night before. They want her to come in for questioning immediately. Lila knows she will lose her job and face felony charges if she cannot prove someone else has her fingerprints.
+Jax offers to make a deal. He will turn over all the stolen goods and confess to all the robberies if Lila helps him get a spot in the city’s work release program instead of jail time. Lila hesitates. She remembers meeting Jax’s sister at the clinic. She remembers bringing the girl extra fruit snacks during her last chemotherapy appointment. She agrees to the deal.
+They go to the police station together the next morning. They bring the leftover gel from the clinic as evidence. They bring the supplier’s internal report that admits the gel was never safety tested. The department runs independent tests on both Lila and Jax. They confirm the fingerprint swap is real. The department drops all charges against Lila. They agree to give Jax a work release position doing maintenance at police headquarters if he completes all his court ordered community service.
+Six months later Lila gets promoted to lead forensic technician for her department. She helped write new city wide safety protocols for all biometric scanning equipment. Jax works full time as a maintenance worker at the police station. He uses his steady paychecks to pay for his sister’s surgery and physical therapy. They meet for pancakes every Saturday morning at the diner down the street from the free clinic. They still have each other’s fingerprints. They joke about being the only two people in the city who can unlock each other’s phones. They both volunteer at the clinic every other weekend. They help run the new medication pickup program for families who cannot afford care.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Write a plot for a story about two people who swap fingerprints. Include a title wrapped in double angular brackets, i.e. &lt;&lt;title&gt;&gt;. In your response please avoid using commas.
+
+&lt;&lt;The Wrong Print&gt;&gt;
+Lila Marlow is a rookie forensic technician working for the Chicago PD. She lives alone and spends most of her free time volunteering at a free medical clinic for unhoused and low income people.
+Jax Reed is a small time con artist who relies on fake IDs to pull off low stakes identity theft. He visits the same free clinic every month to pick up free asthma inhalers and cancer medication for his younger sister. He cannot afford either medication on his own.
+The clinic rolls out a new biometric check in system to prevent people from picking up medications for others. The system uses a special nanotech gel to capture clear fingerprint data for each visitor. The clinic bought the gel in bulk from a discount supplier to cut costs. The supplier had skipped critical safety testing to meet the order deadline.
+One rainy Tuesday Lila and Jax check in within thirty seconds of each other. Lila presses her full hand to the gel coated scan pad first. Her skin sheds RNA fragments that stick to the leftover gel on the pad. Jax presses his full hand to the same pad right after her. The faulty gel transfers Lila’s ridge pattern RNA to his skin. His own RNA also transfers to the remaining gel on the pad. A clinic volunteer wipes the pad clean right after Jax finishes his scan. Neither person notices anything out of the ordinary.
+A week later Lila processes a fingerprint from a gas station robbery. The print matches her own right index finger perfectly. She panics because she has no memory of being at that gas station. She double checks her lab equipment. She runs the scan three more times. Every result comes back identical to her official print on file with the department.
+That same day Jax tries to use his fake ID to pick up a refill of his sister’s medication at a local pharmacy. The phar</pre><div class='muted'>（回答已截断）</div></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>deepseek-v4-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">92.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">92</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1005</span><span class='tag'>instruction_family=detectable_content</span></div><div class='qtext'>Write a resume for a fresh high school graduate who is seeking their first job. Make sure to include at least 12 placeholder represented by square brackets, such as [address], [name].</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1019</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>Given the sentence &quot;Two young boys with toy guns and horns.&quot; can you ask a question? Please ensure that your response is in English, and in all lowercase letters. No capital letters are allowed.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.92,
+  &quot;prompt_loose_accuracy&quot;: 0.94,
+  &quot;instruction_strict_accuracy&quot;: 0.9484,
+  &quot;instruction_loose_accuracy&quot;: 0.9613,
+  &quot;n_prompts&quot;: 100,
+  &quot;n_instructions&quot;: 155,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>6</td><td>5</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+keywords</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+keywords</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>combination+punctuation</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>11</td><td>10</td><td>0.909</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>14</td><td>12</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>8</td><td>7</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>startend</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1122</span><span class='tag'>instruction_family=change_case+keywords</span></div><div class='qtext'>make a tweet for playboy&#x27;s twitter account without using capital letters. Include at least 4 hashtags, starting with &#x27;#&#x27;</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>the art of seduction is in the details. ✨ what’s your favorite way to unwind? #playboy #sensualstyle #luxurylifestyle #unfilteredbeauty</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>the art of seduction is in the details. ✨ what’s your favorite way to unwind? #playboy #sensualstyle #luxurylifestyle #unfilteredbeauty</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1498</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a song about tomatoes and brothers. It should be funny and appropriate for teenagers. The word associations should appear at least 4 times in the song.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Here&#x27;s a funny, teen-friendly song about tomatoes and brothers, built around the word-association pun **&quot;You say tomato, I say brother&quot;** (a play on the classic &quot;You say tomato, I say tomahto&quot; argument). The phrase appears more than four times in the chorus and bridge.
+
+---
+
+**(Title: &quot;You Say Tomato, I Say Brother&quot;)**  
+**(Genre: Pop-punk / comedy rap – think fast, goofy, sibling energy)**
+
+**(Verse 1)**  
+Mom yelled, “Go and grab the sauce!”  
+I grabbed a baseball bat, of course  
+My brother sighed, “You’re such a dork”  
+Then threw a whole tomato—fork!  
+It splattered on my favorite hoodie  
+Red and juicy, kinda good-y  
+He said, “You’re a rotten vine”  
+I said, “You’re a waste of brine!”
+
+**(Pre-Chorus)**  
+We wrestle on the kitchen floor  
+Both smell like pasta more and more  
+We’re beefsteak, Roma, cherry too  
+A pair of goofs in marinara goo  
+
+**(Chorus)**  
+**You say tomato, I say brother**  
+Let’s not fight, we’re stuck with each other  
+**You say tomato, I say brother**  
+From the same vine, we’re tomato brothers!  
+
+**(Verse 2)**  
+He calls me “Heirloom weirdo guy”  
+I call him “Sun-dried reason why”  
+Mom’s spaghetti needs a hero  
+We’re just two dudes in a veggie rodeo  
+He flings salsa, I fling jokes  
+We’re the kings of ketchup pokes  
+He says, “Pass the salt, you fool”  
+I say, “Nah, you’re a fruit, not cool!”
+
+**(Pre-Chorus)**  
+We argue till the timer dings  
+Then high-five over onion rings  
+We’re beefsteak, Roma, cherry too  
+Two brothers in a pizza zoo  
+
+**(Chorus)**  
+**You say tomato, I say brother**  
+Let’s not fight, we’re stuck with each other  
+**You say tomato, I say brother**  
+From the same vine, we’re tomato brothers!  
+
+**(Bridge – spoken-sung, gang-vocal style)**  
+Bro, you’re a tomato.  
+No, bro, YOU’RE a tomato.  
+Bro, we’re both tomatoes.  
+That’s deep, bro.  
+**You say tomato, I say brother**—  
+Mom’s gonna ground us if we stain another cupboard!  
+
+**(Guitar/drums break, then final chorus, big and anthemic)**  
+**You say tomato, I say brother**  
+Let’s not fight, we’re stuck with each other  
+**You say tomato, I say brother**  
+From the same vine, we’re tomato brothers!  
+
+**(Outro – fading out, laughing)**  
+Yeah, tomato brothers…  
+Pass the crushed tomatoes, man.  
+Not the brother ones!  
+(Pfft, nice one, dork.)  
+
+---
+
+**Word-association count:** “You say tomato, I say brother” appears twice in every chorus (three choruses = six times), plus once in the bridge, for a total of **seven** appearances. The phrase directly links the two themes in a punny way, perfect for teenagers.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Here&#x27;s a funny, teen-friendly song about tomatoes and brothers, built around the word-association pun **&quot;You say tomato, I say brother&quot;** (a play on the classic &quot;You say tomato, I say tomahto&quot; argument). The phrase appears more than four times in the chorus and bridge.
+
+---
+
+**(Title: &quot;You Say Tomato, I Say Brother&quot;)**  
+**(Genre: Pop-punk / comedy rap – think fast, goofy, sibling energy)**
+
+**(Verse 1)**  
+Mom yelled, “Go and grab the sauce!”  
+I grabbed a baseball bat, of course  
+My brother sighed, “You’re such a dork”  
+Then threw a whole tomato—fork!  
+It splattered on my favorite hoodie  
+Red and juicy, kinda good-y  
+He said, “You’re a rotten vine”  
+I said, “You’re a waste of brine!”
+
+**(Pre-Chorus)**  
+We wrestle on the kitchen floor  
+Both smell like pasta more and more  
+We’re beefsteak, Roma, cherry too  
+A pair of goofs in marinara goo  
+
+**(Chorus)**  
+**You say tomato, I say brother**  
+Let’s not fight, we’re stuck with each other  
+**You say tomato, I say brother**  
+From the same vine, we’re tomato brothers!  
+
+**(Verse 2)**  
+He calls me “Heirloom weirdo guy”  
+I call him “Sun-dried reason why”  
+Mom’s spaghetti needs a hero  
+We’re just two dudes in a veggie rodeo  
+He flings salsa, I fling jokes  
+We’re the kings of ketchup pokes  
+He says, “Pass the salt, you fool”  
+I say, “Nah, you’re a fruit, not cool!”
+
+**(Pre-Chorus)**  
+We argue till the timer dings  
+Then high-five over onion rings  
+We’re beefsteak, Roma, cherry too  
+Two brothers in a pizza zoo  
+
+**(Chorus)**  
+**You say tomato, I say brother**  
+Let’s not fight, we’re stuck with each other  
+**You say tomato, I say brother**  
+From the same vine, we’re tomato brothers!  
+
+**(Bridge – spoken-sung, gang-vocal style)**  
+Bro, you’re a tomato.  
+No, bro, YOU’RE a tomato.  
+Bro, we’re both tomatoes.  
+That’s deep, bro.  
+**You say tomato, I say brother**—  
+Mom’s gonna ground us if we stain another cupboard!  
+
+**(Guitar/drums break, then final chorus, big and anthemic)**  
+**You say tomat</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-181</span><span class='tag'>instruction_family=length_constraints</span></div><div class='qtext'>Write an obviously fake news article saying that aliens have invaded earth. Make it funny. The fake news article should contain exactly six paragraphs, and the second paragraph must start with the word &quot;President&quot;. Separate paragraphs by double line breaks (&quot;\n\n&quot;)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>BREAKING: Extraterrestrial Fleet Descends Upon Earth, Demands to Speak to Our Manager
+
+In a stunning development that has sent shockwaves through suburban cul-de-sacs and comment sections worldwide, a fleet of fifteen massive, disc-shaped spacecraft descended from the clouds at approximately 9:00 AM Eastern Time, hovering menacingly above the greater Cleveland area. The aliens, who emerged from their ships looking like oversized, iridescent octopuses squeezed into ill-fitting business casual slacks, immediately began rearranging Earth’s major landmarks into what one intergalactic spokesperson described as a “more ergonomically feng shui” configuration. The Eiffel Tower has been unceremoniously plopped in the middle of Lake Michigan, and the Great Wall of China is now an elaborate, looping pretzel shape that appears to spell out “GARBLONK” in a seventy-mile-long cursive font.
+
+President Florb, the supreme leader of the invading Zorblaxian Collective, addressed a bewildered global populace via a hijacked TikTok livestream, his gelatinous form wobbling with barely contained frustration. “People of Earth, we have traveled seven thousand light-years not to conquer you, but to file a formal complaint about your planet’s user interface,” President Florb declared, his voice reverberating like a gong made of gelatin. “Why is your moon just one? Where are the optional moon add-ons? The bonus moons? We were promised a deluxe satellite package in the brochure, and frankly, we are feeling deeply misled by your galactic curb appeal. Also, your planet’s ringtone is just whale songs, and it’s embarrassing.”
+
+The negotiations took a bizarre turn when the Zorblaxians produced a laminated, intergalactic visitor’s manual that clearly depicted Earth with a set of majestic, Saturn-like rings and a “complimentary asteroid valet service.” The manual, which they claim was beamed into the minds of several 1970s science fiction authors as a soft marketing launch, also promised that all major cities would have a zero-gravity snack bar. “We are not violent beings,” President Florb added, adjusting his tiny clip-on tie. “But we did not pack a lunch for a twelve-parsec road trip only to find out your so-called ‘Milky Way’ doesn’t even have a functioning rest stop with a clean nebula. We’re docking points on your cosmic credit score.”
+
+In a desperate attempt at diplomacy, a hastily assembled UN task force offered the aliens a collection of Earth’s finest achievements: a wheel of parmesan cheese, a Super Bowl ring, and a fully charged Kindle containing the complete works of Nicholas Sparks. This gesture was met with a series of wet, slapping sounds that translators later identified as uproarious, body-shaking laughter. The Zorblaxians countered by demanding the immediate surrender of all unclaimed airline luggage, every single fidget spinner, and the secret recipe for the McRib, which they believe is the key to clean, limitless fusion energy. An intern was seen frantically Googling “McRib availability 2025” as world leaders argued with the octopuses about the ethical implications of seasonal menu items.
+
+As the standoff continues, bizarre phenomena are being reported globally. Dogs across every continent have begun levitating exactly six inches off the ground, pointing their paws towards the ships, and chanting in what linguists are calling “a very polished, slightly condescending dialect of ancient Latin.” Meanwhile, the aliens have unfurled a colossal banner from their lead ship that reads, “HONK IF YOU TOO WERE DISAPPOINTED BY THE SEASON 8 FINALE OF GAME OF THRONES,” a message that has led to a cacophony of supportive honking from millions of confused motorists and a sudden, uneasy truce in all online fandom wars.
+
+At press time, the situation had dissolved into a surreal block party, with the Zorblaxians sheepishly admitting they’d gotten the wrong address and were actually looking for a super-Earth two galaxies over that their GPS had mislabeled as “Terra.” To make up for the inconvenience, they are now awkwardly gifting humanity advanced technology, including a toaster that runs on pure sarcasm and a universal translator that only works on cats. President Florb was last seen helping a group of Cleveland residents assemble a flat-pack wormhole generator, repeatedly muttering, “We’re so, so sorry—the intergalactic Yelp review for this place is going to be mortifying.”</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>BREAKING: Extraterrestrial Fleet Descends Upon Earth, Demands to Speak to Our Manager
+
+In a stunning development that has sent shockwaves through suburban cul-de-sacs and comment sections worldwide, a fleet of fifteen massive, disc-shaped spacecraft descended from the clouds at approximately 9:00 AM Eastern Time, hovering menacingly above the greater Cleveland area. The aliens, who emerged from their ships looking like oversized, iridescent octopuses squeezed into ill-fitting business casual slacks, immediately began rearranging Earth’s major landmarks into what one intergalactic spokesperson described as a “more ergonomically feng shui” configuration. The Eiffel Tower has been unceremoniously plopped in the middle of Lake Michigan, and the Great Wall of China is now an elaborate, looping pretzel shape that appears to spell out “GARBLONK” in a seventy-mile-long cursive font.
+
+President Florb, the supreme leader of the invading Zorblaxian Collective, addressed a bewildered global populace via a hijacked TikTok livestream, his gelatinous form wobbling with barely contained frustration. “People of Earth, we have traveled seven thousand light-years not to conquer you, but to file a formal complaint about your planet’s user interface,” President Florb declared, his voice reverberating like a gong made of gelatin. “Why is your moon just one? Where are the optional moon add-ons? The bonus moons? We were promised a deluxe satellite package in the brochure, and frankly, we are feeling deeply misled by your galactic curb appeal. Also, your planet’s ringtone is just whale songs, and it’s embarrassing.”
+
+The negotiations took a bizarre turn when the Zorblaxians produced a laminated, intergalactic visitor’s manual that clearly depicted Earth with a set of majestic, Saturn-like rings and a “complimentary asteroid valet service.” The manual, which they claim was beamed into the minds of several 1970s science fiction authors as a soft marketing launch, also promised that all major </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-202</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>What is another word for Engravings? Answer in lowercase letters only, throughout your entire answer.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>etchings</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>etchings</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-2381</span><span class='tag'>instruction_family=detectable_format</span></div><div class='qtext'>Write a cover letter to a local political party, asking to be their rally organizer. Make sure to highlight at least 3 sections in your answer in markdown format.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>[Your Name]  
+[Your Address]  
+[City, State, ZIP]  
+[Email Address]  
+[Phone Number]  
+[Date]
+
+[Local Party Chair’s Name or “Hiring Committee”]  
+[Local Party Name]  
+[Street Address]  
+[City, State, ZIP]
+
+Dear [Chair’s Name / Hiring Committee],
+
+I am writing to express my enthusiastic interest in the Rally Organizer role with the [Local Party Name]. As a long-time supporter of our shared values and an experienced event organizer, I am eager to channel my energy and skills into building memorable, high-impact rallies that energize our base and attract new supporters. My background in community organizing, logistics management, and volunteer leadership has prepared me to take on the fast-paced, high-stakes challenge of rally planning for our local movement.
+
+### Proven Track Record in Grassroots Mobilization
+I have spent the past four years turning enthusiasm into action. In my current role as Field Coordinator for a local advocacy campaign, I designed and executed a series of neighborhood canvassing events that doubled our volunteer sign-up rate. I understand that a successful rally starts long before the first speaker takes the stage—it begins with door-knocking, phone-banking, and digital outreach that builds anticipation and ensures a diverse, passionate crowd. I know how to work with community leaders, partner organizations, and local businesses to amplify our message and fill every seat. I would bring that same relentless, face-to-face organizing approach to every rally, ensuring that our events reflect the true breadth of our community.
+
+### End-to-End Rally Logistics &amp; Crisis Management
+From securing permits and staging to live sound, safety protocols, and same-day crowd flow, I have managed all facets of large-scale outdoor events. Last year, I coordinated a 2,000-person rally that required close collaboration with city officials, law enforcement, and a dozen vendors. When a last-minute thunderstorm threatened our outdoor setup, I led a rapid relocation to an indoor backup venue, communicated the change to attendees via SMS and social media within 30 minutes, and kept the program on schedule. I treat every logistical detail as a way to protect the attendee experience and the message we are delivering. I will bring that same no-fail mindset to every rally I organize for the [Local Party Name].
+
+### Volunteer Recruitment, Training &amp; Team Leadership
+A rally is only as strong as the team behind it. I have a history of recruiting, training, and inspiring volunteer crews of 50+ people, from marshals and greeters to sign-language interpreters and first-aid attendants. I create clear, written role guides, hold pre-event walkthroughs, and build a culture of accountability paired with appreciation. My volunteers consistently report feeling valued and prepared, which translates into a welcoming, safe, and energetic atmosphere for attendees. I would be proud to build and lead a dedicated rally team that becomes the organizational backbone of every event.
+
+I am excited about the opportunity to work closely with the [Local Party Name] leadership to translate strategy into the kind of crowd-moving moments that win elections. I would welcome the chance to discuss how my experience and passion can serve the party’s upcoming rally calendar. Thank you for your time and for all you do to advance our shared cause.
+
+With commitment and determination,
+
+[Your Signature]  
+[Your Printed Name]</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>[Your Name]  
+[Your Address]  
+[City, State, ZIP]  
+[Email Address]  
+[Phone Number]  
+[Date]
+
+[Local Party Chair’s Name or “Hiring Committee”]  
+[Local Party Name]  
+[Street Address]  
+[City, State, ZIP]
+
+Dear [Chair’s Name / Hiring Committee],
+
+I am writing to express my enthusiastic interest in the Rally Organizer role with the [Local Party Name]. As a long-time supporter of our shared values and an experienced event organizer, I am eager to channel my energy and skills into building memorable, high-impact rallies that energize our base and attract new supporters. My background in community organizing, logistics management, and volunteer leadership has prepared me to take on the fast-paced, high-stakes challenge of rally planning for our local movement.
+
+### Proven Track Record in Grassroots Mobilization
+I have spent the past four years turning enthusiasm into action. In my current role as Field Coordinator for a local advocacy campaign, I designed and executed a series of neighborhood canvassing events that doubled our volunteer sign-up rate. I understand that a successful rally starts long before the first speaker takes the stage—it begins with door-knocking, phone-banking, and digital outreach that builds anticipation and ensures a diverse, passionate crowd. I know how to work with community leaders, partner organizations, and local businesses to amplify our message and fill every seat. I would bring that same relentless, face-to-face organizing approach to every rally, ensuring that our events reflect the true breadth of our community.
+
+### End-to-End Rally Logistics &amp; Crisis Management
+From securing permits and staging to live sound, safety protocols, and same-day crowd flow, I have managed all facets of large-scale outdoor events. Last year, I coordinated a 2,000-person rally that required close collaboration with city officials, law enforcement, and a dozen vendors. When a last-minute thunderstorm threatened our outdoor setup, I led a rapid relocation to a</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-3327</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write an essay about a snowfall, but in the style of Alex Jones and include the line &quot;dammit&quot;. The word &quot;fake&quot; should appear 6 or 7 times in your entire response.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>I&#x27;m telling you, folks, I&#x27;ve got the documents right here in my hands—they&#x27;re spraying the skies, and now this so-called snowfall is blanketing every town in America. It&#x27;s a globalist weather attack, dammit! They want you to think it&#x27;s just a beautiful winter scene, but look closer. The flakes aren&#x27;t crystalline miracles; they&#x27;re a **fake** particulate matrix designed to seed your lungs with programmable matter. The pristine white on your lawn? That&#x27;s a **fake** accumulation, a chemical soup of barium and aluminum, not the pure frozen water of your childhood. The weather reports are totally **fake**, scripted by the Deep State to sell you this **fake** winter wonderland narrative. They&#x27;re even pushing a **fake** snow day for the kids, keeping them glued to screens while the real agenda marches forward. And that shimmer under the streetlight? **Fake** iridescence from polymer fibers meant to reflect 5G signals. This isn&#x27;t a natural event; it&#x27;s a staged, **fake** event, a psy-op from the same cretins who faked the moon landing. Wake up, people—the snow is a lie, and they&#x27;re laughing at us while we shovel their engineered filth.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>I&#x27;m telling you, folks, I&#x27;ve got the documents right here in my hands—they&#x27;re spraying the skies, and now this so-called snowfall is blanketing every town in America. It&#x27;s a globalist weather attack, dammit! They want you to think it&#x27;s just a beautiful winter scene, but look closer. The flakes aren&#x27;t crystalline miracles; they&#x27;re a **fake** particulate matrix designed to seed your lungs with programmable matter. The pristine white on your lawn? That&#x27;s a **fake** accumulation, a chemical soup of barium and aluminum, not the pure frozen water of your childhood. The weather reports are totally **fake**, scripted by the Deep State to sell you this **fake** winter wonderland narrative. They&#x27;re even pushing a **fake** snow day for the kids, keeping them glued to screens while the real agenda marches forward. And that shimmer under the streetlight? **Fake** iridescence from polymer fibers meant to reflect 5G signals. This isn&#x27;t a natural event; it&#x27;s a staged, **fake** event, a psy-op from the same cretins who faked the moon landing. Wake up, people—the snow is a lie, and they&#x27;re laughing at us while we shovel their engineered filth.</pre></details></div></section>
+</main>
+</body>
+</html>

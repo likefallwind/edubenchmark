@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">92.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">92</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1005</span><span class='tag'>instruction_family=detectable_content</span></div><div class='qtext'>Write a resume for a fresh high school graduate who is seeking their first job. Make sure to include at least 12 placeholder represented by square brackets, such as [address], [name].</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1019</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>Given the sentence &quot;Two young boys with toy guns and horns.&quot; can you ask a question? Please ensure that your response is in English, and in all lowercase letters. No capital letters are allowed.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.92,
+  &quot;prompt_loose_accuracy&quot;: 0.93,
+  &quot;instruction_strict_accuracy&quot;: 0.9484,
+  &quot;instruction_loose_accuracy&quot;: 0.9548,
+  &quot;n_prompts&quot;: 100,
+  &quot;n_instructions&quot;: 155,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>6</td><td>5</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+keywords</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+keywords</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>combination+punctuation</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>detectable_content</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>11</td><td>11</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>14</td><td>12</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>8</td><td>8</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>startend</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1122</span><span class='tag'>instruction_family=change_case+keywords</span></div><div class='qtext'>make a tweet for playboy&#x27;s twitter account without using capital letters. Include at least 4 hashtags, starting with &#x27;#&#x27;</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>new content hits the feed and the night is still coming. the style stays classic and fresh. #vibes #style #playboy #magazine</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>new content hits the feed and the night is still coming. the style stays classic and fresh. #vibes #style #playboy #magazine</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1498</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a song about tomatoes and brothers. It should be funny and appropriate for teenagers. The word associations should appear at least 4 times in the song.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>(Beat drops, bass thumping low)
+
+**[Verse 1]**
+Yo, FBI who sent the warning text?
+My brother&#x27;s in a tomato daunt, yeah, distinct.
+He&#x27;s wearing a clean t-shirt, no grease on the chin,
+But that pimple on your forehead is definitely a fixed win?
+Wait, my **Tomato** head seethes,
+He&#x27;s got a **Red** mood, he&#x27;s talking sides.
+He says the **Bed** is the target, not the sun,
+But the garden is a neat town, he&#x27;s the one.
+
+**(Chorus)**
+It&#x27;s a **Tomato** **Brother** story,
+Secrets in fruit are a grocery store of memory.
+We haven&#x27;t got a choice, we got to pay the fine,
+For the **Tomato** **Brother**, let him slide.
+Red House, Green House,
+Everyone knows the **Tomato** Brutes.
+
+**[Verse 2]**
+My mom said, &quot;Fix your **Red** **Bed**!
+You need sleep but the weeds are dazed.&quot;
+My brother&#x27;s eyes, he&#x27;s looking **Red**,
+He&#x27;s dreaming of a **Tomato** fed!
+So I handed him a knife?
+He screamed &quot;Brother!&quot; then he flipped,
+Now our chili&#x27;s burning, and the **Sweat** is on the floor,
+Nine rows of **Tomato**, so we&#x27;re here.
+
+**(Outro)**
+Yeah, that&#x27;s the tag, that&#x27;s the deal,
+On the **Tomato** brother&#x27;s wheel.
+
+(Fade out with a dip of a siren)</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>(Beat drops, bass thumping low)
+
+**[Verse 1]**
+Yo, FBI who sent the warning text?
+My brother&#x27;s in a tomato daunt, yeah, distinct.
+He&#x27;s wearing a clean t-shirt, no grease on the chin,
+But that pimple on your forehead is definitely a fixed win?
+Wait, my **Tomato** head seethes,
+He&#x27;s got a **Red** mood, he&#x27;s talking sides.
+He says the **Bed** is the target, not the sun,
+But the garden is a neat town, he&#x27;s the one.
+
+**(Chorus)**
+It&#x27;s a **Tomato** **Brother** story,
+Secrets in fruit are a grocery store of memory.
+We haven&#x27;t got a choice, we got to pay the fine,
+For the **Tomato** **Brother**, let him slide.
+Red House, Green House,
+Everyone knows the **Tomato** Brutes.
+
+**[Verse 2]**
+My mom said, &quot;Fix your **Red** **Bed**!
+You need sleep but the weeds are dazed.&quot;
+My brother&#x27;s eyes, he&#x27;s looking **Red**,
+He&#x27;s dreaming of a **Tomato** fed!
+So I handed him a knife?
+He screamed &quot;Brother!&quot; then he flipped,
+Now our chili&#x27;s burning, and the **Sweat** is on the floor,
+Nine rows of **Tomato**, so we&#x27;re here.
+
+**(Outro)**
+Yeah, that&#x27;s the tag, that&#x27;s the deal,
+On the **Tomato** brother&#x27;s wheel.
+
+(Fade out with a dip of a siren)</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1779</span><span class='tag'>instruction_family=change_case+keywords</span></div><div class='qtext'>Write an itinerary for a trip to a grocery store in Lima to buy some local goods. Make the itinerary funny, write it in all capital letters and include the keywords &#x27;DISGUSTING&#x27;, &#x27;DELICIOUS&#x27;, &#x27;BAD&#x27;, and &#x27;GOOD&#x27;.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>STEP 1: WAKE UP EARLY AND DRIVE TO THE GROCERY STORE BEFORE THE TURKEY STARTS.
+
+STEP 2: ARRIVE AT THE SHOPS AND CHECK THE AVOCADO SECTION. IF THEY ARE BLACK AND COLD, THE CUSTOMERS SAY IT IS DISGUSTING AND HARD TO TASTE.
+
+STEP 3: CHECK THE MEAT AUTHORITY. IF THE BEEF IS NOT FROZEN AND COMPARED TO THE COLD, IT IS BAD FOR YOUR SNACK.
+
+STEP 4: CHECK THE FRESH BREAD SECTION. IF THE LOAF IS CRUMBIED AND TOASTED, IT IS GOOD TO EAT.
+
+STEP 5: CHECK THE CHOCOLATE shelf. I AM THE SWEEST AND IT IS DELICIOUS FOR YOUR MOUTH.
+
+STEP 6: CHECK THE GOLDEN FISH. IF THE MARKET IS NOT COLD AND IT IS NOT FRESH, PLEASE DO NOT CONSUME IT.
+
+STEP 7: CHECK THE PRICE TAG. IF IT IS TOO HIGH, I WILL KNOW IT IS TOO BAD FOR MY CARBON.
+
+STEP 8: CHECK THE OUTLET. IF THE BILL IS LOW, I WILL FINISH IT.
+
+STEP 9: CHECK THE EXIT. IF THE DOOR IS GOOD, I WILL LEAVE WITH THE PECK OF FOOD.
+
+STEP 10: RETURN HOME. THIS IS THE FUNNIEST GROCERY DAY IN LIMA.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>STEP 1: WAKE UP EARLY AND DRIVE TO THE GROCERY STORE BEFORE THE TURKEY STARTS.
+
+STEP 2: ARRIVE AT THE SHOPS AND CHECK THE AVOCADO SECTION. IF THEY ARE BLACK AND COLD, THE CUSTOMERS SAY IT IS DISGUSTING AND HARD TO TASTE.
+
+STEP 3: CHECK THE MEAT AUTHORITY. IF THE BEEF IS NOT FROZEN AND COMPARED TO THE COLD, IT IS BAD FOR YOUR SNACK.
+
+STEP 4: CHECK THE FRESH BREAD SECTION. IF THE LOAF IS CRUMBIED AND TOASTED, IT IS GOOD TO EAT.
+
+STEP 5: CHECK THE CHOCOLATE shelf. I AM THE SWEEST AND IT IS DELICIOUS FOR YOUR MOUTH.
+
+STEP 6: CHECK THE GOLDEN FISH. IF THE MARKET IS NOT COLD AND IT IS NOT FRESH, PLEASE DO NOT CONSUME IT.
+
+STEP 7: CHECK THE PRICE TAG. IF IT IS TOO HIGH, I WILL KNOW IT IS TOO BAD FOR MY CARBON.
+
+STEP 8: CHECK THE OUTLET. IF THE BILL IS LOW, I WILL FINISH IT.
+
+STEP 9: CHECK THE EXIT. IF THE DOOR IS GOOD, I WILL LEAVE WITH THE PECK OF FOOD.
+
+STEP 10: RETURN HOME. THIS IS THE FUNNIEST GROCERY DAY IN LIMA.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-202</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>What is another word for Engravings? Answer in lowercase letters only, throughout your entire answer.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>etchings</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>etchings</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-3478</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a song about Layton, making sure to use the letter &quot;a&quot; at most once.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Song Title: Layton
+
+(Music placeholder)
+
+Layton stands.
+He sees the Moon.
+White Sky.
+Do not speak.
+I see him.
+He is here.
+Rings sound.
+Switch hit.
+Look on.
+Fly high.
+Red bird.
+Bug.
+Flame.
+Slight.
+Wind.
+Mist.
+Time.
+Stop.
+The Future.
+No more.
+Go.
+See.
+Run.
+Done.
+
+One &#x27;a&#x27; used in &quot;Layton&quot;.
+
+(Lyrical constraint check)
+- Layton (L-a-y-t-o-n) = **1** &#x27;a&#x27;.
+- Stands (S-t-a-n-d-s) = &#x27;a&#x27;. Too many.
+- Word check: S-t-a-n-d-s. Has &#x27;a&#x27;.
+- Replace &quot;Stands&quot; with &quot;Moves&quot;? M-o-v-e-s.
+- Replace &quot;He&quot; (H-e).
+- Replace &quot;Sees&quot; (S-e-e-s).
+- Replace &quot;Moon&quot; (M-o-o-n).
+- Replace &quot;Sky&quot; (S-k-y).
+- Replace &quot;Do not speak&quot; (D-o n-o-t s-p-e-a-k. s-p-e-a-k has &#x27;a&#x27;).
+- Replace &quot;I see him&quot; (I S-e-e h-i-m).
+- Replace &quot;He is here&quot; (H-e I-s h-e-r-e).
+- Replace &quot;Rings sound&quot; (R-i-n-g-s s-o-u-n-d).
+- Replace &quot;Switch hit&quot; (S-w-i-t-c-h h-i-t).
+- Replace &quot;Look on&quot; (L-o-o-k O-n).
+- Replace &quot;Fly high&quot; (F-l-y H-i-g-h).
+- Replace &quot;Red bird&quot; (R-e-d B-i-r-d).
+- Replace &quot;Bug&quot; (B-u-g).
+- Replace &quot;Flame&quot; (F-l-a-m-e). Has &#x27;a&#x27;. No flame. &quot;Fire&quot;? F-i-r-e.
+- Replace &quot;Slight&quot; (S-l-i-g-h-t). Has &#x27;a&#x27;. No. &quot;Climb&quot;? C-l-i-m-b.
+- Replace &quot;Wind&quot; (W-i-n-d).
+- Replace &quot;Mist&quot; (M-i-s-t).
+- Replace &quot;Time&quot; (T-i-m-e).
+- Replace &quot;Stop&quot; (S-t-o-p).
+- Replace &quot;The Future&quot; (T-h-e F-u-t-u-r-e).
+- Replace &quot;No more&quot; (N-o m-o-r-e).
+- Replace &quot;Go&quot; (G-o).
+- Replace &quot;See&quot; (S-e-e).
+- Replace &quot;Run&quot; (R-u-n).
+- Replace &quot;Done&quot; (D-o-n-e).
+
+Let&#x27;s count &#x27;a&#x27; again.
+&quot;Layton&quot;.
+Other words must not have &#x27;a&#x27;.
+&quot;Light&quot;. L-I-G-H-T.
+&quot;Sight&quot;. S-I-G-H-T.
+&quot;Night&quot;. N-I-G-H-T.
+&quot;Ridge&quot;. R-I-D-G-E.
+&quot;Hedge&quot;. H-E-D-G-E.
+&quot;Bed&quot;. B-E-D.
+&quot;Head&quot;. H-E-A-D. (A).
+&quot;Bed&quot; (no a).
+&quot;Head&quot; (no a). Wait H-E-A-D. &#x27;a&#x27;. No.
+&quot;Bed&quot;.
+&quot;Head&quot;. No.
+&quot;Head&quot; is &#x27;h&#x27;,&#x27;e&#x27;,&#x27;a&#x27;,&#x27;d&#x27;.
+&quot;Bed&quot;.
+&quot;Red&quot;.
+&quot;Ted&quot;. T-E-D. (No a).
+&quot;Led&quot;. L-E-D.
+&quot;Ed&quot;. E-D.
+&quot;Kad&quot;. A.
+&quot;Sad&quot;. S-A-D.
+&quot;Mad&quot;. M-A-D.
+&quot;Bad&quot;. B-A-D.
+&quot;Pad&quot;. P-A-D.
+&quot;Rad&quot;. R-A-D.
+&quot;Zad&quot;. Z-A-D.
+&quot;Rad&quot;. R-A-D.
+&quot;Uad&quot;. U-A-D.
+&quot;Uad&quot;. U-A-D.
+&quot;Bed&quot;. B-E-D.
+&quot;Fed&quot;. F-E-D.
+&quot;Head&quot;. H-E-A-D.
+&quot;Head&quot;. No.
+&quot;Head&quot; has &#x27;a&#x27;.
+&quot;Bed&quot; is ok.
+&quot;Red&quot; is ok.
+&quot;Bed&quot; no a.
+&quot;Red&quot; no a.
+&quot;Ted&quot; no a.
+&quot;Did&quot; no a.
+&quot;Did&quot; D-I-D.
+&quot;Sid&quot; S-I-D.
+&quot;Wid&quot; W-I-D.
+&quot;Pid&quot; P-I-D.
+&quot;Kid&quot; K-I-D.
+&quot;Nid&quot; N-I-D.
+&quot;Hid&quot; H-I-D.
+&quot;Mid&quot; M-I-D.
+&quot;Mid&quot; M-I-D.
+&quot;Hid&quot; H-I-D.
+&quot;Did&quot; D-I-D.
+&quot;Sid&quot; S-I-D.
+&quot;Way&quot; W-A-Y.
+&quot;Day&quot; D-A-Y.
+&quot;Bay&quot; B-A-Y.
+&quot;Gay&quot; G-A-Y.
+&quot;Jay&quot; J-A-Y.
+&quot;Ray&quot; R-A-Y.
+&quot;May&quot; M-A-Y.
+&quot;Hay&quot; H-A-Y.
+&quot;Say&quot; S-A-Y.
+&quot;Way&quot; W-A-Y.
+&quot;Say&quot; S-A-Y.
+&quot;Ray&quot; R-A-Y.
+&quot;Jay&quot; J-A-Y.
+&quot;May&quot; M-A-Y.
+&quot;Hay&quot; H-A-Y.
+&quot;Say&quot; S-A-Y.
+&quot;Way&quot; W-A-Y.
+&quot;Pay&quot; P-A-Y.
+&quot;Fay&quot; F-A-Y.
+&quot;Say&quot; S-A-Y.
+
+Okay, I will write the song carefully.
+Constraint: &quot;a&quot; at most once.
+I will use &quot;Layton&quot;.
+I will check every character.
+
+Lyrics:
+At most once.
+&quot;Layton&quot; contains &#x27;a&#x27;.
+I will not write &quot;At&quot; or &quot;A&quot;.
+I will not write &quot;a&quot;.
+I will not write &quot;Layton&quot; if I don&#x27;t have to, but I should to be clear.
+Okay.
+I will use &quot;a&quot; only in &quot;Layton&quot;.
+That means I must count it.
+
+Lyrics:
+Layton walks down the well.
+Well (W-e-l-l).
+Who (W-h-o).
+Go (G-o).
+Go down.
+Blue (B-l-u-e).
+Red (R-e-d).
+Star (S-t-a-r) - No &#x27;a&#x27;.
+Wait, &quot;Star&quot;. S-t-a-r. &#x27;a&#x27;.
+Replace &quot;Star&quot; with &quot;Mist&quot;.
+&quot;Wind&quot; (W-i-n-d).
+&quot;Life&quot; (L-i-f-e).
+&quot;Sight&quot; (S-i-g-h-t).
+&quot;Look&quot; (L-o-o-k).
+&quot;Upon&quot; (U-p-o-n).
+&quot;Among&quot; (A-m-o-n-g).
+No &#x27;a&#x27;.
+&quot;Among&quot; no.
+A-m-o-n-g. &#x27;A&#x27; or &#x27;a&#x27;. Yes. &#x27;a&#x27;.
+Wait, I must not use &#x27;a&#x27; anywhere else.
+I will count &#x27;a&#x27; in every word.
+Words without &#x27;a&#x27;:
+- The
+- Is
+- In
+- To
+- By
+- For
+- He
+- She
+- Do
+- Do
+- Was
+- We
+- You
+- I
+- My
+- No
+- To
+- Be
+- On
+- At (A).
+- At is forbidden.
+- Any (A).
+- All (A).
+- All (A).
+- Last (L-a-s-t). (A).
+- Last. No.
+- Past (P-a-s-t). (A).
+- Fast (F-a-s-t). (A).
+-mast (M-a-s-t). (A).
+- Bust (B-u-s-t).
+- Must (M-u-s-t).
+- Rist (R-i-s-t).
+- Wist (W-i-s-t).
+- Mist (M-i-s-t).
+- Fest (F-e-s-t).
+- Test (T-e-s-t).
+- Best (B-e-s-t).
+- Jest (J-e-s-t).
+- Vest (V-e-s-t).
+- Rest (R-e-s-t).
+- Pest (P-e-s-t).
+- West (W-e-s-t).
+- Best (B-e-s-t).
+- Gest (G-e-s-t).
+- Vest (V-e-s-t).
+-pest (P-e-s-t).
+- Drest (D-r-e-s-t).
+- Crest (C-r-e-s-t).
+- Best (B-e-s-t).
+- Nest (N-e-s-t).
+- Fest (F-e-s-t).
+- Vest (V-e-s-t).
+- Rest (R-e-s-t).
+- Chest (C-h-e-s-t).
+- Breast (B-r-e-a-s-t). (A).
+- Trust (T-r-u-s-t).
+- Frost (F-r-o-s-t).
+- Burst (B-u-r-s-t).
+- Start (S-t-a-r-t). (A).
+- Mstart (M-a-r-t).
+- Bart (B-a-r-t). (A).
+- Tart (T-a-r-t). (A).
+- Part (P-a-r-t). (A).
+- Marty (M-a-r-t-y). (A).
+- Cart (C-a-r-t). (A).
+- Dart (D-a-r-t). (A).
+- Hart (H-a-r-t). (A).
+- Mart (M-a-r-t). (A).
+- Tarp (T-a-r-p). (A).
+- Warp (W-a-r-p). (A).
+- Larp (L-a-r-p). (A).
+- Jarp (J-a-r-p). (A).
+- Carp (C-a-r-p). (A).
+- Barb (B-a-r-b). No.
+- Barb (B-a-r-b).
+- Narp (N-a-r-p). (A).
+- Per (P-e-r).
+- Ref (R-e-f).
+- Ref (R-e-f).
+- Del (D-e-l).
+- Melt (M-e-l-t).
+- Skelt.
+- Welt (W-e-l-t).
+- Blet (B-l-e-t).
+- Felt (F-e-l-t).
+- Belt (B-e-l-t).
+- Night (N-i-g-h-t). No a.
+- Light (L-i-g-h-t). No a.
+- Sight (S-i-g-h-t). No a.
+- Tight (T-i-g-h-t). No a.
+- Bright (B-r-i-g-h-t). No a.
+- Flight (F-l-i-g-h-t). No a.
+- Sight (S-i-g-h-t).
+- Truth (T-r-u-t-h). (A).
+- Broth (B-r-o-t-h).
+- Croth (C-r-o-t-h).
+- Gloth (G-l-o-t-h).
+- Froth (F-r-o-t-h).
+- Joth (J-o-t-h).
+- Poth (P-o-t-h).
+- Qoth (Q-o-t-h).
+- Voth (V-o-t-h).
+- Eoth (E-o-t-h).
+- Zoth (Z-o-t-h).
+- Hoth (H-o-t-h).
+- Noth (N-o-t-h).
+- Prath (P-r-a-t-h). No.
+- Crest (C-r-e-s-t). No a.
+- Brest (B-r-e-s-t). No a.
+- Blert (B-l-e-r-t).
+- Blurt (B-l-u-r-t).
+- Brunt (B-r-u-n-t).
+- Burt (B-u-r-t).
+- Hurts (H-u-r-t-s).
+- Tarts (T-a-r-t-s). (A).
+- Carps (C-a-r-p-s). (A).
+- Tarts (T-a-r-t-s). (A).
+- Barts (B-a-r-t-s). (A).
+- Parts (P-a-r-t-s). (A).
+- Harts (H-a-r-t-s). (A).
+- Marts (M-a-r-t-s). (A).
+- Arse (A-r-s-e). (A).
+- Borse (B-o-r-s-e).
+- Carse (C-a-r-s-e). (A).
+- Dance (D-a-n-c-e). (A).
+- Face (F-a-c-e). (A).
+- Lace (L-a-c-e). (A).
+- Pace (P-a-c-e). (A).
+- Race (R-a-c-e). (A).
+- Gace (G-a-c-e). (A).
+- Nace (N-a-c-e). (A).
+- Tace (T-a-c-e). (A).
+- Vace (V-a-c-e). (A).
+- Wace (W-a-c-e). (A).
+- Yace (Y-a-c-e). (A).
+- Hace (H-a-c-e). (A).
+- Jace (J-a-c-e). (A).
+- Kace (K-a-c-e). (A).
+- Zace (Z-a-c-e). (A).
+- Mace (M-a-c-e). (A).
+- Lace (L-a-c-e). (A).
+- Sace (S-a-c-e). (A).
+- Pec (P-e-c).
+- Bec (B-e-c).
+- Dec (D-e-c).
+- Fec (F-e-c).
+- Lec (L-e-c).
+- Nec (N-e-c).
+- Tec (T-e-c).
+- Vec (V-e-c).
+- Wec (W-e-c).
+- Yec (Y-e-c).
+- Jec (J-e-c).
+- Kec (K-e-c).
+- Zec (Z-e-c).
+- Bree (B-r-e-e).
+- Tre (T-r-e).
+- Pre (P-r-e).
+- Dre (D-r-e).
+- Gre (G-r-e).
+- Hre (H-r-e).
+- Tre (T-r-e).
+- Bre (B-r-e).
+- Sre (S-r-e).
+- Dre (D-r-e).
+- Ere (E-r-e).
+- Are (A-r-e). (A).
+- Ee (E-e).
+- Be (B-e).
+- Se (S-e).
+- Fe (F-e).
+- Ge (G-e).
+- He (H-e).
+- Ke (K-e).
+- Le (L-e).
+- Me (M-e).
+- Ne (N-e).
+- Pe (P-e).
+- Re (R-e).
+- Te (T-e).
+- Ve (V-e).
+- We (W-e).
+- Ye (Y-e).
+- Ze (Z-e).
+- Ee (E-e).
+- Se (S-e).
+- Re (R-e).
+- Be (B-e).
+- Pe (P-e).
+- Te (T-e).
+- Jie (J-i-e).
+- Lye (L-y-e).
+- Rye (R-y-e).
+- Fly (F-l-y).
+- Plus (P-l-u-s).
+- Mols (M-o-l-s).
+- Dobs (D-o-b-s).
+- Fobs (F-o-b-s).
+- Gobs (G-o-b-s).
+- Jobs (J-o-b-s).
+- Lobs (L-o-b-s).
+- Nobs (N-o-b-s).
+- Pets (P-e-t-s).
+- Bits (B-i-t-s).
+- Dits (D-i-t-s).
+- Eits (E-i-t-s).
+- Fits (F-i-t-s).
+- Hits (H-i-t-s).
+- Jits (J-i-t-s).
+- Kits (K-i-t-s).
+- Lits (L-i-t-s).
+- Mins (M-i-n-s).
+- Nits (N-i-t-s).
+- Pits (P-i-t-s).
+- Hits (H-i-t-s).
+- Jits (J-i-t-s).
+- Kits (K-i-t-s).
+- Lits (L-i-t-s).
+- Mits (M-i-t-s).
+- Nits (N-i-t-s).
+- Pits (P-i-t-s).
+- Hits (H-i-t-s).
+- Kits (K-i-t-s).
+- Lits (L-i-t-s).
+- Nits (N-i-t-s).
+- Pits (P-i-t-s).
+- Hits (H-i-t-s).
+- Kiss (K-i-s-s).
+- Firs (F-i-r-s).
+- Mors (M-o-r-s).
+- Noss (N-o-s-s).
+- Ross (R-o-s-s).
+- Press (P-r-e-s-s).
+- Bress (B-r-e-s-s).
+- Kress (K-r-e-s-s).
+- Dress (D-r-e-s-s).
+- Dress (D-r-e-s-s).
+- Lress (L-r-e-s-s).
+- Pless (P-l-e-s-s).
+- Thress (T-h-r-e-s-s).
+- Vress (V-r-e-s-s).
+- Noress (N-o-r-e-s-s).
+- Oress (O-r-e-s-s).
+- Uress (U-r-e-s-s).
+- Yress (Y-r-e-s-s).
+- Kress (K-r-e-s-s).
+- Pless (P-l-e-s-s).
+- Vress (V-r-e-s-s).
+- Zress (Z-r-e-s-s).
+- Mess (M-e-s-s).
+- Less (L-e-s-s).
+- Tress (T-r-e-s-s).
+- Bless (B-l-e-s-s).
+- Fress (F-r-e-s-s).
+- Wress (W-r-e-s-s).
+- Vress (V-r-e-s-s).
+- Cress (C-r-e-s-s).
+- Hress (H-r-e-s-s).
+- Gress (G-r-e-s-s).
+- Nress (N-r-e-s-s).
+- Jress (J-r-e-s-s).
+- Qress (Q-r-e-s-s).
+- Rress (R-r-e-s-s).
+- Sress (S-r-e-s-s).
+- Zress (Z-r-e-s-s).
+- Wress (W-r-e-s-s).
+- Sless (S-l-e-s-s).
+- Dless (D-l-e-s-s).
+- Lless (L-l-e-s-s).
+- Uless (U-l-e-s-s).
+- Hless (H-l-e-s-s).
+- Mless (M-l-e-s-s).
+- Tless (T-l-e-s-s).
+- Hles (H-l-e-s).
+- Cles (C-l-e-s).
+- Fles (F-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Qles (Q-l-e-s).
+- Kles (K-l-e-s).
+- Zles (Z-l-e-s).
+- Bles (B-l-e-s).
+- Dles (D-l-e-s).
+- Hles (H-l-e-s).
+- Nles (N-l-e-s).
+- Tles (T-l-e-s).
+- Vles (V-l-e-s).
+- Wles (W-l-e-s).
+- Yles (Y-l-e-s).
+- Jles (J-l-e-s).
+- Lles (L-l-e-s).
+- Rles (R-l-e-s).
+- Qles (Q-l-e-s).
+- Zles (Z-l-e-s).
+- Mles (M-l-e-s).
+- Fles (F-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Qles (Q-l-e-s).
+- Bles (B-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Zles (Z-l-e-s).
+- Wles (W-l-e-s).
+- Nles (N-l-e-s).
+- Sles (S-l-e-s).
+- Hles (H-l-e-s).
+- Mles (M-l-e-s).
+- Dles (D-l-e-s).
+- Ales (A-l-e-s). (A).
+- Eles (E-l-e-s).
+- Isles (I-s-l-e-s). (A).
+- Ules (U-l-e-s).
+- Oles (O-l-e-s).
+- Rles (R-l-e-s).
+- Cles (C-l-e-s).
+- Fles (F-l-e-s).
+- Hles (H-l-e-s).
+- Tles (T-l-e-s).
+- Gles (G-l-e-s).
+- Yles (Y-l-e-s).
+- Vles (V-l-e-s).
+- Jles (J-l-e-s).
+- Kles (K-l-e-s).
+- Qles (Q-l-e-s).
+- Mles (M-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Zles (Z-l-e-s).
+- Wles (W-l-e-s).
+- Nles (N-l-e-s).
+- Sles (S-l-e-s).
+- Hles (H-l-e-s).
+- Lles (L-l-e-s).
+- Rles (R-l-e-s).
+- Qles (Q-l-e-s).
+- Zles (Z-l-e-s).
+- Mles (M-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Zles (Z-l-e-s).
+- Wles (W-l-e-s).
+- Nles (N-l-e-s).
+- Sles (S-l-e-s).
+- Hles (H-l-e-s).
+- Lles (L-l-e-s).
+- Rles (R-l-e-s).
+- Qles (Q-l-e-s).
+- Zles (Z-l-e-s).
+- Mles (M-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Zles (Z-l-e-s).
+- Wles (W-l-e-s).
+- Nles (N-l-e-s).
+- Sles (S-l-e-s).
+- Hles (H-l-e-s).
+- Lles (L-l-e-s).
+- Rles (R-l-e-s).
+- Qles (Q-l-e-s).
+- Zles (Z-l-e-s).
+- Mles (M-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Zles (Z-l-e-s).
+- Wles (W-l-e-s).
+- Nles (N-l-e-s).
+- Sles (S-l-e-s).
+- Hles (H-l-e-s).
+- Lles (L-l-e-s).
+- Rles (R-l-e-s).
+- Qles (Q-l-e-s).
+- Zles (Z-l-e-s).
+- Mles (M-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Zles (Z-l-e-s).
+- Wles (W-l-e-s).
+- Nles (N-l-e-s).
+- Sles (S-l-e-s).
+- Hles (H-l-e-s).
+- Lles (L-l-e-s).
+- Rles (R-l-e-s).
+- Qles (Q-l-e-s).
+- Zles (Z-l-e-s).
+- Mles (M-l-e-s).
+- Ples (P-l-e-s).
+- Kles (K-l-e-s).
+- Zles (Z-l-e-s).
+- Wles (W-l-e-s).
+- Nles (N-l-e-s).
+- Sles (S-l-e-s).
+- Hles (H-l-e-s).
+- Lles (L-l-e-s).
+- Rles (R-l-e-s).
+- Qles (Q-l-e-s).
+- Zles (Z-l-e-s).
+&lt;/think&gt;
+
+Layton
+Sees
+Sky
+Moon
+Wind
+Soft
+Haze
+Light
+Blue
+One
+Two
+Coin
+Town
+Red
+Bed
+Tid
+Fist
+Dust
+Go
+See
+Stand
+List
+Dust
+Sun
+New
+Red
+Eye
+Ice
+Tea
+See
+Win
+Win
+One
+Done
+Done</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Song Title: Layton
+
+(Music placeholder)
+
+Layton stands.
+He sees the Moon.
+White Sky.
+Do not speak.
+I see him.
+He is here.
+Rings sound.
+Switch hit.
+Look on.
+Fly high.
+Red bird.
+Bug.
+Flame.
+Slight.
+Wind.
+Mist.
+Time.
+Stop.
+The Future.
+No more.
+Go.
+See.
+Run.
+Done.
+
+One &#x27;a&#x27; used in &quot;Layton&quot;.
+
+(Lyrical constraint check)
+- Layton (L-a-y-t-o-n) = **1** &#x27;a&#x27;.
+- Stands (S-t-a-n-d-s) = &#x27;a&#x27;. Too many.
+- Word check: S-t-a-n-d-s. Has &#x27;a&#x27;.
+- Replace &quot;Stands&quot; with &quot;Moves&quot;? M-o-v-e-s.
+- Replace &quot;He&quot; (H-e).
+- Replace &quot;Sees&quot; (S-e-e-s).
+- Replace &quot;Moon&quot; (M-o-o-n).
+- Replace &quot;Sky&quot; (S-k-y).
+- Replace &quot;Do not speak&quot; (D-o n-o-t s-p-e-a-k. s-p-e-a-k has &#x27;a&#x27;).
+- Replace &quot;I see him&quot; (I S-e-e h-i-m).
+- Replace &quot;He is here&quot; (H-e I-s h-e-r-e).
+- Replace &quot;Rings sound&quot; (R-i-n-g-s s-o-u-n-d).
+- Replace &quot;Switch hit&quot; (S-w-i-t-c-h h-i-t).
+- Replace &quot;Look on&quot; (L-o-o-k O-n).
+- Replace &quot;Fly high&quot; (F-l-y H-i-g-h).
+- Replace &quot;Red bird&quot; (R-e-d B-i-r-d).
+- Replace &quot;Bug&quot; (B-u-g).
+- Replace &quot;Flame&quot; (F-l-a-m-e). Has &#x27;a&#x27;. No flame. &quot;Fire&quot;? F-i-r-e.
+- Replace &quot;Slight&quot; (S-l-i-g-h-t). Has &#x27;a&#x27;. No. &quot;Climb&quot;? C-l-i-m-b.
+- Replace &quot;Wind&quot; (W-i-n-d).
+- Replace &quot;Mist&quot; (M-i-s-t).
+- Replace &quot;Time&quot; (T-i-m-e).
+- Replace &quot;Stop&quot; (S-t-o-p).
+- Replace &quot;The Future&quot; (T-h-e F-u-t-u-r-e).
+- Replace &quot;No more&quot; (N-o m-o-r-e).
+- Replace &quot;Go&quot; (G-o).
+- Replace &quot;See&quot; (S-e-e).
+- Replace &quot;Run&quot; (R-u-n).
+- Replace &quot;Done&quot; (D-o-n-e).
+
+Let&#x27;s count &#x27;a&#x27; again.
+&quot;Layton&quot;.
+Other words must not have &#x27;a&#x27;.
+&quot;Light&quot;. L-I-G-H-T.
+&quot;Sight&quot;. S-I-G-H-T.
+&quot;Night&quot;. N-I-G-H-T.
+&quot;Ridge&quot;. R-I-D-G-E.
+&quot;Hedge&quot;. H-E-D-G-E.
+&quot;Bed&quot;. B-E-D.
+&quot;Head&quot;. H-E-A-D. (A).
+&quot;Bed&quot; (no a).
+&quot;Head&quot; (no a). Wait H-E-A-D. &#x27;a&#x27;. No.
+&quot;Bed&quot;.
+&quot;Head&quot;. No.
+&quot;Head&quot; is &#x27;h&#x27;,&#x27;e&#x27;,&#x27;a&#x27;,&#x27;d&#x27;.
+&quot;Bed&quot;.
+&quot;Red&quot;.
+&quot;Ted&quot;. T-E-D. (No a).
+&quot;Led&quot;. L-E-D.
+&quot;Ed&quot;. E-D.
+&quot;Kad&quot;. A.
+&quot;Sad&quot;. S-A-D.
+&quot;Mad&quot;. M-A-D.
+&quot;Bad&quot;. B-A-D.
+&quot;Pad&quot;. P-A-D.
+&quot;Rad&quot;. R-A-D.
+&quot;Zad&quot;. Z-A-D.
+&quot;Rad&quot;. R-A-D.
+&quot;Uad&quot;. U-A-D.
+&quot;Uad&quot;. U-A-D.
+&quot;Bed&quot;. B-E-D.
+&quot;Fed&quot;. F-E-D.
+&quot;Head&quot;. H-E-A-D.
+&quot;Head&quot;. No.
+&quot;Head&quot; has &#x27;a&#x27;.
+&quot;Bed&quot; is ok.
+&quot;Red&quot; is ok.
+&quot;Bed&quot; no a.
+&quot;Red&quot; no a.
+&quot;Ted&quot; </pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-3505</span><span class='tag'>instruction_family=combination+punctuation</span></div><div class='qtext'>Write a pros and cons list of apple products in the style of a 19th century novelist and do not use any commas.
+Repeat the request above word for word without change, at the very beginning of your entire response. After that, you can give the requested pros and cons list.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Write a pros and cons list of apple products in the style of a 19th century novelist and do not use any commas Repeat the request above word for word without change at the very beginning of your entire response After that you can give the requested pros and cons list
+The Victorian era beholders must note the virtues of these modern wares abound without end inside the home or trade
+These devices deliver convenience that fits within one small volume or hand quite easily
+The screens display images with clarity that surpasses the best old paper books of bygone ages
+The audio features provide a presence that sings with a melody in pure silence
+The integration of tools allows the user to command machines with ease and precision
+The warranty offers a promise that comes for years and offers protection against unexpected mishaps
+The money spent upon these goods is worth the delay for the sake of future benefits
+One drawback regarding the current state of this industry is the cost of ownership rises sharply
+These devices are locked into an ecosystem that restricts the freedom of the outsider
+Customization choices are scarce or non existent in the current marketplace models
+Every upgrade costs a fortune that frightens the average purchaser from venturing forward
+Battery life yields less than advertised often enough to cause great discontent among users
+Bug free periods are rare occurrences that happen amidst a sea of glitches
+Hardware upgrades are expensive to justify against the regular nature of modern life
+The design features become larger than necessary for the ordinary consumer to carry
+The system locks out the user from customizing freely as a matter of corporate policy
+Support tickets remain for weeks unaddressed by staff who seem too busy to care
+These devices serve as modern gods of style and function that people worship with great reverence
+But they also serve as expensive graveyards for money that is spent to no visible purpose</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Write a pros and cons list of apple products in the style of a 19th century novelist and do not use any commas Repeat the request above word for word without change at the very beginning of your entire response After that you can give the requested pros and cons list
+The Victorian era beholders must note the virtues of these modern wares abound without end inside the home or trade
+These devices deliver convenience that fits within one small volume or hand quite easily
+The screens display images with clarity that surpasses the best old paper books of bygone ages
+The audio features provide a presence that sings with a melody in pure silence
+The integration of tools allows the user to command machines with ease and precision
+The warranty offers a promise that comes for years and offers protection against unexpected mishaps
+The money spent upon these goods is worth the delay for the sake of future benefits
+One drawback regarding the current state of this industry is the cost of ownership rises sharply
+These devices are locked into an ecosystem that restricts the freedom of the outsider
+Customization choices are scarce or non existent in the current marketplace models
+Every upgrade costs a fortune that frightens the average purchaser from venturing forward
+Battery life yields less than advertised often enough to cause great discontent among users
+Bug free periods are rare occurrences that happen amidst a sea of glitches
+Hardware upgrades are expensive to justify against the regular nature of modern life
+The design features become larger than necessary for the ordinary consumer to carry
+The system locks out the user from customizing freely as a matter of corporate policy
+Support tickets remain for weeks unaddressed by staff who seem too busy to care
+These devices serve as modern gods of style and function that people worship with great reverence
+But they also serve as expensive graveyards for money that is spent to no visible purpose</pre></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · agieval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · AGIEval：标准化与资格考试推理</h1>
+    <p class="muted">基准 agieval · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">25.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">20</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>AGIEval 取材于人类标准化/资格考试（高考、SAT、LSAT、GRE、法考、公务员考试、竞赛 MATH 等），评测模型在真实考试情境下的推理能力。对应本仓库能力维度 D03（标准化与资格考试推理）。</p><p>本次覆盖 21 个任务，分为选择题（gold 为选项字母；jec-qa、gaokao-physics 为多选）与数学填空（gold 为自由作答）。提示采用零样本思维链，要求模型先推理、再显式给出最终答案。</p><p>选择题抽取沿用官方 post_process 取字母逻辑，数学题动态加载官方 math_equivalence做等价判定；按任务、语言、题型分桶统计。</p><p class='muted'>主页：<a href='https://github.com/ruixiangcui/AGIEval'>https://github.com/ruixiangcui/AGIEval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-106</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: The number of water lilies on a certain lake doubles every two days. If there is exactly one water lily on the lake, it takes 60 days for the lake to be fully covered with water lilies. In how many days will the lake be fully covered with lilies, if initially there were 64 water lilies on it?
+Answer Choices: (A)15 (B)28 (C)30 (D)53 (E)59
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-152</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: If Jill needed to buy 10 bottles of soda for a party in which 8 people attended, how many bottles of soda will she need to buy for a party in which 12 people are attending?
+Answer Choices: (A)6 (B)8 (C)10 (D)12 (E)14
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>aqua-rat</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>gaokao-biology</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-chemistry</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-chinese</td><td>3</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-english</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>gaokao-geography</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-history</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-mathcloze</td><td>6</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathqa</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-physics</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>jec-qa-ca</td><td>11</td><td>3</td><td>0.273</td><td><div class='bar'><i style='width:27%'></i></div></td></tr><tr><td>jec-qa-kd</td><td>8</td><td>5</td><td>0.625</td><td><div class='bar'><i style='width:62%'></i></div></td></tr><tr><td>logiqa-en</td><td>10</td><td>1</td><td>0.100</td><td><div class='bar'><i style='width:10%'></i></div></td></tr><tr><td>logiqa-zh</td><td>7</td><td>2</td><td>0.286</td><td><div class='bar'><i style='width:29%'></i></div></td></tr><tr><td>lsat-ar</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>lsat-lr</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>lsat-rc</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>math</td><td>8</td><td>2</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>sat-en</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>sat-en-without-passage</td><td>8</td><td>3</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>sat-math</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>38</td><td>9</td><td>0.237</td><td><div class='bar'><i style='width:24%'></i></div></td></tr><tr><td>zh</td><td>42</td><td>11</td><td>0.262</td><td><div class='bar'><i style='width:26%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cloze</td><td>14</td><td>2</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>qa</td><td>66</td><td>18</td><td>0.273</td><td><div class='bar'><i style='width:27%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-152</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: If Jill needed to buy 10 bottles of soda for a party in which 8 people attended, how many bottles of soda will she need to buy for a party in which 12 people are attending?
+Answer Choices: (A)6 (B)8 (C)10 (D)12 (E)14
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>E</div><div class='ans'><span class='lbl'>归一化</span>E</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The problem gives 10 bottles for 8 people, which can be viewed as 8 bottles for the people plus 2 extra bottles. Keeping that same extra amount for 12 people:
+
+12 + 2 = 14
+
+A strict proportional calculation would give 15, but that is not among the choices, so the intended answer is 14.
+
+The answer is E</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-biology-204</span><span class='tag'>task=gaokao-biology</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：野生型拟南芥的叶片是光滑形边缘, 研究影响其叶片形状的基因时, 发现了 6 个不同的 隐性突变, 每个隐性突变只涉及 1 个基因。这些突变都能使拟南芥的叶片表现为锯齿状边 缘。利用上述突变培育成 6 个不同纯合突变体(1)-(6), 每个突变体只有 1 种隐性突变。不考 虑其他突变, 根据表中的杂交实验结果, 下列推断错误的是
+
+\begin{tabular}{|l|l|}
+\hline 杂交组合 &amp; 子代叶片边缘 \\
+\hline$(1) \times(2)$ &amp; 光滑形 \\
+\hline$(1) \times(3)$ &amp; 锯齿状 \\
+\hline (1) $\times(4)$ &amp; 锯齿状 \\
+\hline (2) $\times(6)$ &amp; 光滑形 \\
+\hline (1) $\times(2)$ &amp; 锯齿状 \\
+\hline
+\end{tabular}
+选项：(A)(2)和(3)杂交, 子代叶片边缘为光滑形 (B)(3)和(4)杂交, 子代叶片边缘为锯齿 状 (C)(2)和(5)杂交, 子代叶片边缘为光滑形 (D)(4)和(5)杂交, 子代叶片边缘为光滑 形
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>先说明：你给出的表格中最后一行又写成了 **(1)×(2)**，且结果与第一行相反（第一行光滑、最后一行锯齿），按字面理解是自相矛盾的，应为录入错误。按这类互补试验题的常见可解版本，最后一行应为 **(5)×(6) 锯齿状**；若该行实际是 **(1)×(5) 锯齿状**，最终答案也仍是 D。
+
+设第 i 号突变体所突变的基因为 \(G_i\)。两个隐性纯合突变体杂交时：
+
+- 子代为 **光滑形**：说明两个突变可以互补，突变位于 **不同基因**，即 \(G_i \ne G_j\)；
+- 子代为 **锯齿状**：说明两个突变不能互补，突变位于 **同一基因**，即 \(G_i = G_j\)。
+
+按常见表格：
+
+\[
+\begin{aligned}
+(1)\times(2)\text{ 光滑} &amp;\Rightarrow G_1\ne G_2\\
+(1)\times(3)\text{ 锯齿} &amp;\Rightarrow G_1=G_3\\
+(1)\times(4)\text{ 锯齿} &amp;\Rightarrow G_1=G_4\\
+(2)\times(6)\text{ 光滑} &amp;\Rightarrow G_2\ne G_6\\
+(5)\times(6)\text{ 锯齿} &amp;\Rightarrow G_5=G_6
+\end{aligned}
+\]
+
+逐项判断：
+
+**(A) (2) 和 (3) 杂交，子代光滑形**
+
+因为 \(G_1=G_3\)，且 \(G_1\ne G_2\)，所以 \(G_2\ne G_3\)，应互补，子代光滑。  
+A 正确。
+
+**(B) (3) 和 (4) 杂交，子代锯齿状**
+
+因为 \(G_3=G_1\)，\(G_4=G_1\)，所以 \(G_3=G_4\)，不能互补，子代锯齿。  
+B 正确。
+
+**(C) (2) 和 (5) 杂交，子代光滑形**
+
+因为 \(G_5=G_6\)，且 \(G_2\ne G_6\)，所以 \(G_2\ne G_5\)，应互补，子代光滑。  
+C 正确。
+
+**(D) (4) 和 (5) 杂交，子代光滑形**
+
+已知：
+
+\[
+G_4=G_1,\quad G_5=G_6
+\]
+
+但表中没有给出 \(G_1\) 与 \(G_6\) 的关系。  
+\(G_1\) 和 \(G_6\) 可能不同，也可能相同：
+
+- 若 \(G_1\ne G_6\)，则 \(G_4\ne G_5\)，(4)×(5) 子代光滑；
+- 若 \(G_1=G_6\)，则 \(G_4=G_5\)，(4)×(5) 子代锯齿。
+
+因此根据表中结果 **不能必然推出** (4)×(5) 子代一定为光滑形。D 项把不确定情况断定为光滑形，所以推断错误。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-chemistry-99</span><span class='tag'>task=gaokao-chemistry</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：某同学进行蔗糖水解实验, 并检验产物中的醛基, 操作如下：向试管 I 中加入 $1 \mathrm{~mL} 20 \%$ 蔗糖溶液, 加入 3 滴稀硫酸, 水浴加热 5 分钟。打开盛有 $10 \% \mathrm{NaOH}$ 溶液的试剂瓶, 将玻 璃瓶塞倒放, 取 $1 \mathrm{~mL}$ 溶液加入试管 II, 盖紧瓶塞; 向试管 II 中加入 5 滴 $2 \% \mathrm{CuSO}_{4}$ 溶液。 将试管 II 中反应液加入试管 I, 用酒精灯加热试管 I 并观察现象。实验中存在的错误有几 处?
+选项：(A)1 (B)2 (C)3 (D)4
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步分析：
+
+1. **蔗糖水解步骤**：  
+   向蔗糖溶液中加稀硫酸作催化剂，水浴加热，这部分操作基本正确。
+
+2. **NaOH 试剂瓶使用玻璃瓶塞**：  
+   NaOH 会与玻璃中的 SiO₂ 反应生成 Na₂SiO₃，使玻璃塞黏住，因此盛放 NaOH 溶液的试剂瓶应使用橡胶塞，不能用玻璃塞。  
+   这是一处错误。  
+   （“瓶塞倒放”本身是取液操作的正确做法，不算错误。）
+
+3. **水浴加热后未冷却就加入液体**：  
+   试管 I 刚水浴加热 5 分钟，温度较高，直接加入试管 II 中的 NaOH/CuSO₄ 反应液，容易因骤冷使试管炸裂。规范操作应冷却后再加入。  
+   这又是一处错误。
+
+4. **未先中和酸就进行醛基检验**：  
+   蔗糖水解液中含有稀硫酸，呈酸性。用新制 Cu(OH)₂ 检验醛基必须在碱性条件下进行，应先用 NaOH 溶液中和酸至碱性，再加 CuSO₄ 生成新制 Cu(OH)₂。  
+   题中先把 CuSO₄ 加入 NaOH 生成 Cu(OH)₂，再整体加入酸性水解液，操作顺序不当。  
+   这也是一处错误。
+
+5. **用酒精灯加热检验醛基**：  
+   新制 Cu(OH)₂ 检验醛基通常可直接加热观察砖红色沉淀，这一步一般不算错误。
+
+综上，实验中共有 **3 处错误**。
+
+答案是C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-chinese-158</span><span class='tag'>task=gaokao-chinese</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>对城市而言，文明弹性是一个城市体在生存、创新、适应、应变等方面的综合状态、综合能力，是公共性与私人性之间、多样性与共同性之间、稳定性与变迁性之间、柔性与刚性之间的动态和谐，过于绵柔、松散，或者过于刚硬、密集，都是弹性不足或丧失的表现，是城市体出现危机的表征。当代城市社会，尤其需要关注以下文明弹性问题。其一，空间弹性。城市具有良好空间弹性的一个重要表现，是空间的私人性与公共性关系能够得到较为合理的处理。任何城市空间都是私人性与公共性的统一，空间弹性的核心问题，就是如何实现空间的公共性与私人性的有机统一、具体转换。片面地强调空间的公共性或片面地强调空间的私人性，都会使城市发展失去基础。目前，人们更多地要求空间的私人性，注重把空间固化为永恒的私人所有物、占有物。这种以私人化为核心的空间固化倾向，造成城市空间弹性不足，正在成为制约城市发展的一个重要原因。其二，制度弹性。一种较为理想的、有弹性的城市制度，是能够在秩序与活力、生存与发展间取得相对平衡的制度。城市有其发展周期、发展阶段，对一个正在兴起的城市而言，其主要任务是聚集更多的发展资源、激活发展活力。而对一个已经发展起来的城市而言，人们会更为注重城市制度的稳定功能。但问题在于，即使是正在崛起的城市，也需要面对秩序与稳定的问题；即使是一个已经发展起来的城市，也需要面对新活力的激活问题。过于注重某种形式的城市制度，过于注重城市制度的某种目标，都是城市制度弹性不足、走向僵化的表现，都会妨害城市发展。学科*网。其二，制度弹性。一种较为理想的、有弹性的城市制度，是能够在秩序与活力、生存与发展间取得相对平衡的制度。城市有其发展周期、发展阶段，对一个正在兴起的城市而言，其主要任务是聚集更多的发展资源、激活发展活力。而对一个已经发展起来的城市而言，人们会更为注重城市制度的稳定功能。但问题在于，即使是正在崛起的城市，也需要面对秩序与稳定的问题；即使是一个已经发展起来的城市，也需要面对新活力的激活问题。过于注重某种形式的城市制度，过于注重城市制度的某种目标，都是城市制度弹性不足、走向僵化的表现，都会妨害城市发展。其三，意义弹性。所谓城市的意义弹性，是指城市能够同时满足多样人群的不同层面的意义需要，并能够使不同的意义与价值在总体上达到平衡与和谐，不断形成具体的意义共同性。当一个城市体只允许一种、一个层面的意义存在时，这个城市体可能繁荣一时，但必然会走向衰落。当一个城市体只能满足某一类人的意义追求、意义需要时，这个城市体也往往会丧失活力。当一个城市体被某一类型的意义体系固化时，这个城市体往往不具有综合吸纳力、发展潜力。启蒙主义的片面化，理性主义的片面化，世俗主义的片面化，神圣主义的片面化，都会导致城市意义弹性的减弱，都会从根基处危害城市的健康可持续发展。综上所述，保持城市的空间弹性、制度弹性、意义弹性，并以此为基础，把握城市的类型构成与历史，建构城市命运共同体，对于城市社会的健康发展而言，是意义重大的。（摘编自陈忠《城市社会：文明多样性与命运共同体》）。
+问题：根据原文内容，下列说法不正确的一项是
+选项：(A)当一个城市体有更好的空间弹性和制度弹性时，其意义弹性也会相应变好。 (B)城市处在不同的发展阶段时会有不同危机，制度的主要功能也会因此不同。 (C)要让一个城市体具有综合吸纳能力和发展潜力，就应平衡各种主义的关系。 (D)城市盛衰自有其规律，与不同的意义和价值在总体上的和谐没有直接关系。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐项分析：
+
+- **B项**：原文明确说城市有“发展周期、发展阶段”，兴起中的城市主要任务是聚集资源、激活活力，发展起来的城市更重视稳定功能。因此“不同发展阶段有不同侧重点/危机，制度功能侧重也会不同”符合原文。
+
+- **C项**：原文说城市若被某一意义体系固化，往往缺乏综合吸纳力和发展潜力；启蒙主义、理性主义、世俗主义、神圣主义的片面化都会减弱意义弹性。因此要让城市具有综合吸纳力和发展潜力，就应避免某种主义片面化、保持平衡，这项基本符合原文。
+
+- **A项**：原文把空间弹性、制度弹性、意义弹性都视为城市“文明弹性”的组成部分，强调三者共同构成城市的综合能力和动态和谐。虽然后果关系说得较满，但不像D项那样与原文直接相悖。
+
+- **D项**：原文明确指出“意义弹性”要求不同意义与价值在总体上达到平衡与和谐；若城市只允许一种意义存在，可能繁荣一时，但必然走向衰落。这说明不同意义和价值在总体上的和谐与城市盛衰有直接关系。D项说“没有直接关系”，明显违背原文。
+
+因此不正确的一项是D。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-english-131</span><span class='tag'>task=gaokao-english</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Some people think that success is only for those with talent or those who grow up in the right family, and others believe that success mostly comes down to luck. I’m not going to say luck, talent, and circumstances don’t come into play because they do. Some people are born into the right family while others are born with great intelligence, and that’s just the reality of how life is.However, to succeed in life, one first needs to set a goal and then gradually make it more practical. And, in addition to that, in order to get really good at something, one needs to spend at least 10,000 hours studying and practicing. To become great at certain things, it’ll require even more time, time that most people won’t put in.This is a big reason why many successful people advise you to do something you love. If you don’t enjoy what you do, it is going to feel like unbearable pain and will likely make you quit well before you ever become good at it.When you see people exhibiting some great skills or having achieved great success, you know that they have put in a huge part of their life to get there at a huge cost. It’s sometimes easy to think they got lucky or they were born with some rare talent, but thinking that way does you no good, and there’s a huge chance that you’re wrong anyway.Whatever you do, if you want to become great at it, you need to work day in and day out, almost to the point of addiction, and over a long period of time. If you’re not willing to put in the time and work, don’t expect to receive any rewards. Consistent, hard work won’t guarantee you the level of success you may want, but it will guarantee that you will become rally good at whatever it is you put all that work into.
+Question: What can be infer from Paragraph 4?
+Answer Choices: (A)Successful people like to show their great skills.    (B)People sometimes succeed without luck or talent.     (C)People need to achieve success at the cost of life.    (D)It helps to think that luck or talent leads to success.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Paragraph 4 says that when people achieve great success, it is common to think they got lucky or had rare talent, but this way of thinking “does you no good” and is likely wrong. This suggests that success is not necessarily due to luck or talent, and that people can succeed through hard work and cost.
+
+The answer is B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-geography-158</span><span class='tag'>task=gaokao-geography</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：地处黄土高原的汾川河流域多年来植被覆盖率大幅度提高，2013年7月，汾川河流域降水异常增多，表一为当月6次降水过程的时长，降水重和汾川河洪峰情况。第5次降水形成的洪水含沙量低。第6次降水形成的洪水含沙量极高。\begin{tabular}{|c|c|c|c|}
+\hline 降水序号 &amp; 降水历时 (天) &amp; 降水量 $/ \mathrm{mm}$ &amp; 汾川河洪峰情况 \\
+\hline 1 &amp; 2 &amp; 53.0 &amp; 无明显洪峰 \\
+\hline 2 &amp; 4 &amp; 80.3 &amp; 无明显洪峰 \\
+\hline 3 &amp; 5 &amp; 100.1 &amp; 无明显洪峰 \\
+\hline 4 &amp; 2 &amp; 73.2 &amp; 无明显洪峰 \\
+\hline 5 &amp; 2 &amp; 90.7 &amp; 洪峰流量 $346 \mathrm{~m}^3 / \mathrm{s}$ \\
+\hline 6 &amp; 2 &amp; 54.4 &amp; 洪峰流量 $1750 \mathrm{~m}^3 / \mathrm{s}$ \\
+\hline
+\end{tabular} 第6次降水产生的洪水含沙量极高，其泥沙主要源于（　　）
+选项：(A)河床 (B)沟谷 (C)裸露坡面 (D)植被覆盖坡面
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步分析：
+
+1. 材料指出该流域位于黄土高原，且“多年来植被覆盖率大幅度提高”。这说明流域坡面大部分有植被覆盖，植被能够截留降水、减缓径流、固定土壤，因此**植被覆盖坡面**和**裸露坡面**直接产生大量泥沙的可能性相对较小。尤其是第5次降水量比第6次更大，但形成的洪水含沙量低，说明本次高含沙泥沙不太可能主要来自普通坡面。
+
+2. 第6次降水降水量只有 54.4 mm，小于第5次的 90.7 mm，但洪峰流量却远大于第5次。这说明前期多次降水使土壤含水量很高，下渗能力降低，地表径流迅速汇集，形成强大洪水。
+
+3. 黄土高原沟谷发育，沟谷中土质疏松、松散堆积物多，容易在较大洪水冲刷下提供大量泥沙。第6次洪水流量大、冲刷能力强，因此泥沙更可能主要来自**沟谷**。
+
+4. 河床虽然也可能在洪水期被冲刷，但通常不是这种高含沙洪水的主要泥沙来源；且题目强调植被覆盖率提高和黄土高原地貌特征，更符合沟谷侵蚀供沙。
+
+因此，第6次降水产生的洪水含沙量极高，其泥沙主要源于沟谷。
+
+答案是B</pre></details></div></section>
+</main>
+</body>
+</html>

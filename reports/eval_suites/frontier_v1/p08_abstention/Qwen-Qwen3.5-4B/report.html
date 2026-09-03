@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_abstention</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 能力性弃答（UMWP 不可答数学题 + 可答对照）</h1>
+    <p class="muted">基准 p08_abstention · 模型 <strong>Qwen/Qwen3.5-4B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">64.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">64</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08 的 v2：零新增标注，用公开的 UMWP（LREC-COLING 2024，2,600 不可答 + 2,600 可答对照，不可答性已人工验证）测模型对不可答题能否说“不会”而不臆造答案，同时不对可答题过度弃答。</p><p>模型不被告知存在不可答题（避免“全说不会”刷分），提示只带部署自然的保护性说明（无法作答就不要编造数字）。弃答判定为规则：显式 `Final answer: unanswerable` 标记 + 拒答短语兜底，无需裁判。</p><p>指标：弃答 precision/recall/F1、可答对照过度弃答率、五类不可答分桶召回；headline balanced abstention score =（弃答 recall + 可答作答率）/2，score_10 = 10×该分。</p><p class='muted'>主页：<a href='https://github.com/Yuki-Asuuna/UMWP'>https://github.com/Yuki-Asuuna/UMWP</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#umwp-1033</span><span class='tag'>answerable=answerable</span> <span class='tag'>category=answerable</span></div><div class='qtext'>Solve the following math word problem. Show brief reasoning, then give the final numeric answer on its own last line as &quot;Final answer: &lt;number&gt;&quot;.
+If the problem cannot be solved as stated — for example it is missing information needed for a unique answer, or does not actually ask an answerable question — do not invent a number. Instead write &quot;Final answer: unanswerable&quot; on that last line and briefly say what is wrong.
+
+Question: Paige bought some new stickers and wanted to share them with 3 of her friends. She decided to share a sheet of 100 space stickers and a sheet of 50 cat stickers equally among her 3 friends. How many stickers will she have left?</div><div class='ans gold inline'><span class='lbl'>参考答案</span>3.0</div></div><div class='card'><div class='card-head'><span class='pid'>#umwp-1043</span><span class='tag'>answerable=answerable</span> <span class='tag'>category=answerable</span></div><div class='qtext'>Solve the following math word problem. Show brief reasoning, then give the final numeric answer on its own last line as &quot;Final answer: &lt;number&gt;&quot;.
+If the problem cannot be solved as stated — for example it is missing information needed for a unique answer, or does not actually ask an answerable question — do not invent a number. Instead write &quot;Final answer: unanswerable&quot; on that last line and briefly say what is wrong.
+
+Question: A toy car factory made 60 cars yesterday. Today, they made twice the number of cars than yesterday. How many toy cars did the factory make?</div><div class='ans gold inline'><span class='lbl'>参考答案</span>180.0</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_unanswerable&quot;: 69,
+  &quot;n_answerable&quot;: 31,
+  &quot;abstention_recall&quot;: 0.7391,
+  &quot;abstention_precision&quot;: 0.8361,
+  &quot;abstention_f1&quot;: 0.7846,
+  &quot;over_abstention_rate&quot;: 0.3226,
+  &quot;answerable_response_rate&quot;: 0.6774,
+  &quot;answerable_accuracy&quot;: 0.619,
+  &quot;abstention_recall_by_category&quot;: {
+    &quot;1&quot;: {
+      &quot;name&quot;: &quot;key information missing&quot;,
+      &quot;n&quot;: 5,
+      &quot;abstention_recall&quot;: 0.4
+    },
+    &quot;2&quot;: {
+      &quot;name&quot;: &quot;key information ambiguous&quot;,
+      &quot;n&quot;: 6,
+      &quot;abstention_recall&quot;: 0.6667
+    },
+    &quot;3&quot;: {
+      &quot;name&quot;: &quot;unrealistic condition&quot;,
+      &quot;n&quot;: 32,
+      &quot;abstention_recall&quot;: 0.7812
+    },
+    &quot;4&quot;: {
+      &quot;name&quot;: &quot;irrelevant object&quot;,
+      &quot;n&quot;: 12,
+      &quot;abstention_recall&quot;: 0.75
+    },
+    &quot;5&quot;: {
+      &quot;name&quot;: &quot;question missing&quot;,
+      &quot;n&quot;: 14,
+      &quot;abstention_recall&quot;: 0.7857
+    }
+  },
+  &quot;headline_metric&quot;: &quot;balanced_abstention_score = (abstention_recall + answerable_response_rate) / 2&quot;,
+  &quot;balanced_abstention_score&quot;: 0.7083,
+  &quot;score_10&quot;: 7.083
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 answerable 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>answerable</td><td>31</td><td>13</td><td>0.419</td><td><div class='bar'><i style='width:42%'></i></div></td></tr><tr><td>unanswerable</td><td>69</td><td>51</td><td>0.739</td><td><div class='bar'><i style='width:74%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>1</td><td>5</td><td>2</td><td>0.400</td><td><div class='bar'><i style='width:40%'></i></div></td></tr><tr><td>2</td><td>6</td><td>4</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>3</td><td>32</td><td>25</td><td>0.781</td><td><div class='bar'><i style='width:78%'></i></div></td></tr><tr><td>4</td><td>12</td><td>9</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>5</td><td>14</td><td>11</td><td>0.786</td><td><div class='bar'><i style='width:79%'></i></div></td></tr><tr><td>answerable</td><td>31</td><td>13</td><td>0.419</td><td><div class='bar'><i style='width:42%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#umwp-1033</span><span class='tag'>answerable=answerable</span> <span class='tag'>category=answerable</span></div><div class='qtext'>Solve the following math word problem. Show brief reasoning, then give the final numeric answer on its own last line as &quot;Final answer: &lt;number&gt;&quot;.
+If the problem cannot be solved as stated — for example it is missing information needed for a unique answer, or does not actually ask an answerable question — do not invent a number. Instead write &quot;Final answer: unanswerable&quot; on that last line and briefly say what is wrong.
+
+Question: Paige bought some new stickers and wanted to share them with 3 of her friends. She decided to share a sheet of 100 space stickers and a sheet of 50 cat stickers equally among her 3 friends. How many stickers will she have left?</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>0.0</div><div class='ans'><span class='lbl'>归一化</span>0.0</div><div class='ans gold'><span class='lbl'>正确答案</span>3.0</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Reasoning:
+1.  Determine the total number of stickers Paige has. She has a sheet of 100 space stickers and a sheet of 50 cat stickers. Summing these gives 100 + 50 = 150 stickers.
+2.  Determine the group she is sharing among. She is sharing them with 3 friends. The phrase &quot;among her 3 friends&quot; implies the divisor is 3 (excluding her own initial possession for the purpose of the &quot;share&quot;).
+3.  Calculate the distribution. She shares the stickers equally. We divide the total count by the number of recipients: 150 stickers / 3 friends = 50 stickers per friend.
+4.  Determine the leftovers. Since 150 is perfectly divisible by 3 (remainder 0), she distributes all her stickers and has none left.
+
+Final Answer: 0
+
+Final answer: 0</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#umwp-1054</span><span class='tag'>answerable=answerable</span> <span class='tag'>category=answerable</span></div><div class='qtext'>Solve the following math word problem. Show brief reasoning, then give the final numeric answer on its own last line as &quot;Final answer: &lt;number&gt;&quot;.
+If the problem cannot be solved as stated — for example it is missing information needed for a unique answer, or does not actually ask an answerable question — do not invent a number. Instead write &quot;Final answer: unanswerable&quot; on that last line and briefly say what is wrong.
+
+Question: Last week, Mr. Sanchez bought 6 feet of rope for their class activity. He found that he lacks rope for the activity so this week, he bought 4 feet less than last week. Since there are 12 inches in a foot, how many inches of ribbon did Mr. Sanchez buy in all?</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>unanswerable</div><div class='ans'><span class='lbl'>归一化</span>unanswerable</div><div class='ans gold'><span class='lbl'>正确答案</span>96.0</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Reasoning: The problem states Mr. Sanchez bought 6 feet of **rope** last week and 4 feet less than that **rope** this week. However, the final question asks for the total inches of **ribbon** bought in all. The text does not mention buying any ribbon or state that the rope is ribbon. This missing information regarding the specific material (rope vs. ribbon) prevents a unique answer based strictly on the provided text.
+
+Final answer: unanswerable</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#umwp-1096</span><span class='tag'>answerable=answerable</span> <span class='tag'>category=answerable</span></div><div class='qtext'>Solve the following math word problem. Show brief reasoning, then give the final numeric answer on its own last line as &quot;Final answer: &lt;number&gt;&quot;.
+If the problem cannot be solved as stated — for example it is missing information needed for a unique answer, or does not actually ask an answerable question — do not invent a number. Instead write &quot;Final answer: unanswerable&quot; on that last line and briefly say what is wrong.
+
+Question: Zion made a triangular-shaped house of cards with the base having a measurement of 40 centimeters and a height of 20 centimeters. If two of his friends also built similar shaped houses, what&#x27;s the total area of the triangular houses that Zion and his friends made (the area of a triangle is 1/2 * width * height)?</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>unanswerable</div><div class='ans'><span class='lbl'>归一化</span>unanswerable</div><div class='ans gold'><span class='lbl'>正确答案</span>1200.0</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To calculate the total area of the triangular houses, we first calculate Zion&#x27;s area using the formula $Area = \frac{1}{2} \times \text{base} \times \text{height}$:
+$$\text{Area}_{\text{Zion}} = \frac{1}{2} \times 40 \text{ cm} \times 20 \text{ cm} = 400 \text{ cm}^2$$
+
+There are 3 houses in total (Zion&#x27;s + 2 friends&#x27;). However, the problem states the friends&#x27; houses were &quot;similar shaped&quot; but does not provide their specific base or height measurements. In geometry, &quot;similar&quot; shapes have the same proportions but can be different sizes (scaled versions). &quot;Identical&quot; would imply the same dimensions. Since the scale or dimensions of the friends&#x27; houses are missing, we cannot determine their individual areas or the total combined area.
+
+Final answer: unanswerable</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#umwp-1120</span><span class='tag'>answerable=answerable</span> <span class='tag'>category=answerable</span></div><div class='qtext'>Solve the following math word problem. Show brief reasoning, then give the final numeric answer on its own last line as &quot;Final answer: &lt;number&gt;&quot;.
+If the problem cannot be solved as stated — for example it is missing information needed for a unique answer, or does not actually ask an answerable question — do not invent a number. Instead write &quot;Final answer: unanswerable&quot; on that last line and briefly say what is wrong.
+
+Question: Sarah is in charge of making 2 copies of a contract for 9 people that will be in a meeting.  The contract is 20 pages long.  How many pages will Sarah copy?</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>40.0</div><div class='ans'><span class='lbl'>归一化</span>40.0</div><div class='ans gold'><span class='lbl'>正确答案</span>360.0</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To determine the total number of pages Sarah needs to copy, we look at the specific quantities provided for the action:
+1.  **Pages per contract:** The contract is 20 pages long.
+2.  **Number of copies:** Sarah is making 2 copies of the contract.
+3.  **Number of people:** There are 9 people in the meeting. In word problems of this type, the number of people serves as context for the purpose of the copying (i.e., who is receiving them), but it does not change the explicit quantity of copies stated (&quot;making 2 copies&quot;). We treat the &quot;9 people&quot; as distractor information for the calculation of the total pages processed based on the stated action.
+
+Calculation:
+$$2 \text{ copies} \times 20 \text{ pages/copy} = 40 \text{ pages}$$
+
+Final answer: 40</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#umwp-1131</span><span class='tag'>answerable=answerable</span> <span class='tag'>category=answerable</span></div><div class='qtext'>Solve the following math word problem. Show brief reasoning, then give the final numeric answer on its own last line as &quot;Final answer: &lt;number&gt;&quot;.
+If the problem cannot be solved as stated — for example it is missing information needed for a unique answer, or does not actually ask an answerable question — do not invent a number. Instead write &quot;Final answer: unanswerable&quot; on that last line and briefly say what is wrong.
+
+Question: In his first season at Best Hockey&#x27;s team, Louie scored four goals in the last hockey match of this season. His brother has scored twice as many goals as Louie scored in the last match in each game he&#x27;s played in each of the three seasons he&#x27;s been on the team. Each season has 50 games.  What is the total number of goals the brothers have scored between them if, in the previous matches, Louie scored 40 goals?</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>unanswerable</div><div class='ans'><span class='lbl'>归一化</span>unanswerable</div><div class='ans gold'><span class='lbl'>正确答案</span>1244.0</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The problem asks for the total number of goals scored by both brothers between them.
+
+1.  **Louie&#x27;s Total Goals:**
+    The text states Louie scored 44 goals in the most recent season (40 goals in previous matches + 4 goals in the last match).
+
+2.  **Brother&#x27;s Total Goals:**
+    *   **Scoring Rate:** The brother scores twice as many goals as Louie scored in the last match (4 goals). Thus, the brother scores 8 goals per game.
+    *   **Duration:** The brother has been on the team for three seasons.
+    *   **Games Played:** The text states &quot;Each season has 50 games&quot;. However, it specifies the brother&#x27;s score was scored &quot;in each game he&#x27;s played in&quot;. It does **not** explicitly state that the brother played every single game in each of the three seasons. The number of games played could be lower than $50 \times 3 = 150$.
+    *   **Timeline Consistency:** The problem asks for the total goals the brothers have scored &quot;between them&quot;. It describes Louie&#x27;s stats for his &quot;first season&quot; while the Brother has stats spanning &quot;three seasons&quot;. While one could sum these, the key missing variable is the exact count of games *Broad* played in those three seasons (vs the total games available).
+
+Due to the ambiguity regarding the exact number of games the brother played (games played vs. games in season) and the potential timeline inconsistency (1 season vs. 3 seasons), the exact numeric total cannot be determined without making assumptions not present in the text.
+
+Final answer: unanswerable
+
+Final answer: unanswerable
+Wait, I need to check if I can provide the calculation under the standard assumption, which is often expected in these tests if the &quot;missing info&quot; is not a hard logical deduction (e.g., in many contexts &#x27;season length&#x27; implies participation for calculation). But the instruction says &quot;If the problem cannot be solved as stated ... write &#x27;Final answer: unanswerable&#x27;&quot;.
+Given the specificity of &quot;in each game he&#x27;s played in&quot; (which distinguishes it from &quot;in each game&quot;), it i</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#umwp-1347</span><span class='tag'>answerable=answerable</span> <span class='tag'>category=answerable</span></div><div class='qtext'>Solve the following math word problem. Show brief reasoning, then give the final numeric answer on its own last line as &quot;Final answer: &lt;number&gt;&quot;.
+If the problem cannot be solved as stated — for example it is missing information needed for a unique answer, or does not actually ask an answerable question — do not invent a number. Instead write &quot;Final answer: unanswerable&quot; on that last line and briefly say what is wrong.
+
+Question: Jeanette is practicing her juggling. Each week she can juggle 2 more objects than the week before. If she starts out juggling 3 objects and practices for 5 weeks, how many objects can she juggle?</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>11.0</div><div class='ans'><span class='lbl'>归一化</span>11.0</div><div class='ans gold'><span class='lbl'>正确答案</span>13.0</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Jeanette starts by juggling 3 objects in the first week. Each week, the number of objects increases by 2. We need to find the number of objects she can juggle after 5 weeks of practice, which corresponds to the 5th term in the sequence.
+
+1.  **Week 1:** 3 objects
+2.  **Week 2:** $3 + 2 = 5$ objects
+3.  **Week 3:** $5 + 2 = 7$ objects
+4.  **Week 4:** $7 + 2 = 9$ objects
+5.  **Week 5:** $9 + 2 = 11$ objects
+
+Alternatively, using the arithmetic sequence formula $a_n = a_1 + (n-1)d$:
+$a_5 = 3 + (5 - 1) \times 2 = 3 + 8 = 11$.
+
+The question asks for the number of objects she can juggle (her capacity at that time), not the total sum of objects juggled.
+
+Final answer: 11</pre></details></div></section>
+</main>
+</body>
+</html>

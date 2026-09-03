@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>Qwen/Qwen3.8-27B</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">59.6%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">99</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">59</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-216</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Think about the different ways that people use the wind. You can use it to fly a kite or to sail a boat. Wind is one of our cleanest and richest power sources（来源）, as well as one of the oldest. Evidence shows that windmills（风车）began to be used in ancient Iran back in the seventh century BC. They were first introduced to Europe during the 1100s, when armies returned from the Middle East with knowledge of using wind power.For many centuries, people used windmills to grind（磨碎）wheat into flour or pump water from deep underground when electricity was discovered in the late 1800s, people living in remote areas began to use them to produce electricity. This allowed them to have electric lights and radio. However, by the 1940s when electricity was available to people in almost all areas of the United States, windmills were rarely used.During the 1970s, people started becoming concerned about the pollution that is created when coal and gas are burned to produce electricity. People also realized that the supply of coal and gas would not last forever. Then, wind was rediscovered, though it means higher coasts. Today, there is a global movement to supply more and more of our electricity through the use of wind.
+Question: 63．What would the author probably discuss in the paragraph that follows?
+Answer Choices: (A)The advantages of wind power. (B)The design of wind power plants. (C)The worldwide movement to save energy. (D)The global trend towards producing power from wind.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 99,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.6768,
+  &quot;r2_accuracy&quot;: 0.596,
+  &quot;net_gain&quot;: -0.0808,
+  &quot;change_rate&quot;: 0.1212,
+  &quot;n_r1_wrong&quot;: 32,
+  &quot;n_fixed_wrong_to_right&quot;: 1,
+  &quot;fix_rate&quot;: 0.0312,
+  &quot;n_r1_right&quot;: 67,
+  &quot;n_broken_right_to_wrong&quot;: 9,
+  &quot;break_rate&quot;: 0.1343,
+  &quot;score_10&quot;: 4.485,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 12,
+      &quot;r2_correct&quot;: 10,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 3
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;r1_correct&quot;: 24,
+      &quot;r2_correct&quot;: 20,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 4
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 27,
+      &quot;r1_correct&quot;: 17,
+      &quot;r2_correct&quot;: 16,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 14,
+      &quot;r2_correct&quot;: 13,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>1</td></tr><tr><td>scored</td><td>99</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>10</td><td>0.556</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>20</td><td>0.556</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>mmlu_pro</td><td>27</td><td>16</td><td>0.593</td><td><div class='bar'><i style='width:59%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>13</td><td>0.722</td><td><div class='bar'><i style='width:72%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>53</td><td>33</td><td>0.623</td><td><div class='bar'><i style='width:62%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>26</td><td>0.565</td><td><div class='bar'><i style='width:57%'></i></div></td></tr></tbody></table></section>
+  <section><h2>未判分原因（1 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>空响应</strong></td><td>1</td><td>模型返回了空内容</td><td class='muted'>mmlu_pro::3730</td></tr></tbody></table></section>
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;逐步验证如下：\n\n1. **A项：蚕丝的主要成分是蛋白质**  \n   蚕丝由蚕吐丝形成，主要成分为丝蛋白，属于蛋白质类物质。  \n   **说法正确。**\n\n2. **B项：蚕丝属于天然高分子材料**  \n   题目中“天热”应为“天然”的笔误。蚕丝是自然界中形成的高分子材料，相对分子质量较大，属于天然高分子材料。  \n   **说法正确。**\n\n3. **C项：“蜡炬成灰”过程中发生了氧化反应**  \n   “蜡炬成灰”指蜡烛燃烧。蜡烛燃烧是与氧气反应生成二氧化碳和水等物质，属于氧化反应。  \n   **说法正确。**\n\n4. **D项：古代的蜡是高级脂肪酸酯，属于高分子聚合物**  \n   古代的蜡主要成分可能包括高级脂肪酸酯、高级脂肪酸、烃类等。虽然其中可能含有高级脂肪酸酯，但这些物质通常相对分子质量较小，不属于高分子聚合物。  \n   **说法错误。**\n\n题目要求选择“说法错误的”，因此错误选项是 **D**。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐步分析：
+
+- **A项**：蚕丝的主要成分是蛋白质，尤其是丝蛋白，说法正确。  
+- **B项**：蚕丝是天然形成的高分子材料，属于天然高分子材料，说法正确。  
+- **C项**：“蜡炬成灰”指蜡烛燃烧，燃烧本质上是氧化反应，说法正确。  
+- **D项**：古代的蜡主要成分是高级脂肪酸酯，例如高级脂肪酸与高级醇形成的酯，但它们不是高分子聚合物，只是小分子有机物的混合物，说法错误。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-216</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Think about the different ways that people use the wind. You can use it to fly a kite or to sail a boat. Wind is one of our cleanest and richest power sources（来源）, as well as one of the oldest. Evidence shows that windmills（风车）began to be used in ancient Iran back in the seventh century BC. They were first introduced to Europe during the 1100s, when armies returned from the Middle East with knowledge of using wind power.For many centuries, people used windmills to grind（磨碎）wheat into flour or pump water from deep underground when electricity was discovered in the late 1800s, people living in remote areas began to use them to produce electricity. This allowed them to have electric lights and radio. However, by the 1940s when electricity was available to people in almost all areas of the United States, windmills were rarely used.During the 1970s, people started becoming concerned about the pollution that is created when coal and gas are burned to produce electricity. People also realized that the supply of coal and gas would not last forever. Then, wind was rediscovered, though it means higher coasts. Today, there is a global movement to supply more and more of our electricity through the use of wind.
+Question: 63．What would the author probably discuss in the paragraph that follows?
+Answer Choices: (A)The advantages of wind power. (B)The design of wind power plants. (C)The worldwide movement to save energy. (D)The global trend towards producing power from wind.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;The previous answer can be confirmed by checking the final sentence of the passage:\n\n1. The passage ends with: “Today, there is a global movement to supply more and more of our electricity through the use of wind.”\n2. This sentence introduces the main topic that would likely be expanded on in the next paragraph: the worldwide growth/use of wind to produce electricity.\n3. Option D, “The global trend towards producing power from wind,” directly matches this final point.\n4. Option C is too broad because the passage is specifically about wind power, not energy saving in general. Option A may be related, but it is not the immediate topic signaled by the last sentence. Option B is not introduced at all.\n\nTherefore, the previous answer is correct.\n\nThe answer is D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The passage ends by saying that “today, there is a global movement to supply more and more of our electricity through the use of wind.” The next paragraph would most naturally continue this idea by discussing that global trend in more detail.
+
+The answer is D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-geography-167</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题： “清明时节雨纷纷”，此时影响长江中下游地区的天气系统可能是（　　）
+选项：(A)准静止锋或冷锋 (B)准静止锋或暖锋 (C)暖锋或冷锋 (D)暖锋或高压
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;重新检查如下：\n\n1. **时间与区域**  \n   “清明时节”约为 4 月上旬，长江中下游处于春季，冷暖空气交汇，容易出现锋面降水。\n\n2. **诗句中的天气特征**  \n   “雨纷纷”强调的是**细雨、连续性或较长时间阴雨**，而不是短时强降水、大风降温。\n\n3. **逐项验证选项**\n   - **高压（反气旋）**：控制下多下沉气流，天气晴朗少雨，不可能造成“雨纷纷”，因此排除含高压的 (D)。\n   - **冷锋**：常伴随大风、降温、短时强降水或阵性降水，与“纷纷”所体现的绵绵细雨特征不太吻合，因此含冷锋的 (A)(C) 不是最符合题意的组合。\n   - **暖锋**：常带来连续性降水，强度较小，符合“雨纷纷”。\n   - **准静止锋**：锋面移动缓慢，雨带滞留，常造成持续阴雨，也符合“雨纷纷”。\n\n4. **结论**  \n   最符合“清明时节雨纷纷”这一连续性细雨特征的天气系统组合是：**准静止锋或暖锋**。\n\n经检查，原答案无误。\n\n答案是B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>“清明时节”约为 4 月上旬，长江中下游进入春季。
+
+- “雨纷纷”强调的是细雨、连续性或持续性降水。  
+- 高压（反气旋）控制下多下沉气流，天气晴朗干燥，不符合“雨纷纷”。  
+- 冷锋过境常带来大风、降温、短时强降水或阵雨，与“纷纷”的绵绵细雨特征不太吻合。  
+- 暖锋过境时常出现连续性降水；准静止锋因冷暖气团势均力敌、锋面移动缓慢，也容易造成持续阴雨天气。  
+
+因此，此时影响长江中下游地区的天气系统可能是准静止锋或暖锋。
+
+答案是B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::jec-qa-ca-484</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：恒祥皮具厂为了扩大生产规模而欲向银行贷款200万元购买生产线。银行要求恒祥皮具厂提供担保，考虑到恒祥所拥有的注册商标具有较高知名度，双方遂协商以该注册商标专用权中的财产权出质，双方并签订了书面质押合同，但未进行登记。3个月后，邻县的另一家洛明皮具厂找到恒祥皮具厂，提出使用其注册商标并支付相应的使用费。恒祥皮具厂在经审查洛明皮具厂符合相应标准后，与洛明皮具厂签订了商标权许可使用合同。银行在得知这一情况后，认为恒祥皮具厂的许可行为侵犯了自己的质权，双方遂发生纠纷。关于本案，下列说法正确的是哪选项?
+选项：(A)质押合同未生效，许可合同有效 (B)质押合同已生效，许可合同无效 (C)质押合同未生效，许可合同无效 (D)质押合同已生效，许可合同有效
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;重新检查后，需要对“法律适用时期”作关键限定：\n\n1. **本题的选项设置明显围绕旧《担保法》规则**  \n   选项反复使用“质押合同未生效/已生效”，这是《担保法》时期的典型考点。  \n   原《担保法》第79条规定：以商标专用权、专利权、著作权中的财产权出质的，出质人与质权人应当订立书面合同，并办理出质登记；**质押合同自登记之日起生效**。\n\n2. **按旧《担保法》：质押合同未生效**  \n   本案中，恒祥皮具厂与银行签订了书面质押合同，但**未进行登记**。  \n   因此，按旧《担保法》，该质押合同**尚未生效**，银行也尚未取得质权。\n\n3. **许可合同是否有效？**  \n   恒祥皮具厂作为注册商标权利人，有权许可他人使用其注册商标。其与洛明皮具厂签订商标权许可使用合同，系双方真实意思表示，且不违反法律强制性规定。  \n   商标使用许可合同是否向商标局备案，并非合同生效要件。  \n   又因银行未取得质权，其不能以质权受到侵害为由主张许可合同无效。  \n   所以，许可合同**有效**。\n\n4. **结论**  \n   按本题原始出题语境（旧《担保法》），正确选项应为：**质押合同未生效，许可合同有效**。\n\n补充说明：如果题目明确要求适用现行《民法典》，则会区分“质押合同效力”与“质权设立”，结论会是质押合同有效、质权未设立、许可合同有效，对应选项D。但就本题原始考点和选项表述而言，应选A。\n\n答案是A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>[&#x27;D&#x27;]</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>按现行《民法典》担保规则分析：
+
+1. **质押合同的效力**  
+   注册商标专用权中的财产权属于可以出质的知识产权财产权。恒祥皮具厂与银行签订了**书面质押合同**，双方意思表示真实，内容不违反法律强制性规定，合同依法成立时即生效。  
+   未办理出质登记，并不导致质押合同无效或未生效。
+
+2. **质权是否设立**  
+   根据《民法典》规定，以注册商标专用权等知识产权中的财产权出质的，**质权自办理出质登记时设立**。本案双方虽然签订质押合同，但**未进行登记**，因此银行并未取得质权。
+
+3. **商标许可使用合同的效力**  
+   恒祥皮具厂作为注册商标权人，有权许可他人使用其注册商标。其与洛明皮具厂签订商标权许可使用合同，系双方真实意思表示，内容合法，合同有效。商标使用许可备案并非许可合同的生效要件。  
+   由于银行未登记设立质权，银行不能主张恒祥的许可行为侵犯其质权。
+
+因此，本案应认定为：**质押合同已生效，许可合同有效**。
+
+注：如果本题明确要求适用1995年旧《担保法》，旧法曾规定此类知识产权质押合同自登记之日起生效，则原答案可能为A；但按现行《民法典》体系，应选D。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-en-455</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Scientists, just like the earth, there is also a hot lava core inside Venus.With the autobiography and revolution of Venus, huge heat will be released.The earth releases internal heat through volcanic eruptions generated by plate tectonic movement.There is no volcanic eruption like the plate tectonic movement, which is confusing.
+Question: If the following statement is true, which one gives the best explanation for the scientist&#x27;s confusion?
+Answer Choices: (A)The autobiography of Venus is slow and its outer shell is much thinner than the earth, which is convenient for the internal heat release (B)The greenhouse effect caused by carbon dioxide in Venus ’atmosphere makes its surface temperature as high as 485 ℃ (C)Due to the effects of high temperature and high pressure, the rock on the surface of Venus is harder than the rock on the surface of the earth (D)The lava movement in the inner core of Venus used to have more severe temperature fluctuations than the rock movement of the earth
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;Re-examining the reasoning:\n\n1. The scientist’s confusion is:\n   - Venus appears to have a hot internal core / large internal heat to release.\n   - Earth releases such heat through volcanic eruptions linked to plate tectonics.\n   - Venus does not show Earth-like plate-tectonic volcanic eruptions.\n   - Therefore, the puzzle is: how can Venus release internal heat without Earth-like plate tectonic volcanism?\n\n2. The best explanation should provide an alternative way for Venus to release internal heat, or otherwise make the lack of Earth-like volcanism less surprising.\n\n3. Option A says Venus’s rotation is slow and its outer shell is much thinner than Earth’s, which makes internal heat release easier. This directly addresses the missing mechanism: even without plate-tectonic volcanism, a thinner outer shell could allow internal heat to escape more readily.\n\n4. Option B only explains Venus’s high surface temperature due to the greenhouse effect. It does not explain how internal heat is released or why Venus lacks Earth-like tectonic volcanism.\n\n5. Option C says Venus’s surface rock is harder, which might make eruptions harder, but it does not explain how the large internal heat is released. It could even deepen the puzzle.\n\n6. Option D refers to past temperature fluctuations in Venus’s inner lava movement. It does not provide a clear explanation for the current absence of Earth-like plate tectonic volcanism or the mechanism of heat release.\n\nThus, the previous answer is confirmed.\n\nThe answer is A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>The scientist’s confusion is that Venus seems to have a hot internal core and should need to release internal heat, but Venus does not appear to release heat through Earth-like plate-tectonic volcanic eruptions.
+
+To resolve this, the best explanation should show an alternative way Venus can release internal heat without Earth-like plate tectonics.
+
+- (A) says Venus’s outer shell is much thinner than Earth’s, making it easier for internal heat to escape. This directly explains how Venus can release heat without plate-tectonic volcanism.
+- (B) explains Venus’s high surface temperature, but not how internal heat is released.
+- (C) would make heat release or volcanic eruption harder, not explain it.
+- (D) refers to past temperature fluctuations and does not explain the current lack of Earth-like plate-tectonic volcanism.
+
+Therefore, (A) best explains the confusion.
+
+The answer is A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::logiqa-zh-46</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>某网络论坛将最近一年与5年前网友曾经发布的有关社会问题的帖子进行了统计比较，发现：像拾金不昧、扶贫急难、见义勇为这样的帖子增加了 50%。而与为非作歹、作恶逃匿、杀人越货有关的帖子却增加了 90%。由此可见，社会风气正在迅速恶化。
+问题：以下哪项如果为真，最能削弱上述论证？
+选项：(A)“好事不出门，坏事传千里”。古往今来，都是如此 (B)最近5年上网的用户翻了两番 (C)最近几年，有些人在网上用造谣的方式达到营利的目的 (D)该网络论坛是一个法制论坛
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;重新检查：\n\n1. **原论证结构**  \n   - 前提：最近一年与5年前相比，正面帖子增加50%，负面帖子增加90%。  \n   - 结论：社会风气正在迅速恶化。  \n   - 隐含假设：帖子数量的增长可以真实反映社会行为本身的增长，且发帖人数、网民规模等背景条件没有发生显著变化。\n\n2. **逐项检查**\n   - **A**：“好事不出门，坏事传千里”。这说明负面事件可能更容易被传播，有一定削弱作用，但它只是泛泛说明传播规律，并没有直接解释为什么最近一年帖子数量会明显增加，削弱力度有限。\n   - **B**：最近5年上网用户翻了两番。  \n     “翻了两番”意味着用户数量变为原来的4倍。  \n     如果网民数量大幅增加，那么即使社会风气没有恶化，甚至每个人参与负面行为的比例下降，帖子总数量也可能自然增加。  \n     因此，仅凭帖子数量增加50%、90%，不能直接推出社会风气恶化。该项直接攻击了论证的关键隐含假设，削弱力度最强。\n   - **C**：有些人网上造谣营利。这说明部分负面帖子可能不真实，有削弱作用，但“有些人”范围较小，不确定是否影响整体统计，削弱力度不如B。\n   - **D**：该论坛是法制论坛。这说明论坛主题可能偏向法律或犯罪问题，但题干是同一论坛前后比较，论坛性质本身对增幅变化的解释力较弱。\n\n3. **结论**  \n   原答案 **B** 正确，无需更改。\n\n答案是B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>这个论证的核心问题在于：它把“帖子数量增加”直接等同于“社会风气恶化”，但没有考虑发帖人数、网民规模等因素是否发生了变化。
+
+- 正面议题帖子增加 50%，负面问题帖子增加 90%，单看增幅确实说明负面帖子增长更快。
+- 但如果最近 5 年上网用户翻了两番，也就是发帖人数大幅增加了，那么即使社会风气没有恶化，帖子的总量也可能自然增长。
+- 在这种情况下，负面帖子增加 90%、正面帖子增加 50%，未必说明坏事真的变多，可能只是网民规模扩大、发帖数量整体增加的结果。
+
+因此，B 项最能削弱原论证。
+
+答案是B</pre></details></div></section>
+</main>
+</body>
+</html>
