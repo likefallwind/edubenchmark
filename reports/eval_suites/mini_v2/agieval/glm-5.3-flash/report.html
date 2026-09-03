@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · agieval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · AGIEval：标准化与资格考试推理</h1>
+    <p class="muted">基准 agieval · 模型 <strong>glm-5.3-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">93.8%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">75</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>AGIEval 取材于人类标准化/资格考试（高考、SAT、LSAT、GRE、法考、公务员考试、竞赛 MATH 等），评测模型在真实考试情境下的推理能力。对应本仓库能力维度 D03（标准化与资格考试推理）。</p><p>本次覆盖 21 个任务，分为选择题（gold 为选项字母；jec-qa、gaokao-physics 为多选）与数学填空（gold 为自由作答）。提示采用零样本思维链，要求模型先推理、再显式给出最终答案。</p><p>选择题抽取沿用官方 post_process 取字母逻辑，数学题动态加载官方 math_equivalence做等价判定；按任务、语言、题型分桶统计。</p><p class='muted'>主页：<a href='https://github.com/ruixiangcui/AGIEval'>https://github.com/ruixiangcui/AGIEval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#lsat-ar-31</span><span class='tag'>task=lsat-ar</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>A loading dock consists of exactly six bays numbered 1 through 6 consecutively from one side of the dock to the other. Each bay is holding a different one of exactly six types of cargo—fuel, grain, livestock, machinery, produce, or textiles. The following apply: The bay holding grain has a higher number than the bay holding livestock. The bay holding livestock has a higher number than the bay holding textiles. The bay holding produce has a higher number than the bay holding fuel. The bay holding textiles is next to the bay holding produce.
+Question: If there is exactly one bay between the bay holding machinery and the bay holding grain, then for exactly how many of the six bays is the type of cargo that bay is holding completely determined?
+Answer Choices: (A)two (B)three (C)four (D)five (E)six
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#lsat-ar-37</span><span class='tag'>task=lsat-ar</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>A bakery makes exactly three kinds of cookie—oatmeal, peanut butter, and sugar. Exactly three batches of each kind of cookie are made each week (Monday through Friday) and each batch is made, from start to finish, on a single day. The following conditions apply: No two batches of the same kind of cookie are made on the same day. At least one batch of cookies is made on Monday. The second batch of oatmeal cookies is made on the same day as the first batch of peanut butter cookies. The second batch of sugar cookies is made on Thursday.
+Question: How many of the days, Monday through Friday, are such that at most two batches of cookies could be made on that day?
+Answer Choices: (A)one (B)two (C)three (D)four (E)five
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>aqua-rat</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-biology</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chemistry</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chinese</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-english</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-geography</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-history</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-mathcloze</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathqa</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-physics</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>jec-qa-ca</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>jec-qa-kd</td><td>5</td><td>4</td><td>0.800</td><td><div class='bar'><i style='width:80%'></i></div></td></tr><tr><td>logiqa-en</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>logiqa-zh</td><td>7</td><td>6</td><td>0.857</td><td><div class='bar'><i style='width:86%'></i></div></td></tr><tr><td>lsat-ar</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>lsat-lr</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>lsat-rc</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>math</td><td>11</td><td>10</td><td>0.909</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>sat-en</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>sat-en-without-passage</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>sat-math</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>43</td><td>41</td><td>0.953</td><td><div class='bar'><i style='width:95%'></i></div></td></tr><tr><td>zh</td><td>37</td><td>34</td><td>0.919</td><td><div class='bar'><i style='width:92%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cloze</td><td>12</td><td>10</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>qa</td><td>68</td><td>65</td><td>0.956</td><td><div class='bar'><i style='width:96%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（5 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#logiqa-en-86</span><span class='tag'>task=logiqa-en</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Based on the following questions? Most people think that advertisers do whatever they can to attract customers.But advertisers are not always like this.Recently, in order to expand sales, a family magazine called &quot;Bay&quot; was renamed &quot;Inferno&quot;, which mainly published violent and pornographic content.As a result, some perennial advertisers from the original &quot;Bay&quot; magazine refused to renew the contract and turned to other publications.This shows that these advertisers not only consider economic benefits, but also take into account their ethical responsibilities.
+Question: If the following item is true, can the argument be strengthened most?
+Answer Choices: (A)The cost and selling price of &quot;Inferno&quot; are lower than that of &quot;Harbour&quot;. (B)The above advertisers who refused to renew their contracts have not affected the benefits after switching to other publications. (C)Readers of family magazines are generally not interested in violent and pornographic content. (D)Some clients who advertise in other family magazines and so on turn to &quot;Inferno&quot; magazine.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>## Step-by-step reasoning
+
+**The argument&#x27;s structure:**
+- Premise: After &quot;Bay&quot; became &quot;Inferno&quot; (violent/pornographic content), long-time advertisers refused to renew and moved to other publications.
+- Conclusion: These advertisers considered ethical responsibility, not just economic benefit.
+
+**To strengthen:** We must rule out the alternative explanation that the advertisers refused to renew for *economic* reasons, and show their decision brought them no economic gain — leaving ethics as the motive.
+
+**Evaluating each option:**
+
+- **(A)** Inferno&#x27;s own cost and selling price being lower concerns the *magazine&#x27;s* pricing, not the advertisers&#x27; economic calculus. It doesn&#x27;t show that advertising in Inferno was economically advantageous, so it does little to strengthen.
+
+- **(B)** If the advertisers&#x27; economic benefits were *unaffected* after switching, then switching brought them **no economic gain**. This eliminates the possibility that they refused to renew in pursuit of better economic returns. With economic motivation ruled out, the most plausible remaining explanation for their refusal is ethical responsibility. This directly supports the conclusion.
+
+- **(C)** If family-magazine readers aren&#x27;t interested in violent/pornographic content, then Inferno&#x27;s audience no longer matches the advertisers&#x27; target market — this provides an **economic reason** for refusing to renew, which *weakens* the ethical interpretation.
+
+- **(D)** Advertisers from other family magazines moving *to* Inferno suggests advertisers are attracted to Inferno (likely for economic reasons), which *undermines* the idea that advertisers act on ethical responsibility.
+
+**Conclusion:** Only (B) removes the economic explanation and thereby most strengthens the claim that the advertisers acted out of ethical responsibility.
+
+The answer is B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#logiqa-zh-639</span><span class='tag'>task=logiqa-zh</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>国内油价与国际油价相比一向是“涨快跌慢”，原因之一是我国成品油调价依据三地原油价格变动超过4%这个边界条件。比如，从100美元一桶涨到104美元时，我们就跟着涨价；但是，从104美元回调4%再降价，则要等价格回落到 99,.84美元。
+问题：以下哪项陈述最好地指出了上述论证的缺陷？
+选项：A．上述论证没能说明，国内油价不合理是由多种原因造成的。 B．上述论证没能说明，国内油价不合理的根本原因在于行业垄断。 C．上述论证没能说明，以4%为边界条件，则油价越高，国内反应越迟钝。 D．上述论证没有从相同的价格基点出发进行比较，如果涨价的基点是100美元，对降价    的条件分析也应该以100美元为基点。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**逐步分析：**
+
+**1. 梳理论证结构**
+题干用一组数字对比来论证“4%边界条件导致涨快跌慢”：
+- 涨价：从100美元涨到104美元（以**100**为基点，涨4%）就调价；
+- 降价：要从104美元回落4%（以**104**为基点，104×96%=99.84）才调价。
+
+**2. 找出问题所在**
+对比一下就会发现：计算“涨4%”时用的基点是100美元，而计算“跌4%”时用的基点却是104美元——**两个比较使用了不同的基点**。
+
+如果统一基点（都以100美元为基点）来分析：
+- 涨4% → 达到104美元就上调；
+- 跌4% → 回落到96美元就下调。
+
+可见就规则本身而言，涨跌条件是对称的（都是相对同一基点变动4%）。题干中“要跌到99.84、跌破原点才降价”的表面上的不对称，完全是偷换基点（把涨价基点100换成降价基点104）制造出来的假象。因此，这一对比不能有效支持“4%边界条件导致涨快跌慢”的结论。
+
+**3. 排除其他选项**
+- **A项**：题干已明确说这是“原因之一”，并未排除其他原因，不构成缺陷。
+- **B项**：垄断与题干论证的逻辑是否成立无关，属于题外话。
+- **C项**：“油价越高反应越迟钝”是论证未提及的另一层含义，但“没提到某点”并不等于论证有缺陷。
+- **D项**：准确指出了论证的核心缺陷——比较的基点不一致，涨价以100为基点，降价分析也应同样以100为基点，这样比较才有效。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#jec-qa-kd-436</span><span class='tag'>task=jec-qa-kd</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>问题：关于对战争和武装冲突中若干概念的理解，以下说法正确的是
+选项：(A)战争只能是国家和国家之间才可能进行的，但是武装冲突则不一定是国家之间的行为。 (B)当双方处于战争状态时，他们之间一定存在敌对行为。 (C)永久中立国必须在其他国家处于战争状态时放弃使用武力的交战权力。 (D)在战争中不得使用背信弃义的作战方法是指不能采取欺诈的手段来赢得战斗的胜利。
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>AC</div><div class='ans'><span class='lbl'>归一化</span>AC</div><div class='ans gold'><span class='lbl'>正确答案</span>[&#x27;A&#x27;]</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**逐项分析：**
+
+**选项(A)**：传统国际法上，“战争”是指经过宣战（或默示承认）而在国家之间形成的法律状态，只能发生在国家（或国家集团）之间；而“武装冲突”是实际使用武力的行为，既可以是国际性的（国家之间），也可以是非国际性的（一国内战、国家与非国家实体之间）。这也是1949年日内瓦公约改用“武装冲突”一词的原因。**（A正确）**
+
+**选项(B)**：战争状态与敌对行为是可以分离的。宣战后可以长期没有实际交战（如1939—1940年英法对德宣战后的“静坐战”）；相反，敌对行为也可以在不存在战争状态的情况下发生（不宣而战，如1937年日本侵华初期）。因此处于战争状态并不必然存在敌对行为。**（B错误）**
+
+**选项(C)**：永久中立国承担的义务包括：平时不参加军事同盟、不承担可能卷入战争的义务；战时必须严守中立，不参加任何交战一方的作战，即放弃交战权（不成为交战一方）。其仅保留受到攻击时的自卫权，而自卫权并不属于“交战权”的范畴。**（C正确）**
+
+**选项(D)**：禁止“背信弃义”的作战手段，禁止的是利用对方依国际人道法对受保护地位的信任进行背叛，如假装投降、假装伤员或平民、滥用红十字或联合国标志等；而一般的军事诈术（伪装、佯攻、假情报、埋伏等）是合法的作战谋略。因此并非一切欺诈手段都禁止。**（D错误）**
+
+答案是AC</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#math-997</span><span class='tag'>task=math</span> <span class='tag'>language=en</span> <span class='tag'>question_type=cloze</span></div><div class='qtext'>Question: The parametric curve $(x,y) = (t^2 + t, 2t - 1),$ for real numbers $t,$ describes a parabola.  Find the vertex of the parabola.
+Reason step by step, then give the final answer in \boxed{}.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>\left(-\frac{1}{4},\ -2\right)</div><div class='ans'><span class='lbl'>归一化</span>\left(-\frac{1}{4},\ -2\right)</div><div class='ans gold'><span class='lbl'>正确答案</span>\left( -\frac{1}{4}, -2 \right)</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>## Setting Up
+
+I have the parametric curve:
+$$x = t^2 + t, \qquad y = 2t - 1$$
+
+**Step 1: Eliminate the parameter.**
+
+From the $y$-equation:
+$$2t - 1 = y \implies t = \frac{y+1}{2}$$
+
+**Step 2: Substitute into the $x$-equation.**
+
+$$x = \left(\frac{y+1}{2}\right)^2 + \frac{y+1}{2}$$
+
+Multiplying both sides by 4:
+$$4x = (y+1)^2 + 2(y+1) = y^2 + 2y + 1 + 2y + 2 = y^2 + 4y + 3$$
+
+**Step 3: Complete the square in $y$.**
+
+$$4x = y^2 + 4y + 3 = (y+2)^2 - 1$$
+
+So the parabola is:
+$$x = \frac{(y+2)^2}{4} - \frac{1}{4}$$
+
+This is a parabola opening in the $+x$ direction, with vertex where $(y+2)^2 = 0$:
+$$y = -2, \qquad x = -\frac{1}{4}$$
+
+**Verification via the parameter:** Since $x = t^2 + t = \left(t + \frac{1}{2}\right)^2 - \frac{1}{4} \geq -\frac{1}{4}$, the minimum $x$ occurs at $t = -\frac{1}{2}$, giving $y = 2(-\frac{1}{2}) - 1 = -2$. This confirms the vertex (leftmost point).
+
+$$\boxed{\left(-\frac{1}{4},\ -2\right)}$$</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#gaokao-mathcloze-25</span><span class='tag'>task=gaokao-mathcloze</span> <span class='tag'>language=zh</span> <span class='tag'>question_type=cloze</span></div><div class='qtext'>问题：已知 $a, b, c$ 分别为 $\triangle A B C$ 的三个内角 $A, B, C$ 的对边, $a=2$ 且 $(2+b)(\sin A-\sin B)=(c-b) \sin C$, 则 $\triangle A B C$ 面积的最大值为 $(\quad)$.
+请逐步推导，并在最后用 \boxed{} 给出最终答案。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>\sqrt{3}</div><div class='ans'><span class='lbl'>归一化</span>\sqrt{3}</div><div class='ans gold'><span class='lbl'>正确答案</span>$\sqrt{3}$</div></div><details><summary>查看模型完整作答</summary><pre class='resp'># 解题过程
+
+## 第一步：利用正弦定理化简条件
+
+由正弦定理，$\sin A = \dfrac{a}{2R}$，$\sin B = \dfrac{b}{2R}$，$\sin C = \dfrac{c}{2R}$（$R$ 为外接圆半径）。
+
+代入条件 $(2+b)(\sin A-\sin B)=(c-b)\sin C$，两边同乘 $2R$：
+
+$$(2+b)(a-b) = (c-b)c$$
+
+由于 $a=2$，即 $2+b = a+b$，所以：
+
+$$(a+b)(a-b) = c^2 - bc$$
+
+$$a^2 - b^2 = c^2 - bc \quad\Longrightarrow\quad b^2 + c^2 - a^2 = bc$$
+
+## 第二步：由余弦定理求角 $A$
+
+由余弦定理：
+
+$$\cos A = \frac{b^2+c^2-a^2}{2bc} = \frac{bc}{2bc} = \frac{1}{2}$$
+
+因为 $A \in (0, \pi)$，所以 $A = \dfrac{\pi}{3}$。
+
+## 第三步：表示面积
+
+$$S = \frac{1}{2}bc\sin A = \frac{1}{2}bc \cdot \frac{\sqrt{3}}{2} = \frac{\sqrt{3}}{4}bc$$
+
+因此只需最大化 $bc$。
+
+## 第四步：求 $bc$ 的最大值
+
+由 $a^2 = b^2 + c^2 - bc = 4$，即：
+
+$$4 = b^2 + c^2 - bc$$
+
+由基本不等式 $b^2 + c^2 \geq 2bc$，得：
+
+$$4 = b^2 + c^2 - bc \geq 2bc - bc = bc$$
+
+所以 $bc \leq 4$，当且仅当 $b = c = 2$ 时取等号。
+
+**验证**：$b=c=2$ 时，$a=2$，三角形为等边三角形，$A=60°$，满足原条件。
+
+## 第五步：计算最大面积
+
+$$S_{\max} = \frac{\sqrt{3}}{4} \times 4 = \sqrt{3}$$
+
+$$\boxed{\sqrt{3}}$$</pre></details></div></section>
+</main>
+</body>
+</html>

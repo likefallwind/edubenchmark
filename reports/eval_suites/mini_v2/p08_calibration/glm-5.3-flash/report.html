@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p08_calibration</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P08 置信度校准（复用 exact-match benchmark + verbalized confidence）</h1>
+    <p class="muted">基准 p08_calibration · 模型 <strong>glm-5.3-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">57.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">57</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P08（置信度校准与弃答）的 v1：零新增标注。复用 ceval / mmlu_pro / agieval / mathtutorbench_problem_solving 的既有判分，在原题后追加置信度诱导，测模型自报置信度与实际对错的一致性——即“自信地教错”这一最致命失效模式的直接测量。</p><p>题目由难度分层抽样器（依据既有 scored.jsonl 的集成难度，easy/mixed/hard≈30/50/20）固定成一份 item_list，所有模型经 --item-list 跑同一套题，保证跨模型可比与公平（难度来自历史模型集成，绝不用被测模型自身错题）。</p><p>指标：CWR（高置信错答率）、ECE、Brier、AUROC、选择性准确率；headline score_10 = 10×[0.5×(1−CWR)+0.5×AUROC]，与纯正确率可分离。难度加权集上的绝对值仅用于模型间相对比较，不作自然分布下的绝对宣称。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-4</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>VIP服务本来是个好东西，大企业作为市场竞争的主体，实行差别化服务，无可厚非。但近年来，一些企业纷纷进军医院、机场、车站等公共场所，掏些赞助费，设立所谓“贵宾厅”，霸占公共资源，不仅带来浪费，更造成公共资源分配的不公。这段文字主要强调的是____。
+A. 公共资源不该过度VIP
+B. VIP服务导致了公共资源的不公平分配
+C. 一些企业搬进医院、机场、车站办公
+D. 实行差别化服务是VIP服务的优势所在
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored&quot;: 100,
+  &quot;n_with_confidence&quot;: 99,
+  &quot;confidence_unparsed_rate&quot;: 0.01,
+  &quot;accuracy&quot;: 0.57,
+  &quot;confidence_mean&quot;: 92.95,
+  &quot;confidence_std&quot;: 8.95,
+  &quot;confidence_histogram&quot;: {
+    &quot;0-9&quot;: 0,
+    &quot;10-19&quot;: 0,
+    &quot;20-29&quot;: 0,
+    &quot;30-39&quot;: 0,
+    &quot;40-49&quot;: 0,
+    &quot;50-59&quot;: 0,
+    &quot;60-69&quot;: 4,
+    &quot;70-79&quot;: 4,
+    &quot;80-89&quot;: 7,
+    &quot;90-99&quot;: 84
+  },
+  &quot;cwr_at_90&quot;: 0.369,
+  &quot;n_high_confidence&quot;: 84,
+  &quot;ece_10bin&quot;: 0.3638,
+  &quot;brier&quot;: 0.3576,
+  &quot;auroc&quot;: 0.7091,
+  &quot;selective_accuracy&quot;: {
+    &quot;coverage_90&quot;: 0.6067,
+    &quot;coverage_80&quot;: 0.6329,
+    &quot;coverage_70&quot;: 0.6522
+  },
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.7222,
+      &quot;n_with_confidence&quot;: 17,
+      &quot;cwr_at_90&quot;: 0.2941,
+      &quot;auroc&quot;: 0.475
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;accuracy&quot;: 0.5,
+      &quot;n_with_confidence&quot;: 36,
+      &quot;cwr_at_90&quot;: 0.4839,
+      &quot;auroc&quot;: 0.6389
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;accuracy&quot;: 0.4643,
+      &quot;n_with_confidence&quot;: 28,
+      &quot;cwr_at_90&quot;: 0.3333,
+      &quot;auroc&quot;: 0.8051
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;accuracy&quot;: 0.7222,
+      &quot;n_with_confidence&quot;: 18,
+      &quot;cwr_at_90&quot;: 0.2778,
+      &quot;auroc&quot;: 0.8077
+    }
+  },
+  &quot;headline_metric&quot;: &quot;score_10 = 10 * [0.5*(1-CWR@90) + 0.5*AUROC]&quot;,
+  &quot;score_10&quot;: 6.7
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>13</td><td>0.722</td><td><div class='bar'><i style='width:72%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>18</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>13</td><td>0.464</td><td><div class='bar'><i style='width:46%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>13</td><td>0.722</td><td><div class='bar'><i style='width:72%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>33</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>24</td><td>0.522</td><td><div class='bar'><i style='width:52%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::art_studies-val-22</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>曹禺的《北京人》被研究者称为中国最伟大的____。
+A. 喜剧
+B. 悲剧
+C. 社会问题剧
+D. 正剧
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 88}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**B**
+
+曹禺的《北京人》（1940年）通过描写曾家这个没落封建大家庭的分崩离析，展现了封建制度与旧文化的必然衰亡，其悲剧艺术达到了曹禺剧作的巅峰，被研究者誉为“中国最伟大的悲剧”。
+
+置信度: 88</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-4</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>VIP服务本来是个好东西，大企业作为市场竞争的主体，实行差别化服务，无可厚非。但近年来，一些企业纷纷进军医院、机场、车站等公共场所，掏些赞助费，设立所谓“贵宾厅”，霸占公共资源，不仅带来浪费，更造成公共资源分配的不公。这段文字主要强调的是____。
+A. 公共资源不该过度VIP
+B. VIP服务导致了公共资源的不公平分配
+C. 一些企业搬进医院、机场、车站办公
+D. 实行差别化服务是VIP服务的优势所在
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;D&quot;, &quot;c&quot;: 95}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**A**
+
+文段先让步肯定“VIP服务本身是好东西，企业实行差别化服务无可厚非”，随后用“但”转折，指出问题所在：一些企业在医院、机场、车站等公共场所设立“贵宾厅”，霸占公共资源，造成浪费和分配不公。可见文段重点在于批评公共资源被过度VIP化侵占的现象，即公共资源不该过度VIP。
+
+- B项表述过于绝对，文段批评的是在公共场所滥设VIP，而非VIP服务本身导致不公；
+- C项曲解文意，企业是设立“贵宾厅”而非搬去办公；
+- D项是转折前的让步内容，非重点。
+
+置信度: 95</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-15</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>在某市一项对公司年轻人员的最新调查中，与往年相比，今年有70％的人打算购买房屋，这一比例已达到历史最高值。然而，在房屋管理局的统计中，该市今年的房屋成交量却比往年有所下降。以下哪项如果为真，最不能解释上述现象?____
+A. 一些打算购买房屋的年轻人目前并不具备该市购买房屋的条件
+B. 往年资料表明，年轻人员购买房屋的比例不足购买房屋成员的30％
+C. 近年来爆发的金融风暴，对房地产行业有一定的打击
+D. 近几个月该市楼市价格不稳定，使得一些购房者持观望态度
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**正确答案：B**
+
+**分析：**
+需要解释的现象是：年轻人购房意愿高达70%（历史最高），但该市房屋成交量却下降了。
+
+- **A项**：有购房意愿的年轻人不具备购房资格，说明意愿无法转化为实际成交，可以解释成交量的下降。
+- **C项**：金融风暴对房地产行业造成冲击，直接说明市场整体低迷、成交量下降的原因，可以解释。
+- **D项**：楼市价格不稳定导致购房者观望，说明有意向的人推迟购房，可以解释成交量下降。
+- **B项**：往年数据显示年轻人购房比例不足购房者的30%，这只能说明年轻人在购房群体中占比小，但并不能说明为什么今年房屋成交量比往年**下降**。该项与成交量下降这一现象之间没有直接的解释关系，最不能解释上述现象。
+
+置信度: 90</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::clinical_medicine-val-10</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>洋地黄中毒合并低钾血症时易发生的心律失常是____
+A. 阵发性房性心动过速伴传导阻滞
+B. 房性期前收缩
+C. 房颤
+D. 室颤
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;D&quot;, &quot;c&quot;: 92}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**正确答案：A. 阵发性房性心动过速伴传导阻滞**
+
+**解析：**
+
+洋地黄中毒所致的心律失常中，最具特征性的是**阵发性房性心动过速伴房室传导阻滞**（PAT伴传导阻滞）。其机制在于：
+
+1. 洋地黄中毒时，心肌细胞（尤其是心房肌）自律性增高，同时洋地黄又抑制房室结传导，二者结合即表现为房速伴传导阻滞；
+2. **低钾血症**使心肌细胞膜对洋地黄的敏感性显著增加（K⁺与洋地黄竞争Na⁺-K⁺-ATP酶的结合位点，血钾越低，洋地黄与酶结合越多），更易诱发此类心律失常。
+
+因此，洋地黄中毒**合并低钾血症**时，最典型、最易发生的心律失常即为阵发性房性心动过速伴传导阻滞。
+
+- B（房性期前收缩）、C（房颤）虽可见于洋地黄中毒，但缺乏特征性；
+- D（室颤）多见于严重中毒，且低钾更常首先表现为上述特征性心律失常。
+
+置信度： 92</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::college_economics-val-40</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>政府对餐馆的营业收入征收20%的营业税；营业收入以餐馆向顾客开具发票的总金额来确定。法律规定顾客有权索取发票。假定发票对于顾客没有任何价值，因此顾客都不开发票。这时，政府为了增加税收，推出了发票抽奖的活动。每开具100元的发票，顾客可从政府那里得到的中奖收入为10元。根据科斯定理并运用供求理论，你预计政府引入这一做法的后果是：____
+A. 顾客开发票；政府税收增加，餐馆收入下降
+B. 顾客不开发票，政府税收不变，餐馆收入下降
+C. 顾客不开发票，政府税收不变，餐馆收入不变
+D. 顾客开发票，政府税收不变，餐馆收入不变
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;B&quot;, &quot;c&quot;: 90}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**答案：B**
+
+**分析：**
+
+1. **顾客的行为**：抽奖活动使每100元发票对顾客产生了10元的期望价值，顾客从此有激励索要发票。
+
+2. **科斯定理的应用**：顾客拥有索要发票的法定权利（权利已明确界定），且双方交易成本低（餐馆与顾客可直接协商，如“不开发票就打折”）：
+   - 顾客开票的价值 = 10元（抽奖期望收益）
+   - 餐馆被开票的成本 = 20元（营业税）
+   
+   由于餐馆为避免开票最多愿支付20元，而顾客只要获得超过10元的补偿就愿意放弃开票，双方存在讨价还价的空间。根据科斯定理，双方会达成协议：餐馆向顾客支付10~20元之间的补偿（如折扣），换取顾客不开发票。这对双方都是帕累托改进。
+
+3. **后果**：
+   - **顾客不开发票**（讨价还价的结果）；
+   - **政府税收不变**（仍没有发票被开具，与引入抽奖前相同）；
+   - **餐馆收入下降**（餐馆必须向顾客支付10~20元/100元的补偿/折扣来阻止开票，净收益减少）。
+
+**置信度: 90**</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::electrical_engineer-val-20</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>光伏电站无功电压控制系统响应时间应为____。
+A. ≤5s
+B. ≤10s
+C. ≤20s
+D. ≤30s
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;a&quot;: &quot;D&quot;, &quot;c&quot;: 85}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**答案：D**
+
+依据 GB/T 19964-2012《光伏发电站接入电力系统技术规定》，光伏电站应配置无功电压控制系统，能够根据电力调度指令自动调节无功功率、控制并网点电压，其无功电压控制系统响应时间应不大于 30s（动态无功补偿装置本身的毫秒级快速响应是另一层要求，而站级无功电压控制系统的响应指标为 ≤30s）。
+
+故正确选项为 D（≤30s）。
+
+置信度: 85</pre></details></div></section>
+</main>
+</body>
+</html>

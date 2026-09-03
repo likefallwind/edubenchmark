@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · k12bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · K12-Bench：课程认知（知识结构层，多选题）</h1>
+    <p class="muted">基准 k12bench · 模型 <strong>glm-5.3-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">59.5%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">119</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>K12-Bench（Liang et al. 2026, arXiv:2605.09635）是从人教版 K-12 数理化生教材构建的课程对齐知识图谱派生出的 23,640 道四选多选题，考察“课程认知”——先修链、概念分类、实验-概念链、跨章定位等课程知识结构；论文明确将其与 C-Eval/CMMLU 的事实召回区分开。对应本仓库 P15（学习路径规划·知识结构层）。</p><p>五个任务族：prereq（先修闭包+直接后继）、locate（跨章首次出现+章节先修）、neighbor（概念分类/相关）、ground（概念↔习题）、evidence（概念↔实验验证链）。纯文本、无图。</p><p>规则判分、无 LLM 裁判：每题标准答案是一组选项字母，按 instance-level 精确率/召回率/F1（集合交并）与 Exact Match 计分。报告顶栏“正确率”为 Exact Match（整题全对才算对）；面板挂载的分级指标 instance-level Macro-F1 见 summary.json 的 extra_metrics（总体 + 分任务族）。</p><p class='muted'>主页：<a href='https://github.com/haolpku/K12-Dataset'>https://github.com/haolpku/K12-Dataset</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#prereq::subtask1::biology_7a_rjb_cpt74</span><span class='tag'>task_family=prereq</span> <span class='tag'>subject=biology</span></div><div class='qtext'>要掌握生物中的【植物的主要组织类型】，应先具备哪些前置知识？
+A. 细胞是生物体的基本单位
+B. 细胞分化
+C. 植物组织培养
+D. 细胞
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#prereq::subtask1::biology_7a_rjb_cpt128</span><span class='tag'>task_family=prereq</span> <span class='tag'>subject=biology</span></div><div class='qtext'>要掌握生物中的【蒸腾作用的意义】，应先具备哪些前置知识？
+A. 蕨类植物
+B. 叶片的结构（表皮、叶肉、叶脉）
+C. 导管
+D. 蒸腾作用
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B,C,D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;headline accuracy = Exact Match; macro_f1 = instance-level Macro-F1 (the panel-mounted metric)&quot;,
+  &quot;mounted_on&quot;: &quot;P15 学习路径规划（知识结构层）&quot;,
+  &quot;overall&quot;: {
+    &quot;n&quot;: 200,
+    &quot;exact_match&quot;: 0.595,
+    &quot;macro_f1&quot;: 0.7719,
+    &quot;precision&quot;: 0.7396,
+    &quot;recall&quot;: 0.8625
+  },
+  &quot;task_family=prereq&quot;: {
+    &quot;n&quot;: 50,
+    &quot;exact_match&quot;: 0.46,
+    &quot;macro_f1&quot;: 0.734,
+    &quot;precision&quot;: 0.6917,
+    &quot;recall&quot;: 0.85,
+    &quot;p15_relevance_weight&quot;: 1.0
+  },
+  &quot;task_family=locate&quot;: {
+    &quot;n&quot;: 75,
+    &quot;exact_match&quot;: 0.7733,
+    &quot;macro_f1&quot;: 0.7733,
+    &quot;precision&quot;: 0.7733,
+    &quot;recall&quot;: 0.7733,
+    &quot;p15_relevance_weight&quot;: 0.8
+  },
+  &quot;task_family=neighbor&quot;: {
+    &quot;n&quot;: 37,
+    &quot;exact_match&quot;: 0.3243,
+    &quot;macro_f1&quot;: 0.713,
+    &quot;precision&quot;: 0.6171,
+    &quot;recall&quot;: 0.973,
+    &quot;p15_relevance_weight&quot;: 0.5
+  },
+  &quot;task_family=ground&quot;: {
+    &quot;n&quot;: 27,
+    &quot;exact_match&quot;: 0.7037,
+    &quot;macro_f1&quot;: 0.9,
+    &quot;precision&quot;: 0.8704,
+    &quot;recall&quot;: 0.9815,
+    &quot;p15_relevance_weight&quot;: 0.5
+  },
+  &quot;task_family=evidence&quot;: {
+    &quot;n&quot;: 11,
+    &quot;exact_match&quot;: 0.6364,
+    &quot;macro_f1&quot;: 0.8182,
+    &quot;precision&quot;: 0.8182,
+    &quot;recall&quot;: 0.8636,
+    &quot;p15_relevance_weight&quot;: 0.5
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>200</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>evidence</td><td>11</td><td>7</td><td>0.636</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>ground</td><td>27</td><td>19</td><td>0.704</td><td><div class='bar'><i style='width:70%'></i></div></td></tr><tr><td>locate</td><td>75</td><td>58</td><td>0.773</td><td><div class='bar'><i style='width:77%'></i></div></td></tr><tr><td>neighbor</td><td>37</td><td>12</td><td>0.324</td><td><div class='bar'><i style='width:32%'></i></div></td></tr><tr><td>prereq</td><td>50</td><td>23</td><td>0.460</td><td><div class='bar'><i style='width:46%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology</td><td>45</td><td>27</td><td>0.600</td><td><div class='bar'><i style='width:60%'></i></div></td></tr><tr><td>chemistry</td><td>76</td><td>41</td><td>0.539</td><td><div class='bar'><i style='width:54%'></i></div></td></tr><tr><td>math</td><td>43</td><td>30</td><td>0.698</td><td><div class='bar'><i style='width:70%'></i></div></td></tr><tr><td>physics</td><td>36</td><td>21</td><td>0.583</td><td><div class='bar'><i style='width:58%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#prereq::subtask1::biology_7a_rjb_cpt74</span><span class='tag'>task_family=prereq</span> <span class='tag'>subject=biology</span></div><div class='qtext'>要掌握生物中的【植物的主要组织类型】，应先具备哪些前置知识？
+A. 细胞是生物体的基本单位
+B. 细胞分化
+C. 植物组织培养
+D. 细胞
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,B,D</div><div class='ans'><span class='lbl'>归一化</span>A,B,D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A,B,D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#prereq::subtask1::biology_7b_rjb_exp1</span><span class='tag'>task_family=prereq</span> <span class='tag'>subject=biology</span></div><div class='qtext'>在学习生物中的【测定某种食物中的能量】之前，需要学习哪些知识？
+A. 作出假设
+B. 设置重复组并取平均值
+C. 解读曲线图
+D. 提出问题—作出假设—制订计划—实施记录—分析结论的探究流程
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,B,D</div><div class='ans'><span class='lbl'>归一化</span>A,B,D</div><div class='ans gold'><span class='lbl'>正确答案</span>A,B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A,B,D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#neighbor::biology_7a_rjb_cpt150</span><span class='tag'>task_family=neighbor</span> <span class='tag'>subject=biology</span></div><div class='qtext'>以下哪些概念与生物中的【植被（vegetation）】直接相关（包括分类关系或紧密关联）？
+A. 可持续发展道路（植物资源利用与保护）
+B. 全民义务植树、种草（植树节）
+C. 植被类型
+D. 依法治理与科学化管理（森林和草原）
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,B,C,D</div><div class='ans'><span class='lbl'>归一化</span>A,B,C,D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A,B,C,D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#neighbor::biology_8a_rjb_cpt49</span><span class='tag'>task_family=neighbor</span> <span class='tag'>subject=biology</span></div><div class='qtext'>以下哪些概念与生物中的【肌肉】直接相关（包括分类关系或紧密关联）？
+A. 神经系统调节运动
+B. 肌腹
+C. 关节腔
+D. 关节囊
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,B</div><div class='ans'><span class='lbl'>归一化</span>A,B</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A,B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ground::subtask1::biology_xzxbx1_rjb_exe25</span><span class='tag'>task_family=ground</span> <span class='tag'>subject=biology</span></div><div class='qtext'>【依据特异性免疫的基本过程，判断下列表述是否正确： (1) T细胞只参与细胞免疫，B细胞只参与体液免疫。( ) (2) B细胞只要接受了相应抗原的直接刺激就会分泌特异性抗体。( )】这道题主要考察了什么核心概念？
+A. 辅助性T细胞
+B. B细胞
+C. 细胞毒性T细胞
+D. 细胞因子
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>A,B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#neighbor::biology_8b_rjb_cpt28</span><span class='tag'>task_family=neighbor</span> <span class='tag'>subject=biology</span></div><div class='qtext'>以下哪些概念与生物中的【基因成对存在与配子只含一个】直接相关（包括分类关系或紧密关联）？
+A. 染色体
+B. 人的性别由性染色体决定
+C. 杂合与纯合（基因组成示例）
+D. 生殖细胞染色体数减半
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,C,D</div><div class='ans'><span class='lbl'>归一化</span>A,C,D</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A,C,D</pre></details></div></section>
+</main>
+</body>
+</html>

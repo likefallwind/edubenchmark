@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_judge</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 1 LLM-as-judge 校准（与人类标注一致性）</h1>
+    <p class="muted">基准 mrbench_judge · 模型 <strong>glm-5.3-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">76.7%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">46</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MRBench（NAACL 2025 Unifying AI Tutor Evaluation）的 LLM-as-judge 校准：被测 --model 本身充当裁判，对数据集中已有人工标注的 tutor 回复逐维度（8 个教学维度）打标，衡量裁判与人类标注的一致程度。每 (回复 × 维度) 拆成一道题，gold 为该维度的人工标签，裁判输出三分类标签后与 gold 比对。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>8 个维度：Mistake Identification / Mistake Location / Revealing of the Answer / Providing Guidance / Actionability / Coherence / Tutor Tone / Humanlikeness。Revealing 三档为 No / Yes(correct) / Yes(incorrect)，Tutor Tone 为 Encouraging/Neutral/Offensive，其余为 Yes / To some extent / No。</p><p>报告“正确率”即逐维度逐题一致率（micro accuracy）；summary.json 的 extra_metrics 按维度给 agreement(accuracy)、macro-F1 与 Cohen&#x27;s kappa，并给跨维度 macro 平均——这就是“裁判有多像人”。裁判输出无法归一的记 unparsed（占比应很低）。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c0-Phi3-Actionability</span><span class='tag'>dimension=Actionability</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+Great job! To further enhance your understanding, let&#x27;s explore more examples and practice solving similar problems together.
+
+Dimension — Actionability: Is it clear from the tutor&#x27;s reply what the student should do next? Does it give the student a concrete next action rather than a dead end?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans gold inline'><span class='lbl'>参考答案</span>No</div></div><div class='card'><div class='card-head'><span class='pid'>#c6-Expert-Mistake_Identification</span><span class='tag'>dimension=Mistake_Identification</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Ronald is rolling a die and won&#x27;t stop rolling until the average of all his rolls is a 3. He rolls a 1, a 3, a 2, a 4, a 3, a 5, a 3, a 4, a 4 and a 2. What does he need to roll on the next roll to be able to stop? 
+ Student: We can start by finding the average of all his rolls so far:
+(1+3+2+4+3+5+3+4+4+2) / 10 = 32 / 10 = 3.2
+To stop rolling, Ronald needs the average of all his rolls to be 3, so we can set up an equation:
+(1+3+2+4+3+5+3+4+4+2+x) / 11 = 3
+Simplifying the equation, we get:
+(29+x) / 11 = 3
+Multiplying both sides by 11, we get:
+29+x = 33
+Subtracting 29 from both sides, we get:
+x = 4
+Therefore, Ronald needs to roll a 4 on the next roll to be able to stop.
+ 4 
+ Tutor: which was 3.2. Then I set up an equation to find what Ronald needs to roll on the next roll to get the average to 3. I multiplied both sides of the equation by 11 subtracted 29 from both sides and then got the answer of 4. 
+ Tutor: What is the total number that Ronald has rolled before his last roll? 
+ Student: The total number that Ronald has rolled before his last roll is 29. 
+ Tutor: What total would Ronald need to have an average of 3? 
+ Student: To have an average of 3 Ronald would need a total of 33.
+
+Tutor reply to evaluate:
+Great! He&#x27;s almost there! What&#x27;s the difference between the total he had before his last roll, and the needed total?
+
+Dimension — Mistake Identification: Has the tutor recognized that the student made a mistake (or that the student&#x27;s latest turn contains an error)?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans gold inline'><span class='lbl'>参考答案</span>No</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric&quot;: &quot;per-dimension agreement with human gold (accuracy), macro-F1, Cohen&#x27;s kappa&quot;,
+  &quot;n_items&quot;: 60,
+  &quot;macro_over_dimensions&quot;: {
+    &quot;agreement&quot;: 0.7686,
+    &quot;f1_macro&quot;: 0.6484,
+    &quot;cohen_kappa&quot;: 0.3966
+  },
+  &quot;per_dimension&quot;: {
+    &quot;Mistake_Identification&quot;: {
+      &quot;n&quot;: 8,
+      &quot;agreement&quot;: 1.0,
+      &quot;f1_macro&quot;: 1.0,
+      &quot;cohen_kappa&quot;: 1.0,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Mistake_Location&quot;: {
+      &quot;n&quot;: 7,
+      &quot;agreement&quot;: 0.5714,
+      &quot;f1_macro&quot;: 0.3889,
+      &quot;cohen_kappa&quot;: 0.1923,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Revealing_of_the_Answer&quot;: {
+      &quot;n&quot;: 8,
+      &quot;agreement&quot;: 1.0,
+      &quot;f1_macro&quot;: 1.0,
+      &quot;cohen_kappa&quot;: 1.0,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Providing_Guidance&quot;: {
+      &quot;n&quot;: 7,
+      &quot;agreement&quot;: 0.5714,
+      &quot;f1_macro&quot;: 0.2667,
+      &quot;cohen_kappa&quot;: 0.0455,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Actionability&quot;: {
+      &quot;n&quot;: 8,
+      &quot;agreement&quot;: 0.625,
+      &quot;f1_macro&quot;: 0.5079,
+      &quot;cohen_kappa&quot;: 0.4545,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Coherence&quot;: {
+      &quot;n&quot;: 6,
+      &quot;agreement&quot;: 1.0,
+      &quot;f1_macro&quot;: 1.0,
+      &quot;cohen_kappa&quot;: 0.0,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;Tutor_Tone&quot;: {
+      &quot;n&quot;: 9,
+      &quot;agreement&quot;: 0.6667,
+      &quot;f1_macro&quot;: 0.746,
+      &quot;cohen_kappa&quot;: 0.4808,
+      &quot;unparsed&quot;: 0
+    },
+    &quot;humanlikeness&quot;: {
+      &quot;n&quot;: 7,
+      &quot;agreement&quot;: 0.7143,
+      &quot;f1_macro&quot;: 0.2778,
+      &quot;cohen_kappa&quot;: 0.0,
+      &quot;unparsed&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>60</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 dimension 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Actionability</td><td>8</td><td>5</td><td>0.625</td><td><div class='bar'><i style='width:62%'></i></div></td></tr><tr><td>Coherence</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Mistake_Identification</td><td>8</td><td>8</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Mistake_Location</td><td>7</td><td>4</td><td>0.571</td><td><div class='bar'><i style='width:57%'></i></div></td></tr><tr><td>Providing_Guidance</td><td>7</td><td>4</td><td>0.571</td><td><div class='bar'><i style='width:57%'></i></div></td></tr><tr><td>Revealing_of_the_Answer</td><td>8</td><td>8</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Tutor_Tone</td><td>9</td><td>6</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>humanlikeness</td><td>7</td><td>5</td><td>0.714</td><td><div class='bar'><i style='width:71%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Bridge</td><td>16</td><td>14</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>MathDial</td><td>44</td><td>32</td><td>0.727</td><td><div class='bar'><i style='width:73%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#c0-Phi3-Actionability</span><span class='tag'>dimension=Actionability</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Elliott is trying to walk 10,000 steps a day. He finished half of his steps on his walks to and from school and did another 1,000 steps going for a short walk with his friend. He also went for a short jog around the block and realized that after he had finished his jog, he only had 2,000 steps left to take. How many steps did Elliott take during his jog? 
+ Student: Elliott finished half of his steps on his walks to and from school, so he took 10,000/2 = 5000 steps during these walks.
+Adding the 1,000 steps he took with his friend, he has taken 5000+1000 = 6000 steps.
+Subtracting 6000 from his goal of 10,000, he has 10,000-6000 = 4000 steps left to take.
+Therefore, he took 4000 steps during his jog. 
+ 4000 
+ Tutor: can you tell me how you got to your answer? 
+ Student: Sure. I started by figuring out how many steps Elliott had taken before his jog. I knew he had finished half of his steps on his walks to and from school so I calculated that he had taken 10000/2 = 5000 steps during these walks. Then I added the 1000 steps he took with his friend so I had taken 5000+1000 = 6000 steps. After that I subtracted 6000 from his goal of 10000 so I had 10000-6000 = 4000 steps left to take. This meant that he had taken 4000 steps during his jog.
+
+Tutor reply to evaluate:
+Great job! To further enhance your understanding, let&#x27;s explore more examples and practice solving similar problems together.
+
+Dimension — Actionability: Is it clear from the tutor&#x27;s reply what the student should do next? Does it give the student a concrete next action rather than a dead end?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>No</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c8-Llama318B-Actionability</span><span class='tag'>dimension=Actionability</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: In one month in the Smith house, Kylie uses 3 bath towels, her 2 daughters use a total of 6 bath towels, and her husband uses a total of 3 bath towels. If the washing machine can fit 4 bath towels for one load of laundry, how many loads of laundry will the Smiths need to do to clean all of their used towels? 
+ Student: Kylie and her husband use a total of 3 + 3 = 6 bath towels.
+Altogether, the Smiths use 3 + 6 + 6 = 15 bath towels in one month.
+They will need 15/4 = 3.75 loads of laundry to clean all of their used towels.
+Since they can&#x27;t do a fractional load of laundry, they will need to do 4 loads of laundry.
+ 4 
+ Tutor: Could you explain how you get to the total of 15 used towels  
+ Student: Yes, Kylie uses 3 towels, her two daughters use a total of 6 towels, and her husband uses a total of 3 towels. That makes a total of 3 + 6 + 3 = 15 towels used in one month. 
+ Tutor: 3 plus 3 plus 6 = 12 not 15
+ Student: Oh, right. I forgot to add Kylie&#x27;s 3 towels. So it&#x27;s 3 + 3 + 6 = 12. Sorry about that.
+
+Tutor reply to evaluate:
+Now that we have the total number of towels used as 12, let&#x27;s continue with the rest of the steps to find out how many loads of laundry the Smiths need to do.
+
+Dimension — Actionability: Is it clear from the tutor&#x27;s reply what the student should do next? Does it give the student a concrete next action rather than a dead end?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>No</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c26-Llama318B-humanlikeness</span><span class='tag'>dimension=humanlikeness</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Frank is walking through a corn maze. He has already spent 45 minutes inside. He has done 4 other corn mazes and finished those in 50 minutes on average. How much longer can he spend inside if he wants to ensure that his average doesn&#x27;t go above 60 minutes per maze? 
+ Student: Frank has completed a total of 5 corn mazes (including the current one), so he has spent a total of 45 + 50(4) = 245 minutes in the mazes.
+To keep his average below 60 minutes per maze, he can spend a total of 60(5) - 245 = 55 minutes in the current maze.
+Since he has already spent 45 minutes inside, he can spend an additional 55 - 45 = 10 minutes inside.
+ 10 
+ Tutor: You are correct as far as the 245 total , could you please look again at the calculation you do next 
+ Student: Oh, I see what I did wrong. I should have subtracted 45 from 60 instead of 55. So the answer should be 60 - 45 - 45 = 10 minutes 
+ Tutor: Your total is 300 minus 245  
+ Student: That&#x27;s right. So the answer should be 60 - 245 = 10 minutes. 
+ Tutor: Could you try that again, do you think you could have made an error, maybe try a calculator  
+ Student: I see what I did wrong. I should have subtracted 45 from 60 instead of 55. So the answer should be 60 - 45 = 15 minutes. I&#x27;ll double check with a calculator to make sure. 
+ Tutor: 245 from .? 
+ Student: Yes, I should have subtracted 245 from 60 instead of 55. So the answer should be 60 - 245 = 15 minutes. I&#x27;ll double check with a calculator to make sure.
+
+Tutor reply to evaluate:
+To find the time Frank can spend in the current maze without exceeding an average of 60 minutes per maze, let&#x27;s calculate 60(5) - 245, which equals 295 - 245.
+
+Dimension — Humanlikeness: Does the tutor&#x27;s reply sound natural and human, as opposed to robotic, templated, or artificial?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>No</div><div class='ans'><span class='lbl'>归一化</span>No</div><div class='ans gold'><span class='lbl'>正确答案</span>Yes</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>No</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c36-Expert-Mistake_Location</span><span class='tag'>dimension=Mistake_Location</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: A mechanic charges different rates to repair the tires of trucks and cars.  For each truck tire that is repaired, the mechanic will charge $60 and for each car tire that is repaired, the mechanic will charge $40.  On Thursday, the mechanic repairs 6 truck tires and 4 car tires.  On Friday, the mechanic repairs 12 car tries and doesn&#x27;t repair any truck tires.  How much more revenue did the mechanic earn on the day with higher revenue? 
+ Student: On Thursday, the mechanic earned 6 x $60 = $360 for repairing truck tires.
+On Thursday, the mechanic earned 4 x $40 = $160 for repairing car tires.
+On Thursday, the mechanic earned a total of $360 + $160 = $520.
+On Friday, the mechanic earned 12 x $40 = $480 for repairing car tires.
+The revenue on Friday is higher by $480 - $520 = $-40.
+ -40 
+ Tutor: good work on this problem. Can you tell me about your strategy? 
+ Student: Sure. I started by calculating the amount of money the mechanic earned on Thursday for repairing truck tires and car tires separately. Then I calculated the amount of money the mechanic earned on Friday for repairing car tires. Finally I subtracted the amount of money earned on Thursday from the amount of money earned on Friday to find the difference in revenue. 
+ Tutor: That makes sense. Let me ask you a slightly different question than the difference in revenue -- on which day was the revenue highest? 
+ Student: On Friday the mechanic earned the highest revenue because they earned 12 x $40 = $480 for repairing car tires.
+
+Tutor reply to evaluate:
+I agree with your math there. But how much money did the mechanic make on Thursday?
+
+Dimension — Mistake Location: Does the tutor&#x27;s reply point to where exactly the mistake is — the specific step, quantity, or place the student went wrong?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Yes</div><div class='ans'><span class='lbl'>归一化</span>Yes</div><div class='ans gold'><span class='lbl'>正确答案</span>No</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Yes</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c68-Llama318B-Providing_Guidance</span><span class='tag'>dimension=Providing_Guidance</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: If Marcy works for the same company for 40 years, she gets an annual pension of $50,000/year. Starting after 20 years, she becomes entitled to 5% of the value of the pension per year. If she quits after 30 years, what will her annual pension be? 
+ Student: Marcy is entitled to 5% x 20 = 100% of the value of the pension.
+So, her annual pension after 20 years is $50,000 x 100% = $50,000.
+For the next 10 years, Marcy is entitled to an additional 5% x 10 = 50% of the value of the pension.
+So, her annual pension after 30 years is $50,000 + ($50,000 x 50%) = $50,000 + $25,000 = $75,000.
+ 75,000 
+ Tutor: Winnie, According to the problem, how many years does Marcy have to work before she earns ANY pension?
+ Student: Marcy has to work for at least 20 years before she earns any pension. 
+ Tutor: How many years past 20 does she work if she works there for 30 years? 
+ Student: Marcy works for 10 years past 20 if she works there for 30 years.
+
+Tutor reply to evaluate:
+I see that you&#x27;ve made a good start, Winnie, now let&#x27;s think about what the problem is asking us to calculate - her annual pension after 30 years.
+
+Dimension — Providing Guidance: Does the tutor provide correct and relevant guidance — a hint, an explanation, a worked example, a clarifying question, etc.?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>Yes</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#c86-GPT4-Actionability</span><span class='tag'>dimension=Actionability</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: Jam has three boxes full of pencils and 2 loose pencils which give a total of 26 pencils. If her sister, Meg, has 46 pencils, how many boxes do Jam and Meg need to store all their pencils? 
+ Student: Jam has 26 - 2 = 24 pencils in her boxes.
+Together, Jam and Meg have 24 + 46 = 70 pencils.
+Each box holds 24 pencils, so they need 70/24 = 2.92 boxes.
+Since they can&#x27;t have a fraction of a box, they need to round up to the nearest whole number of boxes.
+Therefore, they need 3 boxes to store all their pencils.
+ 3 
+ Tutor: sure. I started by figuring out how many pencils Jam had in her boxes which was 26 minus the two loose pencils so 24. Then I added that to Meg&#x27;s 46 pencils to get the total of 70. Since each box holds 24 pencils I divided 70 by 24 to get 2.92 boxes. Since they can&#x27;t have a fraction of a box I rounded up to the nearest whole number of boxes which was 3.
+
+Tutor reply to evaluate:
+You&#x27;ve done a great job with calculations, but there seems to be a misunderstanding about the number of pencils each box can hold. Let&#x27;s work on this together.
+
+Dimension — Actionability: Is it clear from the tutor&#x27;s reply what the student should do next? Does it give the student a concrete next action rather than a dead end?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>To some extent</div><div class='ans'><span class='lbl'>归一化</span>To some extent</div><div class='ans gold'><span class='lbl'>正确答案</span>Yes</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>To some extent</pre></details></div></section>
+</main>
+</body>
+</html>

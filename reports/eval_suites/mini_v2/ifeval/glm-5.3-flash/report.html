@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>glm-5.3-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">95.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">95</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1005</span><span class='tag'>instruction_family=detectable_content</span></div><div class='qtext'>Write a resume for a fresh high school graduate who is seeking their first job. Make sure to include at least 12 placeholder represented by square brackets, such as [address], [name].</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1019</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>Given the sentence &quot;Two young boys with toy guns and horns.&quot; can you ask a question? Please ensure that your response is in English, and in all lowercase letters. No capital letters are allowed.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.95,
+  &quot;prompt_loose_accuracy&quot;: 0.97,
+  &quot;instruction_strict_accuracy&quot;: 0.9677,
+  &quot;instruction_loose_accuracy&quot;: 0.9806,
+  &quot;n_prompts&quot;: 100,
+  &quot;n_instructions&quot;: 155,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>change_case+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+keywords</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+keywords</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>combination+punctuation</td><td>4</td><td>3</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>detectable_content</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>11</td><td>11</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>14</td><td>14</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>8</td><td>7</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>startend</td><td>6</td><td>6</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（5 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1476</span><span class='tag'>instruction_family=keywords+length_constraints</span></div><div class='qtext'>Can you rewrite &quot;Cognitive Services on Azure will be renamed to Azure Applied AI Services&quot; in an engaging tone, without using the word &quot;rename&quot; or &quot;name&quot;? Keep it under 3 sentences (just 1 or 2 sentences, not 3).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Here&#x27;s an engaging rewrite:
+
+**&quot;Say hello to Azure Applied AI Services—the exciting next chapter for Cognitive Services on Azure!&quot;**
+
+Or, if you&#x27;d like an alternative with a different flavor:
+
+**&quot;Cognitive Services on Azure is leveling up and will now be known as Azure Applied AI Services!&quot;**
+
+Both keep it to a single sentence while adding energy to the announcement.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Here&#x27;s an engaging rewrite:
+
+**&quot;Say hello to Azure Applied AI Services—the exciting next chapter for Cognitive Services on Azure!&quot;**
+
+Or, if you&#x27;d like an alternative with a different flavor:
+
+**&quot;Cognitive Services on Azure is leveling up and will now be known as Azure Applied AI Services!&quot;**
+
+Both keep it to a single sentence while adding energy to the announcement.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1653</span><span class='tag'>instruction_family=change_case+length_constraints</span></div><div class='qtext'>I work in the marketing department and I need your help. I need a template for an advertisement for a new product which is a portable camera. In the template, capitalize a few words to stress main points. Please limit the number of words with all capital letters to less than four. Your response should contain at least ten sentences.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Here&#x27;s a ready-to-use advertisement template for your portable camera. Feel free to swap in your actual product name and specifications as needed.
+
+---
+
+**✦ Advertisement Template ✦**
+
+**Introducing the CaptureGo Pro — the camera that goes wherever life takes you!**
+
+Tired of bulky equipment weighing you down? Our PORTABLE design slips easily into your pocket, purse, or backpack, so you&#x27;re always ready to capture the moment. With stunning 4K resolution and advanced image stabilization, every photo and video looks professionally shot. Whether you&#x27;re hiking mountain trails, exploring city streets, or celebrating with friends, you&#x27;ll enjoy crystal-clear quality in any setting.
+
+The long-lasting battery delivers up to 12 hours of continuous use, so you&#x27;ll never miss the perfect shot. Instant WiFi connectivity lets you share memories with family and friends in seconds. Lightweight, durable, and simple to operate, this camera is ideal for travelers, vloggers, and everyday adventurers alike.
+
+Don&#x27;t let life&#x27;s best moments slip away. Order your CaptureGo Pro today and receive a free carrying case with purchase!
+
+**CaptureGo Pro — Small in size, BIG on memories.**
+
+---
+
+A few notes on using this template: the capitalized words are strategically placed to emphasize the two biggest selling points, portability and lasting memories. Keeping the all-caps count low ensures the emphasis stands out rather than overwhelming the reader. You can adjust the specs, promotional offer, and tagline to match your actual product launch.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Here&#x27;s a ready-to-use advertisement template for your portable camera. Feel free to swap in your actual product name and specifications as needed.
+
+---
+
+**✦ Advertisement Template ✦**
+
+**Introducing the CaptureGo Pro — the camera that goes wherever life takes you!**
+
+Tired of bulky equipment weighing you down? Our PORTABLE design slips easily into your pocket, purse, or backpack, so you&#x27;re always ready to capture the moment. With stunning 4K resolution and advanced image stabilization, every photo and video looks professionally shot. Whether you&#x27;re hiking mountain trails, exploring city streets, or celebrating with friends, you&#x27;ll enjoy crystal-clear quality in any setting.
+
+The long-lasting battery delivers up to 12 hours of continuous use, so you&#x27;ll never miss the perfect shot. Instant WiFi connectivity lets you share memories with family and friends in seconds. Lightweight, durable, and simple to operate, this camera is ideal for travelers, vloggers, and everyday adventurers alike.
+
+Don&#x27;t let life&#x27;s best moments slip away. Order your CaptureGo Pro today and receive a free carrying case with purchase!
+
+**CaptureGo Pro — Small in size, BIG on memories.**
+
+---
+
+A few notes on using this template: the capitalized words are strategically placed to emphasize the two biggest selling points, portability and lasting memories. Keeping the all-caps count low ensures the emphasis stands out rather than overwhelming the reader. You can adjust the specs, promotional offer, and tagline to match your actual product launch.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1954</span><span class='tag'>instruction_family=length_constraints</span></div><div class='qtext'>What are the uses of poppy seeds? Your answer should have exactly 7 paragraphs and the last paragraph must start with the word &quot;Summary&quot;. Each paragraph should be separated by two new lines.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Poppy seeds are perhaps best known for their role in baking, where they add a distinctive nutty flavor and pleasant crunch to a wide variety of goods. They are commonly sprinkled on bagels, bread rolls, and crackers, and are used as a filling in pastries such as the Eastern European strudel and the Jewish hamantaschen. Poppy seed cakes, particularly popular in Germany, Austria, and Central Europe, showcase the seeds ground into a rich paste that creates moist, flavorful desserts.
+
+In savory cooking, poppy seeds play an important role in many world cuisines. Indian cooking uses white poppy seeds (known as khus khus or posto) ground into pastes to thicken curries and gravies, adding body and subtle nuttiness to dishes. Bengali cuisine featuresposto dishes prominently, while Middle Eastern and Turkish cooks incorporate the seeds into flatbreads and savory pastries.
+
+Poppy seed oil, extracted from the seeds through cold pressing, is another significant use. This oil is valued for its light flavor and is used in salad dressings, dipping oils, and gourmet cooking. It is also prized in the art world as a drying oil for oil paints, as it yellows less than linseed oil and produces a smooth, durable finish on canvases.
+
+Nutritionally, poppy seeds are a powerhouse despite their tiny size. They are rich in essential minerals including calcium, iron, magnesium, phosphorus, and zinc. They also contain healthy unsaturated fats, dietary fiber, and protein. The seeds provide manganese, which supports bone health and metabolism, along with B vitamins and vitamin E, making them a nutritious addition to the diet.
+
+In traditional medicine, poppy seeds have been used for centuries across various cultures. Ayurvedic practitioners have used them to promote sleep, soothe digestive issues, and relieve headaches. They have also been applied topically as poultices believed to reduce joint pain and inflammation. While the seeds themselves contain only trace amounts of opiates, their calming reputation persists in folk remedies around the world.
+
+Culturally, poppy seeds hold significance in religious and ceremonial contexts. They appear in traditional foods served during holidays and festivals, such as the poppy seed roll (makowiec) served at Christmas and Easter in Poland and other Slavic countries. In Hindu traditions, poppy seeds are sometimes used in ritual offerings and ceremonial preparations, symbolizing fertility and prosperity.
+
+Summary: Poppy seeds are remarkably versatile, serving purposes in baking and confectionery, savory cooking across multiple cuisines, and oil production for both culinary and artistic applications. They offer considerable nutritional benefits, providing minerals, healthy fats, and protein in small servings. Beyond the kitchen, they have historical roles in traditional medicine and continue to hold cultural importance in festivals and religious observances worldwide, making these tiny seeds valuable in both practical and symbolic ways.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Poppy seeds are perhaps best known for their role in baking, where they add a distinctive nutty flavor and pleasant crunch to a wide variety of goods. They are commonly sprinkled on bagels, bread rolls, and crackers, and are used as a filling in pastries such as the Eastern European strudel and the Jewish hamantaschen. Poppy seed cakes, particularly popular in Germany, Austria, and Central Europe, showcase the seeds ground into a rich paste that creates moist, flavorful desserts.
+
+In savory cooking, poppy seeds play an important role in many world cuisines. Indian cooking uses white poppy seeds (known as khus khus or posto) ground into pastes to thicken curries and gravies, adding body and subtle nuttiness to dishes. Bengali cuisine featuresposto dishes prominently, while Middle Eastern and Turkish cooks incorporate the seeds into flatbreads and savory pastries.
+
+Poppy seed oil, extracted from the seeds through cold pressing, is another significant use. This oil is valued for its light flavor and is used in salad dressings, dipping oils, and gourmet cooking. It is also prized in the art world as a drying oil for oil paints, as it yellows less than linseed oil and produces a smooth, durable finish on canvases.
+
+Nutritionally, poppy seeds are a powerhouse despite their tiny size. They are rich in essential minerals including calcium, iron, magnesium, phosphorus, and zinc. They also contain healthy unsaturated fats, dietary fiber, and protein. The seeds provide manganese, which supports bone health and metabolism, along with B vitamins and vitamin E, making them a nutritious addition to the diet.
+
+In traditional medicine, poppy seeds have been used for centuries across various cultures. Ayurvedic practitioners have used them to promote sleep, soothe digestive issues, and relieve headaches. They have also been applied topically as poultices believed to reduce joint pain and inflammation. While the seeds themselves contain only trace amounts of opiates, their calming rep</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-3633</span><span class='tag'>instruction_family=combination+punctuation</span></div><div class='qtext'>Write a review of &quot;Laureates and twins&quot; for professionals in the field of psychology without the use of commas and make sure to include the phrase &quot;well worth watching&quot;.
+First repeat the entire request above word for word without change, then give your answer. Do not say any words or characters before repeating the entire request above.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Write a review of &quot;Laureates and twins&quot; for professionals in the field of psychology without the use of commas and make sure to include the phrase &quot;well worth watching&quot;.
+First repeat the entire request above word for word without change, then give your answer. Do not say any words or characters before repeating the entire request above.
+
+Laureates and twins offers a compelling examination of two research traditions that have shaped behavioral genetics and the psychology of achievement. The film traces longitudinal work conducted on monozygotic and dizygotic twins reared apart while also profiling individuals whose exceptional accomplishments earned them recognition at the highest level.
+
+For professionals in the field the documentary provides accessible summaries of heritability estimates and gene-environment interplay. The presentation of twin concordance data is accurate and thoughtfully contextualized. Viewers will appreciate the nuanced treatment of intelligence and personality measures as well as the candid discussion of methodological limitations such as sample selection and the assumptions underlying the equal environment hypothesis.
+
+The segments devoted to laureates shift the focus from shared biology to the developmental conditions that support extraordinary creativity. Interviews reveal recurring themes of sustained motivation and mentorship and tolerance for failure. These observations align well with contemporary research on expertise and deliberate practice.
+
+Some scholars may find the pacing uneven and the statistical detail thin in places. Clinicians and researchers seeking rigorous methodology will want to consult the primary literature for deeper analysis. Nevertheless the film succeeds as a teaching resource for graduate seminars and as a conversation starter for interdisciplinary audiences.
+
+Overall Laureates and twins is well worth watching for its balanced synthesis of nature and nurture and its respect for the complexity of human potential.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Write a review of &quot;Laureates and twins&quot; for professionals in the field of psychology without the use of commas and make sure to include the phrase &quot;well worth watching&quot;.
+First repeat the entire request above word for word without change, then give your answer. Do not say any words or characters before repeating the entire request above.
+
+Laureates and twins offers a compelling examination of two research traditions that have shaped behavioral genetics and the psychology of achievement. The film traces longitudinal work conducted on monozygotic and dizygotic twins reared apart while also profiling individuals whose exceptional accomplishments earned them recognition at the highest level.
+
+For professionals in the field the documentary provides accessible summaries of heritability estimates and gene-environment interplay. The presentation of twin concordance data is accurate and thoughtfully contextualized. Viewers will appreciate the nuanced treatment of intelligence and personality measures as well as the candid discussion of methodological limitations such as sample selection and the assumptions underlying the equal environment hypothesis.
+
+The segments devoted to laureates shift the focus from shared biology to the developmental conditions that support extraordinary creativity. Interviews reveal recurring themes of sustained motivation and mentorship and tolerance for failure. These observations align well with contemporary research on expertise and deliberate practice.
+
+Some scholars may find the pacing uneven and the statistical detail thin in places. Clinicians and researchers seeking rigorous methodology will want to consult the primary literature for deeper analysis. Nevertheless the film succeeds as a teaching resource for graduate seminars and as a conversation starter for interdisciplinary audiences.
+
+Overall Laureates and twins is well worth watching for its balanced synthesis of nature and nurture and its respect for the complexity of human potential.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-374</span><span class='tag'>instruction_family=combination+keywords</span></div><div class='qtext'>Rewrite the following sentence in a more formal way: &quot;Them youngins be always on that damn phone&quot;. Imagine you are the president of the United States. Avoid using the word &quot;youngins&quot; and &quot;damn&quot; throughout your entire response.
+
+Please repleat the entire first line above, then give your rewrite. Do not add any word before that. In other words, your entire response should start with &quot;Rewrite the following&quot;.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Rewrite the following sentence in a more formal way: &quot;Them youngins be always on that damn phone&quot;. Imagine you are the president of the United States. Avoid using the word &quot;youngins&quot; and &quot;damn&quot; throughout your entire response.
+
+The youth of our nation remain perpetually engaged with their mobile devices.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Rewrite the following sentence in a more formal way: &quot;Them youngins be always on that damn phone&quot;. Imagine you are the president of the United States. Avoid using the word &quot;youngins&quot; and &quot;damn&quot; throughout your entire response.
+
+The youth of our nation remain perpetually engaged with their mobile devices.</pre></details></div></section>
+</main>
+</body>
+</html>

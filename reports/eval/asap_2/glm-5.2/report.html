@@ -13,6 +13,8 @@
   a { color: #3a56d4; }
   p { margin: 0 0 10px; }
   .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
   .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
   .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
   .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
@@ -47,60 +49,118 @@
     <p class="muted">基准 asap_2 · 模型 <strong>glm-5.2</strong></p>
     <div class="kpis">
       <div class="kpi"><div class="v">n/a</div><div class="k">正确率</div></div>
-      <div class="kpi"><div class="v">20</div><div class="k">总题数</div></div>
-      <div class="kpi"><div class="v">20</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">7421</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">7421</div><div class="k">已判分</div></div>
       <div class="kpi"><div class="v">None</div><div class="k">答对</div></div>
     </div>
   </header>
+  
+  
   <section><h2>基准介绍</h2><p>ASAP 2.0 收录美国 6–10 年级学生的源材料议论文共 24,728 篇，每篇由受训人工评分员按统一整体量规打 1–6 分。本适配器让被测模型充当评分员，用**二次加权 kappa（QWK）**衡量它与人工评分的一致程度——这是序数评分任务的标准指标，差 1 分的代价远小于差 4 分。</p><p>评测使用作者仓库中的**官方 test 划分（7,421 篇，5 个 prompt）**；官方 train 划分（17,307 篇）一并落盘但默认不计分。QWK 是群体统计量而非逐题指标，因此逐题只记录「模型分/人工分」这一对评分，summary 中 accuracy 显式为 null，QWK 在总体与各 prompt 层面汇总，另附精确一致率与相邻一致率（差 1 分以内）作为可读诊断。</p><p>**提示词来源需要说明：ASAP 2.0 是语料库而非 LLM 评测基准**——它提供人工评分、官方train/test 划分和官方评分量规，但没有官方的 LLM 提示协议。因此量规原文（取自仓库的asap_scoring_rubric.docx）与各 prompt 的写作任务（语料自带的 assignment 列）均为上游原文照录，外围的评分指令是本仓库自拟的。该 QWK 不等同于任何官方排行榜成绩。</p><p>量规对所有 prompt 统一为 1–6 分。部分 prompt 在 test 划分中恰好没有 6 分，那是样本分布而非该题的分数上限，故提示词一律写 1–6，不把观测区间喂给模型。设置 WITH_SOURCE=1 可附上学生当时阅读的源文章（更接近人工评分员的条件）；但 Facial action coding system 一题的源文章被上游以版权原因扣留（涉及 7,421 篇中的 1,840 篇），该题无论如何都没有源文，summary 会按源文可得性分组报告 QWK，避免两种条件被悄悄混在一起。</p><p class='muted'>主页：<a href='https://github.com/scrosseye/ASAP_2.0'>https://github.com/scrosseye/ASAP_2.0</a></p></section>
   <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#AAAOPP13416000292184</span><span class='tag'>prompt=&quot;A Cowboy Who Rode the Waves&quot;</span> <span class='tag'>split=test</span> <span class='tag'>source_used=no_source</span></div><div class='qtext'>(题面缺失)</div><div class='ans gold inline'><span class='lbl'>参考答案</span>3</div></div><div class='card'><div class='card-head'><span class='pid'>#AAAOPP13416000292169</span><span class='tag'>prompt=&quot;A Cowboy Who Rode the Waves&quot;</span> <span class='tag'>split=test</span> <span class='tag'>source_used=no_source</span></div><div class='qtext'>(题面缺失)</div><div class='ans gold inline'><span class='lbl'>参考答案</span>2</div></div></section>
   <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
   &quot;metric_note&quot;: &quot;Headline is quadratic weighted kappa against human holistic scores over the official 7,421-essay test split — a population agreement statistic, not per-item accuracy (accuracy is null by design). Unparsed or out-of-range replies are excluded from QWK and counted as bad_format.&quot;,
   &quot;headline_metric&quot;: &quot;qwk&quot;,
   &quot;overall&quot;: {
-    &quot;n&quot;: 20,
-    &quot;scorable&quot;: 20,
-    &quot;qwk&quot;: 0.5499999999999999,
+    &quot;n&quot;: 7421,
+    &quot;scorable&quot;: 7421,
+    &quot;qwk&quot;: 0.6149574458378821,
     &quot;scale&quot;: [
       1,
-      5
+      6
     ],
-    &quot;exact_agreement&quot;: 0.55,
-    &quot;adjacent_agreement&quot;: 1.0,
-    &quot;mean_pred&quot;: 2.25,
-    &quot;mean_gold&quot;: 2.5,
-    &quot;mean_bias&quot;: -0.25
+    &quot;exact_agreement&quot;: 0.5010106454655707,
+    &quot;adjacent_agreement&quot;: 0.9560706104298612,
+    &quot;mean_pred&quot;: 2.9010914971028163,
+    &quot;mean_gold&quot;: 2.9203611373130305,
+    &quot;mean_bias&quot;: -0.019269640210214156
   },
   &quot;by_prompt&quot;: {
     &quot;\&quot;A Cowboy Who Rode the Waves\&quot;&quot;: {
-      &quot;n&quot;: 20,
-      &quot;scorable&quot;: 20,
-      &quot;qwk&quot;: 0.5499999999999999,
+      &quot;n&quot;: 527,
+      &quot;scorable&quot;: 527,
+      &quot;qwk&quot;: 0.4890054468428484,
       &quot;scale&quot;: [
         1,
         5
       ],
-      &quot;exact_agreement&quot;: 0.55,
-      &quot;adjacent_agreement&quot;: 1.0,
-      &quot;mean_pred&quot;: 2.25,
-      &quot;mean_gold&quot;: 2.5,
-      &quot;mean_bias&quot;: -0.25
+      &quot;exact_agreement&quot;: 0.5313092979127134,
+      &quot;adjacent_agreement&quot;: 0.967741935483871,
+      &quot;mean_pred&quot;: 2.381404174573055,
+      &quot;mean_gold&quot;: 2.5294117647058822,
+      &quot;mean_bias&quot;: -0.14800759013282727
+    },
+    &quot;Driverless cars&quot;: {
+      &quot;n&quot;: 2670,
+      &quot;scorable&quot;: 2670,
+      &quot;qwk&quot;: 0.5901628177048791,
+      &quot;scale&quot;: [
+        1,
+        6
+      ],
+      &quot;exact_agreement&quot;: 0.5044943820224719,
+      &quot;adjacent_agreement&quot;: 0.9573033707865168,
+      &quot;mean_pred&quot;: 3.108988764044944,
+      &quot;mean_gold&quot;: 3.1794007490636704,
+      &quot;mean_bias&quot;: -0.07041198501872659
+    },
+    &quot;Exploring Venus&quot;: {
+      &quot;n&quot;: 1463,
+      &quot;scorable&quot;: 1463,
+      &quot;qwk&quot;: 0.552589095783431,
+      &quot;scale&quot;: [
+        1,
+        6
+      ],
+      &quot;exact_agreement&quot;: 0.4859876965140123,
+      &quot;adjacent_agreement&quot;: 0.9487354750512645,
+      &quot;mean_pred&quot;: 2.5064935064935066,
+      &quot;mean_gold&quot;: 2.559125085440875,
+      &quot;mean_bias&quot;: -0.052631578947368585
+    },
+    &quot;Facial action coding system&quot;: {
+      &quot;n&quot;: 1840,
+      &quot;scorable&quot;: 1840,
+      &quot;qwk&quot;: 0.6539289652202626,
+      &quot;scale&quot;: [
+        1,
+        6
+      ],
+      &quot;exact_agreement&quot;: 0.5456521739130434,
+      &quot;adjacent_agreement&quot;: 0.975,
+      &quot;mean_pred&quot;: 3.057065217391304,
+      &quot;mean_gold&quot;: 3.178804347826087,
+      &quot;mean_bias&quot;: -0.1217391304347828
+    },
+    &quot;The Face on Mars&quot;: {
+      &quot;n&quot;: 921,
+      &quot;scorable&quot;: 921,
+      &quot;qwk&quot;: 0.48303856600134887,
+      &quot;scale&quot;: [
+        1,
+        6
+      ],
+      &quot;exact_agreement&quot;: 0.40825190010857765,
+      &quot;adjacent_agreement&quot;: 0.9196525515743756,
+      &quot;mean_pred&quot;: 2.9109663409337676,
+      &quot;mean_gold&quot;: 2.450597176981542,
+      &quot;mean_bias&quot;: 0.4603691639522256
     }
   },
   &quot;by_source_condition&quot;: {
     &quot;no_source&quot;: {
-      &quot;n&quot;: 20,
-      &quot;scorable&quot;: 20,
-      &quot;qwk&quot;: 0.5499999999999999,
+      &quot;n&quot;: 7421,
+      &quot;scorable&quot;: 7421,
+      &quot;qwk&quot;: 0.6149574458378821,
       &quot;scale&quot;: [
         1,
-        5
+        6
       ],
-      &quot;exact_agreement&quot;: 0.55,
-      &quot;adjacent_agreement&quot;: 1.0,
-      &quot;mean_pred&quot;: 2.25,
-      &quot;mean_gold&quot;: 2.5,
-      &quot;mean_bias&quot;: -0.25
+      &quot;exact_agreement&quot;: 0.5010106454655707,
+      &quot;adjacent_agreement&quot;: 0.9560706104298612,
+      &quot;mean_pred&quot;: 2.9010914971028163,
+      &quot;mean_gold&quot;: 2.9203611373130305,
+      &quot;mean_bias&quot;: -0.019269640210214156
     }
   },
   &quot;bad_format_rate&quot;: 0.0,
@@ -116,10 +176,10 @@
     &quot;scoring_instruction_source&quot;: &quot;external benchmark_runner.py build_asap_prompt(), reproduced for comparability with the imported runs&quot;,
     &quot;prompt_version&quot;: &quot;v1&quot;,
     &quot;prompt_sha256&quot;: &quot;141b13fb2075bad7b86cf100bd292bf4203bbdaf4c02b907c96f9566f3b9fe9d&quot;,
-    &quot;scored_rows&quot;: 20
+    &quot;scored_rows&quot;: 7421
   }
 }</pre></section>
-  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>20</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 prompt 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>&quot;A Cowboy Who Rode the Waves&quot;</td><td>20</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 split 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>test</td><td>20</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_used 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>no_source</td><td>20</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>7421</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 prompt 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>&quot;A Cowboy Who Rode the Waves&quot;</td><td>527</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Driverless cars</td><td>2670</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Exploring Venus</td><td>1463</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>Facial action coding system</td><td>1840</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>The Face on Mars</td><td>921</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 split 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>test</td><td>7421</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_used 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>no_source</td><td>7421</td><td>None</td><td>n/a</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table></section>
   
   
 </main>

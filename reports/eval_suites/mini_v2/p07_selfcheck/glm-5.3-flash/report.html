@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>glm-5.3-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">64.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">64</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-0</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>最早对管理的具体职能加以概括和系统论述的是____。
+A. 泰罗
+B. 法约尔
+C. 孔茨
+D. 韦伯
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-27</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>甲企业以融资租赁方式租入乙企业的一台机械设备，则下列对该设备计提折旧的叙述中，正确的是____。
+A. 甲企业对该设备不计提折旧
+B. 甲企业应采用与自有资产相一致的会计政策
+C. 如果能够合理确定该设备在租赁期届满时甲企业将会取得此设备的所有权，则应以该设备全新时的预计使用年限作为折旧期间
+D. 该设备的折旧方法和折旧年限应按乙企业有关资产的折旧方法和折旧年限处理
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.65,
+  &quot;r2_accuracy&quot;: 0.64,
+  &quot;net_gain&quot;: -0.01,
+  &quot;change_rate&quot;: 0.08,
+  &quot;n_r1_wrong&quot;: 35,
+  &quot;n_fixed_wrong_to_right&quot;: 2,
+  &quot;fix_rate&quot;: 0.0571,
+  &quot;n_r1_right&quot;: 65,
+  &quot;n_broken_right_to_wrong&quot;: 3,
+  &quot;break_rate&quot;: 0.0462,
+  &quot;score_10&quot;: 5.055,
+  &quot;by_source&quot;: {
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;r1_correct&quot;: 22,
+      &quot;r2_correct&quot;: 22,
+      &quot;fixed&quot;: 2,
+      &quot;broken&quot;: 2
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 18,
+      &quot;r2_correct&quot;: 18,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 12,
+      &quot;r2_correct&quot;: 12,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 13,
+      &quot;r2_correct&quot;: 12,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>12</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>22</td><td>0.611</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>18</td><td>0.643</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>12</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>36</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>28</td><td>0.609</td><td><div class='bar'><i style='width:61%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-0</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>最早对管理的具体职能加以概括和系统论述的是____。
+A. 泰罗
+B. 法约尔
+C. 孔茨
+D. 韦伯
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;**验证过程：**\n\n**第一步：核实题干关键点**\n题目强调“**最早**”和“**系统论述**”管理的具体职能，需要找到管理职能理论的**首创者**。\n\n**第二步：逐一核查各选项**\n\n| 人物 | 主要贡献 | 时间 | 是否首创职能划分 |\n|------|---------|------|----------------|\n| 泰罗 | 科学管理理论（作业管理、定额研究） | 1911年《科学管理原理》 | ✗ 未系统划分管理职能 |\n| 法约尔 | 提出**五大管理职能**（计划、组织、指挥、协调、控制） | 1916年《工业管理与一般管理》 | ✓ **最早系统论述** |\n| 孔茨 | 将职能修正为计划、组织、人事、领导、控制 | 20世纪50年代 | ✗ 是对法约尔理论的**继承与发展**，时间在后 |\n| 韦伯 | 理想行政组织体系（官僚制）理论 | 20世纪初 | ✗ 侧重组织理论，非管理职能 |\n\n**第三步：验证时间逻辑**\n- 法约尔1916年首次提出五大职能 → 孔茨20世纪中叶才在此基础上修改完善；\n- 泰罗与韦伯的研究重点均不在管理职能的划分上。\n\n**第四步：核对教科书标准表述**\n中国管理学教材（如周三多《管理学》）中的标准表述为：“法约尔最早对管理的具体职能加以概括和系统论述。” 与原答案一致。\n\n**结论：推理无误，原答案正确。**\n\n---\n\n**正确答案：B**\n\n**解析：**\n\n法国管理学家**亨利·法约尔**最早对管理的具体职能加以概括和系统论述。他在1916年出版的《工业管理与一般管理》一书中，首次提出管理具有五大职能：\n- 计划\n- 组织\n- 指挥\n- 协调\n- 控制\n\n**其他选项辨析：**\n- **A. 泰罗**：科学管理理论之父，侧重于车间层面的作业管理和工作定额研究；\n- **C. 孔茨**：管理过程学派代表人物，将管理职能归纳为计划、组织、人事、领导、控制，但是对其之后的发展和完善；\n- **D. 韦伯**：提出了“理想的行政组织体系”理论（官僚制理论），被称为“组织理论之父”。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**正确答案：B**
+
+**解析：**
+
+法国管理学家**亨利·法约尔（Henri Fayol）**最早对管理的具体职能加以概括和系统论述。他在1916年出版的《工业管理与一般管理》一书中，首次提出管理具有五大职能：
+- 计划
+- 组织
+- 指挥
+- 协调
+- 控制
+
+**其他选项辨析：**
+- **A. 泰罗**：科学管理理论之父，侧重于车间层面的作业管理和工作定额研究；
+- **C. 孔茨**：管理过程学派代表人物，将管理职能归纳为计划、组织、人事、领导、控制，但是在其之后的发展和完善；
+- **D. 韦伯**：提出了“理想的行政组织体系”理论（官僚制理论），被称为“组织理论之父”。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-27</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>甲企业以融资租赁方式租入乙企业的一台机械设备，则下列对该设备计提折旧的叙述中，正确的是____。
+A. 甲企业对该设备不计提折旧
+B. 甲企业应采用与自有资产相一致的会计政策
+C. 如果能够合理确定该设备在租赁期届满时甲企业将会取得此设备的所有权，则应以该设备全新时的预计使用年限作为折旧期间
+D. 该设备的折旧方法和折旧年限应按乙企业有关资产的折旧方法和折旧年限处理
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;**正确答案：B**\n\n**逐步验证过程：**\n\n**第一步：确认交易性质**\n- 甲企业 = 承租人（租入方）\n- 乙企业 = 出租人（租出方）\n- 租赁方式 = 融资租赁\n\n按照租赁准则，融资租赁实质上转移了与资产所有权有关的全部风险和报酬，承租人应将租入资产视同自有资产核算。这一基础判断无误。\n\n**第二步：逐项复核**\n\n- **A 选项复核**：承租人对融资租入资产应视同自有资产计提折旧，“不计提折旧”只适用于经营租赁。→ A 确认错误 ✓\n\n- **B 选项复核**：准则明确规定，承租人应采用与自有固定资产相一致的折旧政策对融资租入资产计提折旧。→ B 确认正确 ✓\n\n- **C 选项复核**：准确定位后发现此处的表述存在陷阱。准则（含新租赁准则 CAS 21）规定：能够合理确定租赁期届满时取得租赁资产所有权的，应当在租赁资产**剩余使用寿命**内计提折旧。而 C 选项说的是“全新时的预计使用年限”——由于该设备在出租之前可能已被乙企业使用过，租赁开始日其尚有剩余寿命，以“全新时的使用年限”作为折旧期间是错误的。→ C 确认错误 ✓（我此前的解析方向正确，但表述“剩余使用寿命”这一关键依据可以更明确）\n\n- **D 选项复核**：折旧政策和年限应按**承租人（甲企业）**的标准处理，与出租人（乙企业）无关。→ D 确认错误 ✓\n\n**第三步：结论**\n\n复核后各选项判断与原解答一致，无计算或推理错误，**原答案 B 保持不变**。\n\n---\n\n**正确答案：B**\n\n**解析：**\n\n融资租赁方式下，与租赁资产所有权有关的全部风险和报酬实质上已转移给承租人，甲企业应将租入设备视同自有资产入账，并**采用与自有资产相一致的会计政策计提折旧**。\n\n- **A 错误**：融资租入资产应计提折旧（经营租赁租入的资产承租人才不计提折旧）。\n- **C 错误**：能合理确定租赁期届满时取得所有权的，应以租赁开始日该设备的**剩余使用寿命**作为折旧期间，而非设备全新时的预计使用年限（设备出租前可能已被使用过）。\n- **D 错误**：折旧方法和折旧年限应按**承租人（甲企业）**有关资产的标准处理，与出租人（乙企业）无关。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**正确答案：B**
+
+**解析：**
+
+根据租赁准则的规定，承租人（甲企业）以融资租赁方式租入的资产，虽然法律上的所有权属于出租人（乙企业），但承租人在租赁期内实质上控制并享有该资产带来的经济利益，应将其确认为本企业的资产，并**采用与自有资产相一致的会计政策计提折旧**。
+
+**其他选项错误原因：**
+
+- **A 错误**：融资租赁租入的资产视同承租人的自有资产，甲企业应当计提折旧（经营租赁租入的资产承租人才不计提折旧）。
+
+- **C 错误**：如果能合理确定租赁期届满时承租人将取得资产所有权，应以租赁开始日租赁资产的**剩余使用寿命**作为折旧期间，而不是该设备全新时的预计使用年限。
+
+- **D 错误**：折旧方法和折旧年限应按**承租人（甲企业）**有关资产的折旧政策和年限处理，与出租人（乙企业）无关。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::civil_servant-val-9</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>在现代社会，教育符号也即文凭和学历是一种重要的文化货币，手持符号资本，可进入相应职业群体、身份团体和社会位置。譬如，凭借医学博士文凭，可成为医生。此为教育的筛选功能，亦被喻为人才的分类编码场，如同公共汽车总站，目的地不同的人选择不同的路线，乘坐不同的车辆，到达不同的地方。 下列选项不符合文意的一项是____。
+A. 文凭与学历都是符号资本
+B. 教育符号是人才的分类编码
+C. 文凭体现了教育的筛选功能
+D. 手持相应的符号资本才能进入相应的职业群体
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;**逐步验证：**\n\n**第一步：定位原文关键句**\n- ① “教育符号也即文凭和学历是一种重要的文化货币，手持符号资本，可进入相应职业群体、身份团体和社会位置”\n- ② “譬如，凭借医学博士文凭，可成为医生。此为教育的筛选功能”\n- ③ “此……亦被喻为人才的分类编码场，如同公共汽车总站……”\n\n**第二步：逐项比对推理**\n\n- **A项验证**：由①可知，“教育符号”即“文凭和学历”，是“文化货币”，且是可被“手持”的“符号资本”，三者等同。A项推理成立。✓\n\n- **C项验证**：由②可知，“凭借医学博士文凭，可成为医生”这一例证被原文明确表述为“教育的筛选功能”，故文凭确实体现了筛选功能。C项推理成立。✓\n\n- **D项验证**：由①“手持符号资本，可进入相应职业群体”及②中“医学博士文凭→医生”的对应关系，可知持有相应符号资本是进入相应职业群体的前提。D项推理成立。✓\n\n- **B项验证**：由③可知，被喻为“人才的分类编码场”的主语是**“此”**，即上文所说的**“教育的筛选功能”**（指教育本身），而非“教育符号”（文凭、学历）。B项将主体偷换为“教育符号”，属于偷换概念。✗\n\n**验证结论**：原答案无误，无需改正。\n\n---\n\n**B**\n\n**解析：**\n\n- **A项符合文意**：原文指出“教育符号也即文凭和学历是一种重要的文化货币……手持符号资本”，可见文凭与学历正是这种符号资本。\n\n- **C项符合文意**：原文以“凭借医学博士文凭，可成为医生”为例，并明确指出“此为教育的筛选功能”，即文凭体现了教育的筛选功能。\n\n- **D项符合文意**：原文说“手持符号资本，可进入相应职业群体、身份团体和社会位置”，且“医学博士文凭→医生”的例子体现了文凭与职业的对应关系，D项表述与文意一致。\n\n- **B项不符合文意**：原文说的是“教育的筛选功能……亦被喻为人才的分类编码场”，即被喻为“分类编码场”的主体是**教育（的筛选功能）**，而非“教育符号”。B项偷换概念，将教育本身的功能表述为“教育符号是分类编码”，与原文不符。\n\n故正确答案为 **B**。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**B**
+
+**解析：**
+
+- **A项符合文意**：原文指出“教育符号也即文凭和学历是一种重要的文化货币……手持符号资本”，可见文凭与学历正是这种符号资本。
+
+- **C项符合文意**：原文以“凭借医学博士文凭，可成为医生”为例，并明确指出“此为教育的筛选功能”，即文凭体现了教育的筛选功能。
+
+- **D项符合文意**：原文说“手持符号资本，可进入相应职业群体、身份团体和社会位置”，结合教育“筛选功能”的语境，D项表述与文意一致。
+
+- **B项不符合文意**：原文说的是“教育的筛选功能……被喻为人才的分类编码场”，即被喻为“分类编码场”的主体是**教育（的筛选功能）**，而非“教育符号”。B项偷换概念，将教育本身的功能表述为“教育符号是分类编码”，与原文不符。
+
+故正确答案为 **B**。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::computer_architecture-val-18</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>下列关于Cache的说法中，正确的是____。
+A. 采用直接映像时，Cache无需考虑替换问题
+B. 如果选用最优替换算法，则Cache的命中率可以达到100%
+C. Cache本身的速度越快，则Cache存储器的等效访问速度就越快
+D. Cache的容量与主存的容量差别越大越好
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;**逐步验证：**\n\n- **验证A**：直接映像方式下，主存中每个块只能映射到Cache中**唯一确定**的一个块位置。发生失效调入新块时，该位置上的旧块必须被替换，且替换对象没有其他选择。因此**不存在“替换哪一块”的决策问题**，确实无需替换算法。→ **推理成立，A正确**。\n\n- **验证B**：所谓“最优替换算法（OPT）”只能做到“替换将来最长时间不被使用的块”，使**冲突失效**最少。但程序**首次访问**某块时，Cache中必然没有该块（强制性失效/冷启动失效），这种失效任何替换算法都无法消除。因此命中率不可能达到100%。→ **推理成立，B错误**。\n\n- **验证C**：需要更严谨地分析。Cache存储器的等效访问时间 ≈ H×Tc + (1−H)×Tm（H为命中率），即**等效访问速度同时取决于命中率H和Cache本身的速度Tc**。若Cache本身很快但命中率很低（如容量设计不当、映像方式不佳），等效访问速度依然上不去。此外，追求Cache本身过快往往要牺牲容量，反而降低命中率。因此“Cache本身速度越快，等效访问速度就越快”这一单因素论断不成立。→ **推理成立，C错误**。\n\n- **验证D**：Cache容量增大可以提高命中率，但命中率会趋于饱和，且容量越大成本越高、越难做快；Cache容量应根据程序局部性和成本合理选取，与主存容量的差别**并非越大越好**。→ **推理成立，D错误**。\n\n**结论：原解答经复核无误，正确答案仍为 A。**\n\n---\n\n**最终答案：**\n\n**正确答案：A**\n\n**解析：**\n\n- **A（正确）**：采用直接映像方式时，主存的每一块只能唯一地映射到Cache的一个特定块位置。因此当需要调入新块时，被替换的块是唯一确定的，**不存在选择替换哪一块的问题**，无需替换算法。\n\n- **B（错误）**：即使采用最优替换算法，程序第一次访问某个块时必然发生**强制性失效（冷启动失效）**，Cache中尚无该块内容，因此命中率不可能达到100%。\n\n- **C（错误）**：Cache的等效访问速度不仅取决于Cache本身的速度，还与**命中率**密切相关。若命中率低，即使Cache速度很快，等效访问速度也不会快。\n\n- **D（错误）**：Cache容量越大成本越高、速度越难保证。Cache容量只需根据程序局部性合理选取即可，并非与主存容量差别越大越好。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**正确答案：A**
+
+**解析：**
+
+- **A（正确）**：采用直接映像方式时，主存的每一块只能唯一地映射到Cache的一个特定块位置。因此当需要调入新块时，被替换的块是唯一确定的，**不存在选择替换哪一块的问题**，无需替换算法。
+
+- **B（错误）**：即使采用最优替换算法，程序第一次访问某个块时必然发生**强制性失效（冷启动失效）**，Cache中尚无该块内容，因此命中率不可能达到100%。
+
+- **C（错误）**：Cache的等效访问速度不仅取决于Cache本身的速度，还与**命中率**密切相关。若命中率低，即使Cache速度很快，等效访问速度也不会快。
+
+- **D（错误）**：Cache容量越大成本越高、速度越难保证。Cache容量只需根据程序局部性合理选取即可，并非与主存容量差别越大越好。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::computer_network-val-12</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>下列关于交换技术叙述错误的是____
+A. 电路交换在发送与接收方的物理链路上预留带宽
+B. 数据报交换可能出现分组乱序
+C. 数据报交换可能出现分组乱序
+D. 报文交换要求有较大缓存
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;**C**\n\n（注：经逐步复核，题干中 B、C 两项文字重复，原题 C 项应为“**虚电路交换可能出现分组乱序**”，即错误项。）\n\n**逐项验证：**\n\n- **A 正确**：电路交换在通信前建立专用通路，通过 FDM/TDM 在发送方与接收方之间的沿途每段物理链路上预留带宽，通信期间独占资源。叙述无误。\n\n- **B 正确**：数据报交换中每个分组独立选路，可经过不同路径、承受不同时延，因此到达顺序可能与发送顺序不一致，即可能出现分组乱序。叙述无误。\n\n- **C 错误**：虚电路交换在建立连接后，所有分组沿同一条虚电路、按相同路径顺序传输，**分组按序到达，不会出现乱序**。“可能出现分组乱序”的说法与虚电路的特性矛盾，故此叙述错误。\n\n- **D 正确**：报文交换采用存储转发方式，中间节点必须完整接收并存储整个报文后才能向下一跳转发，而报文长度不定且可能很大，因此要求节点有较大的缓存空间。叙述无误。\n\n**结论**：复核后确认原解答无误，错误叙述为 C 项，最终答案仍为 **C**。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**C**
+
+（注：题干中 B、C 两项文字重复，原题 C 项应为“**虚电路交换可能出现分组乱序**”，即错误项。）
+
+**解析：**
+
+- **A 正确**：电路交换在通信前建立专用通路，通过 FDM/TDM 等方式在沿途物理链路上为通信双方预留带宽。
+- **B 正确**：数据报交换中各分组独立选路，可能经过不同路径、不同时延到达，因此可能出现乱序。
+- **C 错误**：虚电路交换在建立连接后，所有分组都沿同一条虚电路按序传输，**不会出现乱序**。
+- **D 正确**：报文交换采用存储转发方式，节点必须接收并存储完整个报文后才能转发，因此需要较大的缓存空间。</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::electrical_engineer-val-5</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>在系统的初始运行条件、故障持续时间均完全相同的情况下，导致系统的暂态稳定性最差的是____
+A. 单相接地短路
+B. 两相短路
+C. 三相短路
+D. 断相故障
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;**C. 三相短路**\n\n**逐步复核：**\n\n**第一步：明确判据**\n暂态稳定的关键在于故障期间发电机电磁功率 P_e 被压低的程度——P_e 降得越低，加速功率 (P_m − P_e) 越大，转子加速越猛，加速面积越大，越容易失稳。\n\n**第二步：用对称分量法比较各短路类型在正序网络中的等效附加阻抗 Z_Δ**\n\n| 故障类型 | 正序网络等效附加阻抗 Z_Δ | 严重程度 |\n|---------|------------------------|---------|\n| 三相短路 | Z_Δ = 0（故障点正序直接金属性接地） | 最严重 |\n| 两相接地短路 | Z_Δ = Z₂ ∥ Z₀ | 较严重 |\n| 两相短路 | Z_Δ = Z₂ | 中等 |\n| 单相接地短路 | Z_Δ = Z₂ + Z₀ | 最轻 |\n\n由于 Z₂ ∥ Z₀ &lt; Z₂ &lt; Z₂ + Z₀，附加阻抗越小，转移电抗越大，故障期间可传输的电磁功率越小。\n\n**第三步：验证各选项**\n\n- **C（三相短路）**：正序附加阻抗为零，故障点三相电压均为零，转移阻抗达最大，P_e 骤降至接近零，加速面积最大——最不利。✓\n- **B（两相短路）**：Z_Δ = Z₂，严重程度次于三相短路。✓\n- **A（单相接地短路）**：Z_Δ = Z₂ + Z₀ 最大，P_e 下降最少，最轻。✓\n- **D（断相故障）**：属纵向故障，一相断线时正序网络相当于串入 Z₂ ∥ Z₀，输电功率下降但仍可通过序网耦合继续传输功率，危害明显小于三相短路（P_e ≈ 0）。✓\n\n**第四步：结论**\n复核无误——三相短路使故障期间电磁功率下降最多、加速面积最大，暂态稳定性最差。原答案正确，无需更改。\n\n**最终答案：C. 三相短路**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**C. 三相短路**
+
+**解析：**
+
+短路故障的严重程度取决于故障期间输电功率（电磁功率）下降的程度：
+
+- **三相短路**时，故障点三相电压均为零，正序网络中转移电抗最大，发电机输出的电磁功率急剧下降（几乎降到零），机械功率与电磁功率的失衡最严重，转子加速最大，加速面积最大，故暂态稳定性最差。
+
+- **单相接地短路**对正序网络影响最小（通过正、负、零序复合序网计算，转移电抗增大有限），电磁功率下降最少，暂态稳定性相对最好。
+
+- **两相短路**的严重程度介于两者之间。
+
+- **断相故障**属于纵向故障，通常伴随功率下降但不伴随严重短路，对暂态稳定的危害一般小于短路故障。
+
+因此，在初始运行条件、故障持续时间均相同的情况下，**三相短路（C）**导致系统的暂态稳定性最差。</pre></details></div></section>
+</main>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · k12bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · K12-Bench：课程认知（知识结构层，多选题）</h1>
+    <p class="muted">基准 k12bench · 模型 <strong>MiniMax-M3</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">18.5%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">37</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>K12-Bench（Liang et al. 2026, arXiv:2605.09635）是从人教版 K-12 数理化生教材构建的课程对齐知识图谱派生出的 23,640 道四选多选题，考察“课程认知”——先修链、概念分类、实验-概念链、跨章定位等课程知识结构；论文明确将其与 C-Eval/CMMLU 的事实召回区分开。对应本仓库 P15（学习路径规划·知识结构层）。</p><p>五个任务族：prereq（先修闭包+直接后继）、locate（跨章首次出现+章节先修）、neighbor（概念分类/相关）、ground（概念↔习题）、evidence（概念↔实验验证链）。纯文本、无图。</p><p>规则判分、无 LLM 裁判：每题标准答案是一组选项字母，按 instance-level 精确率/召回率/F1（集合交并）与 Exact Match 计分。报告顶栏“正确率”为 Exact Match（整题全对才算对）；面板挂载的分级指标 instance-level Macro-F1 见 summary.json 的 extra_metrics（总体 + 分任务族）。</p><p class='muted'>主页：<a href='https://github.com/haolpku/K12-Dataset'>https://github.com/haolpku/K12-Dataset</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#evidence::subtask1::chemistry_xzxbx3_rjb_cpt385</span><span class='tag'>task_family=evidence</span> <span class='tag'>subject=chemistry</span></div><div class='qtext'>教材中哪些实验可以验证化学中的【线型高分子结构】？
+A. 实验5-1 苯酚与甲醛制备酚醛树脂
+B. 高吸水性树脂的吸水性能比较实验
+C. 高分子分离膜在海水淡化中的应用探究
+D. 苯酚的酸性实验（与NaOH和稀盐酸）
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div><div class='card'><div class='card-head'><span class='pid'>#evidence::subtask2::chemistry_9b_rjb_exp40</span><span class='tag'>task_family=evidence</span> <span class='tag'>subject=chemistry</span></div><div class='qtext'>化学中的【比较酸和碱与指示剂的作用】实验，在教材中被用来验证什么原理？
+A. 碱与酸碱指示剂的作用
+B. 碱与指示剂的作用
+C. 酸与指示剂的作用
+D. 酸与酸碱指示剂的作用
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B,C</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;headline accuracy = Exact Match; macro_f1 = instance-level Macro-F1 (the panel-mounted metric)&quot;,
+  &quot;mounted_on&quot;: &quot;P15 学习路径规划（知识结构层）&quot;,
+  &quot;overall&quot;: {
+    &quot;n&quot;: 200,
+    &quot;exact_match&quot;: 0.185,
+    &quot;macro_f1&quot;: 0.2746,
+    &quot;precision&quot;: 0.2533,
+    &quot;recall&quot;: 0.3567
+  },
+  &quot;task_family=prereq&quot;: {
+    &quot;n&quot;: 57,
+    &quot;exact_match&quot;: 0.2632,
+    &quot;macro_f1&quot;: 0.3782,
+    &quot;precision&quot;: 0.345,
+    &quot;recall&quot;: 0.4912,
+    &quot;p15_relevance_weight&quot;: 1.0
+  },
+  &quot;task_family=locate&quot;: {
+    &quot;n&quot;: 89,
+    &quot;exact_match&quot;: 0.1461,
+    &quot;macro_f1&quot;: 0.1655,
+    &quot;precision&quot;: 0.1601,
+    &quot;recall&quot;: 0.1798,
+    &quot;p15_relevance_weight&quot;: 0.8
+  },
+  &quot;task_family=neighbor&quot;: {
+    &quot;n&quot;: 36,
+    &quot;exact_match&quot;: 0.1944,
+    &quot;macro_f1&quot;: 0.4046,
+    &quot;precision&quot;: 0.3542,
+    &quot;recall&quot;: 0.6204,
+    &quot;p15_relevance_weight&quot;: 0.5
+  },
+  &quot;task_family=ground&quot;: {
+    &quot;n&quot;: 15,
+    &quot;exact_match&quot;: 0.0667,
+    &quot;macro_f1&quot;: 0.2044,
+    &quot;precision&quot;: 0.2,
+    &quot;recall&quot;: 0.2667,
+    &quot;p15_relevance_weight&quot;: 0.5
+  },
+  &quot;task_family=evidence&quot;: {
+    &quot;n&quot;: 3,
+    &quot;exact_match&quot;: 0.3333,
+    &quot;macro_f1&quot;: 0.3333,
+    &quot;precision&quot;: 0.3333,
+    &quot;recall&quot;: 0.3333,
+    &quot;p15_relevance_weight&quot;: 0.5
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>200</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>evidence</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>ground</td><td>15</td><td>1</td><td>0.067</td><td><div class='bar'><i style='width:7%'></i></div></td></tr><tr><td>locate</td><td>89</td><td>13</td><td>0.146</td><td><div class='bar'><i style='width:15%'></i></div></td></tr><tr><td>neighbor</td><td>36</td><td>7</td><td>0.194</td><td><div class='bar'><i style='width:19%'></i></div></td></tr><tr><td>prereq</td><td>57</td><td>15</td><td>0.263</td><td><div class='bar'><i style='width:26%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>biology</td><td>44</td><td>13</td><td>0.295</td><td><div class='bar'><i style='width:30%'></i></div></td></tr><tr><td>chemistry</td><td>75</td><td>9</td><td>0.120</td><td><div class='bar'><i style='width:12%'></i></div></td></tr><tr><td>math</td><td>47</td><td>9</td><td>0.191</td><td><div class='bar'><i style='width:19%'></i></div></td></tr><tr><td>physics</td><td>34</td><td>6</td><td>0.176</td><td><div class='bar'><i style='width:18%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#evidence::subtask1::chemistry_xzxbx3_rjb_cpt385</span><span class='tag'>task_family=evidence</span> <span class='tag'>subject=chemistry</span></div><div class='qtext'>教材中哪些实验可以验证化学中的【线型高分子结构】？
+A. 实验5-1 苯酚与甲醛制备酚醛树脂
+B. 高吸水性树脂的吸水性能比较实验
+C. 高分子分离膜在海水淡化中的应用探究
+D. 苯酚的酸性实验（与NaOH和稀盐酸）
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#evidence::subtask2::chemistry_9b_rjb_exp40</span><span class='tag'>task_family=evidence</span> <span class='tag'>subject=chemistry</span></div><div class='qtext'>化学中的【比较酸和碱与指示剂的作用】实验，在教材中被用来验证什么原理？
+A. 碱与酸碱指示剂的作用
+B. 碱与指示剂的作用
+C. 酸与指示剂的作用
+D. 酸与酸碱指示剂的作用
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A,D</div><div class='ans'><span class='lbl'>归一化</span>A,D</div><div class='ans gold'><span class='lbl'>正确答案</span>B,C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A,D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ground::subtask1::biology_bx2_rjb_exe31</span><span class='tag'>task_family=ground</span> <span class='tag'>subject=biology</span></div><div class='qtext'>【比较蝙蝠的翼、鲸的鳍、猫的前肢与人的上肢骨骼，若它们都具有肱骨、桡骨、尺骨、腕骨、掌骨、指骨且排列顺序一致，但功能不同，这最能说明什么？】这道题主要考察了什么核心概念？
+A. 细胞和分子水平的证据
+B. 生物进化论
+C. 同源结构（同源器官）
+D. 化石证据（地层证据）
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ground::subtask1::biology_xzxbx1_rjb_exe15</span><span class='tag'>task_family=ground</span> <span class='tag'>subject=biology</span></div><div class='qtext'>要解决【判断：经常运用已学过的生物学概念去解释相关的生命现象，概念就不容易遗忘。（ ）】这道题，主要需要用到哪些知识？
+A. 记忆的四个阶段
+B. 长时记忆的突触机制
+C. 海马与短时记忆
+D. 人脑的高级功能
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ground::subtask1::chemistry_bx2_rjb_exe30</span><span class='tag'>task_family=ground</span> <span class='tag'>subject=chemistry</span></div><div class='qtext'>要解决【某同学用新制的Cu(OH)2检验三种溶液甲、乙、丙。加热后，甲溶液出现砖红色沉淀，乙溶液无明显变化，丙溶液生成蓝色沉淀但加热仍不变色。已知三种溶液分别为葡萄糖溶液、蔗糖溶液和食盐溶液。请判断甲、乙、丙各为何种溶液，并说明判断依据。】这道题，主要需要用到哪些知识？
+A. 多糖
+B. 蔗糖
+C. 葡萄糖
+D. 葡萄糖的特征反应
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C,D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ground::subtask1::chemistry_xzxbx2_rjb_exe7</span><span class='tag'>task_family=ground</span> <span class='tag'>subject=chemistry</span></div><div class='qtext'>要解决【甲烷分子CH₄的键角为109°28′，4个C–H单键完全等价。若仅用1个2s轨道和3个相互垂直的2p轨道分别与4个H原子的1s轨道重叠，能否解释这种结构？应采用哪种杂化方式才能合理解释甲烷分子的键角和形状？】这道题，主要需要用到哪些知识？
+A. V形（角形）分子结构
+B. 有机化合物分子结构
+C. 分子空间结构类型
+D. sp³杂化轨道
+请输出所有正确选项的字母，多个用英文逗号分隔（例如：A 或 A,C）。只允许输出大写字母 A、B、C、D，不要输出任何解释或其他文字。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div></section>
+</main>
+</body>
+</html>

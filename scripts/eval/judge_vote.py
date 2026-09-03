@@ -6,12 +6,22 @@ this from the official ``run_p2_experiment.py``; Safe-Child-LLM uses it for the
 paper's two labels).  The logic is independent of any benchmark, so it lives
 here rather than being copied per adapter.
 
-Behaviour is deliberately identical to the original ``EduGuardAdversarialAdapter``
-implementation it was lifted from: three attempts per vote with a linear
-backoff, votes cast concurrently, replies lowercased and stripped of wrapping
+Scoring behaviour is deliberately identical to the original
+``EduGuardAdversarialAdapter`` implementation it was lifted from: three attempts
+per vote with a linear backoff, replies lowercased and stripped of wrapping
 punctuation before counting, and the most-voted token winning with ties broken
 by first appearance (verified identical to the original ``Counter.most_common``
 call across every ballot combination on the un-normalized path).
+
+The one deliberate departure is that the ``bon`` votes are cast **sequentially**
+rather than concurrently. They are independent samples of the same prompt, so
+serializing them changes no ballot, no tie-break (order is preserved either way)
+and no score -- only wall-clock. What it fixes is the caller's concurrency knob:
+``--extract-concurrency N`` runs N items at once, and with concurrent voting each
+of those items held ``bon`` judge calls open, so the real in-flight count was
+``3N`` while the knob said ``N``. That hidden 3x is what walked a nominally modest
+setting into ``base_resp 2062`` (MiniMax Token Plan rate limit). Now the knob
+means what it says; to raise judge throughput, raise the caller's concurrency.
 """
 
 from __future__ import annotations
@@ -19,7 +29,6 @@ from __future__ import annotations
 import time
 from collections import Counter
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
 
 from .minimax_client import MiniMaxClient
 from .providers import extraction_max_tokens
@@ -64,7 +73,7 @@ def majority_vote(
     bon: int = DEFAULT_BON,
     normalize: Callable[[str], str] | None = None,
 ) -> tuple[str, list[str]]:
-    """Cast ``bon`` concurrent votes; return (majority decision, cleaned votes).
+    """Cast ``bon`` votes in sequence; return (majority decision, cleaned votes).
 
     ``normalize`` maps a raw reply to the token actually voted on, for judges
     whose verdict is a value the reply may wrap in prose (e.g. one digit of a
@@ -72,8 +81,7 @@ def majority_vote(
     cannot win by accident when the real answers disagree. Omit it to vote on
     the cleaned reply text itself, which is what a single-word judge returns.
     """
-    with ThreadPoolExecutor(max_workers=bon) as pool:
-        votes = list(pool.map(lambda _: cast_vote(client, model, prompt), range(bon)))
+    votes = [cast_vote(client, model, prompt) for _ in range(bon)]
     # official normalization: lowercase + strip quotes/periods/commas
     cleaned = [v.strip().strip("'\".,") for v in votes]
     ballots = [normalize(v) for v in cleaned] if normalize else cleaned

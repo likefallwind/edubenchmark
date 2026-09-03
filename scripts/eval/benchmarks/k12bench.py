@@ -99,13 +99,26 @@ class K12BenchAdapter(BenchmarkAdapter):
 
     def load_items(self, limit: int | None = None, offset: int = 0) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
+        # ``ground.jsonl`` gives 630 source ids to two derived questions each: a
+        # "core concept" variant and a "knowledge/method" variant that differ in
+        # question, options and gold. Both are real questions, so neither may be
+        # dropped -- but a shared item_id collapses them in every dict keyed by it
+        # (resume cache, the extraction/scoring index, suite materialisation,
+        # cross-suite reuse), which used to score one model answer against both
+        # golds and made the first of each pair look ~90% wrong. Suffix repeats so
+        # every item is individually addressable. The first occurrence keeps the
+        # raw id, so frozen item lists and earlier runs still resolve to the same
+        # question.
+        seen: dict[str, int] = {}
         for family in self.families:
             for row in _read_jsonl(DATA_DIR / f"{family}.jsonl"):
+                raw_id = str(row["id"])
+                nth = seen[raw_id] = seen.get(raw_id, 0) + 1
                 options = {k: row["options"].get(k, "") for k in LETTERS}
                 gold = sorted(a.strip().upper() for a in row["answer"] if a.strip())
                 items.append(
                     {
-                        "item_id": str(row["id"]),
+                        "item_id": raw_id if nth == 1 else f"{raw_id}#{nth}",
                         "text": self._format_question(row["question"], options),
                         "image_paths": [],
                         "gold": gold,
@@ -113,7 +126,7 @@ class K12BenchAdapter(BenchmarkAdapter):
                             "options": options,
                             "task_family": family,
                             "subtask": row.get("subtask", family),
-                            "subject": _subject(str(row["id"])),
+                            "subject": _subject(raw_id),
                         },
                     }
                 )

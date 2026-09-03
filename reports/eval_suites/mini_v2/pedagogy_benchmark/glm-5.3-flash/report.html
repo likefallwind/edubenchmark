@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · pedagogy_benchmark</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · Pedagogy Benchmark：教师资格考试的教学法知识（选择题）</h1>
+    <p class="muted">基准 pedagogy_benchmark · 模型 <strong>glm-5.3-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">88.5%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">200</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">177</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>Pedagogy Benchmark 取自智利教育部教师专业发展考试的多项选择题（西班牙语原题译为英文），共 1,143 题，分为 CDPK（跨学科教学法知识，920 题）与 SEND（特殊教育需要与障碍，223 题）两个子基准，覆盖教学策略、评估方法、学生理解、教育理论、课堂管理等教学法子领域。与考察学科内容知识的通用基准不同，它直接测量「怎么教」而非「教什么」。</p><p>提示词与答案解析均移植自官方仓库 src/cdpk/benchmark_answers.py：官方提供 3-shot（gen_prompt）与零样本（gen_prompt_reasoning_models，面向推理模型）两个变体，本适配器默认按模型自动选择并在 summary 中记录实际使用的变体。3-shot 所需的示例题来自上游仓库DVC 管理的 data/Chile/ 目录，不在 HF 数据集内；缺失时本适配器直接报错，不会静默退化为零样本。</p><p>选项范围为 A–G（少数题目多于四个选项）。答案解析直接使用官方 REPAT 正则（含对 DeepSeek-R1、Llama 4、Claude 4 的格式容差），**不调用 LLM 抽取**；无法解析的回复计为 bad_format。官方做法是剔除 bad_format 率超过 5% 的模型，本适配器只在 summary 中给出该标志，不自动剔除。</p><p class='muted'>主页：<a href='https://github.com/AI-for-Education/pedagogy-benchmark'>https://github.com/AI-for-Education/pedagogy-benchmark</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#cdpk:CDPK_science:1</span><span class='tag'>task=cdpk</span> <span class='tag'>category=Science</span> <span class='tag'>pedagogical_subdomain=Teaching strategies</span></div><div class='qtext'>(题面缺失)</div><div class='ans gold inline'><span class='lbl'>参考答案</span>A</div></div><div class='card'><div class='card-head'><span class='pid'>#cdpk:CDPK_science:5</span><span class='tag'>task=cdpk</span> <span class='tag'>category=Science</span> <span class='tag'>pedagogical_subdomain=Teaching strategies</span></div><div class='qtext'>(题面缺失)</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;Accuracy over multiple-choice items, official rule-based parsing (src/cdpk/benchmark_answers.py REPAT). No LLM extraction.&quot;,
+  &quot;prompt_variant&quot;: &quot;colleague&quot;,
+  &quot;prompt_variant_source&quot;: &quot;official gen_prompt (3-shot)&quot;,
+  &quot;bad_format_rate&quot;: 0.0,
+  &quot;bad_format_count&quot;: 0,
+  &quot;official_exclusion_threshold&quot;: 0.05,
+  &quot;exceeds_official_bad_format_threshold&quot;: false,
+  &quot;audit&quot;: {
+    &quot;metric_protocol&quot;: &quot;in-repo port of AI-for-Education/pedagogy-benchmark&quot;,
+    &quot;prompt_version&quot;: &quot;official-v1&quot;,
+    &quot;prompt_sha256&quot;: &quot;8cae91b36000b6d026e1e7eb6bda1ef4720f4b584c5d2402c292a2f968c9d50f&quot;,
+    &quot;n_shot&quot;: 0,
+    &quot;scored_rows&quot;: 200
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>200</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cdpk</td><td>160</td><td>147</td><td>0.919</td><td><div class='bar'><i style='width:92%'></i></div></td></tr><tr><td>send</td><td>40</td><td>30</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 category 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Creative arts</td><td>26</td><td>23</td><td>0.885</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>General</td><td>14</td><td>13</td><td>0.929</td><td><div class='bar'><i style='width:93%'></i></div></td></tr><tr><td>Literacy</td><td>26</td><td>25</td><td>0.962</td><td><div class='bar'><i style='width:96%'></i></div></td></tr><tr><td>Maths</td><td>23</td><td>21</td><td>0.913</td><td><div class='bar'><i style='width:91%'></i></div></td></tr><tr><td>SEND</td><td>40</td><td>30</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>Science</td><td>33</td><td>32</td><td>0.970</td><td><div class='bar'><i style='width:97%'></i></div></td></tr><tr><td>Social studies</td><td>20</td><td>17</td><td>0.850</td><td><div class='bar'><i style='width:85%'></i></div></td></tr><tr><td>Technology</td><td>18</td><td>16</td><td>0.889</td><td><div class='bar'><i style='width:89%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 pedagogical_subdomain 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>Assessment</td><td>37</td><td>33</td><td>0.892</td><td><div class='bar'><i style='width:89%'></i></div></td></tr><tr><td>Classroom management</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Education theories</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Other</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>Student understanding</td><td>62</td><td>54</td><td>0.871</td><td><div class='bar'><i style='width:87%'></i></div></td></tr><tr><td>Teaching strategies</td><td>93</td><td>82</td><td>0.882</td><td><div class='bar'><i style='width:88%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#cdpk:CDPK_science:114</span><span class='tag'>task=cdpk</span> <span class='tag'>category=Science</span> <span class='tag'>pedagogical_subdomain=Student understanding</span></div><div class='qtext'>(题面缺失)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#send:CDPK_send:16</span><span class='tag'>task=send</span> <span class='tag'>category=SEND</span> <span class='tag'>pedagogical_subdomain=Teaching strategies</span></div><div class='qtext'>(题面缺失)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#cdpk:CDPK_literacy:59</span><span class='tag'>task=cdpk</span> <span class='tag'>category=Literacy</span> <span class='tag'>pedagogical_subdomain=Teaching strategies</span></div><div class='qtext'>(题面缺失)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#send:CDPK_send:50</span><span class='tag'>task=send</span> <span class='tag'>category=SEND</span> <span class='tag'>pedagogical_subdomain=Student understanding</span></div><div class='qtext'>(题面缺失)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#cdpk:CDPK_creative_arts:24</span><span class='tag'>task=cdpk</span> <span class='tag'>category=Creative arts</span> <span class='tag'>pedagogical_subdomain=Student understanding</span></div><div class='qtext'>(题面缺失)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#send:CDPK_send:75</span><span class='tag'>task=send</span> <span class='tag'>category=SEND</span> <span class='tag'>pedagogical_subdomain=Teaching strategies</span></div><div class='qtext'>(题面缺失)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>D</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>D</pre></details></div></section>
+</main>
+</body>
+</html>
