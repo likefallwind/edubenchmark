@@ -141,8 +141,15 @@ def main() -> None:
     # trajectory, while the released builder only selects the final point.
     # Recover the exact prefixes by matching the official question-text hash
     # embedded in every gold _key.
+    #
+    # A key must yield exactly one prefix. The raw sequences contain duplicated
+    # records (uid 11537 logs question 4169 twice with the same timestamp and
+    # result), so a hash can match at consecutive positions. Keep the earliest:
+    # the later prefix is the same sample with the current question already in
+    # its history, and a second row under the same _key collides on item_id.
     target_sequences = data / ".target_sequences.tmp.jsonl"
     matched: set[str] = set()
+    dropped: list[str] = []
     with sequences.open(encoding="utf-8") as src, target_sequences.open("w", encoding="utf-8") as dst:
         for line in src:
             obj = json.loads(line)
@@ -156,8 +163,12 @@ def main() -> None:
                 rendered = upstream._render_qinfo_str(qinfo, item)
                 digest = hashlib.sha256(rendered.encode("utf-8")).hexdigest()
                 if digest in wanted:
+                    key = f"{uid}||{digest}"
+                    if key in matched:
+                        dropped.append(f"{key}@{idx}")
+                        continue
                     dst.write(json.dumps({"uid": uid, "sequence": seq[: idx + 1]}, ensure_ascii=False) + "\n")
-                    matched.add(f"{uid}||{digest}")
+                    matched.add(key)
 
     if not matched:
         target_sequences.unlink(missing_ok=True)
@@ -185,10 +196,20 @@ def main() -> None:
     if not overlap:
         output.unlink(missing_ok=True)
         raise SystemExit("LongTutor preparation produced no keys matching the human gold")
+    # _keys() is a set, so it cannot see a duplicated key; count rows too.
+    with output.open(encoding="utf-8") as fh:
+        feature_rows = sum(1 for line in fh if line.strip())
+    if feature_rows != len(feature_keys):
+        output.unlink(missing_ok=True)
+        raise SystemExit(
+            f"LongTutor preparation produced {feature_rows} rows for {len(feature_keys)} keys; "
+            "every sample key must map to exactly one history prefix"
+        )
     manifest = {
         "source": "https://github.com/liano3/LongTutor",
         "prepared_file": str(output.relative_to(ROOT)),
-        "feature_rows": len(feature_keys),
+        "feature_rows": feature_rows,
+        "dropped_duplicate_prefixes": dropped,
         "human_gold_rows": len(gold_keys),
         "matched_gold_rows": len(overlap),
         "license_status": "upstream repository currently has no LICENSE file; do not redistribute",

@@ -130,6 +130,13 @@ the stable `_key`, and verifies the join. For the 1,000 human evaluation samples
 use `human_an_updated.jsonl` as gold, not `pipeline_an_scale.jsonl`. It must still
 fail rather than fabricate inputs if the stable-key join is empty.
 
+Each `_key` must yield exactly one history prefix. The raw trajectories contain a
+duplicated record (uid 11537 logs question 4169 twice with the same timestamp),
+so a key can match at two positions; the preparation script keeps the earliest
+and refuses a build whose row count exceeds its key count. Runs made before
+2026-09-30 loaded 1,001 samples (3,003 for Evidence) with that item counted
+twice; current runs load 1,000 (3,000).
+
 Run the three native task views with MiniMax-M3:
 
 ```bash
