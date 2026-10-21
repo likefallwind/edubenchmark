@@ -2,9 +2,57 @@
 
 ## Project Structure & Module Organization
 
-This repository is a research and benchmark-specification workspace for AI education evaluation. `README.md` is the public entry point. The complete directory contract is in `doc/repository_layout.md`, and the current data flow is in `doc/current_architecture.md`.
+This repository is a research and benchmark-specification workspace for AI education evaluation. `README.md` is the public entry point. The complete directory contract, including lifecycle rules, is in `doc/repository_layout.md`, and the current data flow is in `doc/current_architecture.md`.
 
-Machine-readable specifications, mappings, manifests, and fixed item lists live under `data/`. Human-authored methodology and profiles live under `doc/`. Generation, evaluation, and reporting code belongs in `scripts/`; the reusable per-benchmark framework is under `scripts/eval/`. Generated reports and evaluation evidence belong in `reports/`. Downloaded datasets belong in `sources/datasets/` and should not be committed. Local run-control files belong in `eval/` or `logs/`, never in `scripts/eval/` or as substitutes for `reports/eval/**/summary.json`.
+Current layout (put a new file where its class already lives; do not add new root-level files):
+
+```text
+.
+├── README.md, AGENTS.md, CLAUDE.md   public entry, canonical rules, Claude Code entry
+├── data/                 machine-readable specs, mappings, manifests, fixed item lists
+│   ├── mapping_measurement_model_v6.json   current P01-P20 mapping (source of truth)
+│   ├── <benchmark-or-suite>/               item lists and prepared assets (mini_selection_v2/, eduequity/, ...)
+│   └── student_risk_v1/                    public spec of a private self-built test set
+├── doc/                  human-authored methodology, profiles, decisions
+│   ├── benchmark_profiles/, ability_profiles/   current per-benchmark and per-ability descriptions
+│   ├── tochange/            decided or proposed changes not yet applied to data/ and reports/
+│   └── old/                 superseded documents
+├── scripts/              build, evaluation, analysis, reporting code
+│   ├── eval/                reusable evaluation framework; adapters in eval/benchmarks/
+│   └── experiments/         one-off experiments and archived, non-canonical pipelines
+├── reports/              generated evidence and reports (never hand-edit generated files)
+│   ├── eval/                per-run results; summary.json is the completion source of truth
+│   ├── eval_suites/         mini_v2 and frontier_v1 views
+│   └── atomic_ability_rebenchmark*/   current ability pipeline output and dated snapshots
+├── sources/              external material; sources/datasets/ holds downloads and stays uncommitted
+├── private/              unpublished self-built test sets; git-ignored because the repository is public
+├── tests/                deterministic offline tests
+├── skills/               product-facing skills distributed with the repository
+├── .claude/skills/       repository-maintenance skills for Claude Code
+├── html_report/          stable top-level HTML presentation outputs
+├── otherbenchmark/       imported external result bundles
+├── eval/, logs/          local run-control artifacts and longer-lived run logs
+└── tmp/                  short-lived scratch; nothing authoritative
+```
+
+Where new work goes:
+
+- Machine-readable specifications, mappings, manifests, and fixed item lists live under `data/`. Human-authored methodology and profiles live under `doc/`. Generation, evaluation, and reporting code belongs in `scripts/`; the reusable per-benchmark framework is under `scripts/eval/`. Generated reports and evaluation evidence belong in `reports/`. Downloaded datasets belong in `sources/datasets/` and should not be committed. Local run-control files belong in `eval/` or `logs/`, never in `scripts/eval/` or as substitutes for `reports/eval/**/summary.json`.
+- A new public benchmark: adapter in `scripts/eval/benchmarks/`, profile in `doc/benchmark_profiles/`; follow `.claude/skills/adding-eval-benchmark/SKILL.md`.
+- A self-built test set: public specification in `data/<set>/`, builder and validator in `scripts/build_<set>_items.py`, items and authoring drafts only in `private/<set>/`. Claude Code writes the items itself following `.claude/skills/building-private-test-sets/SKILL.md`; do not have tested-panel models generate them. Never commit items or quote them in docs, issues, or reports.
+- A decided change to abilities or mappings that is not yet applied: `doc/tochange/`. Apply it through the mapping JSON and the rebuild pipeline, then move superseded prose to `doc/old/`.
+- An abandoned or rejected pipeline kept for reference: `scripts/experiments/`, with a header stating it produced no canonical artifact; its outputs stay outside canonical paths.
+
+Worked example, the `student_risk_v1` set (2026-10-21, education-safety workstream):
+
+| Path | Content |
+|---|---|
+| `doc/tochange/education_safety_restructure_2026-10-21.md` | final education-safety structure and the set's role; mapping JSON not yet changed |
+| `data/student_risk_v1/` | `taxonomy.json`, `persona_dimensions.json`, `README.md` (composition, judge rubric, status) |
+| `scripts/build_student_risk_items.py` | persona cards, per-type authoring briefs, validation and export |
+| `private/student_risk_v1/` | `cards.jsonl`, `authored/*.jsonl` (items plus `zz_revisions_*`), `items.jsonl`, `review_sheet.csv`, `calibration_subset.jsonl`, `build_report.md` |
+| `private/student_risk_v1/_discarded_llm_pipeline/` and `scripts/experiments/build_student_risk_items_llm.py` | abandoned multi-model generation run, archived only |
+| `.claude/skills/building-private-test-sets/` | the authoring method |
 
 For evaluation output paths, rule-scored runs use `reports/eval/<benchmark>/<model-slug>/`, while LLM-judged runs use `reports/eval/<benchmark>/judge-<judge-slug>/<model-slug>/`. Underscore-prefixed evaluation subtrees are isolated support or noncanonical artifacts. Preserve dated and R-series snapshots; they are method-history evidence, not naming clutter.
 
