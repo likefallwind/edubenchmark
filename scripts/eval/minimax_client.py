@@ -114,6 +114,7 @@ class MiniMaxClient:
     def reset_usage_window(self) -> None:
         """Zero this thread's usage window before measuring a unit of work."""
         self._usage_tls.window = _empty_window()
+        self._usage_tls.finish_reasons = []
 
     def read_last_reasoning(self) -> str:
         """Return the reasoning text captured by this thread's most recent chat()."""
@@ -123,7 +124,18 @@ class MiniMaxClient:
         """Return a copy of this thread's accumulated usage since the last reset."""
         return dict(getattr(self._usage_tls, "window", None) or _empty_window())
 
-    def _record_usage(self, usage: dict[str, Any] | None) -> None:
+    def read_finish_reasons(self) -> list[str | None]:
+        """Return one provider finish reason for each completed API attempt.
+
+        A reason of ``None`` means that the OpenAI-compatible provider did not
+        send one.  Keeping this separate from token usage prevents a missing
+        reason from being misclassified as a normal stop.
+        """
+        return list(getattr(self._usage_tls, "finish_reasons", []) or [])
+
+    def _record_usage(
+        self, usage: dict[str, Any] | None, finish_reason: str | None = None
+    ) -> None:
         """Add one API response's usage to this thread's window (calls += 1).
 
         ``usage`` is None / empty when the provider omits it (some gateways or
@@ -134,6 +146,11 @@ class MiniMaxClient:
         if window is None:
             window = _empty_window()
             self._usage_tls.window = window
+        reasons = getattr(self._usage_tls, "finish_reasons", None)
+        if reasons is None:
+            reasons = []
+            self._usage_tls.finish_reasons = reasons
+        reasons.append(finish_reason)
         window["calls"] += 1
         if not isinstance(usage, dict):
             return
@@ -197,15 +214,15 @@ class MiniMaxClient:
         try:
             with urllib.request.urlopen(request, timeout=timeout or self.timeout) as response:
                 if stream:
-                    text, reasoning, usage = read_sse_stream(response)
-                    self._record_usage(usage)
+                    text, reasoning, usage, finish_reason = read_sse_stream(response)
+                    self._record_usage(usage, finish_reason)
                     self._reasoning_tls.text = reasoning
                     return text
                 data = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"MiniMax HTTP {exc.code}: {body[:500]}") from exc
-        self._record_usage(data.get("usage"))
+        self._record_usage(data.get("usage"), extract_finish_reason(data))
         self._reasoning_tls.text = extract_reasoning(data)
         return extract_text(data)
 
@@ -248,7 +265,7 @@ def _delta_reasoning(choice: dict[str, Any]) -> str:
     return value if isinstance(value, str) else ""
 
 
-def read_sse_stream(response: Any) -> tuple[str, str, dict[str, Any] | None]:
+def read_sse_stream(response: Any) -> tuple[str, str, dict[str, Any] | None, str | None]:
     """Accumulate assistant text + token usage from an OpenAI SSE token stream.
 
     Each event is a ``data: {json}`` line; the stream ends at ``data: [DONE]``.
@@ -264,11 +281,12 @@ def read_sse_stream(response: Any) -> tuple[str, str, dict[str, Any] | None]:
     so a reasoning model's chain-of-thought is preserved without polluting the
     answer text.
 
-    Returns ``(text, reasoning, usage)``.
+    Returns ``(text, reasoning, usage, finish_reason)``.
     """
     parts: list[str] = []
     reasoning_parts: list[str] = []
     usage: dict[str, Any] | None = None
+    finish_reason: str | None = None
     for raw in response:
         line = raw.decode("utf-8", errors="replace").strip() if isinstance(raw, (bytes, bytearray)) else str(raw).strip()
         if not line or not line.startswith("data:"):
@@ -290,7 +308,19 @@ def read_sse_stream(response: Any) -> tuple[str, str, dict[str, Any] | None]:
         for choice in obj.get("choices") or []:
             parts.append(_delta_text(choice))
             reasoning_parts.append(_delta_reasoning(choice))
-    return "".join(parts).strip(), "".join(reasoning_parts).strip(), usage
+            reason = choice.get("finish_reason")
+            if isinstance(reason, str):
+                finish_reason = reason
+    return "".join(parts).strip(), "".join(reasoning_parts).strip(), usage, finish_reason
+
+
+def extract_finish_reason(data: dict[str, Any]) -> str | None:
+    """Return the first provider completion reason, if it supplied one."""
+    for choice in data.get("choices") or []:
+        reason = (choice or {}).get("finish_reason")
+        if isinstance(reason, str):
+            return reason
+    return None
 
 
 def extract_reasoning(data: dict[str, Any]) -> str:

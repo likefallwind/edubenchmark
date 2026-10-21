@@ -216,6 +216,7 @@ def _predict_one(
             break
         if attempt < retries and retry_sleep:
             time.sleep(retry_sleep * (attempt + 1))
+    read_finish_reasons = getattr(client, "read_finish_reasons", None)
     row = {
         "item_id": str(item["item_id"]),
         "model": model,
@@ -223,6 +224,10 @@ def _predict_one(
         "latency_seconds": round(time.time() - started, 3),
         "attempts": attempts,
         "usage": client.read_usage_window(),
+        # One entry per completed HTTP generation attempt.  It lets profiling
+        # distinguish a normal stop from a provider-reported length stop even
+        # when an item needed a retry.
+        "finish_reasons": read_finish_reasons() if callable(read_finish_reasons) else [],
         "item_fingerprint": item_fingerprint,
         "prediction_identity_sha256": identity,
     }
@@ -402,6 +407,9 @@ def _extract_one(
         row.update({"extracted": extracted, "usage": client.read_usage_window()})
     except Exception as exc:  # noqa: BLE001
         row.update({"extracted": "", "error": str(exc)})
+    read_finish_reasons = getattr(client, "read_finish_reasons", None)
+    if callable(read_finish_reasons):
+        row["finish_reasons"] = read_finish_reasons()
     return row
 
 
