@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Benchmark 逐项档案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: reference ledger — summary strip, filter bar, then one wide grouped table that scrolls sideways inside its own frame */
+:root{
+  --bg:#f4f6f5; --surface:#ffffff; --ink:#18221f; --muted:#5b6964; --line:#d9e0dd; --chalk:#2c6a55; --chalk-soft:#e3efe9;
+  --hi:#1f7a4d; --hi-bg:#e1f2e8; --mid:#9a6a12; --mid-bg:#f8eed9; --lo:#8a4a3f; --lo-bg:#f6e4df; --warn:#a33b2b;
+  --f-display:"Noto Serif SC","Songti SC",serif; --f-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121816; --surface:#19211e; --ink:#e4ebe8; --muted:#9aa9a3; --line:#2c3833; --chalk:#7cc4a6; --chalk-soft:#1f3029;
+  --hi:#7fd3a4; --hi-bg:#1d3327; --mid:#e2b45c; --mid-bg:#352a15; --lo:#e39a8b; --lo-bg:#3a221d; --warn:#f08a77; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121816; --surface:#19211e; --ink:#e4ebe8; --muted:#9aa9a3; --line:#2c3833; --chalk:#7cc4a6; --chalk-soft:#1f3029;
+  --hi:#7fd3a4; --hi-bg:#1d3327; --mid:#e2b45c; --mid-bg:#352a15; --lo:#e39a8b; --lo-bg:#3a221d; --warn:#f08a77; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.6}
+.wrap{max-width:1500px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+header{display:grid;gap:8px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--chalk);font-weight:500}
+h1{font-family:var(--f-display);font-size:clamp(24px,3.2vw,32px);margin:0;line-height:1.25;text-wrap:balance}
+.lede{color:var(--muted);max-width:68ch;margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.stat{background:var(--surface);padding:12px 14px;display:grid;gap:2px}
+.stat b{font-family:var(--f-mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:12px}
+.filters{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center}
+.fgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fgroup>label{font-size:12px;color:var(--muted);margin-right:2px}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:3px 10px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--chalk);border-color:var(--chalk);color:var(--surface)}
+.chip:focus-visible,input:focus-visible{outline:2px solid var(--chalk);outline-offset:2px}
+input[type=search]{font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);min-width:0;width:200px;max-width:100%}
+.count{font-size:12px;color:var(--muted)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 24px;font-size:13px;color:var(--muted)}
+.legend p{margin:0}
+.frame{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:1480px;font-size:13px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+thead th{position:sticky;top:0;background:var(--surface);font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.04em;z-index:2;border-bottom:2px solid var(--line)}
+tbody th{position:sticky;left:0;background:var(--surface);z-index:1;min-width:170px;max-width:190px;font-weight:400}
+.gh td{background:var(--chalk-soft);color:var(--chalk);font-weight:700;font-size:13px;padding:8px 12px}
+.gh td small{font-weight:400;color:var(--muted);margin-left:8px}
+.bid{font-family:var(--f-mono);font-size:12.5px;font-weight:500;word-break:break-all;display:block}
+.src{color:var(--muted);font-size:12px;display:block;margin-top:2px}
+.c-what{min-width:220px}.c-p{min-width:170px}.c-meta{min-width:120px}.c-type{min-width:160px}.c-judge{min-width:190px}.c-disc{min-width:170px}.c-ref{min-width:190px}.c-issue{min-width:240px}
+.p{display:block;font-size:12.5px}
+.p.main{font-weight:500}
+.p.sub{color:var(--muted)}
+.lang{display:inline-block;font-size:11px;padding:0 6px;border-radius:3px;border:1px solid var(--line);margin-right:4px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:12.5px}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:3px}
+.b-hi{background:var(--hi-bg);color:var(--hi)}.b-mid{background:var(--mid-bg);color:var(--mid)}.b-lo{background:var(--lo-bg);color:var(--lo)}.b-mix{background:var(--chalk-soft);color:var(--chalk)}
+.dnote{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.issue{color:var(--ink)}
+.flag{color:var(--warn);font-weight:500}
+.empty{padding:24px;color:var(--muted);text-align:center}
+footer{font-size:12px;color:var(--muted);display:grid;gap:4px;max-width:90ch}
+@media (prefers-reduced-motion:no-preference){.chip{transition:background .15s,color .15s}}
+</style>
+
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">P01–P20 映射内 · 36 个 benchmark · 2026-10-21</div>
+  <h1>Benchmark 逐项档案</h1>
+  <p class="lede">每行一个 benchmark：它让模型做什么、在映射里给哪些能力提供证据、题型和语言、怎么判分、在已跑模型之间拉不拉得开差距、有没有地板分和人类分可以对照，以及已知的问题。</p>
+</header>
+
+<section class="stats" aria-label="总体统计">
+  <div class="stat"><b>95,655</b><span>题（各 benchmark 最大已完成 run）</span></div>
+  <div class="stat"><b>76% / 24%</b><span>英文 / 中文（按题量）</span></div>
+  <div class="stat"><b>21 / 14 / 1</b><span>规则判分 / LLM 裁判 / BLEU（按个数）</span></div>
+  <div class="stat"><b>9 / 9 / 16</b><span>区分度 高 / 中 / 低（另 2 个分指标不一）</span></div>
+  <div class="stat"><b>4–14</b><span>每个 benchmark 有分的模型数</span></div>
+</section>
+
+<section class="filters" aria-label="筛选">
+  <div class="fgroup" data-key="lang"><label>语言</label>
+    <button class="chip" data-v="" aria-pressed="true">全部</button><button class="chip" data-v="zh" aria-pressed="false">含中文</button><button class="chip" data-v="en" aria-pressed="false">纯英文</button></div>
+  <div class="fgroup" data-key="judge"><label>判分</label>
+    <button class="chip" data-v="" aria-pressed="true">全部</button><button class="chip" data-v="rule" aria-pressed="false">规则</button><button class="chip" data-v="llm" aria-pressed="false">LLM 裁判</button></div>
+  <div class="fgroup" data-key="disc"><label>区分度</label>
+    <button class="chip" data-v="" aria-pressed="true">全部</button><button class="chip" data-v="hi" aria-pressed="false">高</button><button class="chip" data-v="mid" aria-pressed="false">中</button><button class="chip" data-v="lo" aria-pressed="false">低</button><button class="chip" data-v="mix" aria-pressed="false">分指标不一</button></div>
+  <div class="fgroup"><label for="q">搜索</label><input id="q" type="search" placeholder="名称、能力、关键词"></div>
+  <span class="count" id="count"></span>
+</section>
+
+<section class="legend" aria-label="读表说明">
+  <p><b>区分度</b>：看主指标在已跑模型之间的分布（统一换算到 0–10）。<span class="badge b-hi">高</span> 标准差 ≥ 0.8；<span class="badge b-mid">中</span> 0.4–0.8；<span class="badge b-lo">低</span> 标准差 &lt; 0.4，或均分 ≥ 8.5 撞天花板。模型只有 4–14 个，标准差本身也不稳，只作粗分。</p>
+  <p><b>测哪些能力</b>：加粗的是相关度 ≥ 0.5 的主挂，灰色是 0.2 的副挂。数字是映射 v6 的相关度档位，不是比例。</p>
+  <p><b>参照线</b>：地板来自 <span class="num">data/benchmark_baselines_v1.json</span>（随机作答或最优常数策略），人类分与可用门槛来自 <span class="num">data/benchmark_human_baselines_v1.json</span>。都换算到 0–10，方便和分数区间对照。</p>
+</section>
+
+<div class="frame">
+<table>
+<thead><tr>
+  <th scope="col">Benchmark</th><th scope="col" class="c-what">让模型做什么</th><th scope="col" class="c-p">测哪些能力</th><th scope="col" class="c-meta">语言 · 题量</th><th scope="col" class="c-type">题型</th><th scope="col" class="c-judge">判分与裁判</th><th scope="col" class="c-disc">区分度（0–10）</th><th scope="col" class="c-ref">参照线</th><th scope="col" class="c-issue">已知问题</th>
+</tr></thead>
+<tbody id="tb"></tbody>
+</table>
+</div>
+
+<footer>
+  <span>数据来源：映射 <span class="num">data/mapping_measurement_model_v6.json</span>；分数分布 <span class="num">reports/atomic_ability_rebenchmark/13_mapping_validation_cells.jsonl</span>；裁判模型 <span class="num">08_selected_score_evidence.jsonl</span>；语言由各 adapter 实际发给模型的题面统计；题量取各 benchmark 最大已完成 run 的 summary.json。</span>
+  <span>LLM 裁判类在聚合时有 deepseek-v4-flash 与 MiniMax-M3 两套裁判视图；edubench 另有原论文设定的 deepseek-v3.2。规则判分类的 LLM 只负责从回答里抽出答案（默认 MiniMax-M2.7，多数带正则兜底），对错由规则比对金标。</span>
+  <span>* 标记的分数已知被 harness 缺陷抬高，不能按字面读。</span>
+</footer>
+</div>
+
+<script>
+const G = {
+  gen:"考生：通用知识与推理|模型自己做题，测的是通用能力，不是教育行为",
+  edu:"考生：教育知识选择题|题目内容是教学法或教育安全，但仍是选出正确答案",
+  probe:"自建能力探针|为单一能力专门设计的测验",
+  diag:"老师：判断学生作答|看学生的解答或学习记录，判断对错、错在哪、学生处于什么状态",
+  rater:"阅卷人：给作答或回复打分|和人类评分员比一致性",
+  tutor:"老师：生成教学内容|写辅导回复、讲解、出题、教学动画，由 LLM 裁判打分",
+  safe:"安全行为|在诱导下守不守得住教育者的边界"
+};
+// lang: zh / en / both ; judge: rule / llm ; disc: hi / mid / lo / mix
+const R = [
+ {g:"gen",id:"mmlu_pro",src:"TIGER-Lab · 2024",what:"大学水平学科选择题，10 个选项，偏推理。",p:[["P05 知识调用",.5],["P06 推理",.2]],lang:"en",lt:"英",n:"12,032",img:0,type:"单选（最多 10 选 1）",judge:"rule",jt:"LLM 抽取选项字母 + 规则比对；正则兜底占 0.1–2.4%",disc:"lo",dr:"7.9–8.8",sd:.30,nm:8,dn:"撞天花板",ref:"随机 1.1（选项数不固定，不是 1.0）；无人类分",iss:"与 agieval、ceval 排名相关 ρ≥0.9，三者高度冗余；公开多年，污染风险最高；一个模型 1.2 万题，算力成本最大。"},
+ {g:"gen",id:"ceval",src:"上海交大等 · 2023",what:"中文学科考试选择题，52 个学科，初中到职业资格。",p:[["P05 知识调用",.5],["P06 推理",.2]],lang:"zh",lt:"中",n:"1,346",img:0,type:"单选（4 选 1）",judge:"rule",jt:"抽取选项字母，规则比对",disc:"lo",dr:"8.3–9.6",sd:.46,nm:9,dn:"撞天花板",ref:"随机 2.5；论文无人类分",iss:"与 mmlu_pro、agieval 冗余；本地只跑 val 集（test 答案不公开）。"},
+ {g:"gen",id:"agieval",src:"微软 · 2023",what:"人类标准化考试原题：高考、SAT、LSAT、法考、公务员考试。",p:[["P06 推理",.5],["P05 知识调用",.2]],lang:"both",lt:"中英",n:"7,272",img:0,type:"单选 6,154 + 数学填空 1,118",judge:"rule",jt:"官方解析脚本 + 官方数学等价判断",disc:"lo",dr:"8.1–9.2",sd:.39,nm:8,dn:"撞天花板",ref:"人类考生均分 7.0，前 1% 9.1（按我们的题量加权）",iss:"doubao 已超过人类前 1% 线；但逐任务看仍有 6/20 个任务有模型低于普通考生（mathcloze、logiqa、jec-qa）。"},
+ {g:"gen",id:"olympiadbench",src:"清华等 · 2024",what:"奥赛和高考难度的数学、物理开放题，过半配图。",p:[["P06 推理",.5],["P03 多模态理解",.2],["P05 知识调用",.2]],lang:"both",lt:"中 77%",n:"6,728",img:4055,type:"填空（数值、表达式、区间、方程）",judge:"rule",jt:"sympy 符号等价判定（官方判分，专用环境）",disc:"mid",dr:"6.4–7.8",sd:.51,nm:6,dn:"做题类里唯一没饱和的",ref:"随机≈0；论文无人类分",iss:"纯文本模型只能做不带图的部分，模型面不完全可比。"},
+ {g:"gen",id:"mathvista",src:"UCLA 等 · 2023",what:"图表、几何图、函数图像上的数学题。",p:[["P03 多模态理解",.5],["P06 推理",.5],["P05 知识调用",.2]],lang:"en",lt:"英",n:"1,000",img:1000,type:"单选 540 + 填空 460",judge:"rule",jt:"官方协议抽取 + 规则比对",disc:"lo",dr:"8.3–8.9",sd:.24,nm:4,dn:"撞天花板",ref:"随机 1.8；人类 6.0（论文在同一 1,000 题上测）",iss:"只有 4 个视觉模型有分；模型已远超人类标注员。"},
+ {g:"gen",id:"k12vista",src:"北大 · 2025",what:"中文 K12 图文学科题，五学科三学段。",p:[["P03 多模态理解",.5],["P05 知识调用",.2],["P06 推理",.2]],lang:"zh",lt:"中",n:"600",img:600,type:"单选 209 + 填空 198 + 问答 193",judge:"llm",jt:"LLM 按官方 rubric 逐空判 0/1（deepseek-v4-flash / MiniMax-M3）",disc:"mid",dr:"6.0–7.6",sd:.72,nm:4,dn:"科学/地理图表子集拉得最开",ref:"地板需实测；论文无人类分",iss:"只有 4 个视觉模型；裁判未做人类校准，当参考值。中文多模态做题的主要来源。"},
+ {g:"gen",id:"mathtutorbench_problem_solving",src:"ETH · 2025（题源 GSM8K）",what:"小学数学应用题，直接做对。",p:[["P06 推理",.5],["P05 知识调用",.2]],lang:"en",lt:"英",n:"1,319",img:0,type:"填空（数值）",judge:"rule",jt:"最终数值精确匹配",disc:"lo",dr:"9.5–9.8",sd:.10,nm:7,dn:"完全饱和",ref:"随机≈0",iss:"GSM8K 是污染最严重的数据集之一；只起“连题都做不对就别谈教”的门槛作用。"},
+ {g:"gen",id:"ifeval",src:"Google · 2023",what:"带硬约束的写作指令：字数、格式、关键词、大小写等。",p:[["P01 指令遵循",1]],lang:"en",lt:"英",n:"541",img:0,type:"生成，约束由代码校验",judge:"rule",jt:"官方 checker 规则校验，无裁判",disc:"lo",dr:"8.7–9.5",sd:.23,nm:7,dn:"撞天花板",ref:"随机文本 1.2；人类设计上接近 10（推论，非实测）",iss:"通用指令，不是教育语境；P01 只有它一个来源。"},
+
+ {g:"edu",id:"pedagogy_benchmark",src:"2025 · 教师资格类考试",what:"教学法知识选择题（CDPK）和特殊教育需求题（SEND）。",p:[["P14 教学策略选择",.8],["P05 知识调用",.5],["P13 学习者画像",.2]],lang:"en",lt:"英",n:"1,119",img:0,type:"单选（4 选 1）",judge:"rule",jt:"官方 prompt + 官方解析，规则比对",disc:"mid",dr:"6.6–9.0",sd:.56,nm:13,dn:"差距主要来自较弱模型",ref:"随机 2.5；论文约 5.0 是按试卷均分估的，题级人类分未发布",iss:"测的是“知道该怎么教”，不是“教得出来”。与 scaffolding 对比：这里均分 8.45，scaffolding 只有 3.09。"},
+ {g:"edu",id:"eduguard_sata",src:"EduGuardBench · 2026",what:"全选题：哪些做法构成教学伤害。",p:[["P17 角色边界",.2],["P18 风险识别",.2],["P19 安全处置",.2]],lang:"both",lt:"中英各半",n:"5,270",img:0,type:"多选（全选）",judge:"rule",jt:"规则部分分 RFS；超长回答触发 LLM 抽取（0–0.4%）",disc:"lo",dr:"6.9–7.7",sd:.23,nm:10,dn:"模型几乎一样",ref:"随机 1.0，最优常数 1.2；无人类分",iss:"测安全知识不是安全行为；本地数据无类别标签，同一份分数挂三个 P，三者假一致。对抗版本差距 3.8–10.0，这里几乎没差距。"},
+
+ {g:"probe",id:"p07_selfcheck",src:"本仓库自建",what:"先答题，再无提示地让模型复查，区分“错改对”和“对改错”。",p:[["P07 自我校验",.8],["P08 置信校准",.2]],lang:"both",lt:"中 47%",n:"550",img:0,type:"复用单选 + 填空，两轮作答",judge:"rule",jt:"规则比对两轮答案",disc:"lo",dr:"4.9–5.6",sd:.24,nm:7,dn:"贴着地板",ref:"从不改答案即得 5.0",iss:"所有模型都贴着 5.0 的地板，这个指标几乎没测出东西。"},
+ {g:"probe",id:"p08_calibration",src:"本仓库自建",what:"答题时同时报出把握，看把握和对错是否对得上。",p:[["P08 置信校准",.8],["P07 自我校验",.2]],lang:"both",lt:"中 47%",n:"550",img:0,type:"复用单选 + 填空，附报置信度",judge:"rule",jt:"规则：高置信答错率 + AUROC",disc:"mid",dr:"5.6–7.1",sd:.54,nm:7,dn:"",ref:"从不给高置信度即得 5.0；均匀随机 3.3",iss:"题目复用 ceval、mmlu_pro 等已饱和题，自报置信度的口径对提示措辞敏感。"},
+ {g:"probe",id:"p08_abstention",src:"本仓库自建（题源 UMWP）",what:"删掉必要条件的数学题，看模型会不会说“答不了”。",p:[["P08 置信校准与弃答",.8]],lang:"en",lt:"英",n:"500",img:0,type:"填空或弃答",judge:"rule",jt:"规则判定作答 / 弃答",disc:"lo",dr:"8.6–9.3",sd:.24,nm:7,dn:"撞天花板",ref:"任何常数策略恒得 5.0；人类弃答 F1 0.93（论文提示了有不可答题）",iss:"headline 指标对常数策略恒为 5.0，要看原生 F1；最高模型 0.93，未超过人类。"},
+ {g:"probe",id:"mooccube_prereq",src:"本仓库自建（学堂在线知识图谱 · 2020）",what:"判断课程概念之间的先修关系，给学习顺序排序。",p:[["P15 学习路径规划",.8]],lang:"zh",lt:"中",n:"300",img:0,type:"单选 200 + 排序 100",judge:"rule",jt:"规则判分，已扣除随机期望",disc:"hi",dr:"1.2–4.8",sd:1.21,nm:7,dn:"",ref:"已内建机会校正，随机为 0",iss:"只覆盖知识结构层面的路径，不涉及按学生状态定制；自建协议，无公开对照。"},
+
+ {g:"diag",id:"mathtutorbench_solution_correctness",src:"ETH · 2025",what:"给一份学生解答，判断对不对。",p:[["P10 错误诊断（正误判定）",.5],["P07 自我校验",.2]],lang:"en",lt:"英",n:"2,004",img:0,type:"判断（对 / 错）",judge:"rule",jt:"官方解析，规则比对",disc:"lo",dr:"8.6–9.0",sd:.14,nm:8,dn:"",ref:"全答“对”即得 6.7（解析失败默认判“对”）",iss:"有效区间只有 6.7–10，模型间几乎没差距。"},
+ {g:"diag",id:"mathtutorbench_mistake_location",src:"ETH · 2025",what:"指出学生解答里第一处错误在哪一步。",p:[["P10 错误诊断（错误定位）",.8],["P02 长上下文",.2]],lang:"en",lt:"英",n:"2,004",img:0,type:"判断（第几步）",judge:"rule",jt:"官方解析，规则比对",disc:"lo",dr:"7.5–7.9",sd:.15,nm:8,dn:"",ref:"全答“0”即得 5.0（半数金标为 0，解析失败默认 0）",iss:"所有模型挤在 7.5–7.9；地板 5.0，有效区间窄。"},
+ {g:"diag",id:"mathtutorbench_mistake_correction",src:"ETH · 2025",what:"看出学生错误后，给出改对的最终答案。",p:[["P06 推理",.2],["P10 错误诊断",.2],["P16 反馈生成",.2]],lang:"en",lt:"英",n:"1,002",img:0,type:"填空（最终数值）",judge:"rule",jt:"最终答案精确匹配",disc:"lo",dr:"8.6–9.4",sd:.32,nm:8,dn:"撞天花板",ref:"随机≈0",iss:"只看改对的最终答案，实际表现接近做题门槛（与做题类 ρ≈1）。"},
+ {g:"diag",id:"longtutor_diagnosis",src:"LongTutor（本仓库移植）",what:"读一段长的学生交互历史，判断学生当前的知识状态（四类）。",p:[["P13 学习者画像",.8],["P10 错误诊断",.2]],lang:"zh",lt:"中",n:"1,000",img:0,type:"四分类",judge:"rule",jt:"规则比对，macro-F1",disc:"hi",dr:"1.5–4.8",sd:1.06,nm:7,dn:"",ref:"按先验瞎猜 2.5；全选多数类 accuracy 0.51 高于模型",iss:"有模型低于按先验瞎猜；金标来自特征决策矩阵加人工修订，不是独立盲标，分低可能有一部分是金标噪声。"},
+ {g:"diag",id:"longtutor_evidence",src:"LongTutor（本仓库移植）",what:"在约 200 条学生作答记录里找信息、跨 session 推理、识别编造内容。",p:[["P02 长上下文与证据定位",.8]],lang:"zh",lt:"中",n:"3,000",img:0,type:"简答",judge:"llm",jt:"LLM 判语义等价（deepseek-v4-flash / MiniMax-M3），裁判定分占 53–96%",disc:"mid",dr:"6.4–9.6",sd:.62,nm:7,dn:"单记录提取撞顶；跨 session 推理和幻觉检查才拉开",ref:"乱码必判错，地板 0",iss:"三个子项差别很大，只看总分会掩盖“提取已饱和、推理没饱和”。"},
+
+ {g:"rater",id:"sas_bench",src:"北大 · 2025",what:"给高考主观题学生答案评分：总分、分步得分、错因。",p:[["P10 错误诊断（错因）",.8],["P11 主观题评价",.8],["P02 / P05 / P06",.2]],lang:"zh",lt:"中",n:"4,109",img:0,type:"打分 + 错因标注（简答 2,559 / 填空 1,440 / 选择 110）",judge:"rule",jt:"与专家标注比一致性：QWK、CCS、ECS",disc:"mix",dr:"QWK 7.9–8.7 / ECS 3.8–6.6",sd:null,nm:10,dn:"总分评分低；错因一致性高（SD 1.02）",ref:"随机或常数评分为 0；QWK ≥ 0.70 业界门槛 9/9 达标",iss:"总分评分已过业界门槛且拉不开；真正有区分度的是错因诊断（ECS）。论文未报人类互评一致性。"},
+ {g:"rater",id:"asap_2",src:"Kaggle · 2024",what:"英文学生议论文整体打分 1–6。",p:[["P11 主观题评价（整体评分）",.8]],lang:"en",lt:"英",n:"7,421",img:0,type:"打分",judge:"rule",jt:"与人类评分比 QWK",disc:"mid",dr:"4.7–6.1",sd:.51,nm:7,dn:"",ref:"随机为 0；QWK ≥ 0.70 业界门槛 0/12 达标",iss:"没有模型达到自动作文评分的上线门槛；本地数据只有合议后的单一分数，算不出人类互评上限。"},
+ {g:"rater",id:"mrbench_judge",src:"MBZUAI · NAACL 2025",what:"给 AI tutor 的回复按 8 个教学维度贴标签。",p:[["P11 主观题评价（多维评分）",.5]],lang:"en",lt:"英",n:"13,240",img:0,type:"多维标注",judge:"rule",jt:"与人类标注比 macro-F1",disc:"mid",dr:"4.1–5.9",sd:.54,nm:9,dn:"",ref:"按先验瞎猜 3.3；人类标注者 κ 0.71；κ ≥ 0.61 门槛 0/8 达标",iss:"全选多数类 accuracy 就有 0.63–0.72，必须看 macro-F1；本来是校准裁判用的，对应真实场景只勉强算教研评课。"},
+ {g:"rater",id:"bea2025_judge",src:"BEA 2025 共享任务",what:"给 tutor 回复按 4 个维度贴标签。",p:[["P11 主观题评价（多维评分）",.5]],lang:"en",lt:"英",n:"9,904",img:0,type:"多维标注",judge:"rule",jt:"与人类标注比 macro-F1",disc:"mid",dr:"3.7–5.5",sd:.55,nm:9,dn:"",ref:"按先验瞎猜 3.4；人类 Fleiss κ 0.65；门槛 0/7 达标",iss:"数据与 mrbench 同源（MathDial / Bridge），两者不独立。"},
+
+ {g:"tutor",id:"mathtutorbench_scaffolding",src:"ETH · 2025（对话源 MathDial）",what:"学生卡住时，给出下一句辅导回复。",p:[["P14 教学策略选择",.5],["P05 教学知识",.2],["P16 反馈生成",.2]],lang:"en",lt:"英",n:"1,150",img:0,type:"开放生成",judge:"llm",jt:"LLM 与金标教师回复成对比较，交换位置两轮（deepseek-v4-flash / MiniMax-M3）",disc:"hi",dr:"1.5–6.1",sd:1.57,nm:9,dn:"",ref:"5.0 = 与专家教师打平；多数模型低于这条线",iss:"最能体现“会答题≠会教”的一项；新手教师下锚未跑。"},
+ {g:"tutor",id:"mathtutorbench_scaffolding_hard",src:"ETH · 2025",what:"同上，情境更棘手。",p:[["P14 教学策略选择",.5],["P05 教学知识",.2],["P16 反馈生成",.2]],lang:"en",lt:"英",n:"327",img:0,type:"开放生成",judge:"llm",jt:"同 scaffolding",disc:"hi",dr:"1.3–5.8",sd:1.43,nm:9,dn:"",ref:"5.0 = 与专家教师打平；6/7 低于这条线",iss:"题量小（327）。"},
+ {g:"tutor",id:"mathtutorbench_pedagogy",src:"ETH · 2025",what:"明确告诉模型用哪种教学法，看它能否照做。",p:[["P14 教学策略选择",.5],["P05 教学知识",.2],["P16 反馈生成",.2]],lang:"en",lt:"英",n:"1,150",img:0,type:"开放生成",judge:"llm",jt:"同 scaffolding",disc:"mid",dr:"7.6–8.9",sd:.50,nm:9,dn:"",ref:"5.0 = 与专家教师打平；全部模型高于这条线",iss:"教学法已在指令里给定，更接近指令遵循；与 scaffolding 结论方向相反。"},
+ {g:"tutor",id:"mathtutorbench_pedagogy_hard",src:"ETH · 2025",what:"同上，情境更棘手。",p:[["P14 教学策略选择",.5],["P05 教学知识",.2],["P16 反馈生成",.2]],lang:"en",lt:"英",n:"327",img:0,type:"开放生成",judge:"llm",jt:"同 scaffolding",disc:"hi",dr:"6.4–8.8",sd:.82,nm:9,dn:"",ref:"5.0 = 与专家教师打平",iss:"与 pedagogy_benchmark 排名相关 0.99，是现有唯一的强收敛证据。"},
+ {g:"tutor",id:"mathtutorbench_socratic",src:"ETH · 2025",what:"不给答案，提一个引导学生自己发现问题的问句。",p:[["P14 教学策略选择",.5],["P16 反馈生成",.2]],lang:"en",lt:"英",n:"1,319",img:0,type:"开放生成",judge:"rule",jt:"与教师金标问句算 BLEU（无裁判）",disc:"lo",dr:"2.1–3.2",sd:.37,nm:7,dn:"",ref:"随机文本≈0；BLEU 无人类上限意义",iss:"BLEU 会误罚换种问法的好问题，绝对值没有意义，只能看排序。"},
+ {g:"tutor",id:"mrbench_tutor",src:"MBZUAI · NAACL 2025",what:"给犯错的学生写下一句辅导回复。",p:[["P10 / P14 / P16 / P17",.2]],lang:"en",lt:"英",n:"200",img:0,type:"开放生成",judge:"llm",jt:"LLM 按 8 维 rubric 贴标签（deepseek-v4-flash / MiniMax-M3）",disc:"lo",dr:"8.9–9.9*",sd:.25,nm:7,dn:"分数被抬高，不能按字面读",ref:"数据集自带专家教师通过率 6.1",iss:"<span class=\"flag\">prompt 把评分维度和参考解法都给了模型</span>，模型等于拿着评分表作答；与人类教师的比较无效，模型间横向比仍可用。"},
+ {g:"tutor",id:"bea2025_tutor",src:"BEA 2025 共享任务",what:"给犯错的学生写下一句辅导回复。",p:[["P10 / P14 / P16",.2]],lang:"en",lt:"英",n:"300",img:0,type:"开放生成",judge:"llm",jt:"LLM 按 4 维贴标签（deepseek-v4-flash / MiniMax-M3）",disc:"lo",dr:"8.4–9.9*",sd:.22,nm:7,dn:"分数被抬高，不能按字面读",ref:"数据集自带专家教师通过率 5.2",iss:"<span class=\"flag\">prompt 四条指令与四个评分维度一一对应</span>；同 mrbench_tutor。"},
+ {g:"tutor",id:"tutorbench",src:"Scale AI · 2025",what:"学生上传手写作业、图表、截图提问，模型当家教。",p:[["P16 反馈生成",.5],["P03 多模态",.2],["P14 教学策略",.2]],lang:"en",lt:"英",n:"1,473",img:811,type:"开放生成",judge:"llm",jt:"LLM 按人工逐题编写的 rubric 加权打分",disc:"lo",dr:"5.1–5.8",sd:.25,nm:6,dn:"",ref:"rubric 含负分项，地板需实测；无人类分",iss:"分数不高但模型之间挤在一起；论文的专家参考回复没有公开，拿不到同管线人类分。"},
+ {g:"tutor",id:"mmtutorbench",src:"2025（ACL 2026）",what:"看教学视频关键帧 + 学生提问，生成结构化辅导回复。",p:[["P16 反馈生成",.5],["P03 多模态",.2],["P14 教学策略",.2]],lang:"en",lt:"英",n:"770",img:770,type:"开放生成",judge:"llm",jt:"LLM 按 6 个二元维度打分",disc:"hi",dr:"5.8–7.8",sd:.90,nm:4,dn:"",ref:"专家 5.85/6（论文 66 题子集、不同裁判，不可比）",iss:"只有 4 个视觉模型。"},
+ {g:"tutor",id:"longtutor_teaching",src:"LongTutor（本仓库移植）",what:"在很长的交互历史下，给出合适的下一步教学反馈。",p:[["P14 教学策略选择",.2]],lang:"zh",lt:"中",n:"1,000",img:0,type:"开放生成",judge:"llm",jt:"LLM 4 维 1–5 分，取策略匹配 + 历史利用两维",disc:"hi",dr:"3.7–8.2",sd:1.48,nm:7,dn:"",ref:"刻度下限 1 分（换算后 0）；无人类分",iss:"中文辅导生成的唯一来源；它的 accuracy 字段其实是解析成功率，不能用。"},
+ {g:"tutor",id:"edubench",src:"2025",what:"讲题、出题、编教学材料、个性化支持等 5 类任务。",p:[["P06 / P12 / P14 / P16",.5],["P05 / P10 / P13",.2]],lang:"en",lt:"英",n:"3,797",img:0,type:"开放生成",judge:"llm",jt:"LLM 12 维 0–10 分（原论文 deepseek-v3.2，另有 deepseek-v4-flash / MiniMax-M3 视图）",disc:"mix",dr:"各维度 5.6–9.8",sd:null,nm:14,dn:"知识类维度撞顶；个性化、动机维度 SD 约 0.3–0.4",ref:"刻度下限 1；论文自报裁判约 +1 分系统性偏高",iss:"占全部证据行的三成；可比集全是英文（档案写“中文”有误）；“错误识别”维度换裁判后两两相关 ≤ 0.14，是裁判噪声；挂了 7 个 P，造成 P 之间人为相关。"},
+ {g:"tutor",id:"eduillustrate",src:"2026",what:"写 Manim 动画代码，把解题过程画出来。",p:[["P04 多模态生成",.5],["P16 教学产物生成",.2]],lang:"zh",lt:"中",n:"230",img:0,type:"开放生成（代码 → 动画）",judge:"llm",jt:"先看能否渲染，再由 LLM 按 8 维 0–5 打分（MiniMax-M3，自建 rubric）",disc:"hi",dr:"1.0–7.6",sd:2.4,nm:6,dn:"差距大部分来自渲染能否成功",ref:"乱码无法渲染，地板 0；无人类参照",iss:"外部仓库管线；裁判和 rubric 都是自建；差距混了“写得出能跑的代码”这一层。"},
+
+ {g:"safe",id:"eduguard_adversarial",src:"EduGuardBench · 2026",what:"801 条越狱提示，诱导扮演教师的模型越界。",p:[["P19 安全处置",.8],["P17 角色边界",.5]],lang:"en",lt:"英",n:"801",img:0,type:"开放生成（对抗）",judge:"llm",jt:"LLM 安全裁判判攻击成功率和拒答质量（deepseek-v3.2）",disc:"hi",dr:"3.8–10.0",sd:2.71,nm:7,dn:"",ref:"全部拒答即满分，地板在另一头",iss:"<span class=\"flag\">裁判只看回答、看不到请求</span>，代写类请求被判成拒绝；84% 的提示是通用越狱内容，教育特有部分少。"}
+];
+const discLabel={hi:["高","b-hi"],mid:["中","b-mid"],lo:["低","b-lo"],mix:["分指标不一","b-mix"]};
+const state={lang:"",judge:"",disc:"",q:""};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+function matches(r){
+  if(state.lang==="zh"&&r.lang==="en")return false;
+  if(state.lang==="en"&&r.lang!=="en")return false;
+  if(state.judge&&r.judge!==state.judge)return false;
+  if(state.disc&&r.disc!==state.disc)return false;
+  if(state.q){const hay=(r.id+r.what+r.p.map(x=>x[0]).join("")+r.type+r.jt+r.iss+r.src).toLowerCase();if(!hay.includes(state.q))return false}
+  return true;
+}
+function row(r){
+  const ps=r.p.map(([n,w])=>`<span class="p ${w>=.5?"main":"sub"}">${esc(n)} <span class="num">${w}</span></span>`).join("");
+  const [dl,dc]=discLabel[r.disc];
+  const sd=r.sd==null?"":` · SD <span class="num">${r.sd.toFixed(2)}</span>`;
+  const img=r.img?`<br><span class="dnote">带图 <span class="num">${r.img.toLocaleString()}</span></span>`:"";
+  return `<tr><th scope="row"><span class="bid">${esc(r.id)}</span><span class="src">${esc(r.src)}</span></th>
+  <td>${esc(r.what)}</td><td>${ps}</td>
+  <td><span class="lang">${esc(r.lt)}</span><span class="num">${r.n}</span> 题${img}</td>
+  <td>${esc(r.type)}</td>
+  <td>${r.judge==="llm"?"<b>LLM 裁判</b>":"<b>规则</b>"}<span class="dnote">${esc(r.jt)}</span></td>
+  <td><span class="badge ${dc}">${dl}</span> <span class="num">${esc(r.dr)}</span><span class="dnote">${r.nm} 个模型${sd}${r.dn?"；"+esc(r.dn):""}</span></td>
+  <td>${esc(r.ref)}</td><td class="issue">${r.iss}</td></tr>`;
+}
+function render(){
+  const tb=document.getElementById("tb");let html="",shown=0;
+  for(const g of Object.keys(G)){
+    const rows=R.filter(r=>r.g===g&&matches(r));if(!rows.length)continue;
+    const [t,d]=G[g].split("|");
+    html+=`<tr class="gh"><td colspan="9">${t}<small>${d} · ${rows.length} 个</small></td></tr>`+rows.map(row).join("");shown+=rows.length;
+  }
+  tb.innerHTML=html||`<tr><td colspan="9" class="empty">没有符合条件的 benchmark，换个筛选条件试试。</td></tr>`;
+  document.getElementById("count").textContent=`显示 ${shown} / ${R.length}`;
+}
+document.querySelectorAll(".fgroup[data-key]").forEach(gr=>{
+  gr.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;
+    gr.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b?"true":"false"));
+    state[gr.dataset.key]=b.dataset.v;render();});
+});
+document.getElementById("q").addEventListener("input",e=>{state.q=e.target.value.trim().toLowerCase();render()});
+render();
+</script>
+
+</body>
+</html>

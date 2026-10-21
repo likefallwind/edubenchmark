@@ -14,6 +14,7 @@
 | `re_benchmark_v1/` | RE_BENCHMARK_V1 报告、试点和小实验 | 版本化工作流 |
 | `mini_selection_v2/` | 39 个 benchmark 的代表性快速筛查集选择与离线验证 | 当前实验工作流 |
 | `frontier_selection_v1/` | 错题、模型分歧与未来能力边界组成的前沿挑战集 | 当前实验工作流 |
+| `benchmark_dossier_2026-10-21/` | 36 个映射内 benchmark 的逐项档案表（用途、题型、判分、区分度、参照线、已知问题） | 手工分析快照 |
 | `2026-05-12/`、`2026-05-13/` | 早期 benchmark 调研和证据库报告 | 历史报告 |
 | `edubenchassistant/` | EduBench Assistant 生成的场景报告 | 按请求生成 |
 
