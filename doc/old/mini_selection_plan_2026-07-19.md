@@ -1,5 +1,7 @@
 # 精选题集(mini_v1)方案定稿(2026-07-19)
 
+> **⛔ 已退役(2026-10-21)。** mini_v1 已被 `mini_v2` / `frontier_v1` 取代(见 `doc/selection_suites.md`),本文档只保留方案思路备查。mini_v1 的题单 `data/mini_selection_v1/`、验证报告 `reports/mini_selection_v1/`、`run_eval.sh` 的 `MINI=1` 开关和结果树 `reports/eval_mini_v1/` 均已移除;`scripts/build_mini_selection_v1.py` 与 `scripts/validate_mini_selection.py` 仍保留,因为 mini_v2 / frontier_v1 的构建与验证脚本把它们当作抽样与重算的代码库 import。
+
 对应 todo.md 第 1 条:"筛选出一个精选题集;以后默认做精选题集,需要再做全量"。本文档是与用户讨论后的定稿方案,实现前的唯一依据。
 
 ## 一、定位与目标(已裁决)

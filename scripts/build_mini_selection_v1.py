@@ -15,10 +15,16 @@ Outputs (nothing outside ``data/mini_selection_v1/`` is touched):
   and rate, per-stratum quotas, per-cell item counts, and the model faces that
   participated in the difficulty estimate.
 
-Design reference: ``doc/mini_selection_plan_2026-07-19.md`` (sections 3-4 and the
+Design reference: ``doc/old/mini_selection_plan_2026-07-19.md`` (sections 3-4 and the
 per-benchmark hard constraints).  This script performs ZERO API calls.
 
 Run: ``python3 scripts/build_mini_selection_v1.py``
+
+mini_v1 was retired on 2026-10-21 in favour of mini_v2 / frontier_v1 and its
+data/report outputs were removed.  This module is kept because
+``build_mini_selection_v2.py``, ``validate_mini_selection_v2.py`` and
+``build_frontier_selection_v1.py`` import its benchmark definitions and
+sampling machinery; running it directly would recreate the retired outputs.
 """
 
 from __future__ import annotations

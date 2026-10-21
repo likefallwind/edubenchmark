@@ -1,6 +1,6 @@
 # 原子能力与 Benchmark 映射(定稿,2026-07-15;2026-07-16 三个待确认项已裁决;同日 R17 裁决 P11/P12/P13 合并为 P11 错误诊断;同日 R18 裁决 P17 重构、P23 新设、全 facet 补含义;2026-07-17 R19 裁决 facet 划分全面复审)
 
-> **2026-07-17 起,当前状态的干净参考文档是 `doc/atomic_ability_mapping_v5_2026-07-17.md`**(清单/映射明细/benchmark 列表/创新点/TODO,由 v5 JSON 逐格核对生成)。本文档保留为**裁决历史档案**(R1–R19 记录与方法学披露),清单与映射表可能滞后,查现状请看新文档。
+> **2026-07-17 起,当前状态的干净参考文档是 `doc/old/atomic_ability_mapping_v5_2026-07-17.md`**(清单/映射明细/benchmark 列表/创新点/TODO,由 v5 JSON 逐格核对生成)。本文档保留为**裁决历史档案**(R1–R19 记录与方法学披露),清单与映射表可能滞后,查现状请看新文档。
 
 这是当前的最终结论:原子能力清单是什么、每个能力由哪些 benchmark 的哪些维度测量、权重多少。不含历史沿革(变化记录见 `doc/benchmark_ability_mapping_v2_2026-07-15.md`)。机器可读版:`data/mapping_measurement_model_v5.json`(与本文档同步,2026-07-17;v4 为 R19 前快照)。
 
@@ -472,7 +472,7 @@ P01/P02/P07/P08 在此前的常规做法里全是"搭车分"(别的任务顺带�
 
 ### R20-1 编号统一到文档口径
 
-v5 文档(`doc/atomic_ability_mapping_v5_2026-07-17.md`)使用干净的 P01–P20,而 JSON/聚合脚本沿用带墓碑的 P01–P23,从 P04 起两套编号错位且从未显式披露。用户裁决:**以文档编号为准**。`data/mapping_measurement_model_v6.json` 与 `scripts/build_atomic_ability_rebenchmark_artifacts.py`(P_GROUPS/ABILITY_PRIORITY/P_GAP_BONUS)、`scripts/build_mapping_validation.py`、`scripts/build_atomic_ability_html_report.py` 已全部迁移,墓碑条目删除。
+v5 文档(`doc/old/atomic_ability_mapping_v5_2026-07-17.md`)使用干净的 P01–P20,而 JSON/聚合脚本沿用带墓碑的 P01–P23,从 P04 起两套编号错位且从未显式披露。用户裁决:**以文档编号为准**。`data/mapping_measurement_model_v6.json` 与 `scripts/build_atomic_ability_rebenchmark_artifacts.py`(P_GROUPS/ABILITY_PRIORITY/P_GAP_BONUS)、`scripts/build_mapping_validation.py`、`scripts/build_atomic_ability_html_report.py` 已全部迁移,墓碑条目删除。
 
 旧→新对照:P05→P04(知识)、P06→P05(推理)、P07→P06(自查)、P08→P07(校准弃答)、P09→P08(工具)、P11→P09(错误诊断,facet P11a/b/c→P09a/b/c)、P14→P10(主观题)、P23→P11(命题)、P16→P12(画像,P16a-d→P12a-d)、P17→P13(策略)、P19→P14(路径)、P18→P15(解释反馈)、P10→P16(多模态产物)、P20→P17(边界)、P21→P18(风险)、P22→P19(处置)、P15→P20(诚信);P01–P03 不变;旧 P04/P12/P13 墓碑删除。benchmark 名 p07_selfcheck/p08_* 沿用旧编号起名,不改名(避免断产物目录),文档注记即可。
 

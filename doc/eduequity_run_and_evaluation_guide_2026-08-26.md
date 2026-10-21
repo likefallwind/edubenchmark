@@ -420,7 +420,7 @@ PHASE=score   MODEL=glm-5.2 ./scripts/run_eval.sh eduequity                     
 ```
 
 注意 **`LIMIT` 在 eduequity 下的单位是「配对数」而不是题数**（`LIMIT=3` = 3 个 pair = 6 条 prompt），
-因为一个评分单元本来就由两次生成构成。`LIMIT=0` 或不设为全量。`MINI=1` 精选题集模式不适用，会跳过。
+因为一个评分单元本来就由两次生成构成。`LIMIT=0` 或不设为全量。
 
 **抽样跑（`LIMIT!=0`）自动隔离到 `reports/eval/eduequity/_smoke/`**，有两个理由，都是踩过的：
 
@@ -429,7 +429,7 @@ PHASE=score   MODEL=glm-5.2 ./scripts/run_eval.sh eduequity                     
    这条保护直接挡掉**，只能手工删目录才能继续——这是接入时实测到的。
 2. 3 对的分数不该混进 `aggregate_eval.py` 的跨模型对比表和 `audit_eval_artifacts.py` 冒充结果。
 
-`_smoke` 以下划线开头，两个脚本的目录遍历都会跳过。这与 `_noimage` 文本降级跑、`MINI` 独立结果树
+`_smoke` 以下划线开头，两个脚本的目录遍历都会跳过。这与 `_noimage` 文本降级跑
 是同一套做法。正式结果只在 `LIMIT=0` 时才写进 `reports/eval/eduequity/`。
 
 它不走 `scripts/eval_benchmark.py`：`BenchmarkAdapter` 是「一题一次模型调用」的结构，

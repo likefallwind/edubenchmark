@@ -57,16 +57,17 @@ Use the miniconda python for all fetch/eval commands (pandas/datasets live there
 
 ## Stage 4 — Curated (精选) set (ask the user; optional)
 
-Only if the user confirms, and only after the full runs of Stage 3 exist. Follow `doc/mini_selection_plan_2026-07-19.md`: sample at the **cell** level, stratified × difficulty-matched, fixed seed, to `data/mini_selection_v1/<name>_items_v1.txt` + manifest; offline-validate against acceptance standards (per-cell |Δ|≤0.3, per-P |Δ|≤0.2, ranking τ≥0.9 on distinguishable pairs, leave-one-out, sampling efficiency ≤1.3).
+Only if the user confirms, and only after the full runs of Stage 3 exist. Follow `doc/selection_suites.md`: add the benchmark to the `mini_v2` and `frontier_v1` builders (a per-benchmark budget plus its consumed stratification axes), then rebuild and offline-validate with `build_mini_selection_v2.py` / `validate_mini_selection_v2.py` and `build_frontier_selection_v1.py` / `validate_frontier_selection_v1.py`. Changing an existing suite's selected IDs, quotas, or cohort requires a new suite version (see that document's versioning rules).
 
-**Face-count caveat:** difficulty/discrimination signals require ≥3 model faces of full `scored.jsonl`. Stage 3's 1–3 full runs may not reach that. Until they do, either **content-stratify only** (the degraded path used for low-face-count sets) or **defer the mini set** and tell the user why. Tier by budget (A 10–15% hard-cut / B 30–50% / C 100% untouched) per the plan. **Discipline: never tune sampling against validation results** — every adjustment must have a reason that holds without looking at the numbers.
+**Face-count caveat:** frontier labels and difficulty signals need several complete model faces of full `scored.jsonl`. Stage 3's 1–3 full runs may not reach that. Until they do, either **content-stratify only** or **defer** and tell the user why; a benchmark with too few faces is labelled low-confidence, as SAS-Bench is. **Discipline: never tune sampling against validation results** — every adjustment must have a reason that holds without looking at the numbers.
 
 ## Stage 5 — Run eval on the curated set (ask the user; optional)
 
-Only if the user confirms. Run the mini set into the isolated parallel tree — never `reports/eval/`:
+Only if the user confirms. Run the suite into its isolated tree — never `reports/eval/`:
 ```
-MINI=1 MODEL=MiniMax-M3 ./scripts/run_eval.sh <name>   # → reports/eval_mini_v1/<name>/minimax3/
+SUITE=mini_v2 MODEL=MiniMax-M3 ./scripts/run_eval.sh <name>   # → reports/eval_suites/mini_v2/<name>/...
 ```
+If full results already exist, `scripts/materialize_eval_suites.py` derives the suite views without API calls.
 
 ## Common mistakes
 
@@ -81,6 +82,6 @@ MINI=1 MODEL=MiniMax-M3 ./scripts/run_eval.sh <name>   # → reports/eval_mini_v
 | Capping `max_tokens` | Never — it starves reasoning models and fakes "empty reply" failures. |
 | Judge = extractor model | Decouple the judge via its own env var + `resolved_judge_model()`. |
 | Building a mini set with no multi-model faces | Content-stratify only, or defer; don't fake difficulty signals. |
-| Running mini into `reports/eval/` | Use `MINI=1` → `reports/eval_mini_v1/`; it clobbers full results otherwise. |
+| Running a suite into `reports/eval/` | Use `SUITE=mini_v2` / `SUITE=frontier_v1` → `reports/eval_suites/<suite>/`; never mix suite and full results. |
 | Renaming a cell after mounting | Aggregation matches exact `subdimension`; a rename silently drops the cell. |
 | Skipping an optional stage the user *did* want | Stages 4 and 5 are gated by asking, not by assuming "no". |

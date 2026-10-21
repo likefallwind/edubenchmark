@@ -138,68 +138,28 @@ JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/Safe-
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
 # ---------------------------------------------------------------------------
-# MINI=1：跑精选题集 mini_v1(data/mini_selection_v1/),结果写独立结果树
-#   MINI=1 MODEL=MiniMax-M3 ./scripts/run_eval.sh mmlu_pro
-# 有清单的 benchmark 传 --item-list(与 --limit 互斥,故自动摘掉 --limit);
-# C 档无清单的照常全量,但同样落在 mini 树里。
-# 输出一律 reports/eval_mini_v1/<benchmark>/<model-slug>/,绝不写 reports/eval/。
-# (注意:脚本里原有的 OUT_DIR 变量是没接线的摆设,这里不复用它,而是真正把
-#  --out-dir 传给 eval_benchmark.py。)
-# 自测(不打 API):MINI=1 DRY_RUN=1 ./scripts/run_eval.sh mmlu_pro
+# SUITE=mini_v2 / frontier_v1：按题单跑选题套件,结果写 reports/eval_suites/<suite>/,
+# 不写 reports/eval/。套件定义见 doc/selection_suites.md。
+#   SUITE=mini_v2 MODEL=MiniMax-M3 ./scripts/run_eval.sh mmlu_pro
+# 自测(不打 API):SUITE=mini_v2 DRY_RUN=1 ./scripts/run_eval.sh mmlu_pro
 # ---------------------------------------------------------------------------
-MINI="${MINI:-}"
-MINI_DIR="data/mini_selection_v1"
-MINI_OUT_ROOT="reports/eval_mini_v1"
 SUITE="${SUITE:-full}"
 case "$SUITE" in
   full|mini_v2|frontier_v1) ;;
   *) echo "[run_eval] SUITE 只能是 full / mini_v2 / frontier_v1,收到:$SUITE" >&2; exit 2 ;;
 esac
-if [[ -n "$MINI" && "$SUITE" != "full" ]]; then
-  echo "[run_eval] 旧 MINI=1 与 SUITE=$SUITE 互斥" >&2
+if [[ -n "${MINI:-}" ]]; then
+  echo "[run_eval] MINI=1(mini_v1)已于 2026-10-21 退役,请改用 SUITE=mini_v2 或 SUITE=frontier_v1" >&2
   exit 2
 fi
 
-# 复刻 scripts/eval/providers.py 的 model_slug(含 MiniMax-M3 别名)
-mini_model_slug() {
-  local m="$1"
-  if [[ "$m" == "MiniMax-M3" ]]; then printf 'minimax3'; return; fi
-  local s
-  s=$(printf '%s' "$m" | sed -e 's/[^A-Za-z0-9._-]\{1,\}/-/g' -e 's/^-*//' -e 's/-*$//')
-  [[ -z "$s" ]] && s="model"
-  printf '%s' "$s"
-}
-
 RUN_PREFIX=()
 # run_eval_py <benchmark-id> <args to eval_benchmark.py...>
-# 非 MINI 模式原样透传;MINI 模式重写选题参数与输出目录。
+# full 模式原样透传;套件模式摘掉选题参数,改传 --suite。
 run_eval_py() {
   local bench="$1"; shift
   local args=("$@")
-  if [[ -n "$MINI" ]]; then
-    local list="$MINI_DIR/${bench}_items_v1.txt"
-    local out="$MINI_OUT_ROOT/${bench}/$(mini_model_slug "$MODEL")"
-    # 摘掉 --limit/--offset/--item-list/--out-dir,记住原有的 item-list
-    local orig_list="" filtered=() i=0
-    while (( i < ${#args[@]} )); do
-      case "${args[$i]}" in
-        --item-list) orig_list="${args[$((i+1))]}"; i=$((i+2)); continue ;;
-        --limit|--offset|--out-dir) i=$((i+2)); continue ;;
-      esac
-      filtered+=("${args[$i]}"); i=$((i+1))
-    done
-    args=(${filtered[@]+"${filtered[@]}"})
-    if [[ -f "$list" ]]; then
-      args+=(--item-list "$list")
-    elif [[ -n "$orig_list" ]]; then
-      # C 档里自带固定题单的(mooccube/p07/p08):保留它自己的题单
-      args+=(--item-list "$orig_list")
-    else
-      args+=(--limit 0)   # C 档无清单:照常全量
-    fi
-    args+=(--out-dir "$out")
-    [[ -n "${DRY_RUN:-}" ]] && args+=(--dry-run)
-  elif [[ "$SUITE" != "full" ]]; then
+  if [[ "$SUITE" != "full" ]]; then
     local filtered=() i=0
     while (( i < ${#args[@]} )); do
       case "${args[$i]}" in
@@ -230,9 +190,7 @@ run_eval_py() {
   ${RUN_PREFIX[@]+"${RUN_PREFIX[@]}"} python scripts/eval_benchmark.py ${args[@]+"${args[@]}"}
 }
 
-if [[ -n "$MINI" ]]; then
-  echo "[run_eval] MINI=1 精选题集模式:题单 $MINI_DIR/ ,输出 $MINI_OUT_ROOT/(不写 reports/eval/)"
-elif [[ "$SUITE" != "full" ]]; then
+if [[ "$SUITE" != "full" ]]; then
   echo "[run_eval] SUITE=$SUITE 题单模式:输出 reports/eval_suites/$SUITE/"
 fi
 echo "[run_eval] model=$MODEL extractor_model=$EXTRACTOR_MODEL judge_model=$JUDGE_MODEL benchmarks=$BENCHMARKS"
@@ -375,16 +333,12 @@ for b in $BENCHMARKS; do
       #   阶段二 run_eduequity_judge.py       -> reports/eval/eduequity/judge-<judge>/<model>/
       # LIMIT 在这里的单位是「配对数」而不是题数(LIMIT=0 或不设 = 全量 400 对);
       # 冒烟先跑 LIMIT=3。裁判由 JUDGE_MODEL 固定,与被测模型解耦。
-      if [[ -n "$MINI" ]]; then
-        echo "[run_eval] eduequity 不支持 MINI 精选题集(题单按 pair 组织,与 --item-list 不同构),跳过" >&2
-        continue
-      fi
       # 抽样跑隔离到 _smoke/ 子树,有两个理由,都是踩过的:
       #  1. 生成阶段把「本次选了哪些 sample_id」哈希进 generation_summary.json,选题不同就
       #     拒绝往同一目录追加(refusing to mix incompatible predictions)。冒烟若占了正式
       #     目录,之后的全量跑会被这条保护直接挡掉,只能手工删目录。
       #  2. 3 对的分数不该混进 aggregate/audit 冒充结果。_smoke 以下划线开头,
-      #     collect_runs / collect 都会跳过,与 _noimage、MINI 独立结果树是同一套做法。
+      #     collect_runs / collect 都会跳过,与 _noimage 隔离结果树是同一套做法。
       EQ_ARGS=()
       EQ_ROOT="reports/eval/eduequity"
       if [[ "$LIMIT" != "0" ]]; then

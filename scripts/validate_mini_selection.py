@@ -4,7 +4,7 @@
 For every model face with full per-item results, recompute each aggregation-
 consumed cell's score on the mini subset and compare with the full-set score,
 then re-run the *published* aggregation to compare P scores.  Produces the five
-acceptance results from ``doc/mini_selection_plan_2026-07-19.md`` section 5:
+acceptance results from ``doc/old/mini_selection_plan_2026-07-19.md`` section 5:
 
   1. per-cell |dscore_10 (mini - full)| <= 0.3
   2. per-P    |d| <= 0.2
@@ -23,6 +23,10 @@ Reads only ``reports/eval/`` (never writes there); all output goes to
 need pandas/sacrebleu etc.):
 
     /home/likefallwind/miniconda3/bin/python scripts/validate_mini_selection.py
+
+mini_v1 was retired on 2026-10-21 and its item lists were removed, so running
+this script directly no longer works.  It is kept because
+``validate_mini_selection_v2.py`` imports its recompute and ranking helpers.
 """
 
 from __future__ import annotations
