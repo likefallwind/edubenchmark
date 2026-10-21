@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>MiniMax-M3.1-Flash-Preview</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">62.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">62</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-0</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>最早对管理的具体职能加以概括和系统论述的是____。
+A. 泰罗
+B. 法约尔
+C. 孔茨
+D. 韦伯
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div><div class='card'><div class='card-head'><span class='pid'>#ceval::business_administration-val-27</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>甲企业以融资租赁方式租入乙企业的一台机械设备，则下列对该设备计提折旧的叙述中，正确的是____。
+A. 甲企业对该设备不计提折旧
+B. 甲企业应采用与自有资产相一致的会计政策
+C. 如果能够合理确定该设备在租赁期届满时甲企业将会取得此设备的所有权，则应以该设备全新时的预计使用年限作为折旧期间
+D. 该设备的折旧方法和折旧年限应按乙企业有关资产的折旧方法和折旧年限处理
+答案：</div><div class='ans gold inline'><span class='lbl'>参考答案</span>B</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.62,
+  &quot;r2_accuracy&quot;: 0.62,
+  &quot;net_gain&quot;: 0.0,
+  &quot;change_rate&quot;: 0.09,
+  &quot;n_r1_wrong&quot;: 38,
+  &quot;n_fixed_wrong_to_right&quot;: 4,
+  &quot;fix_rate&quot;: 0.1053,
+  &quot;n_r1_right&quot;: 62,
+  &quot;n_broken_right_to_wrong&quot;: 4,
+  &quot;break_rate&quot;: 0.0645,
+  &quot;score_10&quot;: 5.204,
+  &quot;by_source&quot;: {
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 36,
+      &quot;r1_correct&quot;: 22,
+      &quot;r2_correct&quot;: 23,
+      &quot;fixed&quot;: 3,
+      &quot;broken&quot;: 2
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 17,
+      &quot;r2_correct&quot;: 17,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    },
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 11,
+      &quot;r2_correct&quot;: 10,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 2
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 18,
+      &quot;r1_correct&quot;: 12,
+      &quot;r2_correct&quot;: 12,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>18</td><td>10</td><td>0.556</td><td><div class='bar'><i style='width:56%'></i></div></td></tr><tr><td>ceval</td><td>36</td><td>23</td><td>0.639</td><td><div class='bar'><i style='width:64%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>17</td><td>0.607</td><td><div class='bar'><i style='width:61%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>18</td><td>12</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>54</td><td>34</td><td>0.630</td><td><div class='bar'><i style='width:63%'></i></div></td></tr><tr><td>zh</td><td>46</td><td>28</td><td>0.609</td><td><div class='bar'><i style='width:61%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ceval::computer_network-val-12</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>下列关于交换技术叙述错误的是____
+A. 电路交换在发送与接收方的物理链路上预留带宽
+B. 数据报交换可能出现分组乱序
+C. 数据报交换可能出现分组乱序
+D. 报文交换要求有较大缓存
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;无正确选项（A/B/C/D）。\n\n逐项核对：\n\n- **A 正确**：电路交换会为通信会话预留所需的链路带宽。\n- **B 正确**：数据报独立选路，同一报文的分组可能乱序到达。\n- **C 正确**：与 B 文字相同，也同样正确。\n- **D 正确**：报文交换需要接收并缓存完整报文，因此对缓存空间要求较大。\n\n因此，严格依据题面，**A～D 均不是错误叙述，题目存在选项重复或录入错误**。若 C 原本应为“虚电路交换可能出现分组乱序”，则错误项才是 **C**。&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C
+
+（按常见原题，C 应为“虚电路交换可能出现分组乱序”，该说法错误。若严格按题面中 B、C 重复的文本，则 A～D 均正确，题目存在笔误。）</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::education_science-val-27</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>依据赫尔巴特的教学阶段论，当学生的兴趣处于“期待”时，教学阶段是____
+A. 明了
+B. 联想
+C. 系统
+D. 方法
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;逐步验证：\n\n1. 赫尔巴特的教学阶段依次为：**明了、联想、系统、方法**。\n2. “期待”兴趣表现为学生被问题吸引，期待接触和理解新知识。\n3. 这种兴趣对应教学的第一阶段——**明了阶段**。\n\n因此原答案无误。\n\nA&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::electrical_engineer-val-5</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>在系统的初始运行条件、故障持续时间均完全相同的情况下，导致系统的暂态稳定性最差的是____
+A. 单相接地短路
+B. 两相短路
+C. 三相短路
+D. 断相故障
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;验证如下：\n\n1. 三相短路时，系统各相对称，最严重地降低发电机端电压及电磁功率。\n2. 功角特性 \\(P_{\\max}=EV/X\\) 降幅最大，发电机更容易失去同步。\n3. 两相短路、单相接地短路和断相故障对系统传输能力的破坏通常较轻。\n\n因此，原答案正确。\n\nC&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>A</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::electrical_engineer-val-10</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>根据电力系统承受大扰动能力的安全稳定标准，发生____故障时允许采取切机和切负荷等稳定控制措施。
+A. 任一发电机跳闸或失磁
+B. 直流输电线路单极
+C. 受端系统任一变压器故障退出运行
+D. 任一段母线
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;复核过程：\n\n1. 题干对应电力系统安全稳定标准中的**第二级标准**，即发生较严重扰动时，必要时允许采取切机、切负荷等稳定控制措施。\n2. **A、B、D**属于通常的单一故障类型，按第一级标准不要求采取切机、切负荷措施。\n3. **C“受端系统任一变压器故障退出运行”**属于第二级标准所涉及的故障，允许采取切机、切负荷等稳定控制措施。\n4. 本题没有数值计算，关键是安全稳定标准的故障分级。\n\n原答案无误，最终答案：\n\nC&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::electrical_engineer-val-18</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>通过10～35kV电压等级并网的光伏发电站功率因数应能在____范围内连续可调，有特殊要求时，可做适当调整以稳定电压水平。
+A. 超前0.95～滞后0.95
+B. 超前0.98～滞后0.98
+C. 超前0.95～滞后0.9
+D. 超前0.9～滞后0.9
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;核查题干对应规定：光伏发电站通过 **10～35 kV** 电压等级并网时，功率因数应能在 **超前0.95～滞后0.95** 范围内连续可调；特殊情况下可适当调整以稳定电压水平。因此原答案无误。\n\nA&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ceval::electrical_engineer-val-20</span><span class='tag'>source_benchmark=ceval</span> <span class='tag'>language=zh</span></div><div class='qtext'>光伏电站无功电压控制系统响应时间应为____。
+A. ≤5s
+B. ≤10s
+C. ≤20s
+D. ≤30s
+答案：</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;核对相关技术规定，光伏电站无功电压控制系统的响应时间不应大于 **30 s**，因此原答案正确。\n\n**D**&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>D</pre></details></div></section>
+</main>
+</body>
+</html>

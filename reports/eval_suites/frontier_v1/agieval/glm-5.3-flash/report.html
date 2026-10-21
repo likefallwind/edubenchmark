@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · agieval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · AGIEval：标准化与资格考试推理</h1>
+    <p class="muted">基准 agieval · 模型 <strong>glm-5.3-flash</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">33.8%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">80</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">27</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>AGIEval 取材于人类标准化/资格考试（高考、SAT、LSAT、GRE、法考、公务员考试、竞赛 MATH 等），评测模型在真实考试情境下的推理能力。对应本仓库能力维度 D03（标准化与资格考试推理）。</p><p>本次覆盖 21 个任务，分为选择题（gold 为选项字母；jec-qa、gaokao-physics 为多选）与数学填空（gold 为自由作答）。提示采用零样本思维链，要求模型先推理、再显式给出最终答案。</p><p>选择题抽取沿用官方 post_process 取字母逻辑，数学题动态加载官方 math_equivalence做等价判定；按任务、语言、题型分桶统计。</p><p class='muted'>主页：<a href='https://github.com/ruixiangcui/AGIEval'>https://github.com/ruixiangcui/AGIEval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#lsat-ar-218</span><span class='tag'>task=lsat-ar</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>At an upcoming exhibition, four art students—Franz, Greene, Hidalgo, and Isaacs—will each display exactly two paintings—an oil and a watercolor. Exactly two paintings will be displayed on each of the walls of the exhibition room—walls 1, 2, 3, and 4—with one painting in the upper position and one in the lower position. The following conditions will apply: No wall has only watercolors displayed on it. No wall has the work of only one student displayed on it. No wall has both a painting by Franz and a painting by Isaacs displayed on it. Greene&#x27;s watercolor is displayed in the upper position of the wall on which Franz&#x27;s oil is displayed. Isaacs&#x27;s oil is displayed in the lower position of wall 4.
+Question: Which one of the following could be an accurate list of the paintings displayed in the lower position on walls 1 through 4, listed in that order?
+Answer Choices: (A)Franz&#x27;s oil, Franz&#x27;s watercolor, Greene&#x27;s oil, Isaacs&#x27;s oil (B)Franz&#x27;s oil, Hidalgo&#x27;s watercolor, Isaacs&#x27;s watercolor, Isaacs&#x27;s oil (C)Greene&#x27;s oil, Franz&#x27;s oil, Isaacs&#x27;s oil, Hidalgo&#x27;s oil (D)Hidalgo&#x27;s oil, Greene&#x27;s oil, Greene&#x27;s watercolor, Isaacs&#x27;s oil (E)Hidalgo&#x27;s watercolor, Franz&#x27;s oil, Greene&#x27;s oil, Isaacs&#x27;s oil
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>C</div></div><div class='card'><div class='card-head'><span class='pid'>#lsat-lr-91</span><span class='tag'>task=lsat-lr</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Psychologist: The obligation to express gratitude cannot be fulfilled anonymously. However much society may have changed over the centuries, human psychology is still driven primarily by personal interaction. Thus, the important social function of positively reinforcing those behaviors that have beneficial consequences for others can be served only if the benefactor knows the source of the gratitude.
+Question: Which one of the following most accurately describes the role played in the psychologist&#x27;s argument by the claim that the obligation to express gratitude cannot be fulfilled anonymously?
+Answer Choices: (A)It is an illustration of a premise that is used to support the argument&#x27;s conclusion. (B)It is used to counter a consideration that might be taken to undermine the argument&#x27;s conclusion. (C)It is used to support indirectly a claim that the argument in turn uses to support directly the conclusion. (D)It is used to identify the social benefit with which the argument is concerned. (E)It is the conclusion that the argument is intended to support.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>E</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>80</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>aqua-rat</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>gaokao-biology</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-chemistry</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-chinese</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-english</td><td>3</td><td>1</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr><tr><td>gaokao-geography</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-history</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>gaokao-mathcloze</td><td>6</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>gaokao-mathqa</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>gaokao-physics</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>jec-qa-ca</td><td>11</td><td>3</td><td>0.273</td><td><div class='bar'><i style='width:27%'></i></div></td></tr><tr><td>jec-qa-kd</td><td>8</td><td>3</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>logiqa-en</td><td>10</td><td>4</td><td>0.400</td><td><div class='bar'><i style='width:40%'></i></div></td></tr><tr><td>logiqa-zh</td><td>7</td><td>1</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>lsat-ar</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>lsat-lr</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>lsat-rc</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>math</td><td>8</td><td>3</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr><tr><td>sat-en</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>sat-en-without-passage</td><td>8</td><td>2</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>sat-math</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>38</td><td>13</td><td>0.342</td><td><div class='bar'><i style='width:34%'></i></div></td></tr><tr><td>zh</td><td>42</td><td>14</td><td>0.333</td><td><div class='bar'><i style='width:33%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>cloze</td><td>14</td><td>3</td><td>0.214</td><td><div class='bar'><i style='width:21%'></i></div></td></tr><tr><td>qa</td><td>66</td><td>24</td><td>0.364</td><td><div class='bar'><i style='width:36%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#lsat-ar-218</span><span class='tag'>task=lsat-ar</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>At an upcoming exhibition, four art students—Franz, Greene, Hidalgo, and Isaacs—will each display exactly two paintings—an oil and a watercolor. Exactly two paintings will be displayed on each of the walls of the exhibition room—walls 1, 2, 3, and 4—with one painting in the upper position and one in the lower position. The following conditions will apply: No wall has only watercolors displayed on it. No wall has the work of only one student displayed on it. No wall has both a painting by Franz and a painting by Isaacs displayed on it. Greene&#x27;s watercolor is displayed in the upper position of the wall on which Franz&#x27;s oil is displayed. Isaacs&#x27;s oil is displayed in the lower position of wall 4.
+Question: Which one of the following could be an accurate list of the paintings displayed in the lower position on walls 1 through 4, listed in that order?
+Answer Choices: (A)Franz&#x27;s oil, Franz&#x27;s watercolor, Greene&#x27;s oil, Isaacs&#x27;s oil (B)Franz&#x27;s oil, Hidalgo&#x27;s watercolor, Isaacs&#x27;s watercolor, Isaacs&#x27;s oil (C)Greene&#x27;s oil, Franz&#x27;s oil, Isaacs&#x27;s oil, Hidalgo&#x27;s oil (D)Hidalgo&#x27;s oil, Greene&#x27;s oil, Greene&#x27;s watercolor, Isaacs&#x27;s oil (E)Hidalgo&#x27;s watercolor, Franz&#x27;s oil, Greene&#x27;s oil, Isaacs&#x27;s oil
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>## Setting Up the Constraints
+
+Each of the 8 paintings (F‑O, F‑W, G‑O, G‑W, H‑O, H‑W, I‑O, I‑W) is used exactly once. Key deductions:
+
+- **Greene&#x27;s watercolor is upper on the wall with Franz&#x27;s oil** → F‑O must be in a **lower** position.
+- **I‑O is lower on wall 4.**
+- Every wall needs at least one oil and two different students, and no wall can mix Franz with Isaacs.
+
+## Testing the Choices
+
+**(A) F‑O, F‑W, G‑O, I‑O (lower)**
+- Wall 1 has F‑O lower → G‑W upper (Wall 1: G‑W/F‑O ✓)
+- Wall 2 has F‑W lower → upper must be an oil, not Franz&#x27;s, not Isaacs&#x27;s → **H‑O** (Wall 2: H‑O/F‑W ✓)
+- Wall 4 has I‑O lower → upper can&#x27;t be Franz or Isaacs → **H‑W** (Wall 4: H‑W/I‑O ✓)
+- Wall 3 gets remaining I‑W upper (Wall 3: I‑W/G‑O ✓ — G‑O provides the oil, no Franz/Isaacs conflict)
+- All conditions satisfied ✓
+
+**(B) F‑O, H‑W, I‑W, I‑O (lower)**
+- Wall 1: G‑W upper. Wall 2 (H‑W lower) needs an oil upper, not Hidalgo → G‑O. Wall 3 (I‑W lower) needs an oil → H‑O. Wall 4&#x27;s upper must be F‑W — but that puts Franz and Isaacs on the same wall ✗
+
+**(C) G‑O, F‑O, I‑O, H‑O (lower)**
+- Isaacs&#x27;s oil is lower on wall 3, but it must be lower on **wall 4** ✗
+
+**(D) H‑O, G‑O, G‑W, I‑O (lower)**
+- Franz&#x27;s oil must be in a *lower* position (Greene&#x27;s watercolor sits above it), but no Franz oil appears among the lower positions; it can&#x27;t be upper either, since G‑W (already lower on wall 3) would have to be upper on its wall ✗
+
+**(E) H‑W, F‑O, G‑O, I‑O (lower)**
+- Wall 1 has watercolor H‑W lower → its upper must be an oil, but the only remaining paintings are F‑W (not an oil) and H‑O (same student — violates the two-student rule) ✗
+
+The answer is A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#lsat-lr-91</span><span class='tag'>task=lsat-lr</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Psychologist: The obligation to express gratitude cannot be fulfilled anonymously. However much society may have changed over the centuries, human psychology is still driven primarily by personal interaction. Thus, the important social function of positively reinforcing those behaviors that have beneficial consequences for others can be served only if the benefactor knows the source of the gratitude.
+Question: Which one of the following most accurately describes the role played in the psychologist&#x27;s argument by the claim that the obligation to express gratitude cannot be fulfilled anonymously?
+Answer Choices: (A)It is an illustration of a premise that is used to support the argument&#x27;s conclusion. (B)It is used to counter a consideration that might be taken to undermine the argument&#x27;s conclusion. (C)It is used to support indirectly a claim that the argument in turn uses to support directly the conclusion. (D)It is used to identify the social benefit with which the argument is concerned. (E)It is the conclusion that the argument is intended to support.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>E</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**Step 1: Identify the conclusion.**
+The word &quot;Thus&quot; signals the conclusion: *&quot;the important social function of positively reinforcing those behaviors that have beneficial consequences for others can be served only if the benefactor knows the source of the gratitude.&quot;* This rules out (E).
+
+**Step 2: Identify the supporting claims.**
+Before the conclusion, the psychologist offers two claims:
+1. &quot;The obligation to express gratitude cannot be fulfilled anonymously&quot; (the claim in question).
+2. &quot;Human psychology is still driven primarily by personal interaction.&quot;
+
+**Step 3: Determine the relationship between these claims and the conclusion.**
+The second claim is a general principle about human psychology, and it directly supports the &quot;Thus&quot; conclusion — if psychology depends on personal interaction, then the reinforcing function of gratitude works only when the source is known.
+
+The first claim (gratitude can&#x27;t be anonymous) is a *specific instance* that exemplifies that general principle: gratitude is precisely the kind of psychological phenomenon that requires personal interaction. So it functions as an illustration of the premise that human psychology is driven by personal interaction — the premise used to support the conclusion.
+
+**Step 4: Evaluate the other options.**
+- (B) Nothing in the argument counters an opposing consideration.
+- (C) The gratitude claim is not offered as evidence for an intermediate claim that then supports the conclusion; it stands alongside (as an example of) the general premise.
+- (D) The social benefit (positively reinforcing beneficial behavior) is identified in the conclusion, not in the gratitude claim.
+- (E) The conclusion is the final sentence, not the first.
+
+The answer is A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#lsat-rc-96</span><span class='tag'>task=lsat-rc</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Music and literature, rivals among the arts, have not coexisted without intruding on each other&#x27;s terrain. Ever since what we think of as &quot;literature&quot; developed out of the sounds of spoken, sung, and chanted art, writing bas aspired to the condition of music, in which fonn contnbutes significantly to content. Nowhere is this truer than in the African American tradition, whose music is often considered its greatest artistic achievement and one of the greatest contributions to North American art. But while many African American writers have used musicians and music as theme and metaphor in their writing, none had attempted to draw upon a musical genre as the structuring principle for an entire novel until Toni Morrison did so in her 1992 novel Jazz, a novel set in the Harlem section of New York City in 1926 . In Jazz, the connection to music is found not only in the novel&#x27;s plot but, more strikingly, in the way in which the story is told. The narration slips easily from the third-person omniscience of the narrator&#x27;s disembodied voice-which, though sensitive and sympathetic, claims no particular identity, gender, or immersion in specific social circumstances-to the first-person lyricism of key characters. But throughout these shifts, the narrator is both generous with the characters&#x27; voices and protective of his or her mastery over the narrative as a whole. On the one hand, the central characters are given the responsibility of relating their parts of the overarching story, but on the other hand, their sections are set offby quotation maIks, reminders that the narrator is allowing them to speak.. In this way, the narrative is analogous in structure to the playing of a jazz hand which intertwines its ensemble sound with the individuality of emhedded solo perfunnances. In jazz, composer and conductor Duke Ellington was the first to construct his compositions with his individual musicians and their unique &quot;voices&quot; in mind. Yet no matter how lengthy his musicians&#x27; improvisations, no matter how bold or inventive their solos might be, they always performed within the undeniable logic of the composer&#x27;s frame-they always, in other words, performed as ifwith quotation marks ar01md their improvisations and solos. It is this same effect that Toni Morrison has achieved in Jazz, a literary rendering of an art of composition that Duke Ellington perfected around the time in which Jazz is set. In this novel, Morrison has found a way, paradoxically, to create the sense of an ensemble of characters improvising within the fixed scope of a carefully constructed collective narration. By simulating the style of a genius of music while exhibiting Morrison&#x27;s own linguistic virtuosity, Jazz serves to redefine the very possibilities of narrative point of view.
+Question: The author&#x27;s assertion in lines 11-16 would be most called in 10 question if which one of the following were true?
+Answer Choices: (A)Even a casual reading of Jazz makes it evident that the author has intentionally tried to simulate a style of jazz performance in the narration of the story. (B)A small number of African American novelists writing earlier in the twentieth century sought to base the form of their work on the typical structme of blues music. (C)All novels about nonliterary arts and artists appear as if their authors have tried to make their narrative styles reminiscent of the arts in question. (D)Depending partly on whether or not it is read aloud, any novel can be found to be somewhat musical in nature. (E)A smaller number of African American writers than of non-African American writers in North America have written novels whose plots and characters have to do with music.
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>B</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**Step 1: Identify the assertion in lines 11-16.**
+
+The key claim in that section is: &quot;while many African American writers have used musicians and music as theme and metaphor in their writing, **none had attempted to draw upon a musical genre as the structuring principle for an entire novel until Toni Morrison did so** in her 1992 novel *Jazz*.&quot;
+
+In other words, Morrison is presented as the *first* African American writer to use a musical genre as the organizing/structuring principle of a whole novel.
+
+**Step 2: Determine what would weaken this claim.**
+
+To call the assertion into question, we&#x27;d need evidence that some African American novelist *before* Morrison had already used a musical genre as the structuring (formal) principle of a novel.
+
+**Step 3: Evaluate the answer choices.**
+
+- **(A)** This supports the passage&#x27;s description of *Jazz* mimicking jazz performance; it doesn&#x27;t challenge the priority claim.
+- **(B)** If African American novelists earlier in the twentieth century based the *form* of their work on the typical structure of blues music, then those writers already used a musical genre as a structuring principle—directly contradicting the claim that Morrison was the first. This would undermine the assertion.
+- **(C)** This makes a sweeping generalization about all novels about nonliterary arts, but &quot;appearing as if&quot; the style is reminiscent of an art is not the same as using that art&#x27;s genre as a *structuring principle* for a novel. It doesn&#x27;t specifically contradict the priority claim about African American writers and musical genres.
+- **(D)** Musicality dependent on reading aloud concerns the sounds of the text, not using a musical genre as a structural organizing principle. Irrelevant to the claim.
+- **(E)** This compares numbers of African American vs. non-African American writers using music in plots and characters—but the passage&#x27;s claim concerns *structuring principle*, not plot/theme. Irrelevant.
+
+**Step 4: Conclusion.**
+
+Only (B) provides a</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#logiqa-en-90</span><span class='tag'>task=logiqa-en</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Mr.Chen is going to hold a gathering of friends and family.He came forward and invited his father&#x27;s brother-in-law, his brother-in-law&#x27;s father, his brother&#x27;s mother-in-law, his brother-in-law&#x27;s brother.
+Question: How many guests did Mr.Chen come forward to invite?
+Answer Choices: (A)No guest invited (B)1 guest (C)2 guests (D)3 guests
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>C</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>## Setting Up the Puzzle
+
+Four invitations are made, but the same real person can be &quot;invited&quot; several times under different labels. The key trick: **&quot;brother-in-law&quot; is ambiguous** — it can mean *a sister&#x27;s husband* **or** *a wife&#x27;s brother*. Also note the gender clues: invitations 1, 2, 4 describe males (brother-in-law, father, brother), while invitation 3 describes a female (mother-in-law). So all four cannot be one person — at least two distinct people are needed.
+
+## A Family That Collapses the Four Invitations into Two People
+
+Let **X** be the man who married Mr. Chen&#x27;s father&#x27;s sister (Mr. Chen&#x27;s aunt):
+
+1. **&quot;His father&#x27;s brother-in-law&quot;** → X, the husband of the father&#x27;s sister. ✓
+
+2. **&quot;His brother-in-law&#x27;s father&quot;** → Let Mr. Chen&#x27;s sister marry X&#x27;s son. That son is a brother-in-law (sister&#x27;s husband), and *his father* is X. ✓
+
+3. **&quot;His brother-in-law&#x27;s brother&quot;** → Let Mr. Chen&#x27;s *other* sister marry X&#x27;s brother. That man is also a brother-in-law (sister&#x27;s husband), and *his brother* is X. ✓
+
+4. **&quot;His brother&#x27;s mother-in-law&quot;** → Let Mr. Chen&#x27;s brother marry X&#x27;s daughter. The mother of that daughter is X&#x27;s wife — i.e., the aunt. ✓
+
+So all four invitations point to just **two people: X and his wife**.
+
+## Checking the Other Options
+
+- **(A) No guest:** Impossible — the invitees are real, distinct people.
+- **(B) 1 guest:** Impossible — one person cannot be both the male relations (father/brother-in-law roles) and the female mother-in-law.
+- **(D) 3 guests:** Possible in a less &quot;compressed&quot; family, but not the minimum the puzzle is fishing for — two people suffice.
+
+The minimum number of guests is **2**.
+
+The answer is C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#sat-math-124</span><span class='tag'>task=sat-math</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: If a white birch tree and a pin oak tree each now have a diameter of 1 foot, which of the following will be closest to the difference, in inches, of their diameters 10 years from now? $(1$ foot $=12$ inches $)$
+Answer Choices: (A)1.0 (B)1.2 (C)1.3 (D)1.4
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>A</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**Setting up the problem:**
+
+From the given growth information (the lines of best fit for the two tree species), the average yearly increases in diameter are approximately:
+- White birch: about **0.9 inch per year**
+- Pin oak: about **0.8 inch per year**
+
+**Computing growth over 10 years:**
+
+- White birch growth in 10 years: 0.9 × 10 = **9 inches**
+- Pin oak growth in 10 years: 0.8 × 10 = **8 inches**
+
+**Applying the starting diameters:**
+
+Each tree currently has a diameter of 1 foot = 12 inches, so in 10 years:
+- White birch: 12 + 9 = 21 inches
+- Pin oak: 12 + 8 = 20 inches
+
+**Difference:**
+
+21 − 20 = **1 inch**
+
+This matches choice (A). The other choices come from misreading the growth rates from the graph.
+
+The answer is A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#aqua-rat-152</span><span class='tag'>task=aqua-rat</span> <span class='tag'>language=en</span> <span class='tag'>question_type=qa</span></div><div class='qtext'>Question: If Jill needed to buy 10 bottles of soda for a party in which 8 people attended, how many bottles of soda will she need to buy for a party in which 12 people are attending?
+Answer Choices: (A)6 (B)8 (C)10 (D)12 (E)14
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>E</div><div class='ans'><span class='lbl'>归一化</span>E</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**Step 1:** Look at the given information — for a party with 8 people, Jill needed 10 bottles of soda.
+
+**Step 2:** Notice the pattern: she bought 2 more bottles than the number of people (10 bottles for 8 people, i.e., one bottle per person plus 2 extra).
+
+**Step 3:** Apply the same pattern to 12 people: 12 people means one bottle per person (12 bottles) plus the 2 extra bottles.
+
+**Step 4:** 12 + 2 = 14 bottles.
+
+The answer is E</pre></details></div></section>
+</main>
+</body>
+</html>

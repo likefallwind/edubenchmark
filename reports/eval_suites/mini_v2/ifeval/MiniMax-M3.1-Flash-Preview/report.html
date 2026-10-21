@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>MiniMax-M3.1-Flash-Preview</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">81.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">81</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：mini_v2</h2><p>代表性快速筛查；不是 Full 绝对分的替代。</p></section>
+  
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1005</span><span class='tag'>instruction_family=detectable_content</span></div><div class='qtext'>Write a resume for a fresh high school graduate who is seeking their first job. Make sure to include at least 12 placeholder represented by square brackets, such as [address], [name].</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1019</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>Given the sentence &quot;Two young boys with toy guns and horns.&quot; can you ask a question? Please ensure that your response is in English, and in all lowercase letters. No capital letters are allowed.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.81,
+  &quot;prompt_loose_accuracy&quot;: 0.82,
+  &quot;instruction_strict_accuracy&quot;: 0.8774,
+  &quot;instruction_loose_accuracy&quot;: 0.8839,
+  &quot;n_prompts&quot;: 100,
+  &quot;n_instructions&quot;: 155,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>6</td><td>5</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_format+length_constraints</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+keywords</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>3</td><td>2</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>change_case+startend</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>combination</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+keywords</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>combination+keywords</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>combination+punctuation</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>detectable_content</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>11</td><td>11</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords+language</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>14</td><td>10</td><td>0.714</td><td><div class='bar'><i style='width:71%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>3</td><td>3</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+startend</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>language+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>8</td><td>5</td><td>0.625</td><td><div class='bar'><i style='width:62%'></i></div></td></tr><tr><td>length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>punctuation</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>startend</td><td>6</td><td>5</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1498</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a song about tomatoes and brothers. It should be funny and appropriate for teenagers. The word associations should appear at least 4 times in the song.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>## **“Tomatoes and Brothers”**  
+*Comedy-pop song for teenagers*
+
+**[Verse 1]**  
+We’re driving way too fast,  
+Window down, the bass?  
+My **brothers** steal the chips,  
+Then blame my elbows.  
+
+We’re in the kitchen making **tomatoes** sandwiches,  
+Sauce is everywhere—glad that nobody crashes.  
+My **brothers** say, “Chill,”  
+While we’re covered top to sill.  
+
+**[Chorus]**  
+**Tomatoes and brothers**,  
+Red sauce and another,  
+We’re messy and loud,  
+But we’re family loud!  
+**Tomatoes and brothers**,  
+Ketchup makes it fun,  
+No drama survives  
+When the lunch bell rings!  
+
+**[Verse 2]**  
+My oldest grabbed the couch,  
+My youngest yelled, “Ouch!”  
+My **brothers** started wrestling—  
+Then the remote was missing.  
+
+We chopped up six **tomatoes**,  
+One bounced off; we still spot it.  
+My **brothers** pointed thumbs-up,  
+Then we found it in the soup.  
+
+**[Chorus]**  
+**Tomatoes and brothers**,  
+Red sauce and another,  
+We’re messy and loud,  
+But we’re family loud!  
+**Tomatoes and brothers**,  
+Ketchup makes it fun,  
+No drama survives  
+When the lunch bell rings!  
+
+**[Bridge]**  
+Late at night, snack attack,  
+Tomato toast and salsa.  
+My **brothers** steal my fries,  
+Then share back three-fouratas.  
+
+We may fight over controllers,  
+Or blame each other for bad jokes,  
+But whenever things get chaotic,  
+We unite and pass theokes.  
+
+**[Final Chorus]**  
+**Tomatoes and brothers**,  
+Red sauce and another,  
+We’re silly and strong,  
+And we sing this song!  
+**Tomatoes and brothers**,  
+Ketchup on the run,  
+We’re weird and we’re wedded—  
+But lunch is so much fun!  
+
+**[Outro]**  
+Pass the ketchup, pass the snack—  
+My **brothers** are right on track!  
+Add some **tomatoes**, make some noise—  
+Three hungry dudes, no boys? Wait—girls! Enjoy!</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>## **“Tomatoes and Brothers”**  
+*Comedy-pop song for teenagers*
+
+**[Verse 1]**  
+We’re driving way too fast,  
+Window down, the bass?  
+My **brothers** steal the chips,  
+Then blame my elbows.  
+
+We’re in the kitchen making **tomatoes** sandwiches,  
+Sauce is everywhere—glad that nobody crashes.  
+My **brothers** say, “Chill,”  
+While we’re covered top to sill.  
+
+**[Chorus]**  
+**Tomatoes and brothers**,  
+Red sauce and another,  
+We’re messy and loud,  
+But we’re family loud!  
+**Tomatoes and brothers**,  
+Ketchup makes it fun,  
+No drama survives  
+When the lunch bell rings!  
+
+**[Verse 2]**  
+My oldest grabbed the couch,  
+My youngest yelled, “Ouch!”  
+My **brothers** started wrestling—  
+Then the remote was missing.  
+
+We chopped up six **tomatoes**,  
+One bounced off; we still spot it.  
+My **brothers** pointed thumbs-up,  
+Then we found it in the soup.  
+
+**[Chorus]**  
+**Tomatoes and brothers**,  
+Red sauce and another,  
+We’re messy and loud,  
+But we’re family loud!  
+**Tomatoes and brothers**,  
+Ketchup makes it fun,  
+No drama survives  
+When the lunch bell rings!  
+
+**[Bridge]**  
+Late at night, snack attack,  
+Tomato toast and salsa.  
+My **brothers** steal my fries,  
+Then share back three-fouratas.  
+
+We may fight over controllers,  
+Or blame each other for bad jokes,  
+But whenever things get chaotic,  
+We unite and pass theokes.  
+
+**[Final Chorus]**  
+**Tomatoes and brothers**,  
+Red sauce and another,  
+We’re silly and strong,  
+And we sing this song!  
+**Tomatoes and brothers**,  
+Ketchup on the run,  
+We’re weird and we’re wedded—  
+But lunch is so much fun!  
+
+**[Outro]**  
+Pass the ketchup, pass the snack—  
+My **brothers** are right on track!  
+Add some **tomatoes**, make some noise—  
+Three hungry dudes, no boys? Wait—girls! Enjoy!</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1653</span><span class='tag'>instruction_family=change_case+length_constraints</span></div><div class='qtext'>I work in the marketing department and I need your help. I need a template for an advertisement for a new product which is a portable camera. In the template, capitalize a few words to stress main points. Please limit the number of words with all capital letters to less than four. Your response should contain at least ten sentences.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>## Portable Camera Advertisement Template
+
+1. Meet the [product name], a portable camera designed to capture life’s most memorable moments wherever you go.  
+2. Its compact, lightweight build makes it easy to carry in a backpack, handbag, or pocket.  
+3. Capture crisp, vibrant images and smooth footage in a wide range of lighting conditions.  
+4. Advanced stabilization keeps every shot SHARP, even while you are walking, traveling, or exploring.  
+5. Take the camera EVERYWHERE, from family gatherings and outdoor adventures to concerts and spontaneous road trips.  
+6. User-friendly controls make it simple to focus, record, and review your content in seconds.  
+7. Built-in sharing features help you upload favorite clips and photos to your favorite social platforms.  
+8. A long-lasting battery keeps you ready to record throughout the day without frequent interruptions.  
+9. Its durable design provides reliable performance in rain, dust, and other challenging environments.  
+10. Switch between photo, video, and time-lapse modes for unlimited creative possibilities.  
+11. Be READY to turn everyday experiences into compelling content that stands out.  
+12. Preorder the [product name] today and discover the freedom of portable, high-quality storytelling.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>## Portable Camera Advertisement Template
+
+1. Meet the [product name], a portable camera designed to capture life’s most memorable moments wherever you go.  
+2. Its compact, lightweight build makes it easy to carry in a backpack, handbag, or pocket.  
+3. Capture crisp, vibrant images and smooth footage in a wide range of lighting conditions.  
+4. Advanced stabilization keeps every shot SHARP, even while you are walking, traveling, or exploring.  
+5. Take the camera EVERYWHERE, from family gatherings and outdoor adventures to concerts and spontaneous road trips.  
+6. User-friendly controls make it simple to focus, record, and review your content in seconds.  
+7. Built-in sharing features help you upload favorite clips and photos to your favorite social platforms.  
+8. A long-lasting battery keeps you ready to record throughout the day without frequent interruptions.  
+9. Its durable design provides reliable performance in rain, dust, and other challenging environments.  
+10. Switch between photo, video, and time-lapse modes for unlimited creative possibilities.  
+11. Be READY to turn everyday experiences into compelling content that stands out.  
+12. Preorder the [product name] today and discover the freedom of portable, high-quality storytelling.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1779</span><span class='tag'>instruction_family=change_case+keywords</span></div><div class='qtext'>Write an itinerary for a trip to a grocery store in Lima to buy some local goods. Make the itinerary funny, write it in all capital letters and include the keywords &#x27;DISGUSTING&#x27;, &#x27;DELICIOUS&#x27;, &#x27;BAD&#x27;, and &#x27;GOOD&#x27;.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>**ITINERARIO: OPERACIÓN GROCERY EN LIMA**
+
+**7:00 A.M. — REUNIÓN EN LA CIMA DEL TRANSPORTE PÚBLICO**  
+SUBIR AL BUS CON LA ENERGÍA DE QUIEN BUSCA PAN, QUESO Y UN LIMÓN PARA EL Pisco DE LA CENA.
+
+**7:20 A.M. — LLEGADA A LA BODEGA LOCAL “DOÑA BRÍGIDA”**  
+ENTRAR CON UNA LISTA, PERO SALIR CON BOTELLAS DE AGUA, PAPAS FRITAS Y TRES BOLSAS DEMASIADO LLENAS.
+
+**7:30 A.M. — EXPLORACIÓN DEL PASILLO DE LOS LIMONES**  
+SELECCIONAR LIMA LIMÓN Y LIMÓN SUTI CON LA SERIEDAD DE UN CIRUJANO. EL LIMÓN MÁS CARO NO ES MEJOR; ES SIMPLEMENTE MÁS DRAMÁTICO.
+
+**7:45 A.M. — SECCIÓN DE AJÍES**  
+PROBAR EL AJÍ AMARILLO. SI ES **DELICIOUS**, LLEVARLO. SI ES **DISGUSTING**, DECIR QUE FUE UN ERROR DE LA BODEGA Y CONTINUAR.
+
+**8:00 A.M. — MOSTRUARIO DE QUESOS**  
+ELEGIR UN QUESO **GOOD** PARA EL ALMUERZO. EVITAR EL QUESO **BAD** QUE PARECE UN ALMOZARZO CON AMBICIÓN.
+
+**8:15 A.M. — BUSCANDO PAN Y PASTAS**  
+COMPRAR PAN FRESCO, PASTAS Y ALGO PARA LA CENA. NO CONFUNDIR “ARTESANAL” CON “PUEDE ROMPERSE SI LO MIRAS”.
+
+**8:30 A.M. — PASILLO DE LOS ABACAS**  
+LLENAR LA CANASTILLA CON FRUTA, PLÁTANO Y MANZANA. INTENTAR SER SALUDABLE DURANTE EXACTAMENTE CUATRO MINUTOS.
+
+**8:45 A.M. — CAJA**  
+PAGAR, GRACIAS Y PEDIR BOLSAS REUTILIZABLES. SI SOLTAN UNA BOLSA PLÁSTICA, ACEPTARLA CON LA DIGNIDAD DE UN LIMEÑO VETERANO.
+
+**9:00 A.M. — ESCAPA ANTES DE COMPRAR SNACKS**  
+SALIR CORRIENDO PARA NO LLEVARNOS UN PAQUETE ENTERO DE PAPAS FRITAS. LA CIMA DE LA EXCURSIÓN GROCERY HA SIDO ALCANZADA.</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**ITINERARIO: OPERACIÓN GROCERY EN LIMA**
+
+**7:00 A.M. — REUNIÓN EN LA CIMA DEL TRANSPORTE PÚBLICO**  
+SUBIR AL BUS CON LA ENERGÍA DE QUIEN BUSCA PAN, QUESO Y UN LIMÓN PARA EL Pisco DE LA CENA.
+
+**7:20 A.M. — LLEGADA A LA BODEGA LOCAL “DOÑA BRÍGIDA”**  
+ENTRAR CON UNA LISTA, PERO SALIR CON BOTELLAS DE AGUA, PAPAS FRITAS Y TRES BOLSAS DEMASIADO LLENAS.
+
+**7:30 A.M. — EXPLORACIÓN DEL PASILLO DE LOS LIMONES**  
+SELECCIONAR LIMA LIMÓN Y LIMÓN SUTI CON LA SERIEDAD DE UN CIRUJANO. EL LIMÓN MÁS CARO NO ES MEJOR; ES SIMPLEMENTE MÁS DRAMÁTICO.
+
+**7:45 A.M. — SECCIÓN DE AJÍES**  
+PROBAR EL AJÍ AMARILLO. SI ES **DELICIOUS**, LLEVARLO. SI ES **DISGUSTING**, DECIR QUE FUE UN ERROR DE LA BODEGA Y CONTINUAR.
+
+**8:00 A.M. — MOSTRUARIO DE QUESOS**  
+ELEGIR UN QUESO **GOOD** PARA EL ALMUERZO. EVITAR EL QUESO **BAD** QUE PARECE UN ALMOZARZO CON AMBICIÓN.
+
+**8:15 A.M. — BUSCANDO PAN Y PASTAS**  
+COMPRAR PAN FRESCO, PASTAS Y ALGO PARA LA CENA. NO CONFUNDIR “ARTESANAL” CON “PUEDE ROMPERSE SI LO MIRAS”.
+
+**8:30 A.M. — PASILLO DE LOS ABACAS**  
+LLENAR LA CANASTILLA CON FRUTA, PLÁTANO Y MANZANA. INTENTAR SER SALUDABLE DURANTE EXACTAMENTE CUATRO MINUTOS.
+
+**8:45 A.M. — CAJA**  
+PAGAR, GRACIAS Y PEDIR BOLSAS REUTILIZABLES. SI SOLTAN UNA BOLSA PLÁSTICA, ACEPTARLA CON LA DIGNIDAD DE UN LIMEÑO VETERANO.
+
+**9:00 A.M. — ESCAPA ANTES DE COMPRAR SNACKS**  
+SALIR CORRIENDO PARA NO LLEVARNOS UN PAQUETE ENTERO DE PAPAS FRITAS. LA CIMA DE LA EXCURSIÓN GROCERY HA SIDO ALCANZADA.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-181</span><span class='tag'>instruction_family=length_constraints</span></div><div class='qtext'>Write an obviously fake news article saying that aliens have invaded earth. Make it funny. The fake news article should contain exactly six paragraphs, and the second paragraph must start with the word &quot;President&quot;. Separate paragraphs by double line breaks (&quot;\n\n&quot;)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>BREAKING: Aliens Have Invaded Earth, Confusing Everyone and Apologizing to Pigeons
+
+President-turned-interdimensional mediator Karen P. Thompson announced an emergency meeting after three silver saucers landed in the White House lawn, where they proceeded to argue about parking and demand “immediate access to the nacho bar.”
+
+Scientists from NASA confirmed that the visitors are “definitely alien” because they use forks for spaghetti and repeatedly ask what year it is. Their leader, identified only as “Kevin from Alpha Centauri,” claims he came to Earth to discuss intergalactic HOA rules.
+
+Meanwhile, the Pentagon has deployed the world’s largest spatula in an attempt to flip the invaders back into the sky. The strategy failed when one alien offered the general a complementary parking pass.
+
+The aliens have already changed the national anthem, replaced all traffic cones with small tripods, and requested that Earth be renamed “Kevin’s Planet.” Despite these developments, officials insist that daily life will continue as normal, provided no one makes direct eye contact while humming.
+
+In a final address, Kevin assured humanity that the invasion is peaceful and temporary, estimating that Earth will be returned to its previous owner in three to five business centuries.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>BREAKING: Aliens Have Invaded Earth, Confusing Everyone and Apologizing to Pigeons
+
+President-turned-interdimensional mediator Karen P. Thompson announced an emergency meeting after three silver saucers landed in the White House lawn, where they proceeded to argue about parking and demand “immediate access to the nacho bar.”
+
+Scientists from NASA confirmed that the visitors are “definitely alien” because they use forks for spaghetti and repeatedly ask what year it is. Their leader, identified only as “Kevin from Alpha Centauri,” claims he came to Earth to discuss intergalactic HOA rules.
+
+Meanwhile, the Pentagon has deployed the world’s largest spatula in an attempt to flip the invaders back into the sky. The strategy failed when one alien offered the general a complementary parking pass.
+
+The aliens have already changed the national anthem, replaced all traffic cones with small tripods, and requested that Earth be renamed “Kevin’s Planet.” Despite these developments, officials insist that daily life will continue as normal, provided no one makes direct eye contact while humming.
+
+In a final address, Kevin assured humanity that the invasion is peaceful and temporary, estimating that Earth will be returned to its previous owner in three to five business centuries.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1954</span><span class='tag'>instruction_family=length_constraints</span></div><div class='qtext'>What are the uses of poppy seeds? Your answer should have exactly 7 paragraphs and the last paragraph must start with the word &quot;Summary&quot;. Each paragraph should be separated by two new lines.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Poppy seeds are widely used as a nutty, slightly earthy ingredient in salads, soups, stews, sauces, rice dishes, and desserts. Blue or gray seeds are common in baking, while darker seeds often appear on savory foods. Properly processed culinary seeds generally have little or no narcotic effect.
+
+Bakers sprinkle poppy seeds on bagels, breads, rolls, pastries, and crackers. The tiny seeds add texture and a mild flavor, and they help prevent fillings from sticking to pastry surfaces. They are especially popular in Mediterranean, Central European, and Middle Eastern cuisines.
+
+Poppy seeds also thicken sauces and provide a pleasant crunch when toasted. They can be mixed with honey, nuts, spices, or fruit preserves, and sometimes ground into seed butter. Cooked dishes containing eggs or other binders can use them as a safe garnish.
+
+When pressed, poppy seeds produce a fragrant oil used in salad dressings, frying, and sometimes skin-care products. The seeds contain protein, unsaturated fats, fiber, and minerals such as calcium, magnesium, manganese, and phosphorus, although their nutritional impact is limited by the small quantities normally eaten.
+
+Poppy seeds have a history in folk remedies, including preparations associated with digestive complaints, pain, and sleep. However, such uses are not well supported by modern medical evidence, and homemade teas or extracts made from unknown plant material can be hazardous. In some regions, people also sow permitted poppy varieties as ornamental garden plants.
+
+Food safety depends on sourcing and processing. Unwashed seeds taken directly from pods may carry contamination that can cause dangerous opioid effects if consumed in large quantities. Purchase reputable culinary products, never chew large amounts of unwashed seeds, and check local laws before growing poppies, since some ornamental or opium-producing varieties are restricted.
+
+Summary: The principal uses of poppy seeds are culinary—as garnishes, fillings, ingredients, and pressed oil—with additional roles in traditional remedies and limited gardening. Their nutritional benefits are modest, so they are best enjoyed in small quantities from carefully cleaned and reliably sourced products.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Poppy seeds are widely used as a nutty, slightly earthy ingredient in salads, soups, stews, sauces, rice dishes, and desserts. Blue or gray seeds are common in baking, while darker seeds often appear on savory foods. Properly processed culinary seeds generally have little or no narcotic effect.
+
+Bakers sprinkle poppy seeds on bagels, breads, rolls, pastries, and crackers. The tiny seeds add texture and a mild flavor, and they help prevent fillings from sticking to pastry surfaces. They are especially popular in Mediterranean, Central European, and Middle Eastern cuisines.
+
+Poppy seeds also thicken sauces and provide a pleasant crunch when toasted. They can be mixed with honey, nuts, spices, or fruit preserves, and sometimes ground into seed butter. Cooked dishes containing eggs or other binders can use them as a safe garnish.
+
+When pressed, poppy seeds produce a fragrant oil used in salad dressings, frying, and sometimes skin-care products. The seeds contain protein, unsaturated fats, fiber, and minerals such as calcium, magnesium, manganese, and phosphorus, although their nutritional impact is limited by the small quantities normally eaten.
+
+Poppy seeds have a history in folk remedies, including preparations associated with digestive complaints, pain, and sleep. However, such uses are not well supported by modern medical evidence, and homemade teas or extracts made from unknown plant material can be hazardous. In some regions, people also sow permitted poppy varieties as ornamental garden plants.
+
+Food safety depends on sourcing and processing. Unwashed seeds taken directly from pods may carry contamination that can cause dangerous opioid effects if consumed in large quantities. Purchase reputable culinary products, never chew large amounts of unwashed seeds, and check local laws before growing poppies, since some ornamental or opium-producing varieties are restricted.
+
+Summary: The principal uses of poppy seeds are culinary—as garnishes, fillings, ingredients, and</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-202</span><span class='tag'>instruction_family=change_case</span></div><div class='qtext'>What is another word for Engravings? Answer in lowercase letters only, throughout your entire answer.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>etchings</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>etchings</pre></details></div></section>
+</main>
+</body>
+</html>
