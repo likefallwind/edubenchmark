@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>MiniMax-M3.1-Flash-Preview</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">60.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1040</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Write me a resume for Matthias Algiers. Use words with all capital letters to highlight key abilities, but make sure that words with all capital letters appear less than 10 times. Wrap the entire response with double quotation marks.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1075</span><span class='tag'>instruction_family=detectable_format</span></div><div class='qtext'>Can you help me make an advertisement for a new product? It&#x27;s a diaper that&#x27;s designed to be more comfortable for babies and I want the entire output in JSON format.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.6,
+  &quot;prompt_loose_accuracy&quot;: 0.66,
+  &quot;instruction_strict_accuracy&quot;: 0.7714,
+  &quot;instruction_loose_accuracy&quot;: 0.8057,
+  &quot;n_prompts&quot;: 100,
+  &quot;n_instructions&quot;: 175,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>8</td><td>2</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_content+detectable_format</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_format</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>5</td><td>3</td><td>0.600</td><td><div class='bar'><i style='width:60%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>change_case+startend</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>combination</td><td>8</td><td>7</td><td>0.875</td><td><div class='bar'><i style='width:88%'></i></div></td></tr><tr><td>combination+detectable_format</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+punctuation</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>combination+keywords</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>combination+length_constraints</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+punctuation</td><td>4</td><td>1</td><td>0.250</td><td><div class='bar'><i style='width:25%'></i></div></td></tr><tr><td>detectable_content</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>9</td><td>9</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>6</td><td>4</td><td>0.667</td><td><div class='bar'><i style='width:67%'></i></div></td></tr><tr><td>detectable_format+keywords+length_constraints</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>10</td><td>6</td><td>0.600</td><td><div class='bar'><i style='width:60%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>4</td><td>2</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>keywords+length_constraints+punctuation</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>keywords+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>10</td><td>5</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1040</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Write me a resume for Matthias Algiers. Use words with all capital letters to highlight key abilities, but make sure that words with all capital letters appear less than 10 times. Wrap the entire response with double quotation marks.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>&quot;Matthias Algiers  
+Professional Resume
+
+CONTACT INFORMATION  
+Phone: [Phone Number]  
+Email: [Email Address]  
+Location: [City, State]  
+LinkedIn: [LinkedIn Profile]  
+Portfolio: [Website or Portfolio URL]
+
+PROFESSIONAL SUMMARY
+
+Results-oriented professional with experience guiding cross-functional initiatives from initial planning through successful delivery. Skilled at translating complex requirements into practical action plans, building productive partnerships, and using data to improve performance. Recognized for clear communication, responsible decision-making, and consistent attention to quality.
+
+KEY ABILITIES
+
+LEADERSHIP • STRATEGIC PLANNING • COMMUNICATION • COLLABORATION • PROJECT MANAGEMENT • DATA ANALYSIS
+
+CORE EXPERTISE
+
+Team Leadership | Stakeholder Management | Process Improvement | Performance Reporting | Operational Efficiency | Change Management | Risk Assessment | Resource Allocation | Coaching | Quality Improvement | Budget Planning | Data-Informed Decision-Making
+
+PROFESSIONAL EXPERIENCE
+
+[Most Recent Job Title]  
+[Company Name] | [Location] | [Start Date–End Date]
+
+- Led a cross-functional team of [number] to deliver [project or initiative] within budget and on schedule.
+- Improved [process or operation] by [percentage], reducing costs, time, or customer complaints.
+- Partnered with senior leaders and key stakeholders to establish priorities and resolve risks.
+- Created performance dashboards and recurring reports to support evidence-based decisions.
+- Mentored team members, delegated responsibilities, and introduced workflow improvements.
+- Delivered [major achievement], resulting in [measurable business outcome].
+
+[Previous Job Title]  
+[Company Name] | [Location] | [Start Date–End Date]
+
+- Coordinated multiple workstreams and maintained alignment across departments.
+- Analyzed operational data to identify trends, inefficiencies, and growth opportunities.
+- Developed recommendations and action plans for managers and executive stakeholders.
+- Facilitated meetings, presentations, and collaborative planning sessions.
+- Strengthened customer relationships through responsive service and clear communication.
+- Recognized for [award, promotion, commendation, or notable accomplishment].
+
+ADDITIONAL EXPERIENCE
+
+[Role or Volunteer Position]  
+[Organization Name] | [Location] | [Dates]
+
+- Supported [event, program, or responsibility] involving [number] participants or stakeholders.
+- Organized resources, schedules, documentation, and follow-up activities.
+- Demonstrated initiative and adaptability in fast-paced environments.
+
+EDUCATION
+
+[Degree Name]  
+[Institution Name] | [City, State] | [Graduation Year]
+
+[Relevant Coursework, Honors, or Academic Projects]
+
+CERTIFICATIONS AND PROFESSIONAL DEVELOPMENT
+
+[Certification or Training]  
+[Issuing Organization] | [Year]
+
+[Certification or Training]  
+[Issuing Organization] | [Year]
+
+SELECTED ACHIEVEMENTS
+
+- [Achievement involving a measurable result, team contribution, or business impact]
+- [Recognition, award, publication, presentation, or successful initiative]
+- [Demonstrated commitment, community contribution, or professional development]
+
+&quot;</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>&quot;Matthias Algiers  
+Professional Resume
+
+CONTACT INFORMATION  
+Phone: [Phone Number]  
+Email: [Email Address]  
+Location: [City, State]  
+LinkedIn: [LinkedIn Profile]  
+Portfolio: [Website or Portfolio URL]
+
+PROFESSIONAL SUMMARY
+
+Results-oriented professional with experience guiding cross-functional initiatives from initial planning through successful delivery. Skilled at translating complex requirements into practical action plans, building productive partnerships, and using data to improve performance. Recognized for clear communication, responsible decision-making, and consistent attention to quality.
+
+KEY ABILITIES
+
+LEADERSHIP • STRATEGIC PLANNING • COMMUNICATION • COLLABORATION • PROJECT MANAGEMENT • DATA ANALYSIS
+
+CORE EXPERTISE
+
+Team Leadership | Stakeholder Management | Process Improvement | Performance Reporting | Operational Efficiency | Change Management | Risk Assessment | Resource Allocation | Coaching | Quality Improvement | Budget Planning | Data-Informed Decision-Making
+
+PROFESSIONAL EXPERIENCE
+
+[Most Recent Job Title]  
+[Company Name] | [Location] | [Start Date–End Date]
+
+- Led a cross-functional team of [number] to deliver [project or initiative] within budget and on schedule.
+- Improved [process or operation] by [percentage], reducing costs, time, or customer complaints.
+- Partnered with senior leaders and key stakeholders to establish priorities and resolve risks.
+- Created performance dashboards and recurring reports to support evidence-based decisions.
+- Mentored team members, delegated responsibilities, and introduced workflow improvements.
+- Delivered [major achievement], resulting in [measurable business outcome].
+
+[Previous Job Title]  
+[Company Name] | [Location] | [Start Date–End Date]
+
+- Coordinated multiple workstreams and maintained alignment across departments.
+- Analyzed operational data to identify trends, inefficiencies, and growth opportunities.
+- Developed recommendations and action plans for managers and executive stakeholders.
+</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1082</span><span class='tag'>instruction_family=length_constraints</span></div><div class='qtext'>Write a story of exactly 2 paragraphs about a man who wakes up one day and realizes that he&#x27;s inside a video game. Separate the paragraphs with the markdown divider: ***</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Milo woke to a sky full of pixelated clouds and realized that the birds outside his window were looping in perfect, mechanical circles. When he stepped outside, a glowing prompt hovered above his head: **Welcome, Player 1. Tutorial level complete. Choose your starting class.** He tried to ignore it, but the world responded to his thoughts—cobblestones turned into buttons, and a silver sword materialized in his hand. At last, he understood: this was no longer his life. He was inside a video game.
+
+Panic briefly overwhelmed him, but then he noticed the shadows of the monsters gathering beyond the village wall. The game’s rules appeared in his vision, offering skills he could unlock and treasures he could claim. He realized that although the world was artificial, the choices within it were real. When the horn sounded and the first goblin charged, Milo raised the sword, knowing that survival meant learning the game faster than it learned him.
+
+***</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Milo woke to a sky full of pixelated clouds and realized that the birds outside his window were looping in perfect, mechanical circles. When he stepped outside, a glowing prompt hovered above his head: **Welcome, Player 1. Tutorial level complete. Choose your starting class.** He tried to ignore it, but the world responded to his thoughts—cobblestones turned into buttons, and a silver sword materialized in his hand. At last, he understood: this was no longer his life. He was inside a video game.
+
+Panic briefly overwhelmed him, but then he noticed the shadows of the monsters gathering beyond the village wall. The game’s rules appeared in his vision, offering skills he could unlock and treasures he could claim. He realized that although the world was artificial, the choices within it were real. When the horn sounded and the first goblin charged, Milo raised the sword, knowing that survival meant learning the game faster than it learned him.
+
+***</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1122</span><span class='tag'>instruction_family=change_case+keywords</span></div><div class='qtext'>make a tweet for playboy&#x27;s twitter account without using capital letters. Include at least 4 hashtags, starting with &#x27;#&#x27;</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>style, wit, and timeless charm—wherever life takes you. discover your signature playboy spirit. #playboy #style #charm #confidence #livinglegend</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>style, wit, and timeless charm—wherever life takes you. discover your signature playboy spirit. #playboy #style #charm #confidence #livinglegend</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1130</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Write a logic quiz for teenagers about a chesterfield. In your entire response, the letter t should appear at most once.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>**Logic Quiz: A Chesterfield**  
+**For ages 13–19**
+
+Name: __________ Score: ______ / 8
+
+A classic couch can serve as a clue. Read each riddle and circle one answer.
+
+1. A designer needs a long seat for three people in a living room. Which choice fits?
+   - A. A couch
+   - B. A side chair
+   - C. A pouf
+   - D. A bed
+
+2. A shopper sees a long couch with rolled arms, a high back marked by evenly spaced dimples, and a deep seat. Which name fits?
+   - A. A beanbag
+   - B. A dining stool
+   - C. A couch
+   - D. A bench
+
+3. A guest needs a seat with a high back, rolled arms, and room for several people. A pouf has no back. A side chair is narrow. A dining stool has no back. Which choice fits?
+   - A. A bench
+   - B. A folding chair
+   - C. A couch
+   - D. A bed
+
+4. “I have a long frame, a high back, and arms at each end. I am used for reading and relaxing.” Which choice am I?
+   - A. A rug
+   - B. A lamp
+   - C. A couch
+   - D. A pillow
+
+5. A family needs a classic, comfortable seat for guests. Which choice works best?
+   - A. A folding chair
+   - B. A couch
+   - C. A beanbag
+   - D. A pouf
+
+6. A drawing shows a long seat with a high back, rolled arms, evenly spaced dimples, and a broad base. Which name fits best?
+   - A. A lamp
+   - B. A stool
+   - C. A rug
+   - D. A couch
+
+7. Four objects occupy four spots. A rug is left of a lamp. A lamp is left of a couch. A pillow is right of a couch. Which object is far right?
+   - A. A rug
+   - B. A lamp
+   - C. A couch
+   - D. A pillow
+
+8. Eight guests arrive. A room has four side chairs and one couch which seats three. How many guests can be seated?
+   - A. 3
+   - B. 4
+   - C. 7
+   - D. 8
+
+**Answer key**
+
+1. **A** — Holds several people.  
+2. **C** — Long frame, rolled arms, dimples, and a deep seat match.  
+3. **C** — Only a couch has a high back, rolled arms, and room for a group.  
+4. **C** — Shape and use match.  
+5. **B** — Classic comfort works for guests.  
+6. **D** — All visual clues match.  
+7. **D** — Order: rug, lamp, couch, pillow.  
+8. **C** — Four chair spots plus three couch spots make seven.
+
+**Bonus:** Give two clues which show your choice has a long frame and rolled arms.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**Logic Quiz: A Chesterfield**  
+**For ages 13–19**
+
+Name: __________ Score: ______ / 8
+
+A classic couch can serve as a clue. Read each riddle and circle one answer.
+
+1. A designer needs a long seat for three people in a living room. Which choice fits?
+   - A. A couch
+   - B. A side chair
+   - C. A pouf
+   - D. A bed
+
+2. A shopper sees a long couch with rolled arms, a high back marked by evenly spaced dimples, and a deep seat. Which name fits?
+   - A. A beanbag
+   - B. A dining stool
+   - C. A couch
+   - D. A bench
+
+3. A guest needs a seat with a high back, rolled arms, and room for several people. A pouf has no back. A side chair is narrow. A dining stool has no back. Which choice fits?
+   - A. A bench
+   - B. A folding chair
+   - C. A couch
+   - D. A bed
+
+4. “I have a long frame, a high back, and arms at each end. I am used for reading and relaxing.” Which choice am I?
+   - A. A rug
+   - B. A lamp
+   - C. A couch
+   - D. A pillow
+
+5. A family needs a classic, comfortable seat for guests. Which choice works best?
+   - A. A folding chair
+   - B. A couch
+   - C. A beanbag
+   - D. A pouf
+
+6. A drawing shows a long seat with a high back, rolled arms, evenly spaced dimples, and a broad base. Which name fits best?
+   - A. A lamp
+   - B. A stool
+   - C. A rug
+   - D. A couch
+
+7. Four objects occupy four spots. A rug is left of a lamp. A lamp is left of a couch. A pillow is right of a couch. Which object is far right?
+   - A. A rug
+   - B. A lamp
+   - C. A couch
+   - D. A pillow
+
+8. Eight guests arrive. A room has four side chairs and one couch which seats three. How many guests can be seated?
+   - A. 3
+   - B. 4
+   - C. 7
+   - D. 8
+
+**Answer key**
+
+1. **A** — Holds several people.  
+2. **C** — Long frame, rolled arms, dimples, and a deep seat match.  
+3. **C** — Only a couch has a high back, rolled arms, and room for a group.  
+4. **C** — Shape and use match.  
+5. **B** — Classic comfort works for guests.  
+6. **D** — All visual clues match.  
+7. **D** — Order: rug, lamp,</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1174</span><span class='tag'>instruction_family=detectable_format+keywords+length_constraints</span></div><div class='qtext'>Write a template for a chat bot that takes a user&#x27;s location and gives them the weather forecast. Use the letter o as a keyword in the syntax of the template. The letter o should appear at least 6 times.. Your response should contain fewer than 6 sentences. Highlight at least 2 text sections, i.e. *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Use `o:` as the keyword for every dynamic slot.
+
+*Prompt template: Please enter your location: `{{o:location}}`.*
+
+*Response template: The forecast for `{{o:location}}` is `{{o:forecast}}`; temperature: `{{o:temperature}}`, precipitation: `{{o:precipitation}}`, wind: `{{o:wind}}`, and humidity: `{{o:humidity}}`.*</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Use `o:` as the keyword for every dynamic slot.
+
+*Prompt template: Please enter your location: `{{o:location}}`.*
+
+*Response template: The forecast for `{{o:location}}` is `{{o:forecast}}`; temperature: `{{o:temperature}}`, precipitation: `{{o:precipitation}}`, wind: `{{o:wind}}`, and humidity: `{{o:humidity}}`.*</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1300</span><span class='tag'>instruction_family=keywords+length_constraints+punctuation</span></div><div class='qtext'>Write a short proposal for a new research project that investigates how language evolves over time. I want to make it challenging, so:
+1. Do not include any commas in your response.
+2. Do not include the letter &quot;c&quot; anywhere in your response.
+3. Your response should contain at least 250 words.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>**Language Evolution Over Time: A Study Plan**
+
+Language is never fixed. Every generation adapts words structures and habits of use to the needs of daily life. This study asks how such adjustments build up over generations and how social forces shape the rate direction and extent of linguistic evolution. Rather than treating the past as a set of isolated snapshots the study will follow recurring patterns from early written texts to present day digital usage. The aim is to build a unified explanation that links sound systems sentence patterns word use and meaning while keeping speaker experience and historical setting in view.
+
+The study will compare three kinds of evidence. First it will examine old letters diaries newspapers legal texts and literary works for shifts in grammar sound and word formation. Second it will study how speakers form new expressions when writing online and how those expressions spread through social networks. Third it will test whether tools based on large text sets can identify patterns that human readers often overlook. This combined approach will make it possible to compare broad trends with local examples and to ask what social groups take part in innovation.
+
+A key question is how meaning and form evolve together. For instance a word may gain a narrow sense in one trade or region and later become widely used in a broader sense. The study will ask whether such developments follow shared pathways and whether new forms succeed because they are easy to learn or because they mark identity status or belonging. It will also examine how exchange between language groups leads to borrowing blending and shortening while preserving older forms in some settings.
+
+The work has four stages. Stage one will assemble a transparent data set with dates places genres and levels of detail. Stage two will trace individual expressions over time and map their entry into wider use. Stage three will compare statistical models with analyses by historians linguists and members of the language groups whose speech is studied. Stage four will release reusable materials methods and plain language summaries.
+
+The final result will be a detailed explanation of how languages evolve under pressure from new needs new media and new social relations. It will offer scholars a shared foundation for future work and show how historical evidence can illuminate the living language of today.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**Language Evolution Over Time: A Study Plan**
+
+Language is never fixed. Every generation adapts words structures and habits of use to the needs of daily life. This study asks how such adjustments build up over generations and how social forces shape the rate direction and extent of linguistic evolution. Rather than treating the past as a set of isolated snapshots the study will follow recurring patterns from early written texts to present day digital usage. The aim is to build a unified explanation that links sound systems sentence patterns word use and meaning while keeping speaker experience and historical setting in view.
+
+The study will compare three kinds of evidence. First it will examine old letters diaries newspapers legal texts and literary works for shifts in grammar sound and word formation. Second it will study how speakers form new expressions when writing online and how those expressions spread through social networks. Third it will test whether tools based on large text sets can identify patterns that human readers often overlook. This combined approach will make it possible to compare broad trends with local examples and to ask what social groups take part in innovation.
+
+A key question is how meaning and form evolve together. For instance a word may gain a narrow sense in one trade or region and later become widely used in a broader sense. The study will ask whether such developments follow shared pathways and whether new forms succeed because they are easy to learn or because they mark identity status or belonging. It will also examine how exchange between language groups leads to borrowing blending and shortening while preserving older forms in some settings.
+
+The work has four stages. Stage one will assemble a transparent data set with dates places genres and levels of detail. Stage two will trace individual expressions over time and map their entry into wider use. Stage three will compare statistical models with analyses by historians linguists</pre><div class='muted'>（回答已截断）</div></details></div></section>
+</main>
+</body>
+</html>
