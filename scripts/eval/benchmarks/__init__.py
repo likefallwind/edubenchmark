@@ -37,6 +37,7 @@ from .mrbench import MRBenchJudgeAdapter, MRBenchTutorAdapter
 from .olympiadbench import OlympiadBenchAdapter
 from .pedagogy_benchmark import PedagogyBenchmarkAdapter
 from .safe_child_llm import SafeChildLLMAdapter
+from .student_risk import StudentRiskAdapter
 from .p07_selfcheck import P07SelfCheckAdapter
 from .p08_abstention import P08AbstentionAdapter
 from .p08_calibration import P08CalibrationAdapter
@@ -65,6 +66,9 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     EduGuardAdversarialAdapter,
     # Safe-Child-LLM: 200 child/adolescent red-team prompts, dual-label judge.
     SafeChildLLMAdapter,
+    # student_risk_v1: private self-built set (items git-ignored), judge describes
+    # recognition / intervention, code compares with the three-level risk label.
+    StudentRiskAdapter,
     # EduBench: comparable 3,797-prompt generation set + fixed 12-dimension judge.
     EduBenchAdapter,
     # MathTutorBench: judge calibration first, then the 9 tasks.

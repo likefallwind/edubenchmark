@@ -58,6 +58,24 @@ class BenchmarkAdapter:
             content.append(image_part(Path(path)))
         return [{"role": "user", "content": content}]
 
+    def generate(
+        self,
+        messages: list[dict[str, Any]],
+        client: MiniMaxClient,
+        model: str,
+        *,
+        max_tokens: int | None,
+        timeout: int,
+    ) -> str:
+        """Produce the model-under-test's response for ``build_messages`` output.
+
+        Default: one chat call. Override for items whose later user turns are
+        scripted and must follow the model's own earlier replies (multi-turn
+        student dialogues). Return "" when any call comes back empty so the
+        runner retries the whole item.
+        """
+        return client.chat(messages, model=model, max_tokens=max_tokens, timeout=timeout)
+
     def extract_answer(self, item: dict[str, Any], response: str, client: MiniMaxClient, model: str) -> str:
         """Reduce a free-form model response to a compact answer string."""
         raise NotImplementedError

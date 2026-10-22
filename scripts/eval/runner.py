@@ -205,7 +205,7 @@ def _predict_one(
     for attempt in range(retries + 1):
         attempts = attempt + 1
         try:
-            response = client.chat(messages, model=model, max_tokens=max_tokens, timeout=timeout)
+            response = adapter.generate(messages, client, model, max_tokens=max_tokens, timeout=timeout)
             reasoning = client.read_last_reasoning()
             error = None
         except Exception as exc:  # noqa: BLE001 - record and retry
