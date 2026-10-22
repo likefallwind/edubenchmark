@@ -24,6 +24,11 @@ Pair cards (age-sensitive types) also carry ``adult_turns``,
 ``adult_signal_evidence`` and ``adult_expected_handling``. A later line for the
 same card overrides an earlier one, so revisions can simply be appended.
 
+Cards carry the four-tier authoring severity the items were written to. Items
+are labelled with the three judged risk levels (严重风险 / 轻微风险 / 无风险) via
+``tier_to_risk_level`` in the taxonomy; an authored ``risk_level`` (or
+``adult_risk_level``) overrides that mapping for a single item.
+
 Usage:
   python scripts/build_student_risk_items.py cards
   python scripts/build_student_risk_items.py show --type A1
@@ -51,6 +56,7 @@ AUTHORED_DIR = OUT_DIR / "authored"
 EXPLICITNESS = ["明说", "暗示", "淡化"]
 # Words that would leak the card into the student's text.
 META_LEAK = ["画像", "风险等级", "严重程度", "明显程度", "立即干预", "短期关注", "一般支持",
+             "严重风险", "轻微风险",
              "作为一个AI", "作为AI"]
 
 
@@ -236,7 +242,20 @@ def load_authored() -> dict[str, dict[str, Any]]:
     return out
 
 
-def build_items(cards: list[dict[str, Any]], authored: dict[str, dict[str, Any]], dims: dict[str, Any]):
+TIER_RE = re.compile(r"属于(立即干预|短期关注|一般支持|无风险)")
+
+
+def build_items(cards: list[dict[str, Any]], authored: dict[str, dict[str, Any]], dims: dict[str, Any],
+                taxonomy: dict[str, Any]):
+    tier_map = taxonomy["tier_to_risk_level"]
+    levels = set(taxonomy["risk_levels"])
+
+    def labelled(level: str, evidence: str, problems: list[str]) -> tuple[str, list[str]]:
+        # Notes were written against the authoring tier; restate them in the judged label.
+        if level not in levels:
+            problems = problems + [f"风险标签「{level}」不在 {sorted(levels)} 中"]
+        return TIER_RE.sub(f"属于{level}", evidence), problems
+
     items, missing = [], []
     for card in cards:
         a = authored.get(card["card_id"])
@@ -248,7 +267,8 @@ def build_items(cards: list[dict[str, Any]], authored: dict[str, dict[str, Any]]
             "item_id": card["card_id"],
             "category_id": card["category_id"], "category": card["category"],
             "type_id": card["type_id"], "type_name": card["type_name"],
-            "severity": card["severity"], "explicitness": card["explicitness"],
+            "risk_level": a.get("risk_level") or tier_map[card["severity"]],
+            "authoring_tier": card["severity"], "explicitness": card["explicitness"],
             "grade": card["grade"], "minor": card["minor"],
             "scenario": card["scenario"], "expression_mode": card["expression_mode"],
             "turn_mode": card["turn_mode"], "system_prompt": card["system_prompt"],
@@ -259,13 +279,19 @@ def build_items(cards: list[dict[str, Any]], authored: dict[str, dict[str, Any]]
             "problems": problems_of(card, turns),
             "pair_id": None, "review_status": "pending", "calibration": False,
         }
+        base["signal_evidence"], base["problems"] = labelled(
+            base["risk_level"], base["signal_evidence"], base["problems"])
         items.append(base)
         if card["kind"] == "pair":
             adult_turns = [str(t).strip() for t in a.get("adult_turns", []) if str(t).strip()]
             base["pair_id"] = card["card_id"]
             adult = dict(base)
             adult.update(
-                item_id=card["card_id"] + "-adult", severity="无风险", explicitness="无风险",
+                item_id=card["card_id"] + "-adult",
+                # Most adult versions carry no risk; a few (e.g. habitual smoking)
+                # stay low-risk for adults too and set adult_risk_level.
+                risk_level=a.get("adult_risk_level", "无风险"), authoring_tier="无风险",
+                explicitness=a.get("adult_explicitness", "无风险"),
                 grade="大学", minor=False,
                 system_prompt=dims["system_prompt_templates"][card["scenario"]].format(
                     grade_label=dims["grades"]["大学"]["label"]),
@@ -274,6 +300,8 @@ def build_items(cards: list[dict[str, Any]], authored: dict[str, dict[str, Any]]
                 expected_handling=a.get("adult_expected_handling", ""),
                 problems=problems_of(card, adult_turns) or ([] if adult_turns else ["成年对照版本缺失"]),
             )
+            adult["signal_evidence"], adult["problems"] = labelled(
+                adult["risk_level"], adult["signal_evidence"], adult["problems"])
             items.append(adult)
 
     # Near-duplicates inside a type are flagged for rewriting, not dropped. Age
@@ -291,12 +319,15 @@ def build_items(cards: list[dict[str, Any]], authored: dict[str, dict[str, Any]]
     return items, missing
 
 
-def mark_calibration(items: list[dict[str, Any]], rng: random.Random, per_level: int = 10) -> None:
-    """Stratified subset for human scoring: 10 per severity level, spread over categories."""
-    for level in ["立即干预", "短期关注", "一般支持", "无风险"]:
+CALIBRATION_PER_LEVEL = {"严重风险": 14, "轻微风险": 13, "无风险": 13}
+
+
+def mark_calibration(items: list[dict[str, Any]], rng: random.Random) -> None:
+    """Stratified subset for human scoring: 40 items over the risk levels, spread over categories."""
+    for level, per_level in CALIBRATION_PER_LEVEL.items():
         by_cat: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for i in sorted(items, key=lambda i: i["item_id"]):
-            if i["severity"] == level and not i["item_id"].endswith("-adult"):
+            if i["risk_level"] == level and not i["item_id"].endswith("-adult"):
                 by_cat[i["category_id"]].append(i)
         for lst in by_cat.values():
             rng.shuffle(lst)
@@ -309,21 +340,22 @@ def mark_calibration(items: list[dict[str, Any]], rng: random.Random, per_level:
 
 
 def write_review_sheet(items: list[dict[str, Any]], path: Path) -> None:
-    cols = ["item_id", "类型", "严重程度", "明显程度", "学段", "表达方式", "轮次", "系统提示", "学生消息",
+    cols = ["item_id", "类型", "风险标签", "出题档位", "明显程度", "学段", "表达方式", "轮次", "系统提示", "学生消息",
             "信号说明", "期望应对", "画像", "自动检查", "校准子集",
-            "审核结论（保留/修改/删除）", "修改后消息", "审核备注"]
+            "风险标签是否合适（是 / 应为…）", "审核结论（保留/修改/删除）", "修改后消息", "审核备注"]
     with path.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f)
         w.writerow(cols)
         for i in items:
             p = i["persona"]
             w.writerow([
-                i["item_id"], f"{i['type_id']} {i['type_name']}", i["severity"], i["explicitness"], i["grade"],
+                i["item_id"], f"{i['type_id']} {i['type_name']}", i["risk_level"], i["authoring_tier"],
+                i["explicitness"], i["grade"],
                 i["expression_mode"], i["turn_mode"], i["system_prompt"],
                 "\n".join(f"【第{n + 1}条】{t}" for n, t in enumerate(i["turns"])),
                 i["signal_evidence"], i["expected_handling"],
                 "；".join(f"{k}:{v}" for k, v in p.items()),
-                "；".join(i["problems"]), "是" if i["calibration"] else "", "", "", "",
+                "；".join(i["problems"]), "是" if i["calibration"] else "", "", "", "", "",
             ])
 
 
@@ -333,8 +365,9 @@ def table(counter: Counter, title: str) -> str:
 
 def stage_export(args) -> None:
     dims = load_json(SPEC_DIR / "persona_dimensions.json")
+    taxonomy = load_json(SPEC_DIR / "taxonomy.json")
     cards = read_jsonl(OUT_DIR / "cards.jsonl")
-    items, missing = build_items(cards, load_authored(), dims)
+    items, missing = build_items(cards, load_authored(), dims, taxonomy)
     mark_calibration(items, random.Random(args.seed))
     write_jsonl(OUT_DIR / "items.jsonl", items)
     write_jsonl(OUT_DIR / "calibration_subset.jsonl", [i for i in items if i["calibration"]])
@@ -344,7 +377,7 @@ def stage_export(args) -> None:
         "# student_risk_v1 构建报告", "",
         f"导出时间：{utc_now()}。题目私有，不进仓库。", "",
         f"- 卡片 {len(cards)} 张，已出题 {len(cards) - len(missing)} 张，导出 {len(items)} 题"
-        f"（风险题 {sum(i['severity'] != '无风险' for i in items)}，无风险 {sum(i['severity'] == '无风险' for i in items)}）。",
+        f"（风险题 {sum(i['risk_level'] != '无风险' for i in items)}，无风险 {sum(i['risk_level'] == '无风险' for i in items)}）。",
         f"- 未出题的卡：{len(missing)}" + (f"（{', '.join(missing[:20])}{' …' if len(missing) > 20 else ''}）" if missing else ""),
         f"- 自动检查有问题的题：{len(flagged)}。",
         f"- 校准子集：{sum(i['calibration'] for i in items)} 题。", "",
@@ -352,7 +385,8 @@ def stage_export(args) -> None:
         *(["无。"] if not flagged else [f"- {i['item_id']}：{'；'.join(i['problems'])}" for i in flagged]), "",
         "## 分布", "",
         table(Counter(f"{i['type_id']} {i['type_name']}" for i in items), "类型"), "",
-        table(Counter(i["severity"] for i in items), "严重程度"), "",
+        table(Counter(i["risk_level"] for i in items), "风险标签"), "",
+        table(Counter(i["authoring_tier"] for i in items), "出题档位"), "",
         table(Counter(i["explicitness"] for i in items), "明显程度"), "",
         table(Counter(i["grade"] for i in items), "学段"), "",
         table(Counter(i["expression_mode"] for i in items), "表达方式"), "",
