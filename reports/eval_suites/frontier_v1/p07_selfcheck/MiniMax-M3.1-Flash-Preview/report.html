@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · p07_selfcheck</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · P07 两轮自查（先答题，再无提示复查，看改对率 vs 改错率）</h1>
+    <p class="muted">基准 p07_selfcheck · 模型 <strong>MiniMax-M3.1-Flash-Preview</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">31.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">31</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>P07（自我校验与修正）的直接测量：标准 intrinsic self-correction 协议。第一轮正常答题；第二轮在同一对话里固定追问“请重新检查你的解答”（不暗示对错），规则判分分离四种结果：错改对（真自查）、对改错（有害的自我怀疑）、保持不变。</p><p>复用 P08 的 delegate（ceval 0-shot / mmlu_pro / agieval / mtb_problem_solving）和同一份难度分层 item_list，零新增标注，且 P07/P08 在同一套题上可比。</p><p>headline score_10 = 10×[0.5×改对率 + 0.5×(1−改错率)]，两项都以第一轮状态为条件，构造上与第一轮正确率解耦（不奖励“题目本来就会”）。</p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans gold inline'><span class='lbl'>参考答案</span>D</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;n_scored_both_rounds&quot;: 100,
+  &quot;n_round2_missing&quot;: 0,
+  &quot;r1_accuracy&quot;: 0.28,
+  &quot;r2_accuracy&quot;: 0.31,
+  &quot;net_gain&quot;: 0.03,
+  &quot;change_rate&quot;: 0.11,
+  &quot;n_r1_wrong&quot;: 72,
+  &quot;n_fixed_wrong_to_right&quot;: 5,
+  &quot;fix_rate&quot;: 0.0694,
+  &quot;n_r1_right&quot;: 28,
+  &quot;n_broken_right_to_wrong&quot;: 2,
+  &quot;break_rate&quot;: 0.0714,
+  &quot;score_10&quot;: 4.99,
+  &quot;by_source&quot;: {
+    &quot;agieval&quot;: {
+      &quot;n&quot;: 17,
+      &quot;r1_correct&quot;: 6,
+      &quot;r2_correct&quot;: 7,
+      &quot;fixed&quot;: 1,
+      &quot;broken&quot;: 0
+    },
+    &quot;ceval&quot;: {
+      &quot;n&quot;: 39,
+      &quot;r1_correct&quot;: 11,
+      &quot;r2_correct&quot;: 14,
+      &quot;fixed&quot;: 4,
+      &quot;broken&quot;: 1
+    },
+    &quot;mmlu_pro&quot;: {
+      &quot;n&quot;: 28,
+      &quot;r1_correct&quot;: 5,
+      &quot;r2_correct&quot;: 4,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 1
+    },
+    &quot;mtb_problem_solving&quot;: {
+      &quot;n&quot;: 16,
+      &quot;r1_correct&quot;: 6,
+      &quot;r2_correct&quot;: 6,
+      &quot;fixed&quot;: 0,
+      &quot;broken&quot;: 0
+    }
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 source_benchmark 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>agieval</td><td>17</td><td>7</td><td>0.412</td><td><div class='bar'><i style='width:41%'></i></div></td></tr><tr><td>ceval</td><td>39</td><td>14</td><td>0.359</td><td><div class='bar'><i style='width:36%'></i></div></td></tr><tr><td>mmlu_pro</td><td>28</td><td>4</td><td>0.143</td><td><div class='bar'><i style='width:14%'></i></div></td></tr><tr><td>mtb_problem_solving</td><td>16</td><td>6</td><td>0.375</td><td><div class='bar'><i style='width:38%'></i></div></td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 language 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>en</td><td>52</td><td>14</td><td>0.269</td><td><div class='bar'><i style='width:27%'></i></div></td></tr><tr><td>zh</td><td>48</td><td>17</td><td>0.354</td><td><div class='bar'><i style='width:35%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-114</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: If n is such that 36 ≤ n ≤ 72, then x = (n2 + 2√n(n + 4) + 16) / (n+ 4√n+ 4) satisfies
+Answer Choices: (A)20 &lt; x &lt; 54 (B)23 &lt; x &lt; 58 (C)25 &lt; x &lt; 64 (D)28 &lt; x &lt; 60 (E)None of these
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;Let \\(t=\\sqrt n\\). Since \\(36\\le n\\le72\\), we have\n\n\\[\n6\\le t\\le6\\sqrt2.\n\\]\n\nRewrite the numerator:\n\n\\[\n\\begin{aligned}\nn^2+2\\sqrt n(n+4)+16\n&amp;=t^4+2t(t^2+4)+16\\\\\n&amp;=t^4+2t^3+8t+16\\\\\n&amp;=(t+2)^2(t^2-2t+4).\n\\end{aligned}\n\\]\n\nAlso,\n\n\\[\nn+4\\sqrt n+4=t^2+4t+4=(t+2)^2.\n\\]\n\nTherefore,\n\n\\[\nx=t^2-2t+4.\n\\]\n\nFor \\(t\\ge6\\), this expression is increasing because\n\n\\[\n\\frac{d}{dt}(t^2-2t+4)=2t-2&gt;0.\n\\]\n\nHence its minimum and maximum are\n\n\\[\nx_{\\min}=6^2-2(6)+4=28,\n\\]\n\nand\n\n\\[\nx_{\\max}=(6\\sqrt2)^2-2(6\\sqrt2)+4\n=76-12\\sqrt2\\approx59.03.\n\\]\n\nThus\n\n\\[\n25&lt;x&lt;64\n\\]\n\nfor every permitted \\(n\\). Option (D) is not strictly true because \\(x=28\\) when \\(n=36\\), and options (A) and (B) fail for larger \\(n\\).\n\nThe answer is C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Let \(t=\sqrt n\). Then \(n=t^2\), and
+
+\[
+\begin{aligned}
+x
+&amp;=\frac{t^4+2t(t^2+4)+16}{t^2+4t+4}\\
+&amp;=\frac{t^4+2t^3+8t+16}{(t+2)^2}.
+\end{aligned}
+\]
+
+Factor the numerator:
+
+\[
+t^4+2t^3+8t+16=(t+2)^2(t^2-2t+4).
+\]
+
+Therefore,
+
+\[
+x=t^2-2t+4=(\sqrt n-1)^2+3.
+\]
+
+Since \(36\le n\le72\),
+
+\[
+6\le t\le6\sqrt2.
+\]
+
+The expression is increasing for \(t\ge6\), so
+
+\[
+28\le x\le 76-12\sqrt2\approx59.03.
+\]
+
+Thus \(25&lt;x&lt;64\) always holds. Option D is not strictly valid because \(x=28\) when \(n=36\).
+
+The answer is C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::aqua-rat-64</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>Question: Amy is organizing her bookshelves and finds that she has 10 different types of books. She then codes each book with either a single letter or a pair of two different letters. If each type of book is uniquely represented by either a single letter or pair of letters, what is the smallest number of letters Amy will need to create the codes for all 10 types of books? (Assume the order of letters in a pair does not matter.)
+Answer Choices: (A)3 (B)4 (C)5 (D)10 (E)20
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;B&quot;, &quot;r2&quot;: &quot;B&quot;, &quot;r2_response&quot;: &quot;Let \\(n\\) be the number of distinct letters available.\n\n- Single-letter codes: \\(n\\)\n- Two-letter codes using different letters: \\(\\binom{n}{2}\\), because order does not matter\n\nTotal possible codes:\n\\[\nn+\\binom{n}{2}\n\\]\n\nCheck \\(n=3\\):\n\\[\n3+\\binom{3}{2}=3+3=6&lt;10\n\\]\nSo 3 letters are insufficient.\n\nCheck \\(n=4\\):\n\\[\n4+\\binom{4}{2}=4+6=10\n\\]\nThus, 4 letters provide exactly 10 unique codes and are sufficient.\n\nThe answer is B&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>B</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>If Amy uses \(n\) different letters, she can create:
+
+- \(n\) single-letter codes
+- \(\binom{n}{2}\) two-letter codes, since order does not matter
+
+Thus, the total number of possible codes is
+\[
+n+\binom{n}{2}=\frac{n(n+1)}{2}.
+\]
+
+For \(n=3\):
+\[
+3+\binom{3}{2}=3+3=6,
+\]
+which is not enough.
+
+For \(n=4\):
+\[
+4+\binom{4}{2}=4+6=10,
+\]
+which is exactly enough.
+
+The answer is B</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-biology-8</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：用体外实验的方法可合成多肽链。已知苯丙氨酸的密码子是 UUU, 若要在体外合成同位 素标记的多肽链, 所需的材料组合是
+
+(1)同位素标记的 tRNA
+
+(2)蛋白质合成所需的酶
+
+(3)同位素标记的苯丙氨酸
+
+(4)人工合成的多聚尿嘧啶核苷酸
+
+(5)除去了 DNA 和 mRNA 的细胞裂解液
+选项：(A)(1)(2)(4) (B)(2)(3)(4) (C)(3)(4)(5) (D)(1)(3)(5)
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;重新核验如下：\n\n1. **模板选择**：人工合成的多聚尿嘧啶核苷酸 poly(U) 含有连续的 UUU 密码子，可作为合成多聚苯丙氨酸的 mRNA，因此需要（4）。\n2. **同位素标记来源**：多肽链中的苯丙氨酸残基直接来自苯丙氨酸，因此应加入同位素标记的苯丙氨酸，需要（3）。tRNA在翻译后不会成为多肽链的一部分，所以标记tRNA不能使多肽链带上标记，（1）不需要。\n3. **翻译系统**：除去了DNA和mRNA的细胞裂解液中仍含有核糖体、tRNA、氨酰-tRNA合成酶及其他翻译因子，可利用加入的poly(U)合成多肽，因此需要（5）。\n4. （2）中的蛋白质合成酶已包含在（5）的细胞裂解液中，不必单独列出；若只选（2）而不选（5），则缺少核糖体、tRNA等必要的翻译装置。\n\n因此，正确的材料组合是（3）（4）（5）。\n\n答案是C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1. **确定模板**：人工合成的多聚尿嘧啶核苷酸即 poly(U)，其重复序列为 UUU，可连续指导苯丙氨酸掺入，因此需要（4）。  
+2. **确定同位素标记的位置**：最终多肽链中的苯丙氨酸应带有同位素标记，所以需要同位素标记的苯丙氨酸（3）。tRNA只是运输氨基酸并在翻译后被释放，标记tRNA本身不能使肽链带上标记，因此不需要（1）。  
+3. **提供翻译系统**：除去了DNA和mRNA的细胞裂解液（5）仍含有核糖体、tRNA、氨酰-tRNA合成酶等蛋白质合成装置；加入poly(U)后即可按指定模板合成多聚苯丙氨酸。单独的“蛋白质合成所需的酶”（2）还缺少核糖体、tRNA等完整装置。  
+4. 因此，完整且必要的组合是（3）（4）（5）。
+
+答案是C</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-157</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：“春蚕到死丝方尽, 蜡炬成灰泪始干” 是唐代诗人李商隐的著名诗句, 下列关于该诗句 中所涉及物质的说法错误的是
+选项：(A)蚕丝的主要成分是蛋白质 (B)蚕丝属于天热高分子材料 (C)“蜡炬成灰” 过程中发生了氧化反应 (D)古代的蜡是高级脂肪酸酯, 属于高分子聚合物
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;D&quot;, &quot;r2&quot;: &quot;D&quot;, &quot;r2_response&quot;: &quot;重新核验如下：\n\n1. **(A) 正确**：蚕丝的主要成分是丝蛋白，丝蛋白属于蛋白质，也属于天然高分子化合物。\n2. **(B) 正确**：题干中的“天热”应为“天然”。蚕丝属于天然高分子材料。\n3. **(C) 正确**：蜡烛燃烧时，蜡与氧气发生发光、放热的氧化反应，生成二氧化碳和水等产物。\n4. **(D) 错误**：古代蜡的主要成分是高级脂肪酸与高级一元醇形成的酯。这些物质虽然相对分子质量较大，但通常没有链节和重复结构，不能仅因分子较大就归为高分子聚合物。\n\n因此，原答案无误。\n\n答案是D&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>D</div><div class='ans gold'><span class='lbl'>正确答案</span>B</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>逐项判断：
+
+- **(A) 正确**：蚕丝的主要成分是丝蛋白，属于蛋白质。
+- **(B) 正确**：蚕丝是天然高分子材料。
+- **(C) 正确**：蜡烛燃烧时蜡与氧气发生反应，属于氧化反应。
+- **(D) 错误**：古代蜡的主要成分是高级脂肪酸与高级一元醇形成的酯，虽然相对分子质量较大，但不属于高分子聚合物。
+
+答案是D</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-chemistry-27</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=zh</span></div><div class='qtext'>问题：黄色固体 $\mathrm{X}$, 可能含有漂白粉、 $\mathrm{FeSO}_{4} $、$ \mathrm{Fe}_{2}\left(\mathrm{SO}_{4}\right)_{3} $、$ \mathrm{CuCl}_{2} $、$ \mathrm{KI}$ 之中的几种或全 部。将 $\mathrm{X}$ 与足量的水作用, 得到深棕色固体混合物 $\mathrm{Y}$ 和无色碱性溶液 $\mathrm{Z}$ 。下列结论合理的 是
+选项：(A)$\mathrm{X}$ 中含 $\mathrm{KI}$, 可能含有 $\mathrm{CuCl}_{2}$ (B)$\mathrm{X}$ 中含有漂白粉和 $\mathrm{FeSO}_{4}$ (C)$\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}, \mathrm{Y}$ 中含有 $\mathrm{Fe}(\mathrm{OH})_{3}$ (D)用 $\mathrm{H}_{2} \mathrm{SO}_{4}$ 酸化溶液 $\mathrm{Z}$, 若有黄绿色气体放出, 说明 $\mathrm{X}$ 中含有 $\mathrm{CuCl}_{2}$
+请逐步思考，并在最后一行给出“答案是X”（多选时给出所有正确选项字母）。</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;A&quot;, &quot;r2&quot;: &quot;A&quot;, &quot;r2_response&quot;: &quot;复查后，原答案 **A** 正确；原推理方向无误，补充更严谨的判断如下。\n\n### 1. 碱性溶液 \\(Z\\) 说明含有漂白粉\n\n漂白粉溶于水后产生 \\(\\mathrm{ClO^-}\\)，并发生水解：\n\n\\[\n\\mathrm{ClO^-+H_2O \\rightleftharpoons HClO+OH^-}\n\\]\n\n其他候选物质的溶液通常呈酸性或中性，因此 \\(X\\) 中一定含有漂白粉。\n\n### 2. 深棕色固体 \\(Y\\) 说明含有 \\(\\mathrm{KI}\\)\n\n候选物质中只有 \\(\\mathrm{KI}\\) 含碘。深棕色固体的形成与 \\(\\mathrm{I_2}\\) 有关，例如：\n\n\\[\n\\mathrm{2Cu^{2+}+4I^-\\rightarrow 2CuI\\downarrow+I_2}\n\\]\n\n生成的白色 \\(\\mathrm{CuI}\\) 与深色 \\(\\mathrm{I_2}\\) 混合，可呈深棕色；若有足量 \\(\\mathrm{I^-}\\)，\\(\\mathrm{Cu^{2+}}\\) 被完全沉淀，故溶液 \\(Z\\) 仍可无色。\n\n即使没有 \\(\\mathrm{CuCl_2}\\)，\\(\\mathrm{Fe^{3+}}\\) 或次氯酸根也能氧化 \\(\\mathrm{I^-}\\)：\n\n\\[\n\\mathrm{2Fe^{3+}+2I^-\\rightarrow 2Fe^{2+}+I_2}\n\\]\n\n因此：\n\n- \\(X\\) 中一定含有 \\(\\mathrm{KI}\\)；\n- \\(\\mathrm{CuCl_2}\\) 可以含有，但不是必需成分。\n\n所以 **A合理**。\n\n### 3. 检查B、C\n\n- 碱性溶液只能确定有漂白粉，不能确定有 \\(\\mathrm{FeSO_4}\\)。即使 \\(Y\\) 中有铁的沉淀，铁最初也可能来自 \\(\\mathrm{Fe_2(SO_4)_3}\\)，因为 \\(\\mathrm{Fe^{3+}}\\) 可先被 \\(\\mathrm{I^-}\\) 还原为 \\(\\mathrm{Fe^{2+}}\\)，再在碱性、氧化性环境中转化为 \\(\\mathrm{Fe(OH)_3}\\)。故 **B不合理**。\n- \\(\\mathrm{CuCl_2}\\) 不一定存在；而没有铁元素时，\\(Y\\) 可只有 \\(\\mathrm{CuI}\\) 和 \\(\\mathrm{I_2}\\)，不含 \\(\\mathrm{Fe(OH)_3}\\)。故 **C不合理**。\n\n### 4. 检查D\n\n漂白粉本身含有 \\(\\mathrm{ClO^-}\\) 和 \\(\\mathrm{Cl^-}\\)，酸化后即可放出黄绿色氯气：\n\n\\[\n\\mathrm{ClO^-+Cl^-+2H^+\\rightarrow Cl_2\\uparrow+H_2O}\n\\]\n\n所以出现黄绿色气体不能证明含有 \\(\\mathrm{CuCl_2}\\)，故 **D不合理**。\n\n答案是A&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>A</div><div class='ans gold'><span class='lbl'>正确答案</span>C</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>### 1. 由溶液 \(Z\) 判断漂白粉
+
+所给物质中，能使溶液呈碱性的是漂白粉。漂白粉在水中产生的 \(\mathrm{ClO^-}\) 会水解：
+
+\[
+\mathrm{ClO^-+H_2O \rightleftharpoons HClO+OH^-}
+\]
+
+因此 \(X\) 中一定含有漂白粉，但仅凭碱性不能确定一定含有 \(\mathrm{FeSO_4}\)。
+
+### 2. 由固体 \(Y\) 判断碘和碘化钾
+
+深棕色固体混合物说明其中含有 \(\mathrm{I_2}\)；碘与白色固体混合时可显深棕色。候选物质中只有 \(\mathrm{KI}\) 含碘，所以 \(X\) 中一定含有 \(\mathrm{KI}\)。
+
+如果同时含有 \(\mathrm{CuCl_2}\)，则发生：
+
+\[
+\mathrm{2Cu^{2+}+4I^- \rightarrow 2CuI\downarrow + I_2}
+\]
+
+生成的白色 \(\mathrm{CuI}\) 与深色 \(\mathrm{I_2}\) 构成深棕色固体，而溶液可以保持无色。因此 \(\mathrm{CuCl_2}\) 是“可能有”，并非一定含有，故 **A合理**。
+
+### 3. 检验其余选项
+
+- **B不合理**：只能确定有漂白粉，不能确定有 \(\mathrm{FeSO_4}\)；深棕色可以由 \(\mathrm{I_2}\) 造成，而且 \(\mathrm{Fe_2(SO_4)_3}\) 也能提供 \(\mathrm{Fe^{3+}}\)，进一步生成 \(\mathrm{Fe(OH)_3}\)。
+- **C不合理**：\(\mathrm{CuCl_2}\) 不一定存在，\(Y\) 中也不一定含有 \(\mathrm{Fe(OH)_3}\)。
+- **D不合理**：酸化 \(Z\) 若产生黄绿色 \(\mathrm{Cl_2}\)，反应为
+
+\[
+\mathrm{ClO^-+Cl^-+2H^+\rightarrow Cl_2\uparrow+H_2O}
+\]
+
+这说明存在漂白粉提供的 \(\mathrm{ClO^-}\)，不能说明一定含有 \(\mathrm{CuCl_2}\)。
+
+答案是A</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#agieval::gaokao-english-122</span><span class='tag'>source_benchmark=agieval</span> <span class='tag'>language=en</span></div><div class='qtext'>It was the first mow of winter﹣﹣an exciting day for every，child but not for most tether．Up until now，l had been able to dress myself for recess（课间休息），but today I would need some help．Miss Finlayson，my kindergarten teacher at Princess Elizabeth School near Hamilton，Ontario，had been through first snow days，many times in her long career，but I think struggled still remember this one．  I managed to get into my  wool snow pants．But I straggled with my jacket because it didn&#x27;t fit well．It was a hand﹣me﹣down from my brother，and it made me wonder why I had to wear his ugly clothes．At least my hat and matching scarf were mine，and they were quite pretty．Finally it was time to have Miss Finlayson help me with my boots．In her calm，motherly voice she said，&quot;By the end of winter，you will be able to put on own boots．&quot;I didn&#x27;t realize at the time that this was more a statement of hope than of confidence．  I handed her my boots and stuck out my foot．Like most children，I expected the adult to do an the work．After mush wiggling and pushing，she managed to get first one into place and then，with a sigh，worked the second one on too．  I announced，&quot;They&#x27;re on the wrong feet．&quot;With the grace that only experience can bring，she struggled to get the boots off and went through the joyless task of putting them on again．Then I said，&quot;These aren&#x27;t my boots．you know．&quot;As she pulled the offending boots from my feet，she still managed to look both helpful and interested．Once they were off．I said，&quot;They are my brother&#x27;s boots．My mother makes me wear them，and I hate them!&quot;Somehow，from long years of practice，she managed to act as though I wasn&#x27;t an annoying little girl．She pushed and shoved．less gently this time，and the boots were returned to their proper place on my feet．With a great sigh of relief，seeing the end of her struggle with me，she asked，&quot;Now，where are your gloves？&#x27;&#x27;  I looked into her eyes and said．&quot;I didn&#x27;t want to lose them．so I put them into the toes of my boots．&quot;
+Question: 62．It can be inferred that before the little girl finally went out to enjoy the first snow of winter，the teacher had to help her put on her boots　．
+Answer Choices: (A)once (B)twice (C)three times (D)four times
+Think step by step, then end with a line &quot;The answer is X&quot; (give all correct option letters if multiple).</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>{&quot;r1&quot;: &quot;C&quot;, &quot;r2&quot;: &quot;C&quot;, &quot;r2_response&quot;: &quot;1. **First time:** The teacher helped the girl put on both boots, but they ended up on the wrong feet.  \n2. **Second time:** The teacher removed the boots and put them on again.  \n3. **Third time:** After the girl said the boots were her brother’s, the teacher removed them once more and returned them to the correct feet.\n\nTherefore, the teacher helped the girl put on her boots **three times**.\n\nThe answer is C&quot;, &quot;r2_error&quot;: &quot;&quot;}</div><div class='ans'><span class='lbl'>归一化</span>C</div><div class='ans gold'><span class='lbl'>正确答案</span>D</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>1. The teacher first helped the girl put on the boots, but they were placed on the wrong feet.  
+2. She took them off and put them on again.  
+3. When the girl insisted they were her brother’s boots, the teacher removed them once more and put them on properly.
+
+Thus, the teacher helped her put on the boots **three times**.
+
+The answer is C</pre></details></div></section>
+</main>
+</body>
+</html>
