@@ -32,7 +32,7 @@ run from there.
 | `eval/` | Local run-control artifacts for evaluation launches, such as queue scripts, status tables, and process logs | Runtime workspace only. Do not treat it as the evaluation framework (`scripts/eval/`) or result tree (`reports/eval/`). |
 | `logs/` | Longer-lived operational logs and completion markers for named bulk runs | Logs are process evidence, not scored benchmark evidence. A `summary.json` remains the result source of truth. |
 | `tmp/` | Short-lived repository-local scratch files | Nothing here is authoritative. A workflow relying on a temporary file must copy the final evidence to its proper destination. |
-| `private/` | Unpublished self-built test sets (items, generation candidates, review sheets); git-ignored because the repository is public | Never commit or quote item text elsewhere. Keep the public specification under `data/<set>/` and regenerate items through their build script. |
+| `private/` | Self-built test sets (items, generation candidates, review sheets); committed and public since 2026-10-22 (owner decision, contamination risk accepted), the directory name is historical | Do not quote item text in docs or reports. Keep the public specification under `data/<set>/` and regenerate items through their build script. |
 
 ## Hidden project directories
 

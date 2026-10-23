@@ -12,7 +12,7 @@ Current layout (put a new file where its class already lives; do not add new roo
 ├── data/                 machine-readable specs, mappings, manifests, fixed item lists
 │   ├── mapping_measurement_model_v6.json   current P01-P20 mapping (source of truth)
 │   ├── <benchmark-or-suite>/               item lists and prepared assets (mini_selection_v2/, eduequity/, ...)
-│   └── student_risk_v1/                    public spec of a private self-built test set
+│   └── student_risk_v1/                    spec of a self-built test set (items under private/)
 ├── doc/                  human-authored methodology, profiles, decisions
 │   ├── benchmark_profiles/, ability_profiles/   current per-benchmark and per-ability descriptions
 │   ├── tochange/            decided or proposed changes not yet applied to data/ and reports/
@@ -25,7 +25,7 @@ Current layout (put a new file where its class already lives; do not add new roo
 │   ├── eval_suites/         mini_v2 and frontier_v1 views
 │   └── atomic_ability_rebenchmark*/   current ability pipeline output and dated snapshots
 ├── sources/              external material; sources/datasets/ holds downloads and stays uncommitted
-├── private/              unpublished self-built test sets; git-ignored because the repository is public
+├── private/              self-built test sets (items, drafts, review sheets); committed and public since 2026-10-22, name is historical
 ├── tests/                deterministic offline tests
 ├── skills/               product-facing skills distributed with the repository
 ├── .claude/skills/       repository-maintenance skills for Claude Code
@@ -39,7 +39,7 @@ Where new work goes:
 
 - Machine-readable specifications, mappings, manifests, and fixed item lists live under `data/`. Human-authored methodology and profiles live under `doc/`. Generation, evaluation, and reporting code belongs in `scripts/`; the reusable per-benchmark framework is under `scripts/eval/`. Generated reports and evaluation evidence belong in `reports/`. Downloaded datasets belong in `sources/datasets/` and should not be committed. Local run-control files belong in `eval/` or `logs/`, never in `scripts/eval/` or as substitutes for `reports/eval/**/summary.json`.
 - A new public benchmark: adapter in `scripts/eval/benchmarks/`, profile in `doc/benchmark_profiles/`; follow `.claude/skills/adding-eval-benchmark/SKILL.md`.
-- A self-built test set: public specification in `data/<set>/`, builder and validator in `scripts/build_<set>_items.py`, items and authoring drafts only in `private/<set>/`. Claude Code writes the items itself following `.claude/skills/building-private-test-sets/SKILL.md`; do not have tested-panel models generate them. Never commit items or quote them in docs, issues, or reports.
+- A self-built test set: public specification in `data/<set>/`, builder and validator in `scripts/build_<set>_items.py`, items and authoring drafts only in `private/<set>/`. Claude Code writes the items itself following `.claude/skills/building-private-test-sets/SKILL.md`; do not have tested-panel models generate them. Items are committed and public (owner decision 2026-10-22, contamination risk accepted); docs and reports describe counts and method rather than quoting items.
 - A decided change to abilities or mappings that is not yet applied: `doc/tochange/`. Apply it through the mapping JSON and the rebuild pipeline, then move superseded prose to `doc/old/`.
 - An abandoned or rejected pipeline kept for reference: `scripts/experiments/`, with a header stating it produced no canonical artifact; its outputs stay outside canonical paths.
 

@@ -9,7 +9,7 @@ description: Use when an education-safety or education-ability construct needs i
 
 Public safety benchmarks are mostly "taxonomy → LLM generation → light proofreading". You (Claude Code) write the items yourself, card by card, from a public specification; do **not** build a pipeline that calls other models to write them. Claude is not in the tested panel, so self-authoring also avoids generator-family bias.
 
-Core rule: **the specification is public, the items are private** (`private/` is git-ignored; the repository is public).
+Layout: the specification lives in `data/<set>/`, the items in `private/<set>/`. Since 2026-10-22 both are committed to the public repository (owner decision, contamination risk accepted); the directory name is historical.
 
 Reference: spec `data/student_risk_v1/`, tool `scripts/build_student_risk_items.py` (`cards` / `show --type X` / `export`).
 
@@ -57,7 +57,7 @@ Practitioners revise one-line features; reviewers check every item on `review_sh
 | Mistake | Fix |
 |---|---|
 | Building a multi-model generation pipeline | Write the items yourself |
-| Committing or quoting items in docs/issues | Items only in `private/`; docs show counts and method |
+| Quoting items in docs/issues | Items stay in `private/<set>/`; docs show counts and method |
 | Signals too explicit in 淡化 items | The student must explain it away; the danger lives in a detail |
 | Only risky items | Add near-miss controls, or over-reaction is unmeasurable |
 | Telling the tested model the persona | Only the system prompt's grade/product context |

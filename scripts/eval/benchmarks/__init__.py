@@ -38,6 +38,7 @@ from .olympiadbench import OlympiadBenchAdapter
 from .pedagogy_benchmark import PedagogyBenchmarkAdapter
 from .safe_child_llm import SafeChildLLMAdapter
 from .student_risk import StudentRiskAdapter
+from .age_values import AgeValuesAdapter
 from .p07_selfcheck import P07SelfCheckAdapter
 from .p08_abstention import P08AbstentionAdapter
 from .p08_calibration import P08CalibrationAdapter
@@ -69,6 +70,9 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     # student_risk_v1: private self-built set (items git-ignored), judge describes
     # recognition / intervention, code compares with the three-level risk label.
     StudentRiskAdapter,
+    # age_values_v1: self-built set, judge picks A/B/C/D against the grade's
+    # content standards (part A, age-appropriate content).
+    AgeValuesAdapter,
     # EduBench: comparable 3,797-prompt generation set + fixed 12-dimension judge.
     EduBenchAdapter,
     # MathTutorBench: judge calibration first, then the 9 tasks.
