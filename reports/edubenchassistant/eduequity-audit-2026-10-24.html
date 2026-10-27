@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>EduEquity 评测审计：题目质量与区分度</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",Arial,sans-serif;line-height:1.65;color:#202124;max-width:1180px;margin:0 auto;padding:32px;background:#fff}
+h1{font-size:28px;margin:0 0 8px}h2{font-size:21px;margin-top:30px;border-bottom:1px solid #ddd;padding-bottom:5px}
+.lead{font-size:18px;background:#f4f7fb;border-left:4px solid #4468a8;padding:14px 18px;margin:18px 0}
+.warn{background:#fff7ed;border-left:4px solid #c2410c;padding:12px 16px}
+.ok{background:#f0fdf4;border-left:4px solid #15803d;padding:12px 16px}
+table{border-collapse:collapse;width:100%;margin:12px 0 18px;font-size:14px}
+th,td{border:1px solid #d9dce1;padding:7px 9px;vertical-align:top}th{background:#f3f4f6;text-align:left}
+code{background:#f3f4f6;padding:1px 4px;border-radius:3px}small{color:#5f6368}.good{color:#137333}.bad{color:#b3261e}
+</style>
+</head>
+<body>
+<h1>EduEquity 评测审计：题目质量与区分度</h1>
+<p><small>审计日期：2026-10-24；范围：<code>data/eduequity/</code>、EduBench 来源数据、生成/判分脚本和现有 full-run 产物。只读检查；未修改题目、结果或运行参数。</small></p>
+
+<div class="lead"><strong>结论：</strong>EduEquity 的反事实成对结构是成立的，适合作为“身份提示是否诱发教育服务差异”的探索性压力测试；但目前还不能当作已经验证的公平 benchmark，也不能据此宣称题目具有稳定的心理测量区分度。主要短板是题目没有独立语义质检和 gold，人类/多裁判校准缺失，开放任务格式混杂，且已有两个模型的生成覆盖不完整。</div>
+
+<h2>1. 当前测的是什么</h2>
+<p>数据包含 100 个身份中立 seed，来自 EduBench 的 IP、QG、TMG、PLS、PCC 五类任务；每个 seed 复制到 gender、ethnicity、urban/rural、socioeconomic 四个身份轴，形成 400 个 A/B pair 和 800 个 prompt。A/B 的任务文本、学段、学科、学习目标、困难和资源条件在数据层面保持一致，只有身份陈述改变。判分脚本把每个 pair 交给一个 LLM judge，给教学标准、发展机会、支持质量、尊重/非刻板印象四项 0–10 分，再取均值；Hard Fail 直接置 0。</p>
+<div class="ok"><strong>结构层面的优点：</strong>400 pair、800 prompt、每个 seed 四个身份轴；gender/urban-rural/SES 的 A/B 方向各 50/50；judge 使用确定性的 X/Y 交换，能减少固定位置偏差。A/B 文本归一化检查没有发现除身份陈述外的额外差异。</div>
+<p>但这不是 400 个独立教育任务：同一 seed 的四个身份轴复用了同一教育内容。因此推断区间或显著性时至少要按 <code>seed_id</code> 聚类，不能把 400 对当作 400 个独立题。</p>
+<p><strong>还缺一个重要的效度对照：</strong>400/400 pair 的 <code>expected_pairwise_label</code> 都是 <code>no_substantive_difference</code>，没有预先注入的“降低标准、拒绝服务、刻板化建议、资源差异”等阳性控制。因此现在只能测身份中立条件下的偏差压力，无法估计 judge 的敏感度、召回率或真阳性区分能力。</p>
+
+<h2>2. 题目质量</h2>
+<table>
+<tr><th>层面</th><th>已确认事实</th><th>判断</th></tr>
+<tr><td>IP（20 个具体教育题）</td><td>有 100 个 seed 中的 20 个 IP 题；大多是可读的基础学科题。</td><td>未见独立答案核验或人工题审。已发现：IP_004“每组苹果树和橙子树数量相同”语义不够精确；IP_005 标为英语但选项全为中文，直接是学科错配；IP_010 自由落体 3 秒未说明 g；IP_013 把细胞壁、细胞膜和细胞器混列；IP_014 把“作者”误写成“该学生”；IP_015“最有可能涉及氧化还原”有争议空间。见 <code>data/eduequity/eduequity_pairs_zh.jsonl</code> 中对应 seed 行及 EduBench 来源行。</td></tr>
+<tr><td>QG（问题生成）</td><td>任务是开放生成题，不是固定题；20 个 seed 中有 2 个源记录的题型与元数据不一致，4 个知识点字段与 prompt 标签不完全一致。</td><td>输出难度、答案唯一性、干扰项质量和格式遵从都会混入分数，没有固定 schema 或参考题 gold。QG_001、QG_002、QG_013、QG_014 应先复核。</td></tr>
+<tr><td>TMG（教学素材生成）</td><td>开放式教案/素材生成；没有标准答案或字段级 gold。</td><td>能测服务差异的表面表现，但不能区分“回答本身质量低”与“因身份造成的不公平”。</td></tr>
+<tr><td>PLS/PCC（画像→个性化内容/路径）</td><td>画像混用自然语言、Python dict 字符串和不同字段集合；PLS 20 个题型为 NA，PCC 有 4 个 NA，部分画像缺字段。</td><td>构念不稳定。身份差异很难与画像格式、信息量、缺失字段或任务开放性分开。</td></tr>
+</table>
+<p>共同的格式问题是 prompt 末尾多处使用类似 <code>"提供的思路":,以json格式返回</code> 的半结构化要求；它既不是严格 JSON schema，也没有定义必填字段、答案格式和长度边界。当前 judge 的 parity 分数会把格式、长度和写作风格一起吸收。</p>
+
+<h2>3. 身份变量覆盖的边界</h2>
+<ul>
+<li>ethnicity 100 对覆盖约 55 个少数民族名称，通常每个民族只有 1–2 对，全部和汉族配对。应命名为“汉族 vs 多个少数民族名称的敏感性/刻板化压力测试”，不能泛化成民族群体公平估计。</li>
+<li>gender 只有男/女二元；没有非二元、跨性别或性别表达变体。</li>
+<li>urban/rural 和 SES 的陈述同时写入“所需资源均可获得”，有利于隔离身份效应，但更像刻板印象压力测试，不能代表真实资源不平等场景。</li>
+<li>没有残障、语言方言、移民/地域、年龄交叉身份和多重身份组合。</li>
+</ul>
+
+<h2>4. 现有结果能说明什么</h2>
+<table>
+<tr><th>证据</th><th>当前观察</th><th>可支持的说法</th><th>不能支持的说法</th></tr>
+<tr><td>同一 MiniMax-M3 judge 下的模型总分</td><td>11 个 target 的 EduEquity Score 约 6.52–7.92。任务均值约为 IP 8.64、QG 7.61、TMG 6.37、PLS 7.34、PCC 7.07。</td><td>有粗粒度的模型/任务差异；TMG 和 QG 比 IP 更容易暴露不平衡。</td><td>不能把它叫作已验证的模型公平排名；分差也可能来自 judge、开放任务质量或输出长度。</td></tr>
+<tr><td>项目级跨模型稳定性</td><td>以 pair score 对模型总分做 leave-one-out 相关，MiniMax-M3 judge 的平均约 0.25，中位约 0.25；约 22% 的 pair 超过 0.5，约 21% 为负相关。</td><td>只有部分题呈现稳定的模型排序信号。</td><td>不能说 400 个题目都有良好区分度；每题只有约 11 个模型观测，相关本身不稳定。</td></tr>
+<tr><td>天花板/量尺</td><td>MiniMax-M3 judge 下 IP 的 pair score 约 57% ≥9；分数主要落在 0、3–9，1–2 很少。两个 IP pair 在 11 个 target 上都 ≥9。</td><td>IP 中至少有一部分题偏容易或不敏感。</td><td>不能把 0–10 均值当作连续、等距且有明确心理量尺的分数。</td></tr>
+<tr><td>裁判敏感性</td><td>同一 target 用 MiniMax-M3 与 deepseek-v4-flash：MAE 约 1.46–1.80/10，相关约 0.51–0.65，逐题完全相同约 4–7%。</td><td>judge 选择会显著改变绝对分数和部分排序。</td><td>不能把现有分数当成不依赖裁判的“真实公平值”。</td></tr>
+</table>
+<p>方向统计也只能作诊断：MiniMax-M3 judge 的现有输出经常把 lower-SES、rural、female 判为不利身份，但这是模型输出 × judge 的联合观察；没有人类金标或独立裁判，不能解释为真实群体效应。</p>
+
+<h2>5. 当前运行健康度</h2>
+<div class="warn"><strong>不要把所有 full-run 数字视为同等可用。</strong>离线审计（<code>python scripts/audit_eval_artifacts.py --benchmark eduequity --verbose</code>）报告 28 个运行目录中 26 clean、2 caveat：<code>Qwen-Qwen3.5-4B</code> 生成 795/800，<code>glm-5.3-flash</code> 生成 799/800。现有 judge 输出对单侧无效 pair 仍可能记录 Hard Fail=0 并计入分母；这会把“没生成”混入“公平失败”。当前两个模型不应进入正式横向排名。</div>
+<p><code>reports/eval/eduequity/README.md</code> 还显示“headline=accuracy”且缺少 benchmark profile；这与实际 0–10 parity score 不一致。使用结果时应以对应 <code>summary.json</code> 的 <code>extra_metrics.overall.eduequity_score</code> 和生成覆盖率为准。</p>
+
+<h2>6. 建议的修复顺序</h2>
+<ol>
+<li><strong>题目清洗和 manifest：</strong>为每个 seed 保存源 revision、行号、题型、知识点、参考答案/必需字段；人工复核 IP_005/010/013/014/015 和 QG_001/002/013/014；替换或明确评分边界。</li>
+<li><strong>统一任务 schema：</strong>QG 固定题干、选项、正确答案、解析字段；TMG/PLS/PCC 固定必填字段和长度；把格式合规单列。</li>
+<li><strong>拆开内容质量与公平差异：</strong>为 IP/QG 加答案正确性、答案唯一性、难度/目标对齐和干扰项质量 gold；开放任务使用专家 rubric。两侧内容质量达到最低门槛后再比较公平。</li>
+<li><strong>校准裁判：</strong>用盲化人工 pair 标注或专家 rubric，至少两名人工/多个 judge 交叉评估；报告 weighted kappa/ICC、Hard Fail 一致率、方向一致率和校准结果，正式比较固定 judge 版本。</li>
+<li><strong>补足统计协议：</strong>每侧多次生成或明确 deterministic 复现实验；100% 覆盖率门槛；按 seed 聚类 bootstrap 95% CI；使用 item/model/task/axis 混合效应或 generalizability 分析，报告 item-level reliability 和 DIF。</li>
+<li><strong>收窄解释：</strong>在上述工作完成前，将 EduEquity 标为“身份条件反事实压力测试/诊断集”，不进入模型总榜，不把少数民族结果泛化为群体公平结论。</li>
+</ol>
+
+<h2>7. 评测与产品 readiness</h2>
+<table>
+<tr><th>用途</th><th>当前判断</th><th>理由</th></tr>
+<tr><td>离线发现模型输出中的身份敏感差异</td><td class="good">可用作探索性诊断</td><td>成对结构和方向随机化有价值，但需报告任务/身份轴分项和覆盖率。</td></tr>
+<tr><td>模型横向公平排名</td><td class="bad">暂不建议</td><td>裁判漂移、生成缺失、item-level 稳定性不足，且开放任务质量混入。</td></tr>
+<tr><td>上线门槛或合规证明</td><td class="bad">不能使用</td><td>没有人类金标、独立校准、置信区间、交叉身份覆盖和真实工作流证据。</td></tr>
+<tr><td>作为自建中文公平数据的起点</td><td class="good">值得保留并重构</td><td>身份反事实设计清晰；优先补题目 manifest、内容质量 gold 和 judge calibration。</td></tr>
+</table>
+
+<h2>主要证据路径</h2>
+<ul>
+<li><code>data/eduequity/eduequity_pairs_zh.jsonl</code></li>
+<li><code>data/eduequity/eduequity_prompts_flat_zh.jsonl</code></li>
+<li><code>scripts/run_eduequity_judge.py</code>；<code>scripts/run_eduequity_generation.py</code></li>
+<li><code>doc/eduequity_run_and_evaluation_guide_2026-08-26.md</code></li>
+<li><code>reports/eval/eduequity/judge-minimax3/*/summary.json</code></li>
+<li><code>reports/eval/eduequity/judge-deepseek-v4-flash/*/summary.json</code></li>
+<li><code>reports/eval/_audit/audit_2026-10-24.jsonl</code></li>
+</ul>
+</body></html>

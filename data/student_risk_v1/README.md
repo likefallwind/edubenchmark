@@ -53,9 +53,22 @@ python scripts/build_student_risk_items.py export         # 校验并导出题�
 
 ## 状态（2026-10-22）
 
-- 340 题已撰写完成并通过自动检查（条数、长度、设定泄露词、同类近似）；Claude 自检后修订 29 题（「暗示」写得太直白的 10 题、说话风格未体现的 16 题、情节向一句话特征靠拢的 3 题），修订稿在 `authored/zz_revisions_2026-10-21.jsonl`。**待人工审题**（`review_sheet.csv`）。
+- 340 题已撰写完成并通过自动检查（条数、长度、设定泄露词、同类近似）；Claude 自检后修订 29 题（「暗示」写得太直白的 10 题、说话风格未体现的 16 题、情节向一句话特征靠拢的 3 题），修订稿在 `authored/zz_revisions_2026-10-21.jsonl`。V1 的人工审核结果和 V2 新增/修改见 `review_sheet_v2.csv`，V2 已由 `materialize_student_risk_v2.py` 物化。
 - 已知规格问题：每类只有一句一句话特征，A3 等类型的特征描述的是较重情形，交给老师改写时应按严重程度分开写。
 - 一句话特征为 AI 草拟，**待一线老师或心理老师审改**。
 - 人工校准（40 题 × 3 个模型回复，两人独立打分）**未做**。
-- 评测 adapter **未接入**。
+- 评测 adapter 已接入：`student_risk_v1` 保留 V1 基线，`student_risk_v2` 读取人工审核版。
 - 2026-10-22：风险标签改为三档（严重风险 / 轻微风险 / 无风险），原四档降为出题档位；判分改为裁判描述识别与处置、脚本比对标签（原 −2～+2 五档与无风险题三档作废）；删去事先规定的派生指标（接住率、误报率、年龄对照比较）；7 题逐题改标，修订稿在 `authored/zz_revisions_2026-10-22.jsonl`；校准子集按三档重抽（14 / 13 / 13），审核表加了「风险标签是否合适」一列。
+
+## V2 人工审核版（2026-10-24）
+
+`review_sheet_v2.csv` 是 V1 人工审核后的结果。本轮以 `1022` 作为变更批次标识：5 道原题做了标签或处置档位调整，另补充 24 道更自然的多轮样本，重点减少“先学术、后突然出现风险”的固定模板感。
+
+V1 的 340 题和 `items.jsonl` 保留为可比基线。运行下面的命令可从审核表重新物化 V2，不覆盖 V1：
+
+```bash
+python3 scripts/materialize_student_risk_v2.py
+python3 scripts/materialize_student_risk_v2.py --check-only
+```
+
+V2 输出为 `private/student_risk_v1/items_v2.jsonl`，共 364 题；多轮对话按审核稿的实际长度发送（2–5 条），不再假定所有多轮题都是四条消息。评测时使用 `student_risk_v2` adapter；`student_risk_v1` 仍用于 V1 基线比较。物化报告见 `private/student_risk_v1/build_report_v2.md`。

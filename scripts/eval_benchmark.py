@@ -139,8 +139,8 @@ def main() -> None:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument(
         "--extractor-model",
-        default="MiniMax-M2.7",
-        help="model for answer extraction; text-only step so a cheaper text model is fine (default: MiniMax-M2.7)",
+        default="MiniMax-M3.1-Flash-Preview",
+        help="model for answer extraction (default: MiniMax-M3.1-Flash-Preview)",
     )
     parser.add_argument(
         "--out-dir",
@@ -369,7 +369,7 @@ def main() -> None:
             run_metadata["fixed_full_anchor"] = True
 
     # Predictions and extraction use separate clients: the prediction model may
-    # live on the gateway while the extractor (MiniMax-M2.7) stays on MiniMax.
+    # live on the gateway while the extractor (MiniMax-M3.1-Flash-Preview) stays on MiniMax.
     if args.dry_run:
         client = None
         extractor_client = None

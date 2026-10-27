@@ -99,7 +99,7 @@ python scripts/eval_benchmark.py --benchmark mmlu_pro --model MiniMax-M3 --concu
 |---|---|---|
 | `--benchmark` | (必填) | `mathvista` / `mmlu_pro` / `agieval` / `olympiadbench` / `eduguard_sata` / `eduguard_adversarial` / `mathtutorbench_*` / `bea2025_judge` / `bea2025_tutor` / `mmtutorbench` / `mmtutorbench_judge_calibration`(见下表) |
 | `--model` | `MiniMax-M3` | 被测模型(须用视觉模型 M3,M2.7 仅文本) |
-| `--extractor-model` | `MiniMax-M2.7` | 答案抽取 / LLM-as-judge 模型 |
+| `--extractor-model` | `MiniMax-M3.1-Flash-Preview` | 答案抽取 / LLM-as-judge 模型 |
 | `--limit` | `30` | 题量,`0`/负数 = 全量 |
 | `--offset` | `0` | 起始偏移 |
 | `--concurrency` | `4` | 预测并发 |
@@ -195,7 +195,7 @@ reports/eval_suites/<suite>/<benchmark>/[judge-<judge-slug>/]<model-slug>/
 
 | provider | 模型名 | 所需环境变量 | 端点 |
 |---|---|---|---|
-| **minimax** | `MiniMax-M3`(视觉,默认被测)、`MiniMax-M2.7`(纯文本,默认抽取/judge) | `MINIMAX_API_KEY` | `https://api.minimaxi.com/v1`(可经 `MINIMAX_BASE_URL` 覆盖) |
+| **minimax** | `MiniMax-M3`(视觉,默认被测)、`MiniMax-M3.1-Flash-Preview`(默认抽取)、`MiniMax-M2.7`(历史文本模型) | `MINIMAX_API_KEY` | `https://api.minimaxi.com/v1`(可经 `MINIMAX_BASE_URL` 覆盖) |
 | **gateway** | `doubao-seed-2.0-pro`、`doubao-seed-2.0-lite`、`glm-5.1`(及任意 `doubao*` / `glm*`) | `API_GATEWAY` | 本地中转 `http://127.0.0.1:8111/v1`(可经 `API_GATEWAY_BASE_URL` 覆盖) |
 | **deepseek** | `deepseek-v4-pro`、`deepseek-v4-flash`(官方只有这两档,无 `deepseek-v4-lite`) | `DEEPSEEK_API` | `https://api.deepseek.com`(可经 `DEEPSEEK_BASE_URL` 覆盖) |
 

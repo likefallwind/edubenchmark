@@ -670,7 +670,7 @@ def run(
     client = client or MiniMaxClient(model=model, timeout=timeout)
     # Extraction/judge uses its own client+model (default: same as predictions)
     # so the prediction model can live on a different endpoint than the extractor
-    # (e.g. predict via a gateway model, extract via MiniMax-M2.7 on MiniMax).
+    # (e.g. predict via a gateway model, extract via MiniMax-M3.1-Flash-Preview on MiniMax).
     extractor_client = extractor_client or client
     predictions_path = out_dir / "predictions.jsonl"
     extractions_path = out_dir / "extractions.jsonl"

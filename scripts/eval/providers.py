@@ -9,7 +9,7 @@ right endpoint is selected automatically.
 Seven providers ship today:
 
 * ``minimax``  — the original MiniMax endpoint (``MINIMAX_API_KEY``); also the
-  home of the default extractor model ``MiniMax-M2.7``.
+  home of the default extractor model ``MiniMax-M3.1-Flash-Preview``.
 * ``gateway``  — a local OpenAI-compatible relay (``API_GATEWAY``) that fronts
   doubao / glm / deepseek and friends at ``/chat/completions``.
 * ``deepseek`` — DeepSeek's official OpenAI-compatible API

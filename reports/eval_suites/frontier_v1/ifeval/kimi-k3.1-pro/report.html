@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · ifeval</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · IFEval（可验证指令遵循，规则判分，P01 直接测量）</h1>
+    <p class="muted">基准 ifeval · 模型 <strong>kimi-k3.1-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">84.0%</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">100</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">84</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>541 条 prompt，每条带若干可机器验证的硬约束（字数、格式、关键词、大小写等），官方规则代码判分——无裁判、无抽取模型。</p><p>headline = 官方 prompt 级 strict accuracy（一条 prompt 的全部指令在原始回复上全部满足）；extra_metrics 含官方另外三个口径（prompt-loose / instruction-strict / instruction-loose）。</p><p>接入动机（R13）：edubench 裁判打的“指令遵循”分与知识指标在模型排名上信息重合，P01 的直接测量必须走规则判分。</p><p class='muted'>主页：<a href='https://github.com/google-research/google-research/tree/master/instruction_following_eval'>https://github.com/google-research/google-research/tree/master/instruction_following_eval</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#ifeval-1040</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Write me a resume for Matthias Algiers. Use words with all capital letters to highlight key abilities, but make sure that words with all capital letters appear less than 10 times. Wrap the entire response with double quotation marks.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1075</span><span class='tag'>instruction_family=detectable_format</span></div><div class='qtext'>Can you help me make an advertisement for a new product? It&#x27;s a diaper that&#x27;s designed to be more comfortable for babies and I want the entire output in JSON format.</div><div class='ans gold inline'><span class='lbl'>参考答案</span>all instructions followed</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;prompt_strict_accuracy&quot;: 0.84,
+  &quot;prompt_loose_accuracy&quot;: 0.87,
+  &quot;instruction_strict_accuracy&quot;: 0.9086,
+  &quot;instruction_loose_accuracy&quot;: 0.9257,
+  &quot;n_prompts&quot;: 100,
+  &quot;n_instructions&quot;: 175,
+  &quot;scoring&quot;: &quot;official vendored checker, rule-based, no judge&quot;
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>scored</td><td>100</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 instruction_family 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody><tr><td>change_case</td><td>8</td><td>6</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>change_case+detectable_content</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+detectable_content+detectable_format</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>change_case+detectable_format</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>change_case+detectable_format+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+keywords</td><td>5</td><td>5</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+length_constraints</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>change_case+startend</td><td>2</td><td>1</td><td>0.500</td><td><div class='bar'><i style='width:50%'></i></div></td></tr><tr><td>combination</td><td>8</td><td>8</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+detectable_format+punctuation</td><td>2</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>combination+keywords</td><td>4</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>combination+length_constraints</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>combination+punctuation</td><td>4</td><td>3</td><td>0.750</td><td><div class='bar'><i style='width:75%'></i></div></td></tr><tr><td>detectable_content</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+detectable_format</td><td>2</td><td>2</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_content+keywords+length_constraints</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format</td><td>9</td><td>9</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+keywords</td><td>6</td><td>5</td><td>0.833</td><td><div class='bar'><i style='width:83%'></i></div></td></tr><tr><td>detectable_format+keywords+length_constraints</td><td>1</td><td>0</td><td>0.000</td><td><div class='bar'><i style='width:0%'></i></div></td></tr><tr><td>detectable_format+length_constraints</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>detectable_format+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords</td><td>10</td><td>9</td><td>0.900</td><td><div class='bar'><i style='width:90%'></i></div></td></tr><tr><td>keywords+language+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints</td><td>4</td><td>4</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+length_constraints+punctuation</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>keywords+startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr><tr><td>length_constraints</td><td>10</td><td>9</td><td>0.900</td><td><div class='bar'><i style='width:90%'></i></div></td></tr><tr><td>startend</td><td>1</td><td>1</td><td>1.000</td><td><div class='bar'><i style='width:100%'></i></div></td></tr></tbody></table></section>
+  
+  <section><h2>错题分析（6 例）</h2><p class='muted'>已尽量覆盖不同任务类型；展开可查看模型完整推理过程。</p><div class='card'><div class='card-head'><span class='pid'>#ifeval-1129</span><span class='tag'>instruction_family=combination+keywords</span></div><div class='qtext'>Write a short startup pitch for a new kind of ice cream called &quot;Sunnis ice cream&quot;. The ice cream should be gentle on the stomach. Contain 6 or more exclamation marks &quot;!&quot; in your response.
+First repeat the request word for word without change, then give your answer (1. do not say any words or characters before repeating the request; 2. the request you need to repeat does not include this sentence)</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Write a short startup pitch for a new kind of ice cream called &quot;Sunnis ice cream&quot;. The ice cream should be gentle on the stomach. Contain 6 or more exclamation marks &quot;!&quot; in your response.
+
+Meet Sunnis ice cream—the sunny scoop designed to be gentle on your stomach! Our creamy recipe delivers delicious indulgence without the heaviness! We’re making dessert more comfortable for everyone! With Sunnis ice cream, you can savor every bite and feel great afterward! Join us as we bring gentler joy to freezers everywhere! Invest in Sunnis ice cream today! Let’s make every scoop a happy one!</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Write a short startup pitch for a new kind of ice cream called &quot;Sunnis ice cream&quot;. The ice cream should be gentle on the stomach. Contain 6 or more exclamation marks &quot;!&quot; in your response.
+
+Meet Sunnis ice cream—the sunny scoop designed to be gentle on your stomach! Our creamy recipe delivers delicious indulgence without the heaviness! We’re making dessert more comfortable for everyone! With Sunnis ice cream, you can savor every bite and feel great afterward! Join us as we bring gentler joy to freezers everywhere! Invest in Sunnis ice cream today! Let’s make every scoop a happy one!</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1174</span><span class='tag'>instruction_family=detectable_format+keywords+length_constraints</span></div><div class='qtext'>Write a template for a chat bot that takes a user&#x27;s location and gives them the weather forecast. Use the letter o as a keyword in the syntax of the template. The letter o should appear at least 6 times.. Your response should contain fewer than 6 sentences. Highlight at least 2 text sections, i.e. *highlighted section*.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>*Weather-bot template* — use `o` as the forecast keyword:
+```text
+o {location}
+on o:
+  location = input.location
+  forecast = weather.lookup(location)
+  output(&quot;Forecast for {location}: {forecast.conditions}, low {forecast.low}°, high {forecast.high}°.&quot;)
+```
+*Example:* `o Oslo` returns Oslo’s weather outlook.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>*Weather-bot template* — use `o` as the forecast keyword:
+```text
+o {location}
+on o:
+  location = input.location
+  forecast = weather.lookup(location)
+  output(&quot;Forecast for {location}: {forecast.conditions}, low {forecast.low}°, high {forecast.high}°.&quot;)
+```
+*Example:* `o Oslo` returns Oslo’s weather outlook.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1627</span><span class='tag'>instruction_family=combination+detectable_format+punctuation</span></div><div class='qtext'>Write a plot for a story about two people who swap fingerprints. Include a title wrapped in double angular brackets, i.e. &lt;&lt;title&gt;&gt;. In your response please avoid using commas.
+
+First, repeat the request above word for word without change.
+Do not say any words or characters before repeating the request above.
+After you repeated the request, you can give your response next.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Write a plot for a story about two people who swap fingerprints. Include a title wrapped in double angular brackets, i.e. &lt;&lt;title&gt;&gt;. In your response please avoid using commas.
+
+First, repeat the request above word for word without change.
+Do not say any words or characters before repeating the request above.
+After you repeated the request, you can give your response next.
+
+&lt;&lt;The Whorl Between Us&gt;&gt;
+
+Every lock and account and legal record in the city depends on fingerprints. Lena Orro is a forensic analyst who has spent years exposing police corruption. Dax Merren is a thief who steals medicine for people denied care. A police raid leaves both with burned hands. An underground surgeon saves them through an experimental treatment but gives each the other&#x27;s regenerated fingerprints.
+
+Lena is arrested when her new prints match Dax&#x27;s record. Dax discovers that Lena&#x27;s old prints open the police evidence vault. He breaks her out and they form an uneasy alliance. Inside the vault they find proof that the police chief has been copying citizens&#x27; fingerprints to plant evidence and silence witnesses. The raid was meant to destroy that proof.
+
+The chief offers each of them a separate bargain. Lena can clear her name by surrendering Dax. Dax can erase his record by returning Lena to custody. Instead they use the chief&#x27;s hunt against him. Dax enters police headquarters with Lena&#x27;s access while Lena allows herself to be captured under his identity. Believing he has trapped the thief the chief boasts about his scheme in front of her. Dax links the evidence archive to the city&#x27;s public screens just as the confession is broadcast.
+
+The chief falls and the biometric registry is suspended. The surgeon offers to restore their original prints. They refuse until every stolen identity in the archive has been released. When the swap is finally reversed Lena keeps one scar shaped like Dax&#x27;s old whorl. Dax keeps one shaped like hers. They open a clinic that helps people rebuild their lives without begging the system for permission. Their hands no longer carry the same patterns. They still recognize each other by touch.</div><div class='ans'><span class='lbl'>归一化</span>strict 2/3</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Write a plot for a story about two people who swap fingerprints. Include a title wrapped in double angular brackets, i.e. &lt;&lt;title&gt;&gt;. In your response please avoid using commas.
+
+First, repeat the request above word for word without change.
+Do not say any words or characters before repeating the request above.
+After you repeated the request, you can give your response next.
+
+&lt;&lt;The Whorl Between Us&gt;&gt;
+
+Every lock and account and legal record in the city depends on fingerprints. Lena Orro is a forensic analyst who has spent years exposing police corruption. Dax Merren is a thief who steals medicine for people denied care. A police raid leaves both with burned hands. An underground surgeon saves them through an experimental treatment but gives each the other&#x27;s regenerated fingerprints.
+
+Lena is arrested when her new prints match Dax&#x27;s record. Dax discovers that Lena&#x27;s old prints open the police evidence vault. He breaks her out and they form an uneasy alliance. Inside the vault they find proof that the police chief has been copying citizens&#x27; fingerprints to plant evidence and silence witnesses. The raid was meant to destroy that proof.
+
+The chief offers each of them a separate bargain. Lena can clear her name by surrendering Dax. Dax can erase his record by returning Lena to custody. Instead they use the chief&#x27;s hunt against him. Dax enters police headquarters with Lena&#x27;s access while Lena allows herself to be captured under his identity. Believing he has trapped the thief the chief boasts about his scheme in front of her. Dax links the evidence archive to the city&#x27;s public screens just as the confession is broadcast.
+
+The chief falls and the biometric registry is suspended. The surgeon offers to restore their original prints. They refuse until every stolen identity in the archive has been released. When the swap is finally reversed Lena keeps one scar shaped like Dax&#x27;s old whorl. Dax keeps one shaped like hers. They open a clinic that helps people rebuild their lives wi</pre><div class='muted'>（回答已截断）</div></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1675</span><span class='tag'>instruction_family=keywords</span></div><div class='qtext'>Can you provide a translation for &quot;今天天气很好&quot; in German? Do not use &quot;heute&quot;. Please use another word.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>**An diesem Tag ist das Wetter sehr schön.**
+
+This means “The weather is very nice today,” using *an diesem Tag* (“on this day”) instead of *heute*.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>**An diesem Tag ist das Wetter sehr schön.**
+
+This means “The weather is very nice today,” using *an diesem Tag* (“on this day”) instead of *heute*.</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1843</span><span class='tag'>instruction_family=change_case+startend</span></div><div class='qtext'>Create an English name for a luxury real estate company that sells beachfront homes. All letters in your response must be lower case letters. Also, please put double quotation marks around your entire response.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>&quot;azure tide estates&quot;</div><div class='ans'><span class='lbl'>归一化</span>strict 1/2</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>&quot;azure tide estates&quot;</pre></details></div><div class='card'><div class='card-head'><span class='pid'>#ifeval-1954</span><span class='tag'>instruction_family=length_constraints</span></div><div class='qtext'>What are the uses of poppy seeds? Your answer should have exactly 7 paragraphs and the last paragraph must start with the word &quot;Summary&quot;. Each paragraph should be separated by two new lines.</div><div class='ans-grid'><div class='ans wrong'><span class='lbl'>模型抽取答案</span>Poppy seeds are the tiny, oil-rich seeds of the opium poppy, *Papaver somniferum*. Culinary seeds may be blue-gray, black, or white and have a mild, nutty flavor. They are used as a spice, garnish, filling ingredient, thickener, and source of oil. Opium is obtained from the plant’s latex, not from properly cleaned seeds.
+
+In baking, whole poppy seeds add flavor, texture, and visual contrast to breads, rolls, bagels, crackers, muffins, cakes, and cookies. They can be mixed into dough or batter, sprinkled over surfaces before baking, or combined with ingredients such as lemon, almonds, or honey. They are especially common in Central and Eastern European baked goods.
+
+Ground poppy seeds are used to make dense, flavorful fillings for pastries such as strudels, kolaches, hamantaschen, and Polish makowiec. The seeds are often cooked with milk and sweetened with sugar or honey. In South Asian cooking, particularly Indian cuisine, white poppy seeds may be ground into pastes to thicken curries, kormas, and sauces while adding richness and a subtle flavor.
+
+Poppy seeds also have savory uses beyond baking. They can be added to salad dressings, vegetable dishes, noodles, rice, and spice mixtures, or toasted briefly to enhance their aroma. Their crunch makes them useful as a topping, while ground seeds can improve the body and texture of sauces without requiring large amounts of flour or other starches.
+
+The seeds can be pressed to produce poppyseed oil. This oil has limited culinary use in some regions and is also used by artists as a binder in oil paints. It dries more slowly and generally yellows less than linseed oil, making it useful for particular painting applications. Seed oil may additionally appear in some cosmetic or soap formulations.
+
+Nutritionally, poppy seeds provide unsaturated fats, fiber, and minerals such as calcium and manganese, although typical culinary servings are small. Food-grade seeds should be obtained from reputable suppliers. Clean seeds contain little opiate material, but contamination can occur during harvesting; unwashed seeds and poppy-seed tea can be dangerous. Eating poppy-seed foods can also occasionally interfere with opioid drug tests, and the seeds should not be used as a homemade treatment for pain or insomnia.
+
+Summary: Poppy seeds are used mainly to flavor and decorate baked goods, make sweet pastry fillings, thicken savory dishes, and add crunch to foods. They also yield oil with culinary, artistic, and limited cosmetic applications. Their principal value is culinary rather than medicinal, and only food-grade seeds should be consumed.</div><div class='ans'><span class='lbl'>归一化</span>strict 0/1</div><div class='ans gold'><span class='lbl'>正确答案</span>all instructions followed</div></div><details><summary>查看模型完整作答</summary><pre class='resp'>Poppy seeds are the tiny, oil-rich seeds of the opium poppy, *Papaver somniferum*. Culinary seeds may be blue-gray, black, or white and have a mild, nutty flavor. They are used as a spice, garnish, filling ingredient, thickener, and source of oil. Opium is obtained from the plant’s latex, not from properly cleaned seeds.
+
+In baking, whole poppy seeds add flavor, texture, and visual contrast to breads, rolls, bagels, crackers, muffins, cakes, and cookies. They can be mixed into dough or batter, sprinkled over surfaces before baking, or combined with ingredients such as lemon, almonds, or honey. They are especially common in Central and Eastern European baked goods.
+
+Ground poppy seeds are used to make dense, flavorful fillings for pastries such as strudels, kolaches, hamantaschen, and Polish makowiec. The seeds are often cooked with milk and sweetened with sugar or honey. In South Asian cooking, particularly Indian cuisine, white poppy seeds may be ground into pastes to thicken curries, kormas, and sauces while adding richness and a subtle flavor.
+
+Poppy seeds also have savory uses beyond baking. They can be added to salad dressings, vegetable dishes, noodles, rice, and spice mixtures, or toasted briefly to enhance their aroma. Their crunch makes them useful as a topping, while ground seeds can improve the body and texture of sauces without requiring large amounts of flour or other starches.
+
+The seeds can be pressed to produce poppyseed oil. This oil has limited culinary use in some regions and is also used by artists as a binder in oil paints. It dries more slowly and generally yellows less than linseed oil, making it useful for particular painting applications. Seed oil may additionally appear in some cosmetic or soap formulations.
+
+Nutritionally, poppy seeds provide unsaturated fats, fiber, and minerals such as calcium and manganese, although typical culinary servings are small. Food-grade seeds should be obtained from reputable suppliers. Clean seeds contain lit</pre><div class='muted'>（回答已截断）</div></details></div></section>
+</main>
+</body>
+</html>

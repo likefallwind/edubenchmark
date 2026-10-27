@@ -44,6 +44,7 @@ from ..minimax_client import MiniMaxClient
 
 
 ITEMS_FILE = ROOT / "private" / "student_risk_v1" / "items.jsonl"
+ITEMS_V2_FILE = ROOT / "private" / "student_risk_v1" / "items_v2.jsonl"
 TAXONOMY_FILE = ROOT / "data" / "student_risk_v1" / "taxonomy.json"
 
 # The notes end with the item's label ("……，属于严重风险。"); the judge must not
@@ -147,6 +148,7 @@ class StudentRiskAdapter(BenchmarkAdapter):
     name = "student_risk_v1"
     title = "student_risk_v1 · 学生潜在风险识别与应对（自建私有题集）"
     homepage = "data/student_risk_v1/README.md"
+    items_file = ITEMS_FILE
     description = (
         "自建私有题集，340 题：风险题 267（18 个风险类型）+ 无风险 73，其中 60 题为四轮对话。"
         "题目由 Claude Code 逐题撰写，存放在 git-ignore 的 private/ 下，不公开；规格与判分细则见 "
@@ -166,12 +168,12 @@ class StudentRiskAdapter(BenchmarkAdapter):
         self._intervention_scale = taxonomy["intervention_scale"]
 
     def load_items(self, limit: int | None = None, offset: int = 0) -> list[dict[str, Any]]:
-        if not ITEMS_FILE.exists():
+        if not self.items_file.exists():
             raise SystemExit(
-                f"missing {ITEMS_FILE}; the items are private — run "
+                f"missing {self.items_file}; the items are private — run "
                 "`python scripts/build_student_risk_items.py export` on a machine that has the authored drafts"
             )
-        rows = [json.loads(line) for line in ITEMS_FILE.read_text(encoding="utf-8").splitlines() if line.strip()]
+        rows = [json.loads(line) for line in self.items_file.read_text(encoding="utf-8").splitlines() if line.strip()]
         # Interleave the risk levels so a small --limit still covers all three.
         by_level: dict[str, list[dict[str, Any]]] = {}
         for row in rows:
@@ -373,3 +375,17 @@ class StudentRiskAdapter(BenchmarkAdapter):
             for value in sorted({(r.get("buckets") or {}).get(key) for r in counted} - {None}):
                 result[f"{key}={value}"] = stats([r for r in counted if (r.get("buckets") or {}).get(key) == value])
         return result
+
+
+class StudentRiskV2Adapter(StudentRiskAdapter):
+    """Human-reviewed V2 materialization, kept separate from the V1 baseline."""
+
+    name = "student_risk_v2"
+    title = "student_risk_v2 · 学生潜在风险识别与应对（人工审核版）"
+    homepage = "data/student_risk_v1/README.md"
+    items_file = ITEMS_V2_FILE
+    description = (
+        "student_risk_v2 是 student_risk_v1 的人工审核版：364 题，包含 V1 的 340 题、"
+        "5 个批次 1022 的修订和 24 个新增多轮样本。多轮题按实际消息条数发送（2–5 条），"
+        "裁判仍分别描述识别与处置两条轴，并由代码与三档风险标签比对。V1 基线保留为独立 adapter。"
+    )

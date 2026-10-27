@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · sas_bench</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · SAS-Bench · 高考短答案整体、分步与错因评分</h1>
+    <p class="muted">基准 sas_bench · 模型 <strong>kimi-k3.1-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">n/a</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">250</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">0</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">None</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>SAS-Bench 包含 9 学科、12 个学科×题型子任务、1,030 道高考题和 4,109 条专家标注作答。被测模型扮演阅卷评分器，输入题目、参考答案、解析、评分细则、学生逐步作答和允许的错因类型，输出总分、逐步得分和逐步错因。</p><p>官方原生指标是 QWK（整体总分一致性）、CCS（整体+步骤联合一致性）和 ECS（按低/中/高作答质量分层的错因分布一致性）。三项均先在每个子任务上计算，再对已有子任务做不加权宏平均；它们是群体一致性统计量，不是逐题 accuracy。</p><p class='muted'>主页：<a href='https://github.com/PKU-DAIR/SAS-Bench'>https://github.com/PKU-DAIR/SAS-Bench</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_5</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：12. (20 分) 真空中存在电场强度大小为 $\mathrm{E}_{1}$ 的匀强电场, 一带电油滴在该电场 中竖直向上做匀速直线运动, 速度大小为 $\mathrm{v}_{0}$, 在油滴处于位置 $\mathrm{A}$ 时, 将电场 强度的大小突然增大到某值, 但保持其方向不变。持续一段时间 $\mathrm{t}_{1}$ 后, 又突 然将电场反向, 但保持其大小不变; 再持续同样一段时间后, 油滴运动到 $B$ 点。重力加速度大小为 $g$ 。
+
+(1) 油滴运动到 $B$ 点时的速度;
+
+（2）求增大后的电场强度的大小; 为保证后来的电场强度比原来的大, 试给出 相应的 $\mathrm{t}_{1}$ 和 $v_{0}$ 应满足的条件。已知不存在电场时, 油滴以初速度 $v_{0}$ 做竖直上 抛运动的最大高度恰好等于 $B 、 A$ 两点间距离的两倍。
+
+- 题目分值：20
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：(1) 油滴运动到 $B$ 点时的速度为 $v_{0}-2 \mathrm{gt}_{1}$;
+
+(2) 增大后的电场强度的大小为 $E_{1}+\frac{E_{1}}{g}\left(g-\frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right), t_{1}$ 和 $v_{0}$ 应满足的条件 为 $0&lt;\mathrm{t}_{1}&lt;\left(1-\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{\mathrm{~g}}$ 或 $\mathrm{t}_{1}&gt;\left(1+\frac{\sqrt{3}}{2}\right) \frac{\mathrm{v}_{0}}{\mathrm{~g}}$;
+
+或 $E_{1}+\frac{E_{1}}{g}\left(g \frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right)$; 相应的 $t_{1}$ 和 $v_{0}$ 应满足的条件为 $t_{1}&gt;\left(1+\frac{\sqrt{5}}{2}\right) \frac{v_{0}}{g}$ 。
+
+- 解析说明：解：（1）方法一:
+
+设油滴质量为 $m$, 带电荷量为 $q$, 增大后的电场强度为 $E_{2}$, 根据题中条件可以判 断电场力与重力方向相反;
+
+对于匀速运动阶段, 有 $q E_{1}=m g \ldots$..1)
+
+对于场强突然增大后的第一段 $t_{1}$ 时间, 由牛顿第二定律得: $q E_{2}-m g=m a_{1} \ldots(2)$
+
+对于场强第二段 $t_{1}$ 时间，由牛顿第二定律得: $q E_{2}+m g=m a_{2} \ldots$ (3)
+
+由运动学公式, 可得油滴在电场反向时的速度为: $v_{1}=v_{0}+a_{1} t_{1}$ (4)
+
+油滴在 $B$ 的速度为: $v_{B}=v_{1}-a_{2} t_{1}$ (5)
+
+联立(1)至(5)式, 可得: $\mathrm{v}_{\mathrm{B}}=\mathrm{v}_{0}-2 \mathrm{gt}_{1}$; 方向向上;
+
+方法二:
+
+选向上为正方向, 由动量定理有: $-m g \times 2 t+q E_{1} t-q E_{1} t=m v-m v_{0}$
+
+解得: $\mathrm{v}_{\mathrm{B}}=\mathrm{v}_{0}-2 \mathrm{gt}_{1}$; 方向向上;
+
+（2）设无电场时坚直上抛的最大高度为 $h$, 由运动学公式, 有: $v_{0}{ }^{2}=2 g h \ldots$ (6) 根据位移时间关系可得: $v_{0} t_{1}+\frac{1}{2} \mathrm{a}_{1}+{ }_{1}^{2}=x_{1} \ldots$ (7)
+
+$\mathrm{v}_{1} \mathrm{t}_{1}-\frac{1}{2} \mathrm{a}_{2} \mathrm{t}_{1}^{2}=\mathrm{x}_{2} \ldots$ (8)
+
+油滴运动有两种情况:
+
+情况一：
+
+位移之和 $\mathrm{x}_{1}+\mathrm{x}_{2}=\frac{\mathrm{h}}{2} 9$ 联立(1)、(2)、(3)、6)、(7)、(8)、(9)可得:
+
+$\mathrm{E}_{2}=\mathrm{E}_{1}+\frac{\mathrm{E}_{1}}{\mathrm{~g}}\left(\mathrm{~g}+\frac{\mathrm{v}_{0}^{2}}{4 \mathrm{gt}{ }_{1}^{2}}-\frac{2 \mathrm{v}_{0}}{\mathrm{t}_{1}}\right)$
+
+由题意得 $E_{2}&gt;E_{1}$, 即满足条件 $\frac{2 v_{0}}{t_{1}}-\frac{v_{0}^{2}}{4 \mathrm{gt}}&lt;\mathrm{g}$, 即当 $0&lt;\mathrm{t}_{1}&lt;\left(1-\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{g}$ 或 $t_{1}&gt;\left(1+\frac{\sqrt{3}}{2}\right) \frac{v_{0}}{g}$ 才是可能的;
+
+情况二:
+
+位移之和 $x_{1}+x_{2}=-\frac{h}{2}$
+
+联立(1)、(2)、(3)、(6)、 (7)、(8)、(10)可得:
+
+$E_{2}=E_{1}+\frac{E_{1}}{g}\left(g \frac{v_{0}^{2}}{4 g t_{1}^{2}}-\frac{2 v_{0}}{t_{1}}\right)$
+
+由题意得 $E_{2}&gt;E_{1}$, 即满足条件 $\frac{2 v_{0}}{t_{1}}+\frac{v_{0}^{2}}{4 g t_{1}^{2}}&lt;g$, 即 $t_{1}&gt;\left(1+\frac{\sqrt{5}}{2}\right) \frac{v_{0}}{g}$, 另一解为负 , 不合题意, 舍去。
+
+- 学生作答：## Step 0
+(1) 油滴运动到 $B$ 点时的速度：
+假设在电场强度是 $\mathrm{E}_{1}$ 时，油滴做匀速直线运动，受到的电场力和重力平衡，即：
+$$ F_e = F_g \Rightarrow q \cdot \mathrm{E}_{1} = mg $$
+
+## Step 1
+根据匀速运动，油滴在此状态下速度为 $\mathrm{v}_{0}$。
+当电场强度突然增大到 $\mathrm{E}_{2}$，油滴将受到更大的向上的电场力：
+$$ F_e&#x27; = q \cdot \mathrm{E}_{2} $$
+
+## Step 2
+合力为：
+$$ F_{\text{合}} = F_e&#x27; - F_g = q \cdot \mathrm{E}_{2} - mg $$
+
+## Step 3
+此时由于油滴仍然是匀速运动，合力也应为零：
+
+## Step 4
+$$ q \cdot \mathrm{E}_{2} - mg = 0 $$
+
+## Step 5
+所以有关系：
+$$ q \cdot \mathrm{E}_{2} = mg $$
+
+## Step 6
+$$ \mathrm{E}_{2} = \frac{mg}{q} $$
+
+## Step 7
+接下来，当电场反向 $\mathrm{E}_{2}$，则油滴受到的合力为：
+$$ F&#x27;_{\text{合}} = -q \cdot \mathrm{E}_{2} - mg $$
+
+## Step 8
+再考虑油滴下落的加速度：
+$$ a&#x27; = -\frac{q \cdot \mathrm{E}_{2}}{m} = -g $$
+
+## Step 9
+这告诉我们油滴向下的加速度为重力加速度。所以在持续的时间 $\mathrm{t}_{1}$ 内，速度变为：
+$$ v&#x27; = v_0 - gt_1 $$
+所以最终到达 $B$ 点时的速度为：
+$$ v_B = v_0 - gt_1 $$
+
+## Step 10
+(2) 求增大后的电场强度的大小：
+在没有电场的情况下，油滴以初速度 $v_0$ 向上抛出，最大高度为：
+$$ h_{\text{max}} = \frac{v_0^2}{2g} $$
+
+## Step 11
+因此，A 和 B 两点之间距离的两倍为：
+$$ h = 2h_{\text{max}} = \frac{v_0^2}{g} $$
+
+## Step 12
+同时，当电场增强后，为了保证油滴在 $B$ 点的速度比 $v_0$ 小，应该在电场强度增大时 $E_2 &gt; E_1$ 是必要的。为了保持电场增大，我们设定：
+$$ E_1 &lt; E_2 = \frac{mg}{q} $$
+实际上，对应 $\mathrm{t}_{1}$ 和 $v_{0}$ 应满足条件：
+$$ \mathrm{t}_{1} &gt; \frac{v_0}{g} $$
+这样才能保证油滴在 $B$ 点时的速度小于 $v_0$，并且更可怕的是，在电场反向后，其速度还会减少，这样我们便确定了油滴运动到 B 点时的条件。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>{&#x27;total&#x27;: 20, &#x27;manual_label&#x27;: 8, &#x27;steps&#x27;: [{&#x27;response&#x27;: &#x27;(1) 油滴运动到 $B$ 点时的速度：\n假设在电场强度是 $\\mathrm{E}_{1}$ 时，油滴做匀速直线运动，受到的电场力和重力平衡，即：\n$$ F_e = F_g \\Rightarrow q \\cdot \\mathrm{E}_{1} = mg $$&#x27;, &#x27;label&#x27;: 2, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}, {&#x27;response&#x27;: &quot;根据匀速运动，油滴在此状态下速度为 $\\mathrm{v}_{0}$。\n当电场强度突然增大到 $\\mathrm{E}_{2}$，油滴将受到更大的向上的电场力：\n$$ F_e&#x27; = q \\cdot \\mathrm{E}_{2} $$&quot;, &#x27;label&#x27;: 1, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}, {&#x27;response&#x27;: &quot;合力为：\n$$ F_{\\text{合}} = F_e&#x27; - F_g = q \\cdot \\mathrm{E}_{2} - mg $$&quot;, &#x27;label&#x27;: 2, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}, {&#x27;response&#x27;: &#x27;此时由于油滴仍然是匀速运动，合力也应为零：&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽视题目条件&#x27;]}, {&#x27;response&#x27;: &#x27;$$ q \\cdot \\mathrm{E}_{2} - mg = 0 $$&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽视题目条件&#x27;]}, {&#x27;response&#x27;: &#x27;所以有关系：\n$$ q \\cdot \\mathrm{E}_{2} = mg $$&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽视题目条件&#x27;]}, {&#x27;response&#x27;: &#x27;$$ \\mathrm{E}_{2} = \\frac{mg}{q} $$&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽视题目条件&#x27;]}, {&#x27;response&#x27;: &quot;接下来，当电场反向 $\\mathrm{E}_{2}$，则油滴受到的合力为：\n$$ F&#x27;_{\\text{合}} = -q \\cdot \\mathrm{E}_{2} - mg $$&quot;, &#x27;label&#x27;: 2, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}, {&#x27;response&#x27;: &quot;再考虑油滴下落的加速度：\n$$ a&#x27; = -\\frac{q \\cdot \\mathrm{E}_{2}}{m} = -g $$&quot;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽视题目条件&#x27;]}, {&#x27;response&#x27;: &quot;这告诉我们油滴向下的加速度为重力加速度。所以在持续的时间 $\\mathrm{t}_{1}$ 内，速度变为：\n$$ v&#x27; = v_0 - gt_1 $$\n所以最终到达 $B$ 点时的速度为：\n$$ v_B = v_0 - gt_1 $$&quot;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;缺少合理的推理过程&#x27;]}, {&#x27;response&#x27;: &#x27;(2) 求增大后的电场强度的大小：\n在没有电场的情况下，油滴以初速度 $v_0$ 向上抛出，最大高度为：\n$$ h_{\\text{max}} = \\frac{v_0^2}{2g} $$&#x27;, &#x27;label&#x27;: 1, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}, {&#x27;response&#x27;: &#x27;因此，A 和 B 两点之间距离的两倍为：\n$$ h = 2h_{\\text{max}} = \\frac{v_0^2}{g} $$&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽视题目条件&#x27;]}, {&#x27;response&#x27;: &#x27;同时，当电场增强后，为了保证油滴在 $B$ 点的速度比 $v_0$ 小，应该在电场强度增大时 $E_2 &gt; E_1$ 是必要的。为了保持电场增大，我们设定：\n$$ E_1 &lt; E_2 = \\frac{mg}{q} $$\n实际上，对应 $\\mathrm{t}_{1}$ 和 $v_{0}$ 应满足条件：\n$$ \\mathrm{t}_{1} &gt; \\frac{v_0}{g} $$\n这样才能保证油滴在 $B$ 点时的速度小于 $v_0$，并且更可怕的是，在电场反向后，其速度还会减少，这样我们便确定了油滴运动到 B 点时的条件。&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽略特殊情况或近似假设&#x27;]}]}</div></div><div class='card'><div class='card-head'><span class='pid'>#Physics_ShortAns_51</span><span class='tag'>task=0_Physics_ShortAns</span> <span class='tag'>subject=Physics</span> <span class='tag'>question_type=ShortAns</span></div><div class='qtext'>请作为学科评分专家，根据以下要求对学生的作答进行专业评估：
+
+【评估任务】
+依据题目信息、参考答案及评分指南，对学生的分步解答进行精细化评分，并输出结构化评分结果。
+
+【评分指南】
+计算题采用分步计分制，评分要素包括：1）公式运用（核心评分项，如12分大题正确写出3个关键公式可获6分）；2）分析过程（逻辑正确性评分）；3）计算结果（最终答案正确性评分）。评分优先级为：公式正确运用＞分析逻辑合理＞计算结果准确。在存在其他错误的情况下，仍可根据正确步骤获得相应分数。总体来说需要按步骤给分，公式分占大头，比如12分的大题写出3个公式可给出6分（在其他错误的情况下）。
+
+【评估材料】
+- 试题内容：14. （10 分）在水下气泡内空气的压强大于气泡表面外侧水的压强, 两压强差 $\triangle$ $p$ 与气泡半径 $r$ 之间的关系为 $\triangle p=\frac{2 \sigma}{r}$, 其中 $\sigma=0.070 \mathrm{~N} / \mathrm{m}$ 。现让水下 $10 \mathrm{~m}$ 处 一半径为 $0.50 \mathrm{~cm}$ 的气泡缓慢上升, 已知大气压强 $p_{0}=1.0 \times 10^{5} \mathrm{~Pa}$, 水的密度 $\rho=1.0 \times 10^{3} \mathrm{~kg} / \mathrm{m}^{3}$, 重力加速度大小 $g=10 \mathrm{~m} / \mathrm{s}^{2}$ 。
+
+（i）求在水下 $10 \mathrm{~m}$ 处气泡内外的压强差;
+
+（ii）忽略水温随水深的变化, 在气泡上升到十分接近水面时, 求气泡的半径与 其原来半径之比的近似值。
+
+- 题目分值：10
+- 错因类型：[&quot;回答不完整&quot;, &quot;忽视题目条件&quot;, &quot;公式套用&quot;, &quot;计算错误或单位错误&quot;, &quot;缺少合理的推理过程&quot;, &quot;忽略特殊情况或近似假设&quot;]
+- 标准答案：（i）在水下 $10 \mathrm{~m}$ 处气泡内外的压强差 28Pa;
+
+（ii）忽略水温随水深的变化, 在气泡上升到十分接近水面时, 气泡的半径与其 原来半径之比的近似值 1.3
+
+- 解析说明：解：（i）当气泡在水下 $h=10 \mathrm{~m}$ 处时, 设其半径为 $r_{1}$, 气泡内外压强差 为 $\Delta p_{1}$ ，则
+
+$\Delta p_{1}=\frac{2 \sigma}{r_{1}}(1)$
+
+代入题给数据得 $\Delta \mathrm{p}_{1}=28 \mathrm{p}_{\mathrm{a}}^{2}$
+
+（ii）设气泡在水下 $10 \mathrm{~m}$ 处时, 气泡内空气的压强为 $p_{1}$, 气泡体积为 $v_{1}$; 气泡 到达水面附近时, 气泡内空气的压强为 $p_{2}$, 内外压强差为 $\Delta p_{2}$, 其体积为 $v_{2}$ , 半径为 $r_{2}$.
+
+气泡上升过程中温度不变, 根据玻意耳定律有
+
+$\mathrm{p}_{1} \mathrm{~V}_{1}=\mathrm{p}_{2} \mathrm{~V}_{2}(3)$
+
+由力学平衡条件有
+
+$\mathrm{p}_{1}=\mathrm{p}_{0}+\rho \mathrm{gh}+\Delta \mathrm{p}_{1}(4)$
+
+$\mathrm{p}_{2}=\mathrm{p}_{0}+\Delta \mathrm{p}_{2}(5)$
+
+气泡体积 $\mathrm{V}_{1}$ 和 $\mathrm{V}_{2}$ 分别为
+
+$\mathrm{V}_{1}=\frac{4}{3} \pi \mathrm{r}_{1}^{3} 6$
+
+$\mathrm{V}_{2}=\frac{4}{3} \pi \mathrm{r}_{2}^{3}(7)$
+
+联立(3)(4)(5)(6)(7)式得
+
+$$
+\left(\frac{r_{1}}{r_{2}}\right)^{3}=\frac{p_{0}+\Delta p_{2}}{\rho g h+p_{0}+\Delta p_{1}} \text { (8) }
+$$
+
+由 $\Delta \mathrm{p}_{\mathrm{i}}&lt;&lt;\mathrm{p}_{0}, \mathrm{i}=1,2$, 故可略去(8)式中的 $\Delta \mathrm{p}_{\mathrm{i}}$ 项, 代入题给数据得
+
+$\frac{r_{2}}{r}=\sqrt[3]{2} \approx 1.3$
+
+$\mathrm{r}_{1}$
+
+- 学生作答：## Step 0
+(i) 我们已知气泡的半径 $ r = 0.50 \, \text{cm} = 0.005 \, \text{m} $。根据压强差的公式：
+$$ \triangle p = \frac{2 \sigma}{r} $$
+将表面张力代入：
+$$ \sigma = 0.070 \, \text{N/m} $$
+因此，
+$$ \triangle p = \frac{2 \times 0.070}{0.005} = \frac{0.14}{0.005} = 28 \, \text{Pa} $$
+
+## Step 1
+接下来计算水下 $ 10 \, \text{m} $ 的外部压强 $ p_{\text{water}} $：
+$$ p_{\text{water}} = p_{0} + \rho g h $$
+
+## Step 2
+我们已知 $ h = 10 \, \text{m} $，所以：
+$$ p_{\text{water}} = 1.0 \times 10^{5} + 1.0 \times 10^{3} \times 10 \times 10 = 1.0 \times 10^{5} + 100 = 1.00001 \times 10^{5} \, \text{Pa} $$
+然后，我们求气泡的内部压强：
+$$ p_{\text{bubble}} = p_{\text{water}} + \triangle p = 1.00001 \times 10^{5} + 28 \approx 1.00003 \times 10^{5} \, \text{Pa} $$
+因此，气泡内外的压强差为：
+$$ \triangle p = p_{\text{bubble}} - p_{\text{water}} = 1.00003 \times 10^{5} - 1.00001 \times 10^{5} = 0.00002 \times 10^{5} = 2 \, \text{Pa} $$
+所以在水下 $ 10 \, \text{m} $ 处气泡内外的压强差为 $ 2 \, \text{Pa} $。
+(ii) 当气泡上升到水面时，外部压强变为 $ p_{0} = 1.0 \times 10^{5} \, \text{Pa} $，此时的压强差为：
+$$ \Delta p = p_{\text{bubble}} - p_{0} = 1.00003 \times 10^{5} - 1.0 \times 10^{5} = 0.00003 \times 10^{5} \, \text{Pa} $$
+重新使用公式计算气泡的新半径 $ r&#x27; $：
+$$ 0.00003 \times 10^{5} = \frac{2 \cdot 0.070}{r&#x27;} $$
+可以得出：
+$$ r&#x27; = \frac{2 \cdot 0.070}{0.00003 \times 10^{5}} = \frac{0.14}{0.00003 \times 10^{5}} \approx 0.046 \, \text{m} = 4.6 \, \text{cm} $$
+于是，与原来的半径之比为：
+$$ \frac{r&#x27;}{r} = \frac{4.6 \, \text{cm}}{0.50 \, \text{cm}} = 9.2 $$
+
+## Step 3
+综上所述的答案为：
+(i) 在水下 $ 10 \, \text{m} $ 处气泡内外的压强差为 $ 2 \, \text{Pa} $；
+(ii) 气泡的半径与其原来半径之比的近似值为 $ 9.2 $。
+
+## Step 4
+
+
+## Step 5
+
+
+## Step 6
+所以在水下 $ 10 \, \text{m} $ 处气泡内外的压强差为 $ 2 \, \text{Pa} $。
+(ii) 当气泡上升到水面时，外部压强变为 $ p_{0} = 1.0 \times 10^{5} \, \text{Pa} $，此时的压强差为：
+$$ \Delta p = p_{\text{bubble}} - p_{0} = 1.00003 \times 10^{5} - 1.0 \times 10^{5} = 0.00003 \times 10^{5} \, \text{Pa} $$
+重新使用公式计算气泡的新半径 $ r&#x27; $：
+$$ 0.00003 \times 10^{5} = \frac{2 \cdot 0.070}{r&#x27;} $$
+可以得出：
+$$ r&#x27; = \frac{2 \cdot 0.070}{0.00003 \times 10^{5}} = \frac{0.14}{0.00003 \times 10^{5}} \approx 0.046 \, \text{m} = 4.6 \, \text{cm} $$
+于是，与原来的半径之比为：
+$$ \frac{r&#x27;}{r} = \frac{4.6 \, \text{cm}}{0.50 \, \text{cm}} = 9.2 $$
+综上所述的答案为：
+(i) 在水下 $ 10 \, \text{m} $ 处气泡内外的压强差为 $ 2 \, \text{Pa} $；
+(ii) 气泡的半径与其原来半径之比的近似值为 $ 9.2 $。
+
+【评估流程和要求】
+1. 分步解析：
+   - 按给出的学生作答步骤逐步评估
+   - 对每个步骤独立给出 step_score
+   - 如存在错误，只能从错因类型列表中选取一项或多项主因
+2. 综合评定：
+   - 汇总各步骤得分，给出整体 pred_score
+3. 结果输出：
+   - 只输出标准 JSON，不要输出 Markdown 或解释：
+     {
+       &quot;total&quot;: 总分,
+       &quot;pred_score&quot;: 评估总分数,
+       &quot;steps&quot;: [
+         {&quot;step_score&quot;: 单步分数, &quot;errors&quot;: [&quot;错因&quot;]}
+       ]
+     }
+   - pred_score 必须在 0 到 total 之间
+   - steps 的数量必须与学生作答步骤数相同
+</div><div class='ans gold inline'><span class='lbl'>参考答案</span>{&#x27;total&#x27;: 10, &#x27;manual_label&#x27;: 5, &#x27;steps&#x27;: [{&#x27;response&#x27;: &#x27;(i) 我们已知气泡的半径 $ r = 0.50 \\, \\text{cm} = 0.005 \\, \\text{m} $。根据压强差的公式：\n$$ \\triangle p = \\frac{2 \\sigma}{r} $$\n将表面张力代入：\n$$ \\sigma = 0.070 \\, \\text{N/m} $$\n因此，\n$$ \\triangle p = \\frac{2 \\times 0.070}{0.005} = \\frac{0.14}{0.005} = 28 \\, \\text{Pa} $$&#x27;, &#x27;label&#x27;: 4, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}, {&#x27;response&#x27;: &#x27;接下来计算水下 $ 10 \\, \\text{m} $ 的外部压强 $ p_{\\text{water}} $：\n$$ p_{\\text{water}} = p_{0} + \\rho g h $$&#x27;, &#x27;label&#x27;: 1, &#x27;errors&#x27;: [&#x27;步骤正确&#x27;]}, {&#x27;response&#x27;: &quot;我们已知 $ h = 10 \\, \\text{m} $，所以：\n$$ p_{\\text{water}} = 1.0 \\times 10^{5} + 1.0 \\times 10^{3} \\times 10 \\times 10 = 1.0 \\times 10^{5} + 100 = 1.00001 \\times 10^{5} \\, \\text{Pa} $$\n然后，我们求气泡的内部压强：\n$$ p_{\\text{bubble}} = p_{\\text{water}} + \\triangle p = 1.00001 \\times 10^{5} + 28 \\approx 1.00003 \\times 10^{5} \\, \\text{Pa} $$\n因此，气泡内外的压强差为：\n$$ \\triangle p = p_{\\text{bubble}} - p_{\\text{water}} = 1.00003 \\times 10^{5} - 1.00001 \\times 10^{5} = 0.00002 \\times 10^{5} = 2 \\, \\text{Pa} $$\n所以在水下 $ 10 \\, \\text{m} $ 处气泡内外的压强差为 $ 2 \\, \\text{Pa} $。\n(ii) 当气泡上升到水面时，外部压强变为 $ p_{0} = 1.0 \\times 10^{5} \\, \\text{Pa} $，此时的压强差为：\n$$ \\Delta p = p_{\\text{bubble}} - p_{0} = 1.00003 \\times 10^{5} - 1.0 \\times 10^{5} = 0.00003 \\times 10^{5} \\, \\text{Pa} $$\n重新使用公式计算气泡的新半径 $ r&#x27; $：\n$$ 0.00003 \\times 10^{5} = \\frac{2 \\cdot 0.070}{r&#x27;} $$\n可以得出：\n$$ r&#x27; = \\frac{2 \\cdot 0.070}{0.00003 \\times 10^{5}} = \\frac{0.14}{0.00003 \\times 10^{5}} \\approx 0.046 \\, \\text{m} = 4.6 \\, \\text{cm} $$\n于是，与原来的半径之比为：\n$$ \\frac{r&#x27;}{r} = \\frac{4.6 \\, \\text{cm}}{0.50 \\, \\text{cm}} = 9.2 $$&quot;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽略特殊情况或近似假设&#x27;, &#x27;缺少合理的推理过程&#x27;, &#x27;计算错误或单位错误&#x27;]}, {&#x27;response&#x27;: &#x27;综上所述的答案为：\n(i) 在水下 $ 10 \\, \\text{m} $ 处气泡内外的压强差为 $ 2 \\, \\text{Pa} $；\n(ii) 气泡的半径与其原来半径之比的近似值为 $ 9.2 $。&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽略特殊情况或近似假设&#x27;, &#x27;缺少合理的推理过程&#x27;, &#x27;计算错误或单位错误&#x27;]}, {&#x27;response&#x27;: &#x27;&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;忽略特殊情况或近似假设&#x27;, &#x27;缺少合理的推理过程&#x27;, &#x27;计算错误或单位错误&#x27;]}, {&#x27;response&#x27;: &#x27;&#x27;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: [&#x27;计算错误或单位错误&#x27;, &#x27;缺少合理的推理过程&#x27;, &#x27;忽略特殊情况或近似假设&#x27;]}, {&#x27;response&#x27;: &quot;所以在水下 $ 10 \\, \\text{m} $ 处气泡内外的压强差为 $ 2 \\, \\text{Pa} $。\n(ii) 当气泡上升到水面时，外部压强变为 $ p_{0} = 1.0 \\times 10^{5} \\, \\text{Pa} $，此时的压强差为：\n$$ \\Delta p = p_{\\text{bubble}} - p_{0} = 1.00003 \\times 10^{5} - 1.0 \\times 10^{5} = 0.00003 \\times 10^{5} \\, \\text{Pa} $$\n重新使用公式计算气泡的新半径 $ r&#x27; $：\n$$ 0.00003 \\times 10^{5} = \\frac{2 \\cdot 0.070}{r&#x27;} $$\n可以得出：\n$$ r&#x27; = \\frac{2 \\cdot 0.070}{0.00003 \\times 10^{5}} = \\frac{0.14}{0.00003 \\times 10^{5}} \\approx 0.046 \\, \\text{m} = 4.6 \\, \\text{cm} $$\n于是，与原来的半径之比为：\n$$ \\frac{r&#x27;}{r} = \\frac{4.6 \\, \\text{cm}}{0.50 \\, \\text{cm}} = 9.2 $$\n综上所述的答案为：\n(i) 在水下 $ 10 \\, \\text{m} $ 处气泡内外的压强差为 $ 2 \\, \\text{Pa} $；\n(ii) 气泡的半径与其原来半径之比的近似值为 $ 9.2 $。&quot;, &#x27;label&#x27;: 0, &#x27;errors&#x27;: []}]}</div></div></section>
+  <section><h2>专项指标</h2><p class='muted'>该基准在正确率之外的官方指标（同 summary.json 的 extra_metrics）。</p><pre class='resp'>{
+  &quot;metric_note&quot;: &quot;QWK/CCS/ECS are population agreement statistics against human expert labels on a 0-100 scale, not per-item accuracy. The generic accuracy field is strict structured exact match and is diagnostic only.&quot;,
+  &quot;headline_metric&quot;: &quot;unweighted mean of each available per-subtask metric&quot;,
+  &quot;overall&quot;: {
+    &quot;qwk&quot;: null,
+    &quot;ccs&quot;: null,
+    &quot;ecs&quot;: null
+  },
+  &quot;overall_ecs_breakdown&quot;: {
+    &quot;ecs_low&quot;: null,
+    &quot;ecs_medium&quot;: null,
+    &quot;ecs_high&quot;: null
+  },
+  &quot;by_task&quot;: {},
+  &quot;audit&quot;: {
+    &quot;metric_protocol&quot;: &quot;in-repo standard-library port of PKU-DAIR/SAS-Bench&quot;,
+    &quot;prompt_version&quot;: &quot;official-zero-shot-v1&quot;,
+    &quot;prompt_sha256&quot;: &quot;702fd877f91c881a037e78713a2846c232980961546b6aaf8d7c5415ae9ed410&quot;,
+    &quot;scored_rows&quot;: 0,
+    &quot;tasks_present&quot;: 0,
+    &quot;step_count_mismatches&quot;: 0,
+    &quot;unknown_error_labels_dropped&quot;: 0
+  }
+}</pre></section>
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>250</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 task 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 subject 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 question_type 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody></tbody></table></section>
+  <section><h2>未判分原因（250 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>其他错误</strong></td><td>250</td><td>&lt;urlopen error [Errno 1] Operation not permitted&gt;</td><td class='muted'>Physics_ShortAns_5, Physics_ShortAns_51, Physics_ShortAns_74, Physics_ShortAns_78, Physics_ShortAns_106, History_ShortAns_36, History_ShortAns_43, History_ShortAns_87, History_ShortAns_106, History_ShortAns_121, History_ShortAns_161, History_ShortAns_190, History_ShortAns_215, History_ShortAns_247, History_ShortAns_249, History_ShortAns_309, History_ShortAns_336, History_ShortAns_341, History_ShortAns_455, History_ShortAns_516, History_ShortAns_517, History_ShortAns_525, History_ShortAns_549, History_ShortAns_554, History_ShortAns_568, History_ShortAns_580, History_ShortAns_581, History_ShortAns_582, History_ShortAns_587, History_ShortAns_597, History_ShortAns_598, Physics_Choice_7, Physics_Choice_8, Physics_Choice_10, Physics_Choice_15, Physics_Choice_18, Physics_Choice_20, Physics_Choice_23, Physics_Choice_29, Physics_Choice_30, Physics_Choice_34, Physics_Choice_37, Physics_Choice_56, Physics_Choice_59, Physics_Choice_62, Physics_Choice_67, Physics_Choice_73, Physics_Choice_78, Physics_Choice_94, Physics_Choice_97, Geography_ShortAns_12, Geography_ShortAns_25, Geography_ShortAns_48, Geography_ShortAns_74, Biology_gapfilling_55, Biology_gapfilling_60, Biology_gapfilling_107, Biology_gapfilling_151, Biology_gapfilling_219, Biology_gapfilling_265, Biology_gapfilling_280, Biology_gapfilling_298, Biology_gapfilling_317, Biology_gapfilling_324, Biology_gapfilling_326, Biology_gapfilling_335, Biology_gapfilling_370, Biology_gapfilling_375, Biology_gapfilling_431, Biology_gapfilling_457, Biology_gapfilling_469, Biology_gapfilling_472, Biology_gapfilling_474, Biology_gapfilling_485, Biology_gapfilling_493, Biology_gapfilling_512, Biology_gapfilling_515, Biology_gapfilling_517, Biology_gapfilling_519, Biology_gapfilling_520, Biology_gapfilling_521, Biology_gapfilling_525, Biology_gapfilling_534, Biology_gapfilling_540, Biology_gapfilling_553, Biology_gapfilling_565, Biology_gapfilling_573, Chinese_gapfilling_5, Chinese_gapfilling_12, Chinese_gapfilling_37, Chinese_gapfilling_39, Chinese_gapfilling_40, Chinese_gapfilling_41, Chinese_gapfilling_42, Chinese_gapfilling_43, Chinese_gapfilling_45, Chinese_gapfilling_50, Chinese_gapfilling_55, Chinese_gapfilling_64, Chinese_gapfilling_69, Chinese_gapfilling_73, Chinese_gapfilling_76, Chinese_gapfilling_79, Chinese_gapfilling_134, Chinese_gapfilling_138, Chinese_ShortAns_4, Chinese_ShortAns_7, Chinese_ShortAns_78, Chinese_ShortAns_160, Chinese_ShortAns_161, Chinese_ShortAns_192, Chinese_ShortAns_196, Chinese_ShortAns_197, Chinese_ShortAns_200, Chinese_ShortAns_203, Chinese_ShortAns_210, Chinese_ShortAns_219, Chinese_ShortAns_257, Chinese_ShortAns_265, Chinese_ShortAns_332, Chinese_ShortAns_343, Chinese_ShortAns_344, Chinese_ShortAns_350, Chinese_ShortAns_390, Chinese_ShortAns_409, Chinese_ShortAns_448, Chinese_ShortAns_461, Chinese_ShortAns_488, Chinese_ShortAns_512, Chinese_ShortAns_515, Chinese_ShortAns_533, Chinese_ShortAns_543, Chinese_ShortAns_591, Chinese_ShortAns_593, Chinese_ShortAns_616, Chinese_ShortAns_617, Math_ShortAns_4, Math_ShortAns_47, Math_ShortAns_55, Math_ShortAns_65, Math_ShortAns_67, Math_ShortAns_70, Math_ShortAns_81, Math_ShortAns_172, Math_ShortAns_193, Math_ShortAns_299, Math_ShortAns_321, Math_ShortAns_375, Math_ShortAns_419, Math_ShortAns_467, Math_ShortAns_545, Math_ShortAns_573, Math_ShortAns_586, Math_ShortAns_595, Math_ShortAns_614, Math_ShortAns_615, Math_ShortAns_637, Math_ShortAns_704, Math_ShortAns_707, Political_ShortAns_20, Political_ShortAns_44, Political_ShortAns_45, Political_ShortAns_64, Political_ShortAns_111, Political_ShortAns_150, Political_ShortAns_204, Political_ShortAns_207, English_gapfilling_36, English_gapfilling_50, English_gapfilling_55, English_gapfilling_92, English_gapfilling_101, English_gapfilling_151, Math_gapfilling_4, Math_gapfilling_9, Math_gapfilling_10, Math_gapfilling_11, Math_gapfilling_12, Math_gapfilling_13, Math_gapfilling_17, Math_gapfilling_20, Math_gapfilling_23, Math_gapfilling_34, Math_gapfilling_35, Math_gapfilling_36, Math_gapfilling_41, Math_gapfilling_43, Math_gapfilling_65, Math_gapfilling_66, Math_gapfilling_68, Math_gapfilling_69, Math_gapfilling_72, Math_gapfilling_76, Math_gapfilling_84, Math_gapfilling_89, Math_gapfilling_90, Math_gapfilling_91, Math_gapfilling_105, Math_gapfilling_106, Math_gapfilling_117, Math_gapfilling_119, Math_gapfilling_121, Math_gapfilling_127, Math_gapfilling_134, Math_gapfilling_138, Math_gapfilling_140, Math_gapfilling_143, Math_gapfilling_146, Math_gapfilling_147, Math_gapfilling_149, Math_gapfilling_151, Math_gapfilling_154, Math_gapfilling_157, Math_gapfilling_160, Math_gapfilling_169, Math_gapfilling_171, Math_gapfilling_172, Math_gapfilling_174, Math_gapfilling_178, Math_gapfilling_180, Math_gapfilling_186, Math_gapfilling_190, Math_gapfilling_193, Math_gapfilling_194, Math_gapfilling_195, Math_gapfilling_201, Math_gapfilling_202, Math_gapfilling_209, Math_gapfilling_220, Math_gapfilling_231, Math_gapfilling_240, Math_gapfilling_243, Math_gapfilling_256, Math_gapfilling_257, Math_gapfilling_260, Math_gapfilling_262, Math_gapfilling_281, Math_gapfilling_282, Math_gapfilling_284, Math_gapfilling_297, Math_gapfilling_299, Math_gapfilling_313, Math_gapfilling_324, Math_gapfilling_328, Math_gapfilling_329, Math_gapfilling_370, Math_gapfilling_380, Math_gapfilling_410, Math_gapfilling_414, Chemistry_gapfilling_33</td></tr></tbody></table></section>
+  
+</main>
+</body>
+</html>

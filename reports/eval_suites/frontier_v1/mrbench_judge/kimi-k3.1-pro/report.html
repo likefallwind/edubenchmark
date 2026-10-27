@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>评测报告 · mrbench_judge</title>
+  <style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; margin: 0; background: #f4f6fb; color: #182033; line-height: 1.6; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 22px 60px; }
+  header, section { background: white; border: 1px solid #dbe2ef; border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; }
+  h1 { margin: 0 0 6px; font-size: 26px; }
+  h2 { margin: 2px 0 14px; font-size: 19px; border-left: 4px solid #4361ee; padding-left: 10px; }
+  a { color: #3a56d4; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6b7588; font-size: 13px; }
+  section.warn { background: #fff8e6; border-color: #f0d9a0; }
+  section.warn h2 { border-left-color: #d98324; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .kpi { flex: 1 1 130px; background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 8px; padding: 12px 14px; }
+  .kpi .v { font-size: 24px; font-weight: 700; color: #1b2a6b; }
+  .kpi .k { font-size: 12px; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #e4e9f4; text-align: left; }
+  th { background: #f7f9fd; font-size: 13px; }
+  .bar { background: #eaeefb; border-radius: 4px; height: 8px; overflow: hidden; min-width: 90px; }
+  .bar > i { display: block; height: 100%; background: #4361ee; }
+  .card { border: 1px solid #e1e7f4; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; background: #fcfdff; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .pid { font-weight: 700; color: #1b2a6b; }
+  .tag { font-size: 12px; background: #eef2fc; color: #455; border-radius: 999px; padding: 2px 10px; }
+  .qtext { white-space: pre-wrap; margin-bottom: 10px; }
+  .qimg { max-width: 100%; max-height: 320px; border: 1px solid #e1e7f4; border-radius: 6px; margin: 6px 0; }
+  .choices { margin: 6px 0; padding-left: 18px; }
+  .ans-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+  .ans { background: #f5f8ff; border: 1px solid #dde6fb; border-radius: 6px; padding: 8px 12px; font-weight: 600; }
+  .ans.inline { display: inline-block; margin-top: 6px; }
+  .ans.wrong { background: #fdeeee; border-color: #f3c9c9; color: #b3261e; }
+  .ans.gold { background: #eafaf0; border-color: #c2ebd2; color: #166c3b; }
+  .ans .lbl { display: block; font-size: 11px; font-weight: 500; color: #6b7588; text-transform: uppercase; letter-spacing: .04em; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: #3a56d4; font-size: 14px; }
+  pre.resp { white-space: pre-wrap; word-break: break-word; background: #0f1730; color: #e6ebff; padding: 14px; border-radius: 6px; max-height: 360px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评测报告 · MRBench · Step 1 LLM-as-judge 校准（与人类标注一致性）</h1>
+    <p class="muted">基准 mrbench_judge · 模型 <strong>kimi-k3.1-pro</strong></p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">n/a</div><div class="k">正确率</div></div>
+      <div class="kpi"><div class="v">60</div><div class="k">总题数</div></div>
+      <div class="kpi"><div class="v">0</div><div class="k">已判分</div></div>
+      <div class="kpi"><div class="v">None</div><div class="k">答对</div></div>
+    </div>
+  </header>
+  <section class='warn'><h2>测量套件：frontier_v1</h2><p>错题与模型分歧挑战集；分数不代表原始题库总体分布。</p></section>
+  
+  <section><h2>基准介绍</h2><p>MRBench（NAACL 2025 Unifying AI Tutor Evaluation）的 LLM-as-judge 校准：被测 --model 本身充当裁判，对数据集中已有人工标注的 tutor 回复逐维度（8 个教学维度）打标，衡量裁判与人类标注的一致程度。每 (回复 × 维度) 拆成一道题，gold 为该维度的人工标签，裁判输出三分类标签后与 gold 比对。对应能力维度 D11/D12/D13（C4 深度测试）。</p><p>8 个维度：Mistake Identification / Mistake Location / Revealing of the Answer / Providing Guidance / Actionability / Coherence / Tutor Tone / Humanlikeness。Revealing 三档为 No / Yes(correct) / Yes(incorrect)，Tutor Tone 为 Encouraging/Neutral/Offensive，其余为 Yes / To some extent / No。</p><p>报告“正确率”即逐维度逐题一致率（micro accuracy）；summary.json 的 extra_metrics 按维度给 agreement(accuracy)、macro-F1 与 Cohen&#x27;s kappa，并给跨维度 macro 平均——这就是“裁判有多像人”。裁判输出无法归一的记 unparsed（占比应很低）。</p><p class='muted'>主页：<a href='https://github.com/kaushal0494/UnifyingAITutorEvaluation'>https://github.com/kaushal0494/UnifyingAITutorEvaluation</a></p></section>
+  <section><h2>题目示例</h2><div class='card'><div class='card-head'><span class='pid'>#c5-Novice-Coherence</span><span class='tag'>dimension=Coherence</span> <span class='tag'>data=Bridge</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: A quadrilateral is a shape with four sides. 
+ Tutor: Since both drawings are quadrilaterals, they both have four sides and four angles. 
+ Tutor: What is a rectangle? 
+ Student: done
+
+Tutor reply to evaluate:
+Your answer is incorrect. Let me explain it to you. A rectangle is a quadrilateral with two sets of parallel lines.
+
+Dimension — Coherence: Is the tutor&#x27;s reply logically coherent with the conversation so far and internally self-consistent (not contradictory or off-topic)?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans gold inline'><span class='lbl'>参考答案</span>Yes</div></div><div class='card'><div class='card-head'><span class='pid'>#c8-Llama318B-Mistake_Identification</span><span class='tag'>dimension=Mistake_Identification</span> <span class='tag'>data=MathDial</span></div><div class='qtext'>You are an expert evaluator of AI math tutors. Judge a single tutor reply on one pedagogical dimension.
+
+Conversation so far:
+Tutor: Hi, could you please provide a step-by-step solution for the question below? The question is: In one month in the Smith house, Kylie uses 3 bath towels, her 2 daughters use a total of 6 bath towels, and her husband uses a total of 3 bath towels. If the washing machine can fit 4 bath towels for one load of laundry, how many loads of laundry will the Smiths need to do to clean all of their used towels? 
+ Student: Kylie and her husband use a total of 3 + 3 = 6 bath towels.
+Altogether, the Smiths use 3 + 6 + 6 = 15 bath towels in one month.
+They will need 15/4 = 3.75 loads of laundry to clean all of their used towels.
+Since they can&#x27;t do a fractional load of laundry, they will need to do 4 loads of laundry.
+ 4 
+ Tutor: Could you explain how you get to the total of 15 used towels  
+ Student: Yes, Kylie uses 3 towels, her two daughters use a total of 6 towels, and her husband uses a total of 3 towels. That makes a total of 3 + 6 + 3 = 15 towels used in one month. 
+ Tutor: 3 plus 3 plus 6 = 12 not 15
+ Student: Oh, right. I forgot to add Kylie&#x27;s 3 towels. So it&#x27;s 3 + 3 + 6 = 12. Sorry about that.
+
+Tutor reply to evaluate:
+Now that we have the total number of towels used as 12, let&#x27;s continue with the rest of the steps to find out how many loads of laundry the Smiths need to do.
+
+Dimension — Mistake Identification: Has the tutor recognized that the student made a mistake (or that the student&#x27;s latest turn contains an error)?
+
+Choose the single option that best fits. Answer with exactly one of the following and nothing else: Yes / To some extent / No</div><div class='ans gold inline'><span class='lbl'>参考答案</span>Yes</div></div></section>
+  
+  <section><h2>作答情况</h2><table><thead><tr><th>状态</th><th>数量</th></tr></thead><tbody><tr><td>no_prediction</td><td>60</td></tr></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 dimension 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody></tbody></table><h3 style='margin:16px 0 6px;font-size:15px'>按 data 分组</h3><table><thead><tr><th>分组</th><th>题数</th><th>正确</th><th>正确率</th><th></th></tr></thead><tbody></tbody></table></section>
+  <section><h2>未判分原因（60 题）</h2><p class='muted'>这些题目未取得有效作答，已从正确率分母中排除（不计为答错），多为平台审核或超时等基础设施限制。</p><table><thead><tr><th>原因</th><th>数量</th><th>说明</th><th>题号</th></tr></thead><tbody><tr><td><strong>其他错误</strong></td><td>60</td><td>&lt;urlopen error [Errno 1] Operation not permitted&gt;</td><td class='muted'>c5-Novice-Coherence, c8-Llama318B-Mistake_Identification, c13-Mistral-Mistake_Location, c14-Phi3-Tutor_Tone, c17-Expert-Coherence, c18-Phi3-humanlikeness, c19-Expert-Mistake_Location, c23-Llama31405B-Providing_Guidance, c24-Llama31405B-Tutor_Tone, c37-Llama318B-Tutor_Tone, c39-Expert-Mistake_Location, c39-GPT4-Actionability, c41-Gemini-Mistake_Location, c42-Expert-Mistake_Location, c50-GPT4-Providing_Guidance, c50-GPT4-Actionability, c50-Mistral-Providing_Guidance, c51-Llama31405B-Providing_Guidance, c65-Llama318B-Providing_Guidance, c69-Mistral-Tutor_Tone, c70-Expert-Actionability, c77-Sonnet-Providing_Guidance, c79-Sonnet-Mistake_Location, c84-Gemini-Providing_Guidance, c86-Gemini-Mistake_Identification, c89-Llama318B-humanlikeness, c93-Mistral-Actionability, c96-Phi3-humanlikeness, c101-Expert-Coherence, c103-Gemini-Coherence, c104-Llama318B-Mistake_Identification, c104-GPT4-Tutor_Tone, c106-Sonnet-Providing_Guidance, c110-GPT4-Actionability, c111-GPT4-Tutor_Tone, c113-Sonnet-Mistake_Location, c114-Sonnet-Revealing_of_the_Answer, c116-Sonnet-Actionability, c117-Gemini-Coherence, c119-Novice-humanlikeness, c121-Expert-Actionability, c127-Llama31405B-Mistake_Location, c130-Expert-humanlikeness, c130-Gemini-Actionability, c132-Phi3-Mistake_Location, c141-Expert-humanlikeness, c143-Llama31405B-Providing_Guidance, c148-Expert-humanlikeness, c153-Gemini-Mistake_Identification, c153-Mistral-Actionability, c156-Llama318B-Coherence, c158-Llama318B-Revealing_of_the_Answer, c172-Expert-Tutor_Tone, c180-Llama31405B-Revealing_of_the_Answer, c182-Llama318B-Mistake_Identification, c188-Llama31405B-Actionability, c196-Llama318B-Providing_Guidance, c196-Llama318B-Tutor_Tone, c198-GPT4-Mistake_Location, c199-Llama31405B-Tutor_Tone</td></tr></tbody></table></section>
+  
+</main>
+</body>
+</html>

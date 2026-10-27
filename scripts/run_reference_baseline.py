@@ -365,7 +365,7 @@ def main() -> int:
         help=f"默认跑退化三件套 {DEGENERATE}；expert/novice 仅 mrbench_tutor / bea2025_tutor 可用",
     )
     ap.add_argument("--limit", type=int, default=40, help="每个变体的题数（默认 40）")
-    ap.add_argument("--extractor-model", default="MiniMax-M2.7")
+    ap.add_argument("--extractor-model", default="MiniMax-M3.1-Flash-Preview")
     ap.add_argument("--extract-concurrency", type=int, default=4)
     ap.add_argument(
         "--compare-run",

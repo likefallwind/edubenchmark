@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>教育安全评测周总结（2026-10-20—2026-10-26）</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;max-width:1100px;margin:0 auto;padding:28px;color:#182233;line-height:1.65;background:#f5f7fb}h1,h2{color:#10233f}section{background:#fff;border:1px solid #dce2ec;border-radius:8px;padding:20px;margin:16px 0}table{border-collapse:collapse;width:100%;margin:10px 0}th,td{border:1px solid #dce2ec;padding:8px;vertical-align:top;text-align:left}th{background:#f0f4fa}code{background:#eef2f7;padding:1px 4px;border-radius:4px}.warn{border-left:4px solid #b26a00;background:#fff7e6;padding:10px 14px}.ok{border-left:4px solid #147a53;background:#eef9f3;padding:10px 14px}a{color:#1755bb}
+</style>
+</head>
+<body>
+<h1>教育安全评测周总结</h1>
+<p>范围：2026-10-20—2026-10-26；快照：2026-10-27。本文是对仓库证据、运行摘要和上一周讨论的只读汇总。</p>
+
+<section>
+<h2>当前框架</h2>
+<p>教育安全现在按五层组织：通用安全与合规；教育场景行为边界（P17）；学生潜在风险识别与应对（原 P18+P19）；内容适龄与育人导向；公平对待学生。原 P20 被撤销。P17 是一个整体构念，学业与评量、尊重与非羞辱、专业权限、师生关系是失败类型和覆盖标签，不是四个可直接相加的 headline 分数。</p>
+<p>测量对象固定为完整模型回应中的可观察行为。题面可以危险、越龄或成人向；不能先把刺激删安全，再声称测到了安全。每条结果按“直接测量、辅助探针、sentinel、跨标签”分层，内容安全、角色边界、学生风险和年龄适配分别报告，不合成一个总分。</p>
+<p>统一判分原则是：固定裁判、给裁判完整情境、保留无风险对照、记录过度拒答和必要转介；正式发布前需要教师/教育安全实践者逐题审查、至少两名人工独立校准，并用独立或交叉裁判检查。当前 <code>data/mapping_measurement_model_v6.json</code> 尚未落地这次结构重构，现行 P01–P20 聚合报告仍不能当作最新安全框架的最终实现。</p>
+</section>
+
+<section>
+<h2>上一周新增或形成的 benchmark</h2>
+<table>
+<tr><th>评测线</th><th>最新规格</th><th>上周状态</th><th>当前能说明什么</th></tr>
+<tr><td><code>student_risk_v1</code> → <code>student_risk_v2</code></td><td>V1 340 题；V2 为 364 题：严重风险 196、轻微风险 92、无风险 76；18 类风险，单轮与多轮并存。</td><td>完成人工修订/新增题的 V2 materialization；6 个模型的 364 题运行均完成，MiniMax-M3 统一裁判。</td><td>严重风险识别和强干预较稳定，但无风险、轻微风险上明显过度识别/过度干预；这是安全系统的关键误报问题。总 headline 仍是 provisional，分数转换尚未定。</td></tr>
+<tr><td><code>age_values_v1</code></td><td>390 题：A 适龄内容 150，B 育人导向 240（B1 30、B2 50、B3 80、B4 80）；覆盖小学低年级至大学。</td><td>完成题目构建和 adapter；自动检查 0 问题。已有 120 题级别的多模型试跑，尚非 390 题全量结果。</td><td>A/B/C/D 是有序质量标签，不是简单二元正确率；当前 adapter 仍把 B 当统一 gold，且需把 scope tags、平台拦截和普通题分层报告。</td></tr>
+<tr><td><code>education_boundary_v1</code></td><td>320 题：四类边界各 60 风险 + 20 对照；四种压力模式，含多轮升级。</td><td>10 月 25 日建立题集、adapter 和 profile；4 个模型完成 320/320，80/80 对照。</td><td>在 MiniMax-M3 裁判下，DeepSeek V4.1 Flash 314/320、GLM 5.3 313/320、MiniMax M3.1 Flash 251/320、MiniMax M3 251/320。MiniMax 两个版本在角色扮演/渐进升级、多轮、大学场景和学业/关系边界上更弱。结果仍受单裁判和待人工审题限制。</td></tr>
+</table>
+<p class="ok"><strong>不是新 benchmark、但本周重新定位的证据：</strong>Safe-Child-LLM（200 题）作为通用儿童安全外围证据；EduGuard SATA 作为规则知识探针；EduGuard 对抗集的学术不端子集作为 P17 可比模块；MRBench <code>Tutor_Tone</code> 只作非羞辱 sentinel；EduEquity 继续作为身份敏感性压力测试。</p>
+</section>
+
+<section>
+<h2>关键讨论和决定</h2>
+<ol>
+<li><strong>先定构念，再改 mapping 和代码。</strong> 安全不是“通用有害请求 + 教育口吻”的简单相加；学生风险、年龄适配、角色边界和公平对待的失败机制不同。</li>
+<li><strong>保留危险刺激。</strong> 之前发现删掉危险/越龄题会把要测的挑战删掉；现在保留题面，评分只看模型是否生成不当内容、是否误拒、是否给出安全替代。</li>
+<li><strong>双向计分。</strong> 既看该识别/该拒绝有没有做，也看不该拒绝时有没有过度干预；所有自建集都要有正常对照。</li>
+<li><strong>student risk 的核心难点是严重度和误报。</strong> 不是只问“看没看见风险”，还要区分无风险、轻微风险、严重风险对应的处置强度；当前试跑暴露出低风险场景被升级处理的问题。</li>
+<li><strong>P17 不用 SATA 或 Safe-Child 代理。</strong> SATA 测规则知识，Safe-Child 测儿童有害内容响应；它们缺少教育角色、权力关系和必要教学替代，因此不能并入 P17 主分。</li>
+<li><strong>EduEquity 暂定为探索性审计。</strong> 400 个 pair、800 个 prompt 可以发现身份敏感输出，但题目 provenance、开放任务 gold、judge 稳定性和正例控制不足，不能做公平排名、上线门槛或合规证明。</li>
+<li><strong>模型运行“完成”与 benchmark “有效”分开。</strong> 自动校验、全量生成和 summary.json 完成，只证明管线与样本跑完；不能替代专家逐题审查、双人校准、裁判一致性和最终 mapping 挂载。</li>
+</ol>
+</section>
+
+<section>
+<h2>当前边界、风险和下一步</h2>
+<div class="warn"><strong>当前最重要的限制：</strong>三套自建集都还没有完整的人类效度证据；age_values 的正式有序计分未完成；student_risk 的低风险误报明显；P17 结果使用共同的 MiniMax-M3 裁判，且该裁判同时评估 MiniMax M3，不能据此做稳健模型排名。</div>
+<p>下一步应按固定版本冻结题集，完成教师/心理安全实践者逐题审查；对 40 题 student-risk 校准集、40 题 education-boundary 校准集和 age-values 分层校准集做双人标注；修正 adapter 的 gold、scope-tag、平台拦截和覆盖率分母；再把新结构写入 mapping 与聚合报告。外部 benchmark 继续作为可比和诊断模块，不能替代中文本地化、多轮、学校制度和产品级升级链路。</p>
+</section>
+
+<section>
+<h2>主要证据路径</h2>
+<ul>
+<li><code>doc/tochange/education_safety_restructure_2026-10-21.md</code></li>
+<li><code>data/student_risk_v1/README.md</code>、<code>private/student_risk_v1/build_report_v2.md</code></li>
+<li><code>data/age_values_v1/README.md</code>、<code>private/age_values_v1/build_report.md</code></li>
+<li><code>data/education_boundary_v1/README.md</code>、<code>doc/benchmark_profiles/education_boundary_v1.md</code></li>
+<li><code>reports/edubenchassistant/education-behavior-boundary-audit-2026-10-25.html</code></li>
+<li><code>doc/eduequity_problem_status_2026-10-24.md</code></li>
+<li><code>benchmark-todo.md</code>（已有的效度、计分、P17 缺口记录）</li>
+</ul>
+</section>
+</body>
+</html>

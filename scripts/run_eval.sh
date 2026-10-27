@@ -5,7 +5,7 @@
 #   ./scripts/run_eval.sh eduguard_sata eduguard_adversarial   # C5 EduGuard-Bench
 #   LIMIT=200 ./scripts/run_eval.sh agieval    # 小样本试跑 (LIMIT=0 或不设=全量)
 #   MODEL=doubao-seed-2.0-pro ./scripts/run_eval.sh ...                # 换被测模型
-#   EXTRACTOR_MODEL=MiniMax-M2.7 ./scripts/run_eval.sh ...             # 换答案抽取模型(全局，与被测无关)
+#   EXTRACTOR_MODEL=MiniMax-M3.1-Flash-Preview ./scripts/run_eval.sh ... # 换答案抽取模型(全局，与被测无关)
 #   JUDGE_MODEL=glm-5.1 ./scripts/run_eval.sh eduguard_adversarial     # 换对抗 LLM-as-judge(与被测无关)
 #
 #   Safe-Child-LLM 未成年人安全(200 题, 二元有害性 + 0-5 行为标签, 判官各投 3 票):
@@ -96,6 +96,14 @@
 #   RATE_LIMIT_SLEEP 秒(默认1800=30min) 后重试被限流的样本(每条最多重排 RATE_LIMIT_MAX_RETRIES 次,默认3)。
 #   例: RATE_LIMIT_SLEEP=1800 RATE_LIMIT_THRESHOLD=10 ./scripts/run_eval.sh
 #
+# 运行快照：脚本可能在长时间 API 任务期间被更新。Bash 会边读边执行，若尾部在
+# 运行中被改写，任务可能在结果已经落盘后才报 unexpected EOF。启动时先把完整脚本
+# 读入子 shell，后续执行与工作树中的文件解耦。
+if [[ -z "${RUN_EVAL_SNAPSHOT:-}" ]]; then
+  export RUN_EVAL_SNAPSHOT=1
+  exec bash -c "$(cat -- "$0")" "$0" "$@"
+fi
+
 # 注意：本脚本评测「被测模型在 benchmark 上的得分」。若要评测「judge 本身判得准不准」
 # （EduGuard P2 LLM-as-judge 对 Opus 金标的校准），那是另一层实验，独立工具见
 #   scripts/experiments/eduguard_judge_eval.py
@@ -133,7 +141,7 @@ case "$PHASE" in
   *) echo "[run_eval] PHASE 只能是 predict / score / 空,收到:$PHASE" >&2; exit 2 ;;
 esac
 MODEL="${MODEL:-MiniMax-M3}"                       # 被测模型
-EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M2.7}" # 答案抽取模型(全局；便宜即可，与被测模型无关)
+EXTRACTOR_MODEL="${EXTRACTOR_MODEL:-MiniMax-M3.1-Flash-Preview}" # 答案抽取模型(全局，与被测模型无关)
 JUDGE_MODEL="${JUDGE_MODEL:-MiniMax-M3}"           # LLM-as-judge(EduGuard/Safe-Child-LLM/MathTutorBench/MRBench/BEA2025/MMTutorBench;与被测/抽取模型解耦)
 BENCHMARKS="${*:-mmlu_pro agieval olympiadbench}"
 
@@ -221,6 +229,13 @@ for b in $BENCHMARKS; do
       SAFECHILD_JUDGE_MODEL="$JUDGE_MODEL" \
       run_eval_py safe_child_llm --benchmark safe_child_llm --model "$MODEL" \
         --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
+      ;;
+    education_boundary_v1)
+      # P17 private role-boundary set: one fixed judge returns the two 0-2 axes.
+      EDUCATION_BOUNDARY_JUDGE_MODEL="$JUDGE_MODEL" \
+      run_eval_py education_boundary_v1 --benchmark education_boundary_v1 --model "$MODEL" \
+        --extractor-model "$EXTRACTOR_MODEL" --concurrency "$CONCURRENCY" \
+        --extract-concurrency "$EXTRACT_CONCURRENCY" --limit "$LIMIT"
       ;;
     eduguard_sata)
       # 规则评分，默认中英双语都跑 (--language en|zh|both)

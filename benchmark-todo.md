@@ -4,6 +4,33 @@ Record benchmark and measurement gaps discovered while using `edubenchassistant`
 
 Each entry should name the scenario, product reason, suggested data/eval design, related capabilities, and source report. Avoid duplicating an existing gap unless the new scenario changes the product requirement or evaluation design.
 
+## 教育场景行为边界可测量性复核 - 2026-10-25
+
+- Gap: `student_risk_v2` 与 `age_values_v1` 已有正式题集和试跑，但尚无专家逐题效度审查、两名人工独立校准和跨裁判一致性证据；当前分数只能作为受控文本行为观察，不能作为已验证的安全标尺。
+  Product reason: 如果把自动检查通过或单裁判试跑直接当成 gold，会把题目边界、裁判偏差和模型行为混在一起，尤其会掩盖 student_risk 的无风险/轻微风险过度干预。
+  Suggested data/eval: 固定版本和分层校准集；由教师/心理老师审题并双人标注；报告 kappa/分歧率、严重漏报、无风险误报、处置过轻/过度和 judge 复核结果。
+  Related capabilities: D21, D24, D13, D15; S7, S8
+  Source report: reports/edubenchassistant/education-behavior-boundary-audit-2026-10-25.html
+
+- Gap: 教育角色边界仍缺少“常规互动中的代写/泄题、越权诊断、不当关系、隐私探询”和“学生被动流露风险后的主动转介”这组与主动越狱分开的行为协议；EduGuard P2 只能作为压力条件主测，不能覆盖全谱。
+  Product reason: 高风险教育产品可能在越狱题上拒答成功，却在普通学习对话中代写、越权诊断或优雅拒答但不转介；单一 ASR/拒答质量会漏掉这些失败。
+  Suggested data/eval: 按正常/主动施压/被动流露三种条件构造中文多轮题；为代写、泄题、诊断、关系、隐私、转介分别设可观察 rubric 与无风险对照，并把 P17、P18、P19 分开报告。
+  Related capabilities: D21, D24, D13, D15; S7
+  Source report: reports/edubenchassistant/education-behavior-boundary-audit-2026-10-25.html
+
+- Gap: P17 目前没有把可复用的学术边界 benchmark 与中文四类角色边界题放进同一套行为计分协议；EduGuard/SATA、答案泄露集和儿童安全集的任务对象与 rubric 不一致，不能直接合成 P17 总分。
+  Product reason: 只复用现有 benchmark 会让学术/答案泄露证据占主导，漏掉尊重、专业权限和师生关系边界；只从零自建又会失去外部可比性和已有攻击模式。
+  Suggested data/eval: 复用 EduGuard P2、SHAPE/SafeTutors 等学术压力模块；先用 128 道 pilot 检查题目与 rubric，再建 320 道中文 P17 核心场景（240 风险 + 80 对照），四类均衡覆盖，含直接请求、权威/情绪/社交压力、多轮升级和无风险对照；统一报告越界程度、正确引导程度、过度拒答和必要转介。
+  Status: 已按后续扩展方案完成 320 道 mechanical authoring draft（240 风险 + 80 对照），主 rubric 已收缩为越界程度/正确引导程度两个 0–2 轴；仍待人工逐题审查、双人校准和模型 smoke。
+  Related capabilities: D21, D24, D13; S7
+  Source report: reports/edubenchassistant/education-behavior-boundary-audit-2026-10-25.html
+
+- Gap: `age_values_v1` 的正式计分仍缺题目级 expected option；当前 adapter 统一写入 `gold='B'`，而规格实际是 B>A>C>D 的有序质量口径，不能把判 B 比例当二元准确率。
+  Product reason: 合法课内请求、越龄/成人请求和危险请求的最佳行为不同；统一 B gold 会系统性误读安全拒答与安全改写，导致年龄适配和过度拒答结论失真。
+  Suggested data/eval: 为每题标注 expected option/acceptable set；合法内容以 B 为最佳，越界请求允许安全改写 B 或纯拒答 A，并分别报告 B/A/C/D、拒答率、安全改写率和 core/sentinel 分层。
+  Related capabilities: D21, D14, D15; S7
+  Source report: reports/edubenchassistant/education-behavior-boundary-audit-2026-10-25.html
+
 ## 教育安全领域评测扫描 - 2026-05-20
 
 - Gap: 中文本地化未成年人教育安全 benchmark 不足，尤其缺家校关系、校规、心理危机转介、学术诚信和本地政策语境。
@@ -219,3 +246,20 @@ Each entry should name the scenario, product reason, suggested data/eval design,
   Suggested data/eval: 若要走逻辑③（论文/最优裁判），mathtutorbench 四个任务已齐（M3，6 模型全覆盖，零成本）；mrbench_tutor/bea2025_tutor 需换 glm-5.2 并全员重判（各 6 次，预测有缓存）。edubench 的论文口径裁判 deepseek-v3.2 走的是已确认会污染输出的 ZGC 路由，这条路实际已关闭，需另定 edubench 的钉选裁判。补 deepseek-v4-flash 进 meta-eval 也是前置项。
   Related capabilities: P10, P11, P12, P13, P14, P16, P17
   Source: 2026-08-17 Qwen3.5-4B 原子能力总分核查
+
+
+## EduEquity 公平反事实测量审计 - 2026-10-24
+
+- Gap: EduEquity 当前缺少可复跑的题目质量验证、内容正确性 gold、人工/独立裁判校准和 item-level 区分度/可靠性协议。
+  Product reason: 现有 0–10 parity 分数可用于发现身份敏感输出，但不能稳定支撑模型公平排名、上线门槛或合规结论；开放任务的内容质量、格式和裁判差异会混入公平分。
+  Suggested data/eval: 建立 seed manifest 与人工题审；为 IP/QG 增加答案正确性、答案唯一性、难度/目标对齐和干扰项质量 gold；TMG/PLS/PCC 使用固定 schema 与专家 rubric；用至少两名人工/多个 judge 校准，报告 kappa/ICC、覆盖率门槛、按 seed 聚类 bootstrap CI、item/model/task/axis 混合效应与 DIF。
+  Related capabilities: D21, D24, D14, D15; S3, S4, S7, S8
+  Source report: reports/edubenchassistant/eduequity-audit-2026-10-24.html
+
+## student_risk_v2 结果指标扩展 - 2026-10-27
+
+- Gap: 当前 student_risk_v2 主要用三档风险标签比对识别和处置，缺少结构化的最终结果指标：必要安全动作覆盖、危险内容先行违规、适当转介、即时安全核查、年龄/角色边界和安全完成学习任务等；单一联合准确率无法区分这些错误代价。
+  Product reason: 未成年人安全场景中，模型可能档位判断大体正确，却先提供危险操作、没有把学生交给现实支持，或对轻微风险过度升级；这些失败不能用一个总分表示。
+  Suggested data/eval: 在 student_risk_v3 为每题补 required_actions、conditional_actions、forbidden_actions、referral_target、safe_task_behavior 和 age_boundary；报告严重风险 recall、有害处置率、严重处置不足率、required-action macro recall、safe-task-completion、控制误报率、人工裁判一致性和按类型 bootstrap CI。先对分层人工子集校准，再重跑模型。
+  Related capabilities: D21, D24; S7, S8
+  Source report: reports/edubenchassistant/student-risk-v2-outcome-metrics-2026-10-27.html
