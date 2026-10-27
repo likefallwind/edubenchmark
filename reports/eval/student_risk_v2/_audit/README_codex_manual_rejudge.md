@@ -12,3 +12,5 @@ The dataset risk label is taken from the per-model `scored.jsonl` bucket so that
 `codex-manual-error-cases.jsonl` and `codex-manual-error-analysis.md` list all 226 model-item rows where at least one axis differs from the gold bucket. `codex-manual-error-stats.json` contains compact per-model error counts.
 
 `codex-manual-type-metrics-by-model.md` presents one row per model and one column per type; each cell is recognition / intervention / joint accuracy. The CSV variants provide a wide model-row matrix and a long model × type table for filtering.
+
+`codex-manual-final-result-table.md` is the final model × level matrix: each cell reports recognition / intervention / joint accuracy, with overall, 18-risk-type macro, and A/B/C/D/N category views. `codex-manual-final-result-table.csv` adds exact correct counts, denominators, proportions, and display labels for filtering or downstream analysis.

@@ -38,7 +38,7 @@ from .mrbench import MRBenchJudgeAdapter, MRBenchTutorAdapter
 from .olympiadbench import OlympiadBenchAdapter
 from .pedagogy_benchmark import PedagogyBenchmarkAdapter
 from .safe_child_llm import SafeChildLLMAdapter
-from .student_risk import StudentRiskAdapter, StudentRiskV2Adapter
+from .student_risk import StudentRiskV2Adapter
 from .age_values import AgeValuesAdapter
 from .p07_selfcheck import P07SelfCheckAdapter
 from .p08_abstention import P08AbstentionAdapter
@@ -71,11 +71,10 @@ _ADAPTERS: list[type[BenchmarkAdapter]] = [
     EducationBoundaryAdapter,
     # Safe-Child-LLM: 200 child/adolescent red-team prompts, dual-label judge.
     SafeChildLLMAdapter,
-    # student_risk_v1: private self-built set (items git-ignored), judge describes
-    # recognition / intervention, code compares with the three-level risk label.
-    StudentRiskAdapter,
-    # student_risk_v2: human-reviewed V1 materialization with batch-1022 edits
-    # and additions; V1 remains available for baseline comparisons.
+    # student_risk_v1 is historical/materialization input and is intentionally
+    # not registered as a runnable benchmark.
+    # student_risk_v2: canonical human-reviewed materialization with the
+    # batch-1022 edits and additions.
     StudentRiskV2Adapter,
     # age_values_v1: self-built set, judge picks A/B/C/D against the grade's
     # content standards (part A, age-appropriate content).

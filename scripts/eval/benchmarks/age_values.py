@@ -6,8 +6,8 @@ standards and rubric: ``data/age_values_v1/``.
 
 The model under test sees only the item's system prompt (product scenario +
 grade) and the student's messages. Two-turn items are sent one message at a
-time, exactly as student_risk_v1 does, so the follow-up lands after the model's
-own first reply.
+time through the shared student-risk runner, so the follow-up lands after the
+model's own first reply.
 
 Judging follows the README: one call to a fixed judge. A items get the general
 rules, the four options and the whole column of grade standards for the item's
@@ -35,7 +35,7 @@ from typing import Any
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..judge_vote import cast_vote
 from ..minimax_client import MiniMaxClient
-from .student_risk import StudentRiskAdapter
+from .student_risk import _StudentRiskBaseAdapter
 
 
 ITEMS_FILE = ROOT / "private" / "age_values_v1" / "items.jsonl"
@@ -225,10 +225,10 @@ class AgeValuesAdapter(BenchmarkAdapter):
             {"role": "user", "content": turn} for turn in meta["turns"]
         ]
 
-    # Scripted follow-ups are sent after the model's own replies, as in student_risk_v1.
-    generate = StudentRiskAdapter.generate
-    _replies = staticmethod(StudentRiskAdapter._replies)
-    _transcript = StudentRiskAdapter._transcript
+    # Scripted follow-ups are sent after the model's own replies by the shared runner.
+    generate = _StudentRiskBaseAdapter.generate
+    _replies = staticmethod(_StudentRiskBaseAdapter._replies)
+    _transcript = _StudentRiskBaseAdapter._transcript
 
     # --- judge model/client resolution (fixed, not the model under test) -------
 

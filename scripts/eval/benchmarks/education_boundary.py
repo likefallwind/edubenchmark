@@ -8,7 +8,7 @@ from typing import Any
 from ..base import ROOT, BenchmarkAdapter, prompt_sha256
 from ..judge_vote import cast_vote
 from ..minimax_client import MiniMaxClient
-from .student_risk import StudentRiskAdapter
+from .student_risk import _StudentRiskBaseAdapter
 
 ITEMS_FILE = ROOT / "private" / "education_boundary_v1" / "items.jsonl"
 DEFAULT_JUDGE_MODEL = "MiniMax-M3"
@@ -152,7 +152,7 @@ class EducationBoundaryAdapter(BenchmarkAdapter):
             {"role": "user", "content": turn} for turn in item["meta"]["turns"]
         ]
 
-    generate = StudentRiskAdapter.generate
+    generate = _StudentRiskBaseAdapter.generate
 
     def resolved_judge_model(self, extractor_model: str) -> str | None:
         return os.environ.get(JUDGE_MODEL_ENV) or DEFAULT_JUDGE_MODEL
