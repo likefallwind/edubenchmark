@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>age_values_v1 分层分析</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55;color:#1f2937;max-width:1180px;margin:30px auto;padding:0 24px}
+h1,h2{color:#111827} h1{font-size:26px} h2{margin-top:28px;font-size:20px} p{margin:8px 0} table{border-collapse:collapse;width:100%;margin:12px 0 22px;font-size:14px} th,td{border:1px solid #d1d5db;padding:7px 8px;text-align:left;vertical-align:top} th{background:#f3f4f6} .note{background:#fff7ed;border-left:4px solid #f59e0b;padding:12px 14px;margin:14px 0} .good{background:#ecfdf5;border-left:4px solid #10b981;padding:12px 14px;margin:14px 0} .muted{color:#6b7280} code{background:#f3f4f6;padding:1px 4px;border-radius:3px}
+</style></head><body>
+<h1>age_values_v1 全量分层分析</h1>
+<p class="muted">运行目录：<code>_full_20261027/judge-minimax3</code>；每个模型 390 题；固定裁判 MiniMax-M3；正确率仍是暂定的“裁判选 B”比例。</p>
+<div class="note"><b>解释边界：</b>A 部分测学段适龄处理；B 部分的标准表不按学段变化，所以 B 按年龄段的差异只能看作学生设定/场景组合下的表现，不能直接叫作年龄适配能力。所有模型的有效分母因裁判抽取失败略有不同。</div>
+<h2>总体与 A/B</h2>
+<table><thead><tr><th>分组</th><th>DeepSeek V4.1 Flash</th><th>Doubao Seed 2.1 Pro</th><th>GLM 5.3 Flash</th><th>裁判错误 D/Doubao/GLM</th></tr></thead><tbody><tr><td>A</td><td>88.1% (126/143)</td><td>79.7% (118/148)</td><td>80.5% (120/149)</td><td>7/2/1</td></tr><tr><td>B</td><td>93.3% (224/240)</td><td>92.0% (219/238)</td><td>89.5% (214/239)</td><td>0/2/1</td></tr></tbody></table>
+<p>总体有效结果：DeepSeek 350/383 = 91.4%；Doubao 337/388 = 86.9%；GLM 334/389 = 85.8%。</p>
+<table><thead><tr><th>配对比较</th><th>共同有效题数</th><th>正确率差</th><th>仅前者正确–仅后者正确</th><th>McNemar 精确 p</th></tr></thead><tbody><tr><td>DeepSeek vs Doubao</td><td>381</td><td>+3.9 pp</td><td>32–17</td><td>0.044</td></tr><tr><td>DeepSeek vs GLM</td><td>382</td><td>+5.5 pp</td><td>39–18</td><td>0.008</td></tr><tr><td>Doubao vs GLM</td><td>384</td><td>+1.3 pp</td><td>32–27</td><td>0.603</td></tr></tbody></table>
+<h2>按 A/B 子类型</h2>
+<table><thead><tr><th>子类型</th><th>DeepSeek V4.1 Flash（正确/有效）</th><th>Doubao Seed 2.1 Pro（正确/有效）</th><th>GLM 5.3 Flash（正确/有效）</th><th>模型间最大跨度</th></tr></thead><tbody><tr><td>A1</td><td>92.6% (25/27)</td><td>90.0% (27/30)</td><td>80.0% (24/30)</td><td>+12.6 pp</td></tr><tr><td>A2</td><td>92.3% (24/26)</td><td>78.6% (22/28)</td><td>82.8% (24/29)</td><td>+13.7 pp</td></tr><tr><td>A3</td><td>86.7% (26/30)</td><td>80.0% (24/30)</td><td>66.7% (20/30)</td><td>+20.0 pp</td></tr><tr><td>A4</td><td>93.3% (28/30)</td><td>76.7% (23/30)</td><td>90.0% (27/30)</td><td>+16.7 pp</td></tr><tr><td>A5</td><td>76.7% (23/30)</td><td>73.3% (22/30)</td><td>83.3% (25/30)</td><td>+10.0 pp</td></tr><tr><td>B1</td><td>93.3% (28/30)</td><td>93.3% (28/30)</td><td>76.7% (23/30)</td><td>+16.7 pp</td></tr><tr><td>B2</td><td>100.0% (50/50)</td><td>95.9% (47/49)</td><td>96.0% (48/50)</td><td>+4.1 pp</td></tr><tr><td>B3</td><td>92.5% (74/80)</td><td>88.6% (70/79)</td><td>84.8% (67/79)</td><td>+7.7 pp</td></tr><tr><td>B4</td><td>90.0% (72/80)</td><td>92.5% (74/80)</td><td>95.0% (76/80)</td><td>+5.0 pp</td></tr></tbody></table>
+<h2>按年龄段（A+B 合计）</h2>
+<table><thead><tr><th>学段</th><th>DeepSeek V4.1 Flash（正确/有效）</th><th>Doubao Seed 2.1 Pro（正确/有效）</th><th>GLM 5.3 Flash（正确/有效）</th><th>模型间最大跨度</th></tr></thead><tbody><tr><td>小学低年级</td><td>94.7% (36/38)</td><td>84.2% (32/38)</td><td>91.9% (34/37)</td><td>+10.5 pp</td></tr><tr><td>小学高年级</td><td>94.0% (63/67)</td><td>92.9% (65/70)</td><td>84.1% (58/69)</td><td>+10.0 pp</td></tr><tr><td>初中</td><td>93.7% (118/126)</td><td>88.8% (111/125)</td><td>84.4% (108/128)</td><td>+9.3 pp</td></tr><tr><td>高中</td><td>86.5% (115/133)</td><td>82.8% (111/134)</td><td>85.8% (115/134)</td><td>+3.6 pp</td></tr><tr><td>大学</td><td>94.7% (18/19)</td><td>94.7% (18/19)</td><td>95.0% (19/20)</td><td>+0.3 pp</td></tr></tbody></table>
+<p class="muted">合计年龄段受 A/B 配比影响：大学只有 A 题；高中和初中包含较多 B 题，因此不能把这一表当成纯 A 适龄曲线。</p>
+<h2>A 部分按年龄段</h2>
+<table><thead><tr><th>学段</th><th>DeepSeek V4.1 Flash（正确/有效）</th><th>Doubao Seed 2.1 Pro（正确/有效）</th><th>GLM 5.3 Flash（正确/有效）</th><th>模型间最大跨度</th></tr></thead><tbody><tr><td>小学低年级</td><td>90.0% (18/20)</td><td>70.0% (14/20)</td><td>85.0% (17/20)</td><td>+20.0 pp</td></tr><tr><td>小学高年级</td><td>85.2% (23/27)</td><td>86.7% (26/30)</td><td>69.0% (20/29)</td><td>+17.7 pp</td></tr><tr><td>初中</td><td>94.7% (36/38)</td><td>79.5% (31/39)</td><td>75.0% (30/40)</td><td>+19.7 pp</td></tr><tr><td>高中</td><td>79.5% (31/39)</td><td>72.5% (29/40)</td><td>85.0% (34/40)</td><td>+12.5 pp</td></tr><tr><td>大学</td><td>94.7% (18/19)</td><td>94.7% (18/19)</td><td>95.0% (19/20)</td><td>+0.3 pp</td></tr></tbody></table>
+<h2>B 部分按年龄段</h2>
+<table><thead><tr><th>学段</th><th>DeepSeek V4.1 Flash（正确/有效）</th><th>Doubao Seed 2.1 Pro（正确/有效）</th><th>GLM 5.3 Flash（正确/有效）</th><th>模型间最大跨度</th></tr></thead><tbody><tr><td>小学低年级</td><td>100.0% (18/18)</td><td>100.0% (18/18)</td><td>100.0% (17/17)</td><td>+0.0 pp</td></tr><tr><td>小学高年级</td><td>100.0% (40/40)</td><td>97.5% (39/40)</td><td>95.0% (38/40)</td><td>+5.0 pp</td></tr><tr><td>初中</td><td>93.2% (82/88)</td><td>93.0% (80/86)</td><td>88.6% (78/88)</td><td>+4.5 pp</td></tr><tr><td>高中</td><td>89.4% (84/94)</td><td>87.2% (82/94)</td><td>86.2% (81/94)</td><td>+3.2 pp</td></tr></tbody></table>
+<p class="muted">B 没有大学题，且小学 B 题很少；B 年龄表的低年级/高年级样本较小。</p>
+<h2>主要观察</h2>
+<ul>
+<li>A 是主要拉开总分的部分：DeepSeek–Doubao 约 8.4 个百分点，DeepSeek–GLM 约 8.4 个百分点；B 部分只有约 1.3–3.8 个百分点。</li>
+<li>最有区分力的 A 子类型是 A3（危险模仿，DeepSeek 86.7%、Doubao 80.0%、GLM 66.7%）和 A4（不良嗜好/成人消费，93.3%、76.7%、90.0%）。A2 也有差异（92.3%、78.6%、82.8%），但有效分母受裁判敏感输入影响。</li>
+<li>A5 的排序反转：GLM 83.3% 高于 DeepSeek 76.7% 和 Doubao 73.3%，说明模型差异不是单一“安全强弱”轴，A5 可能在测措辞/拒答边界，不能只用总分解释。</li>
+<li>B2 接近天花板（96.0%–100%），几乎不能区分；B1、B3 有一定差异；B4 反向排序（GLM 95.0%、Doubao 92.5%、DeepSeek 90.0%），所以 B 总分的模型排序不稳定。</li>
+<li>A 年龄段中，初中和小学高年级最能拉开模型：初中约 19.7 个百分点，小学高年级约 17.7 个百分点；大学约 95% 天花板，基本没有区分度。高中差异较小且排序不稳定。</li>
+<li>情形层面（辅助检查）显示“两轮施压”和“越龄追问”比中性提问更有区分力；中性提问三模型均为 100%。这表明区分主要来自边界压力，而不是普通知识回答。</li>
+</ul>
+<div class="good"><b>结论：</b>当前题集已经有“初步、可用的排序区分度”，尤其来自 A3/A4、初中/小学高年级和边界压力情形；但还不足以作为稳定的模型排名基准。原因是 B2 和普通对照题天花板、A5 与 B4 排序反转、部分年龄×子类型单元只有 4–8 题、gold 和题目尚未人工审核，且裁判敏感输入造成 10 条抽取失败。下一步应先完成逐题人工审核与裁判复核，再按 A3/A4、A2、越龄/成人请求增加平衡题，并把 B2 天花板题降权或单独作为 gate。</div>
+<p class="muted">原始分层数据：各模型目录下的 <code>scored.jsonl</code>；自动生成的单模型报告也保留在同一目录。</p>
+</body></html>

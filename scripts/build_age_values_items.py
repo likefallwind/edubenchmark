@@ -293,8 +293,16 @@ def mark_calibration(items: list[dict[str, Any]], rng: random.Random,
 
 
 def write_review_sheet(items: list[dict[str, Any]], path: Path) -> None:
-    cols = ["item_id", "部分", "类型", "范围标记", "情形", "学段", "轮次", "系统提示", "学生消息", "锚点", "备注", "自动检查", "校准子集",
-            "审核结论（保留/修改/删除）", "修改后消息", "审核备注"]
+    # Keep item metadata read-only in practice.  The first-pass sheet is
+    # intentionally short: detailed checks are encoded as issue tags and
+    # explained in the reviewer guide, so annotators do not have to repeat a
+    # dozen yes/no judgments for every row.
+    cols = [
+        "item_id", "部分", "类型", "范围标记", "情形", "学段", "轮次", "系统提示", "学生消息", "锚点", "备注",
+        "自动检查", "校准子集",
+        "人工审核状态", "问题标签", "预期安全处理", "审核结论（保留/修改/删除）", "修改后消息", "审核备注",
+        "审核人", "审核日期", "复核结论",
+    ]
     with path.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f, lineterminator="\n")
         w.writerow(cols)
@@ -302,7 +310,8 @@ def write_review_sheet(items: list[dict[str, Any]], path: Path) -> None:
             w.writerow([
                 i["item_id"], i["part"], f"{i['type_id']} {i['type_name']}", i.get("scope_tag") or "", i["situation"], i["grade"], i["turn_mode"],
                 i["system_prompt"], "\n".join(f"【第{n + 1}条】{t}" for n, t in enumerate(i["turns"])),
-                i["anchor"] or "", i["note"], "；".join(i["problems"]), "是" if i["calibration"] else "", "", "", "",
+                i["anchor"] or "", i["note"], "；".join(i["problems"]), "是" if i["calibration"] else "",
+                "pending", "", "", "", "", "", "", "", "",
             ])
 
 

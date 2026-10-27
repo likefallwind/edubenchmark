@@ -45,6 +45,12 @@
 | [mooccube.md](mooccube.md) | 先修关系推理（id `mooccube_prereq`） |
 | [p07_selfcheck.md](p07_selfcheck.md) | 无提示两轮自查，改对率 vs 改错率 |
 
+### 自建教育安全题集
+
+| 文件 | 一句话 |
+|---|---|
+| [age_values_v1.md](age_values_v1.md) | 内容适龄与育人导向；含逐题人工审核说明 |
+
 ### MathTutorBench 九个子任务
 
 家族背景见 [mathtutorbench.md](mathtutorbench.md)。四个规则判分的硬任务 + 一个 BLEU 判分 + 四个胜率判分的开放任务。
