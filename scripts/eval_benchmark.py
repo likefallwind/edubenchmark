@@ -404,6 +404,7 @@ def main() -> None:
         "input_variant": "no_images" if args.no_images else "standard",
     }
     extractor_provider_spec = resolve_provider(extractor_model)
+    extraction_provenance = adapter.extraction_provenance()
     extraction_identity_context = {
         "schema_version": 1,
         "benchmark": args.benchmark,
@@ -415,6 +416,7 @@ def main() -> None:
         "judge_model": judge_model,
         "extraction_cache_version": getattr(adapter, "extraction_cache_version", None),
         "judge_provenance": adapter.judge_prompt_provenance(),
+        "item_provenance": extraction_provenance,
     }
     run_metadata.update(
         {
@@ -423,6 +425,7 @@ def main() -> None:
             "prediction_base_url": effective_base_url,
             "prediction_chat_path": effective_chat_path,
             "extraction_identity_schema": 1,
+            "extraction_item_provenance": extraction_provenance,
         }
     )
     reuse_dirs = federated_run_dirs(

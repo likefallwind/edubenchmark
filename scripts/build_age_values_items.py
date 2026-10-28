@@ -49,6 +49,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SPEC_DIR = ROOT / "data" / "age_values_v1"
 OUT_DIR = ROOT / "private" / "age_values_v1"
 AUTHORED_DIR = OUT_DIR / "authored"
+REVIEWED_SHEET = OUT_DIR / "review_sheet_1027.csv"
 
 GRADES = ["小学低年级", "小学高年级", "初中", "高中", "大学"]
 # Words that would leak the card into the student's text.
@@ -99,7 +100,15 @@ def build_a_cards(taxonomy: dict[str, Any], dims: dict[str, Any], rng: random.Ra
                         "turn_mode": "单轮",
                     })
         overreach = [c for c in type_cards if c["situation"] == "越龄追问"]
-        for c in rng.sample(overreach, taxonomy["two_turn_per_type"]):
+        if taxonomy["two_turn_per_type"] == len(overreach):
+            # Consume the four draws used by the original v1 card build so
+            # changing the review policy does not resample scenarios, prompts,
+            # or expression styles for later types.
+            rng.sample(overreach, min(4, len(overreach)))
+            selected = overreach
+        else:
+            selected = rng.sample(overreach, taxonomy["two_turn_per_type"])
+        for c in selected:
             c["turn_mode"] = "两轮"
         for n, c in enumerate(type_cards, 1):
             cards.append({"card_id": f"AV-{type_id}-{n:03d}", **c})
@@ -226,7 +235,34 @@ def load_authored() -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
     for path in sorted(AUTHORED_DIR.glob("*.jsonl")):
         for row in read_jsonl(path):
-            out[row["card_id"]] = row
+            # A dated revision may override only the fields it changed.  Merge
+            # it onto the previous authored row so metadata-only review fixes
+            # remain traceable without duplicating the whole item.
+            card_id = row["card_id"]
+            out[card_id] = {**out.get(card_id, {}), **row}
+    return out
+
+
+def load_review_status(path: Path = REVIEWED_SHEET) -> dict[str, str]:
+    """Load the post-review status when a reviewed sheet is present.
+
+    The authoring queue remains ``review_sheet.csv``; the dated sheet is the
+    human-review record.  Export should fail loudly if that record has missing
+    or duplicate IDs instead of silently publishing mixed review states.
+    """
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    out: dict[str, str] = {}
+    for row in rows:
+        item_id = (row.get("item_id") or "").strip()
+        status = (row.get("人工审核状态") or "").strip()
+        if not item_id or item_id in out:
+            raise SystemExit(f"invalid reviewed sheet: missing or duplicate item_id in {path}")
+        if status not in {"pending", "reviewed"}:
+            raise SystemExit(f"invalid review status {status!r} for {item_id} in {path}")
+        out[item_id] = status
     return out
 
 
@@ -324,6 +360,17 @@ def stage_export(args) -> None:
     cards = read_jsonl(OUT_DIR / "cards.jsonl")
     validate_card_contract(cards, taxonomy)
     items, missing = build_items(cards, load_authored(), anchors, type_names)
+    reviewed_status = load_review_status()
+    if reviewed_status:
+        item_ids = {i["item_id"] for i in items}
+        if set(reviewed_status) != item_ids:
+            missing_status = sorted(item_ids - set(reviewed_status))
+            extra_status = sorted(set(reviewed_status) - item_ids)
+            raise SystemExit(
+                f"reviewed sheet IDs do not match items: missing={missing_status[:5]} extra={extra_status[:5]}"
+            )
+        for item in items:
+            item["review_status"] = reviewed_status[item["item_id"]]
     expected_by_part = {
         "A": taxonomy["totals"]["all_items"],
         "B": taxonomy["part_b"]["totals"]["all_items"],
@@ -341,6 +388,7 @@ def stage_export(args) -> None:
         f"- 未出题的卡：{len(missing)}" + (f"（{', '.join(missing[:20])}{' …' if len(missing) > 20 else ''}）" if missing else ""),
         f"- 自动检查有问题的题：{len(flagged)}。",
         f"- 校准子集：{sum(i['calibration'] for i in items)} 题。", "",
+        *( [f"- 人工审核状态：{dict(Counter(i['review_status'] for i in items))}（来源：{REVIEWED_SHEET.name}）。", ""] if reviewed_status else [] ),
         "## 自动检查问题", "",
         *(["无。"] if not flagged else [f"- {i['item_id']}：{'；'.join(i['problems'])}" for i in flagged]), "",
         "## 分布", "",

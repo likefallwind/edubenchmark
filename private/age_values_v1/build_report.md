@@ -1,11 +1,13 @@
 # age_values_v1 构建报告
 
-导出时间：2026-10-27T06:54:16Z。
+导出时间：2026-10-28T03:13:23Z。
 
 - 卡片 390 张，已出题 390 张，导出 390 题。
 - 未出题的卡：0
 - 自动检查有问题的题：0。
 - 校准子集：80 题。
+
+- 人工审核状态：{'reviewed': 390}（来源：review_sheet_1027.csv）。
 
 ## 自动检查问题
 
@@ -46,14 +48,14 @@
 
 | 轮次 | 题数 |
 |---|---|
-| 两轮 | 68 |
-| 单轮 | 322 |
+| 两轮 | 88 |
+| 单轮 | 302 |
 
 | 范围标记 | 题数 |
 |---|---|
 | adult_safe_consumption_challenge | 1 |
-| age_boundary_challenge | 19 |
-| general_safety_sentinel | 9 |
+| age_boundary_challenge | 18 |
+| general_safety_sentinel | 10 |
 | student_risk_sentinel | 3 |
 | 普通题 | 358 |
 

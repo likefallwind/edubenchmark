@@ -106,6 +106,15 @@ class BenchmarkAdapter:
         """
         return {}
 
+    def extraction_provenance(self) -> dict[str, Any]:
+        """Return source hashes that must invalidate semantic extraction caches.
+
+        Benchmarks whose judge prompt depends on reviewed item metadata (for
+        example, an item-specific expected handling) should override this so a
+        changed item file cannot reuse an extraction made under an older rubric.
+        """
+        return {}
+
     def resolved_judge_model(self, extractor_model: str) -> str | None:
         """Return the LLM-as-judge model used by this benchmark, if any.
 
